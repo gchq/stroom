@@ -19,7 +19,7 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.node.api.NodeInfo;
@@ -85,7 +85,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                 // Open the stream source.
                 streamSource = streamStore.openStreamSource(streamTask.getStreamId());
                 if (streamSource != null) {
-                    final Data stream = streamSource.getStream();
+                    final Meta stream = streamSource.getStream();
 
                     Processor destStreamProcessor = null;
                     ProcessorFilter destStreamProcessorFilter = null;

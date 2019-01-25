@@ -25,7 +25,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.util.date.DateUtil;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -134,7 +134,7 @@ public final class SendStreamDataClient {
 
         final StreamSource streamSource = streamStore.openStreamSource(streamId);
         final StreamSource meta = streamSource.getChildStream(StreamTypeNames.META);
-        final Data stream = streamSource.getStream();
+        final Meta stream = streamSource.getStream();
 
         if (stream.getEffectiveMs() != null) {
             connection.addRequestProperty("effectiveTime",

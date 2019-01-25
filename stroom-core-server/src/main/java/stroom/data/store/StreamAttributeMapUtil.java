@@ -2,7 +2,7 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.util.date.DateUtil;
 
@@ -19,7 +19,7 @@ class StreamAttributeMapUtil {
     /**
      * Turns a stream attribute map object into a generic map of attributes for use by an expression filter.
      */
-    static Map<String, Object> createAttributeMap(final Data stream, final Map<String, String> attributeMap) {
+    static Map<String, Object> createAttributeMap(final Meta stream, final Map<String, String> attributeMap) {
         final Map<String, Object> map = new HashMap<>();
 
         if (stream != null) {

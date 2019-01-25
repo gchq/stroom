@@ -18,8 +18,8 @@
 package stroom.test;
 
 
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaProperties;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -136,8 +136,8 @@ public class CommonTestScenarioCreator {
      * @param feed related
      * @return a basic raw file
      */
-    public Data createSample2LineRawFile(final String feed, final String streamType) {
-        final DataProperties streamProperties = new DataProperties.Builder()
+    public Meta createSample2LineRawFile(final String feed, final String streamType) {
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(feed)
                 .typeName(streamType)
                 .build();
@@ -149,8 +149,8 @@ public class CommonTestScenarioCreator {
         return target.getStream();
     }
 
-    public Data createSampleBlankProcessedFile(final String feed, final Data sourceStream) {
-        final DataProperties streamProperties = new DataProperties.Builder()
+    public Meta createSampleBlankProcessedFile(final String feed, final Meta sourceStream) {
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(feed)
                 .typeName(StreamTypeNames.EVENTS)
                 .parent(sourceStream)

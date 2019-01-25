@@ -1,21 +1,21 @@
 package stroom.streamstore.shared;
 
 import stroom.task.shared.Action;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 
 public class FetchFullStreamInfoAction extends Action<FullStreamInfoResult> {
     private static final long serialVersionUID = -3560107233301674555L;
 
-    private Data stream;
+    private Meta stream;
 
     public FetchFullStreamInfoAction() {
     }
 
-    public FetchFullStreamInfoAction(final Data stream) {
+    public FetchFullStreamInfoAction(final Meta stream) {
         this.stream = stream;
     }
 
-    public Data getStream() {
+    public Meta getStream() {
         return stream;
     }
 

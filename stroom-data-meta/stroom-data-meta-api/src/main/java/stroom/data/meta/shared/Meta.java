@@ -18,7 +18,7 @@ package stroom.data.meta.shared;
 
 import stroom.docref.SharedObject;
 
-public interface Data extends SharedObject {
+public interface Meta extends SharedObject {
     long getId();
 
     String getFeedName();
@@ -33,7 +33,7 @@ public interface Data extends SharedObject {
 
     Integer getProcessorId();
 
-    DataStatus getStatus();
+    Status getStatus();
 
     Long getStatusMs();
 

@@ -17,9 +17,9 @@
 package stroom.data.store.util;
 
 import com.google.inject.Injector;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaService;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
@@ -116,7 +116,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         }
 
         final StreamStore streamStore = injector.getInstance(StreamStore.class);
-        final DataMetaService streamMetaService = injector.getInstance(DataMetaService.class);
+        final MetaService streamMetaService = injector.getInstance(MetaService.class);
 
         if (feed != null) {
             builder.addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feed);
@@ -129,13 +129,13 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         }
 
         // Query the stream store
-        final FindDataCriteria criteria = new FindDataCriteria();
+        final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(builder.build());
-        final List<Data> results = streamMetaService.find(criteria);
+        final List<Meta> results = streamMetaService.find(criteria);
         System.out.println("Starting dump of " + results.size() + " streams");
 
         int count = 0;
-        for (final Data stream : results) {
+        for (final Meta stream : results) {
             count++;
             processFile(count, results.size(), streamStore, stream.getId(), dir);
         }

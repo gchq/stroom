@@ -17,10 +17,10 @@
 
 package stroom.pipeline.stepping;
 
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaService;
 import stroom.data.meta.shared.ExpressionUtil;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.explorer.shared.SharedDocRef;
@@ -35,12 +35,12 @@ import java.util.List;
 
 
 class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStreamAction, SharedDocRef> {
-    private final DataMetaService streamMetaService;
+    private final MetaService streamMetaService;
     private final PipelineStore pipelineStore;
     private final Security security;
 
     @Inject
-    GetPipelineForStreamHandler(final DataMetaService streamMetaService,
+    GetPipelineForStreamHandler(final MetaService streamMetaService,
                                 final PipelineStore pipelineStore,
                                 final Security security) {
         this.streamMetaService = streamMetaService;
@@ -54,7 +54,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
             DocRef docRef = null;
 
             // First try and get the pipeline from the selected child stream.
-            Data childStream = getStream(action.getChildStreamId());
+            Meta childStream = getStream(action.getChildStreamId());
             if (childStream != null) {
                 docRef = getPipeline(childStream);
             }
@@ -96,14 +96,14 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         });
     }
 
-    private Data getStream(final Long id) {
+    private Meta getStream(final Long id) {
         if (id == null) {
             return null;
         }
 
         return security.asProcessingUserResult(() -> {
-            final FindDataCriteria criteria = new FindDataCriteria(ExpressionUtil.createDataIdExpression(id));
-            final List<Data> streamList = streamMetaService.find(criteria);
+            final FindMetaCriteria criteria = new FindMetaCriteria(ExpressionUtil.createDataIdExpression(id));
+            final List<Meta> streamList = streamMetaService.find(criteria);
             if (streamList != null && streamList.size() > 0) {
                 return streamList.get(0);
             }
@@ -112,18 +112,18 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         });
     }
 
-    private Data getFirstChildStream(final Long id) {
+    private Meta getFirstChildStream(final Long id) {
         if (id == null) {
             return null;
         }
 
         return security.asProcessingUserResult(() -> {
-            final FindDataCriteria criteria = new FindDataCriteria(ExpressionUtil.createParentIdExpression(id));
+            final FindMetaCriteria criteria = new FindMetaCriteria(ExpressionUtil.createParentIdExpression(id));
             return streamMetaService.find(criteria).getFirst();
         });
     }
 
-    private DocRef getPipeline(final Data stream) {
+    private DocRef getPipeline(final Meta stream) {
         DocRef docRef = null;
 
         // So we have got the stream so try and get the first pipeline that was

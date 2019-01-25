@@ -22,10 +22,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaProperties;
 import stroom.data.meta.shared.ExpressionUtil;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.impl.mock.MockSecurityContextModule;
@@ -60,29 +60,29 @@ class TestMetaValueServiceImpl {
         dataMetaService.deleteAll();
         metaValueService.deleteAll();
 
-        final Data data = dataMetaService.create(createProperties("FEED1"));
+        final Meta data = dataMetaService.create(createProperties("FEED1"));
 
         dataMetaService.addAttributes(data, createAttributes());
 
-        FindDataCriteria criteria = new FindDataCriteria();
+        FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(data.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(data.getCreateMs())));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
 
-        criteria = new FindDataCriteria();
+        criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(data.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(0);
 
-        criteria = new FindDataCriteria();
+        criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(data.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.FILE_SIZE, Condition.GREATER_THAN, "0"));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
 
-        criteria = new FindDataCriteria();
+        criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(data.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
@@ -95,29 +95,29 @@ class TestMetaValueServiceImpl {
         dataMetaService.deleteAll();
         metaValueService.deleteAll();
 
-        final Data data = dataMetaService.create(createProperties("FEED1"));
+        final Meta data = dataMetaService.create(createProperties("FEED1"));
 
         dataMetaService.addAttributes(data, createAttributes());
 
-        FindDataCriteria criteria = new FindDataCriteria();
+        FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(data.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(data.getCreateMs())));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
 
-        criteria = new FindDataCriteria();
+        criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(data.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(0);
 
-        criteria = new FindDataCriteria();
+        criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(data.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.FILE_SIZE, Condition.GREATER_THAN, "0"));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
 
-        criteria = new FindDataCriteria();
+        criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(data.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
@@ -125,15 +125,15 @@ class TestMetaValueServiceImpl {
 
         metaValueService.deleteOldValues();
 
-        criteria = new FindDataCriteria();
+        criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(data.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(0);
     }
 
-    private DataProperties createProperties(final String feedName) {
-        return new DataProperties.Builder()
+    private MetaProperties createProperties(final String feedName) {
+        return new MetaProperties.Builder()
                 .createMs(1000L)
                 .feedName(feedName)
                 .pipelineUuid("PIPELINE_UUID")

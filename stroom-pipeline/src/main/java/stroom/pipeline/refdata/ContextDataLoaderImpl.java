@@ -16,7 +16,7 @@
 
 package stroom.pipeline.refdata;
 
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.docref.DocRef;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
@@ -35,7 +35,7 @@ public class ContextDataLoaderImpl implements ContextDataLoader {
 
     @Override
     public void load(final InputStream inputStream,
-                     final Data data,
+                     final Meta data,
                      final String feedName,
                      final DocRef contextPipeline,
                      final RefStreamDefinition refStreamDefinition,

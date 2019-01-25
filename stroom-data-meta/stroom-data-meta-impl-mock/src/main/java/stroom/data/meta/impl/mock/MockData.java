@@ -1,9 +1,9 @@
 package stroom.data.meta.impl.mock;
 
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.Status;
 
-class MockData implements Data {
+class MockData implements Meta {
     private long id;
     private String feedName;
     private String typeName;
@@ -11,7 +11,7 @@ class MockData implements Data {
     private Long parentDataId;
     private Long processorTaskId;
     private Integer processorId;
-    DataStatus status;
+    Status status;
     Long statusMs;
     private long createMs;
     private Long effectiveMs;
@@ -55,7 +55,7 @@ class MockData implements Data {
     }
 
     @Override
-    public DataStatus getStatus() {
+    public Status getStatus() {
         return status;
     }
 
@@ -112,7 +112,7 @@ class MockData implements Data {
             return this;
         }
 
-        public Builder status(final DataStatus status) {
+        public Builder status(final Status status) {
             data.status = status;
             return this;
         }
@@ -132,7 +132,7 @@ class MockData implements Data {
             return this;
         }
 
-        public Data build() {
+        public Meta build() {
             return data;
         }
     }

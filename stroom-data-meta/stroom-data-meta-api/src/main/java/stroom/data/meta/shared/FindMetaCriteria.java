@@ -28,7 +28,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FindDataCriteria implements SharedObject, HasIsConstrained, Copyable<FindDataCriteria> {
+public class FindMetaCriteria implements SharedObject, HasIsConstrained, Copyable<FindMetaCriteria> {
     private static final long serialVersionUID = -4777723504698304778L;
 
     private ExpressionOperator expression;
@@ -36,22 +36,22 @@ public class FindDataCriteria implements SharedObject, HasIsConstrained, Copyabl
     private PageRequest pageRequest = null;
     private List<Sort> sortList;
 
-    public FindDataCriteria() {
+    public FindMetaCriteria() {
     }
 
-    public FindDataCriteria(final ExpressionOperator expression) {
+    public FindMetaCriteria(final ExpressionOperator expression) {
         this.expression = expression;
     }
 
-    public static FindDataCriteria createWithData(final Data data) {
-        final FindDataCriteria criteria = new FindDataCriteria();
+    public static FindMetaCriteria createWithData(final Meta data) {
+        final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(ExpressionUtil.createSimpleExpression());
         criteria.obtainSelectedIdSet().add(data.getId());
         return criteria;
     }
 
-    public static FindDataCriteria createWithType(final String typeName) {
-        final FindDataCriteria criteria = new FindDataCriteria();
+    public static FindMetaCriteria createWithType(final String typeName) {
+        final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(ExpressionUtil.createTypeExpression(typeName));
         return criteria;
     }
@@ -139,7 +139,7 @@ public class FindDataCriteria implements SharedObject, HasIsConstrained, Copyabl
     }
 
     @Override
-    public void copyFrom(final FindDataCriteria other) {
+    public void copyFrom(final FindMetaCriteria other) {
         if (other.pageRequest == null) {
             this.pageRequest = null;
         } else {
@@ -161,9 +161,9 @@ public class FindDataCriteria implements SharedObject, HasIsConstrained, Copyabl
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof FindDataCriteria)) return false;
+        if (!(o instanceof FindMetaCriteria)) return false;
 
-        final FindDataCriteria that = (FindDataCriteria) o;
+        final FindMetaCriteria that = (FindMetaCriteria) o;
 
         if (pageRequest != null ? !pageRequest.equals(that.pageRequest) : that.pageRequest != null) return false;
         return sortList != null ? sortList.equals(that.sortList) : that.sortList == null;

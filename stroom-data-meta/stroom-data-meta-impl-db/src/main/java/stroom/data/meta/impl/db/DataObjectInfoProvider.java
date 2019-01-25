@@ -20,13 +20,13 @@ package stroom.data.meta.impl.db;
 import event.logging.BaseObject;
 import event.logging.Object;
 import event.logging.util.EventLoggingUtil;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.event.logging.api.ObjectInfoProvider;
 
 class DataObjectInfoProvider implements ObjectInfoProvider {
     @Override
     public BaseObject createBaseObject(final java.lang.Object obj) {
-        final Data stream = (Data) obj;
+        final Meta stream = (Meta) obj;
 
         final Object object = new Object();
         object.setType("Stream");

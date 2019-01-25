@@ -31,10 +31,10 @@ import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.data.meta.shared.FindDataCriteria;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.FindMetaCriteria;
+import stroom.data.meta.shared.Meta;
 import stroom.streamstore.shared.FindStreamAction;
-import stroom.data.meta.shared.DataRow;
+import stroom.data.meta.shared.MetaRow;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
     private final Provider<EntityChooser> pipelineSelection;
@@ -81,12 +81,12 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         chooser.addDataSelectionHandler(event -> {
             final DocRef pipeline = chooser.getSelectedEntityReference();
             if (pipeline != null) {
-                final FindDataCriteria streamAttributeMapCriteria = new FindDataCriteria();
+                final FindMetaCriteria streamAttributeMapCriteria = new FindMetaCriteria();
                 streamAttributeMapCriteria.obtainSelectedIdSet().add(streamId);
 
                 dispatcher.exec(new FindStreamAction(streamAttributeMapCriteria)).onSuccess(result -> {
                     if (result != null && result.size() == 1) {
-                        final DataRow row = result.get(0);
+                        final MetaRow row = result.get(0);
                         openEditor(pipeline, row.getData(), eventId, childStreamType);
                     }
                 });
@@ -100,7 +100,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         chooser.show();
     }
 
-    private void openEditor(final DocRef pipeline, final Data stream, final long eventId,
+    private void openEditor(final DocRef pipeline, final Meta stream, final long eventId,
                             final String childStreamType) {
         final SteppingContentTabPresenter editor = editorProvider.get();
         editor.read(pipeline, stream, eventId, childStreamType);

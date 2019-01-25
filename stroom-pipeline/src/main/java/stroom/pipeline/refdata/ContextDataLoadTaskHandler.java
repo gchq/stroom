@@ -19,7 +19,7 @@ package stroom.pipeline.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.pipeline.feed.FeedProperties;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
@@ -95,7 +95,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
             errorReceiverProxy.setErrorReceiver(errorReceiver);
 
             final InputStream inputStream = task.getInputStream();
-            final Data stream = task.getData();
+            final Meta stream = task.getData();
             final String feedName = task.getFeedName();
 
             if (inputStream != null) {

@@ -17,8 +17,8 @@
 
 package stroom.query;
 
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.MetaService;
+import stroom.data.meta.shared.Status;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.docref.DocRef;
 import stroom.entity.FindService;
@@ -41,12 +41,12 @@ import java.util.stream.Collectors;
 
 
 class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction, SharedList<SharedString>> {
-    private final DataMetaService streamMetaService;
+    private final MetaService streamMetaService;
     private final PipelineStore pipelineStore;
     private final Security security;
 
     @Inject
-    FetchSuggestionsHandler(final DataMetaService streamMetaService,
+    FetchSuggestionsHandler(final MetaService streamMetaService,
                             final PipelineStore pipelineStore,
                             final Security security) {
         this.streamMetaService = streamMetaService;
@@ -77,8 +77,8 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
                     }
 
                     if (task.getField().getName().equals(MetaDataSource.STATUS)) {
-                        return new SharedList<>(Arrays.stream(DataStatus.values())
-                                .map(DataStatus::getDisplayValue)
+                        return new SharedList<>(Arrays.stream(Status.values())
+                                .map(Status::getDisplayValue)
                                 .map(SharedString::wrap)
                                 .sorted()
                                 .collect(Collectors.toList()));

@@ -20,11 +20,11 @@ package stroom.policy;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.DataProperties;
-import stroom.data.meta.shared.DataStatus;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaService;
+import stroom.data.meta.shared.MetaProperties;
+import stroom.data.meta.shared.Status;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
@@ -45,7 +45,7 @@ class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionStreamFinder.class);
     private static final int RETENTION_PERIOD_DAYS = 1;
     @Inject
-    private DataMetaService streamMetaService;
+    private MetaService streamMetaService;
     @Inject
     private DictionaryStore dictionaryStore;
     @Inject
@@ -63,8 +63,8 @@ class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
             LOGGER.info("now: %s", DateUtil.createNormalDateTimeString(now));
             LOGGER.info("timeOutsideRetentionPeriod: %s", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
 
-            final Data streamInsideRetention = streamMetaService.create(
-                    new DataProperties.Builder()
+            final Meta streamInsideRetention = streamMetaService.create(
+                    new MetaProperties.Builder()
                             .feedName(feedName)
                             .typeName(StreamTypeNames.RAW_EVENTS)
                             .createMs(now)
@@ -72,8 +72,8 @@ class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
                             .build());
 
 
-            final Data streamOutsideRetention = streamMetaService.create(
-                    new DataProperties.Builder()
+            final Meta streamOutsideRetention = streamMetaService.create(
+                    new MetaProperties.Builder()
                             .feedName(feedName)
                             .typeName(StreamTypeNames.RAW_EVENTS)
                             .createMs(timeOutsideRetentionPeriod)
@@ -81,8 +81,8 @@ class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
                             .build());
 
             // Streams are locked initially so unlock.
-            streamMetaService.updateStatus(streamInsideRetention, DataStatus.UNLOCKED);
-            streamMetaService.updateStatus(streamOutsideRetention, DataStatus.UNLOCKED);
+            streamMetaService.updateStatus(streamInsideRetention, Status.UNLOCKED);
+            streamMetaService.updateStatus(streamOutsideRetention, Status.UNLOCKED);
 
             dumpStreams();
 
@@ -98,11 +98,11 @@ class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
     }
 
     private void dumpStreams() {
-        final BaseResultList<Data> streams = streamMetaService.find(new FindDataCriteria());
+        final BaseResultList<Meta> streams = streamMetaService.find(new FindMetaCriteria());
 
         assertThat(streams.size()).isEqualTo(2);
 
-        for (final Data stream : streams) {
+        for (final Meta stream : streams) {
             LOGGER.info("stream: %s, createMs: %s, statusMs: %s, status: %s", stream,
                     DateUtil.createNormalDateTimeString(stream.getCreateMs()),
                     DateUtil.createNormalDateTimeString(stream.getStatusMs()), stream.getStatus());

@@ -17,7 +17,7 @@ public final class ExpressionUtil {
     }
 
     public static ExpressionOperator createSimpleExpression() {
-        return createSimpleExpression(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue());
+        return createSimpleExpression(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
     }
 
     public static ExpressionOperator createSimpleExpression(final String field, final Condition condition, final String value) {
@@ -26,7 +26,7 @@ public final class ExpressionUtil {
                 .build();
     }
 
-    public static ExpressionOperator createStatusExpression(final DataStatus status) {
+    public static ExpressionOperator createStatusExpression(final Status status) {
         return new ExpressionOperator.Builder(Op.AND)
                 .addTerm(MetaDataSource.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build();
@@ -35,7 +35,7 @@ public final class ExpressionUtil {
     public static ExpressionOperator createDataIdExpression(final long id) {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(MetaDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(id))
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         return expression;
     }
@@ -43,7 +43,7 @@ public final class ExpressionUtil {
     public static ExpressionOperator createParentIdExpression(final long parentId) {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(MetaDataSource.PARENT_STREAM_ID, Condition.EQUALS, String.valueOf(parentId))
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         return expression;
     }
@@ -51,7 +51,7 @@ public final class ExpressionUtil {
     public static ExpressionOperator createTypeExpression(final String typeName) {
         return new ExpressionOperator.Builder(Op.AND)
                 .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, typeName)
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
@@ -74,7 +74,7 @@ public final class ExpressionUtil {
             }
         }
 
-        builder.addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue());
+        builder.addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
         return builder.build();
     }
 
@@ -82,7 +82,7 @@ public final class ExpressionUtil {
     public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {
         return new ExpressionOperator.Builder(Op.AND)
                 .addDocRefTerm(MetaDataSource.PIPELINE_UUID, Condition.IS_DOC_REF, pipelineRef)
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 

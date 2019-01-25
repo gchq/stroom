@@ -19,10 +19,10 @@ package stroom.data.store.util;
 import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.FindDataCriteria;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.FindMetaCriteria;
+import stroom.data.meta.shared.Meta;
 import stroom.data.meta.shared.MetaDataSource;
-import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.MetaService;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.persist.PersistService;
@@ -129,7 +129,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
             builder.addTerm(MetaDataSource.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
         }
 
-        final DataMetaService streamMetaService = injector.getInstance(DataMetaService.class);
+        final MetaService streamMetaService = injector.getInstance(MetaService.class);
         final StreamStore streamStore = injector.getInstance(StreamStore.class);
 
         if (feed != null) {
@@ -143,12 +143,12 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         }
 
         // Query the stream store
-        final FindDataCriteria criteria = new FindDataCriteria();
+        final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(builder.build());
-        final List<Data> results = streamMetaService.find(criteria);
+        final List<Meta> results = streamMetaService.find(criteria);
 
         int count = 0;
-        for (final Data stream : results) {
+        for (final Meta stream : results) {
             count++;
             LOGGER.info("processing() - " + count + "/" + results.size() + " " + stream);
 

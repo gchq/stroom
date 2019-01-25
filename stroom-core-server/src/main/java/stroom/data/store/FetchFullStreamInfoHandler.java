@@ -16,7 +16,7 @@
 
 package stroom.data.store;
 
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.data.store.api.StreamStore;
 import stroom.security.Security;
 import stroom.streamstore.shared.FetchFullStreamInfoAction;
@@ -52,7 +52,7 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
         return DateUtil.createNormalDateTimeString(ms) + " (" + ms + ")";
     }
 
-    private List<Entry> getStreamEntries(final Data stream) {
+    private List<Entry> getStreamEntries(final Meta stream) {
         final List<Entry> entries = new ArrayList<>();
 
         entries.add(new Entry("Stream Id", String.valueOf(stream.getId())));
@@ -74,7 +74,7 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
         return entries;
     }
 
-    private List<Entry> getDataRententionEntries(final Data stream, final Map<String, String> attributeMap) {
+    private List<Entry> getDataRententionEntries(final Meta stream, final Map<String, String> attributeMap) {
         final List<Entry> entries = new ArrayList<>();
 
         // Add additional data retention information.
@@ -89,7 +89,7 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
 
     @Override
     public FullStreamInfoResult exec(final FetchFullStreamInfoAction action) {
-        final Data stream = action.getStream();
+        final Meta stream = action.getStream();
         final List<Section> sections = new ArrayList<>();
 
         final Map<String, String> attributeMap = streamStore.getStoredMeta(stream);

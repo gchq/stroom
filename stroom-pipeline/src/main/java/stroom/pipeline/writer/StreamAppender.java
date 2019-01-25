@@ -19,8 +19,8 @@ package stroom.pipeline.writer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaProperties;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -94,7 +94,7 @@ public class StreamAppender extends AbstractAppender {
 
     @Override
     protected OutputStream createOutputStream() {
-        final Data parentStream = streamHolder.getStream();
+        final Meta parentStream = streamHolder.getStream();
 
         if (feed == null && parentStream != null && parentStream.getFeedName() != null) {
             feed = parentStream.getFeedName();
@@ -118,7 +118,7 @@ public class StreamAppender extends AbstractAppender {
             streamTaskId = streamProcessorHolder.getStreamTask().getId();
         }
 
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(feed)
                 .typeName(streamType)
                 .parent(parentStream)

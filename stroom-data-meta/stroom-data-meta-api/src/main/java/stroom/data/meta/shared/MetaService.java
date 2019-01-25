@@ -5,7 +5,7 @@ import stroom.entity.shared.BaseResultList;
 import java.util.List;
 import java.util.Set;
 
-public interface DataMetaService {
+public interface MetaService {
     /**
      * Get the current maximum id of any data.
      *
@@ -19,7 +19,7 @@ public interface DataMetaService {
      * @param properties The properties that the newly created data record will have.
      * @return A new locked data record ready to associate written data with.
      */
-    Data create(DataProperties properties);
+    Meta create(MetaProperties properties);
 
     /**
      * Get a data record from the meta service by id.
@@ -27,7 +27,7 @@ public interface DataMetaService {
      * @param id The id of the data record to retrieve.
      * @return An unlocked data record for the supplied id or null if no unlocked data record can be found.
      */
-    Data getData(long id);
+    Meta getData(long id);
 
     /**
      * Get a data record from the meta service by id.
@@ -36,7 +36,7 @@ public interface DataMetaService {
      * @param anyStatus Whether to allow locked or deleted data records to be returned.
      * @return An unlocked data record for the supplied id or null if no unlocked data records can be found unless anyStatus is true.
      */
-    Data getData(long id, boolean anyStatus);
+    Meta getData(long id, boolean anyStatus);
 
     /**
      * Change the status of the specified data record.
@@ -45,7 +45,7 @@ public interface DataMetaService {
      * @param status The new status.
      * @return The updated data record.
      */
-    Data updateStatus(Data data, DataStatus status);
+    Meta updateStatus(Meta data, Status status);
 
     /**
      * Change the status of data records that match the supplied criteria.
@@ -54,7 +54,7 @@ public interface DataMetaService {
      * @param status   The new status.
      * @return The number of data records that are updated.
      */
-    int updateStatus(FindDataCriteria criteria, DataStatus status);
+    int updateStatus(FindMetaCriteria criteria, Status status);
 
     /**
      * Add some additional attributes to a data record.
@@ -62,7 +62,7 @@ public interface DataMetaService {
      * @param data       The data record to add attributes to.
      * @param attributes A map of key/value attributes.
      */
-    void addAttributes(Data data, AttributeMap attributes);
+    void addAttributes(Meta data, AttributeMap attributes);
 
     /**
      * Delete a data record by id. Note that this method will only delete unlocked data records.
@@ -110,7 +110,7 @@ public interface DataMetaService {
      * @param criteria The criteria to find matching data records with.
      * @return A list of matching data records.
      */
-    BaseResultList<Data> find(FindDataCriteria criteria);
+    BaseResultList<Meta> find(FindMetaCriteria criteria);
 
     /**
      * Find data records and attributes that match the specified criteria.
@@ -118,7 +118,7 @@ public interface DataMetaService {
      * @param criteria The criteria to find matching data records with.
      * @return A list of matching data records that includes attributes.
      */
-    BaseResultList<DataRow> findRows(FindDataCriteria criteria);
+    BaseResultList<MetaRow> findRows(FindMetaCriteria criteria);
 
     /**
      * Find data records and attributes that are related to the supplied record id.
@@ -126,7 +126,7 @@ public interface DataMetaService {
      * @param id The id of the data record to find related data for.
      * @return A list of matching data records that includes attributes.
      */
-    List<DataRow> findRelatedData(long id, boolean anyStatus);
+    List<MetaRow> findRelatedData(long id, boolean anyStatus);
 
     /**
      * Return back a aet of data records that are effective for a period in
@@ -135,5 +135,5 @@ public interface DataMetaService {
      * @param criteria the search criteria
      * @return the list of matches
      */
-    Set<Data> findEffectiveData(EffectiveMetaDataCriteria criteria);
+    Set<Meta> findEffectiveData(EffectiveMetaDataCriteria criteria);
 }

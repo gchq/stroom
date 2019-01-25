@@ -17,7 +17,7 @@
 package stroom.data.store.api;
 
 import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -39,7 +39,7 @@ public interface StreamSource extends Closeable {
     /**
      * @return the stream associated with this source
      */
-    Data getStream();
+    Meta getStream();
 
     /**
      * @return the real IO input stream

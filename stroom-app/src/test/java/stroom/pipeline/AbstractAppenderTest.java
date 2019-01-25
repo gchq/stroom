@@ -17,9 +17,9 @@
 package stroom.pipeline;
 
 
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaService;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
@@ -87,7 +87,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private DataMetaService dataMetaService;
+    private MetaService dataMetaService;
 
     private LoggingErrorReceiver loggingErrorReceiver;
 
@@ -215,7 +215,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     void validateOuptut(final String outputReference,
                         final String type) {
         try {
-            final List<Data> list = dataMetaService.find(new FindDataCriteria());
+            final List<Meta> list = dataMetaService.find(new FindMetaCriteria());
             assertThat(list.size()).isEqualTo(1);
 
             final long id = list.get(0).getId();

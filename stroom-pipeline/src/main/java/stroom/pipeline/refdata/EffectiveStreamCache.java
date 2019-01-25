@@ -26,8 +26,8 @@ import stroom.entity.shared.Period;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.Security;
 import stroom.data.meta.shared.EffectiveMetaDataCriteria;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaService;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
 
@@ -46,13 +46,13 @@ public class EffectiveStreamCache implements Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final LoadingCache<EffectiveStreamKey, NavigableSet> cache;
-    private final DataMetaService streamMetaService;
+    private final MetaService streamMetaService;
     private final EffectiveStreamInternPool internPool;
     private final Security security;
 
     @Inject
     EffectiveStreamCache(final CacheManager cacheManager,
-                         final DataMetaService streamMetaService,
+                         final MetaService streamMetaService,
                          final EffectiveStreamInternPool internPool,
                          final Security security) {
         this(cacheManager, streamMetaService, internPool, security, 10, TimeUnit.MINUTES);
@@ -60,7 +60,7 @@ public class EffectiveStreamCache implements Clearable {
 
     @SuppressWarnings("unchecked")
     EffectiveStreamCache(final CacheManager cacheManager,
-                         final DataMetaService streamMetaService,
+                         final MetaService streamMetaService,
                          final EffectiveStreamInternPool internPool,
                          final Security security,
                          final long duration,
@@ -108,12 +108,12 @@ public class EffectiveStreamCache implements Clearable {
                 criteria.setEffectivePeriod(window);
 
                 // Locate all streams that fit the supplied criteria.
-                final Set<Data> streams = streamMetaService.findEffectiveData(criteria);
+                final Set<Meta> streams = streamMetaService.findEffectiveData(criteria);
 
                 // Add all streams that we have found to the effective stream set.
                 if (streams != null && streams.size() > 0) {
                     effectiveStreamSet = new TreeSet<>();
-                    for (final Data stream : streams) {
+                    for (final Meta stream : streams) {
                         EffectiveStream effectiveStream;
 
                         if (stream.getEffectiveMs() != null) {

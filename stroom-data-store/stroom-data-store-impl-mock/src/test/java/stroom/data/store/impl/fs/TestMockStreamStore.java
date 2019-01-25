@@ -17,9 +17,9 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataProperties;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaProperties;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamSource;
@@ -46,13 +46,13 @@ class TestMockStreamStore {
 
         mockStreamStore.clear();
 
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName("TEST")
                 .typeName(StreamTypeNames.EVENTS)
                 .build();
 
         final StreamTarget streamTarget = mockStreamStore.openStreamTarget(streamProperties);
-        final Data stream = streamTarget.getStream();
+        final Meta stream = streamTarget.getStream();
 
         try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
             try (final OutputStream outputStream = outputStreamProvider.next()) {
@@ -63,13 +63,13 @@ class TestMockStreamStore {
             }
         }
 
-        assertThat(mockStreamMetaService.find(FindDataCriteria.createWithData(stream)).size()).isEqualTo(0);
+        assertThat(mockStreamMetaService.find(FindMetaCriteria.createWithData(stream)).size()).isEqualTo(0);
 
         mockStreamStore.closeStreamTarget(streamTarget);
 
-        assertThat(mockStreamMetaService.find(FindDataCriteria.createWithData(stream)).size()).isEqualTo(1);
+        assertThat(mockStreamMetaService.find(FindMetaCriteria.createWithData(stream)).size()).isEqualTo(1);
 
-        final Data reload = mockStreamMetaService.find(FindDataCriteria.createWithData(stream)).get(0);
+        final Meta reload = mockStreamMetaService.find(FindMetaCriteria.createWithData(stream)).get(0);
 
         final StreamSource streamSource = mockStreamStore.openStreamSource(reload.getId());
 

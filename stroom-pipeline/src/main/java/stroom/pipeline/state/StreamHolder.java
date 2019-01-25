@@ -16,7 +16,7 @@
 
 package stroom.pipeline.state;
 
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.pipeline.scope.PipelineScoped;
@@ -32,7 +32,7 @@ public class StreamHolder implements Holder {
 
     private final StreamCloser streamCloser;
 
-    private Data stream;
+    private Meta stream;
     private long streamNo;
 
     @Inject
@@ -40,11 +40,11 @@ public class StreamHolder implements Holder {
         this.streamCloser = streamCloser;
     }
 
-    public Data getStream() {
+    public Meta getStream() {
         return stream;
     }
 
-    public void setStream(final Data stream) {
+    public void setStream(final Meta stream) {
         this.stream = stream;
     }
 

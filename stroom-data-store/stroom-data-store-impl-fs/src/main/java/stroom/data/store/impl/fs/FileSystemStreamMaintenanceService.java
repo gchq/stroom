@@ -19,9 +19,9 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaService;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.data.store.ScanVolumePathResult;
 import stroom.data.store.StreamMaintenanceService;
@@ -64,7 +64,7 @@ class FileSystemStreamMaintenanceService
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
     private final DataVolumeService streamVolumeService;
-    private final DataMetaService streamMetaService;
+    private final MetaService streamMetaService;
     private final Security security;
 
     private final FileSystemFeedPaths fileSystemFeedPaths;
@@ -75,7 +75,7 @@ class FileSystemStreamMaintenanceService
                                               final FileSystemFeedPaths fileSystemFeedPaths,
                                               final FileSystemTypePaths fileSystemTypePaths,
                                               final DataVolumeService streamVolumeService,
-                                              final DataMetaService streamMetaService,
+                                              final MetaService streamMetaService,
                                               final Security security) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.fileSystemFeedPaths = fileSystemFeedPaths;
@@ -85,7 +85,7 @@ class FileSystemStreamMaintenanceService
         this.security = security;
     }
 
-    List<Path> findAllStreamFile(final Data stream) {
+    List<Path> findAllStreamFile(final Meta stream) {
         final Set<DataVolume> streamVolumes = streamVolumeService.findStreamVolume(stream.getId());
         final List<Path> results = new ArrayList<>();
         for (final DataVolume streamVolume : streamVolumes) {
@@ -170,7 +170,7 @@ class FileSystemStreamMaintenanceService
                                              final Map<String, DataVolume> streamsKeyedByBaseName) {
         try {
             // We need to find streams that match the repo path.
-            final BaseResultList<Data> matchingStreams = findMatchingStreams(repoPath);
+            final BaseResultList<Meta> matchingStreams = findMatchingStreams(repoPath);
 
             // If we haven't found any streams then give up.
             if (matchingStreams.size() > 0) {
@@ -178,7 +178,7 @@ class FileSystemStreamMaintenanceService
                 // Now see what is there as per the database.
                 final FindDataVolumeCriteria criteria = new FindDataVolumeCriteria();
 
-                final Map<Long, Data> streamMap = new HashMap<>();
+                final Map<Long, Meta> streamMap = new HashMap<>();
                 final CriteriaSet<Long> streamIdSet = criteria.obtainStreamIdSet();
                 matchingStreams.forEach(stream -> {
                     final long id = stream.getId();
@@ -190,7 +190,7 @@ class FileSystemStreamMaintenanceService
                 final List<DataVolume> matches = streamVolumeService.find(criteria);
 
                 for (final DataVolume streamVolume : matches) {
-                    final Data stream = streamMap.get(streamVolume.getStreamId());
+                    final Meta stream = streamMap.get(streamVolume.getStreamId());
                     if (stream != null) {
                         streamsKeyedByBaseName.put(fileSystemStreamPathHelper.getBaseName(stream), streamVolume);
                     }
@@ -207,11 +207,11 @@ class FileSystemStreamMaintenanceService
      * @param repoPath The repository path to find relevant streams for.
      * @return A list of streams that are relevant to the supplied repository path.
      */
-    private BaseResultList<Data> findMatchingStreams(final String repoPath) {
+    private BaseResultList<Meta> findMatchingStreams(final String repoPath) {
         try {
             // We need to find streams that match the repo path.
             final ExpressionOperator expression = pathToStreamExpression(repoPath);
-            final FindDataCriteria criteria = new FindDataCriteria(expression);
+            final FindMetaCriteria criteria = new FindMetaCriteria(expression);
             criteria.setPageRequest(new PageRequest(0L, 1000));
             return streamMetaService.find(criteria);
         } catch (final RuntimeException e) {

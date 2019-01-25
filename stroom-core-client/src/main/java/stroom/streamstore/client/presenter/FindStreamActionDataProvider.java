@@ -23,44 +23,44 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.Sort.Direction;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.streamstore.shared.FindStreamAction;
-import stroom.data.meta.shared.DataRow;
+import stroom.data.meta.shared.MetaRow;
 
 public class FindStreamActionDataProvider implements Refreshable, ColumnSortEvent.Handler {
     private final ClientDispatchAsync dispatcher;
-    private final DataGridView<DataRow> view;
+    private final DataGridView<MetaRow> view;
     private FindStreamAction findAction;
-    private ActionDataProvider<DataRow> dataProvider;
+    private ActionDataProvider<MetaRow> dataProvider;
     private Boolean allowNoConstraint = null;
 
-    public FindStreamActionDataProvider(final ClientDispatchAsync dispatcher, final DataGridView<DataRow> view) {
+    public FindStreamActionDataProvider(final ClientDispatchAsync dispatcher, final DataGridView<MetaRow> view) {
         this.dispatcher = dispatcher;
         this.view = view;
         view.addColumnSortHandler(this);
     }
 
-    public FindDataCriteria getCriteria() {
+    public FindMetaCriteria getCriteria() {
         if (findAction != null) {
             return findAction.getCriteria();
         }
         return null;
     }
 
-    public void setCriteria(final FindDataCriteria criteria) {
+    public void setCriteria(final FindMetaCriteria criteria) {
         if (findAction == null) {
             findAction = new FindStreamAction(criteria);
         } else {
             findAction.setCriteria(criteria);
         }
         if (dataProvider == null) {
-            this.dataProvider = new ActionDataProvider<DataRow>(dispatcher, findAction) {
+            this.dataProvider = new ActionDataProvider<MetaRow>(dispatcher, findAction) {
                 // We override the default set data functionality to allow the
                 // examination and modification of data prior to setting it in
                 // the display.
                 @Override
-                protected void changeData(final ResultList<DataRow> data) {
-                    final ResultList<DataRow> processedData = processData(data);
+                protected void changeData(final ResultList<MetaRow> data) {
+                    final ResultList<MetaRow> processedData = processData(data);
                     super.changeData(processedData);
                 }
             };
@@ -83,7 +83,7 @@ public class FindStreamActionDataProvider implements Refreshable, ColumnSortEven
      * We override the default set data functionality to allow the examination
      * and modification of data prior to setting it in the display.
      */
-    protected ResultList<DataRow> processData(final ResultList<DataRow> data) {
+    protected ResultList<MetaRow> processData(final ResultList<MetaRow> data) {
         return data;
     }
 
@@ -109,7 +109,7 @@ public class FindStreamActionDataProvider implements Refreshable, ColumnSortEven
         }
     }
 
-    public ActionDataProvider<DataRow> getDataProvider() {
+    public ActionDataProvider<MetaRow> getDataProvider() {
         return dataProvider;
     }
 

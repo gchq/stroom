@@ -22,8 +22,8 @@ import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataRow;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaRow;
 import stroom.data.meta.impl.db.stroom.tables.records.MetaValRecord;
 import stroom.util.logging.LogExecutionTime;
 
@@ -65,7 +65,7 @@ class MetaValueServiceImpl implements MetaValueService {
     }
 
     @Override
-    public void addAttributes(final Data data, final AttributeMap attributes) {
+    public void addAttributes(final Meta data, final AttributeMap attributes) {
         attributes.forEach((k, v) -> {
             try {
                 final Long longValue = Long.valueOf(v);
@@ -307,12 +307,12 @@ class MetaValueServiceImpl implements MetaValueService {
      * Convert a basic data list to a list of meta data using data attribute keys and values.
      */
     @Override
-    public List<DataRow> decorateDataWithAttributes(final List<Data> list) {
-        final Map<Long, DataRow> rowMap = new HashMap<>();
+    public List<MetaRow> decorateDataWithAttributes(final List<Meta> list) {
+        final Map<Long, MetaRow> rowMap = new HashMap<>();
 
         // Get a list of valid data ids.
         final List<Long> idList = list.parallelStream()
-                .map(Data::getId)
+                .map(Meta::getId)
                 .collect(Collectors.toList());
 
         try (final Connection connection = connectionProvider.getConnection()) {
@@ -332,7 +332,7 @@ class MetaValueServiceImpl implements MetaValueService {
                         if (optional.isPresent()) {
                             final long dataId = r.component1();
                             final String value = String.valueOf(r.component3());
-                            rowMap.computeIfAbsent(dataId, k -> new DataRow()).addAttribute(optional.get(), value);
+                            rowMap.computeIfAbsent(dataId, k -> new MetaRow()).addAttribute(optional.get(), value);
                         }
                     });
 
@@ -341,13 +341,13 @@ class MetaValueServiceImpl implements MetaValueService {
             throw new RuntimeException(e.getMessage(), e);
         }
 
-        final List<DataRow> dataRows = new ArrayList<>();
-        for (final Data data : list) {
-            DataRow dataRow = rowMap.get(data.getId());
+        final List<MetaRow> dataRows = new ArrayList<>();
+        for (final Meta data : list) {
+            MetaRow dataRow = rowMap.get(data.getId());
             if (dataRow != null) {
                 dataRow.setData(data);
             } else {
-                dataRow = new DataRow(data);
+                dataRow = new MetaRow(data);
             }
             dataRows.add(dataRow);
         }

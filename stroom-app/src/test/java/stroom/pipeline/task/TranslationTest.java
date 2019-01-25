@@ -21,10 +21,10 @@ package stroom.pipeline.task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.DataProperties;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaService;
+import stroom.data.meta.shared.MetaProperties;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
@@ -112,7 +112,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private DataMetaService streamMetaService;
+    private MetaService streamMetaService;
     @Inject
     private FeedDocCache feedDocCache;
     @Inject
@@ -232,10 +232,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             final long endStreamId = getLatestStreamId();
 
             if (compareOutput) {
-                final List<Data> processedStreams = new ArrayList<>();
+                final List<Meta> processedStreams = new ArrayList<>();
 
                 for (long streamId = startStreamId + 1; streamId <= endStreamId; streamId++) {
-                    final Data stream = streamMetaService.getData(streamId);
+                    final Meta stream = streamMetaService.getData(streamId);
                     final String streamTypeName = stream.getTypeName();
                     if (!StreamTypeNames.ERROR.equals(streamTypeName)) {
                         processedStreams.add(stream);
@@ -243,7 +243,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         try (StreamSource errorStreamSource = streamStore.openStreamSource(streamId)) {
                             //got an error stream so dump it to console
 
-                            Data parentStream = streamMetaService.getData(stream.getParentDataId());
+                            Meta parentStream = streamMetaService.getData(stream.getParentDataId());
 
                             String errorStreamStr = StreamUtil.streamToString(errorStreamSource.getInputStream());
                             java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(errorStreamSource.getInputStream());
@@ -270,7 +270,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
                 // Copy the contents of the latest written stream to the output.
                 int i = 1;
-                for (final Data processedStream : processedStreams) {
+                for (final Meta processedStream : processedStreams) {
                     String num = "";
                     // If we are going to output more than one file then number
                     // them.
@@ -318,7 +318,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             }
 
             // Create the stream.
-            final DataProperties streamProperties = new DataProperties.Builder()
+            final MetaProperties streamProperties = new MetaProperties.Builder()
                     .feedName(feed.getName())
                     .typeName(streamTypeName)
                     .createMs(millis)
@@ -394,7 +394,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         .build())
                 .build();
 
-        final FindDataCriteria streamCriteria = new FindDataCriteria();
+        final FindMetaCriteria streamCriteria = new FindMetaCriteria();
         streamCriteria.setExpression(expression);
         streamCriteria.obtainSelectedIdSet().setMatchAll(Boolean.TRUE);
 
@@ -546,16 +546,16 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private long getLatestStreamId() {
-        final BaseResultList<Data> list = streamMetaService.find(new FindDataCriteria());
+        final BaseResultList<Meta> list = streamMetaService.find(new FindMetaCriteria());
         if (list == null || list.size() == 0) {
             return 0;
         }
-        list.sort(Comparator.comparing(Data::getId));
-        final Data latest = list.get(list.size() - 1);
+        list.sort(Comparator.comparing(Meta::getId));
+        final Meta latest = list.get(list.size() - 1);
         return latest.getId();
     }
 
-    private void copyStream(final Data stream, final OutputStream outputStream) throws IOException {
+    private void copyStream(final Meta stream, final OutputStream outputStream) throws IOException {
         final StreamSource streamSource = streamStore.openStreamSource(stream.getId());
         StreamUtil.streamToStream(streamSource.getInputStream(), outputStream);
         streamStore.closeStreamSource(streamSource);

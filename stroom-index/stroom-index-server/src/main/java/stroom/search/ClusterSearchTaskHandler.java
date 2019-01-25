@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
-import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.MetaService;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.index.IndexStore;
@@ -91,7 +91,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private final IndexShardSearchConfig indexShardSearchConfig;
     private final ExtractionTaskExecutor extractionTaskExecutor;
     private final ExtractionConfig extractionConfig;
-    private final DataMetaService streamMetaService;
+    private final MetaService streamMetaService;
     private final Security security;
     private final int maxBooleanClauseCount;
     private final int maxStoredDataQueueSize;
@@ -114,7 +114,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                              final IndexShardSearchConfig indexShardSearchConfig,
                              final ExtractionTaskExecutor extractionTaskExecutor,
                              final ExtractionConfig extractionConfig,
-                             final DataMetaService streamMetaService,
+                             final MetaService streamMetaService,
                              final Security security,
                              final SearchConfig searchConfig,
                              final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,

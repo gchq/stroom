@@ -18,7 +18,7 @@ package stroom.pipeline.task;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.dataprocess.PipelineStreamProcessor;
@@ -89,9 +89,9 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
         final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
-        for (final Entry<Long, Data> entry : streamMetaService.getDataMap().entrySet()) {
+        for (final Entry<Long, Meta> entry : streamMetaService.getDataMap().entrySet()) {
             final long streamId = entry.getKey();
-            final Data stream = entry.getValue();
+            final Meta stream = entry.getValue();
             if (StreamTypeNames.EVENTS.equals(stream.getTypeName())) {
                 final byte[] data = streamStore.getFileData().get(streamId).get(stream.getTypeName());
 

@@ -18,7 +18,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 
 public class FindDataVolumeCriteria extends BaseCriteria {
     private static final long serialVersionUID = 3528656425356870590L;
@@ -30,7 +30,7 @@ public class FindDataVolumeCriteria extends BaseCriteria {
     private CriteriaSet<Long> volumeIdSet = null;
     private CriteriaSet<Long> streamIdSet = null;
 
-    public static FindDataVolumeCriteria create(final Data stream) {
+    public static FindDataVolumeCriteria create(final Meta stream) {
         FindDataVolumeCriteria rtn = new FindDataVolumeCriteria();
         rtn.obtainStreamIdSet().add(stream.getId());
         return rtn;

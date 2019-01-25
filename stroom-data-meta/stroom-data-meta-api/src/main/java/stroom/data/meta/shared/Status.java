@@ -24,7 +24,7 @@ import stroom.docref.HasDisplayValue;
  * and unlocked.
  * </p>
  */
-public enum DataStatus implements HasDisplayValue {
+public enum Status implements HasDisplayValue {
     UNLOCKED("Unlocked"), /**
      * Open exclusive lock.
      */
@@ -35,7 +35,7 @@ public enum DataStatus implements HasDisplayValue {
 
     private final String displayValue;
 
-    DataStatus(final String displayValue) {
+    Status(final String displayValue) {
         this.displayValue = displayValue;
     }
 

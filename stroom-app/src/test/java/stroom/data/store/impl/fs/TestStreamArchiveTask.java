@@ -20,7 +20,7 @@ package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.MetaProperties;
 import stroom.data.store.DataRetentionExecutor;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -113,12 +113,12 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
         feedDoc.setRetentionDayAge(FIFTY_FIVE);
         feedStore.writeDocument(feedDoc);
 
-        final DataProperties oldFile = new DataProperties.Builder()
+        final MetaProperties oldFile = new MetaProperties.Builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .createMs(oldDate.toInstant().toEpochMilli())
                 .build();
-        final DataProperties newFile = new DataProperties.Builder()
+        final MetaProperties newFile = new MetaProperties.Builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .createMs(newDate.toInstant().toEpochMilli())

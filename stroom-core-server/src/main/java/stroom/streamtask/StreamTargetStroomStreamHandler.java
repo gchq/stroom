@@ -20,8 +20,8 @@ package stroom.streamtask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaProperties;
 import stroom.data.store.StreamFactory;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamStore;
@@ -73,7 +73,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private final StreamStore streamStore;
     private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistics;
-    private final HashSet<Data> streamSet;
+    private final HashSet<Meta> streamSet;
     private final StroomZipNameSet stroomZipNameSet;
     //    private final Map<String, OutputStreamProvider> outputStreamProviderMap = new HashMap<>();
     private final Map<String, OutputStreamSet> outputStreamMap = new HashMap<>();
@@ -275,7 +275,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         streamStore.closeStreamTarget(feedStreamTarget.remove(currentFeedName));
     }
 
-    public Set<Data> getStreamSet() {
+    public Set<Meta> getStreamSet() {
         return Collections.unmodifiableSet(streamSet);
     }
 
@@ -315,7 +315,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
                 currentStreamTypeName = getStreamTypeName(currentFeedName);
             }
 
-            final DataProperties streamProperties = new DataProperties.Builder()
+            final MetaProperties streamProperties = new MetaProperties.Builder()
                     .feedName(currentFeedName)
                     .typeName(currentStreamTypeName)
                     .effectiveMs(effectiveMs)

@@ -19,8 +19,8 @@ package stroom.streamtask;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaService;
 import stroom.entity.shared.Period;
 import stroom.node.shared.Node;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -45,16 +45,16 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
     @Inject
     private StreamTaskService streamTaskService;
     @Inject
-    private DataMetaService streamMetaService;
+    private MetaService streamMetaService;
     @Inject
     private StreamTaskCreator streamTaskCreator;
 
     @Test
     void testSaveAndGetAll() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final Data file1 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
-        final Data file2 = commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, file1);
-        final Data file3 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        final Meta file1 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        final Meta file2 = commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, file1);
+        final Meta file3 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
 
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName);
 

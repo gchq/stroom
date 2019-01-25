@@ -20,14 +20,14 @@ package stroom.data.store.impl.fs;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.DataProperties;
-import stroom.data.meta.shared.DataRow;
-import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaService;
+import stroom.data.meta.shared.MetaProperties;
+import stroom.data.meta.shared.MetaRow;
+import stroom.data.meta.shared.Status;
 import stroom.data.meta.shared.EffectiveMetaDataCriteria;
 import stroom.data.meta.shared.ExpressionUtil;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.data.meta.impl.db.MetaValueConfig;
 import stroom.data.store.StreamMaintenanceService;
@@ -78,7 +78,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private DataMetaService streamMetaService;
+    private MetaService streamMetaService;
     @Inject
     private DataVolumeService streamVolumeService;
     @Inject
@@ -108,9 +108,9 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .addTerm(MetaDataSource.PARENT_STREAM_ID, Condition.EQUALS, "1")
                 .addTerm(MetaDataSource.STREAM_ID, Condition.EQUALS, "1")
                 .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
-        testCriteria(new FindDataCriteria(expression), 0);
+        testCriteria(new FindMetaCriteria(expression), 0);
     }
 
     private String createYearPeriod(final int year) {
@@ -130,9 +130,9 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                         .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, FEED1)
                         .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, FEED2)
                         .build())
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
-        testCriteria(new FindDataCriteria(expression), 2);
+        testCriteria(new FindMetaCriteria(expression), 2);
     }
 
     @Test
@@ -142,9 +142,9 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                         .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, FEED1)
                         .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, FEED2)
                         .build())
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
-        final FindDataCriteria findStreamCriteria = new FindDataCriteria(expression);
+        final FindMetaCriteria findStreamCriteria = new FindMetaCriteria(expression);
         findStreamCriteria.setPageRequest(new PageRequest(0L, 1));
         testCriteria(findStreamCriteria, 1);
     }
@@ -156,37 +156,37 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .addOperator(new ExpressionOperator.Builder(Op.NOT)
                         .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, FEED1)
                         .build())
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
-        testCriteria(new FindDataCriteria(expression), 0);
+        testCriteria(new FindMetaCriteria(expression), 0);
     }
 
     @Test
     void testFeedFindOne() throws IOException {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, FEED2)
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
-        testCriteria(new FindDataCriteria(expression), 1);
+        testCriteria(new FindMetaCriteria(expression), 1);
     }
 
-    private void testCriteria(final FindDataCriteria criteria, final int expectedStreams) throws IOException {
-        streamMetaService.updateStatus(new FindDataCriteria(), DataStatus.DELETED);
+    private void testCriteria(final FindMetaCriteria criteria, final int expectedStreams) throws IOException {
+        streamMetaService.updateStatus(new FindMetaCriteria(), Status.DELETED);
 
         createStream(FEED1, 1L, null);
         createStream(FEED2, 1L, null);
 //        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-        final BaseResultList<Data> streams = streamMetaService.find(criteria);
+        final BaseResultList<Meta> streams = streamMetaService.find(criteria);
         assertThat(streams.size()).isEqualTo(expectedStreams);
 
-        streamMetaService.updateStatus(new FindDataCriteria(), DataStatus.DELETED);
+        streamMetaService.updateStatus(new FindMetaCriteria(), Status.DELETED);
     }
 
     @Test
     void testParentChild() {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -194,7 +194,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         StreamTargetUtil.write(streamTarget, testString);
         streamStore.closeStreamTarget(streamTarget);
 
-        final DataProperties childProperties = new DataProperties.Builder()
+        final MetaProperties childProperties = new MetaProperties.Builder()
                 .feedName(streamTarget.getStream().getFeedName())
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .parent(streamTarget.getStream())
@@ -203,7 +203,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         StreamTargetUtil.write(childTarget, testString);
         streamStore.closeStreamTarget(childTarget);
 
-        final DataProperties grandChildProperties = new DataProperties.Builder()
+        final MetaProperties grandChildProperties = new MetaProperties.Builder()
                 .feedName(childTarget.getStream().getFeedName())
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .parent(childTarget.getStream())
@@ -212,7 +212,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         StreamTargetUtil.write(grandChildTarget, testString);
         streamStore.closeStreamTarget(grandChildTarget);
 
-        List<DataRow> relationList = streamMetaService.findRelatedData(childTarget.getStream().getId(), true);
+        List<MetaRow> relationList = streamMetaService.findRelatedData(childTarget.getStream().getId(), true);
 
         assertThat(relationList.size()).isEqualTo(3);
         assertThat(relationList.get(0).getData()).isEqualTo(streamTarget.getStream());
@@ -229,39 +229,39 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testFindDeleteAndUndelete() {
-        final Data stream = createStream(FEED1, 1L, null);
+        final Meta stream = createStream(FEED1, 1L, null);
 
-        FindDataCriteria findStreamCriteria = new FindDataCriteria();
+        FindMetaCriteria findStreamCriteria = new FindMetaCriteria();
         findStreamCriteria.obtainSelectedIdSet().add(stream.getId());
-        final long deleted = streamMetaService.updateStatus(findStreamCriteria, DataStatus.DELETED);
+        final long deleted = streamMetaService.updateStatus(findStreamCriteria, Status.DELETED);
 
         assertThat(deleted).isEqualTo(1L);
 
-        findStreamCriteria = new FindDataCriteria();
+        findStreamCriteria = new FindMetaCriteria();
         findStreamCriteria.obtainSelectedIdSet().add(stream.getId());
         assertThat(streamMetaService.find(findStreamCriteria).size()).isEqualTo(1L);
 
-        findStreamCriteria.setExpression(ExpressionUtil.createStatusExpression(DataStatus.UNLOCKED));
+        findStreamCriteria.setExpression(ExpressionUtil.createStatusExpression(Status.UNLOCKED));
         assertThat(streamMetaService.find(findStreamCriteria).size()).isEqualTo(0L);
 
-        findStreamCriteria.setExpression(ExpressionUtil.createStatusExpression(DataStatus.DELETED));
+        findStreamCriteria.setExpression(ExpressionUtil.createStatusExpression(Status.DELETED));
         assertThat(streamMetaService.find(findStreamCriteria).size()).isEqualTo(1L);
 
-        findStreamCriteria.setExpression(ExpressionUtil.createStatusExpression(DataStatus.UNLOCKED));
+        findStreamCriteria.setExpression(ExpressionUtil.createStatusExpression(Status.UNLOCKED));
         assertThat(streamMetaService.find(findStreamCriteria).size()).isEqualTo(0L);
 
         // This will undelete
-        findStreamCriteria.setExpression(ExpressionUtil.createStatusExpression(DataStatus.DELETED));
-        assertThat(streamMetaService.updateStatus(findStreamCriteria, DataStatus.UNLOCKED)).isEqualTo(1L);
+        findStreamCriteria.setExpression(ExpressionUtil.createStatusExpression(Status.DELETED));
+        assertThat(streamMetaService.updateStatus(findStreamCriteria, Status.UNLOCKED)).isEqualTo(1L);
 
-        findStreamCriteria.setExpression(ExpressionUtil.createStatusExpression(DataStatus.UNLOCKED));
+        findStreamCriteria.setExpression(ExpressionUtil.createStatusExpression(Status.UNLOCKED));
         assertThat(streamMetaService.find(findStreamCriteria).size()).isEqualTo(1L);
     }
 
-    private Data createStream(final String feedName, final Long streamTaskId, final Long parentStreamId) {
+    private Meta createStream(final String feedName, final Long streamTaskId, final Long parentStreamId) {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .processorTaskId(streamTaskId)
@@ -286,9 +286,9 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 //                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, "1")
                 .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
-        final FindDataCriteria findStreamCriteria = new FindDataCriteria(expression);
+        final FindMetaCriteria findStreamCriteria = new FindMetaCriteria(expression);
         findStreamCriteria.setPageRequest(new PageRequest(0L, 100));
         findStreamCriteria.setSort(MetaDataSource.CREATE_TIME);
 //        findStreamCriteria.setStreamIdRange(new IdRange(0L, 1L));
@@ -300,14 +300,14 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     void testBasicImportExportList() {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
         streamTarget.getStream().getFeedName();
-        Data exactMetaData = streamTarget.getStream();
+        Meta exactMetaData = streamTarget.getStream();
         StreamTargetUtil.write(streamTarget, testString);
         streamStore.closeStreamTarget(streamTarget);
 
@@ -315,7 +315,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final StreamSource streamSource = streamStore.openStreamSource(exactMetaData.getId());
         exactMetaData = streamSource.getStream();
 
-        assertThat(exactMetaData.getStatus()).isSameAs(DataStatus.UNLOCKED);
+        assertThat(exactMetaData.getStatus()).isSameAs(Status.UNLOCKED);
 
         // Check we can read it back in
 
@@ -326,10 +326,10 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         // Finished
         streamStore.closeStreamSource(streamSource);
 
-        final List<Data> list = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
+        final List<Meta> list = streamMetaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
 
         boolean foundOne = false;
-        for (final Data result : list) {
+        for (final Meta result : list) {
             assertThat(fileSystemStreamPathHelper.getDirectory(result, StreamTypeNames.RAW_EVENTS)).isNotNull();
             assertThat(fileSystemStreamPathHelper.getBaseName(result)).isNotNull();
             if (fileSystemStreamPathHelper.getBaseName(result)
@@ -340,12 +340,12 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         assertThat(foundOne).as("Expecting to find at least that one file " + streamTarget.getStream()).isTrue();
 
-        assertThat(streamMetaService.find(new FindDataCriteria()).size() >= 1).as("Expecting to find at least 1 with no criteria").isTrue();
+        assertThat(streamMetaService.find(new FindMetaCriteria()).size() >= 1).as("Expecting to find at least 1 with no criteria").isTrue();
 
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
-        assertThat(streamMetaService.find(new FindDataCriteria(expression)).size() >= 1).as("Expecting to find at least 1 with UNLOCKED criteria").isTrue();
+        assertThat(streamMetaService.find(new FindMetaCriteria(expression)).size() >= 1).as("Expecting to find at least 1 with UNLOCKED criteria").isTrue();
 
         final FindDataVolumeCriteria volumeCriteria = new FindDataVolumeCriteria();
 //        volumeCriteria.obtainStreamStatusSet().add(StreamStatus.UNLOCKED);
@@ -356,13 +356,13 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private void doTestDeleteSource(final DeleteTestStyle style) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        final Data stream = streamTarget.getStream();
+        final Meta stream = streamTarget.getStream();
         StreamTargetUtil.write(streamTarget, testString);
         streamStore.closeStreamTarget(streamTarget);
 
@@ -387,19 +387,19 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         }
 
         streamSource = streamStore.openStreamSource(stream.getId(), true);
-        assertThat(streamSource.getStream().getStatus()).isEqualTo(DataStatus.DELETED);
+        assertThat(streamSource.getStream().getStatus()).isEqualTo(Status.DELETED);
     }
 
     private void doTestDeleteTarget(final DeleteTestStyle style) {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        final Data stream = streamTarget.getStream();
+        final Meta stream = streamTarget.getStream();
 
         if (DeleteTestStyle.META.equals(style)) {
             // Finished
@@ -421,7 +421,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         }
 
         final StreamSource streamSource = streamStore.openStreamSource(stream.getId(), true);
-        assertThat(streamSource.getStream().getStatus()).isEqualTo(DataStatus.DELETED);
+        assertThat(streamSource.getStream().getStatus()).isEqualTo(Status.DELETED);
     }
 
     @Test
@@ -476,19 +476,19 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     void testFileSystem() throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        final Data exactMetaData = streamTarget.getStream();
+        final Meta exactMetaData = streamTarget.getStream();
         StreamTargetUtil.write(streamTarget, testString);
         streamTarget.getAttributes().put(MetaDataSource.REC_READ, "10");
         streamTarget.getAttributes().put(MetaDataSource.REC_WRITE, "20");
         streamStore.closeStreamTarget(streamTarget);
 
-        final Data reloadMetaData = streamMetaService.find(FindDataCriteria.createWithData(exactMetaData)).get(0);
+        final Meta reloadMetaData = streamMetaService.find(FindMetaCriteria.createWithData(exactMetaData)).get(0);
 
         final StreamSource streamSource = streamStore.openStreamSource(reloadMetaData.getId());
 
@@ -497,11 +497,11 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         is.close();
         streamStore.closeStreamSource(streamSource);
 
-        final FindDataCriteria criteria = new FindDataCriteria();
+        final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(reloadMetaData.getId());
 
 //        streamAttributeValueFlush.flush();
-        final DataRow streamMD = streamMetaService.findRows(criteria).getFirst();
+        final MetaRow streamMD = streamMetaService.findRows(criteria).getFirst();
 
         assertThat(streamMD.getAttributeValue(MetaDataSource.REC_READ)).isEqualTo("10");
         assertThat(streamMD.getAttributeValue(MetaDataSource.REC_WRITE)).isEqualTo("20");
@@ -509,16 +509,16 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testWriteNothing() throws IOException {
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        final Data exactMetaData = streamTarget.getStream();
+        final Meta exactMetaData = streamTarget.getStream();
         streamStore.closeStreamTarget(streamTarget);
 
-        final Data reloadMetaData = streamMetaService.find(FindDataCriteria.createWithData(exactMetaData)).get(0);
+        final Meta reloadMetaData = streamMetaService.find(FindMetaCriteria.createWithData(exactMetaData)).get(0);
 
         final StreamSource streamSource = streamStore.openStreamSource(reloadMetaData.getId());
         final InputStream is = streamSource.getInputStream();
@@ -534,9 +534,9 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final String feed3 = FileSystemTestUtil.getUniqueTestString();
 
 //        setupFeed(feed1);
-        final Data refData1 = buildRefData(feed2, 2008, 2, StreamTypeNames.REFERENCE, false);
-        final Data refData2 = buildRefData(feed2, 2009, 2, StreamTypeNames.REFERENCE, false);
-        final Data refData3 = buildRefData(feed2, 2010, 2, StreamTypeNames.REFERENCE, false);
+        final Meta refData1 = buildRefData(feed2, 2008, 2, StreamTypeNames.REFERENCE, false);
+        final Meta refData2 = buildRefData(feed2, 2009, 2, StreamTypeNames.REFERENCE, false);
+        final Meta refData3 = buildRefData(feed2, 2010, 2, StreamTypeNames.REFERENCE, false);
 
         // These 2 should get ignored as one is locked and the other is RAW
         final HashSet<Long> invalidFeeds = new HashSet<>();
@@ -561,7 +561,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         criteria.setEffectivePeriod(new Period(DateUtil.parseNormalDateTimeString("2009-01-01T00:00:00.000Z"),
                 DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z")));
 
-        Set<Data> set = streamMetaService.findEffectiveData(criteria);
+        Set<Meta> set = streamMetaService.findEffectiveData(criteria);
 
         // Make sure the list contains what it should.
         verifySet(set, refData1, refData2);
@@ -585,18 +585,18 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
      * @param set
      * @param expected
      */
-    private void verifySet(final Set<Data> set, final Data... expected) {
+    private void verifySet(final Set<Meta> set, final Meta... expected) {
         assertThat(set).isNotNull();
         assertThat(set.size()).isEqualTo(expected.length);
-        for (final Data stream : expected) {
+        for (final Meta stream : expected) {
             assertThat(set.contains(stream)).isTrue();
         }
     }
 
-    private Data buildRefData(final String feed, final int year, final int month, final String type, final boolean lock) {
+    private Meta buildRefData(final String feed, final int year, final int month, final String type, final boolean lock) {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(feed)
                 .typeName(type)
                 .effectiveMs(ZonedDateTime.of(year, month, N1, N13, 0, 0, 0, ZoneOffset.UTC).toInstant().toEpochMilli())
@@ -616,7 +616,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testDeleteStreamTarget() {
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -630,7 +630,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 //        // Create tasks.
 //        streamTaskCreator.createTasks(new SimpleTaskContext());
 
-        Data reloadedStream = streamMetaService.getData(streamTarget.getStream().getId());
+        Meta reloadedStream = streamMetaService.getData(streamTarget.getStream().getId());
         assertThat(reloadedStream).isNotNull();
 
         assertThatThrownBy(() -> {
@@ -639,12 +639,12 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         }).isInstanceOf(RuntimeException.class);
 
         streamStore.deleteStreamTarget(streamTarget);
-        reloadedStream = streamMetaService.find(FindDataCriteria.createWithData(streamTarget.getStream())).getFirst();
+        reloadedStream = streamMetaService.find(FindMetaCriteria.createWithData(streamTarget.getStream())).getFirst();
         assertThat(reloadedStream).isNull();
 
         streamStore.deleteStreamTarget(streamTarget);
 
-        reloadedStream = streamMetaService.find(FindDataCriteria.createWithData(streamTarget.getStream())).getFirst();
+        reloadedStream = streamMetaService.find(FindMetaCriteria.createWithData(streamTarget.getStream())).getFirst();
         assertThat(reloadedStream).isNull();
     }
 
@@ -657,7 +657,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final String testString5 = FileSystemTestUtil.getUniqueTestString();
         final String testString6 = FileSystemTestUtil.getUniqueTestString();
 
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -669,7 +669,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         streamTarget.getAttributes().put(MetaDataSource.REC_READ, "100");
         streamStore.closeStreamTarget(streamTarget);
 
-        Data stream = streamTarget.getStream();
+        Meta stream = streamTarget.getStream();
 
         final Set<DataVolume> streamVolumes = streamVolumeService.findStreamVolume(stream.getId());
         final Set<Path> rootFile = new HashSet<>();
@@ -726,7 +726,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     void testIOErrors() throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();

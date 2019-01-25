@@ -18,7 +18,7 @@
 package stroom.headless;
 
 import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.docref.DocRef;
 import stroom.data.meta.api.AttributeMapUtil;
 import stroom.pipeline.feed.FeedStore;
@@ -162,7 +162,7 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
                 }
 
                 // Create the stream.
-                final Data stream = new DataImpl.Builder()
+                final Meta stream = new DataImpl.Builder()
                         .effectiveMs(effectiveMs)
                         .feedName(feedName)
                         .build();

@@ -20,10 +20,10 @@ package stroom.data.store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.meta.shared.MetaDataSource;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.MetaService;
+import stroom.data.meta.shared.Status;
 import stroom.docref.DocRef;
 import stroom.entity.shared.Period;
 import stroom.entity.util.PeriodUtil;
@@ -49,13 +49,13 @@ public class DataRetentionExecutor {
     private static final int DELETE_STREAM_BATCH_SIZE = 1000;
 
     private final FeedStore feedStore;
-    private final DataMetaService streamMetaService;
+    private final MetaService streamMetaService;
     private final TaskContext taskContext;
     private final ClusterLockService clusterLockService;
 
     @Inject
     DataRetentionExecutor(final FeedStore feedStore,
-                          final DataMetaService streamMetaService,
+                          final MetaService streamMetaService,
                           final TaskContext taskContext,
                           final ClusterLockService clusterLockService) {
         this.feedStore = feedStore;
@@ -112,18 +112,18 @@ public class DataRetentionExecutor {
                     .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feed.getName())
                     // we only want it to logically delete UNLOCKED items and not ones
                     // already marked as DELETED
-                    .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                    .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                     .build();
 
             // Delete anything received older than -1 * retention age
-            final FindDataCriteria criteria = new FindDataCriteria();
+            final FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setExpression(expression);
             criteria.obtainPageRequest().setLength(DELETE_STREAM_BATCH_SIZE);
 
             long total = 0;
             int deleted;
             do {
-                deleted = streamMetaService.updateStatus(criteria, DataStatus.DELETED);
+                deleted = streamMetaService.updateStatus(criteria, Status.DELETED);
                 total += deleted;
             } while (deleted >= DELETE_STREAM_BATCH_SIZE);
 

@@ -19,7 +19,7 @@ package stroom.data.store.impl.fs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamTarget;
@@ -48,7 +48,7 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
     private final Set<String> volumePaths;
     private final String streamType;
     private final List<FileSystemStreamTarget> childrenAccessed = new ArrayList<>();
-    private Data stream;
+    private Meta stream;
     private boolean closed;
     private boolean append;
     private AttributeMap attributeMap;
@@ -57,7 +57,7 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
     private FileSystemStreamTarget parent;
 
     private FileSystemStreamTarget(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
-                                   final Data requestMetaData,
+                                   final Meta requestMetaData,
                                    final Set<String> volumePaths,
                                    final String streamType,
                                    final boolean append) {
@@ -90,7 +90,7 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
      * Creates a new file system stream target.
      */
     static FileSystemStreamTarget create(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
-                                         final Data stream,
+                                         final Meta stream,
                                          final Set<String> volumePaths,
                                          final String streamType,
                                          final boolean append) {
@@ -145,7 +145,7 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
     }
 
     @Override
-    public Data getStream() {
+    public Meta getStream() {
         return stream;
     }
 
@@ -192,7 +192,7 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
 //                () -> addChild(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream());
 //    }
 
-    void setMetaData(final Data stream) {
+    void setMetaData(final Meta stream) {
         this.stream = stream;
     }
 

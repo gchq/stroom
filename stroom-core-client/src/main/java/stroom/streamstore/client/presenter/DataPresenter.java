@@ -37,7 +37,7 @@ import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.StepLocation;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Marker;
@@ -206,7 +206,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         update(fireEvents);
     }
 
-    public void fetchData(final Data stream) {
+    public void fetchData(final Meta stream) {
         this.currentStreamId = stream.getId();
         this.currentStreamType = stream.getTypeName();
         currentStreamRange = new OffsetRange<>(0L, 1L);

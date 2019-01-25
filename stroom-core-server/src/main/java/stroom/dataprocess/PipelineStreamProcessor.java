@@ -22,8 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaProperties;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
@@ -191,7 +191,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
 
         // Initialise the helper class that will ensure we only keep the latest output for this stream source and processor.
-        final Data stream = streamSource.getStream();
+        final Meta stream = streamSource.getStream();
         supersededOutputHelper.init(stream, streamProcessor, streamTask, startTime);
 
         // Setup the process info writer.
@@ -224,7 +224,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         PipelineDoc pipelineDoc = null;
 
         try {
-            final Data stream = streamSource.getStream();
+            final Meta stream = streamSource.getStream();
 
             // Update the meta data for all output streams to use.
             metaData.put("Source Stream", String.valueOf(stream.getId()));
@@ -343,7 +343,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
      * Processes a source and writes the result to a target.
      */
     private void processNestedStreams(final Pipeline pipeline,
-                                      final Data stream,
+                                      final Meta stream,
                                       final StreamSource streamSource,
                                       final String feedName,
                                       final String streamTypeName) {
@@ -508,7 +508,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             implements DestinationProvider, Destination, AutoCloseable {
         private final StreamStore streamStore;
         private final MetaData metaData;
-        private final Data stream;
+        private final Meta stream;
         private final Processor streamProcessor;
         private final ProcessorFilterTask streamTask;
         private final RecordCount recordCount;
@@ -520,7 +520,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
         ProcessInfoOutputStreamProvider(final StreamStore streamStore,
                                         final MetaData metaData,
-                                        final Data stream,
+                                        final Meta stream,
                                         final Processor streamProcessor,
                                         final ProcessorFilterTask streamTask,
                                         final RecordCount recordCount,
@@ -567,7 +567,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
                 // Create a processing info stream to write all processing
                 // information to.
-                final DataProperties dataProperties = new DataProperties.Builder()
+                final MetaProperties dataProperties = new MetaProperties.Builder()
                         .feedName(stream.getFeedName())
                         .typeName(StreamTypeNames.ERROR)
                         .parent(stream)

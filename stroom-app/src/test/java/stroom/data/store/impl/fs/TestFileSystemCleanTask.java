@@ -21,8 +21,8 @@ package stroom.data.store.impl.fs;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaProperties;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
@@ -82,11 +82,11 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         // Write a file 2 files ... on we leave locked and the other not locked
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final DataProperties lockfile1 = new DataProperties.Builder()
+        final MetaProperties lockfile1 = new MetaProperties.Builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        final DataProperties nolockfile1 = new DataProperties.Builder()
+        final MetaProperties nolockfile1 = new MetaProperties.Builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -161,7 +161,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     void testArchiveRemovedFile() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Data stream = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        final Meta stream = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
 
         Collection<Path> files = streamMaintenanceService.findAllStreamFile(stream);
 
@@ -207,7 +207,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         final long tenMin = 1000 * 60 * 10;
         final long startTime = endTime - twoDaysTime;
         for (long time = startTime; time < endTime; time += tenMin) {
-            final DataProperties streamProperties = new DataProperties.Builder()
+            final MetaProperties streamProperties = new MetaProperties.Builder()
                     .feedName(feedName)
                     .typeName(StreamTypeNames.RAW_EVENTS)
                     .createMs(time)

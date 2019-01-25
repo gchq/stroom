@@ -19,8 +19,8 @@ package stroom.pipeline.refdata;
 
 import org.junit.jupiter.api.Test;
 import stroom.cache.impl.CacheManagerImpl;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaProperties;
 import stroom.data.meta.shared.EffectiveMetaDataCriteria;
 import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.security.impl.SecurityImpl;
@@ -53,13 +53,13 @@ class TestEffectiveStreamPool extends StroomUnitTest {
 
         final InnerStreamMetaService mockStreamStore = new InnerStreamMetaService() {
             @Override
-            public Set<Data> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+            public Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
                 findEffectiveStreamSourceCount++;
-                final Set<Data> results = new HashSet<>();
+                final Set<Meta> results = new HashSet<>();
                 long workingDate = criteria.getEffectivePeriod().getFrom();
                 while (workingDate < criteria.getEffectivePeriod().getTo()) {
-                    final Data stream = create(
-                            new DataProperties.Builder()
+                    final Meta stream = create(
+                            new MetaProperties.Builder()
                                     .feedName(refFeedName)
                                     .typeName(StreamTypeNames.RAW_REFERENCE)
                                     .createMs(workingDate)
@@ -193,7 +193,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
     }
 
     private static class InnerStreamMetaService extends MockDataMetaService {
-        private final List<Data> streams = new ArrayList<>();
+        private final List<Meta> streams = new ArrayList<>();
         private long callCount = 0;
 
         InnerStreamMetaService() {
@@ -201,7 +201,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
         }
 
         @Override
-        public Set<Data> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+        public Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
             callCount++;
 
             return streams.stream()
@@ -212,8 +212,8 @@ class TestEffectiveStreamPool extends StroomUnitTest {
         }
 
         void addEffectiveStream(final String feedName, long effectiveTimeMs) {
-            final Data stream = create(
-                    new DataProperties.Builder()
+            final Meta stream = create(
+                    new MetaProperties.Builder()
                             .feedName(feedName)
                             .typeName(StreamTypeNames.RAW_REFERENCE)
                             .createMs(effectiveTimeMs)

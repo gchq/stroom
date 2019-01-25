@@ -20,7 +20,7 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.Status;
 import stroom.data.store.api.CompoundInputStream;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;
@@ -242,10 +242,10 @@ public class DataFetcher {
             } catch (final IOException | RuntimeException e) {
                 writeEventLog(eventId, feedName, streamTypeName, pipeline, e);
 
-                if (DataStatus.LOCKED.equals(streamSource.getStream().getStatus())) {
+                if (Status.LOCKED.equals(streamSource.getStream().getStatus())) {
                     return createErrorResult("You cannot view locked streams.");
                 }
-                if (DataStatus.DELETED.equals(streamSource.getStream().getStatus())) {
+                if (Status.DELETED.equals(streamSource.getStream().getStatus())) {
                     return createErrorResult("This data may no longer exist.");
                 }
 

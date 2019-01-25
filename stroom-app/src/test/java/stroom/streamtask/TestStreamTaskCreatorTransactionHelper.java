@@ -21,9 +21,9 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaService;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.ConnectionUtil;
@@ -68,7 +68,7 @@ class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrationTest
     @Inject
     private StroomEntityManager stroomEntityManager;
     @Inject
-    private DataMetaService streamMetaService;
+    private MetaService streamMetaService;
 
     @Test
     void testBasic() {
@@ -76,7 +76,7 @@ class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrationTest
 
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
         assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(0);
-        final List<Data> streams = streamMetaService.find(new FindDataCriteria());
+        final List<Meta> streams = streamMetaService.find(new FindMetaCriteria());
         assertThat(streams.size()).isEqualTo(1);
 
         ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND).build();

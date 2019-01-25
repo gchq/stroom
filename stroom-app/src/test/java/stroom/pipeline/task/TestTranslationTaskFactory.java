@@ -20,9 +20,9 @@ package stroom.pipeline.task;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaService;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.store.api.StreamStore;
 import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.docref.DocRef;
@@ -86,7 +86,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private DataMetaService streamMetaService;
+    private MetaService streamMetaService;
     @Inject
     private StoreCreationTool storeCreationTool;
     @Inject
@@ -116,11 +116,11 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         assertThat(streamMetaService.getLockCount()).isEqualTo(0);
 
         // Check we have some raw events.
-        final List<Data> raw = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
+        final List<Meta> raw = streamMetaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
         assertThat(raw.size()).isEqualTo(NO_OF_EVENT_FILES);
 
         // Check all passed.
-        final List<Data> cooked = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.EVENTS));
+        final List<Meta> cooked = streamMetaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS));
         assertThat(cooked.size()).isEqualTo(NO_OF_EVENT_FILES);
 
         // Check none failed.
@@ -197,11 +197,11 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         final List<StreamProcessorTaskExecutor> results = processAll();
 
         // Check we have some raw events.
-        final List<Data> raw = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
+        final List<Meta> raw = streamMetaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
         assertThat(raw.size()).isEqualTo(NO_OF_EVENT_FILES);
 
         // Check no output streams were written.
-        final List<Data> cooked = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.EVENTS));
+        final List<Meta> cooked = streamMetaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS));
         assertThat(cooked.size()).isEqualTo(0);
 
         // Make sure we got 13 results.
@@ -229,11 +229,11 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         final List<StreamProcessorTaskExecutor> results = processAll();
 
         // Check we have some raw events.
-        final List<Data> raw = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
+        final List<Meta> raw = streamMetaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
         assertThat(raw.size()).isEqualTo(NO_OF_EVENT_FILES);
 
         // Check no output streams were written.
-        final List<Data> cooked = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.EVENTS));
+        final List<Meta> cooked = streamMetaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS));
         assertThat(cooked.size()).isEqualTo(0);
 
         // Make sure we got 13 results.
@@ -253,7 +253,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     @Test
     void testInvalidXSLT() {
         // Check none passed.
-        List<Data> cooked = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
+        List<Meta> cooked = streamMetaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
         assertThat(cooked.size()).isEqualTo(0);
 
         // Create a store.
@@ -263,11 +263,11 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         final List<StreamProcessorTaskExecutor> results = processAll();
 
         // Check we have some raw events.
-        final List<Data> raw = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
+        final List<Meta> raw = streamMetaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
         assertThat(raw.size()).isEqualTo(NO_OF_EVENT_FILES);
 
         // Check all failed.
-        cooked = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.EVENTS));
+        cooked = streamMetaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS));
         assertThat(cooked.size()).isEqualTo(0);
 
         assertThat(results.size()).isEqualTo(13);

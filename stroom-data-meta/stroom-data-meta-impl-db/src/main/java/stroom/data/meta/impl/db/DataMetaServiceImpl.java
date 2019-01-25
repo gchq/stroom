@@ -9,14 +9,14 @@ import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.DataProperties;
-import stroom.data.meta.shared.DataRow;
-import stroom.data.meta.shared.DataSecurityFilter;
-import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaService;
+import stroom.data.meta.shared.MetaProperties;
+import stroom.data.meta.shared.MetaRow;
+import stroom.data.meta.shared.MetaSecurityFilter;
+import stroom.data.meta.shared.Status;
 import stroom.data.meta.shared.EffectiveMetaDataCriteria;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.data.meta.impl.db.DataImpl.Builder;
 import stroom.data.meta.impl.db.ExpressionMapper.TermHandler;
@@ -61,7 +61,7 @@ import static stroom.data.meta.impl.db.stroom.tables.DataType.DATA_TYPE;
 import static stroom.data.meta.impl.db.stroom.tables.MetaVal.META_VAL;
 
 @Singleton
-class DataMetaServiceImpl implements DataMetaService {
+class DataMetaServiceImpl implements MetaService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataMetaServiceImpl.class);
 
     private final ConnectionProvider connectionProvider;
@@ -70,7 +70,7 @@ class DataMetaServiceImpl implements DataMetaService {
     private final ProcessorService processorService;
     private final MetaKeyService metaKeyService;
     private final MetaValueService metaValueService;
-    private final DataSecurityFilter dataSecurityFilter;
+    private final MetaSecurityFilter dataSecurityFilter;
     private final Security security;
 
     private final stroom.data.meta.impl.db.stroom.tables.Data data = DATA.as("d");
@@ -89,7 +89,7 @@ class DataMetaServiceImpl implements DataMetaService {
                         final ProcessorService processorService,
                         final MetaKeyService metaKeyService,
                         final MetaValueService metaValueService,
-                        final DataSecurityFilter dataSecurityFilter,
+                        final MetaSecurityFilter dataSecurityFilter,
                         final Security security) {
         this.connectionProvider = connectionProvider;
         this.feedService = feedService;
@@ -110,7 +110,7 @@ class DataMetaServiceImpl implements DataMetaService {
         termHandlers.put(MetaDataSource.PARENT_STREAM_ID, new TermHandler<>(data.PARENT_ID, Long::valueOf));
         termHandlers.put(MetaDataSource.STREAM_TASK_ID, new TermHandler<>(data.TASK_ID, Long::valueOf));
         termHandlers.put(MetaDataSource.STREAM_PROCESSOR_ID, new TermHandler<>(data.PROCESSOR_ID, Integer::valueOf));
-        termHandlers.put(MetaDataSource.STATUS, new TermHandler<>(data.STATUS, value -> DataStatusId.getPrimitiveValue(DataStatus.valueOf(value.toUpperCase()))));
+        termHandlers.put(MetaDataSource.STATUS, new TermHandler<>(data.STATUS, value -> DataStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase()))));
         termHandlers.put(MetaDataSource.STATUS_TIME, new TermHandler<>(data.STATUS_TIME, DateUtil::parseNormalDateTimeString));
         termHandlers.put(MetaDataSource.CREATE_TIME, new TermHandler<>(data.CREATE_TIME, DateUtil::parseNormalDateTimeString));
         termHandlers.put(MetaDataSource.EFFECTIVE_TIME, new TermHandler<>(data.EFFECTIVE_TIME, DateUtil::parseNormalDateTimeString));
@@ -161,7 +161,7 @@ class DataMetaServiceImpl implements DataMetaService {
     }
 
     @Override
-    public Data create(final DataProperties dataProperties) {
+    public Meta create(final MetaProperties dataProperties) {
         final Integer feedId = feedService.getOrCreate(dataProperties.getFeedName());
         final Integer typeId = dataTypeService.getOrCreate(dataProperties.getTypeName());
         final Integer processorId = processorService.getOrCreate(dataProperties.getProcessorId(), dataProperties.getPipelineUuid());
@@ -199,7 +199,7 @@ class DataMetaServiceImpl implements DataMetaService {
                     .parentDataId(dataProperties.getParentId())
                     .processTaskId(dataProperties.getProcessorTaskId())
                     .processorId(processorId)
-                    .status(DataStatus.LOCKED)
+                    .status(Status.LOCKED)
                     .statusMs(dataProperties.getStatusMs())
                     .createMs(dataProperties.getCreateMs())
                     .effectiveMs(dataProperties.getEffectiveMs())
@@ -212,14 +212,14 @@ class DataMetaServiceImpl implements DataMetaService {
     }
 
     @Override
-    public Data getData(final long id) {
+    public Meta getData(final long id) {
         return getData(id, false);
     }
 
     @Override
-    public Data getData(final long id, final boolean anyStatus) {
+    public Meta getData(final long id, final boolean anyStatus) {
         final Condition condition = getIdCondition(id, anyStatus, DocumentPermissionNames.READ);
-        final List<Data> list = find(condition, 0, 1);
+        final List<Meta> list = find(condition, 0, 1);
         if (list == null || list.size() == 0) {
             return null;
         }
@@ -227,7 +227,7 @@ class DataMetaServiceImpl implements DataMetaService {
     }
 
     @Override
-    public Data updateStatus(final Data data, final DataStatus status) {
+    public Meta updateStatus(final Meta data, final Status status) {
         Objects.requireNonNull(data, "Null data");
 
         final long now = System.currentTimeMillis();
@@ -239,7 +239,7 @@ class DataMetaServiceImpl implements DataMetaService {
         }
     }
 
-    private int updateStatus(final long id, final DataStatus status, final long statusTime, final String permission) {
+    private int updateStatus(final long id, final Status status, final long statusTime, final String permission) {
         final Condition condition = getIdCondition(id, true, permission);
 
         try (final Connection connection = connectionProvider.getConnection()) {
@@ -283,10 +283,10 @@ class DataMetaServiceImpl implements DataMetaService {
     }
 
     @Override
-    public int updateStatus(final FindDataCriteria criteria, final DataStatus status) {
+    public int updateStatus(final FindMetaCriteria criteria, final Status status) {
         // Decide which permission is needed for this update as logical deletes require delete permissions.
         String permission = DocumentPermissionNames.UPDATE;
-        if (DataStatus.DELETED.equals(status)) {
+        if (Status.DELETED.equals(status)) {
             permission = DocumentPermissionNames.DELETE;
         }
 
@@ -308,7 +308,7 @@ class DataMetaServiceImpl implements DataMetaService {
     }
 
     @Override
-    public void addAttributes(final Data data, final AttributeMap attributes) {
+    public void addAttributes(final Meta data, final AttributeMap attributes) {
         metaValueService.addAttributes(data, attributes);
     }
 
@@ -324,22 +324,22 @@ class DataMetaServiceImpl implements DataMetaService {
 
     private int doLogicalDelete(final long id, final boolean lockCheck) {
         if (lockCheck) {
-            final Data data = getData(id, true);
+            final Meta data = getData(id, true);
 
             // Don't bother to try and set the status of deleted data to be deleted.
-            if (DataStatus.DELETED.equals(data.getStatus())) {
+            if (Status.DELETED.equals(data.getStatus())) {
                 return 0;
             }
 
             // Don't delete if the data is not unlocked and we are checking for unlocked.
-            if (!DataStatus.UNLOCKED.equals(data.getStatus())) {
+            if (!Status.UNLOCKED.equals(data.getStatus())) {
                 return 0;
             }
         }
 
         // Ensure the user has permission to delete this data.
         final long now = System.currentTimeMillis();
-        return updateStatus(id, DataStatus.DELETED, now, DocumentPermissionNames.DELETE);
+        return updateStatus(id, Status.DELETED, now, DocumentPermissionNames.DELETE);
     }
 
     private SelectConditionStep<Record1<Long>> getMetaCondition(final ExpressionOperator expression) {
@@ -358,7 +358,7 @@ class DataMetaServiceImpl implements DataMetaService {
     }
 
     @Override
-    public BaseResultList<Data> find(final FindDataCriteria criteria) {
+    public BaseResultList<Meta> find(final FindMetaCriteria criteria) {
         final IdSet idSet = criteria.getSelectedIdSet();
         // If for some reason we have been asked to match nothing then return nothing.
         if (idSet != null && idSet.getMatchNull() != null && idSet.getMatchNull()) {
@@ -376,11 +376,11 @@ class DataMetaServiceImpl implements DataMetaService {
             numberOfRows = pageRequest.getLength();
         }
 
-        final List<Data> results = find(condition, offset, numberOfRows);
+        final List<Meta> results = find(condition, offset, numberOfRows);
         return BaseResultList.createPageResultList(results, criteria.getPageRequest(), null);
     }
 
-    private List<Data> find(final Condition condition, final int offset, final int numberOfRows) {
+    private List<Meta> find(final Condition condition, final int offset, final int numberOfRows) {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
@@ -446,7 +446,7 @@ class DataMetaServiceImpl implements DataMetaService {
 //    }
 
 
-    public int delete(final FindDataCriteria criteria) {
+    public int delete(final FindMetaCriteria criteria) {
         final Condition condition = createCondition(criteria, DocumentPermissionNames.DELETE);
 
         try (final Connection connection = connectionProvider.getConnection()) {
@@ -463,11 +463,11 @@ class DataMetaServiceImpl implements DataMetaService {
     }
 
     @Override
-    public Set<Data> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+    public Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
         // See if we can find a data that exists before the earliest specified time.
         final Optional<Long> optionalId = getMaxEffectiveDataIdBeforePeriod(criteria);
 
-        final Set<Data> set = new HashSet<>();
+        final Set<Meta> set = new HashSet<>();
         if (optionalId.isPresent()) {
             // Get the data that occurs just before or ast the start of the period.
             final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
@@ -484,7 +484,7 @@ class DataMetaServiceImpl implements DataMetaService {
                 .addTerm(MetaDataSource.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getToMs()))
                 .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
                 .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
-                .addTerm(MetaDataSource.STATUS, ExpressionTerm.Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
 
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
@@ -499,7 +499,7 @@ class DataMetaServiceImpl implements DataMetaService {
                 .addTerm(MetaDataSource.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
                 .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
                 .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
-                .addTerm(MetaDataSource.STATUS, ExpressionTerm.Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
 
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
@@ -566,12 +566,12 @@ class DataMetaServiceImpl implements DataMetaService {
 //    }
 
     @Override
-    public BaseResultList<DataRow> findRows(final FindDataCriteria criteria) {
+    public BaseResultList<MetaRow> findRows(final FindMetaCriteria criteria) {
         return security.useAsReadResult(() -> {
             // Cache Call
 
 
-            final FindDataCriteria findDataCriteria = new FindDataCriteria();
+            final FindMetaCriteria findDataCriteria = new FindMetaCriteria();
             findDataCriteria.copyFrom(criteria);
             findDataCriteria.setSort(MetaDataSource.CREATE_TIME, Direction.DESCENDING, false);
 
@@ -582,7 +582,7 @@ class DataMetaServiceImpl implements DataMetaService {
 //            }
 //            findDataCriteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
             // Share the page criteria
-            final BaseResultList<Data> list = find(findDataCriteria);
+            final BaseResultList<Meta> list = find(findDataCriteria);
 
             if (list.size() > 0) {
 //                // We need to decorate data with retention rules as a processing user.
@@ -601,7 +601,7 @@ class DataMetaServiceImpl implements DataMetaService {
                 // Query the database for the attribute values
 //                        if (criteria.isUseCache()) {
                 LOGGER.info("Loading attribute map from DB");
-                final List<DataRow> result = metaValueService.decorateDataWithAttributes(list);
+                final List<MetaRow> result = metaValueService.decorateDataWithAttributes(list);
 //                        } else {
 //                            LOGGER.info("Loading attribute map from filesystem");
 //                            loadAttributeMapFromFileSystem(criteria, result, result, ruleDecorator);
@@ -619,34 +619,34 @@ class DataMetaServiceImpl implements DataMetaService {
     }
 
     @Override
-    public List<DataRow> findRelatedData(final long id, final boolean anyStatus) {
+    public List<MetaRow> findRelatedData(final long id, final boolean anyStatus) {
         // Get the starting row.
-        final FindDataCriteria findDataCriteria = new FindDataCriteria(getIdExpression(id, anyStatus));
-        BaseResultList<Data> rows = find(findDataCriteria);
-        final List<Data> result = new ArrayList<>(rows);
+        final FindMetaCriteria findDataCriteria = new FindMetaCriteria(getIdExpression(id, anyStatus));
+        BaseResultList<Meta> rows = find(findDataCriteria);
+        final List<Meta> result = new ArrayList<>(rows);
 
         if (rows.size() > 0) {
-            Data row = rows.getFirst();
+            Meta row = rows.getFirst();
             addChildren(row, anyStatus, result);
             addParents(row, anyStatus, result);
         }
 
-        result.sort(Comparator.comparing(Data::getId));
+        result.sort(Comparator.comparing(Meta::getId));
 
         return metaValueService.decorateDataWithAttributes(result);
     }
 
-    private void addChildren(final Data parent, final boolean anyStatus, final List<Data> result) {
-        final BaseResultList<Data> children = find(new FindDataCriteria(getParentIdExpression(parent.getId(), anyStatus)));
+    private void addChildren(final Meta parent, final boolean anyStatus, final List<Meta> result) {
+        final BaseResultList<Meta> children = find(new FindMetaCriteria(getParentIdExpression(parent.getId(), anyStatus)));
         children.forEach(child -> {
             result.add(child);
             addChildren(child, anyStatus, result);
         });
     }
 
-    private void addParents(final Data child, final boolean anyStatus, final List<Data> result) {
+    private void addParents(final Meta child, final boolean anyStatus, final List<Meta> result) {
         if (child.getParentDataId() != null) {
-            final BaseResultList<Data> parents = find(new FindDataCriteria(getIdExpression(child.getParentDataId(), anyStatus)));
+            final BaseResultList<Meta> parents = find(new FindMetaCriteria(getIdExpression(child.getParentDataId(), anyStatus)));
             if (parents != null && parents.size() > 0) {
                 parents.forEach(parent -> {
                     result.add(parent);
@@ -655,7 +655,7 @@ class DataMetaServiceImpl implements DataMetaService {
             } else {
                 // Add a dummy parent data as we don't seem to be able to get the real parent.
                 // This might be because it is deleted or the user does not have access permissions.
-                final Data data = new DataImpl.Builder()
+                final Meta data = new DataImpl.Builder()
                         .id(child.getParentDataId())
                         .build();
                 result.add(data);
@@ -692,7 +692,7 @@ class DataMetaServiceImpl implements DataMetaService {
 
         return new ExpressionOperator.Builder(Op.AND)
                 .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
-                .addTerm(MetaDataSource.STATUS, ExpressionTerm.Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
@@ -705,7 +705,7 @@ class DataMetaServiceImpl implements DataMetaService {
 
         return new ExpressionOperator.Builder(Op.AND)
                 .addTerm(MetaDataSource.PARENT_STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
-                .addTerm(MetaDataSource.STATUS, ExpressionTerm.Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
@@ -726,7 +726,7 @@ class DataMetaServiceImpl implements DataMetaService {
         return expression;
     }
 
-    private Condition createCondition(final FindDataCriteria criteria, final String permission) {
+    private Condition createCondition(final FindMetaCriteria criteria, final String permission) {
         Condition condition;
 
         IdSet idSet = null;

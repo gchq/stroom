@@ -35,7 +35,7 @@ import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
@@ -86,7 +86,7 @@ public class StreamEventLog {
         });
     }
 
-    public void exportStream(final FindDataCriteria findStreamCriteria, final Throwable th) {
+    public void exportStream(final FindMetaCriteria findStreamCriteria, final Throwable th) {
         security.insecure(() -> {
             try {
                 if (findStreamCriteria != null) {
@@ -134,7 +134,7 @@ public class StreamEventLog {
         });
     }
 
-    private Query createQuery(final FindDataCriteria findStreamCriteria) {
+    private Query createQuery(final FindMetaCriteria findStreamCriteria) {
         if (findStreamCriteria != null) {
             final Advanced advanced = new Advanced();
             appendCriteria(advanced.getAdvancedQueryItems(), findStreamCriteria);
@@ -179,7 +179,7 @@ public class StreamEventLog {
         return data;
     }
 
-    private void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindDataCriteria findStreamCriteria) {
+    private void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindMetaCriteria findStreamCriteria) {
 //        CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorIdSet",
 //                findStreamCriteria.getStreamProcessorIdSet());
 //        CriteriaLoggingUtil.appendIncludeExcludeEntityIdSet(items, "feeds", findStreamCriteria.getFeeds());

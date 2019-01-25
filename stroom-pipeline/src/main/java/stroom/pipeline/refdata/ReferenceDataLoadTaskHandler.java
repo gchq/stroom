@@ -19,7 +19,7 @@ package stroom.pipeline.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamSourceInputStream;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
@@ -135,7 +135,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 // Open the stream source.
                 final StreamSource streamSource = streamStore.openStreamSource(refStreamDefinition.getStreamId());
                 if (streamSource != null) {
-                    final Data stream = streamSource.getStream();
+                    final Meta stream = streamSource.getStream();
                     try {
                         // Load the feed.
                         final String feedName = stream.getFeedName();
@@ -181,7 +181,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     }
 
     private void populateMaps(final Pipeline pipeline,
-                              final Data stream,
+                              final Meta stream,
                               final StreamSource streamSource,
                               final String feedName,
                               final String streamTypeName,

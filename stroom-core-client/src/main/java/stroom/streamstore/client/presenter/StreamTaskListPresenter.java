@@ -25,7 +25,7 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
-import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.Status;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
@@ -253,7 +253,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Proc
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.obtainStreamTaskStatusSet().setMatchAll(Boolean.FALSE);
         // Only show unlocked stuff
-        criteria.obtainStatusSet().add(DataStatus.UNLOCKED);
+        criteria.obtainStatusSet().add(Status.UNLOCKED);
 
 //        if (feedName != null) {
 //            criteria.obtainFeedNameSet().add(feedName);

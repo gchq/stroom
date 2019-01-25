@@ -1,11 +1,11 @@
 package stroom.headless;
 
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.Status;
 
 import java.util.Objects;
 
-class DataImpl implements Data {
+class DataImpl implements Meta {
     private long id;
     private String feedName;
     private String streamTypeName;
@@ -13,7 +13,7 @@ class DataImpl implements Data {
     private Long parentStreamId;
     private Long streamTaskId;
     private Integer streamProcessorId;
-    private DataStatus status;
+    private Status status;
     private Long statusMs;
     private long createMs;
     private Long effectiveMs;
@@ -57,7 +57,7 @@ class DataImpl implements Data {
     }
 
     @Override
-    public DataStatus getStatus() {
+    public Status getStatus() {
         return status;
     }
 
@@ -132,7 +132,7 @@ class DataImpl implements Data {
             return this;
         }
 
-        public Builder status(final DataStatus status) {
+        public Builder status(final Status status) {
             stream.status = status;
             return this;
         }
@@ -152,7 +152,7 @@ class DataImpl implements Data {
             return this;
         }
 
-        public Data build() {
+        public Meta build() {
             return stream;
         }
     }

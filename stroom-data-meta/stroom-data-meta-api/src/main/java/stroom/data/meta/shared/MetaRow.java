@@ -21,25 +21,25 @@ import stroom.docref.SharedObject;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DataRow implements SharedObject {
+public class MetaRow implements SharedObject {
     private static final long serialVersionUID = -8198186456924478908L;
 
-    private Data data;
+    private Meta data;
     private Map<String, String> attributes = new HashMap<>();
 
-    public DataRow() {
+    public MetaRow() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public DataRow(Data data) {
+    public MetaRow(Meta data) {
         setData(data);
     }
 
-    public Data getData() {
+    public Meta getData() {
         return data;
     }
 
-    public void setData(Data data) {
+    public void setData(Meta data) {
         this.data = data;
     }
 
@@ -54,9 +54,9 @@ public class DataRow implements SharedObject {
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof DataRow)) return false;
+        if (!(o instanceof MetaRow)) return false;
 
-        final DataRow that = (DataRow) o;
+        final MetaRow that = (MetaRow) o;
 
         return data.equals(that.data);
     }

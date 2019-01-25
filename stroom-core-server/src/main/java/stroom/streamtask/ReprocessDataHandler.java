@@ -18,9 +18,9 @@
 package stroom.streamtask;
 
 import com.google.common.base.Strings;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaService;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
@@ -49,13 +49,13 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
 
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
-    private final DataMetaService streamMetaService;
+    private final MetaService streamMetaService;
     private final Security security;
 
     @Inject
     ReprocessDataHandler(final StreamProcessorService streamProcessorService,
                          final StreamProcessorFilterService streamProcessorFilterService,
-                         final DataMetaService streamMetaService,
+                         final MetaService streamMetaService,
                          final Security security) {
         this.streamProcessorService = streamProcessorService;
         this.streamProcessorFilterService = streamProcessorFilterService;
@@ -69,13 +69,13 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
             final List<ReprocessDataInfo> info = new ArrayList<>();
 
             try {
-                final FindDataCriteria criteria = action.getCriteria();
+                final FindMetaCriteria criteria = action.getCriteria();
                 // We only want 1000 streams to be
                 // reprocessed at a maximum.
                 criteria.obtainPageRequest().setOffset(0L);
                 criteria.obtainPageRequest().setLength(MAX_STREAM_TO_REPROCESS);
 
-                final BaseResultList<Data> streams = streamMetaService.find(criteria);
+                final BaseResultList<Meta> streams = streamMetaService.find(criteria);
 
                 if (!streams.isExact()) {
                     info.add(new ReprocessDataInfo(Severity.ERROR, "Results exceed " + MAX_STREAM_TO_REPROCESS
@@ -88,7 +88,7 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
 
                     final Map<Processor, CriteriaSet<Long>> streamToProcessorSet = new HashMap<>();
 
-                    for (final Data stream : streams) {
+                    for (final Meta stream : streams) {
                         // We can only reprocess streams that have a stream
                         // processor and a parent stream id.
                         if (stream.getProcessorId() != null && stream.getParentDataId() != null) {

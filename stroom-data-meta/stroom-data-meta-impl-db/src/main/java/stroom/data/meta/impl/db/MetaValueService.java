@@ -17,16 +17,16 @@
 package stroom.data.meta.impl.db;
 
 import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataRow;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaRow;
 import stroom.entity.shared.Flushable;
 
 import java.util.List;
 
 interface MetaValueService extends Flushable {
-    void addAttributes(Data data, AttributeMap attributes);
+    void addAttributes(Meta data, AttributeMap attributes);
 
-    List<DataRow> decorateDataWithAttributes(List<Data> list);
+    List<MetaRow> decorateDataWithAttributes(List<Meta> list);
 
     void deleteOldValues();
 }

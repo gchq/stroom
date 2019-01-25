@@ -2,8 +2,8 @@ package stroom.data.meta.impl.mock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataRow;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaRow;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.util.date.DateUtil;
 
@@ -20,10 +20,10 @@ class AttributeMapUtil {
     /**
      * Turns a data row object into a generic map of attributes for use by an expression filter.
      */
-    static Map<String, Object> createAttributeMap(final DataRow row) {
+    static Map<String, Object> createAttributeMap(final MetaRow row) {
         final Map<String, Object> attributeMap = new HashMap<>();
 
-        final Data data = row.getData();
+        final Meta data = row.getData();
         if (data != null) {
             attributeMap.put(MetaDataSource.STREAM_ID, data.getId());
             attributeMap.put(MetaDataSource.CREATE_TIME, data.getCreateMs());

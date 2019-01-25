@@ -18,7 +18,7 @@ package stroom.pipeline.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.data.store.api.StreamSourceInputStream;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.docref.DocRef;
@@ -294,7 +294,7 @@ public class ReferenceData {
     }
 
     private void loadContextData(
-            final Data data,
+            final Meta data,
             final StreamSourceInputStream contextStream,
             final DocRef contextPipeline,
             final RefStreamDefinition refStreamDefinition,

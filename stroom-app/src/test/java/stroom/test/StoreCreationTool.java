@@ -17,7 +17,7 @@
 package stroom.test;
 
 
-import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.MetaProperties;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
@@ -156,7 +156,7 @@ public final class StoreCreationTool {
         effectiveMs += effectiveMsOffset++;
 
         // Add the associated data to the stream store.
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(referenceFeed.getName())
                 .typeName(StreamTypeNames.RAW_REFERENCE)
                 .createMs(effectiveMs)
@@ -301,7 +301,7 @@ public final class StoreCreationTool {
                 flatteningXsltLocation, referenceFeeds);
 
         // Add the associated data to the stream store.
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();

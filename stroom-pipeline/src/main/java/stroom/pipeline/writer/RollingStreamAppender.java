@@ -17,8 +17,8 @@
 
 package stroom.pipeline.writer;
 
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaProperties;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.docref.DocRef;
@@ -80,7 +80,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
         // Don't set the processor or the task or else this rolling stream will be deleted automatically because the
         // system will think it is superseded output.
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties streamProperties = new MetaProperties.Builder()
                 .feedName(key.getFeed())
                 .typeName(key.getStreamType())
                 .parent(streamHolder.getStream())
@@ -113,7 +113,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
             if (feedRef != null) {
                 feed = feedRef.getName();
             } else {
-                final Data parentStream = streamHolder.getStream();
+                final Meta parentStream = streamHolder.getStream();
                 if (parentStream == null) {
                     throw new ProcessException("Unable to determine feed as no parent stream set");
                 }

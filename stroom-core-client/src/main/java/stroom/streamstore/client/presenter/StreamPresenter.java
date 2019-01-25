@@ -32,11 +32,11 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.LocationManager;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataRow;
-import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaRow;
+import stroom.data.meta.shared.Status;
 import stroom.data.meta.shared.ExpressionUtil;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
@@ -87,7 +87,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private final ClientDispatchAsync dispatcher;
     private final ButtonView streamListFilter;
 
-    private FindDataCriteria findStreamCriteria;
+    private FindMetaCriteria findStreamCriteria;
     private String feedName;
     private ButtonView streamListUpload;
     private ButtonView streamListDownload;
@@ -156,21 +156,21 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         streamListFilter = streamListPresenter.add(SvgPresets.FILTER);
 
         // Init the buttons
-        setStreamListSelectableEnabled(null, DataStatus.UNLOCKED);
-        setStreamRelationListSelectableEnabled(null, DataStatus.UNLOCKED);
+        setStreamListSelectableEnabled(null, Status.UNLOCKED);
+        setStreamRelationListSelectableEnabled(null, Status.UNLOCKED);
     }
 
-    public static FindDataCriteria createFindStreamCriteria() {
-        final FindDataCriteria findStreamCriteria = new FindDataCriteria();
+    public static FindMetaCriteria createFindStreamCriteria() {
+        final FindMetaCriteria findStreamCriteria = new FindMetaCriteria();
         findStreamCriteria.obtainExpression();
         return findStreamCriteria;
     }
 
-    private static Data getStream(final AbstractStreamListPresenter streamListPresenter, final long id) {
-        final ResultList<DataRow> list = streamListPresenter.getResultList();
+    private static Meta getStream(final AbstractStreamListPresenter streamListPresenter, final long id) {
+        final ResultList<MetaRow> list = streamListPresenter.getResultList();
         if (list != null) {
             if (list.getValues() != null) {
-                for (final DataRow streamAttributeMap : list.getValues()) {
+                for (final MetaRow streamAttributeMap : list.getValues()) {
                     if (streamAttributeMap.getData().getId() == id) {
                         return streamAttributeMap.getData();
                     }
@@ -180,10 +180,10 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         return null;
     }
 
-    public static boolean isSelectedAllOfStatus(final DataStatus filterStatus,
+    public static boolean isSelectedAllOfStatus(final Status filterStatus,
                                                 final AbstractStreamListPresenter streamListPresenter, final IdSet selectedIdSet,
-                                                final DataStatus... statusArray) {
-        final List<DataStatus> statusList = Arrays.asList(statusArray);
+                                                final Status... statusArray) {
+        final List<Status> statusList = Arrays.asList(statusArray);
         // Nothing Selected
         if (selectedIdSet == null || selectedIdSet.isMatchNothing()) {
             return false;
@@ -197,7 +197,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
 
         for (final Long id : selectedIdSet.getSet()) {
-            final Data stream = getStream(streamListPresenter, id);
+            final Meta stream = getStream(streamListPresenter, id);
             if (stream == null || !statusList.contains(stream.getStatus())) {
                 return false;
             }
@@ -213,7 +213,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
         registerHandler(streamListPresenter.getSelectionModel().addSelectionHandler(event -> {
             streamRelationListPresenter.setSelectedStream(streamListPresenter.getSelectedStream(), true,
-                    !DataStatus.UNLOCKED.equals(getSingleStatus(getCriteria())));
+                    !Status.UNLOCKED.equals(getSingleStatus(getCriteria())));
             showData();
         }));
         registerHandler(streamListPresenter.addDataSelectionHandler(event -> setStreamListSelectableEnabled(event.getSelectedItem(),
@@ -267,7 +267,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                     findStreamCriteria.obtainPageRequest().setOffset(0L);
 
                     // Init the buttons
-                    final DataStatus status = getSingleStatus(findStreamCriteria);
+                    final Status status = getSingleStatus(findStreamCriteria);
                     setStreamListSelectableEnabled(streamListPresenter.getSelectedEntityIdSet(), status);
 
                     // Clear the current selection and get a new list of streams.
@@ -296,20 +296,20 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         // Delete
         if (streamListDelete != null) {
             registerHandler(streamListDelete
-                    .addClickHandler(new UpdateStatusClickHandler(this, streamListPresenter, true, dispatcher, DataStatus.DELETED)));
+                    .addClickHandler(new UpdateStatusClickHandler(this, streamListPresenter, true, dispatcher, Status.DELETED)));
         }
         if (streamRelationListDelete != null) {
             registerHandler(streamRelationListDelete.addClickHandler(
-                    new UpdateStatusClickHandler(this, streamRelationListPresenter, false, dispatcher, DataStatus.DELETED)));
+                    new UpdateStatusClickHandler(this, streamRelationListPresenter, false, dispatcher, Status.DELETED)));
         }
         // UN-Delete
         if (streamListUndelete != null) {
             registerHandler(streamListUndelete
-                    .addClickHandler(new UpdateStatusClickHandler(this, streamListPresenter, true, dispatcher, DataStatus.UNLOCKED)));
+                    .addClickHandler(new UpdateStatusClickHandler(this, streamListPresenter, true, dispatcher, Status.UNLOCKED)));
         }
         if (streamRelationListUndelete != null) {
             registerHandler(streamRelationListUndelete.addClickHandler(
-                    new UpdateStatusClickHandler(this, streamRelationListPresenter, false, dispatcher, DataStatus.UNLOCKED)));
+                    new UpdateStatusClickHandler(this, streamRelationListPresenter, false, dispatcher, Status.UNLOCKED)));
         }
         // Process
         if (streamListProcess != null) {
@@ -323,9 +323,9 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     public boolean hasAdvancedCriteria(final ExpressionOperator expression) {
-        final DataStatus status = getSingleStatus(expression);
+        final Status status = getSingleStatus(expression);
 
-        if (!DataStatus.UNLOCKED.equals(status)) {
+        if (!Status.UNLOCKED.equals(status)) {
             return true;
         }
 
@@ -333,26 +333,26 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         return statusPeriod.size() > 0;
     }
 
-    private static DataStatus getSingleStatus(final FindDataCriteria criteria) {
+    private static Status getSingleStatus(final FindMetaCriteria criteria) {
         if (criteria == null) {
             return null;
         }
         return getSingleStatus(criteria.getExpression());
     }
 
-    private static DataStatus getSingleStatus(final ExpressionOperator expression) {
-        final Set<DataStatus> streamStatuses = getStatusSet(expression);
+    private static Status getSingleStatus(final ExpressionOperator expression) {
+        final Set<Status> streamStatuses = getStatusSet(expression);
         if (streamStatuses.size() == 1) {
             return streamStatuses.iterator().next();
         }
         return null;
     }
 
-    private static Set<DataStatus> getStatusSet(final ExpressionOperator expression) {
+    private static Set<Status> getStatusSet(final ExpressionOperator expression) {
         final Set<String> terms = getTerms(expression, MetaDataSource.STATUS);
-        final Set<DataStatus> streamStatuses = new HashSet<>();
+        final Set<Status> streamStatuses = new HashSet<>();
         for (final String term : terms) {
-            for (final DataStatus streamStatus : DataStatus.values()) {
+            for (final Status streamStatus : Status.values()) {
                 if (streamStatus.getDisplayValue().equals(term)) {
                     streamStatuses.add(streamStatus);
                 }
@@ -388,7 +388,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
 
     private void showData() {
-        final Data stream = getSelectedStream();
+        final Meta stream = getSelectedStream();
         if (stream == null) {
             dataPresenter.clear();
         } else {
@@ -401,7 +401,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         streamListPresenter.refresh();
     }
 
-    public FindDataCriteria getCriteria() {
+    public FindMetaCriteria getCriteria() {
         return findStreamCriteria;
     }
 
@@ -474,8 +474,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         streamRelationListPresenter.setCriteria(null);
     }
 
-    private Data getSelectedStream() {
-        DataRow selectedStream = streamListPresenter.getSelectedStream();
+    private Meta getSelectedStream() {
+        MetaRow selectedStream = streamListPresenter.getSelectedStream();
         if (streamRelationListPresenter.getSelectedStream() != null) {
             selectedStream = streamRelationListPresenter.getSelectedStream();
         }
@@ -513,7 +513,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         return selectedIdSet != null && (Boolean.TRUE.equals(selectedIdSet.getMatchAll()) || selectedIdSet.size() > 0);
     }
 
-    public void setStreamListSelectableEnabled(final IdSet streamIdSet, final DataStatus streamStatus) {
+    public void setStreamListSelectableEnabled(final IdSet streamIdSet, final Status streamStatus) {
         final boolean someSelected = isSomeSelected(streamListPresenter, streamIdSet);
 
         if (streamListDownload != null) {
@@ -530,16 +530,16 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
         if (streamListUndelete != null) {
             // Hide if we are normal view (Unlocked streams)
-            streamListUndelete.setVisible(!DataStatus.UNLOCKED.equals(streamStatus));
+            streamListUndelete.setVisible(!Status.UNLOCKED.equals(streamStatus));
             streamListUndelete
                     .setEnabled(someSelected && isSelectedAllOfStatus(getSingleStatus(getCriteria()),
-                            streamListPresenter, streamIdSet, DataStatus.DELETED));
+                            streamListPresenter, streamIdSet, Status.DELETED));
         }
 
     }
 
     private void setStreamRelationListSelectableEnabled(final IdSet streamIdSet,
-                                                        final DataStatus streamStatus) {
+                                                        final Status streamStatus) {
         final boolean someSelected = isSomeSelected(streamRelationListPresenter, streamIdSet);
 
         if (streamRelationListDownload != null) {
@@ -548,14 +548,14 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         if (streamRelationListDelete != null) {
             streamRelationListDelete
                     .setEnabled(someSelected && isSelectedAllOfStatus(getSingleStatus(getCriteria()),
-                            streamRelationListPresenter, streamIdSet, DataStatus.LOCKED, DataStatus.UNLOCKED));
+                            streamRelationListPresenter, streamIdSet, Status.LOCKED, Status.UNLOCKED));
         }
         if (streamRelationListUndelete != null) {
             // Hide if we are normal view (Unlocked streams)
-            streamRelationListUndelete.setVisible(!DataStatus.UNLOCKED.equals(streamStatus));
+            streamRelationListUndelete.setVisible(!Status.UNLOCKED.equals(streamStatus));
             streamRelationListUndelete
                     .setEnabled(someSelected && isSelectedAllOfStatus(getSingleStatus(getCriteria()),
-                            streamRelationListPresenter, streamIdSet, DataStatus.DELETED));
+                            streamRelationListPresenter, streamIdSet, Status.DELETED));
         }
         if (streamRelationListProcess != null) {
             streamRelationListProcess.setEnabled(someSelected);
@@ -583,9 +583,9 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             // in the top screen and then chooses the raw stream in the middle
             // pane to step through.
             Long childStreamId = null;
-            final DataRow map = streamListPresenter.getSelectedStream();
+            final MetaRow map = streamListPresenter.getSelectedStream();
             if (map != null && map.getData() != null) {
-                final Data childStream = map.getData();
+                final Meta childStream = map.getData();
                 // If the top list has a raw stream selected or isn't a child of
                 // the selected stream then this is't the child stream we are
                 // looking for.
@@ -624,7 +624,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             return streamListPresenter;
         }
 
-        FindDataCriteria createCriteria() {
+        FindMetaCriteria createCriteria() {
             final IdSet idSet = streamListPresenter.getSelectedEntityIdSet();
             // First make sure there is some sort of selection, either
             // individual streams have been selected or all streams have been
@@ -632,7 +632,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             if (Boolean.TRUE.equals(idSet.getMatchAll()) || idSet.size() > 0) {
                 // Only use match all if we are allowed to use criteria.
                 if (useCriteria && Boolean.TRUE.equals(idSet.getMatchAll())) {
-                    final FindDataCriteria criteria = createFindStreamCriteria();
+                    final FindMetaCriteria criteria = createFindStreamCriteria();
                     criteria.copyFrom(streamPresenter.getCriteria());
                     // Paging is NA
                     criteria.obtainPageRequest().setLength(null);
@@ -642,9 +642,9 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                 } else if (idSet.size() > 0) {
                     // If we aren't matching all then create a criteria that
                     // only includes the selected streams.
-                    final FindDataCriteria criteria = createFindStreamCriteria();
+                    final FindMetaCriteria criteria = createFindStreamCriteria();
                     // Copy the current filter status
-                    final DataStatus status = getSingleStatus(streamPresenter.getCriteria());
+                    final Status status = getSingleStatus(streamPresenter.getCriteria());
                     if (status != null) {
                         criteria.setExpression(ExpressionUtil.createStatusExpression(status));
                     }
@@ -662,14 +662,14 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         @Override
         public void onClick(final ClickEvent event) {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                final FindDataCriteria criteria = createCriteria();
+                final FindMetaCriteria criteria = createCriteria();
                 if (criteria != null) {
                     performAction(criteria, dispatcher);
                 }
             }
         }
 
-        protected abstract void performAction(FindDataCriteria criteria, ClientDispatchAsync dispatcher);
+        protected abstract void performAction(FindMetaCriteria criteria, ClientDispatchAsync dispatcher);
 
         @Override
         public void fireEvent(final GwtEvent<?> event) {
@@ -692,25 +692,25 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
 
         @Override
-        protected void performAction(final FindDataCriteria criteria, final ClientDispatchAsync dispatcher) {
+        protected void performAction(final FindMetaCriteria criteria, final ClientDispatchAsync dispatcher) {
             dispatcher.exec(new DownloadDataAction(criteria)).onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result));
         }
     }
 
     private static class UpdateStatusClickHandler extends AbstractStreamClickHandler {
-        private final DataStatus newStatus;
+        private final Status newStatus;
 
         public UpdateStatusClickHandler(final StreamPresenter streamPresenter,
                                         final AbstractStreamListPresenter streamListPresenter,
                                         final boolean useCriteria,
                                         final ClientDispatchAsync dispatcher,
-                                        final DataStatus newStatus) {
+                                        final Status newStatus) {
             super(streamPresenter, streamListPresenter, useCriteria, dispatcher);
             this.newStatus = newStatus;
         }
 
         protected String getText(final boolean pastTense) {
-            if (DataStatus.DELETED.equals(newStatus)) {
+            if (Status.DELETED.equals(newStatus)) {
                 return "Delete" + (pastTense ? "d" : "");
             } else {
                 return "Restore" + (pastTense ? "d" : "");
@@ -718,8 +718,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
 
         @Override
-        protected void performAction(final FindDataCriteria initialCriteria, final ClientDispatchAsync dispatcher) {
-            final FindDataCriteria deleteCriteria = new FindDataCriteria();
+        protected void performAction(final FindMetaCriteria initialCriteria, final ClientDispatchAsync dispatcher) {
+            final FindMetaCriteria deleteCriteria = new FindMetaCriteria();
             deleteCriteria.copyFrom(initialCriteria);
 
 //            if (getSingleStatus(deleteCriteria) == null) {
@@ -755,7 +755,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             }
         }
 
-        void doUpdate(final FindDataCriteria criteria, final ClientDispatchAsync dispatcher) {
+        void doUpdate(final FindMetaCriteria criteria, final ClientDispatchAsync dispatcher) {
             dispatcher.exec(new UpdateStatusAction(criteria, newStatus)).onSuccess(result -> {
                 getStreamListPresenter().getSelectedEntityIdSet().clear();
                 getStreamListPresenter().getSelectedEntityIdSet().setMatchAll(false);
@@ -774,7 +774,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
 
         @Override
-        protected void performAction(final FindDataCriteria criteria, final ClientDispatchAsync dispatcher) {
+        protected void performAction(final FindMetaCriteria criteria, final ClientDispatchAsync dispatcher) {
             if (criteria != null) {
                 ConfirmEvent.fire(this, "Are you sure you want to reprocess the selected items", confirm -> {
                     if (confirm) {

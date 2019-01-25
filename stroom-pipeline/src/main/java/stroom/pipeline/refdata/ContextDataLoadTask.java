@@ -16,7 +16,7 @@
 
 package stroom.pipeline.refdata;
 
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.docref.DocRef;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
@@ -27,7 +27,7 @@ import java.io.InputStream;
 
 public class ContextDataLoadTask extends ServerTask<VoidResult> {
     private InputStream inputStream;
-    private Data data;
+    private Meta data;
     private String feedName;
     private DocRef contextPipeline;
     private RefStreamDefinition refStreamDefinition;
@@ -37,7 +37,7 @@ public class ContextDataLoadTask extends ServerTask<VoidResult> {
     }
 
     public ContextDataLoadTask(final InputStream inputStream,
-                               final Data data,
+                               final Meta data,
                                final String feedName,
                                final DocRef contextPipeline,
                                final RefStreamDefinition refStreamDefinition,
@@ -54,7 +54,7 @@ public class ContextDataLoadTask extends ServerTask<VoidResult> {
         return inputStream;
     }
 
-    public Data getData() {
+    public Meta getData() {
         return data;
     }
 

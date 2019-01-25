@@ -17,9 +17,9 @@
 
 package stroom.streamtask;
 
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaService;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.node.api.NodeService;
@@ -40,12 +40,12 @@ import java.util.List;
 
 @Singleton
 public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
-    private final DataMetaService streamMetaService;
+    private final MetaService streamMetaService;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final NodeService nodeService;
 
     @Inject
-    MockStreamTaskCreator(final DataMetaService streamMetaService,
+    MockStreamTaskCreator(final MetaService streamMetaService,
                           final StreamProcessorFilterService streamProcessorFilterService,
                           final NodeService nodeService) {
         this.streamMetaService = streamMetaService;
@@ -75,14 +75,14 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
             for (final ProcessorFilter filter : streamProcessorFilters) {
                 final QueryData queryData = filter.getQueryData();
 
-                final FindDataCriteria findStreamCriteria = new FindDataCriteria();
+                final FindMetaCriteria findStreamCriteria = new FindMetaCriteria();
                 findStreamCriteria.setExpression(queryData.getExpression());
-                final BaseResultList<Data> streams = streamMetaService.find(findStreamCriteria);
+                final BaseResultList<Meta> streams = streamMetaService.find(findStreamCriteria);
 
-                streams.sort(Comparator.comparing(Data::getId));
+                streams.sort(Comparator.comparing(Meta::getId));
 
                 if (streams.size() > 0) {
-                    for (final Data stream : streams) {
+                    for (final Meta stream : streams) {
                         if (stream.getId() >= filter.getStreamProcessorFilterTracker().getMinStreamId()) {
                             // Only process streams with an id of 1 or more
                             // greater than this stream in future.

@@ -1,6 +1,6 @@
 package stroom.data.meta.shared;
 
-public class DataProperties {
+public class MetaProperties {
     private Long parentId;
     private String typeName;
     private String feedName;
@@ -48,7 +48,7 @@ public class DataProperties {
     }
 
     public static class Builder {
-        private DataProperties dp = new DataProperties();
+        private MetaProperties dp = new MetaProperties();
 
         /**
          * This is a utility method to perform common parent association behaviour, e.g. setting the effective time from the parent.
@@ -56,7 +56,7 @@ public class DataProperties {
          * @param parent The parent to set.
          * @return The builder.
          */
-        public Builder parent(final Data parent) {
+        public Builder parent(final Meta parent) {
             // Set effective time from the parent data.
             if (parent != null) {
                 dp.parentId = parent.getId();
@@ -119,8 +119,8 @@ public class DataProperties {
             return this;
         }
 
-        public DataProperties build() {
-            final DataProperties properties = new DataProperties();
+        public MetaProperties build() {
+            final MetaProperties properties = new MetaProperties();
             properties.parentId = dp.parentId;
             properties.typeName = dp.typeName;
             properties.feedName = dp.feedName;

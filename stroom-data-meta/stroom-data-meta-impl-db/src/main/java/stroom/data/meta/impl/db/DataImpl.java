@@ -1,11 +1,11 @@
 package stroom.data.meta.impl.db;
 
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.Status;
 
 import java.util.Objects;
 
-class DataImpl implements Data {
+class DataImpl implements Meta {
     private long id;
     private String feedName;
     private String typeName;
@@ -13,7 +13,7 @@ class DataImpl implements Data {
     private Long parentDataId;
     private Long processTaskId;
     private Integer processorId;
-    private DataStatus status;
+    private Status status;
     private Long statusMs;
     private long createMs;
     private Long effectiveMs;
@@ -57,7 +57,7 @@ class DataImpl implements Data {
     }
 
     @Override
-    public DataStatus getStatus() {
+    public Status getStatus() {
         return status;
     }
 
@@ -100,7 +100,7 @@ class DataImpl implements Data {
         Builder() {
         }
 
-        Builder(final Data data) {
+        Builder(final Meta data) {
             id(data.getId());
             feedName(data.getFeedName());
             typeName(data.getTypeName());
@@ -149,7 +149,7 @@ class DataImpl implements Data {
             return this;
         }
 
-        public Builder status(final DataStatus status) {
+        public Builder status(final Status status) {
             data.status = status;
             return this;
         }
@@ -169,7 +169,7 @@ class DataImpl implements Data {
             return this;
         }
 
-        public Data build() {
+        public Meta build() {
             return data;
         }
     }

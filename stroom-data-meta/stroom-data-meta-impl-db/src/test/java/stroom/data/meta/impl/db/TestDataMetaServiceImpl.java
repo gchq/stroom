@@ -3,10 +3,10 @@ package stroom.data.meta.impl.db;
 import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataProperties;
-import stroom.data.meta.shared.DataStatus;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaProperties;
+import stroom.data.meta.shared.Status;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.query.api.v2.ExpressionOperator;
@@ -33,24 +33,24 @@ class TestDataMetaServiceImpl {
         // Delete everything
         dataMetaService.deleteAll();
 
-        final Data data1 = dataMetaService.create(createProperties("FEED1"));
-        final Data data2 = dataMetaService.create(createProperties("FEED2"));
+        final Meta data1 = dataMetaService.create(createProperties("FEED1"));
+        final Meta data2 = dataMetaService.create(createProperties("FEED2"));
 
         final ExpressionOperator expression = new Builder(Op.AND)
                 .addTerm(MetaDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(data2.getId()))
                 .build();
-        final FindDataCriteria criteria = new FindDataCriteria(expression);
+        final FindMetaCriteria criteria = new FindMetaCriteria(expression);
 
-        final BaseResultList<Data> list = dataMetaService.find(criteria);
+        final BaseResultList<Meta> list = dataMetaService.find(criteria);
 
         assertThat(list.size()).isEqualTo(1);
 
-        int deleted = dataMetaService.updateStatus(new FindDataCriteria(), DataStatus.DELETED);
+        int deleted = dataMetaService.updateStatus(new FindMetaCriteria(), Status.DELETED);
         assertThat(deleted).isEqualTo(2);
     }
 
-    private DataProperties createProperties(final String feedName) {
-        return new DataProperties.Builder()
+    private MetaProperties createProperties(final String feedName) {
+        return new MetaProperties.Builder()
                 .createMs(System.currentTimeMillis())
                 .feedName(feedName)
                 .pipelineUuid("PIPELINE_UUID")

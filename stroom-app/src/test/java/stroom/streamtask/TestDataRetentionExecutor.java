@@ -21,11 +21,11 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.DataProperties;
-import stroom.data.meta.shared.DataStatus;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.MetaService;
+import stroom.data.meta.shared.MetaProperties;
+import stroom.data.meta.shared.Status;
+import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.meta.shared.MetaDataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.policy.DataRetentionExecutor;
@@ -54,7 +54,7 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     private static final int RETENTION_PERIOD_DAYS = 1;
 
     @Inject
-    private DataMetaService streamMetaService;
+    private MetaService streamMetaService;
     @Inject
     private DataRetentionExecutor dataRetentionExecutor;
     @Inject
@@ -82,16 +82,16 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         }
         dataRetentionService.save(dataRetentionPolicy);
 
-        Data streamInsideRetention = streamMetaService.create(
-                new DataProperties.Builder()
+        Meta streamInsideRetention = streamMetaService.create(
+                new MetaProperties.Builder()
                         .feedName(feedName)
                         .typeName(StreamTypeNames.RAW_EVENTS)
                         .createMs(now)
                         .statusMs(now)
                         .build());
 
-        Data streamOutsideRetention = streamMetaService.create(
-                new DataProperties.Builder()
+        Meta streamOutsideRetention = streamMetaService.create(
+                new MetaProperties.Builder()
                         .feedName(feedName)
                         .typeName(StreamTypeNames.RAW_EVENTS)
                         .createMs(timeOutsideRetentionPeriod)
@@ -99,8 +99,8 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
                         .build());
 
         // Streams are locked initially so unlock.
-        streamMetaService.updateStatus(streamInsideRetention, DataStatus.UNLOCKED);
-        streamMetaService.updateStatus(streamOutsideRetention, DataStatus.UNLOCKED);
+        streamMetaService.updateStatus(streamInsideRetention, Status.UNLOCKED);
+        streamMetaService.updateStatus(streamOutsideRetention, Status.UNLOCKED);
 
         dumpStreams();
 
@@ -115,8 +115,8 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
 
         dumpStreams();
 
-        assertThat(streamInsideRetention.getStatus()).isEqualTo(DataStatus.UNLOCKED);
-        assertThat(streamOutsideRetention.getStatus()).isEqualTo(DataStatus.DELETED);
+        assertThat(streamInsideRetention.getStatus()).isEqualTo(Status.UNLOCKED);
+        assertThat(streamOutsideRetention.getStatus()).isEqualTo(Status.DELETED);
         // no change to the record
         assertThat(streamInsideRetention.getStatusMs()).isEqualTo(lastStatusMsInside);
         // record changed
@@ -134,8 +134,8 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
 
         dumpStreams();
 
-        assertThat(streamInsideRetention.getStatus()).isEqualTo(DataStatus.UNLOCKED);
-        assertThat(streamOutsideRetention.getStatus()).isEqualTo(DataStatus.DELETED);
+        assertThat(streamInsideRetention.getStatus()).isEqualTo(Status.UNLOCKED);
+        assertThat(streamOutsideRetention.getStatus()).isEqualTo(Status.DELETED);
         // no change to the records
         assertThat(streamInsideRetention.getStatusMs()).isEqualTo(lastStatusMsInside);
         assertThat(streamOutsideRetention.getStatusMs()).isEqualTo(lastStatusMsOutside);
@@ -146,11 +146,11 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     }
 
     private void dumpStreams() {
-        final BaseResultList<Data> streams = streamMetaService.find(new FindDataCriteria());
+        final BaseResultList<Meta> streams = streamMetaService.find(new FindMetaCriteria());
 
         assertThat(streams.size()).isEqualTo(2);
 
-        for (final Data stream : streams) {
+        for (final Meta stream : streams) {
             LOGGER.info("stream: %s, createMs: %s, statusMs: %s, status: %s", stream,
                     DateUtil.createNormalDateTimeString(stream.getCreateMs()),
                     DateUtil.createNormalDateTimeString(stream.getStatusMs()), stream.getStatus());

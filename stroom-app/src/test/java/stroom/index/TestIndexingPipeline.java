@@ -20,7 +20,7 @@ package stroom.index;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.Meta;
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
@@ -117,7 +117,7 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             // Set the stream for decoration purposes.
             final long id = (long) (Math.random() * 1000);
 
-            final Data stream = mock(Data.class);
+            final Meta stream = mock(Meta.class);
             when(stream.getId()).thenReturn(id);
             streamHolderProvider.get().setStream(stream);
 

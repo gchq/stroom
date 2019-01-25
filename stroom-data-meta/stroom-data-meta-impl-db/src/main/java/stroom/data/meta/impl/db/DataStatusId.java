@@ -16,7 +16,7 @@
 
 package stroom.data.meta.impl.db;
 
-import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.Status;
 
 /**
  * <p>
@@ -29,7 +29,7 @@ class DataStatusId {
     public static final byte LOCKED = 1;
     public static final byte DELETED = 99;
 
-    static byte getPrimitiveValue(final DataStatus status) {
+    static byte getPrimitiveValue(final Status status) {
         switch (status) {
             case UNLOCKED:
                 return 0;
@@ -42,14 +42,14 @@ class DataStatusId {
         }
     }
 
-    static DataStatus getStatus(byte primitiveValue) {
+    static Status getStatus(byte primitiveValue) {
         switch (primitiveValue) {
             case 0:
-                return DataStatus.UNLOCKED;
+                return Status.UNLOCKED;
             case 1:
-                return DataStatus.LOCKED;
+                return Status.LOCKED;
             case 99:
-                return DataStatus.DELETED;
+                return Status.DELETED;
             default:
                 throw new RuntimeException("Unknown status " + primitiveValue);
         }

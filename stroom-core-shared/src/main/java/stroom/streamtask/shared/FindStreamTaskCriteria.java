@@ -22,8 +22,8 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.Period;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.Meta;
+import stroom.data.meta.shared.Status;
 
 /**
  * <p>
@@ -86,7 +86,7 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
      */
     private CriteriaSet<DocRef> pipelineSet = null;
 
-    private CriteriaSet<DataStatus> statusSet;
+    private CriteriaSet<Status> statusSet;
 
     private Period createPeriod;
 //    private Period effectivePeriod;
@@ -96,7 +96,7 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
      */
     private Long createMs = null;
 
-    public static FindStreamTaskCriteria createWithStream(final Data stream) {
+    public static FindStreamTaskCriteria createWithStream(final Meta stream) {
         final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
         criteria.obtainStreamIdSet().add(stream.getId());
         return criteria;
@@ -229,11 +229,11 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
         return streamTaskIdSet;
     }
 
-    public CriteriaSet<DataStatus> getStatusSet() {
+    public CriteriaSet<Status> getStatusSet() {
         return statusSet;
     }
 
-    public CriteriaSet<DataStatus> obtainStatusSet() {
+    public CriteriaSet<Status> obtainStatusSet() {
         if (statusSet == null) {
             statusSet = new CriteriaSet<>();
         }
