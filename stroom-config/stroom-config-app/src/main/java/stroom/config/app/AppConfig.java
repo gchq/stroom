@@ -12,6 +12,7 @@ import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
 import stroom.index.IndexConfig;
+import stroom.index.impl.db.IndexDbConfig;
 import stroom.job.JobSystemConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.impl.NodeConfig;
@@ -45,6 +46,7 @@ public class AppConfig implements IsConfig {
     private ExplorerConfig explorerConfig;
     private ExportConfig exportConfig;
     private IndexConfig indexConfig;
+    private IndexDbConfig indexDbConfig;
     private JobSystemConfig jobSystemConfig;
     private LifecycleConfig lifecycleConfig;
     private NodeConfig nodeConfig;
@@ -74,6 +76,7 @@ public class AppConfig implements IsConfig {
         this.explorerConfig = new ExplorerConfig();
         this.exportConfig = new ExportConfig();
         this.indexConfig = new IndexConfig();
+        this.indexDbConfig = new IndexDbConfig();
         this.jobSystemConfig = new JobSystemConfig();
         this.lifecycleConfig = new LifecycleConfig();
         this.pipelineConfig = new PipelineConfig();
@@ -104,6 +107,7 @@ public class AppConfig implements IsConfig {
               final ExplorerConfig explorerConfig,
               final ExportConfig exportConfig,
               final IndexConfig indexConfig,
+              final IndexDbConfig indexDbConfig,
               final JobSystemConfig jobSystemConfig,
               final LifecycleConfig lifecycleConfig,
               final PipelineConfig pipelineConfig,
@@ -131,6 +135,7 @@ public class AppConfig implements IsConfig {
         this.explorerConfig = explorerConfig;
         this.exportConfig = exportConfig;
         this.indexConfig = indexConfig;
+        this.indexDbConfig = indexDbConfig;
         this.jobSystemConfig = jobSystemConfig;
         this.lifecycleConfig = lifecycleConfig;
         this.pipelineConfig = pipelineConfig;
@@ -248,6 +253,15 @@ public class AppConfig implements IsConfig {
 
     public void setIndexConfig(final IndexConfig indexConfig) {
         this.indexConfig = indexConfig;
+    }
+
+    @JsonProperty("indexDb")
+    public IndexDbConfig getIndexDbConfig() {
+        return indexDbConfig;
+    }
+
+    public void setIndexDbConfig(final IndexDbConfig indexDbConfig) {
+        this.indexDbConfig = indexDbConfig;
     }
 
     @JsonProperty("job")

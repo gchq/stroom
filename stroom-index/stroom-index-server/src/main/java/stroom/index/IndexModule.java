@@ -24,6 +24,7 @@ import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.Clearable;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.index.impl.db.IndexDbModule;
 import stroom.index.shared.CloseIndexShardAction;
 import stroom.index.shared.DeleteIndexShardAction;
 import stroom.index.shared.FetchIndexVolumesAction;
@@ -35,6 +36,7 @@ public class IndexModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new IndexElementModule());
+        install(new IndexDbModule());
 
         bind(IndexShardManager.class).to(IndexShardManagerImpl.class);
         bind(IndexShardWriterCache.class).to(IndexShardWriterCacheImpl.class);

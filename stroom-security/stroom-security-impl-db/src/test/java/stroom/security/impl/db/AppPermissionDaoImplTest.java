@@ -10,7 +10,7 @@ import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import stroom.security.dao.AppPermissionDao;
 import stroom.security.dao.UserDao;
-import stroom.security.shared.UserJooq;
+import stroom.security.shared.User;
 
 import java.util.Optional;
 import java.util.Set;
@@ -22,9 +22,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class AppPermissionDaoImplTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AppPermissionDaoImplTest.class);
 
-    private static MySQLContainer dbContainer = new MySQLContainer();//= null;//
+    private static MySQLContainer dbContainer = new MySQLContainer()
+            .withDatabaseName(Stroom.STROOM.getName());//= null;//
 
-    private static Injector injector;
     private static UserDao userDao;
     private static AppPermissionDao appPermissionDao;
 
@@ -36,7 +36,7 @@ public class AppPermissionDaoImplTest {
         LOGGER.info(() -> "Before All - Start Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
 
-        injector = Guice.createInjector(new SecurityDbModule(), new TestModule(dbContainer));
+        Injector injector = Guice.createInjector(new SecurityDbModule(), new TestModule(dbContainer));
 
         userDao = injector.getInstance(UserDao.class);
         appPermissionDao = injector.getInstance(AppPermissionDao.class);
@@ -55,7 +55,7 @@ public class AppPermissionDaoImplTest {
     public void testPermissionStory() {
         final String userName = String.format("SomePerson_%s", UUID.randomUUID());
 
-        final UserJooq user = userDao.createUser(userName);
+        final User user = userDao.createUser(userName);
         appPermissionDao.addPermission(user.getUuid(), PERMISSION_NAME_1);
         appPermissionDao.addPermission(user.getUuid(), PERMISSION_NAME_2);
 

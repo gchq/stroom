@@ -14,6 +14,7 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-importexport:stroom-importexport-migration')
     implementation project(':stroom-index:stroom-index-shared')
+    implementation project(':stroom-index:stroom-index-impl-db')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')
