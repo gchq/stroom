@@ -17,26 +17,20 @@
 
 package stroom.meta.impl.db;
 
-import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.db.util.JooqUtil;
+import stroom.meta.impl.db.tables.records.MetaTypeRecord;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static stroom.meta.impl.db.tables.MetaType.META_TYPE;
 
 @Singleton
 class MetaTypeServiceImpl implements MetaTypeService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetaTypeServiceImpl.class);
-
     private final Map<String, Integer> cache = new ConcurrentHashMap<>();
 
     private final ConnectionProvider connectionProvider;
@@ -63,17 +57,11 @@ class MetaTypeServiceImpl implements MetaTypeService {
 
     @Override
     public List<String> list() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .select(META_TYPE.NAME)
-                    .from(META_TYPE)
-                    .fetch(META_TYPE.NAME);
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select(META_TYPE.NAME)
+                .from(META_TYPE)
+                .fetch(META_TYPE.NAME)
+        );
     }
 
     private Integer get(final String name) {
@@ -82,44 +70,32 @@ class MetaTypeServiceImpl implements MetaTypeService {
             return id;
         }
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            id = create
-                    .select(META_TYPE.ID)
-                    .from(META_TYPE)
-                    .where(META_TYPE.NAME.eq(name))
-                    .fetchOne(META_TYPE.ID);
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-
-        if (id != null) {
-            cache.put(name, id);
-        }
-
-        return id;
+        final Optional<Integer> optional = JooqUtil.contextResult(connectionProvider, context -> context
+                .select(META_TYPE.ID)
+                .from(META_TYPE)
+                .where(META_TYPE.NAME.eq(name))
+                .fetchOptional(META_TYPE.ID));
+        optional.ifPresent(i -> cache.put(name, i));
+        return optional.orElse(null);
     }
 
     private Integer create(final String name) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            final Integer id = create
+        return JooqUtil.contextResult(connectionProvider, context -> {
+            final Optional<MetaTypeRecord> optional = context
                     .insertInto(META_TYPE, META_TYPE.NAME)
                     .values(name)
+                    .onDuplicateKeyIgnore()
                     .returning(META_TYPE.ID)
-                    .fetchOne()
-                    .getId();
-            cache.put(name, id);
-            return id;
+                    .fetchOptional();
 
-        } catch (final SQLException | RuntimeException e) {
-            // Expect errors in the case of duplicate names.
-            LOGGER.debug(e.getMessage(), e);
-        }
-
-        return null;
+            return optional
+                    .map(record -> {
+                        final Integer id = record.getId();
+                        cache.put(name, id);
+                        return id;
+                    })
+                    .orElseGet(() -> get(name));
+        });
     }
 
     void clear() {
@@ -128,13 +104,8 @@ class MetaTypeServiceImpl implements MetaTypeService {
     }
 
     int deleteAll() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .delete(META_TYPE)
-                    .execute();
-        } catch (final SQLException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .delete(META_TYPE)
+                .execute());
     }
 }

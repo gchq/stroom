@@ -16,17 +16,11 @@
 
 package stroom.meta.impl.db;
 
-import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.db.util.JooqUtil;
 import stroom.meta.shared.MetaDataSource;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -35,8 +29,6 @@ import static stroom.meta.impl.db.tables.MetaKey.META_KEY;
 
 @Singleton
 class MetaKeyServiceImpl implements MetaKeyService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetaKeyServiceImpl.class);
-
 //    private static final Map<String, MetaFieldUse> SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP;
 
     private static final String REC_READ = MetaDataSource.REC_READ;
@@ -108,21 +100,14 @@ class MetaKeyServiceImpl implements MetaKeyService {
     }
 
     private void fillCache() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            create
-                    .select(META_KEY.ID, META_KEY.NAME)
-                    .from(META_KEY)
-                    .fetch()
-                    .forEach(r -> {
-                        idToNameCache.put(r.value1(), r.value2());
-                        nameToIdCache.put(r.value2(), r.value1());
-                    });
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context -> context
+                .select(META_KEY.ID, META_KEY.NAME)
+                .from(META_KEY)
+                .fetch()
+                .forEach(r -> {
+                    idToNameCache.put(r.value1(), r.value2());
+                    nameToIdCache.put(r.value2(), r.value1());
+                }));
     }
 //
 //    private Integer get(final String name) {
@@ -131,8 +116,7 @@ class MetaKeyServiceImpl implements MetaKeyService {
 //            return id;
 //        }
 //
-//        try (final Connection connection = connectionProvider.getConnection()) {
-//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//        JooqUtil.context(connectionProvider, context -> context
 //
 //            id = create
 //                    .select(STRM_TYPE.ID)
@@ -153,16 +137,11 @@ class MetaKeyServiceImpl implements MetaKeyService {
 //    }
 
     private void create(final String name, final MetaType type) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            create
-                    .insertInto(META_KEY, META_KEY.NAME, META_KEY.FIELD_TYPE)
-                    .values(name, type.getPrimitiveValue())
-                    .execute();
-        } catch (final SQLException | RuntimeException e) {
-            // Expect errors in the case of pre existing keys.
-            LOGGER.debug(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context -> context
+                .insertInto(META_KEY, META_KEY.NAME, META_KEY.FIELD_TYPE)
+                .values(name, type.getPrimitiveValue())
+                .onDuplicateKeyIgnore()
+                .execute());
     }
 //
 //    @Override
@@ -256,13 +235,8 @@ class MetaKeyServiceImpl implements MetaKeyService {
     }
 
     int deleteAll() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .delete(META_KEY)
-                    .execute();
-        } catch (final SQLException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .delete(META_KEY)
+                .execute());
     }
 }

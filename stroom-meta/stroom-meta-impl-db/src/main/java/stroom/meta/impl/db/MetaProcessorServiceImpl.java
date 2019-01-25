@@ -17,17 +17,11 @@
 
 package stroom.meta.impl.db;
 
-import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.db.util.JooqUtil;
 import stroom.meta.impl.db.tables.records.MetaProcessorRecord;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,8 +29,6 @@ import static stroom.meta.impl.db.tables.MetaProcessor.META_PROCESSOR;
 
 @Singleton
 class MetaProcessorServiceImpl implements MetaProcessorService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetaProcessorServiceImpl.class);
-
     private final Map<Integer, MetaProcessorRecord> cache = new ConcurrentHashMap<>();
 
     private final ConnectionProvider connectionProvider;
@@ -67,8 +59,7 @@ class MetaProcessorServiceImpl implements MetaProcessorService {
 
 //    @Override
 //    public List<String> list() {
-//        try (final Connection connection = connectionProvider.getConnection()) {
-//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//        JooqUtil.context(connectionProvider, context -> context
 //
 //            return create
 //                    .select(FD.NAME)
@@ -87,43 +78,30 @@ class MetaProcessorServiceImpl implements MetaProcessorService {
             return record.getId();
         }
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            record = create
-                    .selectFrom(META_PROCESSOR)
-                    .where(META_PROCESSOR.PROCESSOR_ID.eq(processorId))
-                    .fetchOne();
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-
-        if (record != null) {
-            cache.put(processorId, record);
-            return record.getId();
-        }
-
-        return null;
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .selectFrom(META_PROCESSOR)
+                .where(META_PROCESSOR.PROCESSOR_ID.eq(processorId))
+                .fetchOptional()
+                .map(r -> {
+                    cache.put(processorId, r);
+                    return r.getId();
+                })
+                .orElse(null));
     }
 
     private Integer create(final int processorId, final String pipelineUuid) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            final MetaProcessorRecord record = create
-                    .insertInto(META_PROCESSOR, META_PROCESSOR.PROCESSOR_ID, META_PROCESSOR.PIPELINE_UUID)
-                    .values(processorId, pipelineUuid)
-                    .returning(META_PROCESSOR.ID)
-                    .fetchOne();
-            cache.put(processorId, record);
-            return record.getId();
-
-        } catch (final SQLException | RuntimeException e) {
-            // Expect errors in the case of duplicate names.
-            LOGGER.debug(e.getMessage(), e);
-        }
-
-        return null;
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .insertInto(META_PROCESSOR, META_PROCESSOR.PROCESSOR_ID, META_PROCESSOR.PIPELINE_UUID)
+                .values(processorId, pipelineUuid)
+                .onDuplicateKeyIgnore()
+                .returning(META_PROCESSOR.ID)
+                .fetchOptional()
+                .map(record -> {
+                    cache.put(processorId, record);
+                    return record.getId();
+                })
+                .orElseGet(() -> get(processorId, pipelineUuid))
+        );
     }
 
     void clear() {
@@ -132,13 +110,8 @@ class MetaProcessorServiceImpl implements MetaProcessorService {
     }
 
     int deleteAll() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .delete(META_PROCESSOR)
-                    .execute();
-        } catch (final SQLException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .delete(META_PROCESSOR)
+                .execute());
     }
 }

@@ -17,26 +17,19 @@
 
 package stroom.meta.impl.db;
 
-import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.db.util.JooqUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static stroom.meta.impl.db.tables.MetaFeed.META_FEED;
 
 @Singleton
 class MetaFeedServiceImpl implements MetaFeedService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetaFeedServiceImpl.class);
-
     private final Map<String, Integer> cache = new ConcurrentHashMap<>();
 
     private final ConnectionProvider connectionProvider;
@@ -63,17 +56,10 @@ class MetaFeedServiceImpl implements MetaFeedService {
 
     @Override
     public List<String> list() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .select(META_FEED.NAME)
-                    .from(META_FEED)
-                    .fetch(META_FEED.NAME);
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select(META_FEED.NAME)
+                .from(META_FEED)
+                .fetch(META_FEED.NAME));
     }
 
     private Integer get(final String name) {
@@ -82,44 +68,29 @@ class MetaFeedServiceImpl implements MetaFeedService {
             return id;
         }
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            id = create
-                    .select(META_FEED.ID)
-                    .from(META_FEED)
-                    .where(META_FEED.NAME.eq(name))
-                    .fetchOne(META_FEED.ID);
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-
-        if (id != null) {
-            cache.put(name, id);
-        }
-
-        return id;
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select(META_FEED.ID)
+                .from(META_FEED)
+                .where(META_FEED.NAME.eq(name))
+                .fetchOptional(META_FEED.ID))
+                .map(i -> cache.put(name, i))
+                .orElse(null);
     }
 
-    private Integer create(final String name) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            final Integer id = create
-                    .insertInto(META_FEED, META_FEED.NAME)
-                    .values(name)
-                    .returning(META_FEED.ID)
-                    .fetchOne()
-                    .getId();
-            cache.put(name, id);
-            return id;
-
-        } catch (final SQLException | RuntimeException e) {
-            // Expect errors in the case of duplicate names.
-            LOGGER.debug(e.getMessage(), e);
-        }
-
-        return null;
+    Integer create(final String name) {
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .insertInto(META_FEED, META_FEED.NAME)
+                .values(name)
+                .onDuplicateKeyIgnore()
+                .returning(META_FEED.ID)
+                .fetchOptional()
+                .map(record -> {
+                    final Integer id = record.getId();
+                    cache.put(name, id);
+                    return id;
+                })
+                .orElseGet(() -> get(name))
+        );
     }
 
     void clear() {
@@ -128,13 +99,8 @@ class MetaFeedServiceImpl implements MetaFeedService {
     }
 
     int deleteAll() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .delete(META_FEED)
-                    .execute();
-        } catch (final SQLException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .delete(META_FEED)
+                .execute());
     }
 }

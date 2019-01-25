@@ -1,34 +1,32 @@
 package stroom.meta.impl.db;
 
 import org.jooq.Condition;
-import org.jooq.DSLContext;
 import org.jooq.Record1;
-import org.jooq.SQLDialect;
 import org.jooq.SelectConditionStep;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaSecurityFilter;
-import stroom.meta.shared.Status;
-import stroom.meta.shared.EffectiveMetaDataCriteria;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaDataSource;
-import stroom.meta.impl.db.MetaImpl.Builder;
-import stroom.meta.impl.db.ExpressionMapper.TermHandler;
-import stroom.meta.impl.db.MetaExpressionMapper.MetaTermHandler;
-import stroom.meta.impl.db.tables.MetaFeed;
-import stroom.meta.impl.db.tables.MetaProcessor;
-import stroom.meta.impl.db.tables.MetaType;
-import stroom.meta.impl.db.tables.MetaVal;
+import stroom.db.util.JooqUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Sort.Direction;
+import stroom.meta.impl.db.ExpressionMapper.TermHandler;
+import stroom.meta.impl.db.MetaExpressionMapper.MetaTermHandler;
+import stroom.meta.impl.db.MetaImpl.Builder;
+import stroom.meta.impl.db.tables.MetaFeed;
+import stroom.meta.impl.db.tables.MetaProcessor;
+import stroom.meta.impl.db.tables.MetaType;
+import stroom.meta.impl.db.tables.MetaVal;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.EffectiveMetaDataCriteria;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.MetaSecurityFilter;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -39,8 +37,6 @@ import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -146,18 +142,12 @@ class MetaServiceImpl implements MetaService {
 
     @Override
     public Long getMaxId() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .select(max(data.ID))
-                    .from(data)
-                    .fetchOptional()
-                    .map(Record1::value1)
-                    .orElse(null);
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select(max(data.ID))
+                .from(data)
+                .fetchOptional()
+                .map(Record1::value1)
+                .orElse(null));
     }
 
     @Override
@@ -166,49 +156,44 @@ class MetaServiceImpl implements MetaService {
         final Integer typeId = dataTypeService.getOrCreate(dataProperties.getTypeName());
         final Integer processorId = processorService.getOrCreate(dataProperties.getProcessorId(), dataProperties.getPipelineUuid());
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            final long id = create.insertInto(META,
-                    META.CREATE_TIME,
-                    META.EFFECTIVE_TIME,
-                    META.PARENT_ID,
-                    META.STATUS,
-                    META.STATUS_TIME,
-                    META.TASK_ID,
-                    META.FEED_ID,
-                    META.TYPE_ID,
-                    META.PROCESSOR_ID)
-                    .values(
-                            dataProperties.getCreateMs(),
-                            dataProperties.getEffectiveMs(),
-                            dataProperties.getParentId(),
-                            MetaStatusId.LOCKED,
-                            dataProperties.getStatusMs(),
-                            dataProperties.getProcessorTaskId(),
-                            feedId,
-                            typeId,
-                            processorId)
-                    .returning(META.ID)
-                    .fetchOne()
-                    .getId();
+        final long id = JooqUtil.contextResult(connectionProvider, context -> context
+                .insertInto(META,
+                        META.CREATE_TIME,
+                        META.EFFECTIVE_TIME,
+                        META.PARENT_ID,
+                        META.STATUS,
+                        META.STATUS_TIME,
+                        META.TASK_ID,
+                        META.FEED_ID,
+                        META.TYPE_ID,
+                        META.PROCESSOR_ID)
+                .values(
+                        dataProperties.getCreateMs(),
+                        dataProperties.getEffectiveMs(),
+                        dataProperties.getParentId(),
+                        MetaStatusId.LOCKED,
+                        dataProperties.getStatusMs(),
+                        dataProperties.getProcessorTaskId(),
+                        feedId,
+                        typeId,
+                        processorId)
+                .returning(META.ID)
+                .fetchOne()
+                .getId()
+        );
 
-            return new Builder().id(id)
-                    .feedName(dataProperties.getFeedName())
-                    .typeName(dataProperties.getTypeName())
-                    .pipelineUuid(dataProperties.getPipelineUuid())
-                    .parentDataId(dataProperties.getParentId())
-                    .processTaskId(dataProperties.getProcessorTaskId())
-                    .processorId(processorId)
-                    .status(Status.LOCKED)
-                    .statusMs(dataProperties.getStatusMs())
-                    .createMs(dataProperties.getCreateMs())
-                    .effectiveMs(dataProperties.getEffectiveMs())
-                    .build();
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return new Builder().id(id)
+                .feedName(dataProperties.getFeedName())
+                .typeName(dataProperties.getTypeName())
+                .pipelineUuid(dataProperties.getPipelineUuid())
+                .parentDataId(dataProperties.getParentId())
+                .processTaskId(dataProperties.getProcessorTaskId())
+                .processorId(processorId)
+                .status(Status.LOCKED)
+                .statusMs(dataProperties.getStatusMs())
+                .createMs(dataProperties.getCreateMs())
+                .effectiveMs(dataProperties.getEffectiveMs())
+                .build();
     }
 
     @Override
@@ -242,14 +227,12 @@ class MetaServiceImpl implements MetaService {
     private int updateStatus(final long id, final Status status, final long statusTime, final String permission) {
         final Condition condition = getIdCondition(id, true, permission);
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .update(data)
-                    .set(data.STATUS, MetaStatusId.getPrimitiveValue(status))
-                    .set(data.STATUS_TIME, statusTime)
-                    .where(condition)
-                    .execute();
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .update(data)
+                .set(data.STATUS, MetaStatusId.getPrimitiveValue(status))
+                .set(data.STATUS_TIME, statusTime)
+                .where(condition)
+                .execute());
 //                    .returning(data.ID,
 //                            dataFeed.NAME,
 //                            dataType.NAME,
@@ -276,10 +259,6 @@ class MetaServiceImpl implements MetaService {
 //                            .build())
 //                    .orElse(null);
 
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
     }
 
     @Override
@@ -292,19 +271,12 @@ class MetaServiceImpl implements MetaService {
 
         final Condition condition = createCondition(criteria, permission);
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .update(data)
-                    .set(data.STATUS, MetaStatusId.getPrimitiveValue(status))
-                    .set(data.STATUS_TIME, System.currentTimeMillis())
-                    .where(condition)
-                    .execute();
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .update(data)
+                .set(data.STATUS, MetaStatusId.getPrimitiveValue(status))
+                .set(data.STATUS_TIME, System.currentTimeMillis())
+                .where(condition)
+                .execute());
     }
 
     @Override
@@ -381,47 +353,40 @@ class MetaServiceImpl implements MetaService {
     }
 
     private List<Meta> find(final Condition condition, final int offset, final int numberOfRows) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .select(
-                            data.ID,
-                            dataFeed.NAME,
-                            dataType.NAME,
-                            dataProcessor.PIPELINE_UUID,
-                            data.PARENT_ID,
-                            data.TASK_ID,
-                            data.PROCESSOR_ID,
-                            data.STATUS,
-                            data.STATUS_TIME,
-                            data.CREATE_TIME,
-                            data.EFFECTIVE_TIME
-                    )
-                    .from(data)
-                    .join(dataFeed).on(data.FEED_ID.eq(dataFeed.ID))
-                    .join(dataType).on(data.TYPE_ID.eq(dataType.ID))
-                    .leftOuterJoin(dataProcessor).on(data.PROCESSOR_ID.eq(dataProcessor.ID))
-                    .where(condition)
-                    .orderBy(data.ID)
-                    .limit(offset, numberOfRows)
-                    .fetch()
-                    .map(r -> new Builder().id(r.component1())
-                            .feedName(r.component2())
-                            .typeName(r.component3())
-                            .pipelineUuid(r.component4())
-                            .parentDataId(r.component5())
-                            .processTaskId(r.component6())
-                            .processorId(r.component7())
-                            .status(MetaStatusId.getStatus(r.component8()))
-                            .statusMs(r.component9())
-                            .createMs(r.component10())
-                            .effectiveMs(r.component11())
-                            .build());
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select(
+                        data.ID,
+                        dataFeed.NAME,
+                        dataType.NAME,
+                        dataProcessor.PIPELINE_UUID,
+                        data.PARENT_ID,
+                        data.TASK_ID,
+                        data.PROCESSOR_ID,
+                        data.STATUS,
+                        data.STATUS_TIME,
+                        data.CREATE_TIME,
+                        data.EFFECTIVE_TIME
+                )
+                .from(data)
+                .join(dataFeed).on(data.FEED_ID.eq(dataFeed.ID))
+                .join(dataType).on(data.TYPE_ID.eq(dataType.ID))
+                .leftOuterJoin(dataProcessor).on(data.PROCESSOR_ID.eq(dataProcessor.ID))
+                .where(condition)
+                .orderBy(data.ID)
+                .limit(offset, numberOfRows)
+                .fetch()
+                .map(r -> new Builder().id(r.component1())
+                        .feedName(r.component2())
+                        .typeName(r.component3())
+                        .pipelineUuid(r.component4())
+                        .parentDataId(r.component5())
+                        .processTaskId(r.component6())
+                        .processorId(r.component7())
+                        .status(MetaStatusId.getStatus(r.component8()))
+                        .statusMs(r.component9())
+                        .createMs(r.component10())
+                        .effectiveMs(r.component11())
+                        .build()));
     }
 
 //    @Override
@@ -431,8 +396,7 @@ class MetaServiceImpl implements MetaService {
 ////        final ExpressionOperator secureExpression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.DELETE);
 ////        final Condition condition = expressionMapper.apply(secureExpression);
 ////
-////        try (final Connection connection = connectionProvider.getConnection()) {
-////            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+////        JooqUtil.context(connectionProvider, context -> context
 ////
 ////            return create
 ////                    .deleteFrom(data)
@@ -449,17 +413,10 @@ class MetaServiceImpl implements MetaService {
     public int delete(final FindMetaCriteria criteria) {
         final Condition condition = createCondition(criteria, DocumentPermissionNames.DELETE);
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .deleteFrom(data)
-                    .where(condition)
-                    .execute();
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .deleteFrom(data)
+                .where(condition)
+                .execute());
     }
 
     @Override
@@ -505,19 +462,12 @@ class MetaServiceImpl implements MetaService {
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
         final Condition condition = expressionMapper.apply(secureExpression);
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .select(max(data.ID))
-                    .from(data)
-                    .where(condition)
-                    .fetchOptional()
-                    .map(Record1::value1);
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select(max(data.ID))
+                .from(data)
+                .where(condition)
+                .fetchOptional()
+                .map(Record1::value1));
     }
 
     @Override
@@ -532,26 +482,18 @@ class MetaServiceImpl implements MetaService {
 
     @Override
     public int getLockCount() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .selectCount()
-                    .from(data)
-                    .where(data.STATUS.eq(MetaStatusId.LOCKED))
-                    .fetchOptional()
-                    .map(Record1::value1)
-                    .orElse(0);
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .selectCount()
+                .from(data)
+                .where(data.STATUS.eq(MetaStatusId.LOCKED))
+                .fetchOptional()
+                .map(Record1::value1)
+                .orElse(0));
     }
 
 //    @Override
 //    public Period getCreatePeriod() {
-//        try (final Connection connection = connectionProvider.getConnection()) {
-//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//        JooqUtil.context(connectionProvider, context -> context
 //            return context
 //                    .select(data.CRT_MS.min(), data.CRT_MS.max())
 //                    .from(data)
@@ -668,14 +610,9 @@ class MetaServiceImpl implements MetaService {
     }
 
     int deleteAll() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .delete(META)
-                    .execute();
-        } catch (final SQLException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .delete(META)
+                .execute());
     }
 
     private Condition getIdCondition(final long id, final boolean anyStatus, final String permission) {

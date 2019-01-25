@@ -18,9 +18,6 @@
 package stroom.config.global.impl.db;
 
 
-import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.global.api.ConfigProperty;
@@ -35,8 +32,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -173,8 +168,7 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
 
 //    public ConfigProperty create(final ConfigProperty configProperty) {
 //        return security.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
-//            try (final Connection connection = connectionProvider.getConnection()) {
-//                final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//            JooqUtil.context(connectionProvider, context -> context
 //
 //                // Insert value.
 //                create
@@ -251,24 +245,20 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     }
 
     private void deleteFromDb(final String name) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+        JooqUtil.context(connectionProvider, context -> {
             LAMBDA_LOGGER.warn(() ->
                     LambdaLogger.buildMessage("Deleting property {} as it is not valid " +
                             "in the object model", name));
-            create
+            context
                     .deleteFrom(CONFIG)
                     .where(CONFIG.NAME.eq(name))
                     .execute();
-        } catch (final SQLException e) {
-            LOGGER.error("Error deleting property {}: {}", name, e.getMessage(), e);
-        }
+        });
     }
 
 //    private void recordHistory(final ConfigProperty configProperty) {
 //        // Record history.
-//        try (final Connection connection = connectionProvider.getConnection()) {
-//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//        JooqUtil.context(connectionProvider, context -> context
 //            create
 //                    .insertInto(CONFIG_HISTORY,
 //                            CONFIG_HISTORY.UPDATE_TIME,

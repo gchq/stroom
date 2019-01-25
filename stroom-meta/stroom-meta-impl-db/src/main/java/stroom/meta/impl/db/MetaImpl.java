@@ -80,8 +80,8 @@ class MetaImpl implements Meta {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final MetaImpl data = (MetaImpl) o;
-        return id == data.id;
+        final MetaImpl meta = (MetaImpl) o;
+        return id == meta.id;
     }
 
     @Override
@@ -95,7 +95,7 @@ class MetaImpl implements Meta {
     }
 
     public static class Builder {
-        private final MetaImpl data = new MetaImpl();
+        private final MetaImpl meta = new MetaImpl();
 
         Builder() {
         }
@@ -115,62 +115,62 @@ class MetaImpl implements Meta {
         }
 
         public Builder id(final long id) {
-            data.id = id;
+            meta.id = id;
             return this;
         }
 
         public Builder feedName(final String feedName) {
-            data.feedName = feedName;
+            meta.feedName = feedName;
             return this;
         }
 
         public Builder typeName(final String typeName) {
-            data.typeName = typeName;
+            meta.typeName = typeName;
             return this;
         }
 
         public Builder pipelineUuid(final String pipelineUuid) {
-            data.pipelineUuid = pipelineUuid;
+            meta.pipelineUuid = pipelineUuid;
             return this;
         }
 
         public Builder parentDataId(final Long parentDataId) {
-            data.parentDataId = parentDataId;
+            meta.parentDataId = parentDataId;
             return this;
         }
 
         public Builder processTaskId(final Long processTaskId) {
-            data.processTaskId = processTaskId;
+            meta.processTaskId = processTaskId;
             return this;
         }
 
         public Builder processorId(final Integer processorId) {
-            data.processorId = processorId;
+            meta.processorId = processorId;
             return this;
         }
 
         public Builder status(final Status status) {
-            data.status = status;
+            meta.status = status;
             return this;
         }
 
         public Builder statusMs(final Long statusMs) {
-            data.statusMs = statusMs;
+            meta.statusMs = statusMs;
             return this;
         }
 
         public Builder createMs(final long createMs) {
-            data.createMs = createMs;
+            meta.createMs = createMs;
             return this;
         }
 
         public Builder effectiveMs(final Long effectiveMs) {
-            data.effectiveMs = effectiveMs;
+            meta.effectiveMs = effectiveMs;
             return this;
         }
 
         public Meta build() {
-            return data;
+            return meta;
         }
     }
 }

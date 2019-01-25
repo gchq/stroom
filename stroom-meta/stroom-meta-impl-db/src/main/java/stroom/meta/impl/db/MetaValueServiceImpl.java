@@ -16,21 +16,18 @@
 
 package stroom.meta.impl.db;
 
-import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.lock.api.ClusterLockService;
+import stroom.db.util.JooqUtil;
+import stroom.meta.impl.db.tables.records.MetaValRecord;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.impl.db.tables.records.MetaValRecord;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,16 +49,19 @@ class MetaValueServiceImpl implements MetaValueService {
     private final ConnectionProvider connectionProvider;
     private final MetaKeyService metaKeyService;
     private final MetaValueConfig metaValueConfig;
+    private final ClusterLockService clusterLockService;
 
     private final Queue<MetaValRecord> queue = new ConcurrentLinkedQueue<>();
 
     @Inject
     MetaValueServiceImpl(final ConnectionProvider connectionProvider,
                          final MetaKeyService metaKeyService,
-                         final MetaValueConfig metaValueConfig) {
+                         final MetaValueConfig metaValueConfig,
+                         final ClusterLockService clusterLockService) {
         this.connectionProvider = connectionProvider;
         this.metaKeyService = metaKeyService;
         this.metaValueConfig = metaValueConfig;
+        this.clusterLockService = clusterLockService;
     }
 
     @Override
@@ -206,15 +206,9 @@ class MetaValueServiceImpl implements MetaValueService {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.debug("Processing batch of {}, queue size is {}", records.size(), queue.size());
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            create
-                    .batchStore(records)
-                    .execute();
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context -> context
+                .batchStore(records)
+                .execute());
 
         if (logExecutionTime.getDuration() > 1000) {
             LOGGER.warn("Saved {} updates, queue size is {}, completed in {}", records.size(), queue.size(), logExecutionTime);
@@ -225,14 +219,17 @@ class MetaValueServiceImpl implements MetaValueService {
 
     @Override
     public void deleteOldValues() {
-        // TODO : @66 ACQUIRE A CLUSTER LOCK BEFORE PERFORMING A BATCH DELETE TO REDUCE DB CONTENTION AND TO LET A SINGLE NODE DO THE JOB.
-
-        final Long age = getAttributeDatabaseAgeMs();
-        final int batchSize = metaValueConfig.getDeleteBatchSize();
-        if (age != null) {
-            int count = batchSize;
-            while (count >= batchSize) {
-                count = deleteBatchOfOldValues(age, batchSize);
+        // Acquire a cluster lock before performing a batch delete to reduce db contention and to let a single node do the job.
+        if (clusterLockService.tryLock(LOCK_NAME)) {
+            try {
+                final Long age = getAttributeDatabaseAgeMs();
+                final int batchSize = metaValueConfig.getDeleteBatchSize();
+                int count = batchSize;
+                while (count >= batchSize) {
+                    count = deleteBatchOfOldValues(age, batchSize);
+                }
+            } finally {
+                clusterLockService.releaseLock(LOCK_NAME);
             }
         }
     }
@@ -241,11 +238,8 @@ class MetaValueServiceImpl implements MetaValueService {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.debug("Processing batch age {}, batch size is {}", age, batchSize);
 
-        int count;
-
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            // TODO : @66 Maybe try delete with limits again after un upgrade to MySQL 5.7.
+        final int count = JooqUtil.contextResult(connectionProvider, context -> context
+                        // TODO : @66 Maybe try delete with limits again after un upgrade to MySQL 5.7.
 //            count = context
 //                    .delete(META_VAL)
 //                    .where(META_VAL.ID.in(
@@ -258,17 +252,13 @@ class MetaValueServiceImpl implements MetaValueService {
 //                    .execute();
 
 
-            count = create.execute("DELETE FROM {0} WHERE {1} < {2} ORDER BY {3} LIMIT {4}",
-                    META_VAL,
-                    META_VAL.CREATE_TIME,
-                    age,
-                    META_VAL.ID,
-                    batchSize);
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+                        .execute("DELETE FROM {0} WHERE {1} < {2} ORDER BY {3} LIMIT {4}",
+                                META_VAL,
+                                META_VAL.CREATE_TIME,
+                                age,
+                                META_VAL.ID,
+                                batchSize)
+        );
 
         if (logExecutionTime.getDuration() > 1000) {
             LOGGER.warn("Deleted {}, completed in {}", count, logExecutionTime);
@@ -315,31 +305,24 @@ class MetaValueServiceImpl implements MetaValueService {
                 .map(Meta::getId)
                 .collect(Collectors.toList());
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            create
-                    .select(
-                            META_VAL.META_ID,
-                            META_VAL.META_KEY_ID,
-                            META_VAL.VAL
-                    )
-                    .from(META_VAL)
-                    .where(META_VAL.META_ID.in(idList))
-                    .fetch()
-                    .forEach(r -> {
-                        final int keyId = r.component2();
-                        final Optional<String> optional = metaKeyService.getNameForId(keyId);
-                        if (optional.isPresent()) {
-                            final long dataId = r.component1();
-                            final String value = String.valueOf(r.component3());
-                            rowMap.computeIfAbsent(dataId, k -> new MetaRow()).addAttribute(optional.get(), value);
-                        }
+        JooqUtil.context(connectionProvider, context -> context
+                .select(
+                        META_VAL.META_ID,
+                        META_VAL.META_KEY_ID,
+                        META_VAL.VAL
+                )
+                .from(META_VAL)
+                .where(META_VAL.META_ID.in(idList))
+                .fetch()
+                .forEach(r -> {
+                    final int keyId = r.component2();
+                    metaKeyService.getNameForId(keyId).ifPresent(name -> {
+                        final long dataId = r.component1();
+                        final String value = String.valueOf(r.component3());
+                        rowMap.computeIfAbsent(dataId, k -> new MetaRow()).addAttribute(name, value);
                     });
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+                })
+        );
 
         final List<MetaRow> dataRows = new ArrayList<>();
         for (final Meta data : list) {
@@ -402,13 +385,8 @@ class MetaValueServiceImpl implements MetaValueService {
     }
 
     int deleteAll() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .delete(META_VAL)
-                    .execute();
-        } catch (final SQLException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .delete(META_VAL)
+                .execute());
     }
 }

@@ -59,4 +59,17 @@ class TestMetaFeedServiceImpl {
 
         assertThat(feedService.list().size()).isEqualTo(2);
     }
+
+    @Test
+    void testDuplicateCreate() {
+        // Delete everything.
+        dataMetaService.deleteAll();
+        feedService.deleteAll();
+
+        String feedName = "TEST";
+        Integer id1 = feedService.create(feedName);
+        Integer id2 = feedService.create(feedName);
+
+        assertThat(id1).isEqualTo(id2);
+    }
 }
