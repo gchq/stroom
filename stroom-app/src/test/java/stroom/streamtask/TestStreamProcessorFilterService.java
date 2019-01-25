@@ -128,17 +128,17 @@ class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
 //        filter.getFindStreamCriteria().obtainFeeds().obtainInclude().remove(feed1);
 //        filter = streamProcessorFilterService.save(filter);
 //        xml = buildXML(new long[]{feed2.getId()}, null);
-//        assertThat(filter.getData()).isEqualTo(xml);
+//        assertThat(filter.getMeta()).isEqualTo(xml);
 //
 //        filter.getFindStreamCriteria().obtainFeeds().obtainExclude().add(feed1);
 //        filter = streamProcessorFilterService.save(filter);
 //        xml = buildXML(new long[]{feed2.getId()}, new long[]{feed1.getId()});
-//        assertThat(filter.getData()).isEqualTo(xml);
+//        assertThat(filter.getMeta()).isEqualTo(xml);
 //
 //        filter.getFindStreamCriteria().obtainFeeds().obtainInclude().add(feed1);
 //        filter = streamProcessorFilterService.save(filter);
 //        xml = buildXML(new long[]{feed1.getId(), feed2.getId()}, new long[]{feed1.getId()});
-//        assertThat(filter.getData()).isEqualTo(xml);
+//        assertThat(filter.getMeta()).isEqualTo(xml);
     }
 
     private String buildXML(final String[] include, final String[] exclude) {

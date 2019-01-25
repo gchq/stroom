@@ -24,7 +24,7 @@ import stroom.entity.shared.Flushable;
 import java.util.List;
 
 interface MetaValueService extends Flushable {
-    void addAttributes(Meta data, AttributeMap attributes);
+    void addAttributes(Meta meta, AttributeMap attributes);
 
     List<MetaRow> decorateDataWithAttributes(List<Meta> list);
 

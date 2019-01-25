@@ -215,16 +215,16 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         List<MetaRow> relationList = streamMetaService.findRelatedData(childTarget.getStream().getId(), true);
 
         assertThat(relationList.size()).isEqualTo(3);
-        assertThat(relationList.get(0).getData()).isEqualTo(streamTarget.getStream());
-        assertThat(relationList.get(1).getData()).isEqualTo(childTarget.getStream());
-        assertThat(relationList.get(2).getData()).isEqualTo(grandChildTarget.getStream());
+        assertThat(relationList.get(0).getMeta()).isEqualTo(streamTarget.getStream());
+        assertThat(relationList.get(1).getMeta()).isEqualTo(childTarget.getStream());
+        assertThat(relationList.get(2).getMeta()).isEqualTo(grandChildTarget.getStream());
 
         relationList = streamMetaService.findRelatedData(grandChildTarget.getStream().getId(), true);
 
         assertThat(relationList.size()).isEqualTo(3);
-        assertThat(relationList.get(0).getData()).isEqualTo(streamTarget.getStream());
-        assertThat(relationList.get(1).getData()).isEqualTo(childTarget.getStream());
-        assertThat(relationList.get(2).getData()).isEqualTo(grandChildTarget.getStream());
+        assertThat(relationList.get(0).getMeta()).isEqualTo(streamTarget.getStream());
+        assertThat(relationList.get(1).getMeta()).isEqualTo(childTarget.getStream());
+        assertThat(relationList.get(2).getMeta()).isEqualTo(grandChildTarget.getStream());
     }
 
     @Test
@@ -630,7 +630,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 //        // Create tasks.
 //        streamTaskCreator.createTasks(new SimpleTaskContext());
 
-        Meta reloadedStream = streamMetaService.getData(streamTarget.getStream().getId());
+        Meta reloadedStream = streamMetaService.getMeta(streamTarget.getStream().getId());
         assertThat(reloadedStream).isNotNull();
 
         assertThatThrownBy(() -> {

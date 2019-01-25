@@ -501,7 +501,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     }
 
     private void checkPeriod(final Period period, final MetaRow processedStream) {
-        final long streamStartMs = processedStream.getData().getCreateMs();
+        final long streamStartMs = processedStream.getMeta().getCreateMs();
         final long streamDuration = getLong(processedStream, MetaDataSource.DURATION);
         final long streamEndMs = streamStartMs + streamDuration;
 
@@ -730,7 +730,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // }
     //
     // // Add input stream size stats.
-    // final Stream sourceStream = task.getData();
+    // final Stream sourceStream = task.getMeta();
     // if (sourceStream != null) {
     // if (sourceStream.getStreamSize() != null) {
     // streamBytesRead += sourceStream.getStreamSize();
@@ -841,7 +841,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // }
     //
     // // Add input stream size stats.
-    // final Stream sourceStream = task.getData();
+    // final Stream sourceStream = task.getMeta();
     // if (sourceStream != null) {
     // if (sourceStream.getStreamSize() != null) {
     // streamBytesRead += sourceStream.getStreamSize();

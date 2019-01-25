@@ -35,13 +35,13 @@ public class ContextDataLoaderImpl implements ContextDataLoader {
 
     @Override
     public void load(final InputStream inputStream,
-                     final Meta data,
+                     final Meta meta,
                      final String feedName,
                      final DocRef contextPipeline,
                      final RefStreamDefinition refStreamDefinition,
                      final RefDataStore refDataStore) {
 
         taskManager.exec(new ContextDataLoadTask(
-                inputStream, data, feedName, contextPipeline, refStreamDefinition, refDataStore));
+                inputStream, meta, feedName, contextPipeline, refStreamDefinition, refDataStore));
     }
 }

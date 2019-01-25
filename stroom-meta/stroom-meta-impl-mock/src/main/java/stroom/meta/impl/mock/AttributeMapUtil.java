@@ -23,24 +23,24 @@ class AttributeMapUtil {
     static Map<String, Object> createAttributeMap(final MetaRow row) {
         final Map<String, Object> attributeMap = new HashMap<>();
 
-        final Meta data = row.getData();
-        if (data != null) {
-            attributeMap.put(MetaDataSource.STREAM_ID, data.getId());
-            attributeMap.put(MetaDataSource.CREATE_TIME, data.getCreateMs());
-            attributeMap.put(MetaDataSource.EFFECTIVE_TIME, data.getEffectiveMs());
-            attributeMap.put(MetaDataSource.STATUS_TIME, data.getStatusMs());
-            attributeMap.put(MetaDataSource.STATUS, data.getStatus().getDisplayValue());
-            if (data.getParentDataId() != null) {
-                attributeMap.put(MetaDataSource.PARENT_STREAM_ID, data.getParentDataId());
+        final Meta meta = row.getMeta();
+        if (meta != null) {
+            attributeMap.put(MetaDataSource.STREAM_ID, meta.getId());
+            attributeMap.put(MetaDataSource.CREATE_TIME, meta.getCreateMs());
+            attributeMap.put(MetaDataSource.EFFECTIVE_TIME, meta.getEffectiveMs());
+            attributeMap.put(MetaDataSource.STATUS_TIME, meta.getStatusMs());
+            attributeMap.put(MetaDataSource.STATUS, meta.getStatus().getDisplayValue());
+            if (meta.getParentDataId() != null) {
+                attributeMap.put(MetaDataSource.PARENT_STREAM_ID, meta.getParentDataId());
             }
-            if (data.getTypeName() != null) {
-                attributeMap.put(MetaDataSource.STREAM_TYPE_NAME, data.getTypeName());
+            if (meta.getTypeName() != null) {
+                attributeMap.put(MetaDataSource.STREAM_TYPE_NAME, meta.getTypeName());
             }
-            final String feedName = data.getFeedName();
+            final String feedName = meta.getFeedName();
             if (feedName != null) {
                 attributeMap.put(MetaDataSource.FEED_NAME, feedName);
             }
-            final String pipelineUuid = data.getPipelineUuid();
+            final String pipelineUuid = meta.getPipelineUuid();
             attributeMap.put(MetaDataSource.PIPELINE_UUID, pipelineUuid);
 //            if (processor != null) {
 //                final String pipelineUuid = processor.getPipelineUuid();

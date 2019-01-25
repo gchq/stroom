@@ -24,23 +24,23 @@ import java.util.Map;
 public class MetaRow implements SharedObject {
     private static final long serialVersionUID = -8198186456924478908L;
 
-    private Meta data;
+    private Meta meta;
     private Map<String, String> attributes = new HashMap<>();
 
     public MetaRow() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public MetaRow(Meta data) {
-        setData(data);
+    public MetaRow(Meta meta) {
+        setMeta(meta);
     }
 
-    public Meta getData() {
-        return data;
+    public Meta getMeta() {
+        return meta;
     }
 
-    public void setData(Meta data) {
-        this.data = data;
+    public void setMeta(Meta meta) {
+        this.meta = meta;
     }
 
     public void addAttribute(final String name, final String value) {
@@ -58,16 +58,16 @@ public class MetaRow implements SharedObject {
 
         final MetaRow that = (MetaRow) o;
 
-        return data.equals(that.data);
+        return meta.equals(that.meta);
     }
 
     @Override
     public int hashCode() {
-        return data.hashCode();
+        return meta.hashCode();
     }
 
     @Override
     public String toString() {
-        return data.toString();
+        return meta.toString();
     }
 }

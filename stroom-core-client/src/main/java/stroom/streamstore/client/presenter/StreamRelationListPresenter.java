@@ -67,7 +67,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             if (!showSystemFiles) {
                 builder.addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
             }
-            builder.addTerm(MetaDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(streamAttributeMap.getData().getId()));
+            builder.addTerm(MetaDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(streamAttributeMap.getMeta().getId()));
 
             final FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setExpression(builder.build());
@@ -84,12 +84,12 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         // Store streams against id.
         streamMap.clear();
         for (final MetaRow row : data) {
-            final Meta stream = row.getData();
+            final Meta stream = row.getMeta();
             streamMap.put(stream.getId(), row);
         }
 
         for (final MetaRow row : data) {
-            final Meta stream = row.getData();
+            final Meta stream = row.getMeta();
             streamMap.put(stream.getId(), row);
         }
 
@@ -114,7 +114,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
     private void addChildren(final MetaRow parent, final List<MetaRow> data,
                              final List<MetaRow> newData, final int depth) {
         for (final MetaRow row : data) {
-            final Meta stream = row.getData();
+            final Meta stream = row.getMeta();
 
             if (parent == null) {
                 // Add roots.
@@ -183,7 +183,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
 
     private int getDepth(final MetaRow row) {
         int depth = 0;
-        Long parentId = row.getData().getParentDataId();
+        Long parentId = row.getMeta().getParentDataId();
         while (parentId != null) {
             depth++;
 
@@ -191,7 +191,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             if (parentRow == null) {
                 parentId = null;
             } else {
-                parentId = parentRow.getData().getParentDataId();
+                parentId = parentRow.getMeta().getParentDataId();
             }
         }
 

@@ -294,7 +294,7 @@ public class ReferenceData {
     }
 
     private void loadContextData(
-            final Meta data,
+            final Meta meta,
             final StreamSourceInputStream contextStream,
             final DocRef contextPipeline,
             final RefStreamDefinition refStreamDefinition,
@@ -308,7 +308,7 @@ public class ReferenceData {
                 // load the context data into the RefDataStore so it is available for lookups
                 contextDataLoader.load(
                         contextStream,
-                        data,
+                        meta,
                         feedHolder.getFeedName(),
                         contextPipeline,
                         refStreamDefinition,

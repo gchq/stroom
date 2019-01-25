@@ -240,7 +240,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
     public StreamSource openStreamSource(final long streamId, final boolean anyStatus) throws StreamException {
         StreamSource streamSource = null;
 
-        final Meta stream = streamMetaService.getData(streamId, anyStatus);
+        final Meta stream = streamMetaService.getMeta(streamId, anyStatus);
         if (stream != null) {
             LOGGER.debug("openStreamSource() {}", stream.getId());
 

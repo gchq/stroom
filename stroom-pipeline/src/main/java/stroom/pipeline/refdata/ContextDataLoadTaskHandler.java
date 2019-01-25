@@ -95,7 +95,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
             errorReceiverProxy.setErrorReceiver(errorReceiver);
 
             final InputStream inputStream = task.getInputStream();
-            final Meta stream = task.getData();
+            final Meta stream = task.getMeta();
             final String feedName = task.getFeedName();
 
             if (inputStream != null) {

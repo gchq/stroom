@@ -27,7 +27,7 @@ import java.io.InputStream;
 
 public class ContextDataLoadTask extends ServerTask<VoidResult> {
     private InputStream inputStream;
-    private Meta data;
+    private Meta meta;
     private String feedName;
     private DocRef contextPipeline;
     private RefStreamDefinition refStreamDefinition;
@@ -37,13 +37,13 @@ public class ContextDataLoadTask extends ServerTask<VoidResult> {
     }
 
     public ContextDataLoadTask(final InputStream inputStream,
-                               final Meta data,
+                               final Meta meta,
                                final String feedName,
                                final DocRef contextPipeline,
                                final RefStreamDefinition refStreamDefinition,
                                final RefDataStore refDataStore) {
         this.inputStream = inputStream;
-        this.data = data;
+        this.meta = meta;
         this.feedName = feedName;
         this.contextPipeline = contextPipeline;
         this.refStreamDefinition = refStreamDefinition;
@@ -54,8 +54,8 @@ public class ContextDataLoadTask extends ServerTask<VoidResult> {
         return inputStream;
     }
 
-    public Meta getData() {
-        return data;
+    public Meta getMeta() {
+        return meta;
     }
 
     public String getFeedName() {

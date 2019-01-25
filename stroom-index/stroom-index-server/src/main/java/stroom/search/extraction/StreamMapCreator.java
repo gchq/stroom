@@ -102,7 +102,7 @@ public class StreamMapCreator {
 
         return fiteredStreamCache.computeIfAbsent(streamId, k -> {
             // See if we can read the stream.
-            return streamMetaService.getData(streamId) != null;
+            return streamMetaService.getMeta(streamId) != null;
         });
     }
 

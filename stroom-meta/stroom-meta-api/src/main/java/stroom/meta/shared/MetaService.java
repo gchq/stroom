@@ -27,7 +27,7 @@ public interface MetaService {
      * @param id The id of the data record to retrieve.
      * @return An unlocked data record for the supplied id or null if no unlocked data record can be found.
      */
-    Meta getData(long id);
+    Meta getMeta(long id);
 
     /**
      * Get a data record from the meta service by id.
@@ -36,7 +36,7 @@ public interface MetaService {
      * @param anyStatus Whether to allow locked or deleted data records to be returned.
      * @return An unlocked data record for the supplied id or null if no unlocked data records can be found unless anyStatus is true.
      */
-    Meta getData(long id, boolean anyStatus);
+    Meta getMeta(long id, boolean anyStatus);
 
     /**
      * Change the status of the specified data record.
@@ -45,7 +45,7 @@ public interface MetaService {
      * @param status The new status.
      * @return The updated data record.
      */
-    Meta updateStatus(Meta data, Status status);
+    Meta updateStatus(Meta meta, Status status);
 
     /**
      * Change the status of data records that match the supplied criteria.
@@ -62,7 +62,7 @@ public interface MetaService {
      * @param data       The data record to add attributes to.
      * @param attributes A map of key/value attributes.
      */
-    void addAttributes(Meta data, AttributeMap attributes);
+    void addAttributes(Meta meta, AttributeMap attributes);
 
     /**
      * Delete a data record by id. Note that this method will only delete unlocked data records.

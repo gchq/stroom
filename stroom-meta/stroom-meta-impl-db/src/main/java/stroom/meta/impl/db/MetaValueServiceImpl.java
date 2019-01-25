@@ -65,15 +65,15 @@ class MetaValueServiceImpl implements MetaValueService {
     }
 
     @Override
-    public void addAttributes(final Meta data, final AttributeMap attributes) {
+    public void addAttributes(final Meta meta, final AttributeMap attributes) {
         attributes.forEach((k, v) -> {
             try {
                 final Long longValue = Long.valueOf(v);
                 final Optional<Integer> optional = metaKeyService.getIdForName(k);
                 optional.ifPresent(keyId -> {
                     MetaValRecord record = new MetaValRecord();
-                    record.setCreateTime(data.getCreateMs());
-                    record.setMetaId(data.getId());
+                    record.setCreateTime(meta.getCreateMs());
+                    record.setMetaId(meta.getId());
                     record.setMetaKeyId(keyId);
                     record.setVal(longValue);
 
@@ -142,14 +142,14 @@ class MetaValueServiceImpl implements MetaValueService {
 //                // Work out the batch inserts
 //                for (final MetaKey metaKey : keys) {
 //                    for (final AsyncFlush asyncFlush : batchInsert) {
-//                        if (asyncFlush.getData().getCreateMs() > applicableStreamAgeMs) {
+//                        if (asyncFlush.getMeta().getCreateMs() > applicableStreamAgeMs) {
 //                            // Found a key
 //                            if (asyncFlush.getAttributeMap().containsKey(metaKey.getName())) {
 //                                final String newValue = asyncFlush.getAttributeMap().get(metaKey.getName());
 //                                boolean dirty = false;
 //                                Meta metaValue = null;
 //                                final Map<Long, Meta> map = dataToAttributeMap
-//                                        .get(asyncFlush.getData().getId());
+//                                        .get(asyncFlush.getMeta().getId());
 //                                if (map != null) {
 //                                    metaValue = map.get(metaKey.getId());
 //                                }
@@ -175,7 +175,7 @@ class MetaValueServiceImpl implements MetaValueService {
 //
 //                                } else {
 //                                    dirty = true;
-//                                    metaValue = new Meta(asyncFlush.getData().getId(), metaKey,
+//                                    metaValue = new Meta(asyncFlush.getMeta().getId(), metaKey,
 //                                            newValue);
 //                                }
 //
@@ -187,7 +187,7 @@ class MetaValueServiceImpl implements MetaValueService {
 //                        } else {
 //                            skipCount++;
 //                            LOGGER.debug("flush() - Skipping flush of old data attributes {} {}",
-//                                    asyncFlush.getData(), DateUtil.createNormalDateTimeString(applicableStreamAgeMs));
+//                                    asyncFlush.getMeta(), DateUtil.createNormalDateTimeString(applicableStreamAgeMs));
 //                        }
 //                    }
 //                }
@@ -325,12 +325,12 @@ class MetaValueServiceImpl implements MetaValueService {
         );
 
         final List<MetaRow> dataRows = new ArrayList<>();
-        for (final Meta data : list) {
-            MetaRow dataRow = rowMap.get(data.getId());
+        for (final Meta meta : list) {
+            MetaRow dataRow = rowMap.get(meta.getId());
             if (dataRow != null) {
-                dataRow.setData(data);
+                dataRow.setMeta(meta);
             } else {
-                dataRow = new MetaRow(data);
+                dataRow = new MetaRow(meta);
             }
             dataRows.add(dataRow);
         }

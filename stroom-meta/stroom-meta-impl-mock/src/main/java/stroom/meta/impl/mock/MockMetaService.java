@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class MockMetaService implements MetaService, Clearable {
     private final Set<String> feeds = new HashSet<>();
     private final Set<String> types = new HashSet<>();
-    private final Map<Long, Meta> dataMap = new HashMap<>();
+    private final Map<Long, Meta> metaMap = new HashMap<>();
 
     /**
      * This id is used to emulate the primary key on the database.
@@ -62,27 +62,27 @@ public class MockMetaService implements MetaService, Clearable {
         currentId++;
         builder.id(currentId);
 
-        final Meta data = builder.build();
-        dataMap.put(currentId, data);
+        final Meta meta = builder.build();
+        metaMap.put(currentId, meta);
 
-        return data;
+        return meta;
     }
 
     @Override
-    public Meta getData(final long id) {
-        return dataMap.get(id);
+    public Meta getMeta(final long id) {
+        return metaMap.get(id);
     }
 
     @Override
-    public Meta getData(final long id, final boolean anyStatus) {
-        return dataMap.get(id);
+    public Meta getMeta(final long id, final boolean anyStatus) {
+        return metaMap.get(id);
     }
 
     @Override
-    public Meta updateStatus(final Meta data, final Status status) {
-        Objects.requireNonNull(data, "Null data");
+    public Meta updateStatus(final Meta meta, final Status status) {
+        Objects.requireNonNull(meta, "Null data");
 
-        final MockMeta result = (MockMeta) dataMap.get(data.getId());
+        final MockMeta result = (MockMeta) metaMap.get(meta.getId());
         if (result != null) {
             result.status = status;
             result.statusMs = System.currentTimeMillis();
@@ -96,7 +96,7 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public void addAttributes(final Meta data, final AttributeMap attributes) {
+    public void addAttributes(final Meta meta, final AttributeMap attributes) {
         // Do nothing.
     }
 
@@ -107,12 +107,12 @@ public class MockMetaService implements MetaService, Clearable {
 
     @Override
     public int delete(final long id, final boolean lockCheck) {
-        final Meta data = dataMap.get(id);
-        if (lockCheck && !Status.UNLOCKED.equals(data.getStatus())) {
+        final Meta meta = metaMap.get(id);
+        if (lockCheck && !Status.UNLOCKED.equals(meta.getStatus())) {
             return 0;
         }
 
-        if (dataMap.remove(id) != null) {
+        if (metaMap.remove(id) != null) {
             return 1;
         }
         return 0;
@@ -120,7 +120,7 @@ public class MockMetaService implements MetaService, Clearable {
 
     @Override
     public int getLockCount() {
-        return (int) dataMap.values().stream().filter(data -> Status.LOCKED.equals(data.getStatus())).count();
+        return (int) metaMap.values().stream().filter(data -> Status.LOCKED.equals(data.getStatus())).count();
     }
 
 //    @Override
@@ -146,13 +146,13 @@ public class MockMetaService implements MetaService, Clearable {
     public BaseResultList<Meta> find(final FindMetaCriteria criteria) {
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(MetaDataSource.getExtendedFieldMap());
         final List<Meta> list = new ArrayList<>();
-        for (final Entry<Long, Meta> entry : dataMap.entrySet()) {
+        for (final Entry<Long, Meta> entry : metaMap.entrySet()) {
             try {
-                final Meta data = entry.getValue();
-                final MetaRow row = new MetaRow(data);
+                final Meta meta = entry.getValue();
+                final MetaRow row = new MetaRow(meta);
                 final Map<String, Object> attributeMap = AttributeMapUtil.createAttributeMap(row);
                 if (expressionMatcher.match(attributeMap, criteria.getExpression())) {
-                    list.add(data);
+                    list.add(meta);
                 }
             } catch (final RuntimeException e) {
                 // Ignore.
@@ -177,18 +177,18 @@ public class MockMetaService implements MetaService, Clearable {
         final Set<Meta> results = new HashSet<>();
 
         try {
-            for (final Meta data : dataMap.values()) {
+            for (final Meta meta : metaMap.values()) {
                 boolean match = true;
 
-                if (criteria.getType() != null && !criteria.getType().equals(data.getTypeName())) {
+                if (criteria.getType() != null && !criteria.getType().equals(meta.getTypeName())) {
                     match = false;
                 }
-                if (criteria.getFeed() != null && !criteria.getFeed().equals(data.getFeedName())) {
+                if (criteria.getFeed() != null && !criteria.getFeed().equals(meta.getFeedName())) {
                     match = false;
                 }
 
                 if (match) {
-                    results.add(data);
+                    results.add(meta);
                 }
             }
         } catch (final RuntimeException e) {
@@ -202,9 +202,9 @@ public class MockMetaService implements MetaService, Clearable {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        for (final long id : dataMap.keySet()) {
-            final Meta data = dataMap.get(id);
-            sb.append(data);
+        for (final long id : metaMap.keySet()) {
+            final Meta meta = metaMap.get(id);
+            sb.append(meta);
             sb.append("\n");
         }
         return sb.toString();
@@ -214,11 +214,11 @@ public class MockMetaService implements MetaService, Clearable {
     public void clear() {
         feeds.clear();
         types.clear();
-        dataMap.clear();
+        metaMap.clear();
         currentId = 0;
     }
 
-    public Map<Long, Meta> getDataMap() {
-        return dataMap;
+    public Map<Long, Meta> getMetaMap() {
+        return metaMap;
     }
 }

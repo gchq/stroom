@@ -69,7 +69,7 @@ class MetaServiceImpl implements MetaService {
     private final MetaSecurityFilter dataSecurityFilter;
     private final Security security;
 
-    private final stroom.meta.impl.db.tables.Meta data = META.as("d");
+    private final stroom.meta.impl.db.tables.Meta meta = META.as("d");
     private final MetaFeed dataFeed = META_FEED.as("f");
     private final MetaType dataType = META_TYPE.as("dt");
     private final MetaProcessor dataProcessor = META_PROCESSOR.as("dp");
@@ -98,18 +98,18 @@ class MetaServiceImpl implements MetaService {
 
         // Standard fields.
         final Map<String, TermHandler<?>> termHandlers = new HashMap<>();
-        termHandlers.put(MetaDataSource.STREAM_ID, new TermHandler<>(data.ID, Long::valueOf));
-        termHandlers.put(MetaDataSource.FEED_NAME, new TermHandler<>(data.FEED_ID, feedService::getOrCreate));
-        termHandlers.put(MetaDataSource.FEED_ID, new TermHandler<>(data.FEED_ID, Integer::valueOf));
-        termHandlers.put(MetaDataSource.STREAM_TYPE_NAME, new TermHandler<>(data.TYPE_ID, dataTypeService::getOrCreate));
+        termHandlers.put(MetaDataSource.STREAM_ID, new TermHandler<>(meta.ID, Long::valueOf));
+        termHandlers.put(MetaDataSource.FEED_NAME, new TermHandler<>(meta.FEED_ID, feedService::getOrCreate));
+        termHandlers.put(MetaDataSource.FEED_ID, new TermHandler<>(meta.FEED_ID, Integer::valueOf));
+        termHandlers.put(MetaDataSource.STREAM_TYPE_NAME, new TermHandler<>(meta.TYPE_ID, dataTypeService::getOrCreate));
         termHandlers.put(MetaDataSource.PIPELINE_UUID, new TermHandler<>(dataProcessor.PIPELINE_UUID, value -> value));
-        termHandlers.put(MetaDataSource.PARENT_STREAM_ID, new TermHandler<>(data.PARENT_ID, Long::valueOf));
-        termHandlers.put(MetaDataSource.STREAM_TASK_ID, new TermHandler<>(data.TASK_ID, Long::valueOf));
-        termHandlers.put(MetaDataSource.STREAM_PROCESSOR_ID, new TermHandler<>(data.PROCESSOR_ID, Integer::valueOf));
-        termHandlers.put(MetaDataSource.STATUS, new TermHandler<>(data.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase()))));
-        termHandlers.put(MetaDataSource.STATUS_TIME, new TermHandler<>(data.STATUS_TIME, DateUtil::parseNormalDateTimeString));
-        termHandlers.put(MetaDataSource.CREATE_TIME, new TermHandler<>(data.CREATE_TIME, DateUtil::parseNormalDateTimeString));
-        termHandlers.put(MetaDataSource.EFFECTIVE_TIME, new TermHandler<>(data.EFFECTIVE_TIME, DateUtil::parseNormalDateTimeString));
+        termHandlers.put(MetaDataSource.PARENT_STREAM_ID, new TermHandler<>(meta.PARENT_ID, Long::valueOf));
+        termHandlers.put(MetaDataSource.STREAM_TASK_ID, new TermHandler<>(meta.TASK_ID, Long::valueOf));
+        termHandlers.put(MetaDataSource.STREAM_PROCESSOR_ID, new TermHandler<>(meta.PROCESSOR_ID, Integer::valueOf));
+        termHandlers.put(MetaDataSource.STATUS, new TermHandler<>(meta.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase()))));
+        termHandlers.put(MetaDataSource.STATUS_TIME, new TermHandler<>(meta.STATUS_TIME, DateUtil::parseNormalDateTimeString));
+        termHandlers.put(MetaDataSource.CREATE_TIME, new TermHandler<>(meta.CREATE_TIME, DateUtil::parseNormalDateTimeString));
+        termHandlers.put(MetaDataSource.EFFECTIVE_TIME, new TermHandler<>(meta.EFFECTIVE_TIME, DateUtil::parseNormalDateTimeString));
         expressionMapper = new ExpressionMapper(termHandlers);
 
 
@@ -143,8 +143,8 @@ class MetaServiceImpl implements MetaService {
     @Override
     public Long getMaxId() {
         return JooqUtil.contextResult(connectionProvider, context -> context
-                .select(max(data.ID))
-                .from(data)
+                .select(max(meta.ID))
+                .from(meta)
                 .fetchOptional()
                 .map(Record1::value1)
                 .orElse(null));
@@ -197,12 +197,12 @@ class MetaServiceImpl implements MetaService {
     }
 
     @Override
-    public Meta getData(final long id) {
-        return getData(id, false);
+    public Meta getMeta(final long id) {
+        return getMeta(id, false);
     }
 
     @Override
-    public Meta getData(final long id, final boolean anyStatus) {
+    public Meta getMeta(final long id, final boolean anyStatus) {
         final Condition condition = getIdCondition(id, anyStatus, DocumentPermissionNames.READ);
         final List<Meta> list = find(condition, 0, 1);
         if (list == null || list.size() == 0) {
@@ -212,13 +212,13 @@ class MetaServiceImpl implements MetaService {
     }
 
     @Override
-    public Meta updateStatus(final Meta data, final Status status) {
-        Objects.requireNonNull(data, "Null data");
+    public Meta updateStatus(final Meta meta, final Status status) {
+        Objects.requireNonNull(meta, "Null data");
 
         final long now = System.currentTimeMillis();
-        final int result = updateStatus(data.getId(), status, now, DocumentPermissionNames.UPDATE);
+        final int result = updateStatus(meta.getId(), status, now, DocumentPermissionNames.UPDATE);
         if (result > 0) {
-            return new Builder(data).status(status).statusMs(now).build();
+            return new Builder(meta).status(status).statusMs(now).build();
         } else {
             return null;
         }
@@ -228,34 +228,34 @@ class MetaServiceImpl implements MetaService {
         final Condition condition = getIdCondition(id, true, permission);
 
         return JooqUtil.contextResult(connectionProvider, context -> context
-                .update(data)
-                .set(data.STATUS, MetaStatusId.getPrimitiveValue(status))
-                .set(data.STATUS_TIME, statusTime)
+                .update(meta)
+                .set(meta.STATUS, MetaStatusId.getPrimitiveValue(status))
+                .set(meta.STATUS_TIME, statusTime)
                 .where(condition)
                 .execute());
 //                    .returning(data.ID,
 //                            dataFeed.NAME,
 //                            dataType.NAME,
 //                            dataProcessor.PIPELINE_UUID,
-//                            data.PARNT_STRM_ID,
-//                            data.STRM_TASK_ID,
-//                            data.FK_STRM_PROC_ID,
-//                            data.STAT,
-//                            data.STAT_MS,
-//                            data.CRT_MS,
-//                            data.EFFECT_MS)
+//                            meta.PARNT_STRM_ID,
+//                            meta.STRM_TASK_ID,
+//                            meta.FK_STRM_PROC_ID,
+//                            meta.STAT,
+//                            meta.STAT_MS,
+//                            meta.CRT_MS,
+//                            meta.EFFECT_MS)
 //                    .fetchOptional()
 //                    .map(r -> new Builder().id(data.ID.get(r))
 //                            .feedName(dataFeed.NAME.get(r))
 //                            .typeName(dataType.NAME.get(r))
 //                            .pipelineUuid(dataProcessor.PIPELINE_UUID.get(r))
-//                            .parentDataId(data.PARNT_STRM_ID.get(r))
-//                            .processTaskId(data.STRM_TASK_ID.get(r))
-//                            .processorId(data.FK_STRM_PROC_ID.get(r))
+//                            .parentDataId(meta.PARNT_STRM_ID.get(r))
+//                            .processTaskId(meta.STRM_TASK_ID.get(r))
+//                            .processorId(meta.FK_STRM_PROC_ID.get(r))
 //                            .status(StreamStatusId.getStatus(data.STAT.get(r)))
-//                            .statusMs(data.STAT_MS.get(r))
-//                            .createMs(data.CRT_MS.get(r))
-//                            .effectiveMs(data.EFFECT_MS.get(r))
+//                            .statusMs(meta.STAT_MS.get(r))
+//                            .createMs(meta.CRT_MS.get(r))
+//                            .effectiveMs(meta.EFFECT_MS.get(r))
 //                            .build())
 //                    .orElse(null);
 
@@ -272,16 +272,16 @@ class MetaServiceImpl implements MetaService {
         final Condition condition = createCondition(criteria, permission);
 
         return JooqUtil.contextResult(connectionProvider, context -> context
-                .update(data)
-                .set(data.STATUS, MetaStatusId.getPrimitiveValue(status))
-                .set(data.STATUS_TIME, System.currentTimeMillis())
+                .update(meta)
+                .set(meta.STATUS, MetaStatusId.getPrimitiveValue(status))
+                .set(meta.STATUS_TIME, System.currentTimeMillis())
                 .where(condition)
                 .execute());
     }
 
     @Override
-    public void addAttributes(final Meta data, final AttributeMap attributes) {
-        metaValueService.addAttributes(data, attributes);
+    public void addAttributes(final Meta meta, final AttributeMap attributes) {
+        metaValueService.addAttributes(meta, attributes);
     }
 
     @Override
@@ -296,15 +296,15 @@ class MetaServiceImpl implements MetaService {
 
     private int doLogicalDelete(final long id, final boolean lockCheck) {
         if (lockCheck) {
-            final Meta data = getData(id, true);
+            final Meta meta = getMeta(id, true);
 
             // Don't bother to try and set the status of deleted data to be deleted.
-            if (Status.DELETED.equals(data.getStatus())) {
+            if (Status.DELETED.equals(meta.getStatus())) {
                 return 0;
             }
 
             // Don't delete if the data is not unlocked and we are checking for unlocked.
-            if (!Status.UNLOCKED.equals(data.getStatus())) {
+            if (!Status.UNLOCKED.equals(meta.getStatus())) {
                 return 0;
             }
         }
@@ -355,24 +355,24 @@ class MetaServiceImpl implements MetaService {
     private List<Meta> find(final Condition condition, final int offset, final int numberOfRows) {
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .select(
-                        data.ID,
+                        meta.ID,
                         dataFeed.NAME,
                         dataType.NAME,
                         dataProcessor.PIPELINE_UUID,
-                        data.PARENT_ID,
-                        data.TASK_ID,
-                        data.PROCESSOR_ID,
-                        data.STATUS,
-                        data.STATUS_TIME,
-                        data.CREATE_TIME,
-                        data.EFFECTIVE_TIME
+                        meta.PARENT_ID,
+                        meta.TASK_ID,
+                        meta.PROCESSOR_ID,
+                        meta.STATUS,
+                        meta.STATUS_TIME,
+                        meta.CREATE_TIME,
+                        meta.EFFECTIVE_TIME
                 )
-                .from(data)
-                .join(dataFeed).on(data.FEED_ID.eq(dataFeed.ID))
-                .join(dataType).on(data.TYPE_ID.eq(dataType.ID))
-                .leftOuterJoin(dataProcessor).on(data.PROCESSOR_ID.eq(dataProcessor.ID))
+                .from(meta)
+                .join(dataFeed).on(meta.FEED_ID.eq(dataFeed.ID))
+                .join(dataType).on(meta.TYPE_ID.eq(dataType.ID))
+                .leftOuterJoin(dataProcessor).on(meta.PROCESSOR_ID.eq(dataProcessor.ID))
                 .where(condition)
-                .orderBy(data.ID)
+                .orderBy(meta.ID)
                 .limit(offset, numberOfRows)
                 .fetch()
                 .map(r -> new Builder().id(r.component1())
@@ -414,7 +414,7 @@ class MetaServiceImpl implements MetaService {
         final Condition condition = createCondition(criteria, DocumentPermissionNames.DELETE);
 
         return JooqUtil.contextResult(connectionProvider, context -> context
-                .deleteFrom(data)
+                .deleteFrom(meta)
                 .where(condition)
                 .execute());
     }
@@ -463,8 +463,8 @@ class MetaServiceImpl implements MetaService {
         final Condition condition = expressionMapper.apply(secureExpression);
 
         return JooqUtil.contextResult(connectionProvider, context -> context
-                .select(max(data.ID))
-                .from(data)
+                .select(max(meta.ID))
+                .from(meta)
                 .where(condition)
                 .fetchOptional()
                 .map(Record1::value1));
@@ -484,8 +484,8 @@ class MetaServiceImpl implements MetaService {
     public int getLockCount() {
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .selectCount()
-                .from(data)
-                .where(data.STATUS.eq(MetaStatusId.LOCKED))
+                .from(meta)
+                .where(meta.STATUS.eq(MetaStatusId.LOCKED))
                 .fetchOptional()
                 .map(Record1::value1)
                 .orElse(0));
@@ -597,10 +597,10 @@ class MetaServiceImpl implements MetaService {
             } else {
                 // Add a dummy parent data as we don't seem to be able to get the real parent.
                 // This might be because it is deleted or the user does not have access permissions.
-                final Meta data = new MetaImpl.Builder()
+                final Meta meta = new MetaImpl.Builder()
                         .id(child.getParentDataId())
                         .build();
-                result.add(data);
+                result.add(meta);
             }
         }
     }
@@ -679,13 +679,13 @@ class MetaServiceImpl implements MetaService {
 
         // If we aren't being asked to match everything then add constraints to the expression.
         if (idSet != null && (idSet.getMatchAll() == null || !idSet.getMatchAll())) {
-            condition = and(condition, data.ID.in(idSet.getSet()));
+            condition = and(condition, meta.ID.in(idSet.getSet()));
         }
 
         // Get additional selection criteria based on meta data attributes;
         final SelectConditionStep<Record1<Long>> metaConditionStep = getMetaCondition(secureExpression);
         if (metaConditionStep != null) {
-            condition = and(condition, data.ID.in(metaConditionStep));
+            condition = and(condition, meta.ID.in(metaConditionStep));
         }
 
         return condition;

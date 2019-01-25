@@ -100,18 +100,18 @@ class MetaImpl implements Meta {
         Builder() {
         }
 
-        Builder(final Meta data) {
-            id(data.getId());
-            feedName(data.getFeedName());
-            typeName(data.getTypeName());
-            pipelineUuid(data.getPipelineUuid());
-            parentDataId(data.getParentDataId());
-            processTaskId(data.getProcessTaskId());
-            processorId(data.getProcessorId());
-            status(data.getStatus());
-            statusMs(data.getStatusMs());
-            createMs(data.getCreateMs());
-            effectiveMs(data.getEffectiveMs());
+        Builder(final Meta meta) {
+            id(meta.getId());
+            feedName(meta.getFeedName());
+            typeName(meta.getTypeName());
+            pipelineUuid(meta.getPipelineUuid());
+            parentDataId(meta.getParentDataId());
+            processTaskId(meta.getProcessTaskId());
+            processorId(meta.getProcessorId());
+            status(meta.getStatus());
+            statusMs(meta.getStatusMs());
+            createMs(meta.getCreateMs());
+            effectiveMs(meta.getEffectiveMs());
         }
 
         public Builder id(final long id) {

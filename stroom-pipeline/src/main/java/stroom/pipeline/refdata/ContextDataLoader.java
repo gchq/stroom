@@ -25,7 +25,7 @@ import java.io.InputStream;
 
 public interface ContextDataLoader {
     void load(final InputStream inputStream,
-              final Meta data,
+              final Meta meta,
               final String feedName,
               final DocRef contextPipeline,
               final RefStreamDefinition refStreamDefinition,

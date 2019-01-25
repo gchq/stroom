@@ -33,11 +33,11 @@ class TestMetaServiceImpl {
         // Delete everything
         dataMetaService.deleteAll();
 
-        final Meta data1 = dataMetaService.create(createProperties("FEED1"));
-        final Meta data2 = dataMetaService.create(createProperties("FEED2"));
+        final Meta meta1 = dataMetaService.create(createProperties("FEED1"));
+        final Meta meta2 = dataMetaService.create(createProperties("FEED2"));
 
         final ExpressionOperator expression = new Builder(Op.AND)
-                .addTerm(MetaDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(data2.getId()))
+                .addTerm(MetaDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(meta2.getId()))
                 .build();
         final FindMetaCriteria criteria = new FindMetaCriteria(expression);
 

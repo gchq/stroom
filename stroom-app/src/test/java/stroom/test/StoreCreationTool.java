@@ -480,7 +480,7 @@ public final class StoreCreationTool {
         // pipelineDataWriter.write(pipelineData, outputStream);
         // data = outputStream.toString();
         //
-        // pipeline.setData(data);
+        // pipeline.setMeta(data);
 
         pipelineStore.writeDocument(pipelineDoc);
 
@@ -517,7 +517,7 @@ public final class StoreCreationTool {
         // pipelineDataWriter.write(pipelineData, outputStream);
         // data = outputStream.toString();
         //
-        // pipeline.setData(data);
+        // pipeline.setMeta(data);
 
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
@@ -669,7 +669,7 @@ public final class StoreCreationTool {
         // pipelineDataWriter.write(pipelineData, outputStream);
         // data = outputStream.toString();
         //
-        // pipeline.setData(data);
+        // pipeline.setMeta(data);
 
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;

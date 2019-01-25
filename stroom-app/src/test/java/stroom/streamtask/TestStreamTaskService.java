@@ -84,8 +84,8 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
                         Instant.ofEpochMilli(criteria.getCreatePeriod().getTo()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli()));
         assertThat(streamTaskService.find(criteria).size()).isEqualTo(0);
 
-        assertThat(streamMetaService.getData(file1.getId())).isNotNull();
-        assertThat(streamMetaService.getData(file2.getId())).isNotNull();
+        assertThat(streamMetaService.getMeta(file1.getId())).isNotNull();
+        assertThat(streamMetaService.getMeta(file2.getId())).isNotNull();
 
         criteria = new FindStreamTaskCriteria();
         assertThat(streamTaskService.findSummary(criteria)).isNotNull();

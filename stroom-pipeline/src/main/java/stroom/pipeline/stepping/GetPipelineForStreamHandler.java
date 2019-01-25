@@ -72,7 +72,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
 //            // If we still don't have a pipeline docRef then just try and find the
 //            // first pipeline we can in the folder that the stream belongs
 //            // to.
-//            final Stream stream = getData(action.getStreamId());
+//            final Stream stream = getMeta(action.getStreamId());
 //            if (stream != null) {
 //                final Feed feed = feedService.load(stream.getFeed());
 //                if (feed != null) {

@@ -846,7 +846,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                         }
 
                         currentStreamId = ref.getStreamId();
-                        currentStream = streamMetaService.getData(currentStreamId);
+                        currentStream = streamMetaService.getMeta(currentStreamId);
                         ranges = new InclusiveRanges();
                     }
 

@@ -102,8 +102,8 @@ class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
         // run the stream retention task which should 'delete' one stream
         streamRetentionExecutor.exec();
 
-        streamInsideRetention = streamMetaService.getData(streamInsideRetention.getId(), true);
-        streamOutsideRetention = streamMetaService.getData(streamOutsideRetention.getId(), true);
+        streamInsideRetention = streamMetaService.getMeta(streamInsideRetention.getId(), true);
+        streamOutsideRetention = streamMetaService.getMeta(streamOutsideRetention.getId(), true);
 
         dumpStreams();
 
@@ -121,8 +121,8 @@ class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
         // one outside the retention period is already 'deleted'
         streamRetentionExecutor.exec();
 
-        streamInsideRetention = streamMetaService.getData(streamInsideRetention.getId(), true);
-        streamOutsideRetention = streamMetaService.getData(streamOutsideRetention.getId(), true);
+        streamInsideRetention = streamMetaService.getMeta(streamInsideRetention.getId(), true);
+        streamOutsideRetention = streamMetaService.getMeta(streamOutsideRetention.getId(), true);
 
         dumpStreams();
 

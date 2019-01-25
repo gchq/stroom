@@ -269,7 +269,7 @@ public class MockStreamStore implements StreamStore, Clearable {
      */
     @Override
     public StreamSource openStreamSource(final long streamId, final boolean anyStatus) throws StreamException {
-        final Meta stream = streamMetaService.getData(streamId, anyStatus);
+        final Meta stream = streamMetaService.getMeta(streamId, anyStatus);
         if (stream == null) {
             return null;
         }
@@ -314,7 +314,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         return fileData;
     }
 
-//    public Map<Long, StreamEntity> getDataMap() {
+//    public Map<Long, StreamEntity> getMetaMap() {
 //        return streamMap;
 //    }
 
@@ -353,19 +353,19 @@ public class MockStreamStore implements StreamStore, Clearable {
         final StringBuilder sb = new StringBuilder();
         sb.append("Stream Store Contains:\n");
         for (final long streamId : fileData.keySet()) {
-            final Meta stream = streamMetaService.getData(streamId);
+            final Meta stream = streamMetaService.getMeta(streamId);
             sb.append(stream);
             sb.append("\n");
         }
         sb.append("\nOpen Input Streams:\n");
         for (final long streamId : openInputStream) {
-            final Meta stream = streamMetaService.getData(streamId);
+            final Meta stream = streamMetaService.getMeta(streamId);
             sb.append(stream);
             sb.append("\n");
         }
         sb.append("\nOpen Output Streams:\n");
         for (final long streamId : openOutputStream.keySet()) {
-            final Meta stream = streamMetaService.getData(streamId);
+            final Meta stream = streamMetaService.getMeta(streamId);
             sb.append(stream);
             sb.append("\n");
         }

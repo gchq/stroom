@@ -33,7 +33,7 @@ public class IndexSerialiser implements DocumentSerialiser2<IndexDoc> {
 
 //        final String js = EncodingUtil.asString(data.get(JS));
 //        if (js != null) {
-//            document.setData(js);
+//            document.setMeta(js);
 //        }
         return document;
     }
@@ -42,8 +42,8 @@ public class IndexSerialiser implements DocumentSerialiser2<IndexDoc> {
     public Map<String, byte[]> write(final IndexDoc document) throws IOException {
         final Map<String, byte[]> data = delegate.write(document);
 
-//        if (document.getData() != null) {
-//            data.put(JS, EncodingUtil.asBytes(document.getData()));
+//        if (document.getMeta() != null) {
+//            data.put(JS, EncodingUtil.asBytes(document.getMeta()));
 //        }
 
         return data;

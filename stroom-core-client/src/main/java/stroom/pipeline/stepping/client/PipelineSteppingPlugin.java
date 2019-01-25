@@ -87,7 +87,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                 dispatcher.exec(new FindStreamAction(streamAttributeMapCriteria)).onSuccess(result -> {
                     if (result != null && result.size() == 1) {
                         final MetaRow row = result.get(0);
-                        openEditor(pipeline, row.getData(), eventId, childStreamType);
+                        openEditor(pipeline, row.getMeta(), eventId, childStreamType);
                     }
                 });
             }

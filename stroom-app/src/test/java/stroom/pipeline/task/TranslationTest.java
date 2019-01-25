@@ -235,7 +235,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 final List<Meta> processedStreams = new ArrayList<>();
 
                 for (long streamId = startStreamId + 1; streamId <= endStreamId; streamId++) {
-                    final Meta stream = streamMetaService.getData(streamId);
+                    final Meta stream = streamMetaService.getMeta(streamId);
                     final String streamTypeName = stream.getTypeName();
                     if (!StreamTypeNames.ERROR.equals(streamTypeName)) {
                         processedStreams.add(stream);
@@ -243,7 +243,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         try (StreamSource errorStreamSource = streamStore.openStreamSource(streamId)) {
                             //got an error stream so dump it to console
 
-                            Meta parentStream = streamMetaService.getData(stream.getParentDataId());
+                            Meta parentStream = streamMetaService.getMeta(stream.getParentDataId());
 
                             String errorStreamStr = StreamUtil.streamToString(errorStreamSource.getInputStream());
                             java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(errorStreamSource.getInputStream());

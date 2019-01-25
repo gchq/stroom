@@ -29,7 +29,7 @@ public interface DataVolumeService {
 
 
 //    interface StreamAndVolumes extends SharedObject {
-//        Stream getData();
+//        Stream getMeta();
 //
 //        Set<Volume> getVolumes();
 //    }
@@ -44,7 +44,7 @@ public interface DataVolumeService {
 //            this.volumes = volumes;
 //        }
 //
-//        public Stream getData() {
+//        public Stream getMeta() {
 //            return stream;
 //        }
 //

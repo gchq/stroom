@@ -171,8 +171,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         if (list != null) {
             if (list.getValues() != null) {
                 for (final MetaRow streamAttributeMap : list.getValues()) {
-                    if (streamAttributeMap.getData().getId() == id) {
-                        return streamAttributeMap.getData();
+                    if (streamAttributeMap.getMeta().getId() == id) {
+                        return streamAttributeMap.getMeta();
                     }
                 }
             }
@@ -481,7 +481,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
 
         if (selectedStream != null) {
-            return selectedStream.getData();
+            return selectedStream.getMeta();
         }
 
         return null;
@@ -584,8 +584,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             // pane to step through.
             Long childStreamId = null;
             final MetaRow map = streamListPresenter.getSelectedStream();
-            if (map != null && map.getData() != null) {
-                final Meta childStream = map.getData();
+            if (map != null && map.getMeta() != null) {
+                final Meta childStream = map.getMeta();
                 // If the top list has a raw stream selected or isn't a child of
                 // the selected stream then this is't the child stream we are
                 // looking for.

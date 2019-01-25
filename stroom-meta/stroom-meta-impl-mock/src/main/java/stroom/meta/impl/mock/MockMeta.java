@@ -75,65 +75,65 @@ class MockMeta implements Meta {
     }
 
     public static class Builder {
-        private final MockMeta data = new MockMeta();
+        private final MockMeta meta = new MockMeta();
 
         public Builder id(final long id) {
-            data.id = id;
+            meta.id = id;
             return this;
         }
 
         public Builder feedName(final String feedName) {
-            data.feedName = feedName;
+            meta.feedName = feedName;
             return this;
         }
 
         public Builder typeName(final String typeName) {
-            data.typeName = typeName;
+            meta.typeName = typeName;
             return this;
         }
 
         public Builder pipelineUuid(final String pipelineUuid) {
-            data.pipelineUuid = pipelineUuid;
+            meta.pipelineUuid = pipelineUuid;
             return this;
         }
 
         public Builder parentDataId(final Long parentDataId) {
-            data.parentDataId = parentDataId;
+            meta.parentDataId = parentDataId;
             return this;
         }
 
         public Builder processorTaskId(final Long processorTaskId) {
-            data.processorTaskId = processorTaskId;
+            meta.processorTaskId = processorTaskId;
             return this;
         }
 
         public Builder processorId(final Integer processorId) {
-            data.processorId = processorId;
+            meta.processorId = processorId;
             return this;
         }
 
         public Builder status(final Status status) {
-            data.status = status;
+            meta.status = status;
             return this;
         }
 
         public Builder statusMs(final Long statusMs) {
-            data.statusMs = statusMs;
+            meta.statusMs = statusMs;
             return this;
         }
 
         public Builder createMs(final long createMs) {
-            data.createMs = createMs;
+            meta.createMs = createMs;
             return this;
         }
 
         public Builder effectiveMs(final Long effectiveMs) {
-            data.effectiveMs = effectiveMs;
+            meta.effectiveMs = effectiveMs;
             return this;
         }
 
         public Meta build() {
-            return data;
+            return meta;
         }
     }
 }

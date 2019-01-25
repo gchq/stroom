@@ -81,13 +81,13 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Proc
 
 //                TooltipUtil.addBreak(html);
 //                TooltipUtil.addHeading(html, "Stream");
-//                TooltipUtil.addRowData(html, "Stream Id", row.getData().getId());
-//                TooltipUtil.addRowData(html, "Status", row.getData().getStatus().getDisplayValue());
-//                TooltipUtil.addRowData(html, "Parent Stream Id", row.getData().getParentDataId());
-//                TooltipUtil.addRowData(html, "Created", toDateString(row.getData().getCreateMs()));
-//                TooltipUtil.addRowData(html, "Effective", toDateString(row.getData().getEffectiveMs()));
-//                TooltipUtil.addRowData(html, "Stream Type", row.getData().getTypeName());
-//                TooltipUtil.addRowData(html, "Feed", row.getData().getFeedName());
+//                TooltipUtil.addRowData(html, "Stream Id", row.getMeta().getId());
+//                TooltipUtil.addRowData(html, "Status", row.getMeta().getStatus().getDisplayValue());
+//                TooltipUtil.addRowData(html, "Parent Stream Id", row.getMeta().getParentDataId());
+//                TooltipUtil.addRowData(html, "Created", toDateString(row.getMeta().getCreateMs()));
+//                TooltipUtil.addRowData(html, "Effective", toDateString(row.getMeta().getEffectiveMs()));
+//                TooltipUtil.addRowData(html, "Stream Type", row.getMeta().getTypeName());
+//                TooltipUtil.addRowData(html, "Feed", row.getMeta().getFeedName());
 
                 if (row.getStreamProcessorFilter() != null) {
                     if (row.getStreamProcessorFilter().getStreamProcessor() != null) {

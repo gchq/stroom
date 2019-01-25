@@ -109,8 +109,8 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 equalsList = false;
             } else {
                 for (int i = 0; i < oldList.size(); i++) {
-                    final Meta oldStream = oldList.get(i).getData();
-                    final Meta newStream = newList.get(i).getData();
+                    final Meta oldStream = oldList.get(i).getMeta();
+                    final Meta newStream = newList.get(i).getMeta();
 
                     if (!oldStream.equals(newStream)) {
                         equalsList = false;
@@ -129,7 +129,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             // if (masterEntityIdSet.getIdSet() != null &&
             // masterEntityIdSet.getIdSet().size() > 0) {
             // for (final StreamAttributeMap map : data) {
-            // final long id = map.getData().getId();
+            // final long id = map.getMeta().getId();
             // if (masterEntityIdSet.contains(id)) {
             // entityIdSet.add(id);
             // }
@@ -143,7 +143,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 entityIdSet.setMatchAll(oldMatchAll);
                 if (data != null) {
                     for (final MetaRow map : data) {
-                        final long id = map.getData().getId();
+                        final long id = map.getMeta().getId();
                         if (oldIdSet.contains(id)) {
                             entityIdSet.add(id);
                         }
@@ -174,7 +174,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue(final MetaRow object) {
-                return TickBoxState.fromBoolean(entityIdSet.isMatch(object.getData().getId()));
+                return TickBoxState.fromBoolean(entityIdSet.isMatch(object.getMeta().getId()));
             }
         };
         if (allowSelectAll) {
@@ -214,7 +214,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         // Add Handlers
         column.setFieldUpdater((index, row, value) -> {
             if (value.toBoolean()) {
-                entityIdSet.add(row.getData().getId());
+                entityIdSet.add(row.getMeta().getId());
 
             } else {
                 // De-selecting one and currently matching all ?
@@ -224,7 +224,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                     final Set<Long> resultStreamIdSet = getResultStreamIdSet();
                     entityIdSet.addAll(resultStreamIdSet);
                 }
-                entityIdSet.remove(row.getData().getId());
+                entityIdSet.remove(row.getMeta().getId());
             }
             getView().redrawHeaders();
             DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
@@ -233,10 +233,10 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
     private SvgPreset getInfoCellState(final MetaRow object) {
         // Should only show unlocked ones by default
-        if (Status.UNLOCKED.equals(object.getData().getStatus())) {
+        if (Status.UNLOCKED.equals(object.getMeta().getStatus())) {
             return SvgPresets.INFO;
         }
-        if (Status.DELETED.equals(object.getData().getStatus())) {
+        if (Status.DELETED.equals(object.getMeta().getStatus())) {
             return SvgPresets.DELETE;
         }
 
@@ -253,7 +253,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
             @Override
             protected void showInfo(final MetaRow row, final int x, final int y) {
-                final FetchFullStreamInfoAction action = new FetchFullStreamInfoAction(row.getData());
+                final FetchFullStreamInfoAction action = new FetchFullStreamInfoAction(row.getMeta());
                 dispatcher.exec(action).onSuccess(result -> {
                     final StringBuilder html = new StringBuilder();
 
@@ -275,20 +275,20 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 //    private void buildTipText(final StreamAttributeMap row, final StringBuilder html) {
 //        TooltipUtil.addHeading(html, "Stream");
 //
-//        TooltipUtil.addRowData(html, "Stream Id", row.getData().getId());
-//        TooltipUtil.addRowData(html, "Status", row.getData().getStatus());
-//        StreamTooltipPresenterUtil.addRowDateString(html, "Status Ms", row.getData().getStatusMs());
-//        TooltipUtil.addRowData(html, "Stream Task Id", row.getData().getProcessTaskId());
-//        TooltipUtil.addRowData(html, "Parent Stream Id", row.getData().getParentDataId());
-//        StreamTooltipPresenterUtil.addRowDateString(html, "Created", row.getData().getCreateMs());
-//        StreamTooltipPresenterUtil.addRowDateString(html, "Effective", row.getData().getEffectiveMs());
-//        TooltipUtil.addRowData(html, "Stream Type", row.getData().getTypeName());
-//        TooltipUtil.addRowData(html, "Feed", row.getData().getFeedName());
-//        if (row.getData().getProcessorId() != null) {
-//            TooltipUtil.addRowData(html, "Stream Processor Id", row.getData().getProcessorId());
+//        TooltipUtil.addRowData(html, "Stream Id", row.getMeta().getId());
+//        TooltipUtil.addRowData(html, "Status", row.getMeta().getStatus());
+//        StreamTooltipPresenterUtil.addRowDateString(html, "Status Ms", row.getMeta().getStatusMs());
+//        TooltipUtil.addRowData(html, "Stream Task Id", row.getMeta().getProcessTaskId());
+//        TooltipUtil.addRowData(html, "Parent Stream Id", row.getMeta().getParentDataId());
+//        StreamTooltipPresenterUtil.addRowDateString(html, "Created", row.getMeta().getCreateMs());
+//        StreamTooltipPresenterUtil.addRowDateString(html, "Effective", row.getMeta().getEffectiveMs());
+//        TooltipUtil.addRowData(html, "Stream Type", row.getMeta().getTypeName());
+//        TooltipUtil.addRowData(html, "Feed", row.getMeta().getFeedName());
+//        if (row.getMeta().getProcessorId() != null) {
+//            TooltipUtil.addRowData(html, "Stream Processor Id", row.getMeta().getProcessorId());
 //        }
-//        if (row.getData().getPipelineUuid() != null) {
-//            TooltipUtil.addRowData(html, "Stream Processor Pipeline", row.getData().getPipelineUuid());
+//        if (row.getMeta().getPipelineUuid() != null) {
+//            TooltipUtil.addRowData(html, "Stream Processor Pipeline", row.getMeta().getPipelineUuid());
 //        }
 //        TooltipUtil.addBreak(html);
 //        TooltipUtil.addHeading(html, "Attributes");
@@ -329,7 +329,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         getView().addResizableColumn(new Column<MetaRow, String>(new TextCell()) {
             @Override
             public String getValue(final MetaRow row) {
-                return ClientDateUtil.toISOString(row.getData().getCreateMs());
+                return ClientDateUtil.toISOString(row.getMeta().getCreateMs());
             }
         }, "Created", ColumnSizeConstants.DATE_COL);
     }
@@ -339,7 +339,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 //        getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
 //            @Override
 //            public String getValue(final StreamAttributeMap row) {
-//                return ClientDateUtil.toISOString(row.getData().getEffectiveMs());
+//                return ClientDateUtil.toISOString(row.getMeta().getEffectiveMs());
 //            }
 //        }, "Effective", ColumnSizeConstants.DATE_COL);
 //    }
@@ -349,8 +349,8 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         getView().addResizableColumn(new Column<MetaRow, String>(new TextCell()) {
             @Override
             public String getValue(final MetaRow row) {
-                if (row != null && row.getData() != null && row.getData().getFeedName() != null) {
-                    return row.getData().getFeedName();
+                if (row != null && row.getMeta() != null && row.getMeta().getFeedName() != null) {
+                    return row.getMeta().getFeedName();
                 }
                 return "";
             }
@@ -363,8 +363,8 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         getView().addResizableColumn(new Column<MetaRow, String>(new TextCell()) {
             @Override
             public String getValue(final MetaRow row) {
-                if (row != null && row.getData() != null && row.getData().getTypeName() != null) {
-                    return row.getData().getTypeName();
+                if (row != null && row.getMeta() != null && row.getMeta().getTypeName() != null) {
+                    return row.getMeta().getTypeName();
                 }
                 return "";
             }
@@ -377,9 +377,9 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         getView().addResizableColumn(new Column<MetaRow, String>(new TextCell()) {
             @Override
             public String getValue(final MetaRow row) {
-                if (row.getData().getProcessorId() != null) {
-                    if (row.getData().getPipelineUuid() != null) {
-                        return row.getData().getPipelineUuid();
+                if (row.getMeta().getProcessorId() != null) {
+                    if (row.getMeta().getPipelineUuid() != null) {
+                        return row.getMeta().getPipelineUuid();
                     } else {
                         return "Not visible";
                     }
@@ -403,7 +403,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         final HashSet<Long> rtn = new HashSet<>();
         if (resultList != null) {
             for (final MetaRow e : resultList) {
-                rtn.add(e.getData().getId());
+                rtn.add(e.getMeta().getId());
             }
         }
         return rtn;
