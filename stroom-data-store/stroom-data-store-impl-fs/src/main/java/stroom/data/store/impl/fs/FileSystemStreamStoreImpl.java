@@ -21,20 +21,20 @@ package stroom.data.store.impl.fs;
 import event.logging.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.DataProperties;
-import stroom.data.meta.api.DataStatus;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.shared.AttributeMap;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.MetaDataSource;
 import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
-import stroom.feed.AttributeMapUtil;
-import stroom.node.NodeCache;
-import stroom.node.VolumeService;
+import stroom.data.meta.api.AttributeMapUtil;
+import stroom.node.api.NodeInfo;
+import stroom.volume.VolumeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
 import stroom.util.io.FileUtil;
@@ -66,19 +66,19 @@ class FileSystemStreamStoreImpl implements StreamStore {
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
     private final DataMetaService streamMetaService;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final VolumeService volumeService;
     private final DataVolumeService streamVolumeService;
 
     @Inject
     FileSystemStreamStoreImpl(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
                               final DataMetaService streamMetaService,
-                              final NodeCache nodeCache,
+                              final NodeInfo nodeInfo,
                               final VolumeService volumeService,
                               final DataVolumeService streamVolumeService) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.streamMetaService = streamMetaService;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.volumeService = volumeService;
         this.streamVolumeService = streamVolumeService;
     }
@@ -87,7 +87,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
     public StreamTarget openStreamTarget(final DataProperties streamProperties) {
         LOGGER.debug("openStreamTarget() " + streamProperties);
 
-        final Set<VolumeEntity> volumeSet = volumeService.getStreamVolumeSet(nodeCache.getDefaultNode());
+        final Set<VolumeEntity> volumeSet = volumeService.getStreamVolumeSet(nodeInfo.getThisNode());
         if (volumeSet.isEmpty()) {
             throw new StreamException("Failed to get lock as no writeable volumes");
         }
@@ -250,7 +250,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
                 LOGGER.warn(message);
                 throw new StreamException(message);
             }
-            final Node node = nodeCache.getDefaultNode();
+            final Node node = nodeInfo.getThisNode();
             final DataVolume streamVolume = streamVolumeService.pickBestVolume(volumeSet, node.getId(), node.getRack().getId());
             if (streamVolume == null) {
                 final String message = "Unable to access any volume for " + stream

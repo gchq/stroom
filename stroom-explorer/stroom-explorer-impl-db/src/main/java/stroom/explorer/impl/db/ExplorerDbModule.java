@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
-import stroom.util.db.DbUtil;
+import stroom.db.util.HikariUtil;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -30,28 +30,8 @@ public class ExplorerDbModule extends AbstractModule {
     @Singleton
     ConnectionProvider getConnectionProvider(final Provider<ExplorerConfig> configProvider) {
         final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
-
-        // Keep waiting until we can establish a DB connection to allow for the DB to start after the app
-        DbUtil.waitForConnection(
-                connectionConfig.getJdbcDriverClassName(),
-                connectionConfig.getJdbcDriverUrl(),
-                connectionConfig.getJdbcDriverUsername(),
-                connectionConfig.getJdbcDriverPassword());
-
         final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
-
-        connectionConfig.validate();
-
-        final HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
-        config.setUsername(connectionConfig.getJdbcDriverUsername());
-        config.setPassword(connectionConfig.getJdbcDriverPassword());
-        config.addDataSourceProperty("cachePrepStmts",
-                String.valueOf(connectionPoolConfig.isCachePrepStmts()));
-        config.addDataSourceProperty("prepStmtCacheSize",
-                String.valueOf(connectionPoolConfig.getPrepStmtCacheSize()));
-        config.addDataSourceProperty("prepStmtCacheSqlLimit",
-                String.valueOf(connectionPoolConfig.getPrepStmtCacheSqlLimit()));
+        final HikariConfig config = HikariUtil.createConfig(connectionConfig, connectionPoolConfig);
         final ConnectionProvider connectionProvider = new ConnectionProvider(config);
         flyway(connectionProvider);
         return connectionProvider;

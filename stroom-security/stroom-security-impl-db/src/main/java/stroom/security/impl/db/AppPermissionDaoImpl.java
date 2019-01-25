@@ -1,9 +1,9 @@
 package stroom.security.impl.db;
 
 import org.jooq.Record;
+import stroom.db.util.JooqUtil;
 import stroom.security.dao.AppPermissionDao;
 import stroom.security.impl.db.tables.records.AppPermissionRecord;
-import stroom.util.jooq.JooqUtil;
 
 import javax.inject.Inject;
 import java.util.Set;

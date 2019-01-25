@@ -1,44 +1,52 @@
 ext.moduleName = 'stroom.core.server'
 
 dependencies {
+    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data-meta:stroom-data-meta-api')
     implementation project(':stroom-data-store:stroom-data-store-api')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
+    implementation project(':stroom-node:stroom-node-api')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-resourcestore:stroom-resourcestore-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-cluster-lock:stroom-cluster-lock-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-data-meta:stroom-data-meta-api')
     implementation project(':stroom-data-store:stroom-data-store-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-shared')
+    implementation project(':stroom-task:stroom-task-cluster-api')
+    implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-job:stroom-job-shared')
 
     implementation libs.eventLogging
     implementation libs.stroomDocRef
     implementation libs.stroomQueryApi
 
     implementation libs.commons_compress
-    implementation libs.commons_exec
+//    implementation libs.commons_exec
     implementation libs.commons_fileupload
     implementation libs.commons_io
     implementation libs.commons_lang
     implementation libs.curator_client
     implementation libs.curator_framework
     implementation libs.curator_x_discovery
-    implementation libs.curator_x_discovery
     implementation libs.dropwizard_lifecycle
     implementation libs.dropwizard_metrics_annotation
     implementation libs.dropwizard_metrics_healthchecks
-    implementation libs.fast_classpath_scanner
     implementation libs.flyway_core
     implementation libs.guava
     implementation libs.guice4
@@ -49,7 +57,6 @@ dependencies {
     implementation libs.hikari
     implementation libs.jackson_annotations
     implementation libs.jackson_core
-    implementation libs.jackson_databind
     implementation libs.jackson_databind
     implementation libs.javassist
     implementation libs.javax_inject
@@ -80,6 +87,7 @@ dependencies {
     runtimeOnly libs.lucene_analyzers_common
     runtimeOnly libs.lucene_queryparser
 
+    testImplementation project(':stroom-node:stroom-node-impl-mock')
     testImplementation project(':stroom-security:stroom-security-impl-mock')
     testImplementation project(':stroom-test-common')
     

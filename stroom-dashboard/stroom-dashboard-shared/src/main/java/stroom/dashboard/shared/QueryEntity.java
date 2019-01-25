@@ -17,8 +17,8 @@
 package stroom.dashboard.shared;
 
 import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.importexport.api.ExternalFile;
 import stroom.query.api.v2.Query;
 
 import javax.persistence.Column;

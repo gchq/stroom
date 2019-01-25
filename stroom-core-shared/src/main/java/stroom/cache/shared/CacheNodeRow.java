@@ -16,26 +16,25 @@
 
 package stroom.cache.shared;
 
-import stroom.node.shared.Node;
 import stroom.docref.SharedObject;
 
 public class CacheNodeRow implements SharedObject {
     private static final long serialVersionUID = -7367500560554774611L;
 
-    private Node node;
+    private String nodeName;
     private CacheInfo cacheInfo;
 
     public CacheNodeRow() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public CacheNodeRow(final Node node, final CacheInfo cacheInfo) {
-        this.node = node;
+    public CacheNodeRow(final String nodeName, final CacheInfo cacheInfo) {
+        this.nodeName = nodeName;
         this.cacheInfo = cacheInfo;
     }
 
-    public Node getNode() {
-        return node;
+    public String getNodeName() {
+        return nodeName;
     }
 
     public CacheInfo getCacheInfo() {

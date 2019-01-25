@@ -2,9 +2,9 @@ package stroom.data.meta.impl.mock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataRow;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataRow;
+import stroom.data.meta.shared.MetaDataSource;
 import stroom.util.date.DateUtil;
 
 import java.util.HashMap;

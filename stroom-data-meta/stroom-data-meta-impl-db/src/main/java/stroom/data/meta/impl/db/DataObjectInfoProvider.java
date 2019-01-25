@@ -20,7 +20,7 @@ package stroom.data.meta.impl.db;
 import event.logging.BaseObject;
 import event.logging.Object;
 import event.logging.util.EventLoggingUtil;
-import stroom.data.meta.api.Data;
+import stroom.data.meta.shared.Data;
 import stroom.event.logging.api.ObjectInfoProvider;
 
 class DataObjectInfoProvider implements ObjectInfoProvider {

@@ -24,7 +24,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.docref.DocRef;
 import stroom.statistics.shared.StatisticStoreDoc;
@@ -68,7 +67,6 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
 
     @BeforeEach
     void beforeTest() {
-        MockitoAnnotations.initMocks(this);
         createCount.set(0);
         destroyCount.set(0);
         eventCount.set(0);

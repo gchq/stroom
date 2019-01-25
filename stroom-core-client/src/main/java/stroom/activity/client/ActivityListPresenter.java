@@ -26,7 +26,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.activity.api.Activity;
 import stroom.activity.api.Activity.Prop;
 import stroom.activity.shared.FindActivityAction;
-import stroom.activity.shared.FindActivityCriteria;
+import stroom.activity.api.FindActivityCriteria;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;

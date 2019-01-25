@@ -2,7 +2,7 @@ package stroom.proxy.repo;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.shared.AttributeMap;
 import stroom.datafeed.StroomStatusCode;
 import stroom.datafeed.StroomStreamException;
 import stroom.util.io.StreamUtil;

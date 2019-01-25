@@ -16,8 +16,8 @@
 
 package stroom.pipeline.task;
 
-import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.shared.AttributeMap;
+import stroom.data.meta.shared.MetaDataSource;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.state.RecordCount;

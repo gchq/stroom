@@ -20,13 +20,13 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import stroom.docref.DocRef;
-import stroom.entity.event.EntityEvent;
-import stroom.entity.event.EntityEventBus;
+import stroom.entity.shared.EntityEvent;
+import stroom.entity.shared.EntityEventBus;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.security.shared.UserRef;
-import stroom.util.cache.CacheManager;
-import stroom.util.cache.CacheUtil;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

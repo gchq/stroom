@@ -20,7 +20,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.kafka.pipeline.KafkaProducerFactory;
-import stroom.util.HasHealthCheck;
 
 public class KafkaModule extends AbstractModule {
     @Override

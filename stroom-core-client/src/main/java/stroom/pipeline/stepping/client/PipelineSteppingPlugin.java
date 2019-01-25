@@ -31,10 +31,10 @@ import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.Data;
+import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.Data;
 import stroom.streamstore.shared.FindStreamAction;
-import stroom.data.meta.api.DataRow;
+import stroom.data.meta.shared.DataRow;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
     private final Provider<EntityChooser> pipelineSelection;

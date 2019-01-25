@@ -1,11 +1,11 @@
 package stroom.security.impl.db;
 
 import org.jooq.impl.DSL;
+import stroom.db.util.JooqUtil;
 import stroom.security.dao.UserDao;
 import stroom.security.impl.db.tables.records.StroomUserGroupsRecord;
 import stroom.security.impl.db.tables.records.StroomUserRecord;
 import stroom.security.shared.User;
-import stroom.util.jooq.JooqUtil;
 
 import javax.inject.Inject;
 import java.util.List;

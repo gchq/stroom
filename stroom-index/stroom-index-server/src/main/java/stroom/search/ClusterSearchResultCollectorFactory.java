@@ -16,14 +16,13 @@
 
 package stroom.search;
 
-import stroom.node.shared.Node;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Sizes;
-import stroom.task.api.TaskManager;
 import stroom.task.api.TaskContext;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
+import stroom.task.api.TaskManager;
 import stroom.task.cluster.ClusterResultCollectorCache;
+import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
 
 import javax.inject.Inject;
 import java.util.Set;
@@ -46,7 +45,7 @@ public class ClusterSearchResultCollectorFactory {
     }
 
     public ClusterSearchResultCollector create(final AsyncSearchTask task,
-                                               final Node node,
+                                               final String nodeName,
                                                final Set<String> highlights,
                                                final ResultHandler resultHandler,
                                                final Sizes defaultMaxResultsSizes,
@@ -56,7 +55,7 @@ public class ClusterSearchResultCollectorFactory {
                 taskContext,
                 task,
                 dispatchHelper,
-                node,
+                nodeName,
                 highlights,
                 clusterResultCollectorCache,
                 resultHandler,

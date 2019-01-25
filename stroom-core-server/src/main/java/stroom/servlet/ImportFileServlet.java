@@ -24,7 +24,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.store.StreamEventLog;
-import stroom.resource.ResourceStore;
+import stroom.resource.api.ResourceStore;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.PropertyMap;

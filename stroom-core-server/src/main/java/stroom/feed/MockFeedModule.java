@@ -17,6 +17,10 @@
 package stroom.feed;
 
 import com.google.inject.AbstractModule;
+import stroom.pipeline.feed.FeedDocCache;
+import stroom.pipeline.feed.FeedDocCacheImpl;
+import stroom.pipeline.feed.FeedStore;
+import stroom.pipeline.feed.FeedStoreImpl;
 
 
 public class MockFeedModule extends AbstractModule {

@@ -23,7 +23,6 @@ public class EntityClusterModule extends AbstractModule {
     @Override
     protected void configure() {
         TaskHandlerBinder.create(binder())
-                .bind(ClearServiceClusterTask.class, ClearServiceClusterHandler.class)
-                .bind(FlushServiceClusterTask.class, FlushServiceClusterHandler.class);
+                .bind(ClearServiceClusterTask.class, ClearServiceClusterHandler.class);
     }
 }

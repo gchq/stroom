@@ -18,7 +18,7 @@ package stroom.pipeline.destination;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.shared.DataProperties;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.datafeed.TestBase;

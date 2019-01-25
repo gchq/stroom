@@ -16,8 +16,9 @@
 
 package stroom.task.cluster;
 
-import stroom.node.shared.Node;
 import stroom.docref.SharedObject;
+import stroom.task.cluster.api.ClusterTask;
+import stroom.task.cluster.api.CollectorId;
 import stroom.task.shared.TaskId;
 
 public interface ClusterWorker {
@@ -37,6 +38,5 @@ public interface ClusterWorker {
      * @param sourceTaskId The id of the parent task that owns this worker cluster task.
      * @param collectorId  The id of the collector to send results back to.
      */
-    <R extends SharedObject> void execAsync(ClusterTask<R> task, Node sourceNode, TaskId sourceTaskId,
-                                            CollectorId collectorId);
+    <R extends SharedObject> void execAsync(ClusterTask<R> task, String sourceNode, TaskId sourceTaskId, CollectorId collectorId);
 }

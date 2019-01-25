@@ -17,6 +17,7 @@
 package stroom.entity.event;
 
 import com.google.inject.AbstractModule;
+import stroom.entity.shared.EntityEventBus;
 
 public class EntityEventModule extends AbstractModule {
     @Override

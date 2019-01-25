@@ -16,9 +16,9 @@
 
 package stroom.task;
 
+import stroom.task.shared.ThreadPool;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
-import stroom.task.shared.ThreadPool;
 
 public class ThreadPoolImpl implements ThreadPool {
     private final String name;

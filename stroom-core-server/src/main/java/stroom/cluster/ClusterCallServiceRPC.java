@@ -20,7 +20,6 @@ import com.caucho.hessian.server.HessianServlet;
 import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterCallServiceLocal;
 import stroom.cluster.api.ServiceName;
-import stroom.node.shared.Node;
 
 import javax.inject.Inject;
 
@@ -33,7 +32,7 @@ public class ClusterCallServiceRPC extends HessianServlet implements ClusterCall
     }
 
     @Override
-    public Object call(final Node sourceNode, final Node targetNode, final ServiceName serviceName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
+    public Object call(final String sourceNode, final String targetNode, final ServiceName serviceName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
         return clusterCallService.call(sourceNode, targetNode, serviceName, methodName, parameterTypes, args);
     }
 }

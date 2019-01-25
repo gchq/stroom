@@ -21,15 +21,10 @@ import stroom.config.global.api.ConfigProperty;
 import stroom.config.global.api.FetchGlobalConfigAction;
 import stroom.config.global.api.FindGlobalConfigCriteria;
 import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.OrderByColumn;
-import stroom.data.meta.api.DataRow;
-import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.ResultList;
-import stroom.entity.shared.Sort.Direction;
 import stroom.streamstore.client.presenter.ActionDataProvider;
-import stroom.streamstore.shared.FindStreamAction;
 
 public class FetchGlobalConfigActionDataProvider implements Refreshable, ColumnSortEvent.Handler {
     private final ClientDispatchAsync dispatcher;

@@ -41,7 +41,7 @@ class TestUserServiceImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestUserServiceImpl.class);
 
     private static MySQLContainer dbContainer = new MySQLContainer()
-            .withDatabaseName(Stroom.STROOM.getName());//= null;//
+            .withDatabaseName(Stroom.STROOM.getName());//= null;//pu
 
     private static Injector injector;
 

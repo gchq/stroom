@@ -17,7 +17,6 @@
 package stroom.search.extraction;
 
 import stroom.search.taskqueue.TaskExecutor;
-import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Singleton;
 
@@ -25,11 +24,5 @@ import javax.inject.Singleton;
 public class ExtractionTaskExecutor extends TaskExecutor {
     ExtractionTaskExecutor() {
         super("Extraction Task Executor");
-    }
-
-    @StroomShutdown
-    @Override
-    public void shutdown() {
-        super.shutdown();
     }
 }

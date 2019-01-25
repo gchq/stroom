@@ -16,9 +16,8 @@
 
 package stroom.statistics.sql.entity;
 
-import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.ExternalFile;
-import stroom.entity.shared.SQLNameConstants;
+import stroom.importexport.api.ExternalFile;
+import stroom.importexport.migration.DocumentEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.common.CustomRollUpMask;
@@ -26,12 +25,7 @@ import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.common.StatisticRollUpType;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
-import javax.persistence.Table;
 import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,29 +35,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Entity
-@Table(name = "STAT_DAT_SRC", uniqueConstraints = @UniqueConstraint(columnNames = {"NAME"}))
+/**
+ * Used for legacy migration
+ **/
+@Deprecated
 public class OldStatisticStoreEntity extends DocumentEntity {
-    public static final String ENTITY_TYPE = "StatisticStore";
-    public static final String ENTITY_TYPE_FOR_DISPLAY = "Statistic Store";
+    private static final String ENTITY_TYPE = "StatisticStore";
     // IndexFields names
-    public static final String FIELD_NAME_DATE_TIME = "Date Time";
-    public static final String FIELD_NAME_VALUE = "Statistic Value";
-    public static final String FIELD_NAME_COUNT = "Statistic Count";
-    public static final String FIELD_NAME_PRECISION_MS = "Precision ms";
+    private static final String FIELD_NAME_DATE_TIME = "Date Time";
+    private static final String FIELD_NAME_VALUE = "Statistic Value";
+    private static final String FIELD_NAME_COUNT = "Statistic Count";
+    private static final String FIELD_NAME_PRECISION_MS = "Precision ms";
 
 
-    public static final Map<StatisticType, List<String>> STATIC_FIELDS_MAP = new HashMap<>();
-    // Hibernate table/column names
-    public static final String TABLE_NAME = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.DATA + SEP
-            + SQLNameConstants.SOURCE;
-    public static final String STATISTIC_TYPE = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.TYPE;
-    public static final String PRECISION = SQLNameConstants.PRECISION;
-    public static final String ROLLUP_TYPE = SQLNameConstants.ROLLUP + SEP + SQLNameConstants.TYPE;
-    public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final Long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
-    public static final String DEFAULT_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
-    private static final long serialVersionUID = -649286188919707915L;
+    private static final Map<StatisticType, List<String>> STATIC_FIELDS_MAP = new HashMap<>();
+    private static final Long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
 
     static {
         STATIC_FIELDS_MAP.put(StatisticType.COUNT, Arrays.asList(
@@ -98,8 +84,6 @@ public class OldStatisticStoreEntity extends DocumentEntity {
         this.precision = DEFAULT_PRECISION;
     }
 
-    @Column(name = SQLNameConstants.DESCRIPTION)
-    @Lob
     public String getDescription() {
         return description;
     }
@@ -108,13 +92,11 @@ public class OldStatisticStoreEntity extends DocumentEntity {
         this.description = description;
     }
 
-    @Override
     @Transient
     public String getType() {
         return ENTITY_TYPE;
     }
 
-    @Column(name = STATISTIC_TYPE, nullable = false)
     public byte getpStatisticType() {
         return pStatisticType;
     }
@@ -132,7 +114,6 @@ public class OldStatisticStoreEntity extends DocumentEntity {
         this.pStatisticType = statisticType.getPrimitiveValue();
     }
 
-    @Column(name = ROLLUP_TYPE, nullable = false)
     public byte getpRollUpType() {
         return pRollUpType;
     }
@@ -150,7 +131,6 @@ public class OldStatisticStoreEntity extends DocumentEntity {
         this.pRollUpType = rollUpType.getPrimitiveValue();
     }
 
-    @Column(name = PRECISION, nullable = false)
     public Long getPrecision() {
         return precision;
     }
@@ -159,7 +139,6 @@ public class OldStatisticStoreEntity extends DocumentEntity {
         this.precision = precision;
     }
 
-    @Column(name = SQLNameConstants.ENABLED, nullable = false)
     public boolean isEnabled() {
         return enabled;
     }
@@ -168,8 +147,6 @@ public class OldStatisticStoreEntity extends DocumentEntity {
         this.enabled = enabled;
     }
 
-    @Lob
-    @Column(name = SQLNameConstants.DATA, length = Integer.MAX_VALUE)
     @ExternalFile
     public String getData() {
         return data;

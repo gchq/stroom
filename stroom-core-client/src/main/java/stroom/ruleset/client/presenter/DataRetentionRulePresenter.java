@@ -26,7 +26,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.ruleset.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.ruleset.shared.DataRetentionRule;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.shared.MetaDataSource;
 import stroom.datasource.shared.FetchFieldsAction;
 import stroom.streamstore.shared.TimeUnit;
 

@@ -1,11 +1,11 @@
 package stroom.security.impl.db;
 
 import org.jooq.Record;
+import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.security.dao.DocumentPermissionDao;
 import stroom.security.impl.db.tables.records.DocPermissionRecord;
 import stroom.security.shared.DocumentPermissionJooq;
-import stroom.util.jooq.JooqUtil;
 
 import javax.inject.Inject;
 import java.util.Set;

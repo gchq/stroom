@@ -16,12 +16,12 @@
 
 package stroom.streamtask;
 
-import stroom.jobsystem.DistributedTask;
+import stroom.job.api.DistributedTask;
 import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.task.api.ServerTask;
 import stroom.task.shared.SimpleThreadPool;
 import stroom.task.shared.ThreadPool;
 import stroom.util.shared.VoidResult;
-import stroom.task.api.ServerTask;
 
 public class StreamProcessorTask extends ServerTask<VoidResult> implements DistributedTask<VoidResult> {
     public static final String JOB_NAME = "Stream Processor";
@@ -45,7 +45,7 @@ public class StreamProcessorTask extends ServerTask<VoidResult> implements Distr
         return streamProcessorTaskExecutor;
     }
 
-    public void setStreamProcessorTaskExecutor(final StreamProcessorTaskExecutor streamProcessorTaskExecutor) {
+    void setStreamProcessorTaskExecutor(final StreamProcessorTaskExecutor streamProcessorTaskExecutor) {
         this.streamProcessorTaskExecutor = streamProcessorTaskExecutor;
     }
 

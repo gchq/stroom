@@ -4,6 +4,8 @@ import com.google.inject.AbstractModule;
 import io.dropwizard.setup.Environment;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfigModule;
+import stroom.lifecycle.impl.LifecycleServiceModule;
+import stroom.resource.impl.SessionResourceModule;
 import stroom.startup.Config;
 
 public class AppModule extends AbstractModule {
@@ -23,6 +25,8 @@ public class AppModule extends AbstractModule {
         install(new AppConfigModule(configuration.getAppConfig()));
 
         install(new CoreModule());
+        install(new LifecycleServiceModule());
+        install(new LifecycleModule());
         install(new JobsModule());
 
         install(new ClusterModule());
@@ -33,7 +37,7 @@ public class AppModule extends AbstractModule {
 
         install(new stroom.statistics.sql.search.SQLStatisticSearchModule());
         install(new stroom.dispatch.DispatchModule());
-        install(new stroom.resource.SessionResourceModule());
+        install(new SessionResourceModule());
 //        install(new stroom.test.DatabaseTestControlModule());
     }
 }

@@ -19,8 +19,8 @@ package stroom.pipeline.filter;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.xml.event.simple.SimpleEventList;
-import stroom.xml.event.simple.SimpleEventListBuilder;
+import stroom.pipeline.xml.event.simple.SimpleEventList;
+import stroom.pipeline.xml.event.simple.SimpleEventListBuilder;
 
 /**
  * This filter is used to buffer SAX events in memory if required. Having

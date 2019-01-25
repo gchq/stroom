@@ -18,13 +18,13 @@ package stroom.data.store.util;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.shared.DataProperties;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
 import stroom.persist.ConnectionProvider;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.util.db.DbUtil;
+import stroom.db.util.DbUtil;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
@@ -58,7 +58,7 @@ class TestStreamGrepTool {
 
             final StreamGrepTool streamGrepTool = new StreamGrepTool();
             streamGrepTool.setFeed(feedName);
-            streamGrepTool.setMatch("to match on");
+
             streamGrepTool.run();
 
         } catch (final RuntimeException e) {

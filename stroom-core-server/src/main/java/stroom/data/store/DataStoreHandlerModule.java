@@ -17,6 +17,8 @@
 package stroom.data.store;
 
 import com.google.inject.AbstractModule;
+import stroom.pipeline.shared.FetchDataAction;
+import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.streamstore.shared.DownloadDataAction;
 import stroom.streamstore.shared.UpdateStatusAction;
 import stroom.streamstore.shared.UploadDataAction;
@@ -26,6 +28,8 @@ public class DataStoreHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
         TaskHandlerBinder.create(binder())
+                .bind(FetchDataAction.class, FetchDataHandler.class)
+                .bind(FetchDataWithPipelineAction.class, FetchDataWithPipelineHandler.class)
                 .bind(UpdateStatusAction.class, UpdateStatusHandler.class)
                 .bind(DownloadDataAction.class, DownloadDataHandler.class)
                 .bind(StreamDownloadTask.class, StreamDownloadTaskHandler.class)

@@ -18,8 +18,8 @@ package stroom.data.store.impl.fs;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.Data;
-import stroom.jobsystem.MockTask;
+import stroom.data.meta.shared.Data;
+import stroom.job.MockTask;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;

@@ -20,10 +20,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.EntityTypeBinder;
 import stroom.entity.FindService;
-import stroom.entity.event.EntityEvent;
+import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.Clearable;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.impl.db.IndexDbModule;
 import stroom.index.shared.CloseIndexShardAction;
 import stroom.index.shared.DeleteIndexShardAction;
@@ -73,6 +73,5 @@ public class IndexModule extends AbstractModule {
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
 //        findServiceBinder.addBinding().to(stroom.index.IndexStoreImpl.class);
         findServiceBinder.addBinding().to(stroom.index.IndexShardServiceImpl.class);
-
     }
 }

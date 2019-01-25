@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.api.ExplorerService;
-import stroom.importexport.ImportExportSerializer;
+import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportState;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticType;

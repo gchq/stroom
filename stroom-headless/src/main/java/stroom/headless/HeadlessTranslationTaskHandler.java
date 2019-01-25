@@ -17,12 +17,12 @@
 
 package stroom.headless;
 
-import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Data;
+import stroom.data.meta.shared.AttributeMap;
+import stroom.data.meta.shared.Data;
 import stroom.docref.DocRef;
-import stroom.feed.AttributeMapUtil;
-import stroom.feed.FeedStore;
-import stroom.feed.StroomHeaderArguments;
+import stroom.data.meta.api.AttributeMapUtil;
+import stroom.pipeline.feed.FeedStore;
+import stroom.data.meta.shared.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.PipelineStore;

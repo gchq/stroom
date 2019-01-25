@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import stroom.db.migration.doc.EncodingUtil;
 import stroom.db.migration.doc.JsonSerialiser2;
 import stroom.docref.DocRef;
-import stroom.entity.util.XMLMarshallerUtil;
+import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;

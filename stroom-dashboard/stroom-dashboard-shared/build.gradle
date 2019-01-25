@@ -5,6 +5,7 @@ dependencies {
     implementation libs.stroomQueryApi
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-docstore:stroom-docstore-shared')
+    implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-task:stroom-task-shared')
 

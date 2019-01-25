@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.elastic.impl'
 
 dependencies {
+    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-elastic:stroom-elastic-api')
     implementation project(':stroom-entity-shared')

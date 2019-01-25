@@ -23,7 +23,7 @@ import net.sf.saxon.value.SequenceType;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.xml.NamespaceConstants;
+import stroom.pipeline.xml.NamespaceConstants;
 
 import javax.inject.Provider;
 import java.util.List;

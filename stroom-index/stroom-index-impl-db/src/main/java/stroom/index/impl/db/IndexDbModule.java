@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
-import stroom.util.db.DbUtil;
+import stroom.db.util.DbUtil;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;

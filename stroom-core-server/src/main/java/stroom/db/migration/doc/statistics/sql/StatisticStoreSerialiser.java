@@ -3,7 +3,7 @@ package stroom.db.migration.doc.statistics.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.db.migration.doc.JsonSerialiser2;
-import stroom.entity.util.XMLMarshallerUtil;
+import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;

@@ -19,7 +19,7 @@ package stroom.data.meta.impl.mock;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
-import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.shared.DataMetaService;
 
 public class MockDataMetaModule extends AbstractModule {
     @Override
