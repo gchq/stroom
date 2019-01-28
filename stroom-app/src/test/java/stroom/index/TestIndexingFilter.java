@@ -196,7 +196,7 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
 //            feedHolderProvider.get().setFeed(new Feed());
 
 //            // Setup the meta data holder.
-//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, streamProcessorService, pipelineStore));
 
             // Set the input.
             final InputStream input = StroomPipelineTestFileUtil.getInputStream(resourceName);

@@ -25,7 +25,7 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
 
     private final MetaService dataMetaService;
 
-    private Meta sourceStream;
+    private Meta sourceMeta;
     private Processor streamProcessor;
     private ProcessorFilterTask streamTask;
     private long processStartTime;
@@ -53,13 +53,13 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
                 return false;
             }
 
-            Objects.requireNonNull(sourceStream, "Source stream must not be null");
+            Objects.requireNonNull(sourceMeta, "Source stream must not be null");
             Objects.requireNonNull(streamProcessor, "Stream processor must not be null");
 
             if (!superseded) {
                 final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                        .addTerm(MetaFieldNames.PARENT_STREAM_ID, Condition.EQUALS, String.valueOf(sourceStream.getId()))
-                        .addTerm(MetaFieldNames.STREAM_PROCESSOR_ID, Condition.EQUALS, String.valueOf(streamProcessor.getId()))
+                        .addTerm(MetaFieldNames.PARENT_ID, Condition.EQUALS, String.valueOf(sourceMeta.getId()))
+                        .addTerm(MetaFieldNames.PROCESSOR_ID, Condition.EQUALS, String.valueOf(streamProcessor.getId()))
                         .build();
                 final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
                 final List<Meta> streamList = dataMetaService.find(findMetaCriteria);
@@ -68,29 +68,29 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
                 long latestStreamCreationTime = processStartTime;
 
                 // Find the latest stream task .... this one is not superseded
-                for (final Meta stream : streamList) {
+                for (final Meta meta : streamList) {
                     // TODO : @66 REMOVE STREAM TASK ID FROM STREAM AND QUERY THE STREAM PROCESSOR SERVICE TO FIND THE LATEST TASK ID FOR THE CURRENT INPUT STREAM AND PROCESSOR
 
-                    if (stream.getProcessTaskId() != null && !Status.DELETED.equals(stream.getStatus())) {
-                        if (stream.getCreateMs() > latestStreamCreationTime) {
-                            latestStreamCreationTime = stream.getCreateMs();
-                            latestStreamTaskId = stream.getProcessTaskId();
-                        } else if (stream.getCreateMs() == latestStreamCreationTime
-                                && (latestStreamTaskId == null || stream.getProcessTaskId() > latestStreamTaskId)) {
-                            latestStreamCreationTime = stream.getCreateMs();
-                            latestStreamTaskId = stream.getProcessTaskId();
+                    if (meta.getProcessTaskId() != null && !Status.DELETED.equals(meta.getStatus())) {
+                        if (meta.getCreateMs() > latestStreamCreationTime) {
+                            latestStreamCreationTime = meta.getCreateMs();
+                            latestStreamTaskId = meta.getProcessTaskId();
+                        } else if (meta.getCreateMs() == latestStreamCreationTime
+                                && (latestStreamTaskId == null || meta.getProcessTaskId() > latestStreamTaskId)) {
+                            latestStreamCreationTime = meta.getCreateMs();
+                            latestStreamTaskId = meta.getProcessTaskId();
                         }
                     }
                 }
 
                 // Loop around all the streams found above looking for ones to delete
                 final FindMetaCriteria findDeleteMetaCriteria = new FindMetaCriteria();
-                for (final Meta stream : streamList) {
+                for (final Meta meta : streamList) {
                     // If the stream is not associated with the latest stream task
                     // and is not already deleted then select it for deletion.
-                    if ((latestStreamTaskId == null || !latestStreamTaskId.equals(stream.getProcessTaskId()))
-                            && !Status.DELETED.equals(stream.getStatus())) {
-                        findDeleteMetaCriteria.obtainSelectedIdSet().add(stream.getId());
+                    if ((latestStreamTaskId == null || !latestStreamTaskId.equals(meta.getProcessTaskId()))
+                            && !Status.DELETED.equals(meta.getStatus())) {
+                        findDeleteMetaCriteria.obtainSelectedIdSet().add(meta.getId());
                     }
                 }
 
@@ -110,11 +110,11 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
         return superseded;
     }
 
-    public void init(final Meta sourceStream,
+    public void init(final Meta sourceMeta,
                      final Processor streamProcessor,
                      final ProcessorFilterTask streamTask,
                      final long processStartTime) {
-        this.sourceStream = sourceStream;
+        this.sourceMeta = sourceMeta;
         this.streamProcessor = streamProcessor;
         this.streamTask = streamTask;
         this.processStartTime = processStartTime;

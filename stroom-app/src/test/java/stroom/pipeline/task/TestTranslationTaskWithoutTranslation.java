@@ -91,9 +91,9 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
 
         for (final Entry<Long, Meta> entry : metaService.getMetaMap().entrySet()) {
             final long streamId = entry.getKey();
-            final Meta stream = entry.getValue();
-            if (StreamTypeNames.EVENTS.equals(stream.getTypeName())) {
-                final byte[] data = streamStore.getFileData().get(streamId).get(stream.getTypeName());
+            final Meta meta = entry.getValue();
+            if (StreamTypeNames.EVENTS.equals(meta.getTypeName())) {
+                final byte[] data = streamStore.getFileData().get(streamId).get(meta.getTypeName());
 
                 // Write the actual XML out.
                 final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir, "TestTask.out");

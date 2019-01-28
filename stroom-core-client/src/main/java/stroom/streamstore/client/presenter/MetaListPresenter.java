@@ -24,10 +24,10 @@ import stroom.meta.shared.MetaFieldNames;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
-public class StreamListPresenter extends AbstractStreamListPresenter {
+public class MetaListPresenter extends AbstractMetaListPresenter {
     @Inject
-    public StreamListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-                               final TooltipPresenter tooltipPresenter) {
+    public MetaListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
+                             final TooltipPresenter tooltipPresenter) {
         super(eventBus, dispatcher, tooltipPresenter, true);
     }
 

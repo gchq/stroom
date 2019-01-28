@@ -54,7 +54,7 @@ public interface StreamStore {
      * @param append allow appending to the stream (or wipe it?)
      * @return the stream to write to
      */
-    StreamTarget openExistingStreamTarget(Meta stream) throws StreamException;
+    StreamTarget openExistingStreamTarget(Meta meta) throws StreamException;
 
     /**
      * <p>
@@ -115,5 +115,5 @@ public interface StreamStore {
      * @param streamId
      * @return
      */
-    AttributeMap getStoredMeta(Meta stream);
+    AttributeMap getStoredMeta(Meta meta);
 }

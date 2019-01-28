@@ -68,7 +68,7 @@ interface ConnectDispatch {
 }
 
 interface TableData {
-  streamId?: string;
+  metaId?: string;
   created?: string;
   type?: string;
   feed?: string;
@@ -234,7 +234,7 @@ const enhance = compose<EnhancedProps, Props>(
       let tableData: TableData[] = streamAttributeMaps.map(
         (streamAttributeMap: DataRow) => {
           return {
-            streamId: streamAttributeMap.data.id,
+            metaId: streamAttributeMap.data.id,
             created: moment(streamAttributeMap.data.createMs).format(
               "MMMM Do YYYY, h:mm:ss a"
             ),
@@ -247,10 +247,10 @@ const enhance = compose<EnhancedProps, Props>(
 
       // Just keep rows with data, more 'load more' rows
       tableData = tableData.filter(
-        (row: TableData) => row.streamId !== undefined
+        (row: TableData) => row.metaId !== undefined
       );
       const dummyRowForLoadMore = {
-        streamId: undefined,
+        metaId: undefined,
         created: undefined,
         type: undefined,
         feed: undefined,
@@ -268,7 +268,7 @@ const enhance = compose<EnhancedProps, Props>(
               // This block of code is mostly about making a sensible looking popup.
               const stream = streamAttributeMaps.find(
                 (streamAttributeMap: DataRow) =>
-                  streamAttributeMap.data.id === row.original.streamId
+                  streamAttributeMap.data.id === row.original.metaId
               );
 
               const eventIcon = <FontAwesomeIcon color="blue" icon="file" />;
@@ -299,7 +299,7 @@ const enhance = compose<EnhancedProps, Props>(
             Header: "Created",
             accessor: "created",
             Cell: (row: RowInfo): React.ReactNode => {
-              if (row.original.streamId) {
+              if (row.original.metaId) {
                 return <span>{row.original.created}</span>;
               } else {
                 return (
@@ -359,8 +359,8 @@ const DataList = ({
       getTdProps={(_: any, rowInfo: RowInfo) => ({
         onClick: (_: any, handleOriginal: () => void) => {
           const index = path(["index"], rowInfo);
-          const streamId = path(["original", "streamId"], rowInfo);
-          if (index !== undefined && streamId !== undefined) {
+          const metaId = path(["original", "metaId"], rowInfo);
+          if (index !== undefined && metaId !== undefined) {
             onRowSelected(dataViewerId, rowInfo.index);
           }
 

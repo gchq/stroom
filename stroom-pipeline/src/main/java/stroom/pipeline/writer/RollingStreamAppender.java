@@ -36,7 +36,7 @@ import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
@@ -50,7 +50,7 @@ import javax.inject.Inject;
 public class RollingStreamAppender extends AbstractRollingAppender implements RollingDestinationFactory {
 
     private final StreamStore streamStore;
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final NodeInfo nodeInfo;
 
     private DocRef feedRef;
@@ -64,11 +64,11 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     RollingStreamAppender(final RollingDestinations destinations,
                           final TaskContext taskContext,
                           final StreamStore streamStore,
-                          final StreamHolder streamHolder,
+                          final MetaHolder metaHolder,
                           final NodeInfo nodeInfo) {
         super(destinations, taskContext);
         this.streamStore = streamStore;
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.nodeInfo = nodeInfo;
     }
 
@@ -83,7 +83,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
         final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(key.getFeed())
                 .typeName(key.getStreamType())
-                .parent(streamHolder.getStream())
+                .parent(metaHolder.getMeta())
                 .build();
 
         final String nodeName = nodeInfo.getThisNodeName();
@@ -113,13 +113,13 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
             if (feedRef != null) {
                 feed = feedRef.getName();
             } else {
-                final Meta parentStream = streamHolder.getStream();
-                if (parentStream == null) {
+                final Meta parentMeta = metaHolder.getMeta();
+                if (parentMeta == null) {
                     throw new ProcessException("Unable to determine feed as no parent stream set");
                 }
 
                 // Use current feed if none other has been specified.
-                feed = parentStream.getFeedName();
+                feed = parentMeta.getFeedName();
             }
         }
 

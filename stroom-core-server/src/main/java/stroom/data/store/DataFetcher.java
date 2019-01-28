@@ -49,7 +49,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.pipeline.writer.AbstractWriter;
 import stroom.pipeline.writer.OutputStreamAppender;
@@ -94,7 +94,7 @@ public class DataFetcher {
     private final Provider<FeedHolder> feedHolderProvider;
     private final Provider<MetaDataHolder> metaDataHolderProvider;
     private final Provider<PipelineHolder> pipelineHolderProvider;
-    private final Provider<StreamHolder> streamHolderProvider;
+    private final Provider<MetaHolder> metaHolderProvider;
     private final PipelineStore pipelineStore;
     private final Provider<PipelineFactory> pipelineFactoryProvider;
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
@@ -115,7 +115,7 @@ public class DataFetcher {
                        final Provider<FeedHolder> feedHolderProvider,
                        final Provider<MetaDataHolder> metaDataHolderProvider,
                        final Provider<PipelineHolder> pipelineHolderProvider,
-                       final Provider<StreamHolder> streamHolderProvider,
+                       final Provider<MetaHolder> metaHolderProvider,
                        final PipelineStore pipelineStore,
                        final Provider<PipelineFactory> pipelineFactoryProvider,
                        final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
@@ -128,7 +128,7 @@ public class DataFetcher {
         this.feedHolderProvider = feedHolderProvider;
         this.metaDataHolderProvider = metaDataHolderProvider;
         this.pipelineHolderProvider = pipelineHolderProvider;
-        this.streamHolderProvider = streamHolderProvider;
+        this.metaHolderProvider = metaHolderProvider;
         this.pipelineStore = pipelineStore;
         this.pipelineFactoryProvider = pipelineFactoryProvider;
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
@@ -203,8 +203,8 @@ public class DataFetcher {
                 }
 
                 // Get the feed name.
-                if (streamSource != null && streamSource.getStream() != null && streamSource.getStream().getFeedName() != null) {
-                    feedName = streamSource.getStream().getFeedName();
+                if (streamSource != null && streamSource.getMeta() != null && streamSource.getMeta().getFeedName() != null) {
+                    feedName = streamSource.getMeta().getFeedName();
                 }
 
                 // Get the boundary and segment input streams.
@@ -221,7 +221,7 @@ public class DataFetcher {
                 streamCloser.add(segmentInputStream);
 
                 // Get the event id.
-                eventId = String.valueOf(streamSource.getStream().getId());
+                eventId = String.valueOf(streamSource.getMeta().getId());
                 if (streamsTotal > 1) {
                     eventId += ":" + streamsOffset;
                 }
@@ -242,10 +242,10 @@ public class DataFetcher {
             } catch (final IOException | RuntimeException e) {
                 writeEventLog(eventId, feedName, streamTypeName, pipeline, e);
 
-                if (Status.LOCKED.equals(streamSource.getStream().getStatus())) {
+                if (Status.LOCKED.equals(streamSource.getMeta().getStatus())) {
                     return createErrorResult("You cannot view locked streams.");
                 }
-                if (Status.DELETED.equals(streamSource.getStream().getStatus())) {
+                if (Status.DELETED.equals(streamSource.getMeta().getStatus())) {
                     return createErrorResult("This data may no longer exist.");
                 }
 
@@ -474,7 +474,7 @@ public class DataFetcher {
                 final FeedHolder feedHolder = feedHolderProvider.get();
                 final MetaDataHolder metaDataHolder = metaDataHolderProvider.get();
                 final PipelineHolder pipelineHolder = pipelineHolderProvider.get();
-                final StreamHolder streamHolder = streamHolderProvider.get();
+                final MetaHolder metaHolder = metaHolderProvider.get();
                 final PipelineFactory pipelineFactory = pipelineFactoryProvider.get();
                 final ErrorReceiverProxy errorReceiverProxy = errorReceiverProxyProvider.get();
 
@@ -489,13 +489,13 @@ public class DataFetcher {
 
                 feedHolder.setFeedName(feedName);
                 // Setup the meta data holder.
-                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
+                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
                 pipelineHolder.setPipeline(DocRefUtil.create(loadedPipeline));
                 // Get the stream providers.
-                streamHolder.setStream(streamSource.getStream());
-                streamHolder.addProvider(streamSource);
-                streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
-                streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
+                metaHolder.setMeta(streamSource.getMeta());
+                metaHolder.addProvider(streamSource);
+                metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
+                metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
 
                 final PipelineData pipelineData = pipelineDataCache.get(loadedPipeline);
                 if (pipelineData == null) {

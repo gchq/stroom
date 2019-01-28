@@ -323,7 +323,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 
             final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
             feedStreamTarget.put(currentFeedName, streamTarget);
-            streamSet.add(streamTarget.getStream());
+            streamSet.add(streamTarget.getMeta());
             final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider();
             return new OutputStreamSet(outputStreamProvider);
 
@@ -355,7 +355,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 //
 //            final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
 //            feedStreamTarget.put(currentFeedName, streamTarget);
-//            streamSet.add(streamTarget.getStream());
+//            streamSet.add(streamTarget.getMeta());
 //            outputStreamProvider = streamTarget.getOutputStreamProvider();
 //            outputStreamProviderMap.put(currentFeedName, outputStreamProvider);
 //        }

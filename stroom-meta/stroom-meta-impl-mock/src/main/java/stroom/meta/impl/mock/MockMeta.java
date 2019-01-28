@@ -40,7 +40,7 @@ class MockMeta implements Meta {
     }
 
     @Override
-    public Long getParentDataId() {
+    public Long getParentMetaId() {
         return parentDataId;
     }
 

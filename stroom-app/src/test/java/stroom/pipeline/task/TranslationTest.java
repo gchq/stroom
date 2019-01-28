@@ -179,7 +179,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(Op.AND)
                                 .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                                .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, streamType)
+                                .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, streamType)
                                 .build())
                         .build();
 
@@ -232,23 +232,23 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             final long endStreamId = getLatestStreamId();
 
             if (compareOutput) {
-                final List<Meta> processedStreams = new ArrayList<>();
+                final List<Meta> processedMeta = new ArrayList<>();
 
                 for (long streamId = startStreamId + 1; streamId <= endStreamId; streamId++) {
-                    final Meta stream = metaService.getMeta(streamId);
-                    final String streamTypeName = stream.getTypeName();
+                    final Meta meta = metaService.getMeta(streamId);
+                    final String streamTypeName = meta.getTypeName();
                     if (!StreamTypeNames.ERROR.equals(streamTypeName)) {
-                        processedStreams.add(stream);
+                        processedMeta.add(meta);
                     } else {
                         try (StreamSource errorStreamSource = streamStore.openStreamSource(streamId)) {
                             //got an error stream so dump it to console
 
-                            Meta parentStream = metaService.getMeta(stream.getParentDataId());
+                            Meta parentMeta = metaService.getMeta(meta.getParentMetaId());
 
                             String errorStreamStr = StreamUtil.streamToString(errorStreamSource.getInputStream());
                             java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(errorStreamSource.getInputStream());
-                            LOGGER.warn("Stream {} with parent {} of type {} has errors:\n{}",
-                                    stream, parentStream.getId(), parentStream.getTypeName(), errorStreamStr);
+                            LOGGER.warn("Meta {} with parent {} of type {} has errors:\n{}",
+                                    meta, parentMeta.getId(), parentMeta.getTypeName(), errorStreamStr);
 
 //                            // only dump warning if debug enabled
 //                            if (LOGGER.isDebugEnabled()) {
@@ -266,15 +266,15 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 // Make sure we have at least one processed stream else it indicates an error in processing somewhere
                 // If we get an error stream you can just run the pipeline in stroom, to try and diagnose the fault
                 // if the above error stream dump doesn't help
-                assertThat(processedStreams.size() > 0).isTrue();
+                assertThat(processedMeta.size() > 0).isTrue();
 
                 // Copy the contents of the latest written stream to the output.
                 int i = 1;
-                for (final Meta processedStream : processedStreams) {
+                for (final Meta meta : processedMeta) {
                     String num = "";
                     // If we are going to output more than one file then number
                     // them.
-                    if (processedStreams.size() > 1) {
+                    if (processedMeta.size() > 1) {
                         num = "_" + String.valueOf(i);
                     }
 
@@ -282,7 +282,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     final Path expectedFile = outputDir.resolve(stem + num + ".out");
 
                     try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(actualFile))) {
-                        copyStream(processedStream, outputStream);
+                        copyStream(meta, outputStream);
                     }
 
                     compareFiles(expectedFile, actualFile, exceptions);
@@ -331,7 +331,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
             // Check that what was written to the store is the same as the
             // contents of the file.
-            final StreamSource checkSource = streamStore.openStreamSource(target.getStream().getId());
+            final StreamSource checkSource = streamStore.openStreamSource(target.getMeta().getId());
             final byte[] original = Files.readAllBytes(file);
             final byte[] stored = StreamUtil.streamToBytes(checkSource.getInputStream());
             streamStore.closeStreamSource(checkSource);
@@ -389,8 +389,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
-                        .addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
@@ -555,8 +555,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         return latest.getId();
     }
 
-    private void copyStream(final Meta stream, final OutputStream outputStream) throws IOException {
-        final StreamSource streamSource = streamStore.openStreamSource(stream.getId());
+    private void copyStream(final Meta meta, final OutputStream outputStream) throws IOException {
+        final StreamSource streamSource = streamStore.openStreamSource(meta.getId());
         StreamUtil.streamToStream(streamSource.getInputStream(), outputStream);
         streamStore.closeStreamSource(streamSource);
     }

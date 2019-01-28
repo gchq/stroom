@@ -123,8 +123,8 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
 
     private void validateFeed(final ProcessorFilter filter, final QueryData queryData) {
         final int feedCount = termCount(queryData, MetaFieldNames.FEED_NAME);
-        final int streamIdCount = termCount(queryData, MetaFieldNames.STREAM_ID);
-        final int parentStreamIdCount = termCount(queryData, MetaFieldNames.PARENT_STREAM_ID);
+        final int streamIdCount = termCount(queryData, MetaFieldNames.ID);
+        final int parentStreamIdCount = termCount(queryData, MetaFieldNames.PARENT_ID);
 
         if (streamIdCount == 0
                 && parentStreamIdCount == 0
@@ -141,9 +141,9 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     }
 
     private void validateStreamType(final ProcessorFilter filter, final QueryData queryData) {
-        final int streamTypeCount = termCount(queryData, MetaFieldNames.STREAM_TYPE_NAME);
-        final int streamIdCount = termCount(queryData, MetaFieldNames.STREAM_ID);
-        final int parentStreamIdCount = termCount(queryData, MetaFieldNames.PARENT_STREAM_ID);
+        final int streamTypeCount = termCount(queryData, MetaFieldNames.TYPE_NAME);
+        final int streamIdCount = termCount(queryData, MetaFieldNames.ID);
+        final int parentStreamIdCount = termCount(queryData, MetaFieldNames.PARENT_ID);
 
         if (streamIdCount == 0
                 && parentStreamIdCount == 0
@@ -258,8 +258,8 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
 //
 //    private void validateFeed(final ProcessorFilter filter, final QueryData queryData) {
 //        final int feedCount = termCount(queryData, MetaDataSource.FEED_NAME);
-//        final int streamIdCount = termCount(queryData, MetaDataSource.STREAM_ID);
-//        final int parentStreamIdCount = termCount(queryData, MetaDataSource.PARENT_STREAM_ID);
+//        final int streamIdCount = termCount(queryData, MetaDataSource.ID);
+//        final int parentStreamIdCount = termCount(queryData, MetaDataSource.PARENT_ID);
 //
 //        if (streamIdCount == 0
 //                && parentStreamIdCount == 0
@@ -276,9 +276,9 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
 //    }
 //
 //    private void validateStreamType(final ProcessorFilter filter, final QueryData queryData) {
-//        final int streamTypeCount = termCount(queryData, MetaDataSource.STREAM_TYPE_NAME);
-//        final int streamIdCount = termCount(queryData, MetaDataSource.STREAM_ID);
-//        final int parentStreamIdCount = termCount(queryData, MetaDataSource.PARENT_STREAM_ID);
+//        final int streamTypeCount = termCount(queryData, MetaDataSource.TYPE_NAME);
+//        final int streamIdCount = termCount(queryData, MetaDataSource.ID);
+//        final int parentStreamIdCount = termCount(queryData, MetaDataSource.PARENT_ID);
 //
 //        if (streamIdCount == 0
 //                && parentStreamIdCount == 0

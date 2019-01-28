@@ -93,39 +93,39 @@ class FileSystemStreamStoreImpl implements StreamStore {
         }
 
         // First time call (no file yet exists)
-        final Meta stream = metaService.create(metaProperties);
+        final Meta meta = metaService.create(metaProperties);
 
-        final Set<DataVolume> streamVolumes = streamVolumeService.createStreamVolumes(stream.getId(), volumeSet);
+        final Set<DataVolume> streamVolumes = streamVolumeService.createStreamVolumes(meta.getId(), volumeSet);
         final Set<String> rootPaths = streamVolumes.stream().map(DataVolume::getVolumePath).collect(Collectors.toSet());
-        final String streamType = stream.getTypeName();
-        final FileSystemStreamTarget target = FileSystemStreamTarget.create(fileSystemStreamPathHelper, stream, rootPaths, streamType, false);
+        final String streamType = meta.getTypeName();
+        final FileSystemStreamTarget target = FileSystemStreamTarget.create(fileSystemStreamPathHelper, meta, rootPaths, streamType, false);
 
         // Force Creation of the files
         target.getOutputStream();
 
-        syncAttributes(stream, target);
+        syncAttributes(meta, target);
 
         return target;
     }
 
     @Override
-    public StreamTarget openExistingStreamTarget(final Meta stream) throws StreamException {
-        Objects.requireNonNull(stream, "Null stream");
-        LOGGER.debug("openExistingStreamTarget() " + stream);
+    public StreamTarget openExistingStreamTarget(final Meta meta) throws StreamException {
+        Objects.requireNonNull(meta, "Null meta");
+        LOGGER.debug("openExistingStreamTarget() " + meta);
 
         // Lock the object
-        final Set<DataVolume> streamVolumes = streamVolumeService.findStreamVolume(stream.getId());
+        final Set<DataVolume> streamVolumes = streamVolumeService.findStreamVolume(meta.getId());
         if (streamVolumes.isEmpty()) {
             throw new StreamException("Not all volumes are unlocked");
         }
-        final Meta lockedStream = metaService.updateStatus(stream, Status.LOCKED);
+        final Meta lockedMeta = metaService.updateStatus(meta, Status.LOCKED);
         final Set<String> rootPaths = streamVolumes.stream().map(DataVolume::getVolumePath).collect(Collectors.toSet());
 
-        final String streamType = lockedStream.getTypeName();
-        final FileSystemStreamTarget target = FileSystemStreamTarget.create(fileSystemStreamPathHelper, lockedStream, rootPaths,
+        final String streamType = lockedMeta.getTypeName();
+        final FileSystemStreamTarget target = FileSystemStreamTarget.create(fileSystemStreamPathHelper, lockedMeta, rootPaths,
                 streamType, true);
 
-        syncAttributes(lockedStream, target);
+        syncAttributes(lockedMeta, target);
 
         return target;
     }
@@ -187,7 +187,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
             // Unlock will update the meta data so set it back on the stream
             // target so the client has the up to date copy
             ((FileSystemStreamTarget) streamTarget).setMetaData(
-                    unLock(streamTarget.getStream(), fileSystemStreamTarget.getAttributes()));
+                    unLock(streamTarget.getMeta(), fileSystemStreamTarget.getAttributes()));
         } else {
             throw new UncheckedIOException(streamCloseException);
         }
@@ -203,7 +203,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
         }
 
         // Make sure the stream data is deleted.
-        return metaService.delete(target.getStream().getId(), false);
+        return metaService.delete(target.getMeta().getId(), false);
     }
 
     /**
@@ -240,25 +240,25 @@ class FileSystemStreamStoreImpl implements StreamStore {
     public StreamSource openStreamSource(final long streamId, final boolean anyStatus) throws StreamException {
         StreamSource streamSource = null;
 
-        final Meta stream = metaService.getMeta(streamId, anyStatus);
-        if (stream != null) {
-            LOGGER.debug("openStreamSource() {}", stream.getId());
+        final Meta meta = metaService.getMeta(streamId, anyStatus);
+        if (meta != null) {
+            LOGGER.debug("openStreamSource() {}", meta.getId());
 
-            final Set<DataVolume> volumeSet = streamVolumeService.findStreamVolume(stream.getId());
+            final Set<DataVolume> volumeSet = streamVolumeService.findStreamVolume(meta.getId());
             if (volumeSet.isEmpty()) {
-                final String message = "Unable to find any volume for " + stream;
+                final String message = "Unable to find any volume for " + meta;
                 LOGGER.warn(message);
                 throw new StreamException(message);
             }
             final Node node = nodeInfo.getThisNode();
             final DataVolume streamVolume = streamVolumeService.pickBestVolume(volumeSet, node.getId(), node.getRack().getId());
             if (streamVolume == null) {
-                final String message = "Unable to access any volume for " + stream
-                        + " perhaps the stream is on a private volume";
+                final String message = "Unable to access any volume for " + meta
+                        + " perhaps the data is on a private volume";
                 LOGGER.warn(message);
                 throw new StreamException(message);
             }
-            streamSource = FileSystemStreamSource.create(fileSystemStreamPathHelper, stream, streamVolume.getVolumePath(), stream.getTypeName());
+            streamSource = FileSystemStreamSource.create(fileSystemStreamPathHelper, meta, streamVolume.getVolumePath(), meta.getTypeName());
         }
 
         return streamSource;
@@ -275,11 +275,11 @@ class FileSystemStreamStoreImpl implements StreamStore {
     }
 
     @Override
-    public AttributeMap getStoredMeta(final Meta stream) {
-        final Set<DataVolume> volumeSet = streamVolumeService.findStreamVolume(stream.getId());
+    public AttributeMap getStoredMeta(final Meta meta) {
+        final Set<DataVolume> volumeSet = streamVolumeService.findStreamVolume(meta.getId());
         if (volumeSet != null && volumeSet.size() > 0) {
             final DataVolume streamVolume = volumeSet.iterator().next();
-            final Path manifest = fileSystemStreamPathHelper.createChildStreamFile(stream, streamVolume, InternalStreamTypeNames.MANIFEST);
+            final Path manifest = fileSystemStreamPathHelper.createChildStreamFile(meta, streamVolume, InternalStreamTypeNames.MANIFEST);
 
             if (Files.isRegularFile(manifest)) {
                 final AttributeMap attributeMap = new AttributeMap();
@@ -301,7 +301,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
 
                 try {
                     final Path rootFile = fileSystemStreamPathHelper.createRootStreamFile(streamVolume.getVolumePath(),
-                            stream, stream.getTypeName());
+                            meta, meta.getTypeName());
 
                     final List<Path> allFiles = fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile);
                     attributeMap.put("Files", allFiles.stream().map(FileUtil::getCanonicalPath).collect(Collectors.joining(",")));
@@ -323,19 +323,19 @@ class FileSystemStreamStoreImpl implements StreamStore {
         return null;
     }
 
-    private void syncAttributes(final Meta stream, final FileSystemStreamTarget target) {
-        updateAttribute(target, MetaFieldNames.STREAM_ID, String.valueOf(stream.getId()));
+    private void syncAttributes(final Meta meta, final FileSystemStreamTarget target) {
+        updateAttribute(target, MetaFieldNames.ID, String.valueOf(meta.getId()));
 
-        if (stream.getParentDataId() != null) {
-            updateAttribute(target, MetaFieldNames.PARENT_STREAM_ID,
-                    String.valueOf(stream.getParentDataId()));
+        if (meta.getParentMetaId() != null) {
+            updateAttribute(target, MetaFieldNames.PARENT_ID,
+                    String.valueOf(meta.getParentMetaId()));
         }
 
-        updateAttribute(target, MetaFieldNames.FEED_NAME, stream.getFeedName());
-        updateAttribute(target, MetaFieldNames.STREAM_TYPE_NAME, stream.getTypeName());
-        updateAttribute(target, MetaFieldNames.CREATE_TIME, DateUtil.createNormalDateTimeString(stream.getCreateMs()));
-        if (stream.getEffectiveMs() != null) {
-            updateAttribute(target, MetaFieldNames.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(stream.getEffectiveMs()));
+        updateAttribute(target, MetaFieldNames.FEED_NAME, meta.getFeedName());
+        updateAttribute(target, MetaFieldNames.TYPE_NAME, meta.getTypeName());
+        updateAttribute(target, MetaFieldNames.CREATE_TIME, DateUtil.createNormalDateTimeString(meta.getCreateMs()));
+        if (meta.getEffectiveMs() != null) {
+            updateAttribute(target, MetaFieldNames.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(meta.getEffectiveMs()));
         }
     }
 
@@ -345,21 +345,21 @@ class FileSystemStreamStoreImpl implements StreamStore {
         }
     }
 
-    private Meta unLock(final Meta stream, final AttributeMap attributeMap) {
-        if (Status.UNLOCKED.equals(stream.getStatus())) {
-            throw new IllegalStateException("Attempt to unlock a stream that is already unlocked");
+    private Meta unLock(final Meta meta, final AttributeMap attributeMap) {
+        if (Status.UNLOCKED.equals(meta.getStatus())) {
+            throw new IllegalStateException("Attempt to unlock data that is already unlocked");
         }
 
         // Write the child meta data
         if (!attributeMap.isEmpty()) {
             try {
-                metaService.addAttributes(stream, attributeMap);
+                metaService.addAttributes(meta, attributeMap);
             } catch (final RuntimeException e) {
                 LOGGER.error("unLock() - Failed to persist attributes in new transaction... will ignore");
             }
         }
 
-        LOGGER.debug("unlock() " + stream);
-        return metaService.updateStatus(stream, Status.UNLOCKED);
+        LOGGER.debug("unlock() " + meta);
+        return metaService.updateStatus(meta, Status.UNLOCKED);
     }
 }

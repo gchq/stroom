@@ -52,7 +52,7 @@ class TestMockStreamStore {
                 .build();
 
         final StreamTarget streamTarget = mockStreamStore.openStreamTarget(metaProperties);
-        final Meta stream = streamTarget.getStream();
+        final Meta meta = streamTarget.getMeta();
 
         try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
             try (final OutputStream outputStream = outputStreamProvider.next()) {
@@ -63,13 +63,13 @@ class TestMockStreamStore {
             }
         }
 
-        assertThat(mockMetaService.find(FindMetaCriteria.createWithData(stream)).size()).isEqualTo(0);
+        assertThat(mockMetaService.find(FindMetaCriteria.createFromMeta(meta)).size()).isEqualTo(0);
 
         mockStreamStore.closeStreamTarget(streamTarget);
 
-        assertThat(mockMetaService.find(FindMetaCriteria.createWithData(stream)).size()).isEqualTo(1);
+        assertThat(mockMetaService.find(FindMetaCriteria.createFromMeta(meta)).size()).isEqualTo(1);
 
-        final Meta reload = mockMetaService.find(FindMetaCriteria.createWithData(stream)).get(0);
+        final Meta reload = mockMetaService.find(FindMetaCriteria.createFromMeta(meta)).get(0);
 
         final StreamSource streamSource = mockStreamStore.openStreamSource(reload.getId());
 

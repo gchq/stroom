@@ -96,7 +96,7 @@ public abstract class AbstractBenchmark {
         StreamTargetUtil.write(dataTarget, data);
         streamStore.closeStreamTarget(dataTarget);
 
-        return dataTarget.getStream();
+        return dataTarget.getMeta();
     }
 
     protected String readData(final long streamId) throws IOException {
@@ -135,17 +135,17 @@ public abstract class AbstractBenchmark {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
         builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feed.getName());
         if (feed.isReference()) {
-            builder.addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE);
+            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE);
         } else {
-            builder.addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS);
+            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS);
         }
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(builder.build());
-        final BaseResultList<Meta> streams = metaService.find(criteria);
-        final Meta targetStream = streams.getFirst();
+        final BaseResultList<Meta> list = metaService.find(criteria);
+        final Meta targetMeta = list.getFirst();
 
         // Get back translated result.
-        final StreamSource target = streamStore.openStreamSource(targetStream.getId());
+        final StreamSource target = streamStore.openStreamSource(targetMeta.getId());
         String xml = StreamUtil.streamToString(target.getInputStream(), true);
         streamStore.closeStreamSource(target);
 

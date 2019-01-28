@@ -43,7 +43,7 @@ public class FindMetaCriteria implements SharedObject, HasIsConstrained, Copyabl
         this.expression = expression;
     }
 
-    public static FindMetaCriteria createWithData(final Meta meta) {
+    public static FindMetaCriteria createFromMeta(final Meta meta) {
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(ExpressionUtil.createSimpleExpression());
         criteria.obtainSelectedIdSet().add(meta.getId());

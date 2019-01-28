@@ -99,9 +99,9 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         // Close the file but not the stream (you should use the closeStream
         // API)
         lockstreamTarget1.close();
-        final Collection<Path> lockedFiles = streamMaintenanceService.findAllStreamFile(lockstreamTarget1.getStream());
+        final Collection<Path> lockedFiles = streamMaintenanceService.findAllStreamFile(lockstreamTarget1.getMeta());
         FileSystemUtil.updateLastModified(lockedFiles, oldDate.toInstant().toEpochMilli());
-        streamVolumeService.find(FindDataVolumeCriteria.create(lockstreamTarget1.getStream()));
+        streamVolumeService.find(FindDataVolumeCriteria.create(lockstreamTarget1.getMeta()));
         // // Hack making the last access time quite old
         // for (StreamVolume volume : volumeList) {
         // volume.setLastAccessMs(oldDate.toDate().getTime());
@@ -118,7 +118,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         streamStore.closeStreamTarget(nolockstreamTarget1);
 
         final Collection<Path> unlockedFiles = streamMaintenanceService
-                .findAllStreamFile(nolockstreamTarget1.getStream());
+                .findAllStreamFile(nolockstreamTarget1.getMeta());
         final Path directory = unlockedFiles.iterator().next().getParent();
         // Create some other files on the file system
 
@@ -161,16 +161,16 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     void testArchiveRemovedFile() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Meta stream = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        final Meta meta = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
 
-        Collection<Path> files = streamMaintenanceService.findAllStreamFile(stream);
+        Collection<Path> files = streamMaintenanceService.findAllStreamFile(meta);
 
         for (final Path file : files) {
             assertThat(FileUtil.delete(file)).isTrue();
         }
 
         final FindDataVolumeCriteria streamVolumeCriteria = new FindDataVolumeCriteria();
-        streamVolumeCriteria.obtainStreamIdSet().add(stream.getId());
+        streamVolumeCriteria.obtainStreamIdSet().add(meta.getId());
 
         assertThat(streamVolumeService.find(streamVolumeCriteria).size() >= 1).as("Must be saved to at least one volume").isTrue();
 
@@ -179,7 +179,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
             fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
         }
 
-        files = streamMaintenanceService.findAllStreamFile(stream);
+        files = streamMaintenanceService.findAllStreamFile(meta);
 
         assertThat(files.size()).as("Files have been deleted above").isEqualTo(0);
 

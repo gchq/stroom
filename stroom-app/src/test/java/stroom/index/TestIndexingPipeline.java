@@ -40,7 +40,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
@@ -74,7 +74,7 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     @Inject
     private PipelineStore pipelineStore;
     @Inject
-    private Provider<StreamHolder> streamHolderProvider;
+    private Provider<MetaHolder> metaHolderProvider;
     @Inject
     private PipelineDataCache pipelineDataCache;
     @Inject
@@ -96,7 +96,7 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             xsltStore.writeDocument(xsltDoc);
 
             final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
-            // indexFields.add(IndexField.createIdField(IndexConstants.STREAM_ID));
+            // indexFields.add(IndexField.createIdField(IndexConstants.ID));
             // indexFields.add(IndexField.createIdField(IndexConstants.EVENT_ID));
             indexFields.add(IndexField.createDateField("EventTime"));
             indexFields.add(IndexField.createField("UserId", AnalyzerType.KEYWORD));
@@ -117,9 +117,9 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             // Set the stream for decoration purposes.
             final long id = (long) (Math.random() * 1000);
 
-            final Meta stream = mock(Meta.class);
-            when(stream.getId()).thenReturn(id);
-            streamHolderProvider.get().setStream(stream);
+            final Meta meta = mock(Meta.class);
+            when(meta.getId()).thenReturn(id);
+            metaHolderProvider.get().setMeta(meta);
 
             // Create the pipeline.
             final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, StroomPipelineTestFileUtil.getString(PIPELINE));

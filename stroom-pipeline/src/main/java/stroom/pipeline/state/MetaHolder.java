@@ -27,25 +27,25 @@ import java.util.HashMap;
 import java.util.Map;
 
 @PipelineScoped
-public class StreamHolder implements Holder {
+public class MetaHolder implements Holder {
     private final Map<String, StreamSourceInputStreamProvider> streamProviders = new HashMap<>();
 
     private final StreamCloser streamCloser;
 
-    private Meta stream;
+    private Meta meta;
     private long streamNo;
 
     @Inject
-    public StreamHolder(final StreamCloser streamCloser) {
+    public MetaHolder(final StreamCloser streamCloser) {
         this.streamCloser = streamCloser;
     }
 
-    public Meta getStream() {
-        return stream;
+    public Meta getMeta() {
+        return meta;
     }
 
-    public void setStream(final Meta stream) {
-        this.stream = stream;
+    public void setMeta(final Meta meta) {
+        this.meta = meta;
     }
 
     public void addProvider(final StreamSource source) {

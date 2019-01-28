@@ -113,13 +113,13 @@ public class EffectiveStreamCache implements Clearable {
                 // Add all streams that we have found to the effective stream set.
                 if (streams != null && streams.size() > 0) {
                     effectiveStreamSet = new TreeSet<>();
-                    for (final Meta stream : streams) {
+                    for (final Meta meta : streams) {
                         EffectiveStream effectiveStream;
 
-                        if (stream.getEffectiveMs() != null) {
-                            effectiveStream = new EffectiveStream(stream.getId(), stream.getEffectiveMs());
+                        if (meta.getEffectiveMs() != null) {
+                            effectiveStream = new EffectiveStream(meta.getId(), meta.getEffectiveMs());
                         } else {
-                            effectiveStream = new EffectiveStream(stream.getId(), stream.getCreateMs());
+                            effectiveStream = new EffectiveStream(meta.getId(), meta.getCreateMs());
                         }
 
                         final boolean success = effectiveStreamSet.add(effectiveStream);

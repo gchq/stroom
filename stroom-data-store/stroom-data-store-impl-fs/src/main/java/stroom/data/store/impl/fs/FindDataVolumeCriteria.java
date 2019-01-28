@@ -30,9 +30,9 @@ public class FindDataVolumeCriteria extends BaseCriteria {
     private CriteriaSet<Long> volumeIdSet = null;
     private CriteriaSet<Long> streamIdSet = null;
 
-    public static FindDataVolumeCriteria create(final Meta stream) {
+    public static FindDataVolumeCriteria create(final Meta meta) {
         FindDataVolumeCriteria rtn = new FindDataVolumeCriteria();
-        rtn.obtainStreamIdSet().add(stream.getId());
+        rtn.obtainStreamIdSet().add(meta.getId());
         return rtn;
     }
 

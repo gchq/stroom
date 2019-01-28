@@ -37,7 +37,7 @@ class TestMetaServiceImpl {
         final Meta meta2 = dataMetaService.create(createProperties("FEED2"));
 
         final ExpressionOperator expression = new Builder(Op.AND)
-                .addTerm(MetaFieldNames.STREAM_ID, Condition.EQUALS, String.valueOf(meta2.getId()))
+                .addTerm(MetaFieldNames.ID, Condition.EQUALS, String.valueOf(meta2.getId()))
                 .build();
         final FindMetaCriteria criteria = new FindMetaCriteria(expression);
 

@@ -85,7 +85,7 @@ public class CommonTestScenarioCreator {
                 .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                         .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed)
-                        .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
@@ -146,14 +146,14 @@ public class CommonTestScenarioCreator {
         target.getAttributes().put(StandardHeaderArguments.FEED, feed);
 
         streamStore.closeStreamTarget(target);
-        return target.getStream();
+        return target.getMeta();
     }
 
-    public Meta createSampleBlankProcessedFile(final String feed, final Meta sourceStream) {
+    public Meta createSampleBlankProcessedFile(final String feed, final Meta sourceMeta) {
         final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feed)
                 .typeName(StreamTypeNames.EVENTS)
-                .parent(sourceStream)
+                .parent(sourceMeta)
                 .build();
 
         final StreamTarget target = streamStore.openStreamTarget(metaProperties);
@@ -166,6 +166,6 @@ public class CommonTestScenarioCreator {
                 + "Version=\"3.0.0\"/>";
         StreamTargetUtil.write(target, data);
         streamStore.closeStreamTarget(target);
-        return target.getStream();
+        return target.getMeta();
     }
 }

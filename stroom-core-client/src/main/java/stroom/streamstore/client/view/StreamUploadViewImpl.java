@@ -27,8 +27,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.item.client.StringListBox;
-import stroom.streamstore.client.presenter.StreamTypeUiManager;
-import stroom.streamstore.client.presenter.StreamUploadPresenter.DataUploadView;
+import stroom.streamstore.client.presenter.DataTypeUiManager;
+import stroom.streamstore.client.presenter.DataUploadPresenter.DataUploadView;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
@@ -47,7 +47,7 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
     TextArea metaData;
 
     @Inject
-    public StreamUploadViewImpl(final Binder binder, final StreamTypeUiManager streamTypeUiManager) {
+    public StreamUploadViewImpl(final Binder binder, final DataTypeUiManager streamTypeUiManager) {
         type = new StringListBox();
 
         for (final String st : streamTypeUiManager.getRawStreamTypeList()) {

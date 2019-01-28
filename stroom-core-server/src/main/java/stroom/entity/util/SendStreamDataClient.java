@@ -133,17 +133,17 @@ public final class SendStreamDataClient {
         connection.addRequestProperty(FEED, feed.getName());
 
         final StreamSource streamSource = streamStore.openStreamSource(streamId);
-        final StreamSource meta = streamSource.getChildStream(StreamTypeNames.META);
-        final Meta stream = streamSource.getStream();
+        final StreamSource metaSource = streamSource.getChildStream(StreamTypeNames.META);
+        final Meta meta = streamSource.getMeta();
 
-        if (stream.getEffectiveMs() != null) {
+        if (meta.getEffectiveMs() != null) {
             connection.addRequestProperty("effectiveTime",
-                    DateUtil.createNormalDateTimeString(stream.getEffectiveMs()));
+                    DateUtil.createNormalDateTimeString(meta.getEffectiveMs()));
         }
 
-        if (meta != null) {
+        if (metaSource != null) {
             final AttributeMap attributeMap = new AttributeMap();
-            AttributeMapUtil.read(meta.getInputStream(), true, attributeMap);
+            AttributeMapUtil.read(metaSource.getInputStream(), true, attributeMap);
             attributeMap.entrySet().stream().filter(entry -> connection.getRequestProperty(entry.getKey()) == null)
                     .forEach(entry -> connection.addRequestProperty(entry.getKey(), entry.getValue()));
         }
@@ -167,7 +167,7 @@ public final class SendStreamDataClient {
             final int response = connection.getResponseCode();
             final String msg = connection.getResponseMessage();
 
-            LOGGER.info("Client Got Response " + response + " Stream Id " + stream.getId());
+            LOGGER.info("Client Got Response " + response + " Id " + meta.getId());
             if (msg != null && !msg.isEmpty()) {
                 LOGGER.info(msg);
             }

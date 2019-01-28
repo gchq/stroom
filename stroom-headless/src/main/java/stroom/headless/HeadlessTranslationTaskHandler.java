@@ -45,7 +45,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -73,7 +73,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
     private final ErrorWriterProxy errorWriterProxy;
     private final RecordErrorReceiver recordErrorReceiver;
     private final PipelineDataCache pipelineDataCache;
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final Security security;
 
     @Inject
@@ -88,7 +88,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                                    final ErrorWriterProxy errorWriterProxy,
                                    final RecordErrorReceiver recordErrorReceiver,
                                    final PipelineDataCache pipelineDataCache,
-                                   final StreamHolder streamHolder,
+                                   final MetaHolder metaHolder,
                                    final Security security) {
         this.pipelineFactory = pipelineFactory;
         this.feedStore = feedStore;
@@ -101,7 +101,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
         this.errorWriterProxy = errorWriterProxy;
         this.recordErrorReceiver = recordErrorReceiver;
         this.pipelineDataCache = pipelineDataCache;
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.security = security;
     }
 
@@ -130,7 +130,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                 feedHolder.setFeedName(feedName);
 
                 // Setup the meta data holder.
-                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
+                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
                 // Set the pipeline so it can be used by a filter if needed.
                 final List<DocRef> pipelines = pipelineStore.findByName(feedName);
@@ -173,7 +173,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                 }
 
                 // Create the stream.
-                final Meta stream = new DataImpl.Builder()
+                final Meta meta = new DataImpl.Builder()
                         .effectiveMs(effectiveMs)
                         .feedName(feedName)
                         .build();
@@ -181,17 +181,17 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                 // Add stream providers for lookups etc.
                 final BasicInputStreamProvider streamProvider = new BasicInputStreamProvider(
                         new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
-                streamHolder.setStream(stream);
-                streamHolder.addProvider(streamProvider, StreamTypeNames.RAW_EVENTS);
+                metaHolder.setMeta(meta);
+                metaHolder.addProvider(streamProvider, StreamTypeNames.RAW_EVENTS);
                 if (task.getMetaStream() != null) {
                     final BasicInputStreamProvider metaStreamProvider = new BasicInputStreamProvider(
                             new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
-                    streamHolder.addProvider(metaStreamProvider, StreamTypeNames.META);
+                    metaHolder.addProvider(metaStreamProvider, StreamTypeNames.META);
                 }
                 if (task.getContextStream() != null) {
                     final BasicInputStreamProvider contextStreamProvider = new BasicInputStreamProvider(
                             new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
-                    streamHolder.addProvider(contextStreamProvider, StreamTypeNames.CONTEXT);
+                    metaHolder.addProvider(contextStreamProvider, StreamTypeNames.CONTEXT);
                 }
 
                 try {

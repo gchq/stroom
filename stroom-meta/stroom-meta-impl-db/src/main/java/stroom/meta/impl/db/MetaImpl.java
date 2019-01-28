@@ -42,7 +42,7 @@ class MetaImpl implements Meta {
     }
 
     @Override
-    public Long getParentDataId() {
+    public Long getParentMetaId() {
         return parentDataId;
     }
 
@@ -105,7 +105,7 @@ class MetaImpl implements Meta {
             feedName(meta.getFeedName());
             typeName(meta.getTypeName());
             pipelineUuid(meta.getPipelineUuid());
-            parentDataId(meta.getParentDataId());
+            parentDataId(meta.getParentMetaId());
             processTaskId(meta.getProcessTaskId());
             processorId(meta.getProcessorId());
             status(meta.getStatus());

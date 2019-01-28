@@ -72,7 +72,7 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
                                 .collect(Collectors.toList()));
                     }
 
-                    if (task.getField().getName().equals(MetaFieldNames.STREAM_TYPE_NAME)) {
+                    if (task.getField().getName().equals(MetaFieldNames.TYPE_NAME)) {
                         return createStreamTypeList(task.getText());
                     }
 

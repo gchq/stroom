@@ -34,7 +34,7 @@ public final class ExpressionUtil {
 
     public static ExpressionOperator createDataIdExpression(final long id) {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFieldNames.STREAM_ID, Condition.EQUALS, String.valueOf(id))
+                .addTerm(MetaFieldNames.ID, Condition.EQUALS, String.valueOf(id))
                 .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         return expression;
@@ -42,7 +42,7 @@ public final class ExpressionUtil {
 
     public static ExpressionOperator createParentIdExpression(final long parentId) {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFieldNames.PARENT_STREAM_ID, Condition.EQUALS, String.valueOf(parentId))
+                .addTerm(MetaFieldNames.PARENT_ID, Condition.EQUALS, String.valueOf(parentId))
                 .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         return expression;
@@ -50,7 +50,7 @@ public final class ExpressionUtil {
 
     public static ExpressionOperator createTypeExpression(final String typeName) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, typeName)
+                .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, typeName)
                 .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }

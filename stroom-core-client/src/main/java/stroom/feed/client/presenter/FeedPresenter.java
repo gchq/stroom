@@ -28,8 +28,8 @@ import stroom.feed.shared.FeedDoc;
 import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
-import stroom.streamstore.client.presenter.StreamTaskPresenter;
+import stroom.streamstore.client.presenter.ClassificationWrappedMetaPresenter;
+import stroom.streamstore.client.presenter.ProcessorTaskPresenter;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -46,8 +46,8 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
                          final LinkTabPanelView view,
                          final ClientSecurityContext securityContext,
                          final Provider<FeedSettingsPresenter> settingsPresenterProvider,
-                         final Provider<ClassificationWrappedStreamPresenter> streamPresenterProvider,
-                         final Provider<StreamTaskPresenter> streamTaskPresenterProvider) {
+                         final Provider<ClassificationWrappedMetaPresenter> streamPresenterProvider,
+                         final Provider<ProcessorTaskPresenter> streamTaskPresenterProvider) {
         super(eventBus, view, securityContext);
 
         tabContentProvider.setDirtyHandler(event -> {

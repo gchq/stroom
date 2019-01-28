@@ -30,7 +30,7 @@ import stroom.pipeline.stepping.SteppingFilter;
 import stroom.pipeline.shared.Record;
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.XPathFilter;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.OutputState;
@@ -48,7 +48,7 @@ import java.util.Set;
 public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, SteppingFilter {
     private final NamespaceContextImpl namespaceContext = new NamespaceContextImpl();
 
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final ErrorReceiverProxy errorReceiverProxy;
 
     private boolean filterApplied;
@@ -59,9 +59,9 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     private String elementId;
 
     @Inject
-    public SAXEventRecorder(final StreamHolder streamHolder,
+    public SAXEventRecorder(final MetaHolder metaHolder,
                             final ErrorReceiverProxy errorReceiverProxy) {
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.errorReceiverProxy = errorReceiverProxy;
     }
 
@@ -134,7 +134,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     @Override
     @SuppressWarnings("unchecked")
     public boolean filterMatches(final long recordNo) {
-        final long streamId = streamHolder.getStream().getId();
+        final long streamId = metaHolder.getMeta().getId();
 
         // If we are skipping to a severity then perform check on severity.
         if (settings.getSkipToSeverity() != null) {

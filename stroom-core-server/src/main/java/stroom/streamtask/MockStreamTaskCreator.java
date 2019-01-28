@@ -82,14 +82,14 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
                 streams.sort(Comparator.comparing(Meta::getId));
 
                 if (streams.size() > 0) {
-                    for (final Meta stream : streams) {
-                        if (stream.getId() >= filter.getStreamProcessorFilterTracker().getMinStreamId()) {
+                    for (final Meta meta : streams) {
+                        if (meta.getId() >= filter.getStreamProcessorFilterTracker().getMinStreamId()) {
                             // Only process streams with an id of 1 or more
                             // greater than this stream in future.
-                            filter.getStreamProcessorFilterTracker().setMinStreamId(stream.getId() + 1);
+                            filter.getStreamProcessorFilterTracker().setMinStreamId(meta.getId() + 1);
 
                             final ProcessorFilterTask streamTask = new ProcessorFilterTask();
-                            streamTask.setStreamId(stream.getId());
+                            streamTask.setStreamId(meta.getId());
                             streamTask.setStreamProcessorFilter(filter);
                             streamTask.setNode(node);
                             streamTask.setStatus(TaskStatus.ASSIGNED);

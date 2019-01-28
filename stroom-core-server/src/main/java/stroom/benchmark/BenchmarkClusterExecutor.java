@@ -267,15 +267,15 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final int count = i;
                 final GenericServerTask writerTask = GenericServerTask.create("WriteBenchmarkData", "Writing benchmark data");
                 writerTask.setRunnable(() -> {
-                    final Meta stream = writeData(feedName, streamTypeName, data);
+                    final Meta meta = writeData(feedName, streamTypeName, data);
 
                     rangeLock.lock();
                     try {
-                        if (minStreamId == null || minStreamId > stream.getId()) {
-                            minStreamId = stream.getId();
+                        if (minStreamId == null || minStreamId > meta.getId()) {
+                            minStreamId = meta.getId();
                         }
-                        if (maxStreamId == null || maxStreamId < stream.getId()) {
-                            maxStreamId = stream.getId();
+                        if (maxStreamId == null || maxStreamId < meta.getId()) {
+                            maxStreamId = meta.getId();
                         }
                     } finally {
                         rangeLock.unlock();
@@ -313,7 +313,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final ExpressionOperator rawExpression = new ExpressionOperator.Builder(Op.AND)
                         .addTerm(MetaFieldNames.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
                         .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName)
-                        .addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, rawStreamType)
+                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, rawStreamType)
                         .build();
                 final QueryData rawCriteria = new QueryData();
                 rawCriteria.setExpression(rawExpression);
@@ -326,7 +326,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final ExpressionOperator processedExpression = new ExpressionOperator.Builder(Op.AND)
                         .addTerm(MetaFieldNames.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(startTime))
                         .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName)
-                        .addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, processedStreamType)
+                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, processedStreamType)
                         .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                         .build();
                 final FindMetaCriteria processedCriteria = new FindMetaCriteria();
@@ -453,8 +453,8 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName)
                 .addTerm(MetaFieldNames.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS)
-                        .addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE)
+                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS)
+                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE)
                         .build())
                 .build();
 
@@ -741,7 +741,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // }
     //
     // // Add output stream size stats.
-    // final Stream targetMD = task.getTargetStream();
+    // final Stream targetMD = task.getTargetMeta();
     // if (targetMD != null) {
     // if (targetMD.getStreamSize() != null) {
     // streamBytesWritten += targetMD.getStreamSize();

@@ -32,12 +32,12 @@ public class MetaFieldNames {
     public static final String FEED_NAME = "Feed";
     public static final String PIPELINE_UUID = "Pipeline";
     public static final String STATUS = "Status";
-    public static final String STREAM_TYPE_NAME = "Type";
+    public static final String TYPE_NAME = "Type";
 
     // Id's
-    public static final String STREAM_ID = "Id";
-    public static final String PARENT_STREAM_ID = "Parent Id";
-    public static final String STREAM_PROCESSOR_ID = "Stream Processor Id";
+    public static final String ID = "Id";
+    public static final String PARENT_ID = "Parent Id";
+    public static final String PROCESSOR_ID = "Processor Id";
 
     // Times
     public static final String CREATE_TIME = "Create Time";
@@ -58,11 +58,11 @@ public class MetaFieldNames {
 
     // Legacy or hidden fields.
     public static final String FEED_ID = "Feed Id";
-    public static final String STREAM_TASK_ID = "Stream Task Id";
+    public static final String TASK_ID = "Task Id";
 
     static {
-//        STREAM_FIELDS.put(STREAM_ID, StreamEntity.ID);
-//        STREAM_FIELDS.put(PARENT_STREAM_ID, StreamEntity.PARENT_STREAM_ID);
+//        STREAM_FIELDS.put(ID, StreamEntity.ID);
+//        STREAM_FIELDS.put(PARENT_ID, StreamEntity.PARENT_ID);
 //        STREAM_FIELDS.put(CREATE_TIME, StreamEntity.CREATE_MS);
 //        FEED_FIELDS.put(FEED, FeedEntity.NAME);
 //        STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamTypeEntity.NAME);
@@ -73,12 +73,12 @@ public class MetaFieldNames {
         FIELDS.add(createDocRefField(FEED_NAME, "Feed"));
         FIELDS.add(createDocRefField(PIPELINE_UUID, "Pipeline"));
         FIELDS.add(createStringField(STATUS));
-        FIELDS.add(createStringField(STREAM_TYPE_NAME));
+        FIELDS.add(createStringField(TYPE_NAME));
 
         // Id's
-        FIELDS.add(createIdField(STREAM_ID));
-        FIELDS.add(createIdField(PARENT_STREAM_ID));
-        FIELDS.add(createIdField(STREAM_PROCESSOR_ID));
+        FIELDS.add(createIdField(ID));
+        FIELDS.add(createIdField(PARENT_ID));
+        FIELDS.add(createIdField(PROCESSOR_ID));
 
         // Times
         FIELDS.add(createDateField(CREATE_TIME));
@@ -94,12 +94,12 @@ public class MetaFieldNames {
         //        EXTENDED_FIELDS.add(createStringField(NODE));
         EXTENDED_FIELDS.add(createDocRefField(PIPELINE_UUID, "Pipeline"));
         EXTENDED_FIELDS.add(createStringField(STATUS));
-        EXTENDED_FIELDS.add(createStringField(STREAM_TYPE_NAME));
+        EXTENDED_FIELDS.add(createStringField(TYPE_NAME));
 
         // Id's
-        EXTENDED_FIELDS.add(createIdField(STREAM_ID));
-        EXTENDED_FIELDS.add(createIdField(PARENT_STREAM_ID));
-        EXTENDED_FIELDS.add(createIdField(STREAM_PROCESSOR_ID));
+        EXTENDED_FIELDS.add(createIdField(ID));
+        EXTENDED_FIELDS.add(createIdField(PARENT_ID));
+        EXTENDED_FIELDS.add(createIdField(PROCESSOR_ID));
 
         // Counts
         EXTENDED_FIELDS.add(createNumField(REC_READ));

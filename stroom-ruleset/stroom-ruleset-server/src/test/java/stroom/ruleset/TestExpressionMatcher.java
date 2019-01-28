@@ -63,7 +63,7 @@ class TestExpressionMatcher {
     private Map<String, Object> createAttributeMap() {
         final Map<String, Object> attributeMap = new HashMap<>();
         attributeMap.put(MetaFieldNames.FEED_NAME, "TEST_FEED");
-        attributeMap.put(MetaFieldNames.STREAM_TYPE_NAME, "Raw Events");
+        attributeMap.put(MetaFieldNames.TYPE_NAME, "Raw Events");
         return attributeMap;
     }
 }

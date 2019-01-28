@@ -39,14 +39,14 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
-public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresenter.DataUploadView> {
+public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.DataUploadView> {
     private String feedName;
-    private StreamPresenter streamPresenter;
+    private MetaPresenter streamPresenter;
 
     @Inject
-    public StreamUploadPresenter(final EventBus eventBus,
-                                 final DataUploadView view,
-                                 final ClientDispatchAsync dispatcher) {
+    public DataUploadPresenter(final EventBus eventBus,
+                               final DataUploadView view,
+                               final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
 
         view.getForm().setAction(dispatcher.getImportFileURL());
@@ -79,7 +79,7 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
                 dispatcher.exec(action)
                         .onSuccess(result -> {
                             hide();
-                            AlertEvent.fireInfo(StreamUploadPresenter.this.streamPresenter, "Uploaded file", null);
+                            AlertEvent.fireInfo(DataUploadPresenter.this.streamPresenter, "Uploaded file", null);
                             streamPresenter.refresh();
                         })
                         .onFailure(caught -> error(caught.getMessage()));
@@ -123,7 +123,7 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
         getView().getForm().submit();
     }
 
-    public void show(final StreamPresenter streamPresenter, final String feedName) {
+    public void show(final MetaPresenter streamPresenter, final String feedName) {
         this.streamPresenter = streamPresenter;
         this.feedName = feedName;
 

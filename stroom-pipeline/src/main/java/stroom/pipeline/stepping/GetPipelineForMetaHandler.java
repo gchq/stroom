@@ -26,7 +26,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.explorer.shared.SharedDocRef;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
+import stroom.pipeline.shared.stepping.GetPipelineForMetaAction;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 
@@ -34,37 +34,37 @@ import javax.inject.Inject;
 import java.util.List;
 
 
-class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStreamAction, SharedDocRef> {
+class GetPipelineForMetaHandler extends AbstractTaskHandler<GetPipelineForMetaAction, SharedDocRef> {
     private final MetaService metaService;
     private final PipelineStore pipelineStore;
     private final Security security;
 
     @Inject
-    GetPipelineForStreamHandler(final MetaService metaService,
-                                final PipelineStore pipelineStore,
-                                final Security security) {
+    GetPipelineForMetaHandler(final MetaService metaService,
+                              final PipelineStore pipelineStore,
+                              final Security security) {
         this.metaService = metaService;
         this.pipelineStore = pipelineStore;
         this.security = security;
     }
 
     @Override
-    public SharedDocRef exec(final GetPipelineForStreamAction action) {
+    public SharedDocRef exec(final GetPipelineForMetaAction action) {
         return security.secureResult(() -> {
             DocRef docRef = null;
 
             // First try and get the pipeline from the selected child stream.
-            Meta childStream = getStream(action.getChildStreamId());
-            if (childStream != null) {
-                docRef = getPipeline(childStream);
+            Meta childMeta = getMeta(action.getChildMetaId());
+            if (childMeta != null) {
+                docRef = getPipeline(childMeta);
             }
 
             if (docRef == null) {
                 // If we didn't get a pipeline docRef from a child stream then try and
                 // find a child stream to get one from.
-                childStream = getFirstChildStream(action.getStreamId());
-                if (childStream != null) {
-                    docRef = getPipeline(childStream);
+                childMeta = getFirstChildMeta(action.getMetaId());
+                if (childMeta != null) {
+                    docRef = getPipeline(childMeta);
                 }
             }
 
@@ -72,7 +72,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
 //            // If we still don't have a pipeline docRef then just try and find the
 //            // first pipeline we can in the folder that the stream belongs
 //            // to.
-//            final Stream stream = getMeta(action.getStreamId());
+//            final Stream stream = getMeta(action.getMetaId());
 //            if (stream != null) {
 //                final Feed feed = feedService.load(stream.getFeed());
 //                if (feed != null) {
@@ -96,7 +96,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         });
     }
 
-    private Meta getStream(final Long id) {
+    private Meta getMeta(final Long id) {
         if (id == null) {
             return null;
         }
@@ -112,7 +112,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         });
     }
 
-    private Meta getFirstChildStream(final Long id) {
+    private Meta getFirstChildMeta(final Long id) {
         if (id == null) {
             return null;
         }
@@ -123,12 +123,12 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         });
     }
 
-    private DocRef getPipeline(final Meta stream) {
+    private DocRef getPipeline(final Meta meta) {
         DocRef docRef = null;
 
         // So we have got the stream so try and get the first pipeline that was
         // used to produce children for this stream.
-        String pipelineUuid = stream.getPipelineUuid();
+        String pipelineUuid = meta.getPipelineUuid();
         if (pipelineUuid != null) {
             try {
                 // Ensure the current user is allowed to load this pipeline.

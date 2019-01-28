@@ -28,17 +28,17 @@ import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.docref.SharedObject;
 
-public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.StreamTaskView>
+public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPresenter.StreamTaskView>
         implements HasDocumentRead<SharedObject> {
     public static final String STREAM_TASK_LIST = "STREAM_TASK_LIST";
     public static final String STREAM_TASK_SUMMARY = "STREAM_TASK_SUMMARY";
-    private final StreamTaskSummaryPresenter streamTaskSummaryPresenter;
-    private final StreamTaskListPresenter streamTaskListPresenter;
+    private final ProcessorTaskSummaryPresenter streamTaskSummaryPresenter;
+    private final ProcessorTaskListPresenter streamTaskListPresenter;
 
     @Inject
-    public StreamTaskPresenter(final EventBus eventBus, final StreamTaskView view,
-                               final StreamTaskSummaryPresenter streamTaskSummaryPresenter,
-                               final StreamTaskListPresenter streamTaskListPresenter) {
+    public ProcessorTaskPresenter(final EventBus eventBus, final StreamTaskView view,
+                                  final ProcessorTaskSummaryPresenter streamTaskSummaryPresenter,
+                                  final ProcessorTaskListPresenter streamTaskListPresenter) {
         super(eventBus, view);
         this.streamTaskSummaryPresenter = streamTaskSummaryPresenter;
         this.streamTaskListPresenter = streamTaskListPresenter;

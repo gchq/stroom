@@ -141,27 +141,27 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
 //        streamTaskCreator.createTasks(new SimpleTaskContext());
 
         List<DataVolume> oldVolumeList = streamVolumeService
-                .find(FindDataVolumeCriteria.create(oldFileTarget.getStream()));
+                .find(FindDataVolumeCriteria.create(oldFileTarget.getMeta()));
         assertThat(oldVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
 
         List<DataVolume> newVolumeList = streamVolumeService
-                .find(FindDataVolumeCriteria.create(newFileTarget.getStream()));
+                .find(FindDataVolumeCriteria.create(newFileTarget.getMeta()));
         assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
 
         streamRetentionExecutor.exec();
         streamDeleteExecutor.delete(System.currentTimeMillis());
 
         // Test Again
-        oldVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(oldFileTarget.getStream()));
+        oldVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(oldFileTarget.getMeta()));
         assertThat(oldVolumeList.size()).as("Expecting 0 stream volumes").isEqualTo(0);
 
-        newVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(newFileTarget.getStream()));
+        newVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(newFileTarget.getMeta()));
         assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
 
         // Test they are
-        oldVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(oldFileTarget.getStream()));
+        oldVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(oldFileTarget.getMeta()));
         assertThat(oldVolumeList.size()).as("Expecting 0 stream volumes").isEqualTo(0);
-        newVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(newFileTarget.getStream()));
+        newVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(newFileTarget.getMeta()));
         assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
     }
 }

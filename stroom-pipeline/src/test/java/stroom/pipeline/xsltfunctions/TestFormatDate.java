@@ -19,7 +19,7 @@ package stroom.pipeline.xsltfunctions;
 
 import org.junit.jupiter.api.Test;
 import stroom.meta.shared.Meta;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomUnitTest;
 
@@ -205,12 +205,12 @@ class TestFormatDate extends StroomUnitTest {
     }
 
     private FormatDate createFormatDate(final String referenceDate) {
-        final Meta stream = mock(Meta.class);
-        when(stream.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString(referenceDate));
+        final Meta meta = mock(Meta.class);
+        when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString(referenceDate));
 
-        final StreamHolder streamHolder = new StreamHolder(null);
-        streamHolder.setStream(stream);
+        final MetaHolder metaHolder = new MetaHolder(null);
+        metaHolder.setMeta(meta);
 
-        return new FormatDate(streamHolder);
+        return new FormatDate(metaHolder);
     }
 }

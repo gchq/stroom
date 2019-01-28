@@ -123,9 +123,9 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         }
 
         if (streamType != null) {
-            builder.addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, streamType);
+            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, streamType);
         } else {
-            builder.addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
+            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
         }
 
         // Query the stream store
@@ -135,9 +135,9 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         System.out.println("Starting dump of " + results.size() + " streams");
 
         int count = 0;
-        for (final Meta stream : results) {
+        for (final Meta meta : results) {
             count++;
-            processFile(count, results.size(), streamStore, stream.getId(), dir);
+            processFile(count, results.size(), streamStore, meta.getId(), dir);
         }
 
         System.out.println("Finished dumping " + results.size() + " streams");

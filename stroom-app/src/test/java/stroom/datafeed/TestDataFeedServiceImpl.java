@@ -100,7 +100,7 @@ class TestDataFeedServiceImpl extends TestBase {
         checkOK();
 
         assertThat(StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
+                .streamToString(streamStore.openStreamSource(streamStore.getLastMeta().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
         assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
     }
 
@@ -115,7 +115,7 @@ class TestDataFeedServiceImpl extends TestBase {
         checkOK();
 
         assertThat(StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
+                .streamToString(streamStore.openStreamSource(streamStore.getLastMeta().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
         assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
     }
 
@@ -132,7 +132,7 @@ class TestDataFeedServiceImpl extends TestBase {
         checkOK();
 
         assertThat(StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
+                .streamToString(streamStore.openStreamSource(streamStore.getLastMeta().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
         assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
     }
 
@@ -148,7 +148,7 @@ class TestDataFeedServiceImpl extends TestBase {
         checkOK();
 
         assertThat(StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
+                .streamToString(streamStore.openStreamSource(streamStore.getLastMeta().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
         assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
     }
 
@@ -214,7 +214,7 @@ class TestDataFeedServiceImpl extends TestBase {
         checkOK();
 
         assertThat(StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
+                .streamToString(streamStore.openStreamSource(streamStore.getLastMeta().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
     }
 
     @Test
@@ -239,7 +239,7 @@ class TestDataFeedServiceImpl extends TestBase {
         checkOK();
 
         assertThat(StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("LINE1\nLINE2\n");
+                .streamToString(streamStore.openStreamSource(streamStore.getLastMeta().getId()).getInputStream())).isEqualTo("LINE1\nLINE2\n");
     }
 
     @Test

@@ -30,7 +30,7 @@ import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.OffsetRange;
@@ -59,7 +59,7 @@ public class DataResource {
                         final Provider<FeedHolder> feedHolderProvider,
                         final Provider<MetaDataHolder> metaDataHolderProvider,
                         final Provider<PipelineHolder> pipelineHolderProvider,
-                        final Provider<StreamHolder> streamHolderProvider,
+                        final Provider<MetaHolder> metaHolderProvider,
                         final PipelineStore pipelineStore,
                         final Provider<PipelineFactory> pipelineFactoryProvider,
                         final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
@@ -72,7 +72,7 @@ public class DataResource {
                 feedHolderProvider,
                 metaDataHolderProvider,
                 pipelineHolderProvider,
-                streamHolderProvider,
+                metaHolderProvider,
                 pipelineStore,
                 pipelineFactoryProvider,
                 errorReceiverProxyProvider,

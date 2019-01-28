@@ -85,12 +85,12 @@ class FileSystemStreamMaintenanceService
         this.security = security;
     }
 
-    List<Path> findAllStreamFile(final Meta stream) {
-        final Set<DataVolume> streamVolumes = streamVolumeService.findStreamVolume(stream.getId());
+    List<Path> findAllStreamFile(final Meta meta) {
+        final Set<DataVolume> streamVolumes = streamVolumeService.findStreamVolume(meta.getId());
         final List<Path> results = new ArrayList<>();
         for (final DataVolume streamVolume : streamVolumes) {
             final Path rootFile = fileSystemStreamPathHelper.createRootStreamFile(streamVolume.getVolumePath(),
-                    stream, stream.getTypeName());
+                    meta, meta.getTypeName());
             if (Files.isRegularFile(rootFile)) {
                 results.add(rootFile);
                 results.addAll(fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile));
@@ -190,9 +190,9 @@ class FileSystemStreamMaintenanceService
                 final List<DataVolume> matches = streamVolumeService.find(criteria);
 
                 for (final DataVolume streamVolume : matches) {
-                    final Meta stream = streamMap.get(streamVolume.getStreamId());
-                    if (stream != null) {
-                        streamsKeyedByBaseName.put(fileSystemStreamPathHelper.getBaseName(stream), streamVolume);
+                    final Meta meta = streamMap.get(streamVolume.getStreamId());
+                    if (meta != null) {
+                        streamsKeyedByBaseName.put(fileSystemStreamPathHelper.getBaseName(meta), streamVolume);
                     }
                 }
             }
@@ -235,7 +235,7 @@ class FileSystemStreamMaintenanceService
 
         if (parts.length > 0 && parts[0].length() > 0) {
             final String streamTypeName = fileSystemTypePaths.getType(parts[0]);
-            builder.addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, streamTypeName);
+            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, streamTypeName);
         }
         if (parts.length >= 4) {
             try {
@@ -280,8 +280,8 @@ class FileSystemStreamMaintenanceService
 
         long toId = fromId + 1000L;
 
-        builder.addTerm(MetaFieldNames.STREAM_ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(fromId));
-        builder.addTerm(MetaFieldNames.STREAM_ID, Condition.LESS_THAN, String.valueOf(toId));
+        builder.addTerm(MetaFieldNames.ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(fromId));
+        builder.addTerm(MetaFieldNames.ID, Condition.LESS_THAN, String.valueOf(toId));
 
         return builder.build();
     }

@@ -43,7 +43,7 @@ final class FileSystemStreamSource implements StreamSource {
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
     private final StreamCloser streamCloser = new BasicStreamCloser();
-    private Meta stream;
+    private Meta meta;
     private String rootPath;
     private String streamType;
     private AttributeMap attributeMap;
@@ -52,11 +52,11 @@ final class FileSystemStreamSource implements StreamSource {
     private FileSystemStreamSource parent;
 
     private FileSystemStreamSource(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
-                                   final Meta stream,
+                                   final Meta meta,
                                    final String rootPath,
                                    final String streamType) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
-        this.stream = stream;
+        this.meta = meta;
         this.rootPath = rootPath;
         this.streamType = streamType;
 
@@ -68,7 +68,7 @@ final class FileSystemStreamSource implements StreamSource {
                                    final String streamType,
                                    final Path file) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
-        this.stream = parent.stream;
+        this.meta = parent.meta;
         this.rootPath = parent.rootPath;
         this.parent = parent;
         this.streamType = streamType;
@@ -83,10 +83,10 @@ final class FileSystemStreamSource implements StreamSource {
      * created.
      */
     static FileSystemStreamSource create(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
-                                         final Meta stream,
+                                         final Meta meta,
                                          final String rootPath,
                                          final String streamType) {
-        return new FileSystemStreamSource(fileSystemStreamPathHelper, stream, rootPath, streamType);
+        return new FileSystemStreamSource(fileSystemStreamPathHelper, meta, rootPath, streamType);
     }
 
     private void validate() {
@@ -103,7 +103,7 @@ final class FileSystemStreamSource implements StreamSource {
     public Path getFile() {
         if (file == null) {
             if (parent == null) {
-                file = fileSystemStreamPathHelper.createRootStreamFile(rootPath, stream, getStreamTypeName());
+                file = fileSystemStreamPathHelper.createRootStreamFile(rootPath, meta, getStreamTypeName());
             } else {
                 file = fileSystemStreamPathHelper.createChildStreamFile(parent.getFile(), getStreamTypeName());
             }
@@ -120,7 +120,7 @@ final class FileSystemStreamSource implements StreamSource {
                 streamCloser.add(inputStream);
             } catch (IOException ioEx) {
                 // Don't log this as an error if we expect this stream to have been deleted or be locked.
-                if (stream == null || Status.UNLOCKED.equals(stream.getStatus())) {
+                if (meta == null || Status.UNLOCKED.equals(meta.getStatus())) {
                     LOGGER.error("getInputStream", ioEx);
                 }
 
@@ -159,12 +159,12 @@ final class FileSystemStreamSource implements StreamSource {
     }
 
     @Override
-    public Meta getStream() {
-        return stream;
+    public Meta getMeta() {
+        return meta;
     }
 
-    public void setStream(final Meta stream) {
-        this.stream = stream;
+    public void setMeta(final Meta meta) {
+        this.meta = meta;
     }
 
     @Override

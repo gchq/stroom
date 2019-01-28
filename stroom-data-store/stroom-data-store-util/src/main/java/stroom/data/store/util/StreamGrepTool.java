@@ -137,9 +137,9 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         }
 
         if (streamType != null) {
-            builder.addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, streamType);
+            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, streamType);
         } else {
-            builder.addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
+            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
         }
 
         // Query the stream store
@@ -148,11 +148,11 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         final List<Meta> results = metaService.find(criteria);
 
         int count = 0;
-        for (final Meta stream : results) {
+        for (final Meta meta : results) {
             count++;
-            LOGGER.info("processing() - " + count + "/" + results.size() + " " + stream);
+            LOGGER.info("processing() - " + count + "/" + results.size() + " " + meta);
 
-            processFile(streamStore, stream.getId(), match);
+            processFile(streamStore, meta.getId(), match);
         }
     }
 

@@ -27,7 +27,7 @@ public interface Meta extends SharedObject {
 
     String getPipelineUuid();
 
-    Long getParentDataId();
+    Long getParentMetaId();
 
     Long getProcessTaskId();
 

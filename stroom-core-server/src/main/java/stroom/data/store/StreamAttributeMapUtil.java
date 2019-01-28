@@ -19,26 +19,26 @@ class StreamAttributeMapUtil {
     /**
      * Turns a stream attribute map object into a generic map of attributes for use by an expression filter.
      */
-    static Map<String, Object> createAttributeMap(final Meta stream, final Map<String, String> attributeMap) {
+    static Map<String, Object> createAttributeMap(final Meta meta, final Map<String, String> attributeMap) {
         final Map<String, Object> map = new HashMap<>();
 
-        if (stream != null) {
-            map.put(MetaFieldNames.STREAM_ID, stream.getId());
-            map.put(MetaFieldNames.CREATE_TIME, stream.getCreateMs());
-            map.put(MetaFieldNames.EFFECTIVE_TIME, stream.getEffectiveMs());
-            map.put(MetaFieldNames.STATUS_TIME, stream.getStatusMs());
-            map.put(MetaFieldNames.STATUS, stream.getStatus().getDisplayValue());
-            if (stream.getParentDataId() != null) {
-                map.put(MetaFieldNames.PARENT_STREAM_ID, stream.getParentDataId());
+        if (meta != null) {
+            map.put(MetaFieldNames.ID, meta.getId());
+            map.put(MetaFieldNames.CREATE_TIME, meta.getCreateMs());
+            map.put(MetaFieldNames.EFFECTIVE_TIME, meta.getEffectiveMs());
+            map.put(MetaFieldNames.STATUS_TIME, meta.getStatusMs());
+            map.put(MetaFieldNames.STATUS, meta.getStatus().getDisplayValue());
+            if (meta.getParentMetaId() != null) {
+                map.put(MetaFieldNames.PARENT_ID, meta.getParentMetaId());
             }
-            if (stream.getTypeName() != null) {
-                map.put(MetaFieldNames.STREAM_TYPE_NAME, stream.getTypeName());
+            if (meta.getTypeName() != null) {
+                map.put(MetaFieldNames.TYPE_NAME, meta.getTypeName());
             }
-            final String feedName = stream.getFeedName();
+            final String feedName = meta.getFeedName();
             if (feedName != null) {
                 map.put(MetaFieldNames.FEED_NAME, feedName);
             }
-            final String pipelineUuid = stream.getPipelineUuid();
+            final String pipelineUuid = meta.getPipelineUuid();
             map.put(MetaFieldNames.PIPELINE_UUID, pipelineUuid);
 //            if (streamProcessor != null) {
 //                final String pipelineUuid = streamProcessor.getPipelineUuid();

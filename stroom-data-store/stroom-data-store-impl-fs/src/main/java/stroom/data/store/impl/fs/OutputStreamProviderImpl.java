@@ -30,13 +30,13 @@ import java.util.HashMap;
 class OutputStreamProviderImpl implements OutputStreamProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(OutputStreamProviderImpl.class);
 
-    private final Meta stream;
+    private final Meta meta;
     private final NestedOutputStreamFactory rootStreamTarget;
     private final HashMap<String, OS> nestedOutputStreamMap = new HashMap<>(10);
 
-    OutputStreamProviderImpl(final Meta stream,
+    OutputStreamProviderImpl(final Meta meta,
                              final NestedOutputStreamFactory streamTarget) {
-        this.stream = stream;
+        this.meta = meta;
         this.rootStreamTarget = streamTarget;
 
         final RANestedOutputStream nestedOutputStream = new RANestedOutputStream(
@@ -50,7 +50,7 @@ class OutputStreamProviderImpl implements OutputStreamProvider {
     }
 
     private void logDebug(String msg) {
-        LOGGER.debug(msg + stream.getId());
+        LOGGER.debug(msg + meta.getId());
     }
 
     @Override

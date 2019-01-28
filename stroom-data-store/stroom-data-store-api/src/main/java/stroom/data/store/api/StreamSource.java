@@ -39,7 +39,7 @@ public interface StreamSource extends Closeable {
     /**
      * @return the stream associated with this source
      */
-    Meta getStream();
+    Meta getMeta();
 
     /**
      * @return the real IO input stream

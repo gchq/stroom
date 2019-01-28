@@ -46,14 +46,14 @@ public class StreamAttributeMapRetentionRuleDecorator {
         expressionMatcher = new ExpressionMatcher(MetaFieldNames.getFieldMap(), dictionaryStore);
     }
 
-    void addMatchingRetentionRuleInfo(final Meta stream, final Map<String, String> attributeMap) {
+    void addMatchingRetentionRuleInfo(final Meta meta, final Map<String, String> attributeMap) {
         try {
             int index = -1;
 
             // If there are no active rules then we aren't going to process anything.
             if (rules.size() > 0) {
                 // Create an attribute map we can match on.
-                final Map<String, Object> map = StreamAttributeMapUtil.createAttributeMap(stream, attributeMap);
+                final Map<String, Object> map = StreamAttributeMapUtil.createAttributeMap(meta, attributeMap);
                 index = findMatchingRuleIndex(map);
             }
 
@@ -62,8 +62,8 @@ public class StreamAttributeMapRetentionRuleDecorator {
                 attributeMap.put(RETENTION_AGE, rule.getAgeString());
 
                 String keepUntil = DataRetentionRule.FOREVER;
-                if (stream != null) {
-                    final long millis = stream.getCreateMs();
+                if (meta != null) {
+                    final long millis = meta.getCreateMs();
                     final LocalDateTime createTime = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDateTime();
                     final Long ms = DataRetentionAgeUtil.plus(createTime, rule);
                     if (ms != null) {

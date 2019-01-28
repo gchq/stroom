@@ -43,16 +43,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class StreamRelationListPresenter extends AbstractStreamListPresenter {
+public class MetaRelationListPresenter extends AbstractMetaListPresenter {
     private final Map<Long, MetaRow> streamMap = new HashMap<>();
     private int maxDepth = -1;
 
     private Column<MetaRow, Expander> expanderColumn;
 
     @Inject
-    public StreamRelationListPresenter(final EventBus eventBus,
-                                       final ClientDispatchAsync dispatcher,
-                                       final TooltipPresenter tooltipPresenter) {
+    public MetaRelationListPresenter(final EventBus eventBus,
+                                     final ClientDispatchAsync dispatcher,
+                                     final TooltipPresenter tooltipPresenter) {
         super(eventBus, dispatcher, tooltipPresenter, false);
         dataProvider.setAllowNoConstraint(false);
     }
@@ -67,7 +67,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             if (!showSystemFiles) {
                 builder.addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
             }
-            builder.addTerm(MetaFieldNames.STREAM_ID, Condition.EQUALS, String.valueOf(metaRow.getMeta().getId()));
+            builder.addTerm(MetaFieldNames.ID, Condition.EQUALS, String.valueOf(metaRow.getMeta().getId()));
 
             final FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setExpression(builder.build());
@@ -84,13 +84,13 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         // Store streams against id.
         streamMap.clear();
         for (final MetaRow row : data) {
-            final Meta stream = row.getMeta();
-            streamMap.put(stream.getId(), row);
+            final Meta meta = row.getMeta();
+            streamMap.put(meta.getId(), row);
         }
 
         for (final MetaRow row : data) {
-            final Meta stream = row.getMeta();
-            streamMap.put(stream.getId(), row);
+            final Meta meta = row.getMeta();
+            streamMap.put(meta.getId(), row);
         }
 
         // Now use the root streams and attach child streams to them.
@@ -114,11 +114,11 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
     private void addChildren(final MetaRow parent, final List<MetaRow> data,
                              final List<MetaRow> newData, final int depth) {
         for (final MetaRow row : data) {
-            final Meta stream = row.getMeta();
+            final Meta meta = row.getMeta();
 
             if (parent == null) {
                 // Add roots.
-                if (stream.getParentDataId() == null || streamMap.get(stream.getParentDataId()) == null) {
+                if (meta.getParentMetaId() == null || streamMap.get(meta.getParentMetaId()) == null) {
                     newData.add(row);
                     addChildren(row, data, newData, depth + 1);
 
@@ -128,8 +128,8 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
                 }
             } else {
                 // Add children.
-                if (stream.getParentDataId() != null) {
-                    final MetaRow thisParent = streamMap.get(stream.getParentDataId());
+                if (meta.getParentMetaId() != null) {
+                    final MetaRow thisParent = streamMap.get(meta.getParentMetaId());
                     if (thisParent != null && thisParent.equals(parent)) {
                         newData.add(row);
                         addChildren(row, data, newData, depth + 1);
@@ -183,7 +183,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
 
     private int getDepth(final MetaRow row) {
         int depth = 0;
-        Long parentId = row.getMeta().getParentDataId();
+        Long parentId = row.getMeta().getParentMetaId();
         while (parentId != null) {
             depth++;
 
@@ -191,7 +191,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             if (parentRow == null) {
                 parentId = null;
             } else {
-                parentId = parentRow.getMeta().getParentDataId();
+                parentId = parentRow.getMeta().getParentMetaId();
             }
         }
 

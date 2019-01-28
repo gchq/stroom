@@ -37,7 +37,7 @@ class TestDataRetentionPolicySerialisation {
     @Test
     void test() throws JAXBException {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
-        builder.addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, "Raw Events");
+        builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, "Raw Events");
         builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, "TEST_FEED");
         final ExpressionOperator expression = builder.build();
 

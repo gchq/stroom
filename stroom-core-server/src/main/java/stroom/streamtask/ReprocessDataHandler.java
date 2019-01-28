@@ -88,12 +88,12 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
 
                     final Map<Processor, CriteriaSet<Long>> streamToProcessorSet = new HashMap<>();
 
-                    for (final Meta stream : streams) {
+                    for (final Meta meta : streams) {
                         // We can only reprocess streams that have a stream
                         // processor and a parent stream id.
-                        if (stream.getProcessorId() != null && stream.getParentDataId() != null) {
-                            final Processor streamProcessor = streamProcessorService.loadByIdInsecure(stream.getProcessorId());
-                            streamToProcessorSet.computeIfAbsent(streamProcessor, k -> new CriteriaSet<>()).add(stream.getParentDataId());
+                        if (meta.getProcessorId() != null && meta.getParentMetaId() != null) {
+                            final Processor streamProcessor = streamProcessorService.loadByIdInsecure(meta.getProcessorId());
+                            streamToProcessorSet.computeIfAbsent(streamProcessor, k -> new CriteriaSet<>()).add(meta.getParentMetaId());
                         } else {
                             skippingCount++;
                         }
@@ -109,10 +109,10 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                         final CriteriaSet<Long> streamIdSet = streamToProcessorSet.get(streamProcessor);
                         if (streamIdSet != null && streamIdSet.size() > 0) {
                             if (streamIdSet.size() == 1) {
-                                operator.addTerm(MetaFieldNames.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamIdSet.getSingleItem()));
+                                operator.addTerm(MetaFieldNames.ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamIdSet.getSingleItem()));
                             } else {
                                 final ExpressionOperator.Builder streamIdTerms = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-                                streamIdSet.forEach(streamId -> streamIdTerms.addTerm(MetaFieldNames.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamId)));
+                                streamIdSet.forEach(streamId -> streamIdTerms.addTerm(MetaFieldNames.ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamId)));
                                 operator.addOperator(streamIdTerms.build());
                             }
                         }

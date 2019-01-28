@@ -19,10 +19,10 @@ package stroom.data.store;
 import stroom.meta.shared.Meta;
 import stroom.data.store.api.StreamStore;
 import stroom.security.Security;
-import stroom.streamstore.shared.FetchFullStreamInfoAction;
-import stroom.streamstore.shared.FullStreamInfoResult;
-import stroom.streamstore.shared.FullStreamInfoResult.Entry;
-import stroom.streamstore.shared.FullStreamInfoResult.Section;
+import stroom.streamstore.shared.FetchFullMetaInfoAction;
+import stroom.streamstore.shared.FullMetaInfoResult;
+import stroom.streamstore.shared.FullMetaInfoResult.Entry;
+import stroom.streamstore.shared.FullMetaInfoResult.Section;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.date.DateUtil;
 
@@ -34,15 +34,15 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 
-class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfoAction, FullStreamInfoResult> {
+class FetchFullMetaInfoHandler extends AbstractTaskHandler<FetchFullMetaInfoAction, FullMetaInfoResult> {
     private final StreamStore streamStore;
     private final StreamAttributeMapRetentionRuleDecorator ruleDecorator;
     private final Security security;
 
     @Inject
-    FetchFullStreamInfoHandler(final StreamStore streamStore,
-                               final StreamAttributeMapRetentionRuleDecorator ruleDecorator,
-                               final Security security) {
+    FetchFullMetaInfoHandler(final StreamStore streamStore,
+                             final StreamAttributeMapRetentionRuleDecorator ruleDecorator,
+                             final Security security) {
         this.streamStore = streamStore;
         this.ruleDecorator = ruleDecorator;
         this.security = security;
@@ -52,33 +52,33 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
         return DateUtil.createNormalDateTimeString(ms) + " (" + ms + ")";
     }
 
-    private List<Entry> getStreamEntries(final Meta stream) {
+    private List<Entry> getStreamEntries(final Meta meta) {
         final List<Entry> entries = new ArrayList<>();
 
-        entries.add(new Entry("Stream Id", String.valueOf(stream.getId())));
-        entries.add(new Entry("Status", stream.getStatus().getDisplayValue()));
-        entries.add(new Entry("Status Ms", getDateTimeString(stream.getStatusMs())));
-        entries.add(new Entry("Stream Task Id", String.valueOf(stream.getProcessTaskId())));
-        entries.add(new Entry("Parent Stream Id", String.valueOf(stream.getParentDataId())));
-        entries.add(new Entry("Created", getDateTimeString(stream.getCreateMs())));
-        entries.add(new Entry("Effective", getDateTimeString(stream.getEffectiveMs())));
-        entries.add(new Entry("Stream Type", stream.getTypeName()));
-        entries.add(new Entry("Feed", stream.getFeedName()));
+        entries.add(new Entry("Stream Id", String.valueOf(meta.getId())));
+        entries.add(new Entry("Status", meta.getStatus().getDisplayValue()));
+        entries.add(new Entry("Status Ms", getDateTimeString(meta.getStatusMs())));
+        entries.add(new Entry("Stream Task Id", String.valueOf(meta.getProcessTaskId())));
+        entries.add(new Entry("Parent Data Id", String.valueOf(meta.getParentMetaId())));
+        entries.add(new Entry("Created", getDateTimeString(meta.getCreateMs())));
+        entries.add(new Entry("Effective", getDateTimeString(meta.getEffectiveMs())));
+        entries.add(new Entry("Stream Type", meta.getTypeName()));
+        entries.add(new Entry("Feed", meta.getFeedName()));
 
-        if (stream.getProcessorId() != null) {
-            entries.add(new Entry("Stream Processor Id", String.valueOf(stream.getProcessorId())));
+        if (meta.getProcessorId() != null) {
+            entries.add(new Entry("Processor Id", String.valueOf(meta.getProcessorId())));
         }
-        if (stream.getPipelineUuid() != null) {
-            entries.add(new Entry("Stream Processor Pipeline", String.valueOf(stream.getPipelineUuid())));
+        if (meta.getPipelineUuid() != null) {
+            entries.add(new Entry("Processor Pipeline", meta.getPipelineUuid()));
         }
         return entries;
     }
 
-    private List<Entry> getDataRententionEntries(final Meta stream, final Map<String, String> attributeMap) {
+    private List<Entry> getDataRententionEntries(final Meta meta, final Map<String, String> attributeMap) {
         final List<Entry> entries = new ArrayList<>();
 
         // Add additional data retention information.
-        ruleDecorator.addMatchingRetentionRuleInfo(stream, attributeMap);
+        ruleDecorator.addMatchingRetentionRuleInfo(meta, attributeMap);
 
         entries.add(new Entry(StreamAttributeMapRetentionRuleDecorator.RETENTION_AGE, attributeMap.get(StreamAttributeMapRetentionRuleDecorator.RETENTION_AGE)));
         entries.add(new Entry(StreamAttributeMapRetentionRuleDecorator.RETENTION_UNTIL, attributeMap.get(StreamAttributeMapRetentionRuleDecorator.RETENTION_UNTIL)));
@@ -88,19 +88,19 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
     }
 
     @Override
-    public FullStreamInfoResult exec(final FetchFullStreamInfoAction action) {
-        final Meta stream = action.getStream();
+    public FullMetaInfoResult exec(final FetchFullMetaInfoAction action) {
+        final Meta meta = action.getMeta();
         final List<Section> sections = new ArrayList<>();
 
-        final Map<String, String> attributeMap = streamStore.getStoredMeta(stream);
+        final Map<String, String> attributeMap = streamStore.getStoredMeta(meta);
 
         if (attributeMap == null) {
             final List<Entry> entries = new ArrayList<>(1);
-            entries.add(new Entry("Deleted Stream Id", String.valueOf(stream.getId())));
+            entries.add(new Entry("Deleted Stream Id", String.valueOf(meta.getId())));
             sections.add(new Section("Stream", entries));
 
         } else {
-            sections.add(new Section("Stream", getStreamEntries(stream)));
+            sections.add(new Section("Stream", getStreamEntries(meta)));
 
             final List<Entry> entries = new ArrayList<>();
             final List<String> sortedKeys = attributeMap.keySet().stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
@@ -134,11 +134,11 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
 
 
             // Add additional data retention information.
-            sections.add(new Section("Retention", getDataRententionEntries(stream, attributeMap)));
+            sections.add(new Section("Retention", getDataRententionEntries(meta, attributeMap)));
 
 
         }
 
-        return new FullStreamInfoResult(sections);
+        return new FullMetaInfoResult(sections);
     }
 }

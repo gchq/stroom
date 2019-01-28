@@ -50,7 +50,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
@@ -80,7 +80,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private final FeedHolder feedHolder;
     private final MetaDataHolder metaDataHolder;
     private final PipelineHolder pipelineHolder;
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final LocationFactoryProxy locationFactory;
     private final CurrentUserHolder currentUserHolder;
     private final SteppingController controller;
@@ -112,7 +112,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         final FeedHolder feedHolder,
                         final MetaDataHolder metaDataHolder,
                         final PipelineHolder pipelineHolder,
-                        final StreamHolder streamHolder,
+                        final MetaHolder metaHolder,
                         final LocationFactoryProxy locationFactory,
                         final CurrentUserHolder currentUserHolder,
                         final SteppingController controller,
@@ -131,7 +131,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         this.feedHolder = feedHolder;
         this.metaDataHolder = metaDataHolder;
         this.pipelineHolder = pipelineHolder;
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.locationFactory = locationFactory;
         this.currentUserHolder = currentUserHolder;
         this.controller = controller;
@@ -311,7 +311,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                     }
 
                     // Load the feed.
-                    final String feedName = streamSource.getStream().getFeedName();
+                    final String feedName = streamSource.getMeta().getFeedName();
 
                     // Get the stream type.
                     final String streamTypeName = stepSource.getStreamTypeName();
@@ -417,24 +417,24 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             // Find streams.
             final List<Meta> allStreamList = metaService.find(criteria);
             allStreamIdList = new ArrayList<>(allStreamList.size());
-            for (final Meta stream : allStreamList) {
-                allStreamIdList.add(stream.getId());
+            for (final Meta meta : allStreamList) {
+                allStreamIdList.add(meta.getId());
             }
 
             if (criteria.getSelectedIdSet() == null || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
                 // If we are including all tasks then don't filter the list.
                 filteredList = new ArrayList<>(allStreamList.size());
-                for (final Meta stream : allStreamList) {
-                    filteredList.add(stream.getId());
+                for (final Meta meta : allStreamList) {
+                    filteredList.add(meta.getId());
                 }
 
             } else if (criteria.getSelectedIdSet() != null && criteria.getSelectedIdSet().getSet() != null
                     && criteria.getSelectedIdSet().getSet().size() > 0) {
                 // Otherwise filter the list to just selected tasks.
                 filteredList = new ArrayList<>(criteria.getSelectedIdSet().getSet().size());
-                for (final Meta stream : allStreamList) {
-                    if (criteria.getSelectedIdSet().isMatch(stream.getId())) {
-                        filteredList.add(stream.getId());
+                for (final Meta meta : allStreamList) {
+                    if (criteria.getSelectedIdSet().isMatch(meta.getId())) {
+                        filteredList.add(meta.getId());
                     }
                 }
             }
@@ -502,19 +502,19 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private void process(final SteppingController controller, final String feedName, final String streamTypeName,
                          final StreamSource streamSource) {
         try {
-            final Meta stream = streamSource.getStream();
+            final Meta meta = streamSource.getMeta();
             final SteppingTask request = controller.getRequest();
             final StepType stepType = request.getStepType();
-            controller.setStreamInfo(createStreamInfo(feedName, stream));
+            controller.setStreamInfo(createStreamInfo(feedName, meta));
 
             // Get the stream providers.
-            streamHolder.setStream(stream);
-            streamHolder.addProvider(streamSource);
-            streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
-            streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
+            metaHolder.setMeta(meta);
+            metaHolder.addProvider(streamSource);
+            metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
+            metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
 
             // Get the main stream provider.
-            final StreamSourceInputStreamProvider mainProvider = streamHolder.getProvider(streamSource.getStreamTypeName());
+            final StreamSourceInputStreamProvider mainProvider = metaHolder.getProvider(streamSource.getStreamTypeName());
 
             try {
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
@@ -530,12 +530,12 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         // Start at the last stream number.
                         streamNo = streamCount;
                         // Update the current processing location.
-                        currentLocation = new StepLocation(stream.getId(), streamNo, currentLocation.getRecordNo());
+                        currentLocation = new StepLocation(meta.getId(), streamNo, currentLocation.getRecordNo());
                     } else {
                         // Else start at the current location.
                         streamNo = currentLocation.getStreamNo();
                         // Update the current processing location.
-                        currentLocation = new StepLocation(stream.getId(), streamNo, currentLocation.getRecordNo());
+                        currentLocation = new StepLocation(meta.getId(), streamNo, currentLocation.getRecordNo());
                     }
                 }
 
@@ -548,7 +548,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 boolean done = controller.isFound();
                 while (!done && streamNo > 0 && streamNo <= streamCount && !Thread.currentThread().isInterrupted()) {
                     // Set the stream number.
-                    streamHolder.setStreamNo(streamNo - 1);
+                    metaHolder.setStreamNo(streamNo - 1);
                     streamLocationFactory.setStreamNo(streamNo);
 
                     // Process the boundary making sure to use the right
@@ -586,16 +586,16 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         // number, otherwise decrement the stream number.
                         if (StepType.FIRST.equals(stepType)) {
                             streamNo++;
-                            currentLocation = new StepLocation(stream.getId(), streamNo, 0);
+                            currentLocation = new StepLocation(meta.getId(), streamNo, 0);
                         } else if (StepType.BACKWARD.equals(stepType)) {
                             streamNo--;
-                            currentLocation = new StepLocation(stream.getId(), streamNo, Long.MAX_VALUE);
+                            currentLocation = new StepLocation(meta.getId(), streamNo, Long.MAX_VALUE);
                         } else if (StepType.FORWARD.equals(stepType)) {
                             streamNo++;
-                            currentLocation = new StepLocation(stream.getId(), streamNo, 0);
+                            currentLocation = new StepLocation(meta.getId(), streamNo, 0);
                         } else if (StepType.LAST.equals(stepType)) {
                             streamNo--;
-                            currentLocation = new StepLocation(stream.getId(), streamNo, Long.MAX_VALUE);
+                            currentLocation = new StepLocation(meta.getId(), streamNo, Long.MAX_VALUE);
                         }
                     }
                 }
@@ -617,7 +617,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             feedHolder.setFeedName(feedName);
 
             // Setup the meta data holder.
-            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
+            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
             pipelineHolder.setPipeline(DocRefUtil.create(pipelineDoc));
             pipelineContext.setStepping(true);
@@ -636,21 +636,21 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         return pipeline;
     }
 
-    private String createStreamInfo(final String feedName, final Meta stream) {
+    private String createStreamInfo(final String feedName, final Meta meta) {
         return "" +
                 "Feed: " +
                 feedName +
                 " Received: " +
-                DateUtil.createNormalDateTimeString(stream.getCreateMs()) +
+                DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
                 " [" +
-                stream.getId();
+                meta.getId();
     }
 
 //    private String getSourceData(final StepLocation location, final List<Highlight> highlights) {
 //        String data = null;
 //        if (location != null && highlights != null && highlights.size() > 0) {
 //            try {
-//                final StreamSource streamSource = streamStore.openStreamSource(location.getStreamId());
+//                final StreamSource streamSource = streamStore.openStreamSource(location.getMetaId());
 //                if (streamSource != null) {
 //                    final NestedInputStream inputStream = streamSource.getNestedInputStream();
 //
@@ -658,7 +658,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 //                        // Skip to the appropriate stream.
 //                        if (inputStream.getEntry(location.getStreamNo() - 1)) {
 //                            // Load the feed.
-//                            final String feedName = streamSource.getStream().getFeedName();
+//                            final String feedName = streamSource.getMeta().getFeedName();
 //
 //                            // Get the stream type.
 //                            final String streamTypeName = streamSource.getStreamTypeName();

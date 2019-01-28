@@ -82,7 +82,7 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         }
         dataRetentionService.save(dataRetentionPolicy);
 
-        Meta streamInsideRetention = metaService.create(
+        Meta metaInsideRetention = metaService.create(
                 new MetaProperties.Builder()
                         .feedName(feedName)
                         .typeName(StreamTypeNames.RAW_EVENTS)
@@ -90,7 +90,7 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
                         .statusMs(now)
                         .build());
 
-        Meta streamOutsideRetention = metaService.create(
+        Meta metaOutsideRetention = metaService.create(
                 new MetaProperties.Builder()
                         .feedName(feedName)
                         .typeName(StreamTypeNames.RAW_EVENTS)
@@ -99,46 +99,46 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
                         .build());
 
         // Streams are locked initially so unlock.
-        metaService.updateStatus(streamInsideRetention, Status.UNLOCKED);
-        metaService.updateStatus(streamOutsideRetention, Status.UNLOCKED);
+        metaService.updateStatus(metaInsideRetention, Status.UNLOCKED);
+        metaService.updateStatus(metaOutsideRetention, Status.UNLOCKED);
 
         dumpStreams();
 
-        Long lastStatusMsInside = streamInsideRetention.getStatusMs();
-        Long lastStatusMsOutside = streamOutsideRetention.getStatusMs();
+        Long lastStatusMsInside = metaInsideRetention.getStatusMs();
+        Long lastStatusMsOutside = metaOutsideRetention.getStatusMs();
 
         // run the stream retention task which should 'delete' one stream
         dataRetentionExecutor.exec();
 
-        streamInsideRetention = metaService.getMeta(streamInsideRetention.getId(), true);
-        streamOutsideRetention = metaService.getMeta(streamOutsideRetention.getId(), true);
+        metaInsideRetention = metaService.getMeta(metaInsideRetention.getId(), true);
+        metaOutsideRetention = metaService.getMeta(metaOutsideRetention.getId(), true);
 
         dumpStreams();
 
-        assertThat(streamInsideRetention.getStatus()).isEqualTo(Status.UNLOCKED);
-        assertThat(streamOutsideRetention.getStatus()).isEqualTo(Status.DELETED);
+        assertThat(metaInsideRetention.getStatus()).isEqualTo(Status.UNLOCKED);
+        assertThat(metaOutsideRetention.getStatus()).isEqualTo(Status.DELETED);
         // no change to the record
-        assertThat(streamInsideRetention.getStatusMs()).isEqualTo(lastStatusMsInside);
+        assertThat(metaInsideRetention.getStatusMs()).isEqualTo(lastStatusMsInside);
         // record changed
-        assertThat(streamOutsideRetention.getStatusMs() > lastStatusMsOutside).isTrue();
+        assertThat(metaOutsideRetention.getStatusMs() > lastStatusMsOutside).isTrue();
 
-        lastStatusMsInside = streamInsideRetention.getStatusMs();
-        lastStatusMsOutside = streamOutsideRetention.getStatusMs();
+        lastStatusMsInside = metaInsideRetention.getStatusMs();
+        lastStatusMsOutside = metaOutsideRetention.getStatusMs();
 
         // run the task again, but this time no changes should be made as the
         // one outside the retention period is already 'deleted'
         dataRetentionExecutor.exec();
 
-        streamInsideRetention = metaService.getMeta(streamInsideRetention.getId(), true);
-        streamOutsideRetention = metaService.getMeta(streamOutsideRetention.getId(), true);
+        metaInsideRetention = metaService.getMeta(metaInsideRetention.getId(), true);
+        metaOutsideRetention = metaService.getMeta(metaOutsideRetention.getId(), true);
 
         dumpStreams();
 
-        assertThat(streamInsideRetention.getStatus()).isEqualTo(Status.UNLOCKED);
-        assertThat(streamOutsideRetention.getStatus()).isEqualTo(Status.DELETED);
+        assertThat(metaInsideRetention.getStatus()).isEqualTo(Status.UNLOCKED);
+        assertThat(metaOutsideRetention.getStatus()).isEqualTo(Status.DELETED);
         // no change to the records
-        assertThat(streamInsideRetention.getStatusMs()).isEqualTo(lastStatusMsInside);
-        assertThat(streamOutsideRetention.getStatusMs()).isEqualTo(lastStatusMsOutside);
+        assertThat(metaInsideRetention.getStatusMs()).isEqualTo(lastStatusMsInside);
+        assertThat(metaOutsideRetention.getStatusMs()).isEqualTo(lastStatusMsOutside);
     }
 
     private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final stroom.streamstore.shared.TimeUnit timeUnit) {
@@ -146,14 +146,14 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     }
 
     private void dumpStreams() {
-        final BaseResultList<Meta> streams = metaService.find(new FindMetaCriteria());
+        final BaseResultList<Meta> list = metaService.find(new FindMetaCriteria());
 
-        assertThat(streams.size()).isEqualTo(2);
+        assertThat(list.size()).isEqualTo(2);
 
-        for (final Meta stream : streams) {
-            LOGGER.info("stream: %s, createMs: %s, statusMs: %s, status: %s", stream,
-                    DateUtil.createNormalDateTimeString(stream.getCreateMs()),
-                    DateUtil.createNormalDateTimeString(stream.getStatusMs()), stream.getStatus());
+        for (final Meta meta : list) {
+            LOGGER.info("meta: %s, createMs: %s, statusMs: %s, status: %s", meta,
+                    DateUtil.createNormalDateTimeString(meta.getCreateMs()),
+                    DateUtil.createNormalDateTimeString(meta.getStatusMs()), meta.getStatus());
         }
     }
 }

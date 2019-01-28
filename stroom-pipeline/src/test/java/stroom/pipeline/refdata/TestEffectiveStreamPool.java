@@ -58,14 +58,14 @@ class TestEffectiveStreamPool extends StroomUnitTest {
                 final Set<Meta> results = new HashSet<>();
                 long workingDate = criteria.getEffectivePeriod().getFrom();
                 while (workingDate < criteria.getEffectivePeriod().getTo()) {
-                    final Meta stream = create(
+                    final Meta meta = create(
                             new MetaProperties.Builder()
                                     .feedName(refFeedName)
                                     .typeName(StreamTypeNames.RAW_REFERENCE)
                                     .createMs(workingDate)
                                     .build());
 
-                    results.add(stream);
+                    results.add(meta);
                     workingDate = Instant.ofEpochMilli(workingDate)
                             .atZone(ZoneOffset.UTC)
                             .plusDays(1)
@@ -212,13 +212,13 @@ class TestEffectiveStreamPool extends StroomUnitTest {
         }
 
         void addEffectiveStream(final String feedName, long effectiveTimeMs) {
-            final Meta stream = create(
+            final Meta meta = create(
                     new MetaProperties.Builder()
                             .feedName(feedName)
                             .typeName(StreamTypeNames.RAW_REFERENCE)
                             .createMs(effectiveTimeMs)
                             .build());
-            streams.add(stream);
+            streams.add(meta);
         }
 
         long getCallCount() {

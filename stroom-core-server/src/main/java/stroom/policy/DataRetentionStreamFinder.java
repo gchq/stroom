@@ -92,7 +92,7 @@ public class DataRetentionStreamFinder {//implements AutoCloseable {
 //        try (final ResultSet resultSet = preparedStatement.executeQuery()) {
 //            while (resultSet.next() && !Thread.currentThread().isInterrupted()) {
 //                final Map<String, Object> attributeMap = createAttributeMap(resultSet, activeRules.getFieldSet());
-//                final Long streamId = (Long) attributeMap.get(StreamDataSource.STREAM_ID);
+//                final Long streamId = (Long) attributeMap.get(StreamDataSource.ID);
 //                final Long createMs = (Long) attributeMap.get(StreamDataSource.CREATE_TIME);
 //                try {
 //                    more = true;
@@ -127,13 +127,13 @@ public class DataRetentionStreamFinder {//implements AutoCloseable {
 //        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
 //                .addTerm(StreamDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(ageRange.getFromMs()))
 //                .addTerm(StreamDataSource.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(ageRange.getToMs()))
-//                .addTerm(StreamDataSource.STREAM_ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(streamIdRange.getFrom()))
-//                .addTerm(StreamDataSource.STREAM_ID, Condition.LESS_THAN_OR_EQUAL_TO, String.valueOf(streamIdRange.getTo()))
+//                .addTerm(StreamDataSource.ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(streamIdRange.getFrom()))
+//                .addTerm(StreamDataSource.ID, Condition.LESS_THAN_OR_EQUAL_TO, String.valueOf(streamIdRange.getTo()))
 //                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
 //                .build();
 //
 //        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria(expression);
-//        findStreamCriteria.setSort(StreamDataSource.STREAM_ID);
+//        findStreamCriteria.setSort(StreamDataSource.ID);
 //        findStreamCriteria.obtainPageRequest().setLength(limit);
 //
 //        return streamMetaService.find(findStreamCriteria);

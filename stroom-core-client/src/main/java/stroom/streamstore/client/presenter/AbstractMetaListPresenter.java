@@ -38,7 +38,7 @@ import stroom.entity.shared.ResultList;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
-import stroom.streamstore.shared.FetchFullStreamInfoAction;
+import stroom.streamstore.shared.FetchFullMetaInfoAction;
 import stroom.meta.shared.MetaRow;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
@@ -56,7 +56,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-public abstract class AbstractStreamListPresenter extends MyPresenterWidget<DataGridView<MetaRow>> implements HasDataSelectionHandlers<IdSet>, Refreshable {
+public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGridView<MetaRow>> implements HasDataSelectionHandlers<IdSet>, Refreshable {
     private final TooltipPresenter tooltipPresenter;
 
     private final IdSet entityIdSet = new IdSet();
@@ -64,10 +64,10 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     protected FindStreamActionDataProvider dataProvider;
     private ResultList<MetaRow> resultList = null;
 
-    AbstractStreamListPresenter(final EventBus eventBus,
-                                final ClientDispatchAsync dispatcher,
-                                final TooltipPresenter tooltipPresenter,
-                                final boolean allowSelectAll) {
+    AbstractMetaListPresenter(final EventBus eventBus,
+                              final ClientDispatchAsync dispatcher,
+                              final TooltipPresenter tooltipPresenter,
+                              final boolean allowSelectAll) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.tooltipPresenter = tooltipPresenter;
         this.dispatcher = dispatcher;
@@ -109,10 +109,10 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 equalsList = false;
             } else {
                 for (int i = 0; i < oldList.size(); i++) {
-                    final Meta oldStream = oldList.get(i).getMeta();
-                    final Meta newStream = newList.get(i).getMeta();
+                    final Meta oldMeta = oldList.get(i).getMeta();
+                    final Meta newMeta = newList.get(i).getMeta();
 
-                    if (!oldStream.equals(newStream)) {
+                    if (!oldMeta.equals(newMeta)) {
                         equalsList = false;
                         break;
                     }
@@ -151,7 +151,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 }
             }
 
-            DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
+            DataSelectionEvent.fire(AbstractMetaListPresenter.this, entityIdSet, false);
         }
 
         MetaRow selected = getView().getSelectionModel().getSelected();
@@ -204,7 +204,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 }
                 dataProvider.getDataProvider()
                         .updateRowData(dataProvider.getDataProvider().getRanges()[0].getStart(), resultList);
-                DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
+                DataSelectionEvent.fire(AbstractMetaListPresenter.this, entityIdSet, false);
             });
 
         } else {
@@ -227,7 +227,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 entityIdSet.remove(row.getMeta().getId());
             }
             getView().redrawHeaders();
-            DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
+            DataSelectionEvent.fire(AbstractMetaListPresenter.this, entityIdSet, false);
         });
     }
 
@@ -253,7 +253,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
             @Override
             protected void showInfo(final MetaRow row, final int x, final int y) {
-                final FetchFullStreamInfoAction action = new FetchFullStreamInfoAction(row.getMeta());
+                final FetchFullMetaInfoAction action = new FetchFullMetaInfoAction(row.getMeta());
                 dispatcher.exec(action).onSuccess(result -> {
                     final StringBuilder html = new StringBuilder();
 
@@ -264,7 +264,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
                     tooltipPresenter.setHTML(html.toString());
                     final PopupPosition popupPosition = new PopupPosition(x, y);
-                    ShowPopupEvent.fire(AbstractStreamListPresenter.this, tooltipPresenter, PopupType.POPUP,
+                    ShowPopupEvent.fire(AbstractMetaListPresenter.this, tooltipPresenter, PopupType.POPUP,
                             popupPosition, null);
                 });
             }
@@ -279,7 +279,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 //        TooltipUtil.addRowData(html, "Status", row.getMeta().getStatus());
 //        StreamTooltipPresenterUtil.addRowDateString(html, "Status Ms", row.getMeta().getStatusMs());
 //        TooltipUtil.addRowData(html, "Stream Task Id", row.getMeta().getProcessTaskId());
-//        TooltipUtil.addRowData(html, "Parent Stream Id", row.getMeta().getParentDataId());
+//        TooltipUtil.addRowData(html, "Parent Stream Id", row.getMeta().getParentMetaId());
 //        StreamTooltipPresenterUtil.addRowDateString(html, "Created", row.getMeta().getCreateMs());
 //        StreamTooltipPresenterUtil.addRowDateString(html, "Effective", row.getMeta().getEffectiveMs());
 //        TooltipUtil.addRowData(html, "Stream Type", row.getMeta().getTypeName());

@@ -4,13 +4,13 @@ import stroom.docref.SharedObject;
 
 import java.util.List;
 
-public class FullStreamInfoResult implements SharedObject {
+public class FullMetaInfoResult implements SharedObject {
     private List<Section> sections;
 
-    public FullStreamInfoResult() {
+    public FullMetaInfoResult() {
     }
 
-    public FullStreamInfoResult(final List<Section> sections) {
+    public FullMetaInfoResult(final List<Section> sections) {
         this.sections = sections;
     }
 

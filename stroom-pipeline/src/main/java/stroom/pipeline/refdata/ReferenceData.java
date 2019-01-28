@@ -26,7 +26,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.MultiRefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataStore;
@@ -63,7 +63,7 @@ public class ReferenceData {
 
     private EffectiveStreamCache effectiveStreamCache;
     private final FeedHolder feedHolder;
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final ContextDataLoader contextDataLoader;
     private final DocumentPermissionCache documentPermissionCache;
     private final Map<PipelineReference, Boolean> localDocumentPermissionCache = new HashMap<>();
@@ -77,7 +77,7 @@ public class ReferenceData {
     @Inject
     ReferenceData(final EffectiveStreamCache effectiveStreamCache,
                   final FeedHolder feedHolder,
-                  final StreamHolder streamHolder,
+                  final MetaHolder metaHolder,
                   final ContextDataLoader contextDataLoader,
                   final DocumentPermissionCache documentPermissionCache,
                   final ReferenceDataLoader referenceDataLoader,
@@ -87,7 +87,7 @@ public class ReferenceData {
                   final Security security) {
         this.effectiveStreamCache = effectiveStreamCache;
         this.feedHolder = feedHolder;
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.contextDataLoader = contextDataLoader;
         this.documentPermissionCache = documentPermissionCache;
         this.referenceDataLoader = referenceDataLoader;
@@ -220,17 +220,17 @@ public class ReferenceData {
                 keyName));
         try {
             // Get nested stream.
-            final long streamNo = streamHolder.getStreamNo();
+            final long streamNo = metaHolder.getStreamNo();
 
             LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("StreamId {}, parentStreamId {}",
-                    streamHolder.getStream().getId(),
-                    streamHolder.getStream().getParentDataId()));
+                    metaHolder.getMeta().getId(),
+                    metaHolder.getMeta().getParentMetaId()));
 
             // the parent stream appears to be null at this point so just use the stream id
             final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                     pipelineReference.getPipeline(),
                     getPipelineVersion(pipelineReference),
-                    streamHolder.getStream().getId(),
+                    metaHolder.getMeta().getId(),
                     streamNo);
 
             // Establish if we have the data for the context stream in the store
@@ -239,13 +239,13 @@ public class ReferenceData {
 
             if (!isEffectiveStreamDataLoaded) {
                 // data is not in the store so load it
-                final StreamSourceInputStreamProvider provider = streamHolder.getProvider(pipelineReference.getStreamType());
+                final StreamSourceInputStreamProvider provider = metaHolder.getProvider(pipelineReference.getStreamType());
                 // There may not be a provider for this stream type if we do not
                 // have any context data stream.
                 if (provider != null) {
                     final StreamSourceInputStream inputStream = provider.getStream(streamNo);
                     loadContextData(
-                            streamHolder.getStream(),
+                            metaHolder.getMeta(),
                             inputStream,
                             pipelineReference.getPipeline(),
                             refStreamDefinition,

@@ -63,7 +63,7 @@ class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
             LOGGER.info("now: %s", DateUtil.createNormalDateTimeString(now));
             LOGGER.info("timeOutsideRetentionPeriod: %s", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
 
-            final Meta streamInsideRetention = metaService.create(
+            final Meta metaInsideRetention = metaService.create(
                     new MetaProperties.Builder()
                             .feedName(feedName)
                             .typeName(StreamTypeNames.RAW_EVENTS)
@@ -72,7 +72,7 @@ class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
                             .build());
 
 
-            final Meta streamOutsideRetention = metaService.create(
+            final Meta metaOutsideRetention = metaService.create(
                     new MetaProperties.Builder()
                             .feedName(feedName)
                             .typeName(StreamTypeNames.RAW_EVENTS)
@@ -81,8 +81,8 @@ class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
                             .build());
 
             // Streams are locked initially so unlock.
-            metaService.updateStatus(streamInsideRetention, Status.UNLOCKED);
-            metaService.updateStatus(streamOutsideRetention, Status.UNLOCKED);
+            metaService.updateStatus(metaInsideRetention, Status.UNLOCKED);
+            metaService.updateStatus(metaOutsideRetention, Status.UNLOCKED);
 
             dumpStreams();
 
@@ -91,21 +91,21 @@ class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
 
             // TODO : @66 Re-implement finding streams for data retention
 //            try (final DataRetentionStreamFinder finder = new DataRetentionStreamFinder(connection, dictionaryStore)) {
-//                final long count = finder.getRowCount(ageRange, Collections.singleton(StreamDataSource.STREAM_ID));
+//                final long count = finder.getRowCount(ageRange, Collections.singleton(StreamDataSource.ID));
 //                assertThat(count).isEqualTo(1);
 //            }
         }
     }
 
     private void dumpStreams() {
-        final BaseResultList<Meta> streams = metaService.find(new FindMetaCriteria());
+        final BaseResultList<Meta> list = metaService.find(new FindMetaCriteria());
 
-        assertThat(streams.size()).isEqualTo(2);
+        assertThat(list.size()).isEqualTo(2);
 
-        for (final Meta stream : streams) {
-            LOGGER.info("stream: %s, createMs: %s, statusMs: %s, status: %s", stream,
-                    DateUtil.createNormalDateTimeString(stream.getCreateMs()),
-                    DateUtil.createNormalDateTimeString(stream.getStatusMs()), stream.getStatus());
+        for (final Meta meta : list) {
+            LOGGER.info("meta: %s, createMs: %s, statusMs: %s, status: %s", meta,
+                    DateUtil.createNormalDateTimeString(meta.getCreateMs()),
+                    DateUtil.createNormalDateTimeString(meta.getStatusMs()), meta.getStatus());
         }
     }
 }

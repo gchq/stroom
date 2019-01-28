@@ -211,7 +211,7 @@ public class StreamEventLog {
             }
 
             for (long id : findMetaCriteria.getSelectedIdSet()) {
-                idSetOp.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(MetaFieldNames.STREAM_ID, TermCondition.EQUALS, String.valueOf(id)));
+                idSetOp.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(MetaFieldNames.ID, TermCondition.EQUALS, String.valueOf(id)));
             }
 
             appendOperator(and.getAdvancedQueryItems(), findMetaCriteria.getExpression());

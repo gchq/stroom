@@ -72,17 +72,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamView>
+public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<SharedObject>, BeginSteppingHandler {
     public static final String DATA = "DATA";
     public static final String STREAM_RELATION_LIST = "STREAM_RELATION_LIST";
     public static final String STREAM_LIST = "STREAM_LIST";
 
     private final LocationManager locationManager;
-    private final StreamListPresenter streamListPresenter;
-    private final StreamRelationListPresenter streamRelationListPresenter;
+    private final MetaListPresenter streamListPresenter;
+    private final MetaRelationListPresenter streamRelationListPresenter;
     private final DataPresenter dataPresenter;
-    private final Provider<StreamUploadPresenter> streamUploadPresenter;
+    private final Provider<DataUploadPresenter> streamUploadPresenter;
     private final Provider<ExpressionPresenter> streamListFilterPresenter;
     private final ClientDispatchAsync dispatcher;
     private final ButtonView streamListFilter;
@@ -102,12 +102,12 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private boolean hasSetCriteria;
 
     @Inject
-    public StreamPresenter(final EventBus eventBus, final StreamView view, final LocationManager locationManager,
-                           final StreamListPresenter streamListPresenter,
-                           final StreamRelationListPresenter streamRelationListPresenter, final DataPresenter dataPresenter,
-                           final Provider<ExpressionPresenter> streamListFilterPresenter,
-                           final Provider<StreamUploadPresenter> streamUploadPresenter,
-                           final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
+    public MetaPresenter(final EventBus eventBus, final StreamView view, final LocationManager locationManager,
+                         final MetaListPresenter streamListPresenter,
+                         final MetaRelationListPresenter streamRelationListPresenter, final DataPresenter dataPresenter,
+                         final Provider<ExpressionPresenter> streamListFilterPresenter,
+                         final Provider<DataUploadPresenter> streamUploadPresenter,
+                         final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.locationManager = locationManager;
         this.streamListPresenter = streamListPresenter;
@@ -166,7 +166,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         return findMetaCriteria;
     }
 
-    private static Meta getStream(final AbstractStreamListPresenter streamListPresenter, final long id) {
+    private static Meta getMeta(final AbstractMetaListPresenter streamListPresenter, final long id) {
         final ResultList<MetaRow> list = streamListPresenter.getResultList();
         if (list != null) {
             if (list.getValues() != null) {
@@ -181,7 +181,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     public static boolean isSelectedAllOfStatus(final Status filterStatus,
-                                                final AbstractStreamListPresenter streamListPresenter, final IdSet selectedIdSet,
+                                                final AbstractMetaListPresenter streamListPresenter, final IdSet selectedIdSet,
                                                 final Status... statusArray) {
         final List<Status> statusList = Arrays.asList(statusArray);
         // Nothing Selected
@@ -197,8 +197,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
 
         for (final Long id : selectedIdSet.getSet()) {
-            final Meta stream = getStream(streamListPresenter, id);
-            if (stream == null || !statusList.contains(stream.getStatus())) {
+            final Meta meta = getMeta(streamListPresenter, id);
+            if (meta == null || !statusList.contains(meta.getStatus())) {
                 return false;
             }
         }
@@ -233,13 +233,13 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
                         if (!expression.equals(findMetaCriteria.obtainExpression())) {
                             if (hasAdvancedCriteria(expression)) {
-                                ConfirmEvent.fire(StreamPresenter.this,
+                                ConfirmEvent.fire(MetaPresenter.this,
                                         "You are setting advanced filters!  It is recommendend you constrain your filter (e.g. by 'Created') to avoid an expensive query.  "
                                                 + "Are you sure you want to apply this advanced filter?",
                                         confirm -> {
                                             if (confirm) {
                                                 applyCriteriaAndShow(presenter);
-                                                HidePopupEvent.fire(StreamPresenter.this, presenter);
+                                                HidePopupEvent.fire(MetaPresenter.this, presenter);
                                             } else {
                                                 // Don't hide
                                             }
@@ -247,16 +247,16 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
                             } else {
                                 applyCriteriaAndShow(presenter);
-                                HidePopupEvent.fire(StreamPresenter.this, presenter);
+                                HidePopupEvent.fire(MetaPresenter.this, presenter);
                             }
 
                         } else {
                             // Nothing changed!
-                            HidePopupEvent.fire(StreamPresenter.this, presenter);
+                            HidePopupEvent.fire(MetaPresenter.this, presenter);
                         }
 
                     } else {
-                        HidePopupEvent.fire(StreamPresenter.this, presenter);
+                        HidePopupEvent.fire(MetaPresenter.this, presenter);
                     }
                 }
 
@@ -277,13 +277,13 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             };
 
             final PopupSize popupSize = new PopupSize(800, 600, 400, 400, true);
-            ShowPopupEvent.fire(StreamPresenter.this, presenter, PopupType.OK_CANCEL_DIALOG, popupSize,
+            ShowPopupEvent.fire(MetaPresenter.this, presenter, PopupType.OK_CANCEL_DIALOG, popupSize,
                     "Filter Streams", streamFilterPUH);
         }));
 
         // Some button's may not exist due to permissions
         if (streamListUpload != null) {
-            registerHandler(streamListUpload.addClickHandler(event -> streamUploadPresenter.get().show(StreamPresenter.this, feedName)));
+            registerHandler(streamListUpload.addClickHandler(event -> streamUploadPresenter.get().show(MetaPresenter.this, feedName)));
         }
         if (streamListDownload != null) {
             registerHandler(streamListDownload
@@ -388,11 +388,11 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
 
     private void showData() {
-        final Meta stream = getSelectedStream();
-        if (stream == null) {
+        final Meta meta = getSelected();
+        if (meta == null) {
             dataPresenter.clear();
         } else {
-            dataPresenter.fetchData(stream);
+            dataPresenter.fetchData(meta);
         }
     }
 
@@ -474,7 +474,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         streamRelationListPresenter.setCriteria(null);
     }
 
-    private Meta getSelectedStream() {
+    private Meta getSelected() {
         MetaRow selected = streamListPresenter.getSelected();
         if (streamRelationListPresenter.getSelected() != null) {
             selected = streamRelationListPresenter.getSelected();
@@ -505,7 +505,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private void showStreamRelationListButtons(final boolean visible) {
     }
 
-    public boolean isSomeSelected(final AbstractStreamListPresenter streamListPresenter,
+    public boolean isSomeSelected(final AbstractMetaListPresenter streamListPresenter,
                                   final IdSet selectedIdSet) {
         if (streamListPresenter.getResultList() == null || streamListPresenter.getResultList().size() == 0) {
             return false;
@@ -585,12 +585,12 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             Long childStreamId = null;
             final MetaRow map = streamListPresenter.getSelected();
             if (map != null && map.getMeta() != null) {
-                final Meta childStream = map.getMeta();
+                final Meta childMeta = map.getMeta();
                 // If the top list has a raw stream selected or isn't a child of
                 // the selected stream then this is't the child stream we are
                 // looking for.
-                if (childStream.getParentDataId() != null && childStream.getParentDataId().equals(streamId)) {
-                    childStreamId = childStream.getId();
+                if (childMeta.getParentMetaId() != null && childMeta.getParentMetaId().equals(streamId)) {
+                    childStreamId = childMeta.getId();
                 }
             }
 
@@ -606,13 +606,13 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     private static abstract class AbstractStreamClickHandler implements ClickHandler, HasHandlers {
-        private final StreamPresenter streamPresenter;
-        private final AbstractStreamListPresenter streamListPresenter;
+        private final MetaPresenter streamPresenter;
+        private final AbstractMetaListPresenter streamListPresenter;
         private final boolean useCriteria;
         private final ClientDispatchAsync dispatcher;
 
-        AbstractStreamClickHandler(final StreamPresenter streamPresenter,
-                                   final AbstractStreamListPresenter streamListPresenter, final boolean useCriteria,
+        AbstractStreamClickHandler(final MetaPresenter streamPresenter,
+                                   final AbstractMetaListPresenter streamListPresenter, final boolean useCriteria,
                                    final ClientDispatchAsync dispatcher) {
             this.streamPresenter = streamPresenter;
             this.streamListPresenter = streamListPresenter;
@@ -620,7 +620,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             this.dispatcher = dispatcher;
         }
 
-        AbstractStreamListPresenter getStreamListPresenter() {
+        AbstractMetaListPresenter getStreamListPresenter() {
             return streamListPresenter;
         }
 
@@ -684,8 +684,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private static class DownloadStreamClickHandler extends AbstractStreamClickHandler {
         private final LocationManager locationManager;
 
-        public DownloadStreamClickHandler(final StreamPresenter streamPresenter,
-                                          final AbstractStreamListPresenter streamListPresenter, final boolean useCriteria,
+        public DownloadStreamClickHandler(final MetaPresenter streamPresenter,
+                                          final AbstractMetaListPresenter streamListPresenter, final boolean useCriteria,
                                           final ClientDispatchAsync dispatcher, final LocationManager locationManager) {
             super(streamPresenter, streamListPresenter, useCriteria, dispatcher);
             this.locationManager = locationManager;
@@ -700,8 +700,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private static class UpdateStatusClickHandler extends AbstractStreamClickHandler {
         private final Status newStatus;
 
-        public UpdateStatusClickHandler(final StreamPresenter streamPresenter,
-                                        final AbstractStreamListPresenter streamListPresenter,
+        public UpdateStatusClickHandler(final MetaPresenter streamPresenter,
+                                        final AbstractMetaListPresenter streamListPresenter,
                                         final boolean useCriteria,
                                         final ClientDispatchAsync dispatcher,
                                         final Status newStatus) {
@@ -767,8 +767,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     private static class ProcessStreamClickHandler extends AbstractStreamClickHandler {
-        ProcessStreamClickHandler(final StreamPresenter streamPresenter,
-                                  final AbstractStreamListPresenter streamListPresenter, final boolean useCriteria,
+        ProcessStreamClickHandler(final MetaPresenter streamPresenter,
+                                  final AbstractMetaListPresenter streamListPresenter, final boolean useCriteria,
                                   final ClientDispatchAsync dispatcher) {
             super(streamPresenter, streamListPresenter, useCriteria, dispatcher);
         }

@@ -19,7 +19,7 @@ package stroom.streamstore.client.presenter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StreamTypeUiManager {
+public class DataTypeUiManager {
 //    private List<StreamTypeEntity> streamTypeList = new ArrayList<>();
 //
 //    @Inject

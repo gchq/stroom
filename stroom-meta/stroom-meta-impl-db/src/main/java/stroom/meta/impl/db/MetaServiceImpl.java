@@ -98,14 +98,14 @@ class MetaServiceImpl implements MetaService {
 
         // Standard fields.
         final Map<String, TermHandler<?>> termHandlers = new HashMap<>();
-        termHandlers.put(MetaFieldNames.STREAM_ID, new TermHandler<>(meta.ID, Long::valueOf));
+        termHandlers.put(MetaFieldNames.ID, new TermHandler<>(meta.ID, Long::valueOf));
         termHandlers.put(MetaFieldNames.FEED_NAME, new TermHandler<>(meta.FEED_ID, feedService::getOrCreate));
         termHandlers.put(MetaFieldNames.FEED_ID, new TermHandler<>(meta.FEED_ID, Integer::valueOf));
-        termHandlers.put(MetaFieldNames.STREAM_TYPE_NAME, new TermHandler<>(meta.TYPE_ID, dataTypeService::getOrCreate));
+        termHandlers.put(MetaFieldNames.TYPE_NAME, new TermHandler<>(meta.TYPE_ID, dataTypeService::getOrCreate));
         termHandlers.put(MetaFieldNames.PIPELINE_UUID, new TermHandler<>(dataProcessor.PIPELINE_UUID, value -> value));
-        termHandlers.put(MetaFieldNames.PARENT_STREAM_ID, new TermHandler<>(meta.PARENT_ID, Long::valueOf));
-        termHandlers.put(MetaFieldNames.STREAM_TASK_ID, new TermHandler<>(meta.TASK_ID, Long::valueOf));
-        termHandlers.put(MetaFieldNames.STREAM_PROCESSOR_ID, new TermHandler<>(meta.PROCESSOR_ID, Integer::valueOf));
+        termHandlers.put(MetaFieldNames.PARENT_ID, new TermHandler<>(meta.PARENT_ID, Long::valueOf));
+        termHandlers.put(MetaFieldNames.TASK_ID, new TermHandler<>(meta.TASK_ID, Long::valueOf));
+        termHandlers.put(MetaFieldNames.PROCESSOR_ID, new TermHandler<>(meta.PROCESSOR_ID, Integer::valueOf));
         termHandlers.put(MetaFieldNames.STATUS, new TermHandler<>(meta.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase()))));
         termHandlers.put(MetaFieldNames.STATUS_TIME, new TermHandler<>(meta.STATUS_TIME, DateUtil::parseNormalDateTimeString));
         termHandlers.put(MetaFieldNames.CREATE_TIME, new TermHandler<>(meta.CREATE_TIME, DateUtil::parseNormalDateTimeString));
@@ -428,7 +428,7 @@ class MetaServiceImpl implements MetaService {
         if (optionalId.isPresent()) {
             // Get the data that occurs just before or ast the start of the period.
             final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(MetaFieldNames.STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(optionalId.get()))
+                    .addTerm(MetaFieldNames.ID, ExpressionTerm.Condition.EQUALS, String.valueOf(optionalId.get()))
                     .build();
             // There is no need to apply security here are is has been applied when finding the data id above.
             final Condition condition = expressionMapper.apply(expression);
@@ -440,7 +440,7 @@ class MetaServiceImpl implements MetaService {
                 .addTerm(MetaFieldNames.EFFECTIVE_TIME, ExpressionTerm.Condition.GREATER_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
                 .addTerm(MetaFieldNames.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getToMs()))
                 .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
-                .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
+                .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
                 .addTerm(MetaFieldNames.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
 
@@ -455,7 +455,7 @@ class MetaServiceImpl implements MetaService {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(MetaFieldNames.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
                 .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
-                .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
+                .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
                 .addTerm(MetaFieldNames.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
 
@@ -587,8 +587,8 @@ class MetaServiceImpl implements MetaService {
     }
 
     private void addParents(final Meta child, final boolean anyStatus, final List<Meta> result) {
-        if (child.getParentDataId() != null) {
-            final BaseResultList<Meta> parents = find(new FindMetaCriteria(getIdExpression(child.getParentDataId(), anyStatus)));
+        if (child.getParentMetaId() != null) {
+            final BaseResultList<Meta> parents = find(new FindMetaCriteria(getIdExpression(child.getParentMetaId(), anyStatus)));
             if (parents != null && parents.size() > 0) {
                 parents.forEach(parent -> {
                     result.add(parent);
@@ -598,7 +598,7 @@ class MetaServiceImpl implements MetaService {
                 // Add a dummy parent data as we don't seem to be able to get the real parent.
                 // This might be because it is deleted or the user does not have access permissions.
                 final Meta meta = new MetaImpl.Builder()
-                        .id(child.getParentDataId())
+                        .id(child.getParentMetaId())
                         .build();
                 result.add(meta);
             }
@@ -623,12 +623,12 @@ class MetaServiceImpl implements MetaService {
     private ExpressionOperator getIdExpression(final long id, final boolean anyStatus) {
         if (anyStatus) {
             return new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(MetaFieldNames.STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
+                    .addTerm(MetaFieldNames.ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
                     .build();
         }
 
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFieldNames.STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
+                .addTerm(MetaFieldNames.ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
                 .addTerm(MetaFieldNames.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
@@ -636,12 +636,12 @@ class MetaServiceImpl implements MetaService {
     private ExpressionOperator getParentIdExpression(final long id, final boolean anyStatus) {
         if (anyStatus) {
             return new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(MetaFieldNames.PARENT_STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
+                    .addTerm(MetaFieldNames.PARENT_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
                     .build();
         }
 
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFieldNames.PARENT_STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
+                .addTerm(MetaFieldNames.PARENT_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
                 .addTerm(MetaFieldNames.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }

@@ -19,27 +19,27 @@ package stroom.pipeline.shared.stepping;
 import stroom.task.shared.Action;
 import stroom.explorer.shared.SharedDocRef;
 
-public class GetPipelineForStreamAction extends Action<SharedDocRef> {
+public class GetPipelineForMetaAction extends Action<SharedDocRef> {
     private static final long serialVersionUID = -1773544031158236156L;
 
-    private Long streamId;
-    private Long childStreamId;
+    private Long metaId;
+    private Long childMetaId;
 
-    public GetPipelineForStreamAction() {
+    public GetPipelineForMetaAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public GetPipelineForStreamAction(final Long streamId, final Long childStreamId) {
-        this.streamId = streamId;
-        this.childStreamId = childStreamId;
+    public GetPipelineForMetaAction(final Long metaId, final Long childMetaId) {
+        this.metaId = metaId;
+        this.childMetaId = childMetaId;
     }
 
-    public Long getStreamId() {
-        return streamId;
+    public Long getMetaId() {
+        return metaId;
     }
 
-    public Long getChildStreamId() {
-        return childStreamId;
+    public Long getChildMetaId() {
+        return childMetaId;
     }
 
     @Override

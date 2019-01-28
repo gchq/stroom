@@ -82,11 +82,11 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
         }
     }
 
-    public void read(final DocRef pipeline, final Meta stream, final long eventId,
+    public void read(final DocRef pipeline, final Meta meta, final long eventId,
                      final String childStreamType) {
         reading = true;
         this.pipeline = pipeline;
-        steppingPresenter.read(pipeline, stream, eventId, childStreamType);
+        steppingPresenter.read(pipeline, meta, eventId, childStreamType);
         reading = false;
     }
 

@@ -103,13 +103,13 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
             final String fileBasePath = FileUtil.getCanonicalPath(data).substring(0, FileUtil.getCanonicalPath(data).lastIndexOf(".zip"));
 
             final LogItemProgress logItemProgress = new LogItemProgress(0, list.size());
-            taskContext.info("Stream {}", logItemProgress);
+            taskContext.info("Data {}", logItemProgress);
 
-            for (final Meta stream : list) {
+            for (final Meta meta : list) {
                 result.incrementRecordsWritten();
                 logItemProgress.incrementProgress();
 
-                id = downloadStream(taskContext, stream.getId(), stroomZipOutputStream, id,
+                id = downloadStream(taskContext, meta.getId(), stroomZipOutputStream, id,
                         settings.getMaxFileParts());
 
                 boolean startNewFile = false;

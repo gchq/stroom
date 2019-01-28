@@ -109,8 +109,8 @@ class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
                                 .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())
                         .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                                .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                                .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                                .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                                 .build())
                         .build())
                 .build();
@@ -180,12 +180,12 @@ class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
                 "            <op>OR</op>\n" +
                 "            <children>\n" +
                 "               <term>\n" +
-                "                  <field>" + MetaFieldNames.STREAM_TYPE_NAME + "</field>\n" +
+                "                  <field>" + MetaFieldNames.TYPE_NAME + "</field>\n" +
                 "                  <condition>EQUALS</condition>\n" +
                 "                  <value>Raw Events</value>\n" +
                 "               </term>\n" +
                 "               <term>\n" +
-                "                  <field>" + MetaFieldNames.STREAM_TYPE_NAME + "</field>\n" +
+                "                  <field>" + MetaFieldNames.TYPE_NAME + "</field>\n" +
                 "                  <condition>EQUALS</condition>\n" +
                 "                  <value>Raw Reference</value>\n" +
                 "               </term>\n" +

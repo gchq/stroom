@@ -49,14 +49,14 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import java.util.ArrayList;
 
-public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<ProcessorFilterTask>> implements HasDocumentRead<SharedObject> {
+public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<ProcessorFilterTask>> implements HasDocumentRead<SharedObject> {
     private final EntityServiceFindActionDataProvider<FindStreamTaskCriteria, ProcessorFilterTask> dataProvider;
 
     private FindStreamTaskCriteria criteria;
 
     @Inject
-    public StreamTaskListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-                                   final TooltipPresenter tooltipPresenter) {
+    public ProcessorTaskListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
+                                      final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(false));
 
         // Info column.
@@ -83,7 +83,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Proc
 //                TooltipUtil.addHeading(html, "Stream");
 //                TooltipUtil.addRowData(html, "Stream Id", row.getMeta().getId());
 //                TooltipUtil.addRowData(html, "Status", row.getMeta().getStatus().getDisplayValue());
-//                TooltipUtil.addRowData(html, "Parent Stream Id", row.getMeta().getParentDataId());
+//                TooltipUtil.addRowData(html, "Parent Stream Id", row.getMeta().getParentMetaId());
 //                TooltipUtil.addRowData(html, "Created", toDateString(row.getMeta().getCreateMs()));
 //                TooltipUtil.addRowData(html, "Effective", toDateString(row.getMeta().getEffectiveMs()));
 //                TooltipUtil.addRowData(html, "Stream Type", row.getMeta().getTypeName());
@@ -109,7 +109,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Proc
                 tooltipPresenter.setHTML(html.toString());
 
                 final PopupPosition popupPosition = new PopupPosition(x, y);
-                ShowPopupEvent.fire(StreamTaskListPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition,
+                ShowPopupEvent.fire(ProcessorTaskListPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition,
                         null);
             }
         }, "<br/>", ColumnSizeConstants.ICON_COL);

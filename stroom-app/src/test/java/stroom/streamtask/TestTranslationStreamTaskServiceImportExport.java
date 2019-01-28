@@ -64,7 +64,7 @@ class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIntegrati
     //
     // FindTranslationStreamTaskCriteria criteria =
     // FindTranslationStreamTaskCriteria
-    // .createWithData(raw);
+    // .createFromMeta(raw);
     //
     // TranslationStreamTask translationStreamTask =
     // translationStreamTaskService

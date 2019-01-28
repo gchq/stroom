@@ -96,9 +96,9 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
      */
     private Long createMs = null;
 
-    public static FindStreamTaskCriteria createWithStream(final Meta stream) {
+    public static FindStreamTaskCriteria createWithStream(final Meta meta) {
         final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
-        criteria.obtainStreamIdSet().add(stream.getId());
+        criteria.obtainStreamIdSet().add(meta.getId());
         return criteria;
     }
 

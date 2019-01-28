@@ -26,27 +26,27 @@ import stroom.entity.shared.IdSet;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
 
-public class ClassificationWrappedStreamPresenter extends ClassificationWrapperPresenter
+public class ClassificationWrappedMetaPresenter extends ClassificationWrapperPresenter
         implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<SharedObject> {
-    private final StreamPresenter streamPresenter;
+    private final MetaPresenter metaPresenter;
 
     @Inject
-    public ClassificationWrappedStreamPresenter(final EventBus eventBus, final ClassificationWrapperView view,
-                                                final StreamPresenter streamPresenter) {
+    public ClassificationWrappedMetaPresenter(final EventBus eventBus, final ClassificationWrapperView view,
+                                              final MetaPresenter metaPresenter) {
         super(eventBus, view);
-        this.streamPresenter = streamPresenter;
-        streamPresenter.setClassificationUiHandlers(this);
+        this.metaPresenter = metaPresenter;
+        metaPresenter.setClassificationUiHandlers(this);
 
-        setInSlot(ClassificationWrapperView.CONTENT, streamPresenter);
+        setInSlot(ClassificationWrapperView.CONTENT, metaPresenter);
     }
 
     @Override
     public void read(final DocRef docRef, final SharedObject entity) {
-        streamPresenter.read(docRef, entity);
+        metaPresenter.read(docRef, entity);
     }
 
     @Override
     public HandlerRegistration addDataSelectionHandler(DataSelectionHandler<IdSet> handler) {
-        return streamPresenter.addDataSelectionHandler(handler);
+        return metaPresenter.addDataSelectionHandler(handler);
     }
 }

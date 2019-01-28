@@ -223,8 +223,8 @@ public final class SetupSampleDataBean {
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                                 .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed.getName())
                                 .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                        .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                                        .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                                        .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                                        .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                                         .build())
                                 .build())
                         .build();
@@ -256,7 +256,7 @@ public final class SetupSampleDataBean {
 
             final ExpressionOperator.Builder expressionBuilder = new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                     .addTerm(
-                            MetaFieldNames.STREAM_TYPE_NAME,
+                            MetaFieldNames.TYPE_NAME,
                             ExpressionTerm.Condition.EQUALS,
                             sourceStreamType);
 

@@ -169,7 +169,7 @@ public final class StoreCreationTool {
         streamStore.closeStreamTarget(target);
 
         try {
-            final StreamSource checkSource = streamStore.openStreamSource(target.getStream().getId());
+            final StreamSource checkSource = streamStore.openStreamSource(target.getMeta().getId());
             assertThat(StreamUtil.streamToString(checkSource.getInputStream())).isEqualTo(data);
             streamStore.closeStreamSource(checkSource);
         } catch (final IOException e) {
@@ -215,7 +215,7 @@ public final class StoreCreationTool {
                     .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                             .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                            .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                            .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                             .build())
                     .build();
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 2, findStreamQueryData);
@@ -324,7 +324,7 @@ public final class StoreCreationTool {
 
         // Check that the data was written ok.
         final String data = StreamUtil.fileToString(dataLocation);
-        final StreamSource checkSource = streamStore.openStreamSource(dataTarget.getStream().getId());
+        final StreamSource checkSource = streamStore.openStreamSource(dataTarget.getMeta().getId());
         assertThat(StreamUtil.streamToString(checkSource.getInputStream())).isEqualTo(data);
         streamStore.closeStreamSource(checkSource);
     }
@@ -381,7 +381,7 @@ public final class StoreCreationTool {
                     .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                             .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, docRef.getName())
-                            .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                            .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                             .build())
                     .build();
 
@@ -618,7 +618,7 @@ public final class StoreCreationTool {
             final QueryData findStreamQueryData = new QueryData.Builder()
                     .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                            .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                             .build())
                     .build();
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);

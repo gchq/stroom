@@ -29,11 +29,11 @@ import java.io.Closeable;
  */
 public interface StreamTarget extends Closeable {
     /**
-     * Get the stream associated with this target.
+     * Get the meta data associated with this target.
      *
-     * @return the stream associated with this target
+     * @return the meta data associated with this target
      */
-    Meta getStream();
+    Meta getMeta();
 
     /**
      * Any meta data attributes associated with the data.

@@ -25,16 +25,16 @@ class AttributeMapUtil {
 
         final Meta meta = row.getMeta();
         if (meta != null) {
-            attributeMap.put(MetaFieldNames.STREAM_ID, meta.getId());
+            attributeMap.put(MetaFieldNames.ID, meta.getId());
             attributeMap.put(MetaFieldNames.CREATE_TIME, meta.getCreateMs());
             attributeMap.put(MetaFieldNames.EFFECTIVE_TIME, meta.getEffectiveMs());
             attributeMap.put(MetaFieldNames.STATUS_TIME, meta.getStatusMs());
             attributeMap.put(MetaFieldNames.STATUS, meta.getStatus().getDisplayValue());
-            if (meta.getParentDataId() != null) {
-                attributeMap.put(MetaFieldNames.PARENT_STREAM_ID, meta.getParentDataId());
+            if (meta.getParentMetaId() != null) {
+                attributeMap.put(MetaFieldNames.PARENT_ID, meta.getParentMetaId());
             }
             if (meta.getTypeName() != null) {
-                attributeMap.put(MetaFieldNames.STREAM_TYPE_NAME, meta.getTypeName());
+                attributeMap.put(MetaFieldNames.TYPE_NAME, meta.getTypeName());
             }
             final String feedName = meta.getFeedName();
             if (feedName != null) {

@@ -802,8 +802,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
 
         // Just create regular stream processing tasks.
         final Map<Meta, InclusiveRanges> map = new HashMap<>();
-        for (final Meta stream : streamList) {
-            map.put(stream, null);
+        for (final Meta meta : streamList) {
+            map.put(meta, null);
         }
 
         final CreatedTasks createdTasks = streamTaskTransactionHelper.createNewTasks(
@@ -825,28 +825,28 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         final Map<Meta, InclusiveRanges> streamMap = new HashMap<>();
 
         if (eventRefs != null) {
-            long currentStreamId = -1;
-            Meta currentStream = null;
+            long currentMetaId = -1;
+            Meta currentMeta = null;
             InclusiveRanges ranges = null;
             boolean trimmed = false;
             for (final EventRef ref : eventRefs) {
                 if (!trimmed) {
                     // When the stream id changes add the current ranges to the
                     // map.
-                    if (currentStreamId != ref.getStreamId()) {
+                    if (currentMetaId != ref.getStreamId()) {
                         if (ranges != null) {
                             if (ranges.getRanges().size() > maxRangesPerStream) {
                                 ranges = ranges.subRanges(maxRangesPerStream);
                                 trimmed = true;
                             }
 
-                            if (currentStream != null) {
-                                streamMap.put(currentStream, ranges);
+                            if (currentMeta != null) {
+                                streamMap.put(currentMeta, ranges);
                             }
                         }
 
-                        currentStreamId = ref.getStreamId();
-                        currentStream = metaService.getMeta(currentStreamId);
+                        currentMetaId = ref.getStreamId();
+                        currentMeta = metaService.getMeta(currentMetaId);
                         ranges = new InclusiveRanges();
                     }
 
@@ -860,8 +860,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                     ranges = ranges.subRanges(maxRangesPerStream);
                 }
 
-                if (currentStream != null) {
-                    streamMap.put(currentStream, ranges);
+                if (currentMeta != null) {
+                    streamMap.put(currentMeta, ranges);
                 }
             }
         }
@@ -884,14 +884,14 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
 
         final ExpressionOperator streamIdExpression = new ExpressionOperator.Builder(Op.AND)
                 .addOperator(expression)
-                .addTerm(MetaFieldNames.STREAM_ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(minStreamId))
+                .addTerm(MetaFieldNames.ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(minStreamId))
                 .addOperator(statusExpression)
                 .build();
 
         // Copy the filter
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(streamIdExpression);
 //        findStreamCriteria.copyFrom(criteria);
-        findMetaCriteria.setSort(MetaFieldNames.STREAM_ID, Direction.ASCENDING, false);
+        findMetaCriteria.setSort(MetaFieldNames.ID, Direction.ASCENDING, false);
 //        findStreamCriteria.setStreamIdRange(new IdRange(minStreamId, null));
 //        // Don't care about status
 //        findStreamCriteria.obtainStatusSet().add(StreamStatus.LOCKED);

@@ -233,7 +233,7 @@ class StreamTaskCreatorTransactionHelper {
 
 
                     for (final Entry<Meta, InclusiveRanges> entry : streams.entrySet()) {
-                        final Meta stream = entry.getKey();
+                        final Meta meta = entry.getKey();
                         final InclusiveRanges eventRanges = entry.getValue();
 
                         String eventRangeData = null;
@@ -244,7 +244,7 @@ class StreamTaskCreatorTransactionHelper {
 
                         // Update the max event id if this stream id is greater than
                         // any we have seen before.
-                        if (streamIdRange == null || stream.getId() > streamIdRange.getMax()) {
+                        if (streamIdRange == null || meta.getId() > streamIdRange.getMax()) {
                             if (eventRanges != null) {
                                 eventIdRange = eventRanges.getOuterRange();
                             } else {
@@ -252,8 +252,8 @@ class StreamTaskCreatorTransactionHelper {
                             }
                         }
 
-                        streamIdRange = InclusiveRange.extend(streamIdRange, stream.getId());
-                        streamMsRange = InclusiveRange.extend(streamMsRange, stream.getCreateMs());
+                        streamIdRange = InclusiveRange.extend(streamIdRange, meta.getId());
+                        streamMsRange = InclusiveRange.extend(streamMsRange, meta.getCreateMs());
 
                         final List<Object> rowArgs = new ArrayList<>(columnNames.size());
 
@@ -262,7 +262,7 @@ class StreamTaskCreatorTransactionHelper {
                         rowArgs.add(TaskStatus.UNPROCESSED.getPrimitiveValue()); //stat
                         rowArgs.add(streamTaskCreateMs); //stat_ms
 
-                        if (Status.UNLOCKED.equals(stream.getStatus())) {
+                        if (Status.UNLOCKED.equals(meta.getStatus())) {
                             // If the stream is unlocked then take ownership of the
                             // task, i.e. set the node to this node.
                             rowArgs.add(node.getId()); //fk_node_id
@@ -272,7 +272,7 @@ class StreamTaskCreatorTransactionHelper {
                             // the task at this time, i.e. set the node to null.
                             rowArgs.add(null); //fk_node_id
                         }
-                        rowArgs.add(stream.getId()); //fk_strm_id
+                        rowArgs.add(meta.getId()); //fk_strm_id
                         if (eventRangeData != null && !eventRangeData.isEmpty()) {
                             rowArgs.add(eventRangeData); //dat
                         } else {

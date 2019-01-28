@@ -38,7 +38,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.RecordCount;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
@@ -58,7 +58,7 @@ public class StreamAppender extends AbstractAppender {
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private final StreamStore streamStore;
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final StreamProcessorHolder streamProcessorHolder;
     private final MetaData metaData;
     private final RecordCount recordCount;
@@ -77,7 +77,7 @@ public class StreamAppender extends AbstractAppender {
     @Inject
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
                           final StreamStore streamStore,
-                          final StreamHolder streamHolder,
+                          final MetaHolder metaHolder,
                           final StreamProcessorHolder streamProcessorHolder,
                           final MetaData metaData,
                           final RecordCount recordCount,
@@ -85,7 +85,7 @@ public class StreamAppender extends AbstractAppender {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
         this.streamStore = streamStore;
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.streamProcessorHolder = streamProcessorHolder;
         this.metaData = metaData;
         this.recordCount = recordCount;
@@ -94,10 +94,10 @@ public class StreamAppender extends AbstractAppender {
 
     @Override
     protected OutputStream createOutputStream() {
-        final Meta parentStream = streamHolder.getStream();
+        final Meta parentMeta = metaHolder.getMeta();
 
-        if (feed == null && parentStream != null && parentStream.getFeedName() != null) {
-            feed = parentStream.getFeedName();
+        if (feed == null && parentMeta != null && parentMeta.getFeedName() != null) {
+            feed = parentMeta.getFeedName();
         }
 
         if (streamType == null) {
@@ -121,7 +121,7 @@ public class StreamAppender extends AbstractAppender {
         final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feed)
                 .typeName(streamType)
-                .parent(parentStream)
+                .parent(parentMeta)
                 .processorId(processorId)
                 .pipelineUuid(pipelineUuid)
                 .processorTaskId(streamTaskId)

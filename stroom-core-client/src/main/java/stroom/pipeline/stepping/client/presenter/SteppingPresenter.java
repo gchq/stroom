@@ -84,7 +84,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private SteppingResult currentResult;
     private ButtonPanel leftButtons;
 
-    private Meta stream;
+    private Meta meta;
 
     @Inject
     public SteppingPresenter(final EventBus eventBus, final SteppingView view,
@@ -169,9 +169,9 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     if (property.getValue() != null) {
                         if (property.getValue().getEntity() != null) {
                             docRef = property.getValue().getEntity();
-                        } else if (property.getName().toLowerCase().contains("pattern") && stream != null) {
+                        } else if (property.getName().toLowerCase().contains("pattern") && meta != null) {
                             String value = property.getValue().getString();
-                            value = replace(value, "feed", stream.getFeedName());
+                            value = replace(value, "feed", meta.getFeedName());
                             value = replace(value, "pipeline", action.getPipeline().getName());
 
                             if (element.getElementType().getType().equalsIgnoreCase("XSLTFilter")) {
@@ -272,19 +272,19 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         }
     }
 
-    public void read(final DocRef pipeline, final Meta stream, final long eventId,
+    public void read(final DocRef pipeline, final Meta meta, final long eventId,
                      final String childStreamType) {
-        this.stream = stream;
+        this.meta = meta;
 
         // Load the stream.
-        sourcePresenter.fetchData(true, stream.getId(), childStreamType);
+        sourcePresenter.fetchData(true, meta.getId(), childStreamType);
 
         // Set the pipeline on the stepping action.
         action.setPipeline(pipeline);
 
         // Set the stream id on the stepping action.
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-        findMetaCriteria.obtainSelectedIdSet().add(stream.getId());
+        findMetaCriteria.obtainSelectedIdSet().add(meta.getId());
         action.setCriteria(findMetaCriteria);
         action.setChildStreamType(childStreamType);
 
@@ -312,7 +312,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             }
 
             if (eventId > 0) {
-                step(StepType.REFRESH, new StepLocation(stream.getId(), 1L, eventId));
+                step(StepType.REFRESH, new StepLocation(meta.getId(), 1L, eventId));
             }
         });
     }

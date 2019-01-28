@@ -171,16 +171,16 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
 
         assertThat(streamList.size()).isEqualTo(2);
 
-        final Meta originalStream = streamTarget.getStream();
+        final Meta originalMeta = streamTarget.getMeta();
 
-        for (final Meta stream : streamList) {
-            assertThat(stream.getStatus()).isEqualTo(Status.UNLOCKED);
-            final StreamSource streamSource = streamStore.openStreamSource(stream.getId());
+        for (final Meta meta : streamList) {
+            assertThat(meta.getStatus()).isEqualTo(Status.UNLOCKED);
+            final StreamSource streamSource = streamStore.openStreamSource(meta.getId());
 
             assertThat(StreamUtil.streamToString(streamSource.getInputStream(), false)).isEqualTo("DATA1DATA2");
             assertThat(StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.CONTEXT).getInputStream(), false)).isEqualTo("CONTEXT1CONTEXT2");
 
-            if (originalStream.equals(stream)) {
+            if (originalMeta.equals(meta)) {
                 assertContains(
                         StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.META).getInputStream(), false),
                         "META:1", "X:1", "META:2", "Y:2");

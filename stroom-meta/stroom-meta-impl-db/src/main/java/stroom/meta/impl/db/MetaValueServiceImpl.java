@@ -118,7 +118,7 @@ class MetaValueServiceImpl implements MetaValueService {
 //            AsyncFlush item;
 //            while ((item = queue.poll()) != null && batchInsert.size() < DEFAULT_FLUSH_BATCH_SIZE) {
 //                batchInsert.add(item);
-//                idSet.add(item.getStreamId());
+//                idSet.add(item.getMetaId());
 //            }
 //
 //            if (batchInsert.size() < DEFAULT_FLUSH_BATCH_SIZE) {
@@ -133,7 +133,7 @@ class MetaValueServiceImpl implements MetaValueService {
 //                // Key by the MetaKey pk
 //                final Map<Long, Map<Long, Meta>> dataToAttributeMap = new HashMap<>();
 //                for (final Meta value : metaValueService.find(criteria)) {
-//                    dataToAttributeMap.computeIfAbsent(value.getStreamId(), k -> new HashMap<>())
+//                    dataToAttributeMap.computeIfAbsent(value.getMetaId(), k -> new HashMap<>())
 //                            .put(value.getMetaKeyId(), value);
 //                }
 //
@@ -340,7 +340,7 @@ class MetaValueServiceImpl implements MetaValueService {
 
 //        final SqlBuilder sql = new SqlBuilder();
 //        sql.append("SELECT ");
-//        sql.append(MetaValue.STREAM_ID);
+//        sql.append(MetaValue.ID);
 //        sql.append(", ");
 //        sql.append(MetaValue.META_KEY_ID);
 //        sql.append(", ");
@@ -350,7 +350,7 @@ class MetaValueServiceImpl implements MetaValueService {
 //        sql.append(" FROM ");
 //        sql.append(MetaValue.TABLE_NAME);
 //        sql.append(" WHERE ");
-//        sql.append(MetaValue.STREAM_ID);
+//        sql.append(MetaValue.ID);
 //        sql.append(" in (");
 //        sql.append(idList.toString());
 //        sql.append(")");

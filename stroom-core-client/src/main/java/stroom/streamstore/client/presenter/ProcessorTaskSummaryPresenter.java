@@ -44,13 +44,13 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
-public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<SummaryDataRow>>
+public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridView<SummaryDataRow>>
         implements HasDocumentRead<SharedObject> {
     private EntityServiceFindSummaryActionDataProvider<FindStreamTaskCriteria> dataProvider;
 
     @Inject
-    public StreamTaskSummaryPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-                                      final TooltipPresenter tooltipPresenter) {
+    public ProcessorTaskSummaryPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
+                                         final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(true, false));
 
         // Info column.
@@ -75,7 +75,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
                 tooltipPresenter.setHTML(html.toString());
 
                 final PopupPosition popupPosition = new PopupPosition(x, y);
-                ShowPopupEvent.fire(StreamTaskSummaryPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition,
+                ShowPopupEvent.fire(ProcessorTaskSummaryPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition,
                         null);
             }
         };

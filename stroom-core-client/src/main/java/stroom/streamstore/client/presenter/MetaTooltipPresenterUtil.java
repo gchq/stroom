@@ -20,7 +20,7 @@ import stroom.entity.shared.NamedEntity;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
-public class StreamTooltipPresenterUtil {
+public class MetaTooltipPresenterUtil {
     public static final void addRowDateString(final StringBuilder html, final String label, final Long ms) {
         if (ms != null) {
             TooltipUtil.addRowData(html, label, ClientDateUtil.toISOString(ms) + " (" + ms + ")");

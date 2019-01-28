@@ -40,7 +40,7 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
@@ -60,7 +60,7 @@ class IndexingFilter extends AbstractXMLFilter {
     private static final String NAME = "name";
     private static final String VALUE = "value";
 
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final LocationFactoryProxy locationFactory;
     private final Indexer indexer;
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -76,12 +76,12 @@ class IndexingFilter extends AbstractXMLFilter {
     private Locator locator;
 
     @Inject
-    IndexingFilter(final StreamHolder streamHolder,
+    IndexingFilter(final MetaHolder metaHolder,
                    final LocationFactoryProxy locationFactory,
                    final Indexer indexer,
                    final ErrorReceiverProxy errorReceiverProxy,
                    final IndexStructureCache indexStructureCache) {
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.locationFactory = locationFactory;
         this.indexer = indexer;
         this.errorReceiverProxy = errorReceiverProxy;
@@ -110,12 +110,12 @@ class IndexingFilter extends AbstractXMLFilter {
             indexFieldsMap = indexStructure.getIndexFieldsMap();
 
             // Create a key to create shards with.
-            if (streamHolder == null || streamHolder.getStream() == null) {
+            if (metaHolder == null || metaHolder.getMeta() == null) {
                 // Many tests don't use streams so where this is the case just
                 // create a basic key.
                 indexShardKey = IndexShardKeyUtil.createTestKey(index);
             } else {
-                final long timeMs = streamHolder.getStream().getCreateMs();
+                final long timeMs = metaHolder.getMeta().getCreateMs();
                 indexShardKey = IndexShardKeyUtil.createTimeBasedPartition(index, timeMs);
             }
         } finally {

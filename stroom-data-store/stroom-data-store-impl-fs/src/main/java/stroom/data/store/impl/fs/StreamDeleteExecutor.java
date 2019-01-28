@@ -72,7 +72,7 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
         // TODO : @66 MOVE THIS CODE INTO THE STREAM STORE META SERVICE
 
 //        // Delete stream attribute values.
-//        deleteWithJoin(StreamAttributeValue.TABLE_NAME, StreamAttributeValue.STREAM_ID, "stream attribute values",
+//        deleteWithJoin(StreamAttributeValue.TABLE_NAME, StreamAttributeValue.ID, "stream attribute values",
 //                total);
 
         // TODO : @66 MOVE THIS CODE INTO THE STREAM STORE META SERVICE
@@ -88,7 +88,7 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
                 .addTerm(MetaFieldNames.STATUS_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(age))
                 .build();
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
-        findMetaCriteria.setSort(MetaFieldNames.STREAM_ID);
+        findMetaCriteria.setSort(MetaFieldNames.ID);
         findMetaCriteria.obtainPageRequest().setLength(batchSize);
         final BaseResultList<Meta> streams = metaService.find(findMetaCriteria);
         return streams.stream().map(Meta::getId).collect(Collectors.toList());

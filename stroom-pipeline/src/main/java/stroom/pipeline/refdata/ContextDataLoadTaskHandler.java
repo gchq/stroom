@@ -34,7 +34,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.security.Security;
@@ -58,7 +58,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
     private final MetaDataHolder metaDataHolder;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final PipelineStore pipelineStore;
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final PipelineDataCache pipelineDataCache;
     private final Security security;
 
@@ -72,7 +72,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                                final MetaDataHolder metaDataHolder,
                                final ErrorReceiverProxy errorReceiverProxy,
                                final PipelineStore pipelineStore,
-                               final StreamHolder streamHolder,
+                               final MetaHolder metaHolder,
                                final PipelineDataCache pipelineDataCache,
                                final Security security) {
         this.pipelineFactory = pipelineFactory;
@@ -82,7 +82,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
         this.metaDataHolder = metaDataHolder;
         this.errorReceiverProxy = errorReceiverProxy;
         this.pipelineStore = pipelineStore;
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.pipelineDataCache = pipelineDataCache;
         this.security = security;
     }
@@ -95,7 +95,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
             errorReceiverProxy.setErrorReceiver(errorReceiver);
 
             final InputStream inputStream = task.getInputStream();
-            final Meta stream = task.getMeta();
+            final Meta meta = task.getMeta();
             final String feedName = task.getFeedName();
 
             if (inputStream != null) {
@@ -109,9 +109,9 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                         final StringBuilder sb = new StringBuilder();
                         sb.append("(feed = ");
                         sb.append(feedName);
-                        if (stream != null) {
+                        if (meta != null) {
                             sb.append(", source id = ");
-                            sb.append(stream.getId());
+                            sb.append(meta.getId());
                         }
                         sb.append(")");
                         contextIdentifier = sb.toString();
@@ -126,7 +126,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                     feedHolder.setFeedName(feedName);
 
                     // Setup the meta data holder.
-                    metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
+                    metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
                     // Get the appropriate encoding for the stream type.
                     final String encoding = feedProperties.getEncoding(feedName, StreamTypeNames.CONTEXT);
@@ -142,7 +142,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
 
                     task.getRefDataStore().doWithLoaderUnlessComplete(
                             refStreamDefinition,
-                            stream.getEffectiveMs(),
+                            meta.getEffectiveMs(),
                             refDataLoader -> {
                                 // set this loader in the holder so it is available to the pipeline filters
                                 refDataLoaderHolder.setRefDataLoader(refDataLoader);
