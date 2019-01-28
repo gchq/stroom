@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public interface StroomHeaderArguments {
+public interface StandardHeaderArguments {
     String GUID = "GUID";
     String COMPRESSION = "Compression";
     String COMPRESSION_ZIP = "ZIP";

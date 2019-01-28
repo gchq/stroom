@@ -16,7 +16,7 @@
 
 package stroom.data.store;
 
-import stroom.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.util.date.DateUtil;
 
 import java.util.Map;
@@ -33,7 +33,7 @@ public final class StreamFactory {
     }
 
     public static Long getReferenceEffectiveTime(final Map<String, String> argsMap, boolean doDefault) {
-        Long effectiveMs = getSafeMs(argsMap, StroomHeaderArguments.EFFECTIVE_TIME);
+        Long effectiveMs = getSafeMs(argsMap, StandardHeaderArguments.EFFECTIVE_TIME);
         if (effectiveMs != null) {
             return effectiveMs;
         }
@@ -49,7 +49,7 @@ public final class StreamFactory {
     }
 
     public static Long getReceivedTime(final Map<String, String> argsMap, boolean doDefault) {
-        Long receivedTimeMs = getSafeMs(argsMap, StroomHeaderArguments.RECEIVED_TIME);
+        Long receivedTimeMs = getSafeMs(argsMap, StandardHeaderArguments.RECEIVED_TIME);
         if (receivedTimeMs != null) {
             return receivedTimeMs;
         }

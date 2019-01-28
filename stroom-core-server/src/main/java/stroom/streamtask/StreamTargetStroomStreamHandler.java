@@ -28,7 +28,7 @@ import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.pipeline.feed.FeedDocCache;
-import stroom.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomHeaderStreamHandler;
 import stroom.proxy.repo.StroomStreamHandler;
@@ -204,7 +204,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
             }
 
             // Are we switching feed?
-            final String feedName = currentAttributeMap.get(StroomHeaderArguments.FEED);
+            final String feedName = currentAttributeMap.get(StandardHeaderArguments.FEED);
             if (feedName != null) {
                 if (currentFeedName == null || !currentFeedName.equals(feedName)) {
                     // Yes ... load the new feed

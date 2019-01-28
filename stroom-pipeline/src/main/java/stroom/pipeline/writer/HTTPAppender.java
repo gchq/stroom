@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -89,7 +89,7 @@ public class HTTPAppender extends AbstractAppender {
                 LOGGER.info("handleHeader() - " + forwardUrl + " Sending request " + attributeMap);
             }
             startTimeMs = System.currentTimeMillis();
-            attributeMap.computeIfAbsent(StroomHeaderArguments.GUID, k -> UUID.randomUUID().toString());
+            attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
 
             URL url = new URL(forwardUrl);
             connection = (HttpURLConnection) url.openConnection();
@@ -109,7 +109,7 @@ public class HTTPAppender extends AbstractAppender {
             connection.setDoInput(true);
 
             if (useCompression) {
-                connection.addRequestProperty(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
+                connection.addRequestProperty(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
             }
 
             AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);

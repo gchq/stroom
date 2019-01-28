@@ -22,7 +22,7 @@ import stroom.meta.shared.Meta;
 import stroom.docref.DocRef;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.pipeline.feed.FeedStore;
-import stroom.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.PipelineStore;
@@ -125,7 +125,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                 AttributeMapUtil.read(metaStream, false, metaData);
 
                 // Get the feed.
-                final String feedName = metaData.get(StroomHeaderArguments.FEED);
+                final String feedName = metaData.get(StandardHeaderArguments.FEED);
                 final FeedDoc feed = getFeed(feedName);
                 feedHolder.setFeedName(feedName);
 
@@ -164,7 +164,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                 // Set effective time.
                 Long effectiveMs = null;
                 try {
-                    final String effectiveTime = metaData.get(StroomHeaderArguments.EFFECTIVE_TIME);
+                    final String effectiveTime = metaData.get(StandardHeaderArguments.EFFECTIVE_TIME);
                     if (effectiveTime != null && !effectiveTime.isEmpty()) {
                         effectiveMs = DateUtil.parseNormalDateTimeString(effectiveTime);
                     }

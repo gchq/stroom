@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.pipeline.feed.FeedDocCache;
-import stroom.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.util.date.DateUtil;
 import stroom.util.io.AbstractFileVisitor;
@@ -178,9 +178,9 @@ public class ProxyRepositoryCreator {
         final String dateTime = DateUtil.createNormalDateTimeString(effectiveMs);
 
         final AttributeMap map = new AttributeMap();
-        map.put(StroomHeaderArguments.FEED, feed.getName());
-        map.put(StroomHeaderArguments.RECEIVED_TIME, dateTime);
-        map.put(StroomHeaderArguments.EFFECTIVE_TIME, dateTime);
+        map.put(StandardHeaderArguments.FEED, feed.getName());
+        map.put(StandardHeaderArguments.RECEIVED_TIME, dateTime);
+        map.put(StandardHeaderArguments.EFFECTIVE_TIME, dateTime);
         map.put("TestData", "Loaded By SetupSampleData");
 
         return map;

@@ -21,7 +21,7 @@ package stroom.datafeed;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.data.store.impl.fs.MockStreamStore;
-import stroom.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 
@@ -247,7 +247,7 @@ class TestDataFeedServiceImpl extends TestBase {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
-        request.addHeader(StroomHeaderArguments.CONTENT_LENGTH, "0");
+        request.addHeader(StandardHeaderArguments.CONTENT_LENGTH, "0");
         request.addHeader("compression", "GZIP");
         request.setInputStream("".getBytes());
 

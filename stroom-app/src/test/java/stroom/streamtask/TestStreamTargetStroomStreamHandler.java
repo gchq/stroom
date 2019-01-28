@@ -24,7 +24,7 @@ import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.docref.DocRef;
 import stroom.pipeline.feed.FeedDocCache;
 import stroom.pipeline.feed.FeedStore;
-import stroom.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
@@ -61,7 +61,7 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
         feedStore.writeDocument(feedDoc);
 
         final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(StroomHeaderArguments.FEED, "TEST_FEED");
+        attributeMap.put(StandardHeaderArguments.FEED, "TEST_FEED");
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
                 feedDocCache, null, "TEST_FEED", StreamTypeNames.RAW_REFERENCE);
@@ -94,10 +94,10 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
         streamStore.clear();
 
         final AttributeMap attributeMap1 = new AttributeMap();
-        attributeMap1.put(StroomHeaderArguments.FEED, "TEST_FEED1");
+        attributeMap1.put(StandardHeaderArguments.FEED, "TEST_FEED1");
 
         final AttributeMap attributeMap2 = new AttributeMap();
-        attributeMap2.put(StroomHeaderArguments.FEED, "TEST_FEED2");
+        attributeMap2.put(StandardHeaderArguments.FEED, "TEST_FEED2");
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
                 feedDocCache, null, "TEST_FEED1", StreamTypeNames.RAW_EVENTS);
@@ -131,7 +131,7 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
         streamStore.clear();
 
         final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(StroomHeaderArguments.FEED, "TEST_FEED");
+        attributeMap.put(StandardHeaderArguments.FEED, "TEST_FEED");
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
                 feedDocCache, null, "TEST_FEED", StreamTypeNames.RAW_EVENTS);

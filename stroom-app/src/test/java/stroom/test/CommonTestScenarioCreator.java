@@ -25,7 +25,7 @@ import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
 import stroom.docref.DocRef;
-import stroom.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.index.IndexStore;
 import stroom.index.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
@@ -143,7 +143,7 @@ public class CommonTestScenarioCreator {
                 .build();
         final StreamTarget target = streamStore.openStreamTarget(metaProperties);
         StreamTargetUtil.write(target, "line1\nline2");
-        target.getAttributes().put(StroomHeaderArguments.FEED, feed);
+        target.getAttributes().put(StandardHeaderArguments.FEED, feed);
 
         streamStore.closeStreamTarget(target);
         return target.getStream();

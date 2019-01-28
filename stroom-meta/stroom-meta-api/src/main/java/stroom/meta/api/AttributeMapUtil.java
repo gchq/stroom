@@ -19,7 +19,7 @@ package stroom.meta.api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.util.date.DateUtil;
 
 import javax.servlet.http.HttpServletRequest;
@@ -78,7 +78,7 @@ public class AttributeMapUtil {
     public static AttributeMap cloneAllowable(final AttributeMap in) {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.putAll(in);
-        attributeMap.removeAll(StroomHeaderArguments.HEADER_CLONE_EXCLUDE_SET);
+        attributeMap.removeAll(StandardHeaderArguments.HEADER_CLONE_EXCLUDE_SET);
         return attributeMap;
     }
 
@@ -158,14 +158,14 @@ public class AttributeMapUtil {
             final X509Certificate cert = certs[0];
             if (cert.getSubjectDN() != null) {
                 final String remoteDN = cert.getSubjectDN().toString();
-                attributeMap.put(StroomHeaderArguments.REMOTE_DN, remoteDN);
+                attributeMap.put(StandardHeaderArguments.REMOTE_DN, remoteDN);
             } else {
                 LOGGER.debug("Cert {} doesn't have a subject DN", cert);
             }
 
             if (cert.getNotAfter() != null) {
                 final String remoteCertExpiry = DateUtil.createNormalDateTimeString(cert.getNotAfter().getTime());
-                attributeMap.put(StroomHeaderArguments.REMOTE_CERT_EXPIRY, remoteCertExpiry);
+                attributeMap.put(StandardHeaderArguments.REMOTE_CERT_EXPIRY, remoteCertExpiry);
             } else {
                 LOGGER.debug("Cert {} doesn't have a Not After date", cert);
             }
@@ -198,10 +198,10 @@ public class AttributeMapUtil {
                 final String newHeaderValue = DateUtil.createNormalDateTimeString(
                         localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli());
                 LOGGER.debug("Converting certificate expiry date from [{}] to [{}]", headerValue, newHeaderValue);
-                attributeMap.put(StroomHeaderArguments.REMOTE_CERT_EXPIRY, newHeaderValue);
+                attributeMap.put(StandardHeaderArguments.REMOTE_CERT_EXPIRY, newHeaderValue);
             } catch (Exception e) {
                 LOGGER.error("Unable to create header {} from header {} with value [{}].",
-                        StroomHeaderArguments.REMOTE_CERT_EXPIRY, CERT_EXPIRY_HEADER_TOKEN, headerValue, e);
+                        StandardHeaderArguments.REMOTE_CERT_EXPIRY, CERT_EXPIRY_HEADER_TOKEN, headerValue, e);
             }
         }
     }
