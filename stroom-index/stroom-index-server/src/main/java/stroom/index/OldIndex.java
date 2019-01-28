@@ -16,18 +16,13 @@
 
 package stroom.index;
 
-import stroom.importexport.api.ExternalFile;
+import stroom.docref.HasDisplayValue;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
-import stroom.entity.shared.SQLNameConstants;
+import stroom.importexport.api.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 import stroom.index.shared.IndexFields;
-import stroom.docref.HasDisplayValue;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
-import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 

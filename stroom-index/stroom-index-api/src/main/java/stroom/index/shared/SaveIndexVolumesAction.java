@@ -27,14 +27,14 @@ public class SaveIndexVolumesAction extends Action<VoidResult> {
     private static final long serialVersionUID = -6668626615097471925L;
 
     private DocRef indexRef;
-    private Set<VolumeEntity> volumes;
+    private Set<IndexVolume> volumes;
 
     public SaveIndexVolumesAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
     public SaveIndexVolumesAction(final DocRef indexRef,
-                                  final Set<VolumeEntity> volumes) {
+                                  final Set<IndexVolume> volumes) {
         this.indexRef = indexRef;
         this.volumes = volumes;
     }
@@ -43,7 +43,7 @@ public class SaveIndexVolumesAction extends Action<VoidResult> {
         return indexRef;
     }
 
-    public Set<VolumeEntity> getVolumes() {
+    public Set<IndexVolume> getVolumes() {
         return volumes;
     }
 

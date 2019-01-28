@@ -17,9 +17,9 @@
 
 package stroom.index;
 
+import stroom.docref.DocRef;
 import stroom.docstore.DocumentStore;
 import stroom.index.shared.IndexDoc;
-import stroom.docref.DocRef;
 
 import java.util.List;
 

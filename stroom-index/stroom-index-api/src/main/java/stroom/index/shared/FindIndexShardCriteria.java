@@ -30,8 +30,8 @@ public class FindIndexShardCriteria extends BaseCriteria {
     public static final String FIELD_PARTITION = "Partition";
     private static final long serialVersionUID = 3552286394659242683L;
     private Range<Integer> documentCountRange = new Range<>();
-    private EntityIdSet<Node> nodeIdSet = new EntityIdSet<>();
-    private EntityIdSet<VolumeEntity> volumeIdSet = new EntityIdSet<>();
+    private CriteriaSet<String> nodeNameSet = new CriteriaSet<>();
+    private CriteriaSet<Long> volumeIdSet = new CriteriaSet<>();
     private CriteriaSet<DocRef> indexSet = new CriteriaSet<>();
     private EntityIdSet<IndexShard> indexShardSet = new EntityIdSet<>();
     private CriteriaSet<IndexShardStatus> indexShardStatusSet = new CriteriaSet<>();
@@ -43,7 +43,7 @@ public class FindIndexShardCriteria extends BaseCriteria {
 
     public FindIndexShardCriteria(final FindIndexShardCriteria criteria) {
         // Copy constructor.
-        nodeIdSet.copyFrom(criteria.nodeIdSet);
+        nodeNameSet.copyFrom(criteria.nodeNameSet);
         volumeIdSet.copyFrom(criteria.volumeIdSet);
         documentCountRange = criteria.documentCountRange;
         indexSet.copyFrom(criteria.indexSet);
@@ -72,11 +72,11 @@ public class FindIndexShardCriteria extends BaseCriteria {
         return indexShardSet;
     }
 
-    public EntityIdSet<Node> getNodeIdSet() {
-        return nodeIdSet;
+    public CriteriaSet<String> getNodeNameSet() {
+        return nodeNameSet;
     }
 
-    public EntityIdSet<VolumeEntity> getVolumeIdSet() {
+    public CriteriaSet<Long> getVolumeIdSet() {
         return volumeIdSet;
     }
 

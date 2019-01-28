@@ -4,21 +4,11 @@ import stroom.util.shared.HasAuditInfo;
 
 public class IndexVolumeGroup implements HasAuditInfo {
 
-    private Long id;
     private String name;
 
-    private Long createTimeMs;
-    private Long updateTimeMs;
+    // There is nothing to update, so just use the create fields
     private String createUser;
-    private String updateUser;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
+    private Long createTimeMs;
 
     public String getName() {
         return name;
@@ -39,16 +29,6 @@ public class IndexVolumeGroup implements HasAuditInfo {
     }
 
     @Override
-    public Long getUpdateTimeMs() {
-        return updateTimeMs;
-    }
-
-    @Override
-    public void setUpdateTimeMs(Long updateTimeMs) {
-        this.updateTimeMs = updateTimeMs;
-    }
-
-    @Override
     public String getCreateUser() {
         return createUser;
     }
@@ -59,12 +39,53 @@ public class IndexVolumeGroup implements HasAuditInfo {
     }
 
     @Override
+    public Long getUpdateTimeMs() {
+        return createTimeMs;
+    }
+
+    @Override
+    public void setUpdateTimeMs(final Long updateTimeMs) {
+        // do nothing
+    }
+
+    @Override
     public String getUpdateUser() {
-        return updateUser;
+        return createUser;
     }
 
     @Override
     public void setUpdateUser(String updateUser) {
-        this.updateUser = updateUser;
+        // do nothing
+    }
+
+    public static class Builder {
+        private final IndexVolumeGroup instance;
+
+        public Builder(final IndexVolumeGroup instance) {
+            this.instance = instance;
+        }
+
+        public Builder() {
+            this(new IndexVolumeGroup());
+        }
+
+        public Builder name(final String value) {
+            instance.setName(value);
+            return this;
+        }
+
+        public Builder createTimeMs(final Long value) {
+            instance.setCreateTimeMs(value);
+            return this;
+        }
+
+        public Builder createUser(final String value) {
+            instance.setCreateUser(value);
+            return this;
+        }
+
+        public IndexVolumeGroup build() {
+            return instance;
+        }
     }
 }

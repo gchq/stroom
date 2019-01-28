@@ -38,7 +38,8 @@ class SaveIndexVolumesActionHandler extends AbstractTaskHandler<SaveIndexVolumes
     @Override
     public VoidResult exec(final SaveIndexVolumesAction action) {
         return security.secureResult(() -> {
-            indexVolumeService.setVolumesForIndex(action.getIndexRef(), action.getVolumes());
+            //TODO  It used to save the volume associations with the index, we must make sure this can
+            //be done by saving volume group name in IndexDoc, then we may be able to delete this Action
             return VoidResult.INSTANCE;
         });
     }

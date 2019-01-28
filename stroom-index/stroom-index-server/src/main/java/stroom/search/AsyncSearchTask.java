@@ -16,13 +16,12 @@
 
 package stroom.search;
 
-import stroom.node.shared.Node;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.task.api.ServerTask;
 import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;
-import stroom.task.api.ServerTask;
 
 import java.io.Serializable;
 import java.util.Map;

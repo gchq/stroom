@@ -1,11 +1,10 @@
 package stroom.index;
 
-import stroom.docref.DocRef;
 import stroom.index.dao.IndexVolumeDao;
 import stroom.index.shared.IndexVolume;
 
 import javax.inject.Inject;
-import java.util.Set;
+import java.util.List;
 
 public class IndexVolumeServiceImpl implements IndexVolumeService {
     private final IndexVolumeDao indexVolumeDao;
@@ -15,8 +14,18 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
         this.indexVolumeDao = indexVolumeDao;
     }
 
-    @SuppressWarnings("unchecked")
-    public Set<IndexVolume> getVolumesForIndex(final DocRef indexRef) {
-        return indexVolumeDao.getVolumesForIndex(indexRef.getUuid());
+    @Override
+    public List<IndexVolume> getVolumesOnNode(final String nodeName) {
+        return indexVolumeDao.getVolumesOnNode(nodeName);
+    }
+
+    @Override
+    public List<IndexVolume> getVolumesInGroup(final String groupName) {
+        return indexVolumeDao.getVolumesInGroup(groupName);
+    }
+
+    @Override
+    public List<IndexVolume> getVolumesInGroupOnNode(final String groupName, final String nodeName) {
+        return indexVolumeDao.getVolumesInGroupOnNode(groupName, nodeName);
     }
 }

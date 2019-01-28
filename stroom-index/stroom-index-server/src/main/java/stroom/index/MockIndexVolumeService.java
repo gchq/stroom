@@ -17,19 +17,25 @@
 
 package stroom.index;
 
-import stroom.node.shared.VolumeEntity;
-import stroom.docref.DocRef;
+import stroom.index.shared.IndexVolume;
 
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 
 public class MockIndexVolumeService implements IndexVolumeService {
+
     @Override
-    public Set<VolumeEntity> getVolumesForIndex(final DocRef indexRef) {
-        return Collections.emptySet();
+    public List<IndexVolume> getVolumesOnNode(String nodeName) {
+        return Collections.emptyList();
     }
 
     @Override
-    public void setVolumesForIndex(final DocRef indexRef, final Set<VolumeEntity> volumes) {
+    public List<IndexVolume> getVolumesInGroup(String groupName) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<IndexVolume> getVolumesInGroupOnNode(String groupName, String nodeName) {
+        return Collections.emptyList();
     }
 }

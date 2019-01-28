@@ -41,7 +41,7 @@ import stroom.index.impl.db.tables.records.IndexShardRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexShard extends TableImpl<IndexShardRecord> {
 
-    private static final long serialVersionUID = 2042862496;
+    private static final long serialVersionUID = 1326748502;
 
     /**
      * The reference instance of <code>stroom.index_shard</code>
@@ -59,7 +59,7 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
     /**
      * The column <code>stroom.index_shard.id</code>.
      */
-    public final TableField<IndexShardRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<IndexShardRecord, Long> ID = createField("id", org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>stroom.index_shard.version</code>.
@@ -74,7 +74,7 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
     /**
      * The column <code>stroom.index_shard.fk_volume_id</code>.
      */
-    public final TableField<IndexShardRecord, Integer> FK_VOLUME_ID = createField("fk_volume_id", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<IndexShardRecord, Long> FK_VOLUME_ID = createField("fk_volume_id", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * The column <code>stroom.index_shard.index_uuid</code>.
@@ -82,24 +82,24 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
     public final TableField<IndexShardRecord, String> INDEX_UUID = createField("index_uuid", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.index_shard.created_by</code>.
+     * The column <code>stroom.index_shard.create_time_ms</code>.
      */
-    public final TableField<IndexShardRecord, String> CREATED_BY = createField("created_by", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
+    public final TableField<IndexShardRecord, Long> CREATE_TIME_MS = createField("create_time_ms", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.index_shard.created_at</code>.
+     * The column <code>stroom.index_shard.create_user</code>.
      */
-    public final TableField<IndexShardRecord, Long> CREATED_AT = createField("created_at", org.jooq.impl.SQLDataType.BIGINT, this, "");
+    public final TableField<IndexShardRecord, String> CREATE_USER = createField("create_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.index_shard.updated_by</code>.
+     * The column <code>stroom.index_shard.update_time_ms</code>.
      */
-    public final TableField<IndexShardRecord, String> UPDATED_BY = createField("updated_by", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
+    public final TableField<IndexShardRecord, Long> UPDATE_TIME_MS = createField("update_time_ms", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.index_shard.updated_at</code>.
+     * The column <code>stroom.index_shard.update_user</code>.
      */
-    public final TableField<IndexShardRecord, Long> UPDATED_AT = createField("updated_at", org.jooq.impl.SQLDataType.BIGINT, this, "");
+    public final TableField<IndexShardRecord, String> UPDATE_USER = createField("update_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.index_shard.commit_doc_count</code>.
@@ -204,7 +204,7 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
      * {@inheritDoc}
      */
     @Override
-    public Identity<IndexShardRecord, Integer> getIdentity() {
+    public Identity<IndexShardRecord, Long> getIdentity() {
         return Keys.IDENTITY_INDEX_SHARD;
     }
 

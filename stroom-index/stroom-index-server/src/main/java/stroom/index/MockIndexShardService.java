@@ -17,16 +17,14 @@
 
 package stroom.index;
 
+import stroom.docref.DocRef;
 import stroom.entity.MockEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.node.shared.Node;
-import stroom.node.shared.VolumeEntity;
-import stroom.node.shared.VolumeEntity.VolumeType;
-import stroom.docref.DocRef;
+import stroom.index.shared.IndexVolume;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Singleton;
@@ -36,11 +34,15 @@ import java.nio.file.Path;
 @Singleton
 public class MockIndexShardService extends MockEntityService<IndexShard, FindIndexShardCriteria>
         implements IndexShardService {
+
     @Override
-    public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
+    public IndexShard createIndexShard(IndexShardKey indexShardKey, String ownerNodeName) {
         final IndexShard indexShard = new IndexShard();
-        indexShard.setVolume(
-                VolumeEntity.create(ownerNode, FileUtil.getCanonicalPath(FileUtil.getTempDir()), VolumeType.PUBLIC));
+        indexShard.setVolume(new IndexVolume.Builder()
+                .nodeName(ownerNodeName)
+                .path(FileUtil.getCanonicalPath(FileUtil.getTempDir()))
+                .volumeType(IndexVolume.VolumeType.PUBLIC)
+                .build());
         indexShard.setIndexUuid(indexShardKey.getIndexUuid());
         indexShard.setPartition(indexShardKey.getPartition());
         indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
@@ -59,10 +61,10 @@ public class MockIndexShardService extends MockEntityService<IndexShard, FindInd
         for (final IndexShard indexShard : map.values()) {
             boolean include = true;
 
-            if (!criteria.getVolumeIdSet().isMatch(indexShard.getVolume())) {
+            if (!criteria.getVolumeIdSet().isMatch(indexShard.getVolume().getId())) {
                 include = false;
 
-            } else if (!criteria.getNodeIdSet().isMatch(indexShard.getNode())) {
+            } else if (!criteria.getNodeNameSet().isMatch(indexShard.getNodeName())) {
                 include = false;
             } else if (!criteria.getIndexSet().isMatch(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShard.getIndexUuid()))) {
                 include = false;

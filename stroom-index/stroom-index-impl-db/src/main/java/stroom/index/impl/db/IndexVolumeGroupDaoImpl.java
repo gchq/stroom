@@ -1,53 +1,66 @@
 package stroom.index.impl.db;
 
+import stroom.db.util.JooqUtil;
 import stroom.index.dao.IndexVolumeGroupDao;
 import stroom.index.shared.IndexVolumeGroup;
+import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
-import java.util.Optional;
+
+import static stroom.index.impl.db.Tables.INDEX_VOLUME_GROUP;
+import static stroom.index.impl.db.Tables.INDEX_VOLUME_GROUP_LINK;
 
 public class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
     private final ConnectionProvider connectionProvider;
+    private final SecurityContext securityContext;
 
     @Inject
-    public IndexVolumeGroupDaoImpl(final ConnectionProvider connectionProvider) {
+    public IndexVolumeGroupDaoImpl(final SecurityContext securityContext,
+                                   final ConnectionProvider connectionProvider) {
+        this.securityContext = securityContext;
         this.connectionProvider = connectionProvider;
     }
 
     @Override
-    public IndexVolumeGroup create() {
-//        return JooqUtil.contextResult(connectionProvider, context -> {
-//            final Optional<MetaFeedRecord> optional = context
-//                    .insertInto(META_FEED, META_FEED.NAME)
-//                    .values(name)
-//                    .onDuplicateKeyIgnore()
-//                    .returning(META_FEED.ID)
-//                    .fetchOptional();
-//
-//            return optional
-//                    .map(record -> {
-//                        final Integer id = record.getId();
-//                        cache.put(name, id);
-//                        return id;
-//                    })
-//                    .orElseGet(() -> get(name));
-//        });
-        return null;
+    public IndexVolumeGroup create(final String name) {
+        return JooqUtil.contextResult(connectionProvider, context -> {
+            context
+                    .insertInto(INDEX_VOLUME_GROUP,
+                            INDEX_VOLUME_GROUP.NAME,
+                            INDEX_VOLUME_GROUP.CREATE_USER,
+                            INDEX_VOLUME_GROUP.CREATE_TIME_MS)
+                    .values(name, securityContext.getUserId(), System.currentTimeMillis())
+                    .onDuplicateKeyIgnore()
+                    .execute();
+
+            return context
+                    .select()
+                    .from(INDEX_VOLUME_GROUP)
+                    .where(INDEX_VOLUME_GROUP.NAME.eq(name))
+                    .fetchOneInto(IndexVolumeGroup.class);
+        });
     }
 
     @Override
-    public IndexVolumeGroup update(IndexVolumeGroup record) {
-        return null;
+    public IndexVolumeGroup get(final String name) {
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select()
+                .from(INDEX_VOLUME_GROUP)
+                .where(INDEX_VOLUME_GROUP.NAME.eq(name))
+                .fetchOneInto(IndexVolumeGroup.class)
+        );
     }
 
     @Override
-    public int delete(int id) {
-        return 0;
-    }
-
-    @Override
-    public Optional<IndexVolumeGroup> fetch(int id) {
-        return Optional.empty();
+    public void delete(final String name) {
+        JooqUtil.context(connectionProvider, context -> {
+            context
+                    .deleteFrom(INDEX_VOLUME_GROUP_LINK)
+                    .where(INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_GROUP_NAME.eq(name))
+                    .execute();
+            context.deleteFrom(INDEX_VOLUME_GROUP)
+                    .where(INDEX_VOLUME_GROUP.NAME.eq(name)).execute();
+        });
     }
 }

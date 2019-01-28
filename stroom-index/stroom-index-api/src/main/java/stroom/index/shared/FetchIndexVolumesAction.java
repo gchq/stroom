@@ -17,25 +17,23 @@
 package stroom.index.shared;
 
 import stroom.task.shared.Action;
-import stroom.node.shared.VolumeEntity;
-import stroom.docref.DocRef;
 import stroom.util.shared.SharedList;
 
-public class FetchIndexVolumesAction extends Action<SharedList<VolumeEntity>> {
+public class FetchIndexVolumesAction extends Action<SharedList<IndexVolume>> {
     private static final long serialVersionUID = -6668626615097471925L;
 
-    private DocRef indexRef;
+    private String groupName;
 
     public FetchIndexVolumesAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchIndexVolumesAction(final DocRef indexRef) {
-        this.indexRef = indexRef;
+    public FetchIndexVolumesAction(final String groupName) {
+        this.groupName = groupName;
     }
 
-    public DocRef getIndexRef() {
-        return indexRef;
+    public String getGroupName() {
+        return groupName;
     }
 
     @Override

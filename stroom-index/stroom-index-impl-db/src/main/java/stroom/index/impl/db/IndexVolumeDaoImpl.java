@@ -1,32 +1,149 @@
 package stroom.index.impl.db;
 
-import org.jooq.Field;
-import org.jooq.Record;
-import org.jooq.Table;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.db.util.JooqUtil;
 import stroom.index.dao.IndexVolumeDao;
 import stroom.index.shared.IndexVolume;
+import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
 
-import java.util.Set;
+import java.util.List;
 
-import static org.jooq.impl.DSL.field;
-import static org.jooq.impl.DSL.table;
+import static stroom.index.impl.db.Tables.INDEX_VOLUME_GROUP_LINK;
+import static stroom.index.impl.db.tables.IndexVolume.INDEX_VOLUME;
+
 
 public class IndexVolumeDaoImpl implements IndexVolumeDao {
 
     private final ConnectionProvider connectionProvider;
+    private final SecurityContext securityContext;
+
+    private static final Byte FIRST_VERSION = 1;
 
     @Inject
-    public IndexVolumeDaoImpl(final ConnectionProvider connectionProvider) {
+    public IndexVolumeDaoImpl(final SecurityContext securityContext,
+                              final ConnectionProvider connectionProvider) {
+        this.securityContext = securityContext;
         this.connectionProvider = connectionProvider;
     }
 
     @Override
-    public Set<IndexVolume> getVolumesForIndex(String indexUuid) {
-        return null;
+    public IndexVolume create(final String nodeName,
+                              final String path) {
+        final Long now = System.currentTimeMillis();
+        final String userId = securityContext.getUserId();
+
+        return JooqUtil.contextResult(connectionProvider, context -> {
+            final Long id = context.insertInto(INDEX_VOLUME,
+                    INDEX_VOLUME.VERSION,
+                    INDEX_VOLUME.INDEX_STATUS,
+                    INDEX_VOLUME.VOLUME_TYPE,
+                    INDEX_VOLUME.NODE_NAME,
+                    INDEX_VOLUME.PATH,
+                    INDEX_VOLUME.CREATE_USER,
+                    INDEX_VOLUME.CREATE_TIME_MS,
+                    INDEX_VOLUME.UPDATE_USER,
+                    INDEX_VOLUME.UPDATE_TIME_MS)
+                    .values(FIRST_VERSION,
+                            IndexVolume.VolumeUseStatus.defaultValue().getPrimitiveValue(),
+                            IndexVolume.VolumeType.defaultValue().getPrimitiveValue(),
+                            nodeName,
+                            path,
+                            userId,
+                            now,
+                            userId,
+                            now)
+                    .returning(INDEX_VOLUME.ID)
+                    .fetchOne()
+                    .getId();
+
+            return context.select()
+                    .from(INDEX_VOLUME)
+                    .where(INDEX_VOLUME.ID.eq(id))
+                    .fetchOneInto(IndexVolume.class);
+        });
+    }
+
+    @Override
+    public IndexVolume getById(final Long id) {
+        return JooqUtil.contextResult(connectionProvider, context -> context.select()
+                .from(INDEX_VOLUME)
+                .where(INDEX_VOLUME.ID.eq(id))
+                .fetchOneInto(IndexVolume.class)
+        );
+    }
+
+    @Override
+    public void delete(final Long id) {
+        JooqUtil.context(connectionProvider, context -> context
+                .deleteFrom(INDEX_VOLUME)
+                .where(INDEX_VOLUME.ID.eq(id))
+                .execute()
+        );
+    }
+
+    @Override
+    public List<IndexVolume> getVolumesOnNode(final String nodeName) {
+        return JooqUtil.contextResult(connectionProvider, context -> context.select()
+                .from(INDEX_VOLUME)
+                .where(INDEX_VOLUME.NODE_NAME.eq(nodeName))
+                .fetchInto(IndexVolume.class)
+        );
+    }
+
+    @Override
+    public List<IndexVolume> getVolumesInGroup(final String groupName) {
+        return JooqUtil.contextResult(connectionProvider, context -> context.select()
+                .from(INDEX_VOLUME)
+                .innerJoin(INDEX_VOLUME_GROUP_LINK)
+                .on(INDEX_VOLUME.ID.eq(INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_ID))
+                .where(INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_GROUP_NAME.eq(groupName))
+                .fetchInto(IndexVolume.class)
+        );
+    }
+
+    @Override
+    public List<IndexVolume> getVolumesInGroupOnNode(final String groupName,
+                                                     final String nodeName) {
+        return JooqUtil.contextResult(connectionProvider, context -> context.select()
+                .from(INDEX_VOLUME)
+                .innerJoin(INDEX_VOLUME_GROUP_LINK)
+                .on(INDEX_VOLUME.ID.eq(INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_ID))
+                .where(INDEX_VOLUME.NODE_NAME.eq(nodeName))
+                .and(INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_GROUP_NAME.eq(groupName))
+                .fetchInto(IndexVolume.class)
+        );
+    }
+
+    @Override
+    public void addVolumeToGroup(final Long volumeId,
+                                 final String name) {
+        JooqUtil.context(connectionProvider, context -> context
+                .insertInto(INDEX_VOLUME_GROUP_LINK,
+                        INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_ID,
+                        INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_GROUP_NAME)
+                .values(volumeId, name)
+                .onDuplicateKeyIgnore()
+                .execute());
+    }
+
+    @Override
+    public void removeVolumeFromGroup(final Long volumeId,
+                                      final String name) {
+        JooqUtil.context(connectionProvider, context -> context
+                .deleteFrom(INDEX_VOLUME_GROUP_LINK)
+                .where(INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_ID.eq(volumeId))
+                .and(INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_GROUP_NAME.eq(name))
+                .execute()
+        );
+    }
+
+    @Override
+    public void clearVolumeGroupMemberships(final Long volumeId) {
+        JooqUtil.context(connectionProvider, context -> context
+                .deleteFrom(INDEX_VOLUME_GROUP_LINK)
+                .where(INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_ID.eq(volumeId))
+                .execute()
+        );
     }
 }

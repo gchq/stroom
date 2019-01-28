@@ -30,9 +30,9 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.query.api.v2.Query;
 import stroom.security.Security;
 import stroom.task.GenericServerTask;
-import stroom.task.api.TaskManager;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskManager;
 import stroom.task.cluster.ClusterDispatchAsync;
 import stroom.task.cluster.NodeNotFoundException;
 import stroom.task.cluster.NullClusterStateException;
@@ -125,10 +125,10 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     final Map<String, List<Long>> shardMap = new HashMap<>();
                     for (final IndexShard indexShard : indexShards) {
                         if (IndexShardStatus.CORRUPT.equals(indexShard.getStatus())) {
-                            resultCollector.getErrorSet(indexShard.getNode().getName()).add(
+                            resultCollector.getErrorSet(indexShard.getNodeName()).add(
                                     "Attempt to search an index shard marked as corrupt: id=" + indexShard.getId() + ".");
                         } else {
-                            final String nodeName = indexShard.getNode().getName();
+                            final String nodeName = indexShard.getNodeName();
                             shardMap.computeIfAbsent(nodeName, k -> new ArrayList<>()).add(indexShard.getId());
                         }
                     }

@@ -41,7 +41,7 @@ import stroom.index.impl.db.tables.records.IndexVolumeRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexVolume extends TableImpl<IndexVolumeRecord> {
 
-    private static final long serialVersionUID = -1550995439;
+    private static final long serialVersionUID = 2130979234;
 
     /**
      * The reference instance of <code>stroom.index_volume</code>
@@ -59,7 +59,7 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
     /**
      * The column <code>stroom.index_volume.id</code>.
      */
-    public final TableField<IndexVolumeRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<IndexVolumeRecord, Long> ID = createField("id", org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>stroom.index_volume.version</code>.
@@ -67,24 +67,24 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
     public final TableField<IndexVolumeRecord, Byte> VERSION = createField("version", org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.index_volume.created_by</code>.
+     * The column <code>stroom.index_volume.create_time_ms</code>.
      */
-    public final TableField<IndexVolumeRecord, String> CREATED_BY = createField("created_by", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
+    public final TableField<IndexVolumeRecord, Long> CREATE_TIME_MS = createField("create_time_ms", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.index_volume.created_at</code>.
+     * The column <code>stroom.index_volume.create_user</code>.
      */
-    public final TableField<IndexVolumeRecord, Long> CREATED_AT = createField("created_at", org.jooq.impl.SQLDataType.BIGINT, this, "");
+    public final TableField<IndexVolumeRecord, String> CREATE_USER = createField("create_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.index_volume.updated_by</code>.
+     * The column <code>stroom.index_volume.update_time_ms</code>.
      */
-    public final TableField<IndexVolumeRecord, String> UPDATED_BY = createField("updated_by", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
+    public final TableField<IndexVolumeRecord, Long> UPDATE_TIME_MS = createField("update_time_ms", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.index_volume.updated_at</code>.
+     * The column <code>stroom.index_volume.update_user</code>.
      */
-    public final TableField<IndexVolumeRecord, Long> UPDATED_AT = createField("updated_at", org.jooq.impl.SQLDataType.BIGINT, this, "");
+    public final TableField<IndexVolumeRecord, String> UPDATE_USER = createField("update_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.index_volume.node_name</code>.
@@ -184,7 +184,7 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
      * {@inheritDoc}
      */
     @Override
-    public Identity<IndexVolumeRecord, Integer> getIdentity() {
+    public Identity<IndexVolumeRecord, Long> getIdentity() {
         return Keys.IDENTITY_INDEX_VOLUME;
     }
 

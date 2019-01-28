@@ -1,11 +1,11 @@
 package stroom.index;
 
 import stroom.index.shared.IndexVolume;
-import stroom.node.shared.VolumeEntity;
-import stroom.docref.DocRef;
 
-import java.util.Set;
+import java.util.List;
 
 public interface IndexVolumeService {
-    Set<IndexVolume> getVolumesForIndex(DocRef indexRef);
+    List<IndexVolume> getVolumesOnNode(String nodeName);
+    List<IndexVolume> getVolumesInGroup(String groupName);
+    List<IndexVolume> getVolumesInGroupOnNode(String groupName, String nodeName);
 }

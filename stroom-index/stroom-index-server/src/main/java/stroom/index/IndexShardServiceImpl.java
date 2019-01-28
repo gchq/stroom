@@ -18,10 +18,7 @@
 package stroom.index;
 
 import event.logging.BaseAdvancedQueryItem;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -35,7 +32,6 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
-import stroom.volume.VolumeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
 import stroom.security.Security;
@@ -51,9 +47,6 @@ import java.util.Set;
 @Singleton
 public class IndexShardServiceImpl
         extends SystemEntityServiceImpl<IndexShard, FindIndexShardCriteria> implements IndexShardService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardServiceImpl.class);
-
-    private static final String VOLUME_ERROR = "One or more volumes must been assigned to an index for a shard to be created";
 
     private final Security security;
     private final IndexVolumeService indexVolumeService;
@@ -77,25 +70,15 @@ public class IndexShardServiceImpl
     public IndexShard createIndexShard(final IndexShardKey indexShardKey, final String ownerNodeName) {
         final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
         final IndexDoc index = indexStructure.getIndex();
-        final Set<VolumeEntity> allowedVolumes = indexVolumeService.getVolumesForIndex(DocRefUtil.create(index));
-        if (allowedVolumes == null || allowedVolumes.size() == 0) {
-            LOGGER.debug(VOLUME_ERROR);
-            throw new IndexException(VOLUME_ERROR);
-        }
-
-        final Set<IndexVolume> volumes = indexVolumeService.getIndexVolumeSet(ownerNodeName, allowedVolumes);
-
-        // The first set should be a set of cache volumes unless no caches have
-        // been defined or they are full.
-        IndexVolume volume = null;
-
-        if (volumes != null && volumes.size() > 0) {
-            volume = volumes.iterator().next();
-        }
-        if (volume == null) {
+        final List<IndexVolume> volumes = indexVolumeService.getVolumesInGroupOnNode(index.getVolumeGroupName(), ownerNodeName);
+        if (volumes == null || volumes.size() == 0) {
             throw new IndexException("No shard can be created as no volumes are available for index: " + index.getName()
                     + " (" + index.getUuid() + ")");
         }
+
+        // The first set should be a set of cache volumes unless no caches have
+        // been defined or they are full.
+        final IndexVolume volume = volumes.iterator().next();
 
         final IndexShard indexShard = new IndexShard();
         indexShard.setIndexUuid(index.getUuid());
@@ -122,8 +105,9 @@ public class IndexShardServiceImpl
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindIndexShardCriteria criteria) {
         CriteriaLoggingUtil.appendRangeTerm(items, "documentCountRange", criteria.getDocumentCountRange());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "nodeIdSet", criteria.getNodeIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "volumeIdSet", criteria.getVolumeIdSet());
+        //TODO include these when converting to jOOQ
+        //CriteriaLoggingUtil.appendEntityIdSet(items, "nodeIdSet", criteria.getNodeIdSet());
+        //CriteriaLoggingUtil.appendEntityIdSet(items, "volumeIdSet", criteria.getVolumeIdSet());
         CriteriaLoggingUtil.appendEntityIdSet(items, "indexIdSet", criteria.getIndexShardSet());
         CriteriaLoggingUtil.appendCriteriaSet(items, "indexShardStatusSet", criteria.getIndexShardStatusSet());
         CriteriaLoggingUtil.appendStringTerm(items, "partition", criteria.getPartition().getString());
@@ -183,8 +167,9 @@ public class IndexShardServiceImpl
 
             sql.appendDocRefSetQuery(alias + ".indexUuid", criteria.getIndexSet());
             sql.appendEntityIdSetQuery(alias, criteria.getIndexShardSet());
-            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
-            sql.appendEntityIdSetQuery(alias + ".volume", criteria.getVolumeIdSet());
+            // TODO include these in jOOQ
+            //sql.appendPrimitiveValueSetQuery(alias + ".node", criteria.getNodeIdSet());
+            //sql.appendEntityIdSetQuery(alias + ".volume", criteria.getVolumeIdSet());
             sql.appendPrimitiveValueSetQuery(alias + ".pstatus", criteria.getIndexShardStatusSet());
             sql.appendRangeQuery(alias + ".documentCount", criteria.getDocumentCountRange());
             sql.appendValueQuery(alias + ".partition", criteria.getPartition());

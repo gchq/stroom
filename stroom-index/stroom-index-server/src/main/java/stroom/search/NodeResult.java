@@ -16,9 +16,9 @@
 
 package stroom.search;
 
+import stroom.docref.SharedObject;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Payload;
-import stroom.docref.SharedObject;
 
 import java.util.List;
 import java.util.Map;

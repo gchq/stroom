@@ -17,6 +17,7 @@
 package stroom.index.shared;
 
 import stroom.docref.HasDisplayValue;
+import stroom.docref.SharedObject;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.util.shared.HasAuditInfo;
@@ -24,7 +25,7 @@ import stroom.util.shared.HasAuditInfo;
 /**
  * Some path on the network where we can store stuff.
  */
-public class IndexVolume implements HasAuditInfo {
+public class IndexVolume implements HasAuditInfo, SharedObject {
 
     private static final long TEN_GB = 10 * 1024 * 1024 * 1024;
     private static final double NINETY_NINE_PERCENT = 0.99D;
@@ -37,9 +38,8 @@ public class IndexVolume implements HasAuditInfo {
     private String updateUser;
 
     private String path;
-    private byte pvolumeType = VolumeType.PUBLIC.getPrimitiveValue();
-    private byte pstreamStatus = VolumeUseStatus.ACTIVE.getPrimitiveValue();
-    private byte pindexStatus = VolumeUseStatus.ACTIVE.getPrimitiveValue();
+    private byte volumeType = VolumeType.PUBLIC.getPrimitiveValue();
+    private byte indexStatus = VolumeUseStatus.ACTIVE.getPrimitiveValue();
     private String nodeName;
     private Long bytesLimit;
     private static final double ONE_HUNDRED = 100D;
@@ -109,9 +109,8 @@ public class IndexVolume implements HasAuditInfo {
         // Replaces the copy function
         public Builder fromOriginal(final IndexVolume original) {
             instance.path = original.path;
-            instance.pvolumeType = original.pvolumeType;
-            instance.pstreamStatus = original.pstreamStatus;
-            instance.pindexStatus = original.pindexStatus;
+            instance.volumeType = original.volumeType;
+            instance.indexStatus = original.indexStatus;
             instance.nodeName = original.nodeName;
             instance.bytesLimit = original.bytesLimit;
             return this;
@@ -128,7 +127,7 @@ public class IndexVolume implements HasAuditInfo {
         }
 
         public Builder volumeType(final VolumeType value) {
-            instance.setVolumeType(value);
+            instance.setVolumeTypeE(value);
             return this;
         }
 
@@ -173,52 +172,36 @@ public class IndexVolume implements HasAuditInfo {
         this.path = path;
     }
 
-    public byte getPvolumeType() {
-        return pvolumeType;
+    public byte getVolumeType() {
+        return volumeType;
     }
 
-    public void setPvolumeType(final byte pVolumeType) {
-        this.pvolumeType = pVolumeType;
+    public void setVolumeType(final byte pVolumeType) {
+        this.volumeType = pVolumeType;
     }
 
-    public VolumeType getVolumeType() {
-        return VolumeType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pvolumeType);
+    public VolumeType getVolumeTypeE() {
+        return VolumeType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(volumeType);
     }
 
-    public void setVolumeType(final VolumeType volumeType) {
-        this.pvolumeType = volumeType.getPrimitiveValue();
+    public void setVolumeTypeE(final VolumeType volumeType) {
+        this.volumeType = volumeType.getPrimitiveValue();
     }
 
-    public byte getPstreamStatus() {
-        return pstreamStatus;
+    public byte getIndexStatus() {
+        return indexStatus;
     }
 
-    public void setPstreamStatus(final byte pStoreStatus) {
-        this.pstreamStatus = pStoreStatus;
+    public void setIndexStatus(final byte pIndexStatus) {
+        this.indexStatus = pIndexStatus;
     }
 
-    public VolumeUseStatus getStreamStatus() {
-        return VolumeUseStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pstreamStatus);
+    public VolumeUseStatus getIndexStatusE() {
+        return VolumeUseStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(indexStatus);
     }
 
-    public void setStreamStatus(final VolumeUseStatus streamStatus) {
-        this.pstreamStatus = streamStatus.getPrimitiveValue();
-    }
-
-    public byte getPindexStatus() {
-        return pindexStatus;
-    }
-
-    public void setPindexStatus(final byte pIndexStatus) {
-        this.pindexStatus = pIndexStatus;
-    }
-
-    public VolumeUseStatus getIndexStatus() {
-        return VolumeUseStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pindexStatus);
-    }
-
-    public void setIndexStatus(final VolumeUseStatus indexStatus) {
-        this.pindexStatus = indexStatus.getPrimitiveValue();
+    public void setIndexStatusE(final VolumeUseStatus indexStatus) {
+        this.indexStatus = indexStatus.getPrimitiveValue();
     }
 
     public Long getBytesLimit() {
@@ -320,6 +303,10 @@ public class IndexVolume implements HasAuditInfo {
         public byte getPrimitiveValue() {
             return primitiveValue;
         }
+
+        public static VolumeType defaultValue() {
+            return PUBLIC;
+        }
     }
 
     public enum VolumeUseStatus implements HasDisplayValue, HasPrimitiveValue {
@@ -347,6 +334,10 @@ public class IndexVolume implements HasAuditInfo {
         @Override
         public byte getPrimitiveValue() {
             return primitiveValue;
+        }
+
+        public static VolumeUseStatus defaultValue() {
+            return ACTIVE;
         }
     }
 }

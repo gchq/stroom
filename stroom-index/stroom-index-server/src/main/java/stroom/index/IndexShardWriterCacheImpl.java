@@ -25,8 +25,8 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.Node;
-import stroom.task.api.ExecutorProvider;
 import stroom.task.ThreadPoolImpl;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
@@ -133,7 +133,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private IndexShardWriter openExistingShard(final IndexShardKey indexShardKey) {
         // Get all index shards that are owned by this node.
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getNodeIdSet().add(nodeInfo.getThisNode());
+        criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
         criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.getIndexSet().add(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
@@ -424,7 +424,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         // Make sure all open shards are marked as closed.
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getNodeIdSet().add(nodeInfo.getThisNode());
+        criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
         criteria.getIndexShardStatusSet().add(IndexShardStatus.OPEN);
         criteria.getIndexShardStatusSet().add(IndexShardStatus.OPENING);
         criteria.getIndexShardStatusSet().add(IndexShardStatus.CLOSING);
