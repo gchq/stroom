@@ -5,7 +5,7 @@ import stroom.meta.shared.Status;
 
 import java.util.Objects;
 
-class DataImpl implements Meta {
+class MetaImpl implements Meta {
     private long id;
     private String feedName;
     private String streamTypeName;
@@ -18,7 +18,7 @@ class DataImpl implements Meta {
     private long createMs;
     private Long effectiveMs;
 
-    DataImpl() {
+    MetaImpl() {
     }
 
     @Override
@@ -80,7 +80,7 @@ class DataImpl implements Meta {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final DataImpl stream = (DataImpl) o;
+        final MetaImpl stream = (MetaImpl) o;
         return id == stream.id;
     }
 
@@ -95,65 +95,65 @@ class DataImpl implements Meta {
     }
 
     public static class Builder {
-        private final DataImpl stream = new DataImpl();
+        private final MetaImpl meta = new MetaImpl();
 
         public Builder id(final long id) {
-            stream.id = id;
+            meta.id = id;
             return this;
         }
 
         public Builder feedName(final String feedName) {
-            stream.feedName = feedName;
+            meta.feedName = feedName;
             return this;
         }
 
         public Builder streamTypeName(final String streamTypeName) {
-            stream.streamTypeName = streamTypeName;
+            meta.streamTypeName = streamTypeName;
             return this;
         }
 
         public Builder pipelineUuid(final String pipelineUuid) {
-            stream.pipelineUuid = pipelineUuid;
+            meta.pipelineUuid = pipelineUuid;
             return this;
         }
 
         public Builder parentStreamId(final Long parentStreamId) {
-            stream.parentStreamId = parentStreamId;
+            meta.parentStreamId = parentStreamId;
             return this;
         }
 
         public Builder streamTaskId(final Long streamTaskId) {
-            stream.streamTaskId = streamTaskId;
+            meta.streamTaskId = streamTaskId;
             return this;
         }
 
         public Builder streamProcessorId(final Integer streamProcessorId) {
-            stream.streamProcessorId = streamProcessorId;
+            meta.streamProcessorId = streamProcessorId;
             return this;
         }
 
         public Builder status(final Status status) {
-            stream.status = status;
+            meta.status = status;
             return this;
         }
 
         public Builder statusMs(final Long statusMs) {
-            stream.statusMs = statusMs;
+            meta.statusMs = statusMs;
             return this;
         }
 
         public Builder createMs(final long createMs) {
-            stream.createMs = createMs;
+            meta.createMs = createMs;
             return this;
         }
 
         public Builder effectiveMs(final Long effectiveMs) {
-            stream.effectiveMs = effectiveMs;
+            meta.effectiveMs = effectiveMs;
             return this;
         }
 
         public Meta build() {
-            return stream;
+            return meta;
         }
     }
 }

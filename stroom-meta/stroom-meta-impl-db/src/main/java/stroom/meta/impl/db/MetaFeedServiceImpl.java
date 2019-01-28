@@ -43,12 +43,8 @@ class MetaFeedServiceImpl implements MetaFeedService {
     public Integer getOrCreate(final String name) {
         Integer id = get(name);
         if (id == null) {
-            // Try and create.
+            // Create.
             id = create(name);
-            if (id == null) {
-                // Get again.
-                id = get(name);
-            }
         }
 
         return id;

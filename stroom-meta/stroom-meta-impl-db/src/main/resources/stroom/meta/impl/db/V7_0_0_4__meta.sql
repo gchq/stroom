@@ -3,7 +3,6 @@
 --
 CREATE TABLE IF NOT EXISTS meta (
   id 				bigint(20) NOT NULL AUTO_INCREMENT,
-  version           int(11) NOT NULL,
   create_time       bigint(20) NOT NULL,
   effective_time	bigint(20) DEFAULT NULL,
   parent_id     	bigint(20) DEFAULT NULL,
@@ -28,8 +27,8 @@ DELIMITER //
 CREATE PROCEDURE copy ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM' > 0) THEN
-    INSERT INTO meta (id, version, create_time, effective_time, parent_id, status, status_time, task_id, feed_id, type_id, processor_id)
-    SELECT ID, VER, CRT_MS, EFFECT_MS, PARNT_STRM_ID, STAT, STAT_MS, STRM_TASK_ID, FK_FD_ID, FK_STRM_TP_ID, FK_STRM_PROC_ID
+    INSERT INTO meta (id, create_time, effective_time, parent_id, status, status_time, task_id, feed_id, type_id, processor_id)
+    SELECT ID, CRT_MS, EFFECT_MS, PARNT_STRM_ID, STAT, STAT_MS, STRM_TASK_ID, FK_FD_ID, FK_STRM_TP_ID, FK_STRM_PROC_ID
     FROM STRM
     WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM meta)
     ORDER BY ID;

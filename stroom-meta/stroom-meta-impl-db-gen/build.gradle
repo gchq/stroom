@@ -43,9 +43,6 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         includes = 'meta_feed|meta_type|meta_processor|meta|meta_key|meta_val'
                         // We don't want to include flyway versioning
                         excludes = 'meta_schema_history'
-
-                        // Specify 'version' for use in optimistic concurrency control
-                        recordVersionFields = 'version'
                     }
                     target {
                         packageName = 'stroom.meta.impl.db'

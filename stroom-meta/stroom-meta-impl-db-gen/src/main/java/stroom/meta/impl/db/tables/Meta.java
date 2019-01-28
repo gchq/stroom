@@ -41,7 +41,7 @@ import stroom.meta.impl.db.tables.records.MetaRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Meta extends TableImpl<MetaRecord> {
 
-    private static final long serialVersionUID = -1156380933;
+    private static final long serialVersionUID = 1430548233;
 
     /**
      * The reference instance of <code>stroom.meta</code>
@@ -60,11 +60,6 @@ public class Meta extends TableImpl<MetaRecord> {
      * The column <code>stroom.meta.id</code>.
      */
     public final TableField<MetaRecord, Long> ID = createField("id", org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
-
-    /**
-     * The column <code>stroom.meta.version</code>.
-     */
-    public final TableField<MetaRecord, Integer> VERSION = createField("version", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>stroom.meta.create_time</code>.
@@ -202,14 +197,6 @@ public class Meta extends TableImpl<MetaRecord> {
 
     public MetaProcessor metaProcessor() {
         return new MetaProcessor(this, Keys.META_PROCESSOR_ID);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public TableField<MetaRecord, Integer> getRecordVersion() {
-        return VERSION;
     }
 
     /**

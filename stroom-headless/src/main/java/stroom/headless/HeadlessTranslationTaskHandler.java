@@ -173,7 +173,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                 }
 
                 // Create the stream.
-                final Meta meta = new DataImpl.Builder()
+                final Meta meta = new MetaImpl.Builder()
                         .effectiveMs(effectiveMs)
                         .feedName(feedName)
                         .build();

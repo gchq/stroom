@@ -46,31 +46,12 @@ class MetaProcessorServiceImpl implements MetaProcessorService {
 
         Integer id = get(processorId, pipelineUuid);
         if (id == null) {
-            // Try and create.
+            // Create.
             id = create(processorId, pipelineUuid);
-            if (id == null) {
-                // Get again.
-                id = get(processorId, pipelineUuid);
-            }
         }
 
         return id;
     }
-
-//    @Override
-//    public List<String> list() {
-//        JooqUtil.context(connectionProvider, context -> context
-//
-//            return create
-//                    .select(FD.NAME)
-//                    .from(FD)
-//                    .fetch(FD.NAME);
-//
-//        } catch (final SQLException e) {
-//            LOGGER.error(e.getMessage(), e);
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
-//    }
 
     private Integer get(final Integer processorId, final String pipelineUuid) {
         MetaProcessorRecord record = cache.get(processorId);

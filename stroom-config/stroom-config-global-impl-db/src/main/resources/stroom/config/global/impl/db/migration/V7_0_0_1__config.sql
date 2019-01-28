@@ -23,7 +23,7 @@ CREATE PROCEDURE copy ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'GLOB_PROP' > 0) THEN
     INSERT INTO config (id, version, create_time_ms, create_user, update_time_ms, update_user, name, val)
-    SELECT ID, VER, CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, VAL
+    SELECT ID, 1, CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, VAL
     FROM GLOB_PROP
     WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM activity)
     ORDER BY ID;

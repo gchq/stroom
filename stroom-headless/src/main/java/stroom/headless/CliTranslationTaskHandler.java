@@ -162,7 +162,7 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
                 }
 
                 // Create the stream.
-                final Meta meta = new DataImpl.Builder()
+                final Meta meta = new MetaImpl.Builder()
                         .effectiveMs(effectiveMs)
                         .feedName(feedName)
                         .build();
