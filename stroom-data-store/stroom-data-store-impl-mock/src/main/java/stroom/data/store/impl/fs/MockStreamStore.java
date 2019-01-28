@@ -588,11 +588,6 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
 
         @Override
-        public String getStreamTypeName() {
-            return streamTypeName;
-        }
-
-        @Override
         public AttributeMap getAttributes() {
             return attributeMap;
         }

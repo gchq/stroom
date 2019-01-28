@@ -194,7 +194,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
             metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
 
             // Get the main stream provider.
-            final StreamSourceInputStreamProvider mainProvider = metaHolder.getProvider(streamSource.getStreamTypeName());
+            final StreamSourceInputStreamProvider mainProvider = metaHolder.getProvider(streamTypeName);
 
             // Start processing.
             try {

@@ -103,9 +103,9 @@ final class FileSystemStreamSource implements StreamSource {
     public Path getFile() {
         if (file == null) {
             if (parent == null) {
-                file = fileSystemStreamPathHelper.createRootStreamFile(rootPath, meta, getStreamTypeName());
+                file = fileSystemStreamPathHelper.createRootStreamFile(rootPath, meta, streamType);
             } else {
-                file = fileSystemStreamPathHelper.createChildStreamFile(parent.getFile(), getStreamTypeName());
+                file = fileSystemStreamPathHelper.createChildStreamFile(parent.getFile(), streamType);
             }
         }
         return file;
@@ -165,11 +165,6 @@ final class FileSystemStreamSource implements StreamSource {
 
     public void setMeta(final Meta meta) {
         this.meta = meta;
-    }
-
-    @Override
-    public String getStreamTypeName() {
-        return streamType;
     }
 
     @Override

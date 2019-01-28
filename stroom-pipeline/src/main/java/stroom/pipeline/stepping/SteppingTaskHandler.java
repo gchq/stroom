@@ -314,7 +314,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                     final String feedName = streamSource.getMeta().getFeedName();
 
                     // Get the stream type.
-                    final String streamTypeName = stepSource.getStreamTypeName();
+                    final String streamTypeName = stepSource.getMeta().getTypeName();
 
                     // Now process the data.
                     processStream(controller, feedName, streamTypeName, stepSource);
@@ -514,7 +514,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
 
             // Get the main stream provider.
-            final StreamSourceInputStreamProvider mainProvider = metaHolder.getProvider(streamSource.getStreamTypeName());
+            final StreamSourceInputStreamProvider mainProvider = metaHolder.getProvider(streamTypeName);
 
             try {
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();

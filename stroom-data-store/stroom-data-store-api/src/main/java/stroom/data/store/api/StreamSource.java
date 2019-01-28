@@ -31,15 +31,18 @@ import java.io.InputStream;
  */
 public interface StreamSource extends Closeable {
     /**
-     * @return a type associated with the stream. Used to differentiate between
-     * child streams ("ctx", "idx", etc).
-     */
-    String getStreamTypeName();
-
-    /**
-     * @return the stream associated with this source
+     * Get the meta data associated with this source.
+     *
+     * @return the meta data associated with this source
      */
     Meta getMeta();
+
+    /**
+     * Any meta data attributes associated with the data.
+     *
+     * @return meta data attributes associated with the data.
+     */
+    AttributeMap getAttributes();
 
     /**
      * @return the real IO input stream
@@ -53,11 +56,6 @@ public interface StreamSource extends Closeable {
     CompoundInputStream getCompoundInputStream() throws IOException;
 
     StreamSourceInputStreamProvider getInputStreamProvider();
-
-    /**
-     * Any attributes regarding the stream
-     */
-    AttributeMap getAttributes();
 
     /**
      * Depending on the type of stream we we may return back null if the stream

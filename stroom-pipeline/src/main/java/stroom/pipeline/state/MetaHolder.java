@@ -53,7 +53,7 @@ public class MetaHolder implements Holder {
             final StreamSourceInputStreamProvider provider = source.getInputStreamProvider();
             streamCloser.add(provider);
             streamCloser.add(source);
-            streamProviders.put(source.getStreamTypeName(), provider);
+            streamProviders.put(source.getMeta().getTypeName(), provider);
         }
     }
 

@@ -185,7 +185,7 @@ public class DataFetcher {
                 }
 
                 streamCloser.add(streamSource);
-                streamTypeName = streamSource.getStreamTypeName();
+                streamTypeName = streamSource.getMeta().getTypeName();
 
                 // Find out which child stream types are available.
                 availableChildStreamTypes = getAvailableChildStreamTypes(streamSource);
