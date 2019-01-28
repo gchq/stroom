@@ -34,7 +34,7 @@ public class DataRetentionStreamFinder {//implements AutoCloseable {
 //
 //    private final Connection connection;
 //    private final DictionaryStore dictionaryStore;
-//    private final StreamMetaService streamMetaService;
+//    private final MetaService metaService;
 //
 //    private PreparedStatement preparedStatement;
 //

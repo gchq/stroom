@@ -18,7 +18,7 @@ package stroom.test;
 
 
 import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamSource;
@@ -156,7 +156,7 @@ public final class StoreCreationTool {
         effectiveMs += effectiveMsOffset++;
 
         // Add the associated data to the stream store.
-        final MetaProperties streamProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(referenceFeed.getName())
                 .typeName(StreamTypeNames.RAW_REFERENCE)
                 .createMs(effectiveMs)
@@ -164,7 +164,7 @@ public final class StoreCreationTool {
 
         final String data = StreamUtil.fileToString(dataLocation);
 
-        final StreamTarget target = streamStore.openStreamTarget(streamProperties);
+        final StreamTarget target = streamStore.openStreamTarget(metaProperties);
         StreamTargetUtil.write(target, data);
         streamStore.closeStreamTarget(target);
 
@@ -212,10 +212,10 @@ public final class StoreCreationTool {
 
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
-                    .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                    .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                            .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                            .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                            .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                             .build())
                     .build();
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 2, findStreamQueryData);
@@ -301,12 +301,12 @@ public final class StoreCreationTool {
                 flatteningXsltLocation, referenceFeeds);
 
         // Add the associated data to the stream store.
-        final MetaProperties streamProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
-        final StreamTarget dataTarget = streamStore.openStreamTarget(streamProperties);
+        final StreamTarget dataTarget = streamStore.openStreamTarget(metaProperties);
         try (final OutputStreamProvider outputStreamProvider = dataTarget.getOutputStreamProvider()) {
             try (final InputStream inputStream = Files.newInputStream(dataLocation);
                  final SegmentOutputStream outputStream = outputStreamProvider.next()) {
@@ -378,10 +378,10 @@ public final class StoreCreationTool {
 
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
-                    .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                    .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, docRef.getName())
-                            .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                            .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, docRef.getName())
+                            .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                             .build())
                     .build();
 
@@ -616,9 +616,9 @@ public final class StoreCreationTool {
 
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
-                    .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                    .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                            .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                             .build())
                     .build();
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);

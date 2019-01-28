@@ -20,7 +20,7 @@ package stroom.data.store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.util.date.DateUtil;
@@ -43,7 +43,7 @@ public class StreamAttributeMapRetentionRuleDecorator {
 
     public StreamAttributeMapRetentionRuleDecorator(final DictionaryStore dictionaryStore, final List<DataRetentionRule> rules) {
         this.rules = rules;
-        expressionMatcher = new ExpressionMatcher(MetaDataSource.getFieldMap(), dictionaryStore);
+        expressionMatcher = new ExpressionMatcher(MetaFieldNames.getFieldMap(), dictionaryStore);
     }
 
     void addMatchingRetentionRuleInfo(final Meta stream, final Map<String, String> attributeMap) {

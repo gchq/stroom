@@ -16,7 +16,7 @@
 
 package stroom.streamtask.shared;
 
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
@@ -38,9 +38,9 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
     public static final String FIELD_CREATE_TIME = "Created";
     public static final String FIELD_START_TIME = "Start Time";
     public static final String FIELD_END_TIME_DATE = "End Time";
-    public static final String FIELD_FEED_NAME = MetaDataSource.FEED_NAME;
+    public static final String FIELD_FEED_NAME = MetaFieldNames.FEED_NAME;
     public static final String FIELD_PRIORITY = "Priority";
-    public static final String FIELD_PIPELINE_UUID = MetaDataSource.PIPELINE_UUID;
+    public static final String FIELD_PIPELINE_UUID = MetaFieldNames.PIPELINE_UUID;
     public static final String FIELD_STATUS = "Status";
     public static final String FIELD_COUNT = "Count";
     public static final String FIELD_NODE = "Node";

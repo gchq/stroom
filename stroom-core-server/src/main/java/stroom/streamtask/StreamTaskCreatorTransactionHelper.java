@@ -73,7 +73,7 @@ class StreamTaskCreatorTransactionHelper {
     private final NodeService nodeService;
     private final ClusterLockService clusterLockService;
     private final StreamTaskService streamTaskService;
-    private final MetaService streamMetaService;
+    private final MetaService metaService;
     private final StroomEntityManager stroomEntityManager;
     private final EntityManagerSupport entityManagerSupport;
     private final CoreConfig coreConfig;
@@ -83,7 +83,7 @@ class StreamTaskCreatorTransactionHelper {
                                        final NodeService nodeService,
                                        final ClusterLockService clusterLockService,
                                        final StreamTaskService streamTaskService,
-                                       final MetaService streamMetaService,
+                                       final MetaService metaService,
                                        final StroomEntityManager stroomEntityManager,
                                        final EntityManagerSupport entityManagerSupport,
                                        final CoreConfig coreConfig) {
@@ -91,7 +91,7 @@ class StreamTaskCreatorTransactionHelper {
         this.nodeService = nodeService;
         this.clusterLockService = clusterLockService;
         this.streamTaskService = streamTaskService;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.stroomEntityManager = stroomEntityManager;
         this.entityManagerSupport = entityManagerSupport;
         this.coreConfig = coreConfig;

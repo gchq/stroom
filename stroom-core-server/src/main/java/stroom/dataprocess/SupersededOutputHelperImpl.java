@@ -6,7 +6,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.pipeline.scope.PipelineScoped;
 import stroom.pipeline.task.SupersededOutputHelper;
 import stroom.query.api.v2.ExpressionOperator;
@@ -58,11 +58,11 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
 
             if (!superseded) {
                 final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                        .addTerm(MetaDataSource.PARENT_STREAM_ID, Condition.EQUALS, String.valueOf(sourceStream.getId()))
-                        .addTerm(MetaDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, String.valueOf(streamProcessor.getId()))
+                        .addTerm(MetaFieldNames.PARENT_STREAM_ID, Condition.EQUALS, String.valueOf(sourceStream.getId()))
+                        .addTerm(MetaFieldNames.STREAM_PROCESSOR_ID, Condition.EQUALS, String.valueOf(streamProcessor.getId()))
                         .build();
-                final FindMetaCriteria findStreamCriteria = new FindMetaCriteria(expression);
-                final List<Meta> streamList = dataMetaService.find(findStreamCriteria);
+                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
+                final List<Meta> streamList = dataMetaService.find(findMetaCriteria);
 
                 Long latestStreamTaskId = null;
                 long latestStreamCreationTime = processStartTime;
@@ -84,19 +84,19 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
                 }
 
                 // Loop around all the streams found above looking for ones to delete
-                final FindMetaCriteria findDeleteStreamCriteria = new FindMetaCriteria();
+                final FindMetaCriteria findDeleteMetaCriteria = new FindMetaCriteria();
                 for (final Meta stream : streamList) {
                     // If the stream is not associated with the latest stream task
                     // and is not already deleted then select it for deletion.
                     if ((latestStreamTaskId == null || !latestStreamTaskId.equals(stream.getProcessTaskId()))
                             && !Status.DELETED.equals(stream.getStatus())) {
-                        findDeleteStreamCriteria.obtainSelectedIdSet().add(stream.getId());
+                        findDeleteMetaCriteria.obtainSelectedIdSet().add(stream.getId());
                     }
                 }
 
                 // If we have found any to delete then delete them now.
-                if (findDeleteStreamCriteria.obtainSelectedIdSet().isConstrained()) {
-                    final long deleteCount = dataMetaService.updateStatus(findDeleteStreamCriteria, Status.DELETED);
+                if (findDeleteMetaCriteria.obtainSelectedIdSet().isConstrained()) {
+                    final long deleteCount = dataMetaService.updateStatus(findDeleteMetaCriteria, Status.DELETED);
                     LOGGER.info("checkSuperseded() - Removed {}", deleteCount);
                 }
 

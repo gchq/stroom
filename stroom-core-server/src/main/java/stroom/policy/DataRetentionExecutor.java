@@ -20,7 +20,7 @@ package stroom.policy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.DataRetentionAgeUtil;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.entity.shared.Period;
@@ -362,8 +362,8 @@ public class DataRetentionExecutor {
             final List<DataRetentionRule> activeRules = new ArrayList<>();
 
             // Find out which fields are used by the expressions so we don't have to do unnecessary joins.
-            fieldSet.add(MetaDataSource.STREAM_ID);
-            fieldSet.add(MetaDataSource.CREATE_TIME);
+            fieldSet.add(MetaFieldNames.STREAM_ID);
+            fieldSet.add(MetaFieldNames.CREATE_TIME);
 
             // Also make sure we create a list of rules that are enabled and have at least one enabled term.
             rules.forEach(rule -> {

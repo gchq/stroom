@@ -46,7 +46,7 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
     private static final String DIR = "TestTranslationTask/";
 
     @Inject
-    private MockMetaService streamMetaService;
+    private MockMetaService metaService;
     @Inject
     private MockStreamStore streamStore;
     @Inject
@@ -73,7 +73,7 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
         final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
-        for (final Entry<Long, Meta> entry : streamMetaService.getMetaMap().entrySet()) {
+        for (final Entry<Long, Meta> entry : metaService.getMetaMap().entrySet()) {
             final long streamId = entry.getKey();
             final Meta stream = entry.getValue();
             if (StreamTypeNames.EVENTS.equals(stream.getTypeName())) {

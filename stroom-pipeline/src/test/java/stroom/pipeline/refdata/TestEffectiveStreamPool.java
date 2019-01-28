@@ -51,7 +51,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
     void testGrowingWindow() {
         final String refFeedName = "TEST_REF";
 
-        final InnerStreamMetaService mockStreamStore = new InnerStreamMetaService() {
+        final InnerStreamMetaService metaService = new InnerStreamMetaService() {
             @Override
             public Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
                 findEffectiveStreamSourceCount++;
@@ -78,7 +78,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
 
         try (CacheManager cacheManager = new CacheManagerImpl()) {
             final EffectiveStreamCache effectiveStreamPool = new EffectiveStreamCache(cacheManager,
-                    mockStreamStore,
+                    metaService,
                     new EffectiveStreamInternPool(),
                     new SecurityImpl(new MockSecurityContext()));
 

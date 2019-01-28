@@ -21,7 +21,7 @@ import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.MetaSecurityFilter;
@@ -98,18 +98,18 @@ class MetaServiceImpl implements MetaService {
 
         // Standard fields.
         final Map<String, TermHandler<?>> termHandlers = new HashMap<>();
-        termHandlers.put(MetaDataSource.STREAM_ID, new TermHandler<>(meta.ID, Long::valueOf));
-        termHandlers.put(MetaDataSource.FEED_NAME, new TermHandler<>(meta.FEED_ID, feedService::getOrCreate));
-        termHandlers.put(MetaDataSource.FEED_ID, new TermHandler<>(meta.FEED_ID, Integer::valueOf));
-        termHandlers.put(MetaDataSource.STREAM_TYPE_NAME, new TermHandler<>(meta.TYPE_ID, dataTypeService::getOrCreate));
-        termHandlers.put(MetaDataSource.PIPELINE_UUID, new TermHandler<>(dataProcessor.PIPELINE_UUID, value -> value));
-        termHandlers.put(MetaDataSource.PARENT_STREAM_ID, new TermHandler<>(meta.PARENT_ID, Long::valueOf));
-        termHandlers.put(MetaDataSource.STREAM_TASK_ID, new TermHandler<>(meta.TASK_ID, Long::valueOf));
-        termHandlers.put(MetaDataSource.STREAM_PROCESSOR_ID, new TermHandler<>(meta.PROCESSOR_ID, Integer::valueOf));
-        termHandlers.put(MetaDataSource.STATUS, new TermHandler<>(meta.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase()))));
-        termHandlers.put(MetaDataSource.STATUS_TIME, new TermHandler<>(meta.STATUS_TIME, DateUtil::parseNormalDateTimeString));
-        termHandlers.put(MetaDataSource.CREATE_TIME, new TermHandler<>(meta.CREATE_TIME, DateUtil::parseNormalDateTimeString));
-        termHandlers.put(MetaDataSource.EFFECTIVE_TIME, new TermHandler<>(meta.EFFECTIVE_TIME, DateUtil::parseNormalDateTimeString));
+        termHandlers.put(MetaFieldNames.STREAM_ID, new TermHandler<>(meta.ID, Long::valueOf));
+        termHandlers.put(MetaFieldNames.FEED_NAME, new TermHandler<>(meta.FEED_ID, feedService::getOrCreate));
+        termHandlers.put(MetaFieldNames.FEED_ID, new TermHandler<>(meta.FEED_ID, Integer::valueOf));
+        termHandlers.put(MetaFieldNames.STREAM_TYPE_NAME, new TermHandler<>(meta.TYPE_ID, dataTypeService::getOrCreate));
+        termHandlers.put(MetaFieldNames.PIPELINE_UUID, new TermHandler<>(dataProcessor.PIPELINE_UUID, value -> value));
+        termHandlers.put(MetaFieldNames.PARENT_STREAM_ID, new TermHandler<>(meta.PARENT_ID, Long::valueOf));
+        termHandlers.put(MetaFieldNames.STREAM_TASK_ID, new TermHandler<>(meta.TASK_ID, Long::valueOf));
+        termHandlers.put(MetaFieldNames.STREAM_PROCESSOR_ID, new TermHandler<>(meta.PROCESSOR_ID, Integer::valueOf));
+        termHandlers.put(MetaFieldNames.STATUS, new TermHandler<>(meta.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase()))));
+        termHandlers.put(MetaFieldNames.STATUS_TIME, new TermHandler<>(meta.STATUS_TIME, DateUtil::parseNormalDateTimeString));
+        termHandlers.put(MetaFieldNames.CREATE_TIME, new TermHandler<>(meta.CREATE_TIME, DateUtil::parseNormalDateTimeString));
+        termHandlers.put(MetaFieldNames.EFFECTIVE_TIME, new TermHandler<>(meta.EFFECTIVE_TIME, DateUtil::parseNormalDateTimeString));
         expressionMapper = new ExpressionMapper(termHandlers);
 
 
@@ -117,15 +117,15 @@ class MetaServiceImpl implements MetaService {
         final Map<String, MetaTermHandler> metaTermHandlers = new HashMap<>();
 
 //        metaTermHandlers.put(StreamDataSource.NODE, createMetaTermHandler(StreamDataSource.NODE));
-        addMetaTermHandler(metaTermHandlers, MetaDataSource.REC_READ);
-        addMetaTermHandler(metaTermHandlers, MetaDataSource.REC_WRITE);
-        addMetaTermHandler(metaTermHandlers, MetaDataSource.REC_INFO);
-        addMetaTermHandler(metaTermHandlers, MetaDataSource.REC_WARN);
-        addMetaTermHandler(metaTermHandlers, MetaDataSource.REC_ERROR);
-        addMetaTermHandler(metaTermHandlers, MetaDataSource.REC_FATAL);
-        addMetaTermHandler(metaTermHandlers, MetaDataSource.DURATION);
-        addMetaTermHandler(metaTermHandlers, MetaDataSource.FILE_SIZE);
-        addMetaTermHandler(metaTermHandlers, MetaDataSource.STREAM_SIZE);
+        addMetaTermHandler(metaTermHandlers, MetaFieldNames.REC_READ);
+        addMetaTermHandler(metaTermHandlers, MetaFieldNames.REC_WRITE);
+        addMetaTermHandler(metaTermHandlers, MetaFieldNames.REC_INFO);
+        addMetaTermHandler(metaTermHandlers, MetaFieldNames.REC_WARN);
+        addMetaTermHandler(metaTermHandlers, MetaFieldNames.REC_ERROR);
+        addMetaTermHandler(metaTermHandlers, MetaFieldNames.REC_FATAL);
+        addMetaTermHandler(metaTermHandlers, MetaFieldNames.DURATION);
+        addMetaTermHandler(metaTermHandlers, MetaFieldNames.FILE_SIZE);
+        addMetaTermHandler(metaTermHandlers, MetaFieldNames.RAW_SIZE);
 
         metaExpressionMapper = new MetaExpressionMapper(metaTermHandlers);
     }
@@ -428,7 +428,7 @@ class MetaServiceImpl implements MetaService {
         if (optionalId.isPresent()) {
             // Get the data that occurs just before or ast the start of the period.
             final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(optionalId.get()))
+                    .addTerm(MetaFieldNames.STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(optionalId.get()))
                     .build();
             // There is no need to apply security here are is has been applied when finding the data id above.
             final Condition condition = expressionMapper.apply(expression);
@@ -437,11 +437,11 @@ class MetaServiceImpl implements MetaService {
 
         // Now add all data that occurs within the requested period.
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.EFFECTIVE_TIME, ExpressionTerm.Condition.GREATER_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
-                .addTerm(MetaDataSource.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getToMs()))
-                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
-                .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
-                .addTerm(MetaDataSource.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTerm(MetaFieldNames.EFFECTIVE_TIME, ExpressionTerm.Condition.GREATER_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
+                .addTerm(MetaFieldNames.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getToMs()))
+                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
+                .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
+                .addTerm(MetaFieldNames.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
 
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
@@ -453,10 +453,10 @@ class MetaServiceImpl implements MetaService {
 
     private Optional<Long> getMaxEffectiveDataIdBeforePeriod(final EffectiveMetaDataCriteria criteria) {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
-                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
-                .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
-                .addTerm(MetaDataSource.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTerm(MetaFieldNames.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
+                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
+                .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
+                .addTerm(MetaFieldNames.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
 
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
@@ -515,7 +515,7 @@ class MetaServiceImpl implements MetaService {
 
             final FindMetaCriteria findDataCriteria = new FindMetaCriteria();
             findDataCriteria.copyFrom(criteria);
-            findDataCriteria.setSort(MetaDataSource.CREATE_TIME, Direction.DESCENDING, false);
+            findDataCriteria.setSort(MetaFieldNames.CREATE_TIME, Direction.DESCENDING, false);
 
 //            final boolean includeRelations = findDataCriteria.getFetchSet().contains(StreamEntity.ENTITY_TYPE);
 //            findDataCriteria.setFetchSet(new HashSet<>());
@@ -623,26 +623,26 @@ class MetaServiceImpl implements MetaService {
     private ExpressionOperator getIdExpression(final long id, final boolean anyStatus) {
         if (anyStatus) {
             return new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
+                    .addTerm(MetaFieldNames.STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
                     .build();
         }
 
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
-                .addTerm(MetaDataSource.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTerm(MetaFieldNames.STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
+                .addTerm(MetaFieldNames.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
     private ExpressionOperator getParentIdExpression(final long id, final boolean anyStatus) {
         if (anyStatus) {
             return new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(MetaDataSource.PARENT_STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
+                    .addTerm(MetaFieldNames.PARENT_STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
                     .build();
         }
 
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.PARENT_STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
-                .addTerm(MetaDataSource.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTerm(MetaFieldNames.PARENT_STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
+                .addTerm(MetaFieldNames.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 

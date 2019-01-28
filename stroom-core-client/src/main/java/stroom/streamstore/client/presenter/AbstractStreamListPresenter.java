@@ -440,7 +440,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         dataProvider.setCriteria(criteria);
     }
 
-    MetaRow getSelectedStream() {
+    MetaRow getSelected() {
         return getView().getSelectionModel().getSelected();
     }
 

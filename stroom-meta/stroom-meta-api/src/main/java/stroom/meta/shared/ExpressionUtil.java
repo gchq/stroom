@@ -17,7 +17,7 @@ public final class ExpressionUtil {
     }
 
     public static ExpressionOperator createSimpleExpression() {
-        return createSimpleExpression(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
+        return createSimpleExpression(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
     }
 
     public static ExpressionOperator createSimpleExpression(final String field, final Condition condition, final String value) {
@@ -28,30 +28,30 @@ public final class ExpressionUtil {
 
     public static ExpressionOperator createStatusExpression(final Status status) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, status.getDisplayValue())
+                .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createDataIdExpression(final long id) {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(id))
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTerm(MetaFieldNames.STREAM_ID, Condition.EQUALS, String.valueOf(id))
+                .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         return expression;
     }
 
     public static ExpressionOperator createParentIdExpression(final long parentId) {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.PARENT_STREAM_ID, Condition.EQUALS, String.valueOf(parentId))
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTerm(MetaFieldNames.PARENT_STREAM_ID, Condition.EQUALS, String.valueOf(parentId))
+                .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         return expression;
     }
 
     public static ExpressionOperator createTypeExpression(final String typeName) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, typeName)
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, typeName)
+                .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
@@ -64,25 +64,25 @@ public final class ExpressionUtil {
 
         if (feedNames != null) {
             if (feedNames.length == 1) {
-                builder.addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedNames[0]);
+                builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedNames[0]);
             } else {
                 final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
                 for (final String feedName : feedNames) {
-                    or.addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName);
+                    or.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName);
                 }
                 builder.addOperator(or.build());
             }
         }
 
-        builder.addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
+        builder.addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
         return builder.build();
     }
 
 
     public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addDocRefTerm(MetaDataSource.PIPELINE_UUID, Condition.IS_DOC_REF, pipelineRef)
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addDocRefTerm(MetaFieldNames.PIPELINE_UUID, Condition.IS_DOC_REF, pipelineRef)
+                .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 

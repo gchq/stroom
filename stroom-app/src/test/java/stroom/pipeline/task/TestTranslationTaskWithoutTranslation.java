@@ -53,7 +53,7 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
     @Inject
     private MockStreamStore streamStore;
     @Inject
-    private MockMetaService streamMetaService;
+    private MockMetaService metaService;
     @Inject
     private NodeInfo nodeInfo;
     @Inject
@@ -71,7 +71,7 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
     @Test
     void test() throws IOException {
         setup(FEED_NAME, RESOURCE_NAME);
-        assertThat(streamMetaService.getLockCount()).isEqualTo(0);
+        assertThat(metaService.getLockCount()).isEqualTo(0);
 
         final List<StreamProcessorTaskExecutor> results = processAll();
         assertThat(results.size()).isEqualTo(1);
@@ -89,7 +89,7 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
         final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
-        for (final Entry<Long, Meta> entry : streamMetaService.getMetaMap().entrySet()) {
+        for (final Entry<Long, Meta> entry : metaService.getMetaMap().entrySet()) {
             final long streamId = entry.getKey();
             final Meta stream = entry.getValue();
             if (StreamTypeNames.EVENTS.equals(stream.getTypeName())) {

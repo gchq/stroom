@@ -283,9 +283,9 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         action.setPipeline(pipeline);
 
         // Set the stream id on the stepping action.
-        final FindMetaCriteria findStreamCriteria = new FindMetaCriteria();
-        findStreamCriteria.obtainSelectedIdSet().add(stream.getId());
-        action.setCriteria(findStreamCriteria);
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+        findMetaCriteria.obtainSelectedIdSet().add(stream.getId());
+        action.setCriteria(findMetaCriteria);
         action.setChildStreamType(childStreamType);
 
         // Load the pipeline.

@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.WrappedSegmentOutputStream;
@@ -118,7 +118,7 @@ public class StreamAppender extends AbstractAppender {
             streamTaskId = streamProcessorHolder.getStreamTask().getId();
         }
 
-        final MetaProperties streamProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feed)
                 .typeName(streamType)
                 .parent(parentStream)
@@ -127,7 +127,7 @@ public class StreamAppender extends AbstractAppender {
                 .processorTaskId(streamTaskId)
                 .build();
 
-        streamTarget = streamStore.openStreamTarget(streamProperties);
+        streamTarget = streamStore.openStreamTarget(metaProperties);
 
         wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.getOutputStreamProvider().next()) {
             @Override
@@ -193,7 +193,7 @@ public class StreamAppender extends AbstractAppender {
             currentStatistics.write(streamTarget.getAttributes());
 
             // Overwrite the actual output record count.
-            streamTarget.getAttributes().put(MetaDataSource.REC_WRITE, String.valueOf(count));
+            streamTarget.getAttributes().put(MetaFieldNames.REC_WRITE, String.valueOf(count));
 
             // Close the stream target.
             try {

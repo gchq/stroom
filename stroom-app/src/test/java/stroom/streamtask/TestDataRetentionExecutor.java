@@ -26,7 +26,7 @@ import stroom.meta.shared.MetaService;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.entity.shared.BaseResultList;
 import stroom.policy.DataRetentionExecutor;
 import stroom.policy.DataRetentionService;
@@ -54,7 +54,7 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     private static final int RETENTION_PERIOD_DAYS = 1;
 
     @Inject
-    private MetaService streamMetaService;
+    private MetaService metaService;
     @Inject
     private DataRetentionExecutor dataRetentionExecutor;
     @Inject
@@ -73,7 +73,7 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
 
         // save two streams, one inside retention period, one outside
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
-        builder.addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName);
+        builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName);
         final DataRetentionRule rule = createRule(1, builder.build(), RETENTION_PERIOD_DAYS, stroom.streamstore.shared.TimeUnit.DAYS);
         final DataRetentionPolicy currentPolicy = dataRetentionService.load();
         final DataRetentionPolicy dataRetentionPolicy = new DataRetentionPolicy(Collections.singletonList(rule));
@@ -82,7 +82,7 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         }
         dataRetentionService.save(dataRetentionPolicy);
 
-        Meta streamInsideRetention = streamMetaService.create(
+        Meta streamInsideRetention = metaService.create(
                 new MetaProperties.Builder()
                         .feedName(feedName)
                         .typeName(StreamTypeNames.RAW_EVENTS)
@@ -90,7 +90,7 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
                         .statusMs(now)
                         .build());
 
-        Meta streamOutsideRetention = streamMetaService.create(
+        Meta streamOutsideRetention = metaService.create(
                 new MetaProperties.Builder()
                         .feedName(feedName)
                         .typeName(StreamTypeNames.RAW_EVENTS)
@@ -99,8 +99,8 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
                         .build());
 
         // Streams are locked initially so unlock.
-        streamMetaService.updateStatus(streamInsideRetention, Status.UNLOCKED);
-        streamMetaService.updateStatus(streamOutsideRetention, Status.UNLOCKED);
+        metaService.updateStatus(streamInsideRetention, Status.UNLOCKED);
+        metaService.updateStatus(streamOutsideRetention, Status.UNLOCKED);
 
         dumpStreams();
 
@@ -110,8 +110,8 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         // run the stream retention task which should 'delete' one stream
         dataRetentionExecutor.exec();
 
-        streamInsideRetention = streamMetaService.getMeta(streamInsideRetention.getId(), true);
-        streamOutsideRetention = streamMetaService.getMeta(streamOutsideRetention.getId(), true);
+        streamInsideRetention = metaService.getMeta(streamInsideRetention.getId(), true);
+        streamOutsideRetention = metaService.getMeta(streamOutsideRetention.getId(), true);
 
         dumpStreams();
 
@@ -129,8 +129,8 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         // one outside the retention period is already 'deleted'
         dataRetentionExecutor.exec();
 
-        streamInsideRetention = streamMetaService.getMeta(streamInsideRetention.getId(), true);
-        streamOutsideRetention = streamMetaService.getMeta(streamOutsideRetention.getId(), true);
+        streamInsideRetention = metaService.getMeta(streamInsideRetention.getId(), true);
+        streamOutsideRetention = metaService.getMeta(streamOutsideRetention.getId(), true);
 
         dumpStreams();
 
@@ -146,7 +146,7 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     }
 
     private void dumpStreams() {
-        final BaseResultList<Meta> streams = streamMetaService.find(new FindMetaCriteria());
+        final BaseResultList<Meta> streams = metaService.find(new FindMetaCriteria());
 
         assertThat(streams.size()).isEqualTo(2);
 

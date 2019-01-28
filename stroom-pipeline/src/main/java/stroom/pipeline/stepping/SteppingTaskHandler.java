@@ -73,7 +73,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private static final Logger LOGGER = LoggerFactory.getLogger(SteppingTaskHandler.class);
 
     private final StreamStore streamStore;
-    private final MetaService streamMetaService;
+    private final MetaService metaService;
     private final StreamCloser streamCloser;
     private final FeedProperties feedProperties;
     private final TaskContext taskContext;
@@ -105,7 +105,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
     @Inject
     SteppingTaskHandler(final StreamStore streamStore,
-                        final MetaService streamMetaService,
+                        final MetaService metaService,
                         final StreamCloser streamCloser,
                         final FeedProperties feedProperties,
                         final TaskContext taskContext,
@@ -124,7 +124,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         final PipelineContext pipelineContext,
                         final Security security) {
         this.streamStore = streamStore;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.streamCloser = streamCloser;
         this.feedProperties = feedProperties;
         this.taskContext = taskContext;
@@ -415,7 +415,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             }
 
             // Find streams.
-            final List<Meta> allStreamList = streamMetaService.find(criteria);
+            final List<Meta> allStreamList = metaService.find(criteria);
             allStreamIdList = new ArrayList<>(allStreamList.size());
             for (final Meta stream : allStreamList) {
                 allStreamIdList.add(stream.getId());

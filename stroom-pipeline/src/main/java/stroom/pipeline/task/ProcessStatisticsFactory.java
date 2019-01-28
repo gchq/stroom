@@ -17,7 +17,7 @@
 package stroom.pipeline.task;
 
 import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.state.RecordCount;
@@ -43,17 +43,17 @@ public class ProcessStatisticsFactory {
 
     private static void addRecordCounts(final ProcessStatistics stats,
                                         final RecordCount recordCount) {
-        stats.map.put(MetaDataSource.REC_READ, recordCount.getRead());
-        stats.map.put(MetaDataSource.REC_WRITE, recordCount.getWritten());
-        stats.map.put(MetaDataSource.DURATION, recordCount.getDuration());
+        stats.map.put(MetaFieldNames.REC_READ, recordCount.getRead());
+        stats.map.put(MetaFieldNames.REC_WRITE, recordCount.getWritten());
+        stats.map.put(MetaFieldNames.DURATION, recordCount.getDuration());
     }
 
     private static void addMarkerCounts(final ProcessStatistics stats,
                                         final ErrorStatistics errorStatistics) {
-        stats.map.put(MetaDataSource.REC_INFO, getMarkerCount(errorStatistics, Severity.INFO));
-        stats.map.put(MetaDataSource.REC_WARN, getMarkerCount(errorStatistics, Severity.WARNING));
-        stats.map.put(MetaDataSource.REC_ERROR, getMarkerCount(errorStatistics, Severity.ERROR));
-        stats.map.put(MetaDataSource.REC_FATAL, getMarkerCount(errorStatistics, Severity.FATAL_ERROR));
+        stats.map.put(MetaFieldNames.REC_INFO, getMarkerCount(errorStatistics, Severity.INFO));
+        stats.map.put(MetaFieldNames.REC_WARN, getMarkerCount(errorStatistics, Severity.WARNING));
+        stats.map.put(MetaFieldNames.REC_ERROR, getMarkerCount(errorStatistics, Severity.ERROR));
+        stats.map.put(MetaFieldNames.REC_FATAL, getMarkerCount(errorStatistics, Severity.FATAL_ERROR));
     }
 
     private static long getMarkerCount(final ErrorStatistics errorStatistics,

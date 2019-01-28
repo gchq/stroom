@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.Status;
@@ -51,14 +51,14 @@ public abstract class AbstractBenchmark {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBenchmark.class);
 
     private final StreamStore streamStore;
-    private final MetaService streamMetaService;
+    private final MetaService metaService;
     private final TaskContext taskContext;
 
     AbstractBenchmark(final StreamStore streamStore,
-                      final MetaService streamMetaService,
+                      final MetaService metaService,
                       final TaskContext taskContext) {
         this.streamStore = streamStore;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.taskContext = taskContext;
     }
 
@@ -87,12 +87,12 @@ public abstract class AbstractBenchmark {
 
     protected Meta writeData(final String feedName, final String streamTypeName, final String data) {
         // Add the associated data to the stream store.
-        final MetaProperties streamProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feedName)
                 .typeName(streamTypeName)
                 .build();
 
-        final StreamTarget dataTarget = streamStore.openStreamTarget(streamProperties);
+        final StreamTarget dataTarget = streamStore.openStreamTarget(metaProperties);
         StreamTargetUtil.write(dataTarget, data);
         streamStore.closeStreamTarget(dataTarget);
 
@@ -133,15 +133,15 @@ public abstract class AbstractBenchmark {
 
     protected void verifyData(final FeedDoc feed, final String verificationString) throws IOException {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
-        builder.addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feed.getName());
+        builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feed.getName());
         if (feed.isReference()) {
-            builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE);
+            builder.addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE);
         } else {
-            builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS);
+            builder.addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS);
         }
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(builder.build());
-        final BaseResultList<Meta> streams = streamMetaService.find(criteria);
+        final BaseResultList<Meta> streams = metaService.find(criteria);
         final Meta targetStream = streams.getFirst();
 
         // Get back translated result.
@@ -163,7 +163,7 @@ public abstract class AbstractBenchmark {
     protected void deleteData(final String... feeds) {
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(ExpressionUtil.createFeedsExpression(feeds));
-        streamMetaService.updateStatus(criteria, Status.DELETED);
+        metaService.updateStatus(criteria, Status.DELETED);
     }
 
     protected String createReferenceData(final int recordCount) {

@@ -7,7 +7,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.entity.shared.BaseResultList;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
@@ -37,7 +37,7 @@ class TestMetaServiceImpl {
         final Meta meta2 = dataMetaService.create(createProperties("FEED2"));
 
         final ExpressionOperator expression = new Builder(Op.AND)
-                .addTerm(MetaDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(meta2.getId()))
+                .addTerm(MetaFieldNames.STREAM_ID, Condition.EQUALS, String.valueOf(meta2.getId()))
                 .build();
         final FindMetaCriteria criteria = new FindMetaCriteria(expression);
 

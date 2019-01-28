@@ -80,14 +80,14 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
         // Don't set the processor or the task or else this rolling stream will be deleted automatically because the
         // system will think it is superseded output.
-        final MetaProperties streamProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(key.getFeed())
                 .typeName(key.getStreamType())
                 .parent(streamHolder.getStream())
                 .build();
 
         final String nodeName = nodeInfo.getThisNodeName();
-        final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
+        final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
         return new RollingStreamDestination(key,
                 getFrequency(),
                 getSchedule(),

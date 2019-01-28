@@ -20,7 +20,7 @@ package stroom.policy;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.entity.shared.Period;
 import stroom.policy.DataRetentionExecutor.Progress;
 import stroom.policy.DataRetentionExecutor.Tracker;
@@ -43,7 +43,7 @@ class TestDataRetentionExecutor {
     @Test
     void testTracker() {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
-        builder.addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, "TEST_FEED");
+        builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, "TEST_FEED");
         final DataRetentionRule rule = createRule(1, builder.build(), 1, stroom.streamstore.shared.TimeUnit.DAYS);
         final DataRetentionPolicy dataRetentionPolicy = new DataRetentionPolicy(Collections.singletonList(rule));
         Tracker tracker = new Tracker(100L, dataRetentionPolicy);

@@ -59,38 +59,38 @@ public class MockStreamStore implements StreamStore, Clearable {
 
     private Meta lastStream;
 
-    private final MetaService streamMetaService;
+    private final MetaService metaService;
 
     @SuppressWarnings("unused")
     @Inject
-    MockStreamStore(final MetaService streamMetaService) {
-        this.streamMetaService = streamMetaService;
+    MockStreamStore(final MetaService metaService) {
+        this.metaService = metaService;
     }
 
 //    public MockStreamStore() {
-//        this.streamMetaService = new MockStreamMetaService();
+//        this.metaService = new MockStreamMetaService();
 //    }
 
 ////    @Override
-//    public StreamEntity create(final StreamProperties streamProperties) {
-//        final StreamTypeEntity streamType = streamTypeService.getOrCreate(streamProperties.getTypeName());
-//        final FeedEntity feed = feedService.getOrCreate(streamProperties.getFeedName());
+//    public StreamEntity create(final StreamProperties metaProperties) {
+//        final StreamTypeEntity streamType = streamTypeService.getOrCreate(metaProperties.getTypeName());
+//        final FeedEntity feed = feedService.getOrCreate(metaProperties.getFeedName());
 //
 //        final StreamEntity stream = new StreamEntity();
 //
-//        if (streamProperties.getParent() != null) {
-//            stream.setParentStreamId(streamProperties.getParent().getId());
+//        if (metaProperties.getParent() != null) {
+//            stream.setParentStreamId(metaProperties.getParent().getId());
 //        }
 //
 //        stream.setFeed(feed);
 //        stream.setType(streamType);
-//        stream.setStreamProcessor(streamProperties.getStreamProcessor());
-//        if (streamProperties.getStreamTask() != null) {
-//            stream.setStreamTaskId(streamProperties.getStreamTask().getId());
+//        stream.setStreamProcessor(metaProperties.getStreamProcessor());
+//        if (metaProperties.getStreamTask() != null) {
+//            stream.setStreamTaskId(metaProperties.getStreamTask().getId());
 //        }
-//        stream.setCreateMs(streamProperties.getCreateMs());
-//        stream.setEffectiveMs(streamProperties.getEffectiveMs());
-//        stream.setStatusMs(streamProperties.getStatusMs());
+//        stream.setCreateMs(metaProperties.getCreateMs());
+//        stream.setEffectiveMs(metaProperties.getEffectiveMs());
+//        stream.setStatusMs(metaProperties.getStatusMs());
 //
 //        return stream;
 //    }
@@ -131,7 +131,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         fileData.clear();
         openOutputStream.clear();
         openInputStream.clear();
-        ((MockMetaService) streamMetaService).clear();
+        ((MockMetaService) metaService).clear();
     }
 
     public int getStreamStoreCount() {
@@ -197,7 +197,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
 
         // Set the status of the stream to be unlocked.
-        streamMetaService.updateStatus(stream, Status.UNLOCKED);
+        metaService.updateStatus(stream, Status.UNLOCKED);
     }
 
 //    @Override
@@ -269,7 +269,7 @@ public class MockStreamStore implements StreamStore, Clearable {
      */
     @Override
     public StreamSource openStreamSource(final long streamId, final boolean anyStatus) throws StreamException {
-        final Meta stream = streamMetaService.getMeta(streamId, anyStatus);
+        final Meta stream = metaService.getMeta(streamId, anyStatus);
         if (stream == null) {
             return null;
         }
@@ -278,8 +278,8 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     @Override
-    public StreamTarget openStreamTarget(final MetaProperties streamProperties) {
-        final Meta stream = streamMetaService.create(streamProperties);
+    public StreamTarget openStreamTarget(final MetaProperties metaProperties) {
+        final Meta stream = metaService.create(metaProperties);
 
         final TypedMap<String, ByteArrayOutputStream> typeMap = TypedMap.fromMap(new HashMap<>());
         typeMap.put(stream.getTypeName(), new ByteArrayOutputStream());
@@ -353,19 +353,19 @@ public class MockStreamStore implements StreamStore, Clearable {
         final StringBuilder sb = new StringBuilder();
         sb.append("Stream Store Contains:\n");
         for (final long streamId : fileData.keySet()) {
-            final Meta stream = streamMetaService.getMeta(streamId);
+            final Meta stream = metaService.getMeta(streamId);
             sb.append(stream);
             sb.append("\n");
         }
         sb.append("\nOpen Input Streams:\n");
         for (final long streamId : openInputStream) {
-            final Meta stream = streamMetaService.getMeta(streamId);
+            final Meta stream = metaService.getMeta(streamId);
             sb.append(stream);
             sb.append("\n");
         }
         sb.append("\nOpen Output Streams:\n");
         for (final long streamId : openOutputStream.keySet()) {
-            final Meta stream = streamMetaService.getMeta(streamId);
+            final Meta stream = metaService.getMeta(streamId);
             sb.append(stream);
             sb.append("\n");
         }

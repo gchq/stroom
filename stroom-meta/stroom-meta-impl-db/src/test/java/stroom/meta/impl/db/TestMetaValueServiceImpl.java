@@ -26,7 +26,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.impl.mock.MockSecurityContextModule;
 import stroom.util.date.DateUtil;
@@ -66,25 +66,25 @@ class TestMetaValueServiceImpl {
 
         FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs())));
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs())));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(0);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.FILE_SIZE, Condition.GREATER_THAN, "0"));
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.FILE_SIZE, Condition.GREATER_THAN, "0"));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
     }
@@ -101,25 +101,25 @@ class TestMetaValueServiceImpl {
 
         FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs())));
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs())));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(0);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.FILE_SIZE, Condition.GREATER_THAN, "0"));
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.FILE_SIZE, Condition.GREATER_THAN, "0"));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
 
@@ -127,7 +127,7 @@ class TestMetaValueServiceImpl {
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
         assertThat(dataMetaService.find(criteria).size()).isEqualTo(0);
     }
@@ -144,7 +144,7 @@ class TestMetaValueServiceImpl {
 
     private AttributeMap createAttributes() {
         final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(MetaDataSource.FILE_SIZE, "100");
+        attributeMap.put(MetaFieldNames.FILE_SIZE, "100");
         return attributeMap;
     }
 }

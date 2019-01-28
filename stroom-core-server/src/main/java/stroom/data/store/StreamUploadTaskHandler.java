@@ -186,13 +186,13 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
             final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(taskContext,
                     "Read");
 
-            final MetaProperties streamProperties = new MetaProperties.Builder()
+            final MetaProperties metaProperties = new MetaProperties.Builder()
                     .feedName(task.getFeedName())
                     .typeName(task.getStreamTypeName())
                     .effectiveMs(effectiveMs)
                     .build();
 
-            streamTarget = streamStore.openStreamTarget(streamProperties);
+            streamTarget = streamStore.openStreamTarget(metaProperties);
 
             try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
                 int count = 0;

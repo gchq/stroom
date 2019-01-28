@@ -3,7 +3,7 @@ package stroom.data.store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.util.date.DateUtil;
 
 import java.util.HashMap;
@@ -23,23 +23,23 @@ class StreamAttributeMapUtil {
         final Map<String, Object> map = new HashMap<>();
 
         if (stream != null) {
-            map.put(MetaDataSource.STREAM_ID, stream.getId());
-            map.put(MetaDataSource.CREATE_TIME, stream.getCreateMs());
-            map.put(MetaDataSource.EFFECTIVE_TIME, stream.getEffectiveMs());
-            map.put(MetaDataSource.STATUS_TIME, stream.getStatusMs());
-            map.put(MetaDataSource.STATUS, stream.getStatus().getDisplayValue());
+            map.put(MetaFieldNames.STREAM_ID, stream.getId());
+            map.put(MetaFieldNames.CREATE_TIME, stream.getCreateMs());
+            map.put(MetaFieldNames.EFFECTIVE_TIME, stream.getEffectiveMs());
+            map.put(MetaFieldNames.STATUS_TIME, stream.getStatusMs());
+            map.put(MetaFieldNames.STATUS, stream.getStatus().getDisplayValue());
             if (stream.getParentDataId() != null) {
-                map.put(MetaDataSource.PARENT_STREAM_ID, stream.getParentDataId());
+                map.put(MetaFieldNames.PARENT_STREAM_ID, stream.getParentDataId());
             }
             if (stream.getTypeName() != null) {
-                map.put(MetaDataSource.STREAM_TYPE_NAME, stream.getTypeName());
+                map.put(MetaFieldNames.STREAM_TYPE_NAME, stream.getTypeName());
             }
             final String feedName = stream.getFeedName();
             if (feedName != null) {
-                map.put(MetaDataSource.FEED_NAME, feedName);
+                map.put(MetaFieldNames.FEED_NAME, feedName);
             }
             final String pipelineUuid = stream.getPipelineUuid();
-            map.put(MetaDataSource.PIPELINE_UUID, pipelineUuid);
+            map.put(MetaFieldNames.PIPELINE_UUID, pipelineUuid);
 //            if (streamProcessor != null) {
 //                final String pipelineUuid = streamProcessor.getPipelineUuid();
 //                if (pipelineUuid != null) {
@@ -48,7 +48,7 @@ class StreamAttributeMapUtil {
 //            }
         }
 
-        MetaDataSource.getExtendedFields().forEach(field -> {
+        MetaFieldNames.getExtendedFields().forEach(field -> {
             final String value = attributeMap.get(field.getName());
             if (value != null) {
                 try {

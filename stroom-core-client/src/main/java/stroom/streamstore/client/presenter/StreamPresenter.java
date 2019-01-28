@@ -37,7 +37,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.docref.DocRef;
@@ -87,7 +87,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private final ClientDispatchAsync dispatcher;
     private final ButtonView streamListFilter;
 
-    private FindMetaCriteria findStreamCriteria;
+    private FindMetaCriteria findMetaCriteria;
     private String feedName;
     private ButtonView streamListUpload;
     private ButtonView streamListDownload;
@@ -160,19 +160,19 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         setStreamRelationListSelectableEnabled(null, Status.UNLOCKED);
     }
 
-    public static FindMetaCriteria createFindStreamCriteria() {
-        final FindMetaCriteria findStreamCriteria = new FindMetaCriteria();
-        findStreamCriteria.obtainExpression();
-        return findStreamCriteria;
+    public static FindMetaCriteria createFindMetaCriteria() {
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+        findMetaCriteria.obtainExpression();
+        return findMetaCriteria;
     }
 
     private static Meta getStream(final AbstractStreamListPresenter streamListPresenter, final long id) {
         final ResultList<MetaRow> list = streamListPresenter.getResultList();
         if (list != null) {
             if (list.getValues() != null) {
-                for (final MetaRow streamAttributeMap : list.getValues()) {
-                    if (streamAttributeMap.getMeta().getId() == id) {
-                        return streamAttributeMap.getMeta();
+                for (final MetaRow metaRow : list.getValues()) {
+                    if (metaRow.getMeta().getId() == id) {
+                        return metaRow.getMeta();
                     }
                 }
             }
@@ -212,18 +212,18 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         super.onBind();
 
         registerHandler(streamListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            streamRelationListPresenter.setSelectedStream(streamListPresenter.getSelectedStream(), true,
+            streamRelationListPresenter.setSelectedStream(streamListPresenter.getSelected(), true,
                     !Status.UNLOCKED.equals(getSingleStatus(getCriteria())));
             showData();
         }));
         registerHandler(streamListPresenter.addDataSelectionHandler(event -> setStreamListSelectableEnabled(event.getSelectedItem(),
-                getSingleStatus(findStreamCriteria))));
+                getSingleStatus(findMetaCriteria))));
         registerHandler(streamRelationListPresenter.getSelectionModel().addSelectionHandler(event -> showData()));
-        registerHandler(streamRelationListPresenter.addDataSelectionHandler(event -> setStreamRelationListSelectableEnabled(event.getSelectedItem(), getSingleStatus(findStreamCriteria))));
+        registerHandler(streamRelationListPresenter.addDataSelectionHandler(event -> setStreamRelationListSelectableEnabled(event.getSelectedItem(), getSingleStatus(findMetaCriteria))));
 
         registerHandler(streamListFilter.addClickHandler(event -> {
             final ExpressionPresenter presenter = streamListFilterPresenter.get();
-            presenter.read(findStreamCriteria.obtainExpression(), MetaDataSource.STREAM_STORE_DOC_REF, MetaDataSource.getExtendedFields());
+            presenter.read(findMetaCriteria.obtainExpression(), MetaFieldNames.STREAM_STORE_DOC_REF, MetaFieldNames.getExtendedFields());
 
             final PopupUiHandlers streamFilterPUH = new DefaultPopupUiHandlers() {
                 @Override
@@ -231,7 +231,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                     if (ok) {
                         final ExpressionOperator expression = presenter.write();
 
-                        if (!expression.equals(findStreamCriteria.obtainExpression())) {
+                        if (!expression.equals(findMetaCriteria.obtainExpression())) {
                             if (hasAdvancedCriteria(expression)) {
                                 ConfirmEvent.fire(StreamPresenter.this,
                                         "You are setting advanced filters!  It is recommendend you constrain your filter (e.g. by 'Created') to avoid an expensive query.  "
@@ -262,12 +262,12 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
                 private void applyCriteriaAndShow(final ExpressionPresenter presenter) {
                     // Copy new filter settings back.
-                    findStreamCriteria.setExpression(presenter.write());
+                    findMetaCriteria.setExpression(presenter.write());
                     // Reset the page offset.
-                    findStreamCriteria.obtainPageRequest().setOffset(0L);
+                    findMetaCriteria.obtainPageRequest().setOffset(0L);
 
                     // Init the buttons
-                    final Status status = getSingleStatus(findStreamCriteria);
+                    final Status status = getSingleStatus(findMetaCriteria);
                     setStreamListSelectableEnabled(streamListPresenter.getSelectedEntityIdSet(), status);
 
                     // Clear the current selection and get a new list of streams.
@@ -329,7 +329,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             return true;
         }
 
-        final Set<String> statusPeriod = getTerms(expression, MetaDataSource.STATUS_TIME);
+        final Set<String> statusPeriod = getTerms(expression, MetaFieldNames.STATUS_TIME);
         return statusPeriod.size() > 0;
     }
 
@@ -349,7 +349,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     private static Set<Status> getStatusSet(final ExpressionOperator expression) {
-        final Set<String> terms = getTerms(expression, MetaDataSource.STATUS);
+        final Set<String> terms = getTerms(expression, MetaFieldNames.STATUS);
         final Set<Status> streamStatuses = new HashSet<>();
         for (final String term : terms) {
             for (final Status streamStatus : Status.values()) {
@@ -402,7 +402,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     public FindMetaCriteria getCriteria() {
-        return findStreamCriteria;
+        return findMetaCriteria;
     }
 
     @Override
@@ -416,7 +416,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
     }
 
-//    private FindStreamCriteria createFindStreamCriteria() {
+//    private FindStreamCriteria createFindMetaCriteria() {
 //        final FindStreamCriteria criteria = new FindStreamCriteria();
 //        criteria.obtainExpression();
 //
@@ -440,8 +440,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             showStreamListButtons(true);
             showStreamRelationListButtons(true);
 
-            findStreamCriteria = createFindStreamCriteria();
-            findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
+            findMetaCriteria = createFindMetaCriteria();
+            findMetaCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
 
             initCriteria();
         }
@@ -454,8 +454,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             showStreamListButtons(false);
             showStreamRelationListButtons(false);
 
-            findStreamCriteria = createFindStreamCriteria();
-            findStreamCriteria.setExpression(ExpressionUtil.createPipelineExpression(pipelineRef));
+            findMetaCriteria = createFindMetaCriteria();
+            findMetaCriteria.setExpression(ExpressionUtil.createPipelineExpression(pipelineRef));
 
             initCriteria();
         }
@@ -464,24 +464,24 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private void setNullCriteria() {
         showStreamListButtons(false);
         showStreamRelationListButtons(false);
-        findStreamCriteria = createFindStreamCriteria();
+        findMetaCriteria = createFindMetaCriteria();
 
         initCriteria();
     }
 
     private void initCriteria() {
-        streamListPresenter.setCriteria(findStreamCriteria);
+        streamListPresenter.setCriteria(findMetaCriteria);
         streamRelationListPresenter.setCriteria(null);
     }
 
     private Meta getSelectedStream() {
-        MetaRow selectedStream = streamListPresenter.getSelectedStream();
-        if (streamRelationListPresenter.getSelectedStream() != null) {
-            selectedStream = streamRelationListPresenter.getSelectedStream();
+        MetaRow selected = streamListPresenter.getSelected();
+        if (streamRelationListPresenter.getSelected() != null) {
+            selected = streamRelationListPresenter.getSelected();
         }
 
-        if (selectedStream != null) {
-            return selectedStream.getMeta();
+        if (selected != null) {
+            return selected.getMeta();
         }
 
         return null;
@@ -570,7 +570,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             SharedDocRef pipelineRef = null;
 
             // TODO : Fix by making entity id sets docref sets.
-//            final EntityIdSet<PipelineEntity> entityIdSet = findStreamCriteria
+//            final EntityIdSet<PipelineEntity> entityIdSet = findMetaCriteria
 //                    .getPipelineSet();
 //            if (entityIdSet != null) {
 //                if (entityIdSet.getSet().size() > 0) {
@@ -583,7 +583,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             // in the top screen and then chooses the raw stream in the middle
             // pane to step through.
             Long childStreamId = null;
-            final MetaRow map = streamListPresenter.getSelectedStream();
+            final MetaRow map = streamListPresenter.getSelected();
             if (map != null && map.getMeta() != null) {
                 final Meta childStream = map.getMeta();
                 // If the top list has a raw stream selected or isn't a child of
@@ -632,7 +632,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             if (Boolean.TRUE.equals(idSet.getMatchAll()) || idSet.size() > 0) {
                 // Only use match all if we are allowed to use criteria.
                 if (useCriteria && Boolean.TRUE.equals(idSet.getMatchAll())) {
-                    final FindMetaCriteria criteria = createFindStreamCriteria();
+                    final FindMetaCriteria criteria = createFindMetaCriteria();
                     criteria.copyFrom(streamPresenter.getCriteria());
                     // Paging is NA
                     criteria.obtainPageRequest().setLength(null);
@@ -642,7 +642,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                 } else if (idSet.size() > 0) {
                     // If we aren't matching all then create a criteria that
                     // only includes the selected streams.
-                    final FindMetaCriteria criteria = createFindStreamCriteria();
+                    final FindMetaCriteria criteria = createFindMetaCriteria();
                     // Copy the current filter status
                     final Status status = getSingleStatus(streamPresenter.getCriteria());
                     if (status != null) {

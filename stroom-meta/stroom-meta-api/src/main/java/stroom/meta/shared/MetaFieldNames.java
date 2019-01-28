@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class MetaDataSource {
+public class MetaFieldNames {
     public static final String STREAM_STORE_TYPE = "StreamStore";
     public static final DocRef STREAM_STORE_DOC_REF = new DocRef.Builder()
             .type(STREAM_STORE_TYPE)
@@ -54,7 +54,7 @@ public class MetaDataSource {
     public static final String REC_FATAL = "Fatal Error Count";
     public static final String DURATION = "Duration";
     public static final String FILE_SIZE = "File Size";
-    public static final String STREAM_SIZE = "Raw Size";
+    public static final String RAW_SIZE = "Raw Size";
 
     // Legacy or hidden fields.
     public static final String FEED_ID = "Feed Id";
@@ -116,7 +116,7 @@ public class MetaDataSource {
 
         // Sizes
         EXTENDED_FIELDS.add(createNumField(FILE_SIZE));
-        EXTENDED_FIELDS.add(createNumField(STREAM_SIZE));
+        EXTENDED_FIELDS.add(createNumField(RAW_SIZE));
         EXTENDED_FIELD_MAP = EXTENDED_FIELDS.stream().collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
     }
 

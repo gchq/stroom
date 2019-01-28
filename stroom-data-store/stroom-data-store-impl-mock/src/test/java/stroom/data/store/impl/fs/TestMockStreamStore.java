@@ -41,17 +41,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestMockStreamStore {
     @Test
     void testExample() throws IOException {
-        final MockMetaService mockStreamMetaService = new MockMetaService();
-        final MockStreamStore mockStreamStore = new MockStreamStore(mockStreamMetaService);
+        final MockMetaService mockMetaService = new MockMetaService();
+        final MockStreamStore mockStreamStore = new MockStreamStore(mockMetaService);
 
         mockStreamStore.clear();
 
-        final MetaProperties streamProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName("TEST")
                 .typeName(StreamTypeNames.EVENTS)
                 .build();
 
-        final StreamTarget streamTarget = mockStreamStore.openStreamTarget(streamProperties);
+        final StreamTarget streamTarget = mockStreamStore.openStreamTarget(metaProperties);
         final Meta stream = streamTarget.getStream();
 
         try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
@@ -63,13 +63,13 @@ class TestMockStreamStore {
             }
         }
 
-        assertThat(mockStreamMetaService.find(FindMetaCriteria.createWithData(stream)).size()).isEqualTo(0);
+        assertThat(mockMetaService.find(FindMetaCriteria.createWithData(stream)).size()).isEqualTo(0);
 
         mockStreamStore.closeStreamTarget(streamTarget);
 
-        assertThat(mockStreamMetaService.find(FindMetaCriteria.createWithData(stream)).size()).isEqualTo(1);
+        assertThat(mockMetaService.find(FindMetaCriteria.createWithData(stream)).size()).isEqualTo(1);
 
-        final Meta reload = mockStreamMetaService.find(FindMetaCriteria.createWithData(stream)).get(0);
+        final Meta reload = mockMetaService.find(FindMetaCriteria.createWithData(stream)).get(0);
 
         final StreamSource streamSource = mockStreamStore.openStreamSource(reload.getId());
 

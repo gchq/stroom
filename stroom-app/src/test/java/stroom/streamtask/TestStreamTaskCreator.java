@@ -18,7 +18,7 @@ package stroom.streamtask;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -108,13 +108,13 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
 //        assertThat(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail()).isFalse();
 
         final QueryData findStreamQueryData = new QueryData.Builder()
-                .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                         .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName1)
-                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
+                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName1)
+                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())
-                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 

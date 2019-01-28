@@ -207,12 +207,12 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         final long tenMin = 1000 * 60 * 10;
         final long startTime = endTime - twoDaysTime;
         for (long time = startTime; time < endTime; time += tenMin) {
-            final MetaProperties streamProperties = new MetaProperties.Builder()
+            final MetaProperties metaProperties = new MetaProperties.Builder()
                     .feedName(feedName)
                     .typeName(StreamTypeNames.RAW_EVENTS)
                     .createMs(time)
                     .build();
-            final StreamTarget t = streamStore.openStreamTarget(streamProperties);
+            final StreamTarget t = streamStore.openStreamTarget(metaProperties);
             StreamTargetUtil.write(t, "TEST");
             streamStore.closeStreamTarget(t);
         }

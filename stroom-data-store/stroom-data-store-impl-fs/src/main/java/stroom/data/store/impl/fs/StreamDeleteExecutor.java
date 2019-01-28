@@ -21,7 +21,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.entity.shared.BaseResultList;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -40,16 +40,16 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
     private static final String LOCK_NAME = "StreamDeleteExecutor";
     private static final String TEMP_STRM_ID_TABLE = "TEMP_STRM_ID";
 
-    private final MetaService streamMetaService;
+    private final MetaService metaService;
 
     @Inject
     StreamDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
                          final ClusterLockService clusterLockService,
                          final DataStoreServiceConfig dataStoreServiceConfig,
                          final TaskContext taskContext,
-                         final MetaService streamMetaService) {
+                         final MetaService metaService) {
         super(batchIdTransactionHelper, clusterLockService, taskContext, TASK_NAME, LOCK_NAME, dataStoreServiceConfig, TEMP_STRM_ID_TABLE);
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
     }
 
     public void exec() {
@@ -84,13 +84,13 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
     @Override
     protected List<Long> getDeleteIdList(final long age, final int batchSize) {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
-                .addTerm(MetaDataSource.STATUS_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(age))
+                .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
+                .addTerm(MetaFieldNames.STATUS_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(age))
                 .build();
-        final FindMetaCriteria findStreamCriteria = new FindMetaCriteria(expression);
-        findStreamCriteria.setSort(MetaDataSource.STREAM_ID);
-        findStreamCriteria.obtainPageRequest().setLength(batchSize);
-        final BaseResultList<Meta> streams = streamMetaService.find(findStreamCriteria);
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
+        findMetaCriteria.setSort(MetaFieldNames.STREAM_ID);
+        findMetaCriteria.obtainPageRequest().setLength(batchSize);
+        final BaseResultList<Meta> streams = metaService.find(findMetaCriteria);
         return streams.stream().map(Meta::getId).collect(Collectors.toList());
     }
 }

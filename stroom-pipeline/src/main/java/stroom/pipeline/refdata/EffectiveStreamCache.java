@@ -46,26 +46,26 @@ public class EffectiveStreamCache implements Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final LoadingCache<EffectiveStreamKey, NavigableSet> cache;
-    private final MetaService streamMetaService;
+    private final MetaService metaService;
     private final EffectiveStreamInternPool internPool;
     private final Security security;
 
     @Inject
     EffectiveStreamCache(final CacheManager cacheManager,
-                         final MetaService streamMetaService,
+                         final MetaService metaService,
                          final EffectiveStreamInternPool internPool,
                          final Security security) {
-        this(cacheManager, streamMetaService, internPool, security, 10, TimeUnit.MINUTES);
+        this(cacheManager, metaService, internPool, security, 10, TimeUnit.MINUTES);
     }
 
     @SuppressWarnings("unchecked")
     EffectiveStreamCache(final CacheManager cacheManager,
-                         final MetaService streamMetaService,
+                         final MetaService metaService,
                          final EffectiveStreamInternPool internPool,
                          final Security security,
                          final long duration,
                          final TimeUnit unit) {
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.internPool = internPool;
         this.security = security;
 
@@ -108,7 +108,7 @@ public class EffectiveStreamCache implements Clearable {
                 criteria.setEffectivePeriod(window);
 
                 // Locate all streams that fit the supplied criteria.
-                final Set<Meta> streams = streamMetaService.findEffectiveData(criteria);
+                final Set<Meta> streams = metaService.findEffectiveData(criteria);
 
                 // Add all streams that we have found to the effective stream set.
                 if (streams != null && streams.size() > 0) {

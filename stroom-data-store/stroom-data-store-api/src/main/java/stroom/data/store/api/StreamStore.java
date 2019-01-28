@@ -44,7 +44,7 @@ public interface StreamStore {
      *
      * @return the stream to write to
      */
-    StreamTarget openStreamTarget(MetaProperties streamProperties) throws StreamException;
+    StreamTarget openStreamTarget(MetaProperties metaProperties) throws StreamException;
 
     /**
      * <p>

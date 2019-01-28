@@ -67,11 +67,11 @@ class TestStreamDumpTool {
     }
 
     private void addData(final String feedName, final String data) {
-        final MetaProperties streamProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
+        final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
         StreamTargetUtil.write(streamTarget, data);
         streamStore.closeStreamTarget(streamTarget);
     }

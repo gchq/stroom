@@ -33,7 +33,7 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -57,26 +57,26 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         dataProvider.setAllowNoConstraint(false);
     }
 
-    public void setSelectedStream(final MetaRow streamAttributeMap, final boolean fireEvents,
+    public void setSelectedStream(final MetaRow metaRow, final boolean fireEvents,
                                   final boolean showSystemFiles) {
-        if (streamAttributeMap == null) {
+        if (metaRow == null) {
             setCriteria(null);
 
         } else {
             final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
             if (!showSystemFiles) {
-                builder.addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
+                builder.addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
             }
-            builder.addTerm(MetaDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(streamAttributeMap.getMeta().getId()));
+            builder.addTerm(MetaFieldNames.STREAM_ID, Condition.EQUALS, String.valueOf(metaRow.getMeta().getId()));
 
             final FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setExpression(builder.build());
-            criteria.setSort(MetaDataSource.CREATE_TIME, Direction.ASCENDING, false);
+            criteria.setSort(MetaFieldNames.CREATE_TIME, Direction.ASCENDING, false);
 
             setCriteria(criteria);
         }
 
-        getSelectionModel().setSelected(streamAttributeMap);
+        getSelectionModel().setSelected(metaRow);
     }
 
     @Override
@@ -162,14 +162,14 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         addFeedColumn();
         addPipelineColumn();
 
-        addAttributeColumn("Raw", MetaDataSource.STREAM_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Disk", MetaDataSource.FILE_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Read", MetaDataSource.REC_READ, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Write", MetaDataSource.REC_WRITE, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Fatal", MetaDataSource.REC_FATAL, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Error", MetaDataSource.REC_ERROR, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Warn", MetaDataSource.REC_WARN, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Info", MetaDataSource.REC_INFO, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Raw", MetaFieldNames.RAW_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Disk", MetaFieldNames.FILE_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Read", MetaFieldNames.REC_READ, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Write", MetaFieldNames.REC_WRITE, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Fatal", MetaFieldNames.REC_FATAL, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Error", MetaFieldNames.REC_ERROR, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Warn", MetaFieldNames.REC_WARN, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Info", MetaFieldNames.REC_INFO, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
 
         // TODO : @66 Add data retention column back into the table.
 //        addAttributeColumn("Retention", StreamAttributeConstants.RETENTION_AGE, ColumnSizeConstants.SMALL_COL);

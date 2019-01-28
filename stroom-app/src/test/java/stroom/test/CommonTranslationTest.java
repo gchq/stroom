@@ -76,19 +76,19 @@ public class CommonTranslationTest {
     private final StreamTaskCreator streamTaskCreator;
     private final StoreCreationTool storeCreationTool;
     private final TaskManager taskManager;
-    private final MetaService streamMetaService;
+    private final MetaService metaService;
 
     @Inject
     CommonTranslationTest(final NodeInfo nodeInfo,
                           final StreamTaskCreator streamTaskCreator,
                           final StoreCreationTool storeCreationTool,
                           final TaskManager taskManager,
-                          final MetaService streamMetaService) {
+                          final MetaService metaService) {
         this.nodeInfo = nodeInfo;
         this.streamTaskCreator = streamTaskCreator;
         this.storeCreationTool = storeCreationTool;
         this.taskManager = taskManager;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
     }
 
     public List<StreamProcessorTaskExecutor> processAll() {
@@ -153,6 +153,6 @@ public class CommonTranslationTest {
             }
         });
 
-        assertThat(streamMetaService.getLockCount()).isEqualTo(0);
+        assertThat(metaService.getLockCount()).isEqualTo(0);
     }
 }

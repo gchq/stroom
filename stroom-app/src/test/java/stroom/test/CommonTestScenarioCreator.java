@@ -20,7 +20,7 @@ package stroom.test;
 
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
@@ -82,10 +82,10 @@ public class CommonTestScenarioCreator {
 
     public void createBasicTranslateStreamProcessor(final String feed) {
         final QueryData findStreamQueryData = new QueryData.Builder()
-                .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                        .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed)
-                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed)
+                        .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
@@ -137,11 +137,11 @@ public class CommonTestScenarioCreator {
      * @return a basic raw file
      */
     public Meta createSample2LineRawFile(final String feed, final String streamType) {
-        final MetaProperties streamProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feed)
                 .typeName(streamType)
                 .build();
-        final StreamTarget target = streamStore.openStreamTarget(streamProperties);
+        final StreamTarget target = streamStore.openStreamTarget(metaProperties);
         StreamTargetUtil.write(target, "line1\nline2");
         target.getAttributes().put(StroomHeaderArguments.FEED, feed);
 
@@ -150,13 +150,13 @@ public class CommonTestScenarioCreator {
     }
 
     public Meta createSampleBlankProcessedFile(final String feed, final Meta sourceStream) {
-        final MetaProperties streamProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feed)
                 .typeName(StreamTypeNames.EVENTS)
                 .parent(sourceStream)
                 .build();
 
-        final StreamTarget target = streamStore.openStreamTarget(streamProperties);
+        final StreamTarget target = streamStore.openStreamTarget(metaProperties);
         final String data = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<Events xpath-default-namespace=\"records:2\" "
                 + "xmlns:stroom=\"stroom\" "

@@ -45,7 +45,7 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionTransactionHelper.class);
     private static final int RETENTION_PERIOD_DAYS = 1;
     @Inject
-    private MetaService streamMetaService;
+    private MetaService metaService;
     @Inject
     private DictionaryStore dictionaryStore;
     @Inject
@@ -63,7 +63,7 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
             LOGGER.info("now: %s", DateUtil.createNormalDateTimeString(now));
             LOGGER.info("timeOutsideRetentionPeriod: %s", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
 
-            final Meta streamInsideRetention = streamMetaService.create(
+            final Meta streamInsideRetention = metaService.create(
                     new MetaProperties.Builder()
                             .feedName(feedName)
                             .typeName(StreamTypeNames.RAW_EVENTS)
@@ -71,7 +71,7 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
                             .statusMs(now)
                             .build());
 
-            final Meta streamOutsideRetention = streamMetaService.create(
+            final Meta streamOutsideRetention = metaService.create(
                     new MetaProperties.Builder()
                             .feedName(feedName)
                             .typeName(StreamTypeNames.RAW_EVENTS)
@@ -80,8 +80,8 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
                             .build());
 
             // Streams are locked initially so unlock.
-            streamMetaService.updateStatus(streamInsideRetention, Status.UNLOCKED);
-            streamMetaService.updateStatus(streamOutsideRetention, Status.UNLOCKED);
+            metaService.updateStatus(streamInsideRetention, Status.UNLOCKED);
+            metaService.updateStatus(streamOutsideRetention, Status.UNLOCKED);
 
             dumpStreams();
 
@@ -97,7 +97,7 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
     }
 
     private void dumpStreams() {
-        final BaseResultList<Meta> streams = streamMetaService.find(new FindMetaCriteria());
+        final BaseResultList<Meta> streams = metaService.find(new FindMetaCriteria());
 
         assertThat(streams.size()).isEqualTo(2);
 

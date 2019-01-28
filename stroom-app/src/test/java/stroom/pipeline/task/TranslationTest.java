@@ -25,7 +25,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -112,7 +112,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private MetaService streamMetaService;
+    private MetaService metaService;
     @Inject
     private FeedDocCache feedDocCache;
     @Inject
@@ -176,10 +176,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 final String streamType = feed.isReference() ?
                         StreamTypeNames.RAW_REFERENCE : StreamTypeNames.RAW_EVENTS;
                 final QueryData findStreamQueryData = new QueryData.Builder()
-                        .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                        .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(Op.AND)
-                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                                .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, streamType)
+                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                                .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, streamType)
                                 .build())
                         .build();
 
@@ -235,7 +235,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 final List<Meta> processedStreams = new ArrayList<>();
 
                 for (long streamId = startStreamId + 1; streamId <= endStreamId; streamId++) {
-                    final Meta stream = streamMetaService.getMeta(streamId);
+                    final Meta stream = metaService.getMeta(streamId);
                     final String streamTypeName = stream.getTypeName();
                     if (!StreamTypeNames.ERROR.equals(streamTypeName)) {
                         processedStreams.add(stream);
@@ -243,7 +243,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         try (StreamSource errorStreamSource = streamStore.openStreamSource(streamId)) {
                             //got an error stream so dump it to console
 
-                            Meta parentStream = streamMetaService.getMeta(stream.getParentDataId());
+                            Meta parentStream = metaService.getMeta(stream.getParentDataId());
 
                             String errorStreamStr = StreamUtil.streamToString(errorStreamSource.getInputStream());
                             java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(errorStreamSource.getInputStream());
@@ -318,12 +318,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             }
 
             // Create the stream.
-            final MetaProperties streamProperties = new MetaProperties.Builder()
+            final MetaProperties metaProperties = new MetaProperties.Builder()
                     .feedName(feed.getName())
                     .typeName(streamTypeName)
                     .createMs(millis)
                     .build();
-            final StreamTarget target = streamStore.openStreamTarget(streamProperties);
+            final StreamTarget target = streamStore.openStreamTarget(metaProperties);
 
             final InputStream inputStream = new BufferedInputStream(Files.newInputStream(file));
             StreamTargetUtil.write(target, inputStream);
@@ -387,20 +387,20 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final FeedDoc feed = feeds.get();
 
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName)
+                .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
-                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                        .addTerm(MetaFieldNames.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
-        final FindMetaCriteria streamCriteria = new FindMetaCriteria();
-        streamCriteria.setExpression(expression);
-        streamCriteria.obtainSelectedIdSet().setMatchAll(Boolean.TRUE);
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+        findMetaCriteria.setExpression(expression);
+        findMetaCriteria.obtainSelectedIdSet().setMatchAll(Boolean.TRUE);
 
         final SteppingTask action = new SteppingTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN);
         action.setPipeline(pipelineRef);
-        action.setCriteria(streamCriteria);
+        action.setCriteria(findMetaCriteria);
 
         SteppingResult response = new SteppingResult();
         response = step(StepType.FORWARD, 40, action, response);
@@ -546,7 +546,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private long getLatestStreamId() {
-        final BaseResultList<Meta> list = streamMetaService.find(new FindMetaCriteria());
+        final BaseResultList<Meta> list = metaService.find(new FindMetaCriteria());
         if (list == null || list.size() == 0) {
             return 0;
         }

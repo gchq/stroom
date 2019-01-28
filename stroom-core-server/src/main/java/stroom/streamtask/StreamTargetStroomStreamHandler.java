@@ -315,13 +315,13 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
                 currentStreamTypeName = getStreamTypeName(currentFeedName);
             }
 
-            final MetaProperties streamProperties = new MetaProperties.Builder()
+            final MetaProperties metaProperties = new MetaProperties.Builder()
                     .feedName(currentFeedName)
                     .typeName(currentStreamTypeName)
                     .effectiveMs(effectiveMs)
                     .build();
 
-            final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
+            final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
             feedStreamTarget.put(currentFeedName, streamTarget);
             streamSet.add(streamTarget.getStream());
             final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider();
@@ -347,13 +347,13 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 //                currentStreamTypeName = getStreamTypeName(currentFeedName);
 //            }
 //
-//            final DataProperties streamProperties = new DataProperties.Builder()
+//            final DataProperties metaProperties = new DataProperties.Builder()
 //                    .feedName(currentFeedName)
 //                    .typeName(currentStreamTypeName)
 //                    .effectiveMs(effectiveMs)
 //                    .build();
 //
-//            final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
+//            final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
 //            feedStreamTarget.put(currentFeedName, streamTarget);
 //            streamSet.add(streamTarget.getStream());
 //            outputStreamProvider = streamTarget.getOutputStreamProvider();

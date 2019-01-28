@@ -56,19 +56,19 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
 
     private final TaskContext taskContext;
     private final StreamStore streamStore;
-    private final MetaService streamMetaService;
+    private final MetaService metaService;
     private final Security security;
     private final BufferFactory bufferFactory;
 
     @Inject
     StreamDownloadTaskHandler(final TaskContext taskContext,
                               final StreamStore streamStore,
-                              final MetaService streamMetaService,
+                              final MetaService metaService,
                               final Security security,
                               final BufferFactory bufferFactory) {
         this.taskContext = taskContext;
         this.streamStore = streamStore;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.security = security;
         this.bufferFactory = bufferFactory;
     }
@@ -82,10 +82,10 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
     }
 
     private StreamDownloadResult downloadData(final StreamDownloadTask task,
-                                              final FindMetaCriteria findStreamCriteria,
+                                              final FindMetaCriteria findMetaCriteria,
                                               Path data,
                                               final StreamDownloadSettings settings) {
-        final BaseResultList<Meta> list = streamMetaService.find(findStreamCriteria);
+        final BaseResultList<Meta> list = metaService.find(findMetaCriteria);
 
         final StreamDownloadResult result = new StreamDownloadResult();
 

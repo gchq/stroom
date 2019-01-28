@@ -19,7 +19,7 @@ package stroom.streamtask;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
@@ -102,15 +102,15 @@ class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
 
         final QueryData findStreamQueryData = new QueryData.Builder()
-                .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                         .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName1)
-                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
+                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName1)
+                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())
                         .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                                .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                                .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                                .addTerm(MetaFieldNames.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                                 .build())
                         .build())
                 .build();
@@ -163,7 +163,7 @@ class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
             for (final String feed : include) {
                 xml += "" +
                         "               <term>\n" +
-                        "                  <field>" + MetaDataSource.FEED_NAME + "</field>\n" +
+                        "                  <field>" + MetaFieldNames.FEED_NAME + "</field>\n" +
                         "                  <condition>EQUALS</condition>\n" +
                         "                  <value>" + feed + "</value>\n" +
                         "               </term>\n";
@@ -180,12 +180,12 @@ class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
                 "            <op>OR</op>\n" +
                 "            <children>\n" +
                 "               <term>\n" +
-                "                  <field>" + MetaDataSource.STREAM_TYPE_NAME + "</field>\n" +
+                "                  <field>" + MetaFieldNames.STREAM_TYPE_NAME + "</field>\n" +
                 "                  <condition>EQUALS</condition>\n" +
                 "                  <value>Raw Events</value>\n" +
                 "               </term>\n" +
                 "               <term>\n" +
-                "                  <field>" + MetaDataSource.STREAM_TYPE_NAME + "</field>\n" +
+                "                  <field>" + MetaFieldNames.STREAM_TYPE_NAME + "</field>\n" +
                 "                  <condition>EQUALS</condition>\n" +
                 "                  <value>Raw Reference</value>\n" +
                 "               </term>\n" +

@@ -40,15 +40,15 @@ import java.util.List;
 
 @Singleton
 public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
-    private final MetaService streamMetaService;
+    private final MetaService metaService;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final NodeService nodeService;
 
     @Inject
-    MockStreamTaskCreator(final MetaService streamMetaService,
+    MockStreamTaskCreator(final MetaService metaService,
                           final StreamProcessorFilterService streamProcessorFilterService,
                           final NodeService nodeService) {
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.nodeService = nodeService;
     }
@@ -75,9 +75,9 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
             for (final ProcessorFilter filter : streamProcessorFilters) {
                 final QueryData queryData = filter.getQueryData();
 
-                final FindMetaCriteria findStreamCriteria = new FindMetaCriteria();
-                findStreamCriteria.setExpression(queryData.getExpression());
-                final BaseResultList<Meta> streams = streamMetaService.find(findStreamCriteria);
+                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+                findMetaCriteria.setExpression(queryData.getExpression());
+                final BaseResultList<Meta> streams = metaService.find(findMetaCriteria);
 
                 streams.sort(Comparator.comparing(Meta::getId));
 

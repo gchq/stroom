@@ -21,7 +21,7 @@ import com.google.common.base.Strings;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
 import stroom.query.api.v2.ExpressionOperator;
@@ -49,17 +49,17 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
 
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
-    private final MetaService streamMetaService;
+    private final MetaService metaService;
     private final Security security;
 
     @Inject
     ReprocessDataHandler(final StreamProcessorService streamProcessorService,
                          final StreamProcessorFilterService streamProcessorFilterService,
-                         final MetaService streamMetaService,
+                         final MetaService metaService,
                          final Security security) {
         this.streamProcessorService = streamProcessorService;
         this.streamProcessorFilterService = streamProcessorFilterService;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.security = security;
     }
 
@@ -75,7 +75,7 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                 criteria.obtainPageRequest().setOffset(0L);
                 criteria.obtainPageRequest().setLength(MAX_STREAM_TO_REPROCESS);
 
-                final BaseResultList<Meta> streams = streamMetaService.find(criteria);
+                final BaseResultList<Meta> streams = metaService.find(criteria);
 
                 if (!streams.isExact()) {
                     info.add(new ReprocessDataInfo(Severity.ERROR, "Results exceed " + MAX_STREAM_TO_REPROCESS
@@ -109,15 +109,15 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                         final CriteriaSet<Long> streamIdSet = streamToProcessorSet.get(streamProcessor);
                         if (streamIdSet != null && streamIdSet.size() > 0) {
                             if (streamIdSet.size() == 1) {
-                                operator.addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamIdSet.getSingleItem()));
+                                operator.addTerm(MetaFieldNames.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamIdSet.getSingleItem()));
                             } else {
                                 final ExpressionOperator.Builder streamIdTerms = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-                                streamIdSet.forEach(streamId -> streamIdTerms.addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamId)));
+                                streamIdSet.forEach(streamId -> streamIdTerms.addTerm(MetaFieldNames.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamId)));
                                 operator.addOperator(streamIdTerms.build());
                             }
                         }
 
-                        queryData.setDataSource(MetaDataSource.STREAM_STORE_DOC_REF);
+                        queryData.setDataSource(MetaFieldNames.STREAM_STORE_DOC_REF);
                         queryData.setExpression(operator.build());
 
                         if (!streamProcessor.isEnabled()) {

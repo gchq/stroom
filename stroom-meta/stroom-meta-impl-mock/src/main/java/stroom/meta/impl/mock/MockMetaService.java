@@ -5,7 +5,7 @@ import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.Status;
@@ -144,7 +144,7 @@ public class MockMetaService implements MetaService, Clearable {
 
     @Override
     public BaseResultList<Meta> find(final FindMetaCriteria criteria) {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(MetaDataSource.getExtendedFieldMap());
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(MetaFieldNames.getExtendedFieldMap());
         final List<Meta> list = new ArrayList<>();
         for (final Entry<Long, Meta> entry : metaMap.entrySet()) {
             try {

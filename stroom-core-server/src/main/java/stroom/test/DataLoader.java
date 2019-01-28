@@ -109,13 +109,13 @@ public class DataLoader {
                 streamTypeName = StreamTypeNames.RAW_REFERENCE;
             }
 
-            final MetaProperties streamProperties = new MetaProperties.Builder()
+            final MetaProperties metaProperties = new MetaProperties.Builder()
                     .feedName(feed.getName())
                     .typeName(streamTypeName)
                     .effectiveMs(effectiveMs)
                     .build();
 
-            final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
+            final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
 
             try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
                 try (final SegmentOutputStream outputStream = outputStreamProvider.next()) {

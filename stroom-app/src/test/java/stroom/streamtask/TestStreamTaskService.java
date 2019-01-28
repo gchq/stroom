@@ -45,7 +45,7 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
     @Inject
     private StreamTaskService streamTaskService;
     @Inject
-    private MetaService streamMetaService;
+    private MetaService metaService;
     @Inject
     private StreamTaskCreator streamTaskCreator;
 
@@ -58,7 +58,7 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
 
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName);
 
-        assertThat(streamMetaService.delete(file3.getId())).as("checking we can delete stand alone files").isEqualTo(1);
+        assertThat(metaService.delete(file3.getId())).as("checking we can delete stand alone files").isEqualTo(1);
 
         // Create all required tasks.
         createTasks();
@@ -84,8 +84,8 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
                         Instant.ofEpochMilli(criteria.getCreatePeriod().getTo()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli()));
         assertThat(streamTaskService.find(criteria).size()).isEqualTo(0);
 
-        assertThat(streamMetaService.getMeta(file1.getId())).isNotNull();
-        assertThat(streamMetaService.getMeta(file2.getId())).isNotNull();
+        assertThat(metaService.getMeta(file1.getId())).isNotNull();
+        assertThat(metaService.getMeta(file2.getId())).isNotNull();
 
         criteria = new FindStreamTaskCriteria();
         assertThat(streamTaskService.findSummary(criteria)).isNotNull();

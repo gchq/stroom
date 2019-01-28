@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.docref.DocRef;
@@ -49,17 +49,17 @@ public class DataRetentionExecutor {
     private static final int DELETE_STREAM_BATCH_SIZE = 1000;
 
     private final FeedStore feedStore;
-    private final MetaService streamMetaService;
+    private final MetaService metaService;
     private final TaskContext taskContext;
     private final ClusterLockService clusterLockService;
 
     @Inject
     DataRetentionExecutor(final FeedStore feedStore,
-                          final MetaService streamMetaService,
+                          final MetaService metaService,
                           final TaskContext taskContext,
                           final ClusterLockService clusterLockService) {
         this.feedStore = feedStore;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.taskContext = taskContext;
         this.clusterLockService = clusterLockService;
     }
@@ -108,11 +108,11 @@ public class DataRetentionExecutor {
                     DateUtil.createNormalDateTimeString(createPeriod.getTo())
             });
 
-            final ExpressionOperator expression = periodToExpression(MetaDataSource.CREATE_TIME, createPeriod)
-                    .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feed.getName())
+            final ExpressionOperator expression = periodToExpression(MetaFieldNames.CREATE_TIME, createPeriod)
+                    .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feed.getName())
                     // we only want it to logically delete UNLOCKED items and not ones
                     // already marked as DELETED
-                    .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                    .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                     .build();
 
             // Delete anything received older than -1 * retention age
@@ -123,7 +123,7 @@ public class DataRetentionExecutor {
             long total = 0;
             int deleted;
             do {
-                deleted = streamMetaService.updateStatus(criteria, Status.DELETED);
+                deleted = metaService.updateStatus(criteria, Status.DELETED);
                 total += deleted;
             } while (deleted >= DELETE_STREAM_BATCH_SIZE);
 

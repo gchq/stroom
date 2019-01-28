@@ -26,18 +26,18 @@ import javax.inject.Inject;
 
 
 class UpdateStatusHandler extends AbstractTaskHandler<UpdateStatusAction, SharedInteger> {
-    private final MetaService streamMetaService;
+    private final MetaService metaService;
     private final Security security;
 
     @Inject
-    UpdateStatusHandler(final MetaService streamMetaService,
+    UpdateStatusHandler(final MetaService metaService,
                         final Security security) {
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.security = security;
     }
 
     @Override
     public SharedInteger exec(final UpdateStatusAction task) {
-        return security.secureResult(() -> new SharedInteger(streamMetaService.updateStatus(task.getCriteria(), task.getNewStatus())));
+        return security.secureResult(() -> new SharedInteger(metaService.updateStatus(task.getCriteria(), task.getNewStatus())));
     }
 }

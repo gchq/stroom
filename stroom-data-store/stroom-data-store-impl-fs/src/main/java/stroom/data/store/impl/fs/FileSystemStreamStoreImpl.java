@@ -26,7 +26,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.Status;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
@@ -65,27 +65,27 @@ class FileSystemStreamStoreImpl implements StreamStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamStoreImpl.class);
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
-    private final MetaService streamMetaService;
+    private final MetaService metaService;
     private final NodeInfo nodeInfo;
     private final VolumeService volumeService;
     private final DataVolumeService streamVolumeService;
 
     @Inject
     FileSystemStreamStoreImpl(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
-                              final MetaService streamMetaService,
+                              final MetaService metaService,
                               final NodeInfo nodeInfo,
                               final VolumeService volumeService,
                               final DataVolumeService streamVolumeService) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.nodeInfo = nodeInfo;
         this.volumeService = volumeService;
         this.streamVolumeService = streamVolumeService;
     }
 
     @Override
-    public StreamTarget openStreamTarget(final MetaProperties streamProperties) {
-        LOGGER.debug("openStreamTarget() " + streamProperties);
+    public StreamTarget openStreamTarget(final MetaProperties metaProperties) {
+        LOGGER.debug("openStreamTarget() " + metaProperties);
 
         final Set<VolumeEntity> volumeSet = volumeService.getStreamVolumeSet(nodeInfo.getThisNode());
         if (volumeSet.isEmpty()) {
@@ -93,7 +93,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
         }
 
         // First time call (no file yet exists)
-        final Meta stream = streamMetaService.create(streamProperties);
+        final Meta stream = metaService.create(metaProperties);
 
         final Set<DataVolume> streamVolumes = streamVolumeService.createStreamVolumes(stream.getId(), volumeSet);
         final Set<String> rootPaths = streamVolumes.stream().map(DataVolume::getVolumePath).collect(Collectors.toSet());
@@ -118,7 +118,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
         if (streamVolumes.isEmpty()) {
             throw new StreamException("Not all volumes are unlocked");
         }
-        final Meta lockedStream = streamMetaService.updateStatus(stream, Status.LOCKED);
+        final Meta lockedStream = metaService.updateStatus(stream, Status.LOCKED);
         final Set<String> rootPaths = streamVolumes.stream().map(DataVolume::getVolumePath).collect(Collectors.toSet());
 
         final String streamType = lockedStream.getTypeName();
@@ -145,10 +145,10 @@ class FileSystemStreamStoreImpl implements StreamStore {
             streamCloseException = e;
         }
 
-        updateAttribute(fileSystemStreamTarget, MetaDataSource.STREAM_SIZE,
+        updateAttribute(fileSystemStreamTarget, MetaFieldNames.RAW_SIZE,
                 String.valueOf(((FileSystemStreamTarget) streamTarget).getStreamSize()));
 
-        updateAttribute(fileSystemStreamTarget, MetaDataSource.FILE_SIZE,
+        updateAttribute(fileSystemStreamTarget, MetaFieldNames.FILE_SIZE,
                 String.valueOf(((FileSystemStreamTarget) streamTarget).getTotalFileSize()));
 
         try {
@@ -203,7 +203,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
         }
 
         // Make sure the stream data is deleted.
-        return streamMetaService.delete(target.getStream().getId(), false);
+        return metaService.delete(target.getStream().getId(), false);
     }
 
     /**
@@ -240,7 +240,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
     public StreamSource openStreamSource(final long streamId, final boolean anyStatus) throws StreamException {
         StreamSource streamSource = null;
 
-        final Meta stream = streamMetaService.getMeta(streamId, anyStatus);
+        final Meta stream = metaService.getMeta(streamId, anyStatus);
         if (stream != null) {
             LOGGER.debug("openStreamSource() {}", stream.getId());
 
@@ -324,18 +324,18 @@ class FileSystemStreamStoreImpl implements StreamStore {
     }
 
     private void syncAttributes(final Meta stream, final FileSystemStreamTarget target) {
-        updateAttribute(target, MetaDataSource.STREAM_ID, String.valueOf(stream.getId()));
+        updateAttribute(target, MetaFieldNames.STREAM_ID, String.valueOf(stream.getId()));
 
         if (stream.getParentDataId() != null) {
-            updateAttribute(target, MetaDataSource.PARENT_STREAM_ID,
+            updateAttribute(target, MetaFieldNames.PARENT_STREAM_ID,
                     String.valueOf(stream.getParentDataId()));
         }
 
-        updateAttribute(target, MetaDataSource.FEED_NAME, stream.getFeedName());
-        updateAttribute(target, MetaDataSource.STREAM_TYPE_NAME, stream.getTypeName());
-        updateAttribute(target, MetaDataSource.CREATE_TIME, DateUtil.createNormalDateTimeString(stream.getCreateMs()));
+        updateAttribute(target, MetaFieldNames.FEED_NAME, stream.getFeedName());
+        updateAttribute(target, MetaFieldNames.STREAM_TYPE_NAME, stream.getTypeName());
+        updateAttribute(target, MetaFieldNames.CREATE_TIME, DateUtil.createNormalDateTimeString(stream.getCreateMs()));
         if (stream.getEffectiveMs() != null) {
-            updateAttribute(target, MetaDataSource.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(stream.getEffectiveMs()));
+            updateAttribute(target, MetaFieldNames.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(stream.getEffectiveMs()));
         }
     }
 
@@ -353,13 +353,13 @@ class FileSystemStreamStoreImpl implements StreamStore {
         // Write the child meta data
         if (!attributeMap.isEmpty()) {
             try {
-                streamMetaService.addAttributes(stream, attributeMap);
+                metaService.addAttributes(stream, attributeMap);
             } catch (final RuntimeException e) {
                 LOGGER.error("unLock() - Failed to persist attributes in new transaction... will ignore");
             }
         }
 
         LOGGER.debug("unlock() " + stream);
-        return streamMetaService.updateStatus(stream, Status.UNLOCKED);
+        return metaService.updateStatus(stream, Status.UNLOCKED);
     }
 }

@@ -35,15 +35,15 @@ import java.util.List;
 
 
 class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStreamAction, SharedDocRef> {
-    private final MetaService streamMetaService;
+    private final MetaService metaService;
     private final PipelineStore pipelineStore;
     private final Security security;
 
     @Inject
-    GetPipelineForStreamHandler(final MetaService streamMetaService,
+    GetPipelineForStreamHandler(final MetaService metaService,
                                 final PipelineStore pipelineStore,
                                 final Security security) {
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.pipelineStore = pipelineStore;
         this.security = security;
     }
@@ -103,7 +103,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
 
         return security.asProcessingUserResult(() -> {
             final FindMetaCriteria criteria = new FindMetaCriteria(ExpressionUtil.createDataIdExpression(id));
-            final List<Meta> streamList = streamMetaService.find(criteria);
+            final List<Meta> streamList = metaService.find(criteria);
             if (streamList != null && streamList.size() > 0) {
                 return streamList.get(0);
             }
@@ -119,7 +119,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
 
         return security.asProcessingUserResult(() -> {
             final FindMetaCriteria criteria = new FindMetaCriteria(ExpressionUtil.createParentIdExpression(id));
-            return streamMetaService.find(criteria).getFirst();
+            return metaService.find(criteria).getFirst();
         });
     }
 

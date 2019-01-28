@@ -23,7 +23,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort.Direction;
 import stroom.node.api.NodeInfo;
@@ -95,7 +95,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final StreamTaskHelper streamTaskHelper;
     private final ProcessConfig processConfig;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
-    private final MetaService streamMetaService;
+    private final MetaService metaService;
     private final Security security;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
@@ -146,7 +146,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final StreamTaskHelper streamTaskHelper,
                           final ProcessConfig processConfig,
                           final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
-                          final MetaService streamMetaService,
+                          final MetaService metaService,
                           final Security security) {
 
         this.streamProcessorFilterService = streamProcessorFilterService;
@@ -157,7 +157,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         this.streamTaskHelper = streamTaskHelper;
         this.processConfig = processConfig;
         this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.security = security;
     }
 
@@ -514,7 +514,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                             final int requiredTasks = tasksToCreate;
                             if (requiredTasks > 0 && !Thread.currentThread().isInterrupted()) {
                                 final QueryData queryData = loadedFilter.getQueryData();
-                                boolean isStreamStoreSearch = (queryData.getDataSource() != null) && queryData.getDataSource().getType().equals(MetaDataSource.STREAM_STORE_TYPE);
+                                boolean isStreamStoreSearch = (queryData.getDataSource() != null) && queryData.getDataSource().getType().equals(MetaFieldNames.STREAM_STORE_TYPE);
 
                                 // Record the time before we are going to query for
                                 // streams for tracking purposes.
@@ -739,7 +739,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
 
         final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.create(filter.getUpdateUser(), null), query,
                 minEvent, maxEvent, maxStreams, maxEvents, maxEventsPerStream, POLL_INTERVAL_MS);
-        final Long maxMetaId = streamMetaService.getMaxId();
+        final Long maxMetaId = metaService.getMaxId();
         taskManager.execAsync(eventSearchTask, new TaskCallbackAdaptor<>() {
             @Override
             public void onSuccess(final EventRefs result) {
@@ -794,7 +794,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         final ProcessorFilterTracker updatedTracker = streamTaskTransactionHelper.saveTracker(tracker);
 
         // This will contain locked and unlocked streams
-        final Long maxMetaId = streamMetaService.getMaxId();
+        final Long maxMetaId = metaService.getMaxId();
         final List<Meta> streamList = runSelectMetaQuery(
                 queryData.getExpression(),
                 updatedTracker.getMinStreamId(),
@@ -846,7 +846,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                         }
 
                         currentStreamId = ref.getStreamId();
-                        currentStream = streamMetaService.getMeta(currentStreamId);
+                        currentStream = metaService.getMeta(currentStreamId);
                         ranges = new InclusiveRanges();
                     }
 
@@ -878,27 +878,27 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                                   final int max) {
         // Don't select deleted streams.
         final ExpressionOperator statusExpression = new ExpressionOperator.Builder(Op.OR)
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                 .build();
 
         final ExpressionOperator streamIdExpression = new ExpressionOperator.Builder(Op.AND)
                 .addOperator(expression)
-                .addTerm(MetaDataSource.STREAM_ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(minStreamId))
+                .addTerm(MetaFieldNames.STREAM_ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(minStreamId))
                 .addOperator(statusExpression)
                 .build();
 
         // Copy the filter
-        final FindMetaCriteria findStreamCriteria = new FindMetaCriteria(streamIdExpression);
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(streamIdExpression);
 //        findStreamCriteria.copyFrom(criteria);
-        findStreamCriteria.setSort(MetaDataSource.STREAM_ID, Direction.ASCENDING, false);
+        findMetaCriteria.setSort(MetaFieldNames.STREAM_ID, Direction.ASCENDING, false);
 //        findStreamCriteria.setStreamIdRange(new IdRange(minStreamId, null));
 //        // Don't care about status
 //        findStreamCriteria.obtainStatusSet().add(StreamStatus.LOCKED);
 //        findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-        findStreamCriteria.obtainPageRequest().setLength(max);
+        findMetaCriteria.obtainPageRequest().setLength(max);
 
-        return streamMetaService.find(findStreamCriteria);
+        return metaService.find(findMetaCriteria);
     }
 
 //    private Long min(final Long l1, final Long l2) {
