@@ -319,9 +319,9 @@ public class IndexShardManagerImpl implements IndexShardManager {
                 final IndexShard indexShard = indexShardService.loadById(indexShardId);
                 if (indexShard != null) {
                     // Only allow certain state transitions.
-                    final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
+                    final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatusE());
                     if (allowed.contains(status)) {
-                        indexShard.setStatus(status);
+                        indexShard.setStatusE(status);
                         indexShardService.setStatus(indexShard.getId(), status);
                     }
                 }

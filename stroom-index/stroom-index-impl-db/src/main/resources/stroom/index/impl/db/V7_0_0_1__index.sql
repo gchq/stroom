@@ -16,8 +16,6 @@ CREATE TABLE IF NOT EXISTS `index_volume` (
     `update_user`           varchar(255) NOT NULL,
     `node_name` varchar(255) NOT NULL,
     `path` varchar(255) NOT NULL,
-    `index_status` tinyint(4) NOT NULL,
-    `volume_type` tinyint(4) NOT NULL,
     `bytes_limit` bigint(20) DEFAULT NULL,
     `bytes_used` bigint(20) DEFAULT NULL,
     `bytes_free` bigint(20) DEFAULT NULL,

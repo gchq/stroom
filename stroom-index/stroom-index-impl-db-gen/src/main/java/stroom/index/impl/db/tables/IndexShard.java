@@ -4,6 +4,11 @@
 package stroom.index.impl.db.tables;
 
 
+import java.util.Arrays;
+import java.util.List;
+
+import javax.annotation.Generated;
+
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
@@ -16,14 +21,11 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
+
 import stroom.index.impl.db.Indexes;
 import stroom.index.impl.db.Keys;
 import stroom.index.impl.db.Stroom;
 import stroom.index.impl.db.tables.records.IndexShardRecord;
-
-import javax.annotation.Generated;
-import java.util.Arrays;
-import java.util.List;
 
 
 /**

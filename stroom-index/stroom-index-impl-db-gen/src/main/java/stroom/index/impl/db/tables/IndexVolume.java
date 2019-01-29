@@ -4,6 +4,11 @@
 package stroom.index.impl.db.tables;
 
 
+import java.util.Arrays;
+import java.util.List;
+
+import javax.annotation.Generated;
+
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
@@ -16,14 +21,11 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
+
 import stroom.index.impl.db.Indexes;
 import stroom.index.impl.db.Keys;
 import stroom.index.impl.db.Stroom;
 import stroom.index.impl.db.tables.records.IndexVolumeRecord;
-
-import javax.annotation.Generated;
-import java.util.Arrays;
-import java.util.List;
 
 
 /**
@@ -39,7 +41,7 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexVolume extends TableImpl<IndexVolumeRecord> {
 
-    private static final long serialVersionUID = 2130979234;
+    private static final long serialVersionUID = -1084347172;
 
     /**
      * The reference instance of <code>stroom.index_volume</code>
@@ -93,16 +95,6 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
      * The column <code>stroom.index_volume.path</code>.
      */
     public final TableField<IndexVolumeRecord, String> PATH = createField("path", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
-
-    /**
-     * The column <code>stroom.index_volume.index_status</code>.
-     */
-    public final TableField<IndexVolumeRecord, Byte> INDEX_STATUS = createField("index_status", org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
-
-    /**
-     * The column <code>stroom.index_volume.volume_type</code>.
-     */
-    public final TableField<IndexVolumeRecord, Byte> VOLUME_TYPE = createField("volume_type", org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
 
     /**
      * The column <code>stroom.index_volume.bytes_limit</code>.

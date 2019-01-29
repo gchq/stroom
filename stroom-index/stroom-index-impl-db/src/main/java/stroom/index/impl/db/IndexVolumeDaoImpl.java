@@ -27,6 +27,14 @@ public class IndexVolumeDaoImpl implements IndexVolumeDao {
     }
 
     @Override
+    public List<IndexVolume> getAll() {
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select()
+                .from(INDEX_VOLUME)
+                .fetchInto(IndexVolume.class));
+    }
+
+    @Override
     public IndexVolume create(final String nodeName,
                               final String path) {
         final Long now = System.currentTimeMillis();
@@ -35,8 +43,6 @@ public class IndexVolumeDaoImpl implements IndexVolumeDao {
         return JooqUtil.contextResult(connectionProvider, context -> {
             final Long id = context.insertInto(INDEX_VOLUME,
                     INDEX_VOLUME.VERSION,
-                    INDEX_VOLUME.INDEX_STATUS,
-                    INDEX_VOLUME.VOLUME_TYPE,
                     INDEX_VOLUME.NODE_NAME,
                     INDEX_VOLUME.PATH,
                     INDEX_VOLUME.CREATE_USER,
@@ -44,8 +50,6 @@ public class IndexVolumeDaoImpl implements IndexVolumeDao {
                     INDEX_VOLUME.UPDATE_USER,
                     INDEX_VOLUME.UPDATE_TIME_MS)
                     .values(FIRST_VERSION,
-                            IndexVolume.VolumeUseStatus.defaultValue().getPrimitiveValue(),
-                            IndexVolume.VolumeType.defaultValue().getPrimitiveValue(),
                             nodeName,
                             path,
                             userId,

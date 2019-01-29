@@ -234,7 +234,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                             ClientDateUtil.toISOString(indexShard.getPartitionToTime()));
                 }
                 TooltipUtil.addRowData(html, "Path", indexShard.getVolume().getPath());
-                TooltipUtil.addRowData(html, "Status", indexShard.getStatus().getDisplayValue());
+                TooltipUtil.addRowData(html, "Status", indexShard.getStatusE().getDisplayValue());
                 TooltipUtil.addRowData(html, "Document Count", intToString(indexShard.getDocumentCount()));
                 TooltipUtil.addRowData(html, "File Size", indexShard.getFileSizeString());
                 TooltipUtil.addRowData(html, "Bytes Per Document", intToString(indexShard.getBytesPerDocument()));
@@ -284,7 +284,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
             @Override
             public String getValue(final IndexShard indexShard) {
-                return indexShard.getStatus().getDisplayValue();
+                return indexShard.getStatusE().getDisplayValue();
             }
         }, "Status", 100);
     }

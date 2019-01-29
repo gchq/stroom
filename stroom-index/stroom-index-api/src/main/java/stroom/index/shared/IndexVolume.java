@@ -16,10 +16,7 @@
 
 package stroom.index.shared;
 
-import stroom.docref.HasDisplayValue;
 import stroom.docref.SharedObject;
-import stroom.entity.shared.HasPrimitiveValue;
-import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.util.shared.HasAuditInfo;
 
 /**
@@ -38,8 +35,6 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
     private String updateUser;
 
     private String path;
-    private byte volumeType = VolumeType.PUBLIC.getPrimitiveValue();
-    private byte indexStatus = VolumeUseStatus.ACTIVE.getPrimitiveValue();
     private String nodeName;
     private Long bytesLimit;
     private static final double ONE_HUNDRED = 100D;
@@ -109,8 +104,6 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
         // Replaces the copy function
         public Builder fromOriginal(final IndexVolume original) {
             instance.path = original.path;
-            instance.volumeType = original.volumeType;
-            instance.indexStatus = original.indexStatus;
             instance.nodeName = original.nodeName;
             instance.bytesLimit = original.bytesLimit;
             return this;
@@ -123,11 +116,6 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
 
         public Builder path(final String value) {
             instance.setPath(value);
-            return this;
-        }
-
-        public Builder volumeType(final VolumeType value) {
-            instance.setVolumeTypeE(value);
             return this;
         }
 
@@ -170,38 +158,6 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
 
     public void setPath(final String path) {
         this.path = path;
-    }
-
-    public byte getVolumeType() {
-        return volumeType;
-    }
-
-    public void setVolumeType(final byte pVolumeType) {
-        this.volumeType = pVolumeType;
-    }
-
-    public VolumeType getVolumeTypeE() {
-        return VolumeType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(volumeType);
-    }
-
-    public void setVolumeTypeE(final VolumeType volumeType) {
-        this.volumeType = volumeType.getPrimitiveValue();
-    }
-
-    public byte getIndexStatus() {
-        return indexStatus;
-    }
-
-    public void setIndexStatus(final byte pIndexStatus) {
-        this.indexStatus = pIndexStatus;
-    }
-
-    public VolumeUseStatus getIndexStatusE() {
-        return VolumeUseStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(indexStatus);
-    }
-
-    public void setIndexStatusE(final VolumeUseStatus indexStatus) {
-        this.indexStatus = indexStatus.getPrimitiveValue();
     }
 
     public Long getBytesLimit() {
@@ -276,68 +232,5 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
             percent = Double.valueOf(((double) bytesUsed) / ((double) bytesTotal) * ONE_HUNDRED).longValue();
         }
         return percent;
-    }
-
-    /**
-     * A non generic class!
-     */
-    public enum VolumeType implements HasDisplayValue, HasPrimitiveValue {
-        PUBLIC("Public", 0), PRIVATE("Private", 1);
-
-        public static final PrimitiveValueConverter<VolumeType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
-                VolumeType.values());
-        private final String displayValue;
-        private final byte primitiveValue;
-
-        VolumeType(final String displayValue, final int primitiveValue) {
-            this.displayValue = displayValue;
-            this.primitiveValue = (byte) primitiveValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-
-        @Override
-        public byte getPrimitiveValue() {
-            return primitiveValue;
-        }
-
-        public static VolumeType defaultValue() {
-            return PUBLIC;
-        }
-    }
-
-    public enum VolumeUseStatus implements HasDisplayValue, HasPrimitiveValue {
-        ACTIVE("Active", 0), // Currently being written to.
-        INACTIVE("Inactive", 1), // No longer being written to but still
-        // accessible for reading.
-        CLOSED("Closed", 3); // Data has been removed and the volume is closed.
-
-        public static final PrimitiveValueConverter<VolumeUseStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
-                VolumeUseStatus.values());
-
-        private final String displayValue;
-        private final byte primitiveValue;
-
-        VolumeUseStatus(final String displayValue, final int primitiveValue) {
-            this.displayValue = displayValue;
-            this.primitiveValue = (byte) primitiveValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-
-        @Override
-        public byte getPrimitiveValue() {
-            return primitiveValue;
-        }
-
-        public static VolumeUseStatus defaultValue() {
-            return ACTIVE;
-        }
     }
 }

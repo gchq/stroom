@@ -79,7 +79,7 @@ public class IndexVolumeDaoImplTest {
                 .collect(Collectors.toSet());
         final Set<String> pathsOutsideGroup = IntStream.range(0, 10)
                 .mapToObj(TestData::createPath)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toSet()); // used to ensure some 'noise' exists in the db.
 
         // When
         final IndexVolumeGroup group = indexVolumeGroupDao.create(groupName);
@@ -93,11 +93,62 @@ public class IndexVolumeDaoImplTest {
         // Then
         assertThat(group.getName()).isEqualTo(groupName);
         assertThat(volumesInGroup.stream().map(IndexVolume::getId))
-                .containsExactlyElementsOf(indexVolumesInsideGroup.stream()
+                .containsOnlyElementsOf(indexVolumesInsideGroup.stream()
                         .map(IndexVolume::getId)
                         .collect(Collectors.toSet()));
         assertThat(volumesInGroup.stream().map(IndexVolume::getPath))
-                .containsExactlyElementsOf(pathsInsideGroup);
+                .containsOnlyElementsOf(pathsInsideGroup);
+
+    }
+
+    @Test
+    public void testGroupMembershipRemove() {
+        // Given
+        final String groupName = TestData.createVolumeGroupName();
+        final String nodeName = TestData.createNodeName();
+        final String path = TestData.createPath();
+
+        // When
+        final IndexVolumeGroup group = indexVolumeGroupDao.create(groupName);
+        final IndexVolume indexVolume = indexVolumeDao.create(nodeName, path);
+        indexVolumeDao.addVolumeToGroup(indexVolume.getId(), groupName);
+        final List<IndexVolume> found1 = indexVolumeDao.getVolumesInGroup(groupName);
+        indexVolumeDao.removeVolumeFromGroup(indexVolume.getId(), groupName);
+        final List<IndexVolume> found2 = indexVolumeDao.getVolumesInGroup(groupName);
+
+        // Then
+        assertThat(group.getName()).isEqualTo(groupName);
+        assertThat(found1).hasSize(1);
+        assertThat(found1.get(0).getNodeName()).isEqualTo(nodeName);
+        assertThat(found1.get(0).getPath()).isEqualTo(path);
+        assertThat(found2).hasSize(0);
+    }
+
+    @Test
+    public void testGroupMembershipClear() {
+        // Given
+        final Set<String> groupNames = IntStream.range(0, 5)
+                .mapToObj(TestData::createVolumeGroupName)
+                .collect(Collectors.toSet());
+        final String nodeName = TestData.createNodeName();
+        final String pathToRemove = TestData.createPath();
+        final String pathToRemain = TestData.createPath();
+
+        // When
+        final IndexVolume volumeToRemove = indexVolumeDao.create(nodeName, pathToRemove);
+        final IndexVolume volumeToRemain = indexVolumeDao.create(nodeName, pathToRemain);
+        final Set<IndexVolumeGroup> groups = groupNames.stream()
+                .map(indexVolumeGroupDao::create)
+                .peek(g -> indexVolumeDao.addVolumeToGroup(volumeToRemove.getId(), g.getName()))
+                .peek(g -> indexVolumeDao.addVolumeToGroup(volumeToRemain.getId(), g.getName()))
+                .collect(Collectors.toSet());
+        final List<IndexVolume> indexesInGroup1 = indexVolumeDao.getVolumesInGroup(groupNames.iterator().next());
+        indexVolumeDao.clearVolumeGroupMemberships(volumeToRemove.getId());
+        final List<IndexVolume> indexesInGroup2 = indexVolumeDao.getVolumesInGroup(groupNames.iterator().next());
+
+        // Then
+        assertThat(indexesInGroup1.stream().map(IndexVolume::getPath)).containsOnly(pathToRemain, pathToRemove);
+        assertThat(indexesInGroup2.stream().map(IndexVolume::getPath)).containsOnly(pathToRemain);
 
     }
 }
