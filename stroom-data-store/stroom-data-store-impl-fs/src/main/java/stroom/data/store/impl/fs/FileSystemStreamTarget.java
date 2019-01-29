@@ -18,17 +18,21 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.api.DataException;
+import stroom.data.store.api.OutputStreamProvider;
+import stroom.data.store.api.Target;
+import stroom.io.SeekableOutputStream;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
-import stroom.data.store.api.OutputStreamProvider;
-import stroom.data.store.api.StreamException;
-import stroom.data.store.api.StreamTarget;
-import stroom.meta.api.AttributeMapUtil;
-import stroom.io.SeekableOutputStream;
+import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.Status;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,9 +45,10 @@ import java.util.stream.Collectors;
 /**
  * A file system implementation of StreamTarget.
  */
-final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFactory {
+final class FileSystemStreamTarget implements Target, NestedOutputStreamFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamTarget.class);
 
+    private final MetaService metaService;
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
     private final Set<String> volumePaths;
     private final String streamType;
@@ -55,12 +60,15 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
     private OutputStream outputStream;
     private Set<Path> files;
     private FileSystemStreamTarget parent;
+    private long index;
 
-    private FileSystemStreamTarget(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
+    private FileSystemStreamTarget(final MetaService metaService,
+                                   final FileSystemStreamPathHelper fileSystemStreamPathHelper,
                                    final Meta requestMetaData,
                                    final Set<String> volumePaths,
                                    final String streamType,
                                    final boolean append) {
+        this.metaService = metaService;
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.meta = requestMetaData;
         this.volumePaths = volumePaths;
@@ -70,10 +78,12 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
         validate();
     }
 
-    private FileSystemStreamTarget(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
+    private FileSystemStreamTarget(final MetaService metaService,
+                                   final FileSystemStreamPathHelper fileSystemStreamPathHelper,
                                    final FileSystemStreamTarget parent,
                                    final String streamType,
                                    final Set<Path> files) {
+        this.metaService = metaService;
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.meta = parent.meta;
         this.volumePaths = parent.volumePaths;
@@ -89,12 +99,13 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
     /**
      * Creates a new file system stream target.
      */
-    static FileSystemStreamTarget create(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
+    static FileSystemStreamTarget create(final MetaService metaService,
+                                         final FileSystemStreamPathHelper fileSystemStreamPathHelper,
                                          final Meta meta,
                                          final Set<String> volumePaths,
                                          final String streamType,
                                          final boolean append) {
-        return new FileSystemStreamTarget(fileSystemStreamPathHelper, meta, volumePaths, streamType, append);
+        return new FileSystemStreamTarget(metaService, fileSystemStreamPathHelper, meta, volumePaths, streamType, append);
     }
 
     private void validate() {
@@ -104,20 +115,98 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
     }
 
     @Override
-    public void close() throws IOException {
-        if (outputStream != null && !closed) {
+    public void close() {
+        // If we get error on closing the stream we must return it to the caller
+        IOException streamCloseException = null;
+
+        // Close the stream target.
+        try {
+            if (outputStream != null && !closed) {
+                closed = true;
+                outputStream.close();
+            }
             closed = true;
-            outputStream.close();
+            // Close off any open kids .... closing the parent
+            // closes kids (the caller can also close the kid off if they like).
+            for (final FileSystemStreamTarget child : childrenAccessed) {
+                child.close();
+            }
+        } catch (final IOException e) {
+            LOGGER.error("closeStreamTarget() - Error on closing stream {}", this, e);
+            streamCloseException = e;
         }
-        closed = true;
-        // Close off any open kids .... closing the parent
-        // closes kids (the caller can also close the kid off if they like).
-        for (final FileSystemStreamTarget child : childrenAccessed) {
-            child.close();
+
+        updateAttribute(this, MetaFieldNames.RAW_SIZE,
+                String.valueOf(getStreamSize()));
+
+        updateAttribute(this, MetaFieldNames.FILE_SIZE,
+                String.valueOf(getTotalFileSize()));
+
+        try {
+            boolean doneManifest = false;
+
+            // Are we appending?
+            if (isAppend()) {
+                final Set<Path> childFile = fileSystemStreamPathHelper.createChildStreamPath(getFiles(false), InternalStreamTypeNames.MANIFEST);
+
+                // Does the manifest exist ... overwrite it
+                if (FileSystemUtil.isAllFile(childFile)) {
+                    try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(InternalStreamTypeNames.MANIFEST, childFile)) {
+                        AttributeMapUtil.write(getAttributes(), outputStream);
+                    }
+                    doneManifest = true;
+                }
+            }
+
+            if (!doneManifest) {
+                // No manifest done yet ... output one if the parent dir's exist
+                if (FileSystemUtil.isAllParentDirectoryExist(getFiles(false))) {
+                    try (final OutputStream outputStream = add(InternalStreamTypeNames.MANIFEST).getOutputStream()) {
+                        AttributeMapUtil.write(getAttributes(), outputStream);
+                    }
+                } else {
+                    LOGGER.warn("closeStreamTarget() - Closing target file with no directory present");
+                }
+
+            }
+        } catch (final IOException e) {
+            LOGGER.error("closeStreamTarget() - Error on writing Manifest {}", this, e);
+        }
+
+        if (streamCloseException == null) {
+            // Unlock will update the meta data so set it back on the stream
+            // target so the client has the up to date copy
+            setMetaData(unlock(getMeta(), getAttributes()));
+        } else {
+            throw new UncheckedIOException(streamCloseException);
         }
     }
 
-    Long getStreamSize() {
+    private void updateAttribute(final FileSystemStreamTarget target, final String key, final String value) {
+        if (!target.getAttributes().containsKey(key)) {
+            target.getAttributes().put(key, value);
+        }
+    }
+
+    private Meta unlock(final Meta meta, final AttributeMap attributeMap) {
+        if (Status.UNLOCKED.equals(meta.getStatus())) {
+            throw new IllegalStateException("Attempt to unlock data that is already unlocked");
+        }
+
+        // Write the child meta data
+        if (!attributeMap.isEmpty()) {
+            try {
+                metaService.addAttributes(meta, attributeMap);
+            } catch (final RuntimeException e) {
+                LOGGER.error("unlock() - Failed to persist attributes in new transaction... will ignore");
+            }
+        }
+
+        LOGGER.debug("unlock() " + meta);
+        return metaService.updateStatus(meta, Status.UNLOCKED, Status.LOCKED);
+    }
+
+    private Long getStreamSize() {
         try {
             long total = 0;
             if (outputStream != null) {
@@ -130,7 +219,7 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
         }
     }
 
-    Long getTotalFileSize() {
+    private Long getTotalFileSize() {
         long total = 0;
         final Set<Path> fileSet = getFiles(false);
 
@@ -160,7 +249,7 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
                         final Path rootDir = Paths.get(rootPath);
                         if (!FileSystemUtil.mkdirs(rootDir, aFile.getParent())) {
                             // Unable to create path
-                            throw new StreamException("Unable to create directory for file " + aFile);
+                            throw new DataException("Unable to create directory for file " + aFile);
 
                         }
                     }
@@ -180,19 +269,14 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
         return files;
     }
 
-
     @Override
-    public OutputStreamProvider getOutputStreamProvider() {
-        return new OutputStreamProviderImpl(meta, this);
+    public OutputStreamProvider next() {
+        final OutputStreamProvider outputStreamProvider = new OutputStreamProviderImpl(meta, this, index);
+        index++;
+        return outputStreamProvider;
     }
 
-//    @Override
-//    SegmentOutputStream getSegmentOutputStream() {
-//        return new RASegmentOutputStream(getOutputStream(),
-//                () -> addChild(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream());
-//    }
-
-    void setMetaData(final Meta meta) {
+    private void setMetaData(final Meta meta) {
         this.meta = meta;
     }
 
@@ -206,7 +290,7 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
             throw new RuntimeException("Stream store is responsible for the child manifest stream");
         }
         final Set<Path> childFile = fileSystemStreamPathHelper.createChildStreamPath(getFiles(false), streamTypeName);
-        final FileSystemStreamTarget child = new FileSystemStreamTarget(fileSystemStreamPathHelper, this, streamTypeName, childFile);
+        final FileSystemStreamTarget child = new FileSystemStreamTarget(metaService, fileSystemStreamPathHelper, this, streamTypeName, childFile);
         childrenAccessed.add(child);
         return child;
     }
@@ -223,7 +307,7 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
 
                 if (!FileSystemUtil.deleteAnyPath(files)) {
                     LOGGER.error("getOutputStream() - Unable to delete existing files for new stream target");
-                    throw new StreamException("Unable to delete existing files for new stream target " + files);
+                    throw new DataException("Unable to delete existing files for new stream target " + files);
                 }
 
                 outputStream = fileSystemStreamPathHelper.getOutputStream(streamType, files);
@@ -231,7 +315,7 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
                 LOGGER.error("getOutputStream() - " + ioEx.getMessage());
                 // No reason to get a IO on opening the out stream .... fail in
                 // a heap
-                throw new StreamException(ioEx);
+                throw new DataException(ioEx);
             }
         }
         return outputStream;
@@ -242,7 +326,7 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
 //        return add(typeName);
 //    }
 
-    StreamTarget getParent() {
+    Target getParent() {
         return parent;
     }
 

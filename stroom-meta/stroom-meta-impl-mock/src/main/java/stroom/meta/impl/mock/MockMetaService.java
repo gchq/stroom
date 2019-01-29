@@ -1,16 +1,16 @@
 package stroom.meta.impl.mock;
 
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.Clearable;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.meta.shared.MetaService;
 import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Clearable;
 
 import javax.inject.Singleton;
 import java.util.ArrayList;
@@ -79,12 +79,20 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public Meta updateStatus(final Meta meta, final Status status) {
+    public Meta updateStatus(final Meta meta, final Status newStatus, final Status currentStatus) {
         Objects.requireNonNull(meta, "Null data");
 
         final MockMeta result = (MockMeta) metaMap.get(meta.getId());
         if (result != null) {
-            result.status = status;
+            if (currentStatus != result.getStatus()) {
+                throw new RuntimeException("Unexpected status " +
+                        result.getStatus() +
+                        " (expected " +
+                        currentStatus +
+                        ")");
+            }
+
+            result.status = newStatus;
             result.statusMs = System.currentTimeMillis();
         }
         return result;

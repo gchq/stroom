@@ -233,7 +233,7 @@ public class StroomStreamProcessor {
                 // try/catch so we can return to the client an error in the case
                 // of a corrupt stream.
                 try {
-                    AttributeMapUtil.read(zipArchiveInputStream, false, entryAttributeMap);
+                    AttributeMapUtil.read(zipArchiveInputStream, entryAttributeMap);
                 } catch (final IOException ioEx) {
                     throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, ioEx.getMessage());
                 }

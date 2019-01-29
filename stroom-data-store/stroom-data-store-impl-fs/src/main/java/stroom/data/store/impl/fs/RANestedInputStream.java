@@ -31,7 +31,7 @@ import java.io.InputStream;
  */
 class RANestedInputStream extends NestedInputStream {
     protected final InputStream data;
-    protected final InputStream index;
+    protected final SupplierWithIO<InputStream> indexInputStreamSupplier;
     private final StreamCloser streamCloser;
     private long currentEntry = -1;
     private boolean currentEntryClosed = true;
@@ -39,12 +39,16 @@ class RANestedInputStream extends NestedInputStream {
     private Long segmentCount = null;
     private RASegmentInputStream segmentInputStream;
 
-    RANestedInputStream(final InputStream data, final InputStream index) {
+    RANestedInputStream(final InputStream data, final InputStream inputStream) {
+        this(data, () -> inputStream);
+    }
+
+    RANestedInputStream(final InputStream data, final SupplierWithIO<InputStream> indexInputStreamSupplier) {
         this.data = data;
-        this.index = index;
+        this.indexInputStreamSupplier = indexInputStreamSupplier;
 
         streamCloser = new BasicStreamCloser();
-        streamCloser.add(data).add(index);
+        streamCloser.add(data);
     }
 
     public void closeEntry() throws IOException {
@@ -90,7 +94,7 @@ class RANestedInputStream extends NestedInputStream {
         // Record the entry we are going to open and create an input stream for
         // the entry.
         currentEntry = entryNo;
-        segmentInputStream = new RASegmentInputStream(data, index);
+        segmentInputStream = new RASegmentInputStream(data, indexInputStreamSupplier);
 
         // If this stream has segments, include the requested segment
         // otherwise we will use the whole stream.
@@ -120,7 +124,7 @@ class RANestedInputStream extends NestedInputStream {
     private long getSegmentCount() throws IOException {
         if (segmentCount == null) {
             if (segmentInputStream == null) {
-                segmentInputStream = new RASegmentInputStream(data, index);
+                segmentInputStream = new RASegmentInputStream(data, indexInputStreamSupplier);
             }
             segmentCount = segmentInputStream.count();
         }

@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
-import stroom.data.store.api.StreamTargetUtil;
+import stroom.data.store.api.TargetUtil;
 import stroom.util.io.StreamUtil;
 
 import java.io.ByteArrayInputStream;
@@ -40,7 +40,7 @@ class TestStreamTargetUtil {
 
         final ByteArrayOutputStream dataBuffer = new ByteArrayOutputStream();
 
-        StreamTargetUtil.write(bais, new RASegmentOutputStream(dataBuffer, ByteArrayOutputStream::new), true);
+        TargetUtil.write(bais, new RASegmentOutputStream(dataBuffer, ByteArrayOutputStream::new), true);
 
         assertThat(new String(dataBuffer.toByteArray(), StreamUtil.DEFAULT_CHARSET)).isEqualTo(text);
     }

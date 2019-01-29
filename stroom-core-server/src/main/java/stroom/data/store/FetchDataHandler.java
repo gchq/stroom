@@ -17,7 +17,7 @@
 
 package stroom.data.store;
 
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Store;
 import stroom.pipeline.feed.FeedProperties;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -43,7 +43,7 @@ class FetchDataHandler extends AbstractTaskHandler<FetchDataAction, AbstractFetc
     private final DataFetcher dataFetcher;
 
     @Inject
-    FetchDataHandler(final StreamStore streamStore,
+    FetchDataHandler(final Store streamStore,
                      final FeedProperties feedProperties,
                      final Provider<FeedHolder> feedHolderProvider,
                      final Provider<MetaDataHolder> metaDataHolderProvider,

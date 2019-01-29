@@ -17,13 +17,9 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.SegmentInputStream;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamSourceInputStream;
-import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.io.BasicStreamCloser;
 import stroom.io.SeekableInputStream;
 import stroom.io.StreamCloser;
-import stroom.streamstore.shared.StreamTypeNames;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,37 +29,37 @@ import java.io.InputStream;
  * <p>
  * You must call getNextEntry and closeEntry like the ZIP API.
  */
-class StreamSourceInputStreamProviderImpl implements StreamSourceInputStreamProvider {
-    private final StreamSource streamSource;
+class StreamSourceInputStreamProviderImpl {
+    private final NestedInputStreamFactory nestedInputStreamFactory;
     private Long segmentCount = null;
     private InputStream data;
     private InputStream boundaryIndex;
     private InputStream segmentIndex;
     private StreamCloser streamCloser;
 
-    StreamSourceInputStreamProviderImpl(final StreamSource streamSource) {
-        this.streamSource = streamSource;
+    StreamSourceInputStreamProviderImpl(final NestedInputStreamFactory nestedInputStreamFactory) {
+        this.nestedInputStreamFactory = nestedInputStreamFactory;
     }
 
-    private InputStream getData() throws IOException {
+    private InputStream getData() {
         if (data == null) {
-            data = streamSource.getInputStream();
+            data = nestedInputStreamFactory.getInputStream();
             getStreamCloser().add(data);
         }
         return data;
     }
 
-    private InputStream getBoundaryIndex() throws IOException {
+    private InputStream getBoundaryIndex() {
         if (boundaryIndex == null) {
-            boundaryIndex = streamSource.getChildStream(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream();
+            boundaryIndex = nestedInputStreamFactory.getChild(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream();
             getStreamCloser().add(boundaryIndex);
         }
         return boundaryIndex;
     }
 
-    private InputStream getSegmentIndex() throws IOException {
+    private InputStream getSegmentIndex() {
         if (segmentIndex == null) {
-            segmentIndex = streamSource.getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream();
+            segmentIndex = nestedInputStreamFactory.getChild(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream();
             getStreamCloser().add(segmentIndex);
         }
         return segmentIndex;
@@ -76,45 +72,43 @@ class StreamSourceInputStreamProviderImpl implements StreamSourceInputStreamProv
         return streamCloser;
     }
 
-    @Override
-    public long getStreamCount() throws IOException {
+    private long getStreamCount() throws IOException {
         return getSegmentCount();
     }
 
-    @Override
-    public StreamSourceInputStream getStream(final long streamNo) throws IOException {
+//    @Override
+//    public StreamSourceInputStream getStream(final long streamNo) throws IOException {
+//        // Check bounds.
+//        final long segmentCount = getSegmentCount();
+//        if (streamNo < 0 || streamNo >= segmentCount) {
+//            return null;
+//        }
+//
+//        final RASegmentInputStream segmentInputStream = new RASegmentInputStream(getData(), getBoundaryIndex());
+//
+//        // If this stream has segments, include the requested segment
+//        // otherwise we will use the whole stream.
+//        if (segmentCount > 0) {
+//            segmentInputStream.include(streamNo);
+//        }
+//
+//        // Calculate the size of this stream.
+//        final long entryByteOffsetStart = entryByteOffsetStart(segmentInputStream, streamNo);
+//        final long entryByteOffsetEnd = entryByteOffsetEnd(segmentInputStream, streamNo);
+//        final long size = entryByteOffsetEnd - entryByteOffsetStart;
+//
+//        // Create the wrapped input stream.
+//        return new StreamSourceInputStreamImpl(segmentInputStream, size);
+//    }
+
+    private SegmentInputStream getStream(final long streamNo) throws IOException {
         // Check bounds.
         final long segmentCount = getSegmentCount();
         if (streamNo < 0 || streamNo >= segmentCount) {
             return null;
         }
 
-        final RASegmentInputStream segmentInputStream = new RASegmentInputStream(getData(), getBoundaryIndex());
-
-        // If this stream has segments, include the requested segment
-        // otherwise we will use the whole stream.
-        if (segmentCount > 0) {
-            segmentInputStream.include(streamNo);
-        }
-
-        // Calculate the size of this stream.
-        final long entryByteOffsetStart = entryByteOffsetStart(segmentInputStream, streamNo);
-        final long entryByteOffsetEnd = entryByteOffsetEnd(segmentInputStream, streamNo);
-        final long size = entryByteOffsetEnd - entryByteOffsetStart;
-
-        // Create the wrapped input stream.
-        return new StreamSourceInputStreamImpl(segmentInputStream, size);
-    }
-
-    @Override
-    public SegmentInputStream getSegmentInputStream(final long streamNo) throws IOException {
-        // Check bounds.
-        final long segmentCount = getSegmentCount();
-        if (streamNo < 0 || streamNo >= segmentCount) {
-            return null;
-        }
-
-        final RASegmentInputStream segmentInputStream = new RASegmentInputStream(getData(), getBoundaryIndex());
+        final RASegmentInputStream segmentInputStream = new RASegmentInputStream(getData(), this::getBoundaryIndex);
 
         // If this stream has segments, include the requested segment
         // otherwise we will use the whole stream.
@@ -127,7 +121,7 @@ class StreamSourceInputStreamProviderImpl implements StreamSourceInputStreamProv
         final long entryByteOffsetEnd = entryByteOffsetEnd(segmentInputStream, streamNo);
         // final long size = entryByteOffsetEnd - entryByteOffsetStart;
 
-        return new RASegmentInputStream(getData(), getSegmentIndex(), entryByteOffsetStart, entryByteOffsetEnd);
+        return new RASegmentInputStream(getData(), this::getSegmentIndex, entryByteOffsetStart, entryByteOffsetEnd);
     }
 
     private long entryByteOffsetStart(final RASegmentInputStream segmentInputStream, final long streamNo)
@@ -146,13 +140,12 @@ class StreamSourceInputStreamProviderImpl implements StreamSourceInputStreamProv
 
     private long getSegmentCount() throws IOException {
         if (segmentCount == null) {
-            final RASegmentInputStream segmentInputStream = new RASegmentInputStream(getData(), getBoundaryIndex());
+            final RASegmentInputStream segmentInputStream = new RASegmentInputStream(getData(), () -> getBoundaryIndex());
             segmentCount = segmentInputStream.count();
         }
         return segmentCount;
     }
 
-    @Override
     public void close() throws IOException {
         if (streamCloser != null) {
             streamCloser.close();

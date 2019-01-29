@@ -17,14 +17,16 @@
 package stroom.pipeline;
 
 
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.FindMetaCriteria;
+import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.SourceUtil;
+import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.io.StreamCloser;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -85,7 +87,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
     @Inject
-    private StreamStore streamStore;
+    private Store streamStore;
     @Inject
     private MetaService dataMetaService;
 
@@ -333,45 +335,47 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     }
 
     private void checkFull(final long streamId, final String outputReference) throws IOException {
-        final StreamSource streamSource = streamStore.openStreamSource(streamId);
-        final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(outputReference);
-        final String refData = StreamUtil.fileToString(refFile);
-        final String data = StreamUtil.streamToString(streamSource.getInputStream());
-        assertThat(data).isEqualTo(refData);
-        streamStore.closeStreamSource(streamSource);
+        try (final Source streamSource = streamStore.openStreamSource(streamId)) {
+            final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(outputReference);
+            final String refData = StreamUtil.fileToString(refFile);
+            final String data = SourceUtil.readString(streamSource);
+            assertThat(data).isEqualTo(refData);
+        }
     }
 
     private void checkOuterData(final long streamId, final int count, final String ref) throws IOException {
-        final StreamSource streamSource = streamStore.openStreamSource(streamId);
-        final SegmentInputStream segmentInputStream = streamSource.getSegmentInputStream();
+        try (final Source streamSource = streamStore.openStreamSource(streamId)) {
+            try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
+                final SegmentInputStream segmentInputStream = inputStreamProvider.get();
 
-        assertThat(segmentInputStream.count()).isEqualTo(count);
+                assertThat(segmentInputStream.count()).isEqualTo(count);
 
-        // Include the first and last segment only.
-        segmentInputStream.include(0);
-        segmentInputStream.include(segmentInputStream.count() - 1);
+                // Include the first and last segment only.
+                segmentInputStream.include(0);
+                segmentInputStream.include(segmentInputStream.count() - 1);
 
-        final String data = StreamUtil.streamToString(segmentInputStream);
-        assertThat(data).isEqualTo(ref);
-
-        streamStore.closeStreamSource(streamSource);
+                final String data = StreamUtil.streamToString(segmentInputStream);
+                assertThat(data).isEqualTo(ref);
+            }
+        }
     }
 
     private void checkInnerData(final long streamId, final int count, final String ref) throws IOException {
-        final StreamSource streamSource = streamStore.openStreamSource(streamId);
-        final SegmentInputStream segmentInputStream = streamSource.getSegmentInputStream();
+        try (final Source streamSource = streamStore.openStreamSource(streamId)) {
+            try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
+                final SegmentInputStream segmentInputStream = inputStreamProvider.get();
 
-        assertThat(segmentInputStream.count()).isEqualTo(count);
+                assertThat(segmentInputStream.count()).isEqualTo(count);
 
-        // Include the first and last segment only.
-        segmentInputStream.include(0);
-        segmentInputStream.include(1);
-        segmentInputStream.include(segmentInputStream.count() - 2);
-        segmentInputStream.include(segmentInputStream.count() - 1);
+                // Include the first and last segment only.
+                segmentInputStream.include(0);
+                segmentInputStream.include(1);
+                segmentInputStream.include(segmentInputStream.count() - 2);
+                segmentInputStream.include(segmentInputStream.count() - 1);
 
-        final String data = StreamUtil.streamToString(segmentInputStream);
-        assertThat(data).isEqualTo(ref);
-
-        streamStore.closeStreamSource(streamSource);
+                final String data = StreamUtil.streamToString(segmentInputStream);
+                assertThat(data).isEqualTo(ref);
+            }
+        }
     }
 }

@@ -20,11 +20,12 @@ package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.data.store.DataRetentionExecutor;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.store.api.StreamTargetUtil;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
+import stroom.data.store.api.TargetUtil;
 import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
 import stroom.docref.DocRef;
 import stroom.pipeline.feed.FeedStore;
@@ -64,7 +65,7 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     @Inject
     private VolumeConfig volumeConfig;
     @Inject
-    private StreamStore streamStore;
+    private Store streamStore;
     @Inject
     private DataVolumeService streamVolumeService;
     @Inject
@@ -124,13 +125,17 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
                 .createMs(newDate.toInstant().toEpochMilli())
                 .build();
 
-        final StreamTarget oldFileTarget = streamStore.openStreamTarget(oldFile);
-        StreamTargetUtil.write(oldFileTarget, "MyTest");
-        streamStore.closeStreamTarget(oldFileTarget);
+        Meta oldFileMeta;
+        try (final Target oldFileTarget = streamStore.openStreamTarget(oldFile)) {
+            oldFileMeta = oldFileTarget.getMeta();
+            TargetUtil.write(oldFileTarget, "MyTest");
+        }
 
-        final StreamTarget newFileTarget = streamStore.openStreamTarget(newFile);
-        StreamTargetUtil.write(newFileTarget, "MyTest");
-        streamStore.closeStreamTarget(newFileTarget);
+        Meta newFileMeta;
+        try (final Target newFileTarget = streamStore.openStreamTarget(newFile)) {
+            newFileMeta = newFileTarget.getMeta();
+            TargetUtil.write(newFileTarget, "MyTest");
+        }
 
 //        // Now we have added some data create some associated stream tasks.
 //        // TODO : At some point we need to change deletion to delete streams and
@@ -141,27 +146,27 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
 //        streamTaskCreator.createTasks(new SimpleTaskContext());
 
         List<DataVolume> oldVolumeList = streamVolumeService
-                .find(FindDataVolumeCriteria.create(oldFileTarget.getMeta()));
+                .find(FindDataVolumeCriteria.create(oldFileMeta));
         assertThat(oldVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
 
         List<DataVolume> newVolumeList = streamVolumeService
-                .find(FindDataVolumeCriteria.create(newFileTarget.getMeta()));
+                .find(FindDataVolumeCriteria.create(newFileMeta));
         assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
 
         streamRetentionExecutor.exec();
         streamDeleteExecutor.delete(System.currentTimeMillis());
 
         // Test Again
-        oldVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(oldFileTarget.getMeta()));
+        oldVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(oldFileMeta));
         assertThat(oldVolumeList.size()).as("Expecting 0 stream volumes").isEqualTo(0);
 
-        newVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(newFileTarget.getMeta()));
+        newVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(newFileMeta));
         assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
 
         // Test they are
-        oldVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(oldFileTarget.getMeta()));
+        oldVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(oldFileMeta));
         assertThat(oldVolumeList.size()).as("Expecting 0 stream volumes").isEqualTo(0);
-        newVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(newFileTarget.getMeta()));
+        newVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(newFileMeta));
         assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
     }
 }

@@ -16,13 +16,12 @@
 
 package stroom.data.store.api;
 
-import java.io.Closeable;
-import java.io.IOException;
+import java.io.InputStream;
 
-public interface StreamSourceInputStreamProvider extends Closeable {
-    long getStreamCount() throws IOException;
-
-    StreamSourceInputStream getStream(final long streamNo) throws IOException;
-
-    SegmentInputStream getSegmentInputStream(final long streamNo) throws IOException;
+public abstract class SizeAwareInputStream extends InputStream {
+    /**
+     * Get the size in bytes of the input stream.
+     * @return The size in bytes of the input stream.
+     */
+    public abstract long size();
 }

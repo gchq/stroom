@@ -22,8 +22,8 @@ import org.slf4j.LoggerFactory;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
 import stroom.data.store.api.WrappedSegmentOutputStream;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
@@ -57,7 +57,7 @@ public class StreamAppender extends AbstractAppender {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAppender.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final MetaHolder metaHolder;
     private final StreamProcessorHolder streamProcessorHolder;
     private final MetaData metaData;
@@ -67,7 +67,7 @@ public class StreamAppender extends AbstractAppender {
     private String feed;
     private String streamType;
     private boolean segmentOutput = true;
-    private StreamTarget streamTarget;
+    private Target streamTarget;
     private WrappedSegmentOutputStream wrappedSegmentOutputStream;
     private boolean doneHeader;
     private long count;
@@ -76,7 +76,7 @@ public class StreamAppender extends AbstractAppender {
 
     @Inject
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
-                          final StreamStore streamStore,
+                          final Store streamStore,
                           final MetaHolder metaHolder,
                           final StreamProcessorHolder streamProcessorHolder,
                           final MetaData metaData,
@@ -129,7 +129,7 @@ public class StreamAppender extends AbstractAppender {
 
         streamTarget = streamStore.openStreamTarget(metaProperties);
 
-        wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.getOutputStreamProvider().next()) {
+        wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.next().get()) {
             @Override
             public void close() throws IOException {
                 super.flush();
@@ -200,13 +200,9 @@ public class StreamAppender extends AbstractAppender {
                 if (supersededOutputHelper.isSuperseded()) {
                     streamStore.deleteStreamTarget(streamTarget);
                 } else {
-                    streamStore.closeStreamTarget(streamTarget);
+                    streamTarget.close();
                 }
-//            } catch (final OptimisticLockException e) {
-//                // This exception will be thrown is the stream target has already been deleted by another thread if it was superseded.
-//                LOGGER.debug("Optimistic lock exception thrown when closing stream target (see trace for details)");
-//                LOGGER.trace(e.getMessage(), e);
-            } catch (final RuntimeException e) {
+            } catch (final IOException | RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         }

@@ -1,11 +1,11 @@
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.api.StreamSourceInputStream;
+import stroom.data.store.api.SizeAwareInputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-class StreamSourceInputStreamImpl extends StreamSourceInputStream {
+class StreamSourceInputStreamImpl extends SizeAwareInputStream {
     private final InputStream inputStream;
     private final long size;
 

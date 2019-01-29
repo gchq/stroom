@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public interface OutputStreamProvider extends Closeable {
-    SegmentOutputStream next();
+    SegmentOutputStream get();
 
-    SegmentOutputStream next(String streamType);
+    SegmentOutputStream get(String streamType);
 }

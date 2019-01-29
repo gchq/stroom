@@ -18,8 +18,8 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.shared.AttributeMap;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.ArgsUtil;
 import stroom.util.io.AbstractFileVisitor;
@@ -106,46 +106,45 @@ class FileMetaGrep extends AbstractCommandLineTool {
 
             if (path.endsWith("meta.bgz")) {
                 String bdyPath = path.substring(0, path.length() - 4) + ".bdy.dat";
-                RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(file),
-                        new UncompressedInputStream(Paths.get(bdyPath), true));
-                int segment = 0;
-                while (nestedInputStream.getNextEntry()) {
-                    segment++;
+                try (final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(file),
+                        () -> new UncompressedInputStream(Paths.get(bdyPath), true))) {
+                    int segment = 0;
+                    while (nestedInputStream.getNextEntry()) {
+                        segment++;
 
-                    AttributeMap attributeMap = new AttributeMap();
-                    AttributeMapUtil.read(nestedInputStream, false, attributeMap);
-                    nestedInputStream.closeEntry();
+                        AttributeMap attributeMap = new AttributeMap();
+                        AttributeMapUtil.read(nestedInputStream, attributeMap);
+                        nestedInputStream.closeEntry();
 
-                    boolean match = true;
+                        boolean match = true;
 
-                    for (String matchKey : matchMap.keySet()) {
-                        if (!attributeMap.containsKey(matchKey)) {
-                            // No Good
-                            match = false;
-                        } else {
-                            if (!attributeMap.get(matchKey).startsWith(matchMap.get(matchKey))) {
+                        for (String matchKey : matchMap.keySet()) {
+                            if (!attributeMap.containsKey(matchKey)) {
                                 // No Good
                                 match = false;
+                            } else {
+                                if (!attributeMap.get(matchKey).startsWith(matchMap.get(matchKey))) {
+                                    // No Good
+                                    match = false;
+                                }
                             }
                         }
-                    }
 
-                    if (match) {
-                        // Found Match
-                        System.out.println("Found Match in " + path + " at segment " + segment);
-                        System.out.write(AttributeMapUtil.toByteArray(attributeMap));
-                        System.out.println();
+                        if (match) {
+                            // Found Match
+                            System.out.println("Found Match in " + path + " at segment " + segment);
+                            System.out.write(AttributeMapUtil.toByteArray(attributeMap));
+                            System.out.println();
+                        }
                     }
-
                 }
-                nestedInputStream.close();
             }
         } catch (IOException ioEx) {
             ioEx.printStackTrace();
         }
     }
 
-    public boolean matches(String path) {
+    private boolean matches(String path) {
         String[] pathParts = path.split("/");
 
         for (int i = 0; (i < pathParts.length) && (i < repoPathParts.length); i++) {

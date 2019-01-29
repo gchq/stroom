@@ -19,7 +19,7 @@
 package stroom.data.store;
 
 import io.swagger.annotations.Api;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Store;
 import stroom.pipeline.feed.FeedProperties;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -54,7 +54,7 @@ public class DataResource {
     private final Security security;
 
     @Inject
-    public DataResource(final StreamStore streamStore,
+    public DataResource(final Store streamStore,
                         final FeedProperties feedProperties,
                         final Provider<FeedHolder> feedHolderProvider,
                         final Provider<MetaDataHolder> metaDataHolderProvider,

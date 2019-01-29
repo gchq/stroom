@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.data.store.StreamMaintenanceService;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Store;
 import stroom.data.store.impl.SteamStoreStreamCloserImpl;
 import stroom.db.util.HikariUtil;
 import stroom.io.StreamCloser;
@@ -49,7 +49,7 @@ public class FileSystemDataStoreModule extends AbstractModule {
         install(new TaskModule());
 
         bind(StreamMaintenanceService.class).to(FileSystemStreamMaintenanceService.class);
-        bind(StreamStore.class).to(FileSystemStreamStoreImpl.class);
+        bind(Store.class).to(FileSystemStreamStoreImpl.class);
         bind(StreamCloser.class).to(SteamStoreStreamCloserImpl.class);
         bind(FileSystemTypePaths.class).to(FileSystemTypePathsImpl.class);
         bind(DataVolumeService.class).to(DataVolumeServiceImpl.class);

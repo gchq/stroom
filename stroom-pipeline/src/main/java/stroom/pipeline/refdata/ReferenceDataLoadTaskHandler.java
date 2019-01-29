@@ -19,13 +19,11 @@ package stroom.pipeline.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.Meta;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamSourceInputStream;
-import stroom.data.store.api.StreamSourceInputStreamProvider;
-import stroom.data.store.api.StreamStore;
-import stroom.pipeline.feed.FeedProperties;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
 import stroom.io.StreamCloser;
+import stroom.meta.shared.Meta;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.StreamLocationFactory;
@@ -35,24 +33,25 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.feed.FeedProperties;
+import stroom.pipeline.refdata.store.RefDataStore;
+import stroom.pipeline.refdata.store.RefDataStoreFactory;
+import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
-import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.pipeline.refdata.store.RefDataStore;
-import stroom.pipeline.refdata.store.RefDataStoreFactory;
-import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.security.Security;
-import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Processes reference data that meets some supplied criteria (feed names,
@@ -64,7 +63,7 @@ import java.io.IOException;
 class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoadTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataLoadTaskHandler.class);
 
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final PipelineFactory pipelineFactory;
     private final PipelineStore pipelineStore;
     private final PipelineHolder pipelineHolder;
@@ -83,7 +82,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     private ErrorReceiverIdDecorator errorReceiver;
 
     @Inject
-    ReferenceDataLoadTaskHandler(final StreamStore streamStore,
+    ReferenceDataLoadTaskHandler(final Store streamStore,
                                  final PipelineFactory pipelineFactory,
                                  final PipelineStore pipelineStore,
                                  final PipelineHolder pipelineHolder,
@@ -127,15 +126,13 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
             errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
             errorReceiverProxy.setErrorReceiver(errorReceiver);
 
-            try {
-                final RefStreamDefinition refStreamDefinition = task.getRefStreamDefinition();
+            final RefStreamDefinition refStreamDefinition = task.getRefStreamDefinition();
+            LOGGER.debug("Loading reference data: {}", refStreamDefinition);
 
-                LOGGER.debug("Loading reference data: {}", refStreamDefinition);
-
-                // Open the stream source.
-                final StreamSource streamSource = streamStore.openStreamSource(refStreamDefinition.getStreamId());
-                if (streamSource != null) {
-                    final Meta meta = streamSource.getMeta();
+            // Open the stream source.
+            try (final Source source = streamStore.openStreamSource(refStreamDefinition.getStreamId())) {
+                if (source != null) {
+                    final Meta meta = source.getMeta();
                     try {
                         // Load the feed.
                         final String feedName = meta.getFeedName();
@@ -156,7 +153,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                         populateMaps(
                                 pipeline,
                                 meta,
-                                streamSource,
+                                source,
                                 feedName,
                                 meta.getTypeName(),
                                 task.getRefStreamDefinition());
@@ -169,11 +166,9 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                         } catch (final IOException e) {
                             log(Severity.FATAL_ERROR, e.getMessage(), e);
                         }
-
-                        streamStore.closeStreamSource(streamSource);
                     }
                 }
-            } catch (final RuntimeException e) {
+            } catch (final IOException | RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
             }
             return VoidResult.INSTANCE;
@@ -182,49 +177,46 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
 
     private void populateMaps(final Pipeline pipeline,
                               final Meta meta,
-                              final StreamSource streamSource,
+                              final Source source,
                               final String feedName,
                               final String streamTypeName,
                               final RefStreamDefinition refStreamDefinition) {
+        // Set the source meta.
+        metaHolder.setMeta(meta);
+
+        // Start processing.
         try {
-            // Get the stream providers.
-            metaHolder.setMeta(meta);
-            metaHolder.addProvider(streamSource);
-            metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
-            metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
+            pipeline.startProcessing();
+        } catch (final RuntimeException e) {
+            // An exception during start processing is definitely a failure.
+            log(Severity.FATAL_ERROR, e.getMessage(), e);
+        }
 
-            // Get the main stream provider.
-            final StreamSourceInputStreamProvider mainProvider = metaHolder.getProvider(streamTypeName);
+        try {
+            // Get the appropriate encoding for the stream type.
+            final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
-            // Start processing.
-            try {
-                pipeline.startProcessing();
-            } catch (final RuntimeException e) {
-                // An exception during start processing is definitely a failure.
-                log(Severity.FATAL_ERROR, e.getMessage(), e);
-            }
+            final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
+            locationFactory.setLocationFactory(streamLocationFactory);
 
-            try {
-                // Get the appropriate encoding for the stream type.
-                final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
+            refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, meta.getEffectiveMs(), refDataLoader -> {
+                // we are now blocking any other thread loading the same refStreamDefinition
 
-                final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
-                locationFactory.setLocationFactory(streamLocationFactory);
+                try {
+                    // Loop over the stream boundaries and process each sequentially.
+                    // Typically ref data will only have a single streamNo so if there are
+                    // multiple then overrideExisting may be needed.
+                    final long count = source.count();
+                    for (long index = 0; index < count && !Thread.currentThread().isInterrupted(); index++) {
+                        metaHolder.setStreamNo(index);
+                        streamLocationFactory.setStreamNo(index + 1);
 
-                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, meta.getEffectiveMs(), refDataLoader -> {
-                    // we are now blocking any other thread loading the same refStreamDefinition
-
-                    try {
-                        // Loop over the stream boundaries and process each sequentially.
-                        // Typically ref data will only have a single streamNo so if there are
-                        // multiple then overrideExisting may be needed.
-                        final long streamCount = mainProvider.getStreamCount();
-                        for (long streamNo = 0; streamNo < streamCount && !Thread.currentThread().isInterrupted(); streamNo++) {
-                            metaHolder.setStreamNo(streamNo);
-                            streamLocationFactory.setStreamNo(streamNo + 1);
+                        try (final InputStreamProvider inputStreamProvider = source.get(index)) {
+                            // Get the stream providers.
+                            metaHolder.setInputStreamProvider(inputStreamProvider);
 
                             // Get the stream.
-                            final StreamSourceInputStream inputStream = mainProvider.getStream(streamNo);
+                            final InputStream inputStream = inputStreamProvider.get();
 
                             // set this loader in the holder so it is available to the pipeline filters
                             refDataLoaderHolder.setRefDataLoader(refDataLoader);
@@ -235,26 +227,25 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                             } catch (final RuntimeException e) {
                                 log(Severity.FATAL_ERROR, e.getMessage(), e);
                             }
+                        } catch (final IOException | RuntimeException e) {
+                            log(Severity.FATAL_ERROR, e.getMessage(), e);
                         }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
                     }
-                });
-                // clear the reference to the loader now we have finished with it
-                refDataLoaderHolder.setRefDataLoader(null);
-
-            } catch (final RuntimeException e) {
-                log(Severity.FATAL_ERROR, e.getMessage(), e);
-            } finally {
-                try {
-                    pipeline.endProcessing();
-                } catch (final RuntimeException e) {
-                    log(Severity.FATAL_ERROR, e.getMessage(), e);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-            }
+            });
+            // clear the reference to the loader now we have finished with it
+            refDataLoaderHolder.setRefDataLoader(null);
 
         } catch (final RuntimeException e) {
             log(Severity.FATAL_ERROR, e.getMessage(), e);
+        } finally {
+            try {
+                pipeline.endProcessing();
+            } catch (final RuntimeException e) {
+                log(Severity.FATAL_ERROR, e.getMessage(), e);
+            }
         }
     }
 

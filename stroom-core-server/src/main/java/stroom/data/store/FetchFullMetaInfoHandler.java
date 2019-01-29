@@ -16,8 +16,9 @@
 
 package stroom.data.store;
 
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
 import stroom.meta.shared.Meta;
-import stroom.data.store.api.StreamStore;
 import stroom.security.Security;
 import stroom.streamstore.shared.FetchFullMetaInfoAction;
 import stroom.streamstore.shared.FullMetaInfoResult;
@@ -27,6 +28,7 @@ import stroom.task.api.AbstractTaskHandler;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -35,12 +37,12 @@ import java.util.stream.Collectors;
 
 
 class FetchFullMetaInfoHandler extends AbstractTaskHandler<FetchFullMetaInfoAction, FullMetaInfoResult> {
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final StreamAttributeMapRetentionRuleDecorator ruleDecorator;
     private final Security security;
 
     @Inject
-    FetchFullMetaInfoHandler(final StreamStore streamStore,
+    FetchFullMetaInfoHandler(final Store streamStore,
                              final StreamAttributeMapRetentionRuleDecorator ruleDecorator,
                              final Security security) {
         this.streamStore = streamStore;
@@ -92,20 +94,21 @@ class FetchFullMetaInfoHandler extends AbstractTaskHandler<FetchFullMetaInfoActi
         final Meta meta = action.getMeta();
         final List<Section> sections = new ArrayList<>();
 
-        final Map<String, String> attributeMap = streamStore.getStoredMeta(meta);
+        try (final Source source = streamStore.openStreamSource(meta.getId())) {
+            final Map<String, String> attributeMap = source.getAttributes();
 
-        if (attributeMap == null) {
-            final List<Entry> entries = new ArrayList<>(1);
-            entries.add(new Entry("Deleted Stream Id", String.valueOf(meta.getId())));
-            sections.add(new Section("Stream", entries));
+            if (attributeMap == null) {
+                final List<Entry> entries = new ArrayList<>(1);
+                entries.add(new Entry("Deleted Stream Id", String.valueOf(meta.getId())));
+                sections.add(new Section("Stream", entries));
 
-        } else {
-            sections.add(new Section("Stream", getStreamEntries(meta)));
+            } else {
+                sections.add(new Section("Stream", getStreamEntries(meta)));
 
-            final List<Entry> entries = new ArrayList<>();
-            final List<String> sortedKeys = attributeMap.keySet().stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
-            sortedKeys.forEach(key -> entries.add(new Entry(key, attributeMap.get(key))));
-            sections.add(new Section("Attributes", entries));
+                final List<Entry> entries = new ArrayList<>();
+                final List<String> sortedKeys = attributeMap.keySet().stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
+                sortedKeys.forEach(key -> entries.add(new Entry(key, attributeMap.get(key))));
+                sections.add(new Section("Attributes", entries));
 
 
 //            try {
@@ -133,10 +136,13 @@ class FetchFullMetaInfoHandler extends AbstractTaskHandler<FetchFullMetaInfoActi
 //            }
 
 
-            // Add additional data retention information.
-            sections.add(new Section("Retention", getDataRententionEntries(meta, attributeMap)));
+                // Add additional data retention information.
+                sections.add(new Section("Retention", getDataRententionEntries(meta, attributeMap)));
 
 
+            }
+        } catch (final IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
 
         return new FullMetaInfoResult(sections);

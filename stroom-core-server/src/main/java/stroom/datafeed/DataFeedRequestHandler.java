@@ -20,7 +20,7 @@ package stroom.datafeed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.meta.shared.AttributeMap;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.pipeline.feed.FeedDocCache;
@@ -50,7 +50,7 @@ class DataFeedRequestHandler implements RequestHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataFeedRequestHandler.class);
 
     private final Security security;
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistics;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
@@ -61,7 +61,7 @@ class DataFeedRequestHandler implements RequestHandler {
 
     @Inject
     public DataFeedRequestHandler(final Security security,
-                                  final StreamStore streamStore,
+                                  final Store streamStore,
                                   final FeedDocCache feedDocCache,
                                   final MetaDataStatistic metaDataStatistics,
                                   final AttributeMapFilterFactory attributeMapFilterFactory,

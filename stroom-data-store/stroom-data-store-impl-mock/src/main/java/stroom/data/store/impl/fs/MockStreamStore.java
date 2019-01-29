@@ -16,23 +16,21 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.data.store.api.DataException;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.NestedInputStream;
+import stroom.data.store.api.OutputStreamProvider;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
+import stroom.entity.shared.Clearable;
+import stroom.io.SeekableInputStream;
 import stroom.meta.impl.mock.MockMetaService;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
 import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
-import stroom.data.store.api.CompoundInputStream;
-import stroom.data.store.api.NestedInputStream;
-import stroom.data.store.api.OutputStreamProvider;
-import stroom.data.store.api.SegmentInputStream;
-import stroom.data.store.api.StreamException;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamSourceInputStreamProvider;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.entity.shared.Clearable;
-import stroom.io.SeekableInputStream;
 import stroom.util.collections.TypedMap;
 
 import javax.inject.Inject;
@@ -48,7 +46,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-public class MockStreamStore implements StreamStore, Clearable {
+public class MockStreamStore implements Store, Clearable {
     /**
      * Our stream data.
      */
@@ -138,67 +136,67 @@ public class MockStreamStore implements StreamStore, Clearable {
         return fileData.size();
     }
 
-    @Override
-    public void closeStreamSource(final StreamSource source) {
-        // Close the stream source.
-        try {
-            source.close();
-        } catch (final IOException e) {
-            throw new StreamException(e.getMessage());
-        }
-        openInputStream.remove(source.getMeta().getId());
-    }
+//    @Override
+//    public void closeStreamSource(final Source source) {
+//        // Close the stream source.
+//        try {
+//            source.close();
+//        } catch (final IOException e) {
+//            throw new DataException(e.getMessage());
+//        }
+//        openInputStream.remove(source.getMeta().getId());
+//    }
 
-    @Override
-    public void closeStreamTarget(final StreamTarget target) {
-        final MockStreamTarget mockStreamTarget = (MockStreamTarget) target;
-        final String streamTypeName = mockStreamTarget.getStreamTypeName();
-
-        // Close the stream target.
-        try {
-            target.close();
-        } catch (final IOException e) {
-            throw new StreamException(e.getMessage());
-        }
-
-        final Meta meta = target.getMeta();
-        final long streamId = meta.getId();
-
-        // Get the data map to add the stream output to.
-        TypedMap<String, byte[]> dataTypeMap = fileData.get(streamId);
-        if (dataTypeMap == null) {
-            dataTypeMap = TypedMap.fromMap(new HashMap<>());
-            fileData.put(meta.getId(), dataTypeMap);
-        }
-
-        final TypedMap<String, ByteArrayOutputStream> typeMap = openOutputStream.get(streamId);
-
-        if (typeMap != null) {
-            // Add data from this stream to the data type map.
-            final ByteArrayOutputStream ba = typeMap.remove(streamTypeName);
-            if (ba != null && ba.toByteArray() != null) {
-                dataTypeMap.put(streamTypeName, ba.toByteArray());
-            } else {
-                dataTypeMap.put(streamTypeName, new byte[0]);
-            }
-
-            // Clean up the open output streams if there are no more open types
-            // for this stream.
-            if (typeMap.size() == 0) {
-                openOutputStream.remove(streamId);
-            }
-        } else {
-            dataTypeMap.put(streamTypeName, new byte[0]);
-        }
-
-        // Close child streams.
-        for (final String childType : mockStreamTarget.childMap.keySet()) {
-            closeStreamTarget(mockStreamTarget.getChildStream(childType));
-        }
-
-        // Set the status of the stream to be unlocked.
-        metaService.updateStatus(meta, Status.UNLOCKED);
-    }
+//    @Override
+//    public void closeStreamTarget(final Target target) {
+//        final MockStreamTarget mockStreamTarget = (MockStreamTarget) target;
+//        final String streamTypeName = mockStreamTarget.getStreamTypeName();
+//
+//        // Close the stream target.
+//        try {
+//            target.close();
+//        } catch (final IOException e) {
+//            throw new DataException(e.getMessage());
+//        }
+//
+//        final Meta meta = target.getMeta();
+//        final long streamId = meta.getId();
+//
+//        // Get the data map to add the stream output to.
+//        TypedMap<String, byte[]> dataTypeMap = fileData.get(streamId);
+//        if (dataTypeMap == null) {
+//            dataTypeMap = TypedMap.fromMap(new HashMap<>());
+//            fileData.put(meta.getId(), dataTypeMap);
+//        }
+//
+//        final TypedMap<String, ByteArrayOutputStream> typeMap = openOutputStream.get(streamId);
+//
+//        if (typeMap != null) {
+//            // Add data from this stream to the data type map.
+//            final ByteArrayOutputStream ba = typeMap.remove(streamTypeName);
+//            if (ba != null && ba.toByteArray() != null) {
+//                dataTypeMap.put(streamTypeName, ba.toByteArray());
+//            } else {
+//                dataTypeMap.put(streamTypeName, new byte[0]);
+//            }
+//
+//            // Clean up the open output streams if there are no more open types
+//            // for this stream.
+//            if (typeMap.size() == 0) {
+//                openOutputStream.remove(streamId);
+//            }
+//        } else {
+//            dataTypeMap.put(streamTypeName, new byte[0]);
+//        }
+//
+//        // Close child streams.
+//        for (final String childType : mockStreamTarget.childMap.keySet()) {
+//            closeStreamTarget(mockStreamTarget.getChildStream(childType));
+//        }
+//
+//        // Set the status of the stream to be unlocked.
+//        metaService.updateStatus(meta, Status.UNLOCKED, Status.LOCKED);
+//    }
 
 //    @Override
 //    public Long delete(final long streamId) {
@@ -209,7 +207,7 @@ public class MockStreamStore implements StreamStore, Clearable {
 //    }
 
     @Override
-    public int deleteStreamTarget(final StreamTarget target) {
+    public int deleteStreamTarget(final Target target) {
         final long streamId = target.getMeta().getId();
         openOutputStream.remove(streamId);
         fileData.remove(streamId);
@@ -248,7 +246,7 @@ public class MockStreamStore implements StreamStore, Clearable {
 //    }
 
     @Override
-    public StreamSource openStreamSource(final long streamId) throws StreamException {
+    public Source openStreamSource(final long streamId) throws DataException {
         return openStreamSource(streamId, false);
     }
 
@@ -265,10 +263,10 @@ public class MockStreamStore implements StreamStore, Clearable {
      * deleted) else null. Also returns null if one exists but is
      * logically deleted or locked unless <code>anyStatus</code> is
      * true.
-     * @throws StreamException Could be thrown if no volume
+     * @throws DataException Could be thrown if no volume
      */
     @Override
-    public StreamSource openStreamSource(final long streamId, final boolean anyStatus) throws StreamException {
+    public Source openStreamSource(final long streamId, final boolean anyStatus) throws DataException {
         final Meta meta = metaService.getMeta(streamId, anyStatus);
         if (meta == null) {
             return null;
@@ -278,7 +276,7 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     @Override
-    public StreamTarget openStreamTarget(final MetaProperties metaProperties) {
+    public Target openStreamTarget(final MetaProperties metaProperties) {
         final Meta meta = metaService.create(metaProperties);
 
         final TypedMap<String, ByteArrayOutputStream> typeMap = TypedMap.fromMap(new HashMap<>());
@@ -291,7 +289,7 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     @Override
-    public StreamTarget openExistingStreamTarget(final Meta meta) throws StreamException {
+    public Target openExistingStreamTarget(final Meta meta) throws DataException {
         final TypedMap<String, ByteArrayOutputStream> typeMap = TypedMap.fromMap(new HashMap<>());
         typeMap.put(meta.getTypeName(), new ByteArrayOutputStream());
         openOutputStream.put(meta.getId(), typeMap);
@@ -300,11 +298,11 @@ public class MockStreamStore implements StreamStore, Clearable {
 
         return new MockStreamTarget(meta);
     }
-
-    @Override
-    public AttributeMap getStoredMeta(final Meta meta) {
-        return null;
-    }
+//
+//    @Override
+//    public AttributeMap getStoredMeta(final Meta meta) {
+//        return null;
+//    }
 
     public Meta getLastMeta() {
         return lastMeta;
@@ -393,12 +391,13 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
     }
 
-    private class MockStreamTarget implements StreamTarget, NestedOutputStreamFactory {
+    private class MockStreamTarget implements Target, NestedOutputStreamFactory {
         private final Meta meta;
         private final String streamTypeName;
         private final AttributeMap attributeMap = new AttributeMap();
         private final Map<String, MockStreamTarget> childMap = new HashMap<>();
         private ByteArrayOutputStream outputStream = null;
+        private long index;
 //        private StreamTarget parent;
 
         MockStreamTarget(final Meta meta) {
@@ -406,48 +405,96 @@ public class MockStreamStore implements StreamStore, Clearable {
             this.streamTypeName = meta.getTypeName();
         }
 
-        MockStreamTarget(final StreamTarget parent, final String streamTypeName) {
+        MockStreamTarget(final Target parent, final String streamTypeName) {
 //            this.parent = parent;
             this.meta = parent.getMeta();
             this.streamTypeName = streamTypeName;
         }
 
         @Override
-        public OutputStream getOutputStream() {
-            if (outputStream == null) {
-                final TypedMap<String, ByteArrayOutputStream> typeMap = getOpenOutputStream().get(meta.getId());
-                outputStream = typeMap.get(streamTypeName);
-            }
-            return outputStream;
+        public Meta getMeta() {
+            return meta;
         }
 
         @Override
-        public OutputStreamProvider getOutputStreamProvider() {
-            return new OutputStreamProviderImpl(meta, this);
+        public AttributeMap getAttributes() {
+            return attributeMap;
         }
 
+        @Override
+        public OutputStreamProvider next() {
+            final OutputStreamProvider outputStreamProvider = new OutputStreamProviderImpl(meta, this, index);
+            index++;
+            return outputStreamProvider;
+        }
+
+
+//
 //        @Override
-//        public SegmentOutputStream getSegmentOutputStream() {
-//            return new RASegmentOutputStream(getOutputStream(),
-//                    () -> add(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream());
+//        public OutputStreamProvider getOutputStreamProvider() {
+//            return new OutputStreamProviderImpl(meta, this);
 //        }
+//
+////        @Override
+////        public SegmentOutputStream getSegmentOutputStream() {
+////            return new RASegmentOutputStream(getOutputStream(),
+////                    () -> add(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream());
+////        }
 
         @Override
         public void close() {
+            // Close the stream target.
             try {
                 if (outputStream != null) {
                     outputStream.close();
                 }
-            } catch (final IOException ioEx) {
-                // Wrap it
-                throw new RuntimeException(ioEx);
+            } catch (final IOException e) {
+                throw new DataException(e.getMessage());
             }
+
+            final long streamId = meta.getId();
+
+            // Get the data map to add the stream output to.
+            TypedMap<String, byte[]> dataTypeMap = fileData.get(streamId);
+            if (dataTypeMap == null) {
+                dataTypeMap = TypedMap.fromMap(new HashMap<>());
+                fileData.put(meta.getId(), dataTypeMap);
+            }
+
+            final TypedMap<String, ByteArrayOutputStream> typeMap = openOutputStream.get(streamId);
+
+            if (typeMap != null) {
+                // Add data from this stream to the data type map.
+                final ByteArrayOutputStream ba = typeMap.remove(streamTypeName);
+                if (ba != null && ba.toByteArray() != null) {
+                    dataTypeMap.put(streamTypeName, ba.toByteArray());
+                } else {
+                    dataTypeMap.put(streamTypeName, new byte[0]);
+                }
+
+                // Clean up the open output streams if there are no more open types
+                // for this stream.
+                if (typeMap.size() == 0) {
+                    openOutputStream.remove(streamId);
+                }
+            } else {
+                dataTypeMap.put(streamTypeName, new byte[0]);
+            }
+
+            // Close child streams.
+            for (final String childType : childMap.keySet()) {
+                try {
+                getChildStream(childType).close();
+                } catch (final IOException e) {
+                    throw new DataException(e.getMessage());
+                }
+            }
+
+            // Set the status of the stream to be unlocked.
+            metaService.updateStatus(meta, Status.UNLOCKED, Status.LOCKED);
         }
 
-        @Override
-        public Meta getMeta() {
-            return meta;
-        }
+
 
 //        @Override
 //        public StreamTarget addChildStream(final String typeName) {
@@ -459,6 +506,15 @@ public class MockStreamStore implements StreamStore, Clearable {
             return add(streamTypeName);
         }
 
+        @Override
+        public OutputStream getOutputStream() {
+            if (outputStream == null) {
+                final TypedMap<String, ByteArrayOutputStream> typeMap = getOpenOutputStream().get(meta.getId());
+                outputStream = typeMap.get(streamTypeName);
+            }
+            return outputStream;
+        }
+
         MockStreamTarget add(final String streamTypeName) {
             final TypedMap<String, ByteArrayOutputStream> typeMap = getOpenOutputStream().get(meta.getId());
             typeMap.put(streamTypeName, new ByteArrayOutputStream());
@@ -466,16 +522,32 @@ public class MockStreamStore implements StreamStore, Clearable {
             return childMap.get(streamTypeName);
         }
 
-        StreamTarget getChildStream(final String streamTypeName) {
+        Target getChildStream(final String streamTypeName) {
             return childMap.get(streamTypeName);
         }
+    }
 
-//        StreamTarget getParent() {
-//            return parent;
-//        }
+    private class MockStreamSource implements Source, NestedInputStreamFactory {
+        private final Meta meta;
+        private final String streamTypeName;
+        private final AttributeMap attributeMap = new AttributeMap();
+        private InputStream inputStream = null;
+        private Source parent;
 
-        String getStreamTypeName() {
-            return streamTypeName;
+        MockStreamSource(final Meta meta) {
+            this.meta = meta;
+            this.streamTypeName = meta.getTypeName();
+        }
+
+        MockStreamSource(final Source parent, final String streamTypeName) {
+            this.parent = parent;
+            this.meta = parent.getMeta();
+            this.streamTypeName = streamTypeName;
+        }
+
+        @Override
+        public Meta getMeta() {
+            return meta;
         }
 
         @Override
@@ -483,28 +555,21 @@ public class MockStreamStore implements StreamStore, Clearable {
             return attributeMap;
         }
 
-//        @Override
-//        public boolean isAppend() {
-//            return false;
-//        }
-    }
-
-    private class MockStreamSource implements StreamSource {
-        private final Meta meta;
-        private final String streamTypeName;
-        private final AttributeMap attributeMap = new AttributeMap();
-        private InputStream inputStream = null;
-        private StreamSource parent;
-
-        MockStreamSource(final Meta meta) {
-            this.meta = meta;
-            this.streamTypeName = meta.getTypeName();
+        @Override
+        public InputStreamProvider get(final long index) {
+            return new InputStreamProviderImpl(meta, this, index);
         }
 
-        MockStreamSource(final StreamSource parent, final String streamTypeName) {
-            this.parent = parent;
-            this.meta = parent.getMeta();
-            this.streamTypeName = streamTypeName;
+        @Override
+        public long count() throws IOException {
+            try (final NestedInputStream nestedInputStream = getNestedInputStream()) {
+                return nestedInputStream.getEntryCount();
+            }
+        }
+
+        @Override
+        public NestedInputStreamFactory getChild(final String streamTypeName) {
+            return child(streamTypeName);
         }
 
         @Override
@@ -521,56 +586,27 @@ public class MockStreamStore implements StreamStore, Clearable {
             return inputStream;
         }
 
-        @Override
-        public NestedInputStream getNestedInputStream() throws IOException {
+        //        @Override
+//        public InputStream getInputStream() {
+//            if (inputStream == null) {
+//                final TypedMap<String, byte[]> typeMap = getFileData().get(meta.getId());
+//                final byte[] data = typeMap.get(streamTypeName);
+//
+//                if (data == null) {
+//                    throw new IllegalStateException("Some how we have null data stream in the stream store");
+//                }
+//                inputStream = new SeekableByteArrayInputStream(data);
+//            }
+//            return inputStream;
+//        }
+
+        //        @Override
+        private NestedInputStream getNestedInputStream() {
             final InputStream data = getInputStream();
-            final InputStream boundaryIndex = getChildStream(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream();
-            return new RANestedInputStream(data, boundaryIndex);
+            return new RANestedInputStream(data, () -> child(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream());
         }
 
-        @Override
-        public SegmentInputStream getSegmentInputStream() throws IOException {
-            final InputStream data = getInputStream();
-            final InputStream segmentIndex = getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream();
-            return new RASegmentInputStream(data, segmentIndex);
-        }
-
-        @Override
-        public CompoundInputStream getCompoundInputStream() throws IOException {
-            final InputStream data = getInputStream();
-            final InputStream boundaryIndex = getChildStream(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream();
-            final InputStream segmentIndex = getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream();
-            final RANestedInputStream nestedInputStream = new RANestedInputStream(data, boundaryIndex);
-            return new RACompoundInputStream(nestedInputStream, segmentIndex);
-        }
-
-        @Override
-        public StreamSourceInputStreamProvider getInputStreamProvider() {
-            return new StreamSourceInputStreamProviderImpl(this);
-        }
-
-        /**
-         * Close off the stream.
-         */
-        @Override
-        public void close() {
-            try {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-            } catch (final IOException ioEx) {
-                // Wrap it
-                throw new RuntimeException(ioEx);
-            }
-        }
-
-        @Override
-        public Meta getMeta() {
-            return meta;
-        }
-
-        @Override
-        public StreamSource getChildStream(final String streamTypeName) {
+        private MockStreamSource child(final String streamTypeName) {
             final TypedMap<String, byte[]> typeMap = getFileData().get(meta.getId());
             if (typeMap.containsKey(streamTypeName)) {
                 return new MockStreamSource(this, streamTypeName);
@@ -582,19 +618,63 @@ public class MockStreamStore implements StreamStore, Clearable {
 
             return null;
         }
+//
+//        @Override
+//        public SegmentInputStream getSegmentInputStream() throws IOException {
+//            final InputStream data = getInputStream();
+//            final InputStream segmentIndex = getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream();
+//            return new RASegmentInputStream(data, segmentIndex);
+//        }
+//
+//        @Override
+//        public CompoundInputStream getCompoundInputStream() throws IOException {
+//            final InputStream data = getInputStream();
+//            final InputStream boundaryIndex = getChildStream(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream();
+//            final InputStream segmentIndex = getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream();
+//            final RANestedInputStream nestedInputStream = new RANestedInputStream(data, boundaryIndex);
+//            return new RACompoundInputStream(nestedInputStream, segmentIndex);
+//        }
+//
+//        @Override
+//        public InputStreamProvider getInputStreamProvider() {
+//            return new StreamSourceInputStreamProviderImpl(this);
+//        }
 
-        StreamSource getParent() {
-            return parent;
-        }
-
+        /**
+         * Close off the stream.
+         */
         @Override
-        public AttributeMap getAttributes() {
-            return attributeMap;
+        public void close() {
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+            } catch (final IOException e) {
+                throw new DataException(e.getMessage());
+            } finally {
+                openInputStream.remove(meta.getId());
+            }
         }
+
+
+//        private Source getChildStream(final String streamTypeName) {
+//            final TypedMap<String, byte[]> typeMap = getFileData().get(meta.getId());
+//            if (typeMap.containsKey(streamTypeName)) {
+//                return new MockStreamSource(this, streamTypeName);
+//            }
+//
+//            if (InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName)) {
+//                return new MockBoundaryStreamSource(this);
+//            }
+//
+//            return null;
+//        }
+
+
     }
 
     private class MockBoundaryStreamSource extends MockStreamSource {
-        MockBoundaryStreamSource(final StreamSource parent) {
+        MockBoundaryStreamSource(final Source parent) {
             super(parent, InternalStreamTypeNames.BOUNDARY_INDEX);
         }
 

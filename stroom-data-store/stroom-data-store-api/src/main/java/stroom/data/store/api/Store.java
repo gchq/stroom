@@ -36,7 +36,7 @@ import stroom.meta.shared.MetaProperties;
  * stream to unlock the file.
  * </p>
  */
-public interface StreamStore {
+public interface Store {
     /**
      * <p>
      * Open a new stream (i.e. new file) based on some meta data
@@ -44,7 +44,7 @@ public interface StreamStore {
      *
      * @return the stream to write to
      */
-    StreamTarget openStreamTarget(MetaProperties metaProperties) throws StreamException;
+    Target openStreamTarget(MetaProperties metaProperties) throws DataException;
 
     /**
      * <p>
@@ -54,14 +54,14 @@ public interface StreamStore {
      * @param append allow appending to the stream (or wipe it?)
      * @return the stream to write to
      */
-    StreamTarget openExistingStreamTarget(Meta meta) throws StreamException;
+    Target openExistingStreamTarget(Meta meta) throws DataException;
 
-    /**
-     * <p>
-     * Close a open stream target so it can be read by someone else.
-     * </p>
-     */
-    void closeStreamTarget(StreamTarget streamTarget);
+//    /**
+//     * <p>
+//     * Close a open stream target so it can be read by someone else.
+//     * </p>
+//     */
+//    void closeStreamTarget(Target streamTarget);
 
     /**
      * <p>
@@ -70,7 +70,7 @@ public interface StreamStore {
      *
      * @return items deleted
      */
-    int deleteStreamTarget(StreamTarget target);
+    int deleteStreamTarget(Target target);
 
     /**
      * <p>
@@ -79,10 +79,10 @@ public interface StreamStore {
      *
      * @param streamId the id of the stream to open.
      * @return The stream source if the stream can be found.
-     * @throws StreamException in case of a IO error or stream volume not visible or non
+     * @throws DataException in case of a IO error or stream volume not visible or non
      *                         existent.
      */
-    StreamSource openStreamSource(long streamId) throws StreamException;
+    Source openStreamSource(long streamId) throws DataException;
 
     /**
      * <p>
@@ -97,23 +97,23 @@ public interface StreamStore {
      * deleted) else null. Also returns null if one exists but is
      * logically deleted or locked unless <code>anyStatus</code> is
      * true.
-     * @throws StreamException Could be thrown if no volume
+     * @throws DataException Could be thrown if no volume
      */
-    StreamSource openStreamSource(long streamId, boolean anyStatus) throws StreamException;
+    Source openStreamSource(long streamId, boolean anyStatus) throws DataException;
 
 
-    /**
-     * <p>
-     * Close a open stream source so it can be read by someone else.
-     * </p>
-     */
-    void closeStreamSource(StreamSource streamSource);
-
-    /**
-     * Gets the meta data that was stored in the stream store against the supplied stream id.
-     *
-     * @param streamId
-     * @return
-     */
-    AttributeMap getStoredMeta(Meta meta);
+//    /**
+//     * <p>
+//     * Close a open stream source so it can be read by someone else.
+//     * </p>
+//     */
+//    void closeStreamSource(Source streamSource);
+//
+//    /**
+//     * Gets the meta data that was stored in the stream store against the supplied stream id.
+//     *
+//     * @param streamId
+//     * @return
+//     */
+//    AttributeMap getStoredMeta(Meta meta);
 }

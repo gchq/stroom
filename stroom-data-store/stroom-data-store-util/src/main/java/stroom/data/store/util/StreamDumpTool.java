@@ -17,12 +17,13 @@
 package stroom.data.store.util;
 
 import com.google.inject.Injector;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
 import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
+import stroom.meta.shared.MetaService;
 import stroom.persist.PersistService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -115,7 +116,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
             }
         }
 
-        final StreamStore streamStore = injector.getInstance(StreamStore.class);
+        final Store streamStore = injector.getInstance(Store.class);
         final MetaService metaService = injector.getInstance(MetaService.class);
 
         if (feed != null) {
@@ -146,13 +147,11 @@ public class StreamDumpTool extends AbstractCommandLineTool {
     /**
      * Scan a file
      */
-    private void processFile(final int count, final int total, final StreamStore streamStore, final long streamId,
+    private void processFile(final int count, final int total, final Store streamStore, final long streamId,
                              final Path outputDir) {
-        StreamSource streamSource = null;
-        try {
-            streamSource = streamStore.openStreamSource(streamId);
-            if (streamSource != null) {
-                try (InputStream inputStream = streamSource.getInputStream()) {
+        try (final Source streamSource = streamStore.openStreamSource(streamId)) {
+            try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
+                try (final InputStream inputStream = inputStreamProvider.get()) {
                     final Path outputFile = outputDir.resolve(streamId + ".dat");
                     System.out.println(
                             "Dumping stream " + count + " of " + total + " to file '" + FileUtil.getCanonicalPath(outputFile) + "'");
@@ -163,10 +162,6 @@ public class StreamDumpTool extends AbstractCommandLineTool {
             }
         } catch (final IOException | RuntimeException e) {
             e.printStackTrace();
-        } finally {
-            if (streamSource != null) {
-                streamStore.closeStreamSource(streamSource);
-            }
         }
     }
 }

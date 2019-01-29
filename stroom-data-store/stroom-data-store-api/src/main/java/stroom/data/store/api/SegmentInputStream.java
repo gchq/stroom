@@ -17,7 +17,6 @@
 package stroom.data.store.api;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * <p>
@@ -30,7 +29,7 @@ import java.io.InputStream;
  * <code>count() - 1</code>.
  * </p>
  */
-public abstract class SegmentInputStream extends InputStream {
+public abstract class SegmentInputStream extends SizeAwareInputStream {
     /**
      * This method returns the total number of segments that can be read from
      * this input stream.

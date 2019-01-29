@@ -19,17 +19,17 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.MetaProperties;
 import stroom.data.store.api.OutputStreamProvider;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
 import stroom.datafeed.BufferFactory;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.pipeline.feed.FeedDocCache;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.StandardHeaderArguments;
+import stroom.pipeline.feed.FeedDocCache;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
@@ -60,7 +60,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
     private static final String GZ = "GZ";
 
     private final TaskContext taskContext;
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistics;
     private final Security security;
@@ -68,7 +68,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
 
     @Inject
     StreamUploadTaskHandler(final TaskContext taskContext,
-                            final StreamStore streamStore,
+                            final Store streamStore,
                             final FeedDocCache feedDocCache,
                             final MetaDataStatistic metaDataStatistics,
                             final Security security,
@@ -177,80 +177,80 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
         }
     }
 
-    private void uploadData(final StroomZipFile stroomZipFile, final StreamUploadTask task, final AttributeMap attributeMap,
-                            final List<String> fileList) throws IOException {
-        StreamTarget streamTarget = null;
+    private void uploadData(final StroomZipFile stroomZipFile,
+                            final StreamUploadTask task,
+                            final AttributeMap attributeMap,
+                            final List<String> fileList) {
+        final Long effectiveMs = task.getEffectiveMs();
+        final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(taskContext,
+                "Read");
 
-        try {
-            final Long effectiveMs = task.getEffectiveMs();
-            final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(taskContext,
-                    "Read");
+        final MetaProperties metaProperties = new MetaProperties.Builder()
+                .feedName(task.getFeedName())
+                .typeName(task.getStreamTypeName())
+                .effectiveMs(effectiveMs)
+                .build();
 
-            final MetaProperties metaProperties = new MetaProperties.Builder()
-                    .feedName(task.getFeedName())
-                    .typeName(task.getStreamTypeName())
-                    .effectiveMs(effectiveMs)
-                    .build();
+        Target targetRef = null;
+        try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+            targetRef = target;
 
-            streamTarget = streamStore.openStreamTarget(metaProperties);
-
-            try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
-                int count = 0;
+            int count = 0;
                 final int maxCount = fileList.size();
                 for (final String inputBase : fileList) {
                     count++;
                     taskContext.info("{}/{}", count, maxCount);
-                    streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Data,
-                            streamProgressMonitor);
-                    streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Meta,
-                            streamProgressMonitor);
-                    streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Context,
-                            streamProgressMonitor);
+                    try (final OutputStreamProvider outputStreamProvider = target.next()) {
+                        streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Data,
+                                streamProgressMonitor);
+                        streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Meta,
+                                streamProgressMonitor);
+                        streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Context,
+                                streamProgressMonitor);
+                    }
+            }
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.error("importData() - aborting import ", e);
+            streamStore.deleteStreamTarget(targetRef);
+        }
+    }
+
+    private void streamContents(final StroomZipFile stroomZipFile,
+                                final AttributeMap globalAttributeMap,
+                                final OutputStreamProvider outputStreamProvider,
+                                final String baseName,
+                                final StroomZipFileType stroomZipFileType,
+                                final StreamProgressMonitor streamProgressMonitor) throws IOException {
+        try (final InputStream sourceStream = stroomZipFile.getInputStream(baseName, stroomZipFileType)) {
+            // Quit if we have nothing to write
+            if (sourceStream == null && !StroomZipFileType.Meta.equals(stroomZipFileType)) {
+                return;
+            }
+            if (StroomZipFileType.Data.equals(stroomZipFileType)) {
+                try (final OutputStream outputStream = outputStreamProvider.get()) {
+                    streamToStream(sourceStream, outputStream, streamProgressMonitor);
                 }
             }
-
-            streamStore.closeStreamTarget(streamTarget);
-
-        } catch (final RuntimeException e) {
-            LOGGER.error("importData() - aborting import ", e);
-            streamStore.deleteStreamTarget(streamTarget);
+            if (StroomZipFileType.Meta.equals(stroomZipFileType)) {
+                final AttributeMap segmentAttributeMap = new AttributeMap();
+                segmentAttributeMap.putAll(globalAttributeMap);
+                if (sourceStream != null) {
+                    AttributeMapUtil.read(sourceStream, segmentAttributeMap);
+                }
+                try (final OutputStream outputStream = outputStreamProvider.get(StreamTypeNames.META)) {
+                    AttributeMapUtil.write(segmentAttributeMap, outputStream);
+                }
+            }
+            if (StroomZipFileType.Context.equals(stroomZipFileType)) {
+                try (final OutputStream outputStream = outputStreamProvider.get(StreamTypeNames.CONTEXT)) {
+                    streamToStream(sourceStream, outputStream, streamProgressMonitor);
+                }
+            }
         }
     }
 
-    private void streamContents(final StroomZipFile stroomZipFile, final AttributeMap globalAttributeMap,
-                                final OutputStreamProvider outputStreamProvider, final String baseName, final StroomZipFileType stroomZipFileType,
-                                final StreamProgressMonitor streamProgressMonitor) throws IOException {
-        final InputStream sourceStream = stroomZipFile.getInputStream(baseName, stroomZipFileType);
-        // Quit if we have nothing to write
-        if (sourceStream == null && !StroomZipFileType.Meta.equals(stroomZipFileType)) {
-            return;
-        }
-        if (StroomZipFileType.Data.equals(stroomZipFileType)) {
-            try (final OutputStream outputStream = outputStreamProvider.next()) {
-                streamToStream(sourceStream, outputStream, streamProgressMonitor);
-            }
-        }
-        if (StroomZipFileType.Meta.equals(stroomZipFileType)) {
-            final AttributeMap segmentAttributeMap = new AttributeMap();
-            segmentAttributeMap.putAll(globalAttributeMap);
-            if (sourceStream != null) {
-                AttributeMapUtil.read(sourceStream, false, segmentAttributeMap);
-            }
-            try (final OutputStream outputStream = outputStreamProvider.next(StreamTypeNames.META)) {
-                AttributeMapUtil.write(segmentAttributeMap, outputStream);
-            }
-        }
-        if (StroomZipFileType.Context.equals(stroomZipFileType)) {
-            try (final OutputStream outputStream = outputStreamProvider.next(StreamTypeNames.CONTEXT)) {
-                streamToStream(sourceStream, outputStream, streamProgressMonitor);
-            }
-        }
-        if (sourceStream != null) {
-            sourceStream.close();
-        }
-    }
-
-    private boolean streamToStream(final InputStream inputStream, final OutputStream outputStream,
+    private boolean streamToStream(final InputStream inputStream,
+                                   final OutputStream outputStream,
                                    final StreamProgressMonitor streamProgressMonitor) throws IOException {
         final byte[] buffer = bufferFactory.create();
         int len;

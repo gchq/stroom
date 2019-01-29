@@ -21,32 +21,24 @@ package stroom.data.store.impl.fs;
 import event.logging.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.Status;
-import stroom.meta.shared.MetaFieldNames;
-import stroom.data.store.api.StreamException;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.DataException;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
-import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
-import stroom.volume.VolumeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
-import stroom.util.io.FileUtil;
+import stroom.volume.VolumeService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,7 +53,7 @@ import java.util.stream.Collectors;
  * </p>
  */
 @Singleton
-class FileSystemStreamStoreImpl implements StreamStore {
+class FileSystemStreamStoreImpl implements Store {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamStoreImpl.class);
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
@@ -84,12 +76,12 @@ class FileSystemStreamStoreImpl implements StreamStore {
     }
 
     @Override
-    public StreamTarget openStreamTarget(final MetaProperties metaProperties) {
+    public Target openStreamTarget(final MetaProperties metaProperties) {
         LOGGER.debug("openStreamTarget() " + metaProperties);
 
         final Set<VolumeEntity> volumeSet = volumeService.getStreamVolumeSet(nodeInfo.getThisNode());
         if (volumeSet.isEmpty()) {
-            throw new StreamException("Failed to get lock as no writeable volumes");
+            throw new DataException("Failed to get lock as no writeable volumes");
         }
 
         // First time call (no file yet exists)
@@ -98,7 +90,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
         final Set<DataVolume> streamVolumes = streamVolumeService.createStreamVolumes(meta.getId(), volumeSet);
         final Set<String> rootPaths = streamVolumes.stream().map(DataVolume::getVolumePath).collect(Collectors.toSet());
         final String streamType = meta.getTypeName();
-        final FileSystemStreamTarget target = FileSystemStreamTarget.create(fileSystemStreamPathHelper, meta, rootPaths, streamType, false);
+        final FileSystemStreamTarget target = FileSystemStreamTarget.create(metaService, fileSystemStreamPathHelper, meta, rootPaths, streamType, false);
 
         // Force Creation of the files
         target.getOutputStream();
@@ -109,20 +101,20 @@ class FileSystemStreamStoreImpl implements StreamStore {
     }
 
     @Override
-    public StreamTarget openExistingStreamTarget(final Meta meta) throws StreamException {
+    public Target openExistingStreamTarget(final Meta meta) throws DataException {
         Objects.requireNonNull(meta, "Null meta");
         LOGGER.debug("openExistingStreamTarget() " + meta);
 
         // Lock the object
         final Set<DataVolume> streamVolumes = streamVolumeService.findStreamVolume(meta.getId());
         if (streamVolumes.isEmpty()) {
-            throw new StreamException("Not all volumes are unlocked");
+            throw new DataException("Not all volumes are unlocked");
         }
-        final Meta lockedMeta = metaService.updateStatus(meta, Status.LOCKED);
+        final Meta lockedMeta = metaService.updateStatus(meta, Status.LOCKED, Status.UNLOCKED);
         final Set<String> rootPaths = streamVolumes.stream().map(DataVolume::getVolumePath).collect(Collectors.toSet());
 
         final String streamType = lockedMeta.getTypeName();
-        final FileSystemStreamTarget target = FileSystemStreamTarget.create(fileSystemStreamPathHelper, lockedMeta, rootPaths,
+        final FileSystemStreamTarget target = FileSystemStreamTarget.create(metaService, fileSystemStreamPathHelper, lockedMeta, rootPaths,
                 streamType, true);
 
         syncAttributes(lockedMeta, target);
@@ -130,71 +122,71 @@ class FileSystemStreamStoreImpl implements StreamStore {
         return target;
     }
 
+//    @Override
+//    public void closeStreamTarget(final Target streamTarget) {
+//        final FileSystemStreamTarget fileSystemStreamTarget = (FileSystemStreamTarget) streamTarget;
+//
+//        // If we get error on closing the stream we must return it to the caller
+//        IOException streamCloseException = null;
+//
+//        try {
+//            // Close the stream target.
+//            streamTarget.close();
+//        } catch (final IOException e) {
+//            LOGGER.error("closeStreamTarget() - Error on closing stream {}", streamTarget, e);
+//            streamCloseException = e;
+//        }
+//
+//        updateAttribute(fileSystemStreamTarget, MetaFieldNames.RAW_SIZE,
+//                String.valueOf(((FileSystemStreamTarget) streamTarget).getStreamSize()));
+//
+//        updateAttribute(fileSystemStreamTarget, MetaFieldNames.FILE_SIZE,
+//                String.valueOf(((FileSystemStreamTarget) streamTarget).getTotalFileSize()));
+//
+//        try {
+//            boolean doneManifest = false;
+//
+//            // Are we appending?
+//            if (fileSystemStreamTarget.isAppend()) {
+//                final Set<Path> childFile = fileSystemStreamPathHelper.createChildStreamPath(
+//                        ((FileSystemStreamTarget) streamTarget).getFiles(false), InternalStreamTypeNames.MANIFEST);
+//
+//                // Does the manifest exist ... overwrite it
+//                if (FileSystemUtil.isAllFile(childFile)) {
+//                    try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(InternalStreamTypeNames.MANIFEST, childFile)) {
+//                        AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), outputStream);
+//                    }
+//                    doneManifest = true;
+//                }
+//            }
+//
+//            if (!doneManifest) {
+//                // No manifest done yet ... output one if the parent dir's exist
+//                if (FileSystemUtil.isAllParentDirectoryExist(((FileSystemStreamTarget) streamTarget).getFiles(false))) {
+//                    try (final OutputStream outputStream = fileSystemStreamTarget.add(InternalStreamTypeNames.MANIFEST).getOutputStream()) {
+//                        AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), outputStream);
+//                    }
+//                } else {
+//                    LOGGER.warn("closeStreamTarget() - Closing target file with no directory present");
+//                }
+//
+//            }
+//        } catch (final IOException e) {
+//            LOGGER.error("closeStreamTarget() - Error on writing Manifest {}", streamTarget, e);
+//        }
+//
+//        if (streamCloseException == null) {
+//            // Unlock will update the meta data so set it back on the stream
+//            // target so the client has the up to date copy
+//            ((FileSystemStreamTarget) streamTarget).setMetaData(
+//                    unLock(streamTarget.getMeta(), fileSystemStreamTarget.getAttributes()));
+//        } else {
+//            throw new UncheckedIOException(streamCloseException);
+//        }
+//    }
+
     @Override
-    public void closeStreamTarget(final StreamTarget streamTarget) {
-        final FileSystemStreamTarget fileSystemStreamTarget = (FileSystemStreamTarget) streamTarget;
-
-        // If we get error on closing the stream we must return it to the caller
-        IOException streamCloseException = null;
-
-        try {
-            // Close the stream target.
-            streamTarget.close();
-        } catch (final IOException e) {
-            LOGGER.error("closeStreamTarget() - Error on closing stream {}", streamTarget, e);
-            streamCloseException = e;
-        }
-
-        updateAttribute(fileSystemStreamTarget, MetaFieldNames.RAW_SIZE,
-                String.valueOf(((FileSystemStreamTarget) streamTarget).getStreamSize()));
-
-        updateAttribute(fileSystemStreamTarget, MetaFieldNames.FILE_SIZE,
-                String.valueOf(((FileSystemStreamTarget) streamTarget).getTotalFileSize()));
-
-        try {
-            boolean doneManifest = false;
-
-            // Are we appending?
-            if (fileSystemStreamTarget.isAppend()) {
-                final Set<Path> childFile = fileSystemStreamPathHelper.createChildStreamPath(
-                        ((FileSystemStreamTarget) streamTarget).getFiles(false), InternalStreamTypeNames.MANIFEST);
-
-                // Does the manifest exist ... overwrite it
-                if (FileSystemUtil.isAllFile(childFile)) {
-                    try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(InternalStreamTypeNames.MANIFEST, childFile)) {
-                        AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), outputStream);
-                    }
-                    doneManifest = true;
-                }
-            }
-
-            if (!doneManifest) {
-                // No manifest done yet ... output one if the parent dir's exist
-                if (FileSystemUtil.isAllParentDirectoryExist(((FileSystemStreamTarget) streamTarget).getFiles(false))) {
-                    try (final OutputStream outputStream = fileSystemStreamTarget.add(InternalStreamTypeNames.MANIFEST).getOutputStream()) {
-                        AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), outputStream);
-                    }
-                } else {
-                    LOGGER.warn("closeStreamTarget() - Closing target file with no directory present");
-                }
-
-            }
-        } catch (final IOException e) {
-            LOGGER.error("closeStreamTarget() - Error on writing Manifest {}", streamTarget, e);
-        }
-
-        if (streamCloseException == null) {
-            // Unlock will update the meta data so set it back on the stream
-            // target so the client has the up to date copy
-            ((FileSystemStreamTarget) streamTarget).setMetaData(
-                    unLock(streamTarget.getMeta(), fileSystemStreamTarget.getAttributes()));
-        } else {
-            throw new UncheckedIOException(streamCloseException);
-        }
-    }
-
-    @Override
-    public int deleteStreamTarget(final StreamTarget target) {
+    public int deleteStreamTarget(final Target target) {
         // Make sure the stream is closed.
         try {
             target.close();
@@ -213,11 +205,11 @@ class FileSystemStreamStoreImpl implements StreamStore {
      *
      * @param streamId the id of the stream to open.
      * @return The stream source if the stream can be found.
-     * @throws StreamException in case of a IO error or stream volume not visible or non
+     * @throws DataException in case of a IO error or stream volume not visible or non
      *                         existent.
      */
     @Override
-    public StreamSource openStreamSource(final long streamId) throws StreamException {
+    public Source openStreamSource(final long streamId) throws DataException {
         return openStreamSource(streamId, false);
     }
 
@@ -234,11 +226,11 @@ class FileSystemStreamStoreImpl implements StreamStore {
      * deleted) else null. Also returns null if one exists but is
      * logically deleted or locked unless <code>anyStatus</code> is
      * true.
-     * @throws StreamException Could be thrown if no volume
+     * @throws DataException Could be thrown if no volume
      */
     @Override
-    public StreamSource openStreamSource(final long streamId, final boolean anyStatus) throws StreamException {
-        StreamSource streamSource = null;
+    public Source openStreamSource(final long streamId, final boolean anyStatus) throws DataException {
+        Source streamSource = null;
 
         final Meta meta = metaService.getMeta(streamId, anyStatus);
         if (meta != null) {
@@ -248,7 +240,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
             if (volumeSet.isEmpty()) {
                 final String message = "Unable to find any volume for " + meta;
                 LOGGER.warn(message);
-                throw new StreamException(message);
+                throw new DataException(message);
             }
             final Node node = nodeInfo.getThisNode();
             final DataVolume streamVolume = streamVolumeService.pickBestVolume(volumeSet, node.getId(), node.getRack().getId());
@@ -256,7 +248,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
                 final String message = "Unable to access any volume for " + meta
                         + " perhaps the data is on a private volume";
                 LOGGER.warn(message);
-                throw new StreamException(message);
+                throw new DataException(message);
             }
             streamSource = FileSystemStreamSource.create(fileSystemStreamPathHelper, meta, streamVolume.getVolumePath(), meta.getTypeName());
         }
@@ -264,64 +256,64 @@ class FileSystemStreamStoreImpl implements StreamStore {
         return streamSource;
     }
 
-    @Override
-    public void closeStreamSource(final StreamSource streamSource) {
-        try {
-            // Close the stream source.
-            streamSource.close();
-        } catch (final IOException e) {
-            LOGGER.error("Unable to close stream source!", e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public AttributeMap getStoredMeta(final Meta meta) {
-        final Set<DataVolume> volumeSet = streamVolumeService.findStreamVolume(meta.getId());
-        if (volumeSet != null && volumeSet.size() > 0) {
-            final DataVolume streamVolume = volumeSet.iterator().next();
-            final Path manifest = fileSystemStreamPathHelper.createChildStreamFile(meta, streamVolume, InternalStreamTypeNames.MANIFEST);
-
-            if (Files.isRegularFile(manifest)) {
-                final AttributeMap attributeMap = new AttributeMap();
-                try {
-                    AttributeMapUtil.read(Files.newInputStream(manifest), true, attributeMap);
-                } catch (final IOException ioException) {
-                    LOGGER.error("loadAttributeMapFromFileSystem() {}", manifest, ioException);
-                }
-
-//                for (final String name : attributeMap.keySet()) {
-//                    final StreamAttributeKey key = keyMap.get(name);
-//                    final String value = attributeMap.get(name);
-//                    if (key == null) {
-//                        streamAttributeMap.addAttribute(name, value);
-//                    } else {
-//                        streamAttributeMap.addAttribute(key, value);
-//                    }
+//    @Override
+//    public void closeStreamSource(final Source streamSource) {
+//        try {
+//            // Close the stream source.
+//            streamSource.close();
+//        } catch (final IOException e) {
+//            LOGGER.error("Unable to close stream source!", e.getMessage(), e);
+//        }
+//    }
+//
+//    @Override
+//    public AttributeMap getStoredMeta(final Meta meta) {
+//        final Set<DataVolume> volumeSet = streamVolumeService.findStreamVolume(meta.getId());
+//        if (volumeSet != null && volumeSet.size() > 0) {
+//            final DataVolume streamVolume = volumeSet.iterator().next();
+//            final Path manifest = fileSystemStreamPathHelper.createChildStreamFile(meta, streamVolume, InternalStreamTypeNames.MANIFEST);
+//
+//            if (Files.isRegularFile(manifest)) {
+//                final AttributeMap attributeMap = new AttributeMap();
+//                try {
+//                    AttributeMapUtil.read(Files.newInputStream(manifest), true, attributeMap);
+//                } catch (final IOException ioException) {
+//                    LOGGER.error("loadAttributeMapFromFileSystem() {}", manifest, ioException);
 //                }
-
-                try {
-                    final Path rootFile = fileSystemStreamPathHelper.createRootStreamFile(streamVolume.getVolumePath(),
-                            meta, meta.getTypeName());
-
-                    final List<Path> allFiles = fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile);
-                    attributeMap.put("Files", allFiles.stream().map(FileUtil::getCanonicalPath).collect(Collectors.joining(",")));
-
-
-                    //                streamAttributeMap.setFileNameList(new ArrayList<>());
-                    //                streamAttributeMap.getFileNameList().add(FileUtil.getCanonicalPath(rootFile));
-                    //                for (final Path file : allFiles) {
-                    //                    streamAttributeMap.getFileNameList().add(FileUtil.getCanonicalPath(file));
-                    //                }
-                } catch (final RuntimeException e) {
-                    LOGGER.error("loadAttributeMapFromFileSystem() ", e);
-                }
-
-                return attributeMap;
-            }
-        }
-
-        return null;
-    }
+//
+////                for (final String name : attributeMap.keySet()) {
+////                    final StreamAttributeKey key = keyMap.get(name);
+////                    final String value = attributeMap.get(name);
+////                    if (key == null) {
+////                        streamAttributeMap.addAttribute(name, value);
+////                    } else {
+////                        streamAttributeMap.addAttribute(key, value);
+////                    }
+////                }
+//
+//                try {
+//                    final Path rootFile = fileSystemStreamPathHelper.createRootStreamFile(streamVolume.getVolumePath(),
+//                            meta, meta.getTypeName());
+//
+//                    final List<Path> allFiles = fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile);
+//                    attributeMap.put("Files", allFiles.stream().map(FileUtil::getCanonicalPath).collect(Collectors.joining(",")));
+//
+//
+//                    //                streamAttributeMap.setFileNameList(new ArrayList<>());
+//                    //                streamAttributeMap.getFileNameList().add(FileUtil.getCanonicalPath(rootFile));
+//                    //                for (final Path file : allFiles) {
+//                    //                    streamAttributeMap.getFileNameList().add(FileUtil.getCanonicalPath(file));
+//                    //                }
+//                } catch (final RuntimeException e) {
+//                    LOGGER.error("loadAttributeMapFromFileSystem() ", e);
+//                }
+//
+//                return attributeMap;
+//            }
+//        }
+//
+//        return null;
+//    }
 
     private void syncAttributes(final Meta meta, final FileSystemStreamTarget target) {
         updateAttribute(target, MetaFieldNames.ID, String.valueOf(meta.getId()));
@@ -345,21 +337,21 @@ class FileSystemStreamStoreImpl implements StreamStore {
         }
     }
 
-    private Meta unLock(final Meta meta, final AttributeMap attributeMap) {
-        if (Status.UNLOCKED.equals(meta.getStatus())) {
-            throw new IllegalStateException("Attempt to unlock data that is already unlocked");
-        }
-
-        // Write the child meta data
-        if (!attributeMap.isEmpty()) {
-            try {
-                metaService.addAttributes(meta, attributeMap);
-            } catch (final RuntimeException e) {
-                LOGGER.error("unLock() - Failed to persist attributes in new transaction... will ignore");
-            }
-        }
-
-        LOGGER.debug("unlock() " + meta);
-        return metaService.updateStatus(meta, Status.UNLOCKED);
-    }
+//    private Meta unLock(final Meta meta, final AttributeMap attributeMap) {
+//        if (Status.UNLOCKED.equals(meta.getStatus())) {
+//            throw new IllegalStateException("Attempt to unlock data that is already unlocked");
+//        }
+//
+//        // Write the child meta data
+//        if (!attributeMap.isEmpty()) {
+//            try {
+//                metaService.addAttributes(meta, attributeMap);
+//            } catch (final RuntimeException e) {
+//                LOGGER.error("unLock() - Failed to persist attributes in new transaction... will ignore");
+//            }
+//        }
+//
+//        LOGGER.debug("unlock() " + meta);
+//        return metaService.updateStatus(meta, Status.UNLOCKED, Status.LOCKED);
+//    }
 }

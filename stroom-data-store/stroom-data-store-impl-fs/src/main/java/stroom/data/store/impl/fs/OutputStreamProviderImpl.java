@@ -18,10 +18,10 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.Meta;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.WrappedSegmentOutputStream;
+import stroom.meta.shared.Meta;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -31,22 +31,18 @@ class OutputStreamProviderImpl implements OutputStreamProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(OutputStreamProviderImpl.class);
 
     private final Meta meta;
-    private final NestedOutputStreamFactory rootStreamTarget;
-    private final HashMap<String, OS> nestedOutputStreamMap = new HashMap<>(10);
+    private final NestedOutputStreamFactory nestedOutputStreamFactory;
+    private final SegmentOutputStreamProvider root;
+    private final HashMap<String, SegmentOutputStreamProvider> nestedOutputStreamMap = new HashMap<>(10);
+    private final long index;
 
     OutputStreamProviderImpl(final Meta meta,
-                             final NestedOutputStreamFactory streamTarget) {
+                             final NestedOutputStreamFactory nestedOutputStreamFactory,
+                             final long index) {
         this.meta = meta;
-        this.rootStreamTarget = streamTarget;
-
-        final RANestedOutputStream nestedOutputStream = new RANestedOutputStream(
-                streamTarget.getOutputStream(),
-                () -> streamTarget.addChild(InternalStreamTypeNames.BOUNDARY_INDEX).getOutputStream());
-        final RASegmentOutputStream segmentOutputStream = new RASegmentOutputStream(
-                nestedOutputStream,
-                () -> streamTarget.addChild(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream());
-        final OS os = new OS(nestedOutputStream, segmentOutputStream);
-        nestedOutputStreamMap.put(null, os);
+        this.nestedOutputStreamFactory = nestedOutputStreamFactory;
+        this.index = index;
+        root = new SegmentOutputStreamProvider(nestedOutputStreamFactory, null);
     }
 
     private void logDebug(String msg) {
@@ -54,93 +50,78 @@ class OutputStreamProviderImpl implements OutputStreamProvider {
     }
 
     @Override
-    public SegmentOutputStream next() {
-        try {
-            if (LOGGER.isDebugEnabled()) {
-                logDebug("next()");
-            }
-
-            final OS os = getOS(null);
-            os.nestedOutputStream.putNextEntry();
-            final SegmentOutputStream outputStream = os.outputStream;
-
-            return new WrappedSegmentOutputStream(outputStream) {
-                @Override
-                public void close() throws IOException {
-                    os.nestedOutputStream.closeEntry();
-                }
-            };
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
+    public SegmentOutputStream get() {
+        if (LOGGER.isDebugEnabled()) {
+            logDebug("get()");
         }
+
+        return root.getOutputStream(index);
     }
 
     @Override
-    public SegmentOutputStream next(final String streamTypeName) {
-        try {
-            if (LOGGER.isDebugEnabled()) {
-                logDebug("next() - " + streamTypeName);
-            }
-
-            final OS os = getOS(streamTypeName);
-            os.nestedOutputStream.putNextEntry();
-            final SegmentOutputStream outputStream = os.outputStream;
-
-            return new WrappedSegmentOutputStream(outputStream) {
-                @Override
-                public void close() throws IOException {
-                    os.nestedOutputStream.closeEntry();
-                }
-            };
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
+    public SegmentOutputStream get(final String streamTypeName) {
+        if (LOGGER.isDebugEnabled()) {
+            logDebug("get() - " + streamTypeName);
         }
+
+        return getSegmentOutputStreamProvider(streamTypeName).getOutputStream(index);
     }
 
-    private OS getOS(final String streamTypeName) {
+    private SegmentOutputStreamProvider getSegmentOutputStreamProvider(final String streamTypeName) {
         return nestedOutputStreamMap.computeIfAbsent(streamTypeName, k -> {
-            final NestedOutputStreamFactory childTarget = rootStreamTarget.addChild(k);
-            final RANestedOutputStream nestedOutputStream = new RANestedOutputStream(childTarget.getOutputStream(),
-                    () -> childTarget.addChild(InternalStreamTypeNames.BOUNDARY_INDEX).getOutputStream());
-
-            SegmentOutputStream outputStream;
-//            if (!FileSystemStreamPathHelper.isStreamTypeSegment(k)) {
-//                outputStream = nestedOutputStream;
-//            } else {
-            outputStream = new RASegmentOutputStream(nestedOutputStream,
-                    () -> childTarget.addChild(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream());
-//            }
-
-            return new OS(nestedOutputStream, outputStream);
+            final NestedOutputStreamFactory childNestedOutputStreamFactory = nestedOutputStreamFactory.addChild(k);
+            return new SegmentOutputStreamProvider(childNestedOutputStreamFactory, k);
         });
-
-//        if (syncWriting) {
-//            final OS root = nestedOutputStreamMap.get(null);
-//            // Add blank marks for the missing context files
-//            final RANestedOutputStream nestedOutputStream = os.nestedOutputStream;
-//            while (nestedOutputStream.getNestCount() + 1 < root.nestedOutputStream.getNestCount()) {
-//                nestedOutputStream.putNextEntry();
-//                nestedOutputStream.closeEntry();
-//            }
-//        }
-//
-//        return os;
     }
 
     @Override
     public void close() throws IOException {
-        for (OS nestedOutputStream : nestedOutputStreamMap.values()) {
+        for (SegmentOutputStreamProvider nestedOutputStream : nestedOutputStreamMap.values()) {
             nestedOutputStream.nestedOutputStream.close();
         }
     }
 
-    private static class OS {
-        RANestedOutputStream nestedOutputStream;
-        SegmentOutputStream outputStream;
+    private static class SegmentOutputStreamProvider {
+        private long index = -1;
+        private final String dataTypeName;
+        private final RANestedOutputStream nestedOutputStream;
+        private final SegmentOutputStream outputStream;
 
-        OS(final RANestedOutputStream nestedOutputStream, final SegmentOutputStream outputStream) {
-            this.nestedOutputStream = nestedOutputStream;
-            this.outputStream = outputStream;
+        SegmentOutputStreamProvider(final NestedOutputStreamFactory nestedOutputStreamFactory, final String dataTypeName) {
+            this.dataTypeName = dataTypeName;
+
+            nestedOutputStream = new RANestedOutputStream(nestedOutputStreamFactory.getOutputStream(),
+                    () -> nestedOutputStreamFactory.addChild(InternalStreamTypeNames.BOUNDARY_INDEX).getOutputStream());
+            outputStream = new RASegmentOutputStream(nestedOutputStream,
+                    () -> nestedOutputStreamFactory.addChild(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream());
+        }
+
+        public SegmentOutputStream getOutputStream(final long index) {
+            try {
+                if (this.index >= index) {
+                    throw new IOException("Output stream already provided for index " + index);
+                }
+
+                // Move up to the right index if this OS is behind, i.e. it hasn't been requested for a certain data type before.
+                while (this.index < index - 1) {
+                    LOGGER.debug("Fast forwarding for " + dataTypeName);
+                    this.index++;
+                    nestedOutputStream.putNextEntry();
+                    nestedOutputStream.closeEntry();
+                }
+
+                this.index++;
+                nestedOutputStream.putNextEntry();
+
+                return new WrappedSegmentOutputStream(outputStream) {
+                    @Override
+                    public void close() throws IOException {
+                        nestedOutputStream.closeEntry();
+                    }
+                };
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
     }
 }

@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.meta.shared.AttributeMap;
 import stroom.data.store.StreamProgressMonitor;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Store;
 import stroom.datafeed.BufferFactory;
 import stroom.pipeline.feed.FeedDocCache;
 import stroom.meta.shared.StandardHeaderArguments;
@@ -54,7 +54,7 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
 
     private final ProxyFileHandler feedFileProcessorHelper;
 
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistic;
     private final int maxAggregation;
@@ -64,7 +64,7 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
     private volatile boolean stop = false;
 
     @Inject
-    ProxyFileProcessorImpl(final StreamStore streamStore,
+    ProxyFileProcessorImpl(final Store streamStore,
                            final FeedDocCache feedDocCache,
                            final MetaDataStatistic metaDataStatistic,
                            final ProxyAggregationConfig proxyAggregationConfig,
@@ -79,7 +79,7 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
         );
     }
 
-    ProxyFileProcessorImpl(final StreamStore streamStore,
+    ProxyFileProcessorImpl(final Store streamStore,
                            final FeedDocCache feedDocCache,
                            final MetaDataStatistic metaDataStatistic,
                            final int maxAggregation,

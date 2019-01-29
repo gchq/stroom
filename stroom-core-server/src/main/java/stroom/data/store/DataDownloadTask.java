@@ -21,16 +21,16 @@ import stroom.task.api.ServerTask;
 
 import java.nio.file.Path;
 
-public class StreamDownloadTask extends ServerTask<StreamDownloadResult> {
+public class DataDownloadTask extends ServerTask<DataDownloadResult> {
     private FindMetaCriteria criteria;
     private Path file;
     private StreamDownloadSettings settings;
 
-    public StreamDownloadTask() {
+    public DataDownloadTask() {
     }
 
-    public StreamDownloadTask(final String userToken, final FindMetaCriteria criteria,
-                              final Path file, final StreamDownloadSettings settings) {
+    public DataDownloadTask(final String userToken, final FindMetaCriteria criteria,
+                            final Path file, final StreamDownloadSettings settings) {
         super(null, userToken);
         this.criteria = criteria;
         this.file = file;

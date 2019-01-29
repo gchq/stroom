@@ -17,13 +17,14 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.OutputStreamProvider;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Target;
+import stroom.meta.impl.mock.MockMetaService;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.impl.mock.MockMetaService;
-import stroom.data.store.api.OutputStreamProvider;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamTarget;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.io.StreamUtil;
 
@@ -51,34 +52,33 @@ class TestMockStreamStore {
                 .typeName(StreamTypeNames.EVENTS)
                 .build();
 
-        final StreamTarget streamTarget = mockStreamStore.openStreamTarget(metaProperties);
-        final Meta meta = streamTarget.getMeta();
+        Meta meta = null;
+        try (final Target streamTarget = mockStreamStore.openStreamTarget(metaProperties)) {
+            meta = streamTarget.getMeta();
 
-        try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
-            try (final OutputStream outputStream = outputStreamProvider.next()) {
-                outputStream.write("PARENT".getBytes(StreamUtil.DEFAULT_CHARSET));
+            try (final OutputStreamProvider outputStreamProvider = streamTarget.next()) {
+                try (final OutputStream outputStream = outputStreamProvider.get()) {
+                    outputStream.write("PARENT".getBytes(StreamUtil.DEFAULT_CHARSET));
+                }
+                try (final OutputStream outputStream = outputStreamProvider.get(StreamTypeNames.CONTEXT)) {
+                    outputStream.write("CHILD".getBytes(StreamUtil.DEFAULT_CHARSET));
+                }
             }
-            try (final OutputStream outputStream = outputStreamProvider.next(StreamTypeNames.CONTEXT)) {
-                outputStream.write("CHILD".getBytes(StreamUtil.DEFAULT_CHARSET));
-            }
+
+            assertThat(mockMetaService.find(FindMetaCriteria.createFromMeta(meta)).size()).isEqualTo(0);
         }
-
-        assertThat(mockMetaService.find(FindMetaCriteria.createFromMeta(meta)).size()).isEqualTo(0);
-
-        mockStreamStore.closeStreamTarget(streamTarget);
 
         assertThat(mockMetaService.find(FindMetaCriteria.createFromMeta(meta)).size()).isEqualTo(1);
 
         final Meta reload = mockMetaService.find(FindMetaCriteria.createFromMeta(meta)).get(0);
 
-        final StreamSource streamSource = mockStreamStore.openStreamSource(reload.getId());
-
-        String testMe = StreamUtil.streamToString(streamSource.getInputStream());
-
-        assertThat(testMe).isEqualTo("PARENT");
-
-        testMe = StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.CONTEXT).getInputStream());
-
-        assertThat(testMe).isEqualTo("CHILD");
+        try (final Source streamSource = mockStreamStore.openStreamSource(reload.getId())) {
+            try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
+                String testMe = StreamUtil.streamToString(inputStreamProvider.get());
+                assertThat(testMe).isEqualTo("PARENT");
+                testMe = StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.CONTEXT));
+                assertThat(testMe).isEqualTo("CHILD");
+            }
+        }
     }
 }

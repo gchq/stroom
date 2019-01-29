@@ -20,16 +20,18 @@ package stroom.pipeline.task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.SourceUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.store.api.StreamTargetUtil;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
+import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.pipeline.feed.FeedDocCache;
@@ -110,7 +112,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private StreamProcessorFilterService streamProcessorFilterService;
     @Inject
-    private StreamStore streamStore;
+    private Store streamStore;
     @Inject
     private MetaService metaService;
     @Inject
@@ -240,15 +242,18 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     if (!StreamTypeNames.ERROR.equals(streamTypeName)) {
                         processedMeta.add(meta);
                     } else {
-                        try (StreamSource errorStreamSource = streamStore.openStreamSource(streamId)) {
-                            //got an error stream so dump it to console
+                        try (Source errorStreamSource = streamStore.openStreamSource(streamId)) {
+                            String errorStreamStr = SourceUtil.readString(errorStreamSource);
 
-                            Meta parentMeta = metaService.getMeta(meta.getParentMetaId());
+//                            try (final InputStreamProvider inputStreamProvider = errorStreamSource.get(0)) {
+                                //got an error stream so dump it to console
 
-                            String errorStreamStr = StreamUtil.streamToString(errorStreamSource.getInputStream());
-                            java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(errorStreamSource.getInputStream());
-                            LOGGER.warn("Meta {} with parent {} of type {} has errors:\n{}",
-                                    meta, parentMeta.getId(), parentMeta.getTypeName(), errorStreamStr);
+                                Meta parentMeta = metaService.getMeta(meta.getParentMetaId());
+
+//                                String errorStreamStr = StreamUtil.streamToString(inputStreamProvider.get());
+//                                java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(inputStreamProvider.get());
+                                LOGGER.warn("Meta {} with parent {} of type {} has errors:\n{}",
+                                        meta, parentMeta.getId(), parentMeta.getTypeName(), errorStreamStr);
 
 //                            // only dump warning if debug enabled
 //                            if (LOGGER.isDebugEnabled()) {
@@ -258,6 +263,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 //                                errorStreamLines
 //                                        .filter(line -> line.contains("ERROR:"))
 //                                        .forEach(System.out::println);
+//                            }
 //                            }
                         }
                     }
@@ -323,19 +329,21 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     .typeName(streamTypeName)
                     .createMs(millis)
                     .build();
-            final StreamTarget target = streamStore.openStreamTarget(metaProperties);
 
-            final InputStream inputStream = new BufferedInputStream(Files.newInputStream(file));
-            StreamTargetUtil.write(target, inputStream);
-            streamStore.closeStreamTarget(target);
+            Meta meta;
+            try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+                meta = target.getMeta();
+                final InputStream inputStream = new BufferedInputStream(Files.newInputStream(file));
+                TargetUtil.write(target, inputStream);
+            }
 
             // Check that what was written to the store is the same as the
             // contents of the file.
-            final StreamSource checkSource = streamStore.openStreamSource(target.getMeta().getId());
-            final byte[] original = Files.readAllBytes(file);
-            final byte[] stored = StreamUtil.streamToBytes(checkSource.getInputStream());
-            streamStore.closeStreamSource(checkSource);
-            assertThat(Arrays.equals(original, stored)).isTrue();
+            try (final Source checkSource = streamStore.openStreamSource(meta.getId())) {
+                final byte[] original = Files.readAllBytes(file);
+                final byte[] stored = SourceUtil.read(checkSource);
+                assertThat(Arrays.equals(original, stored)).isTrue();
+            }
         }
     }
 
@@ -556,9 +564,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private void copyStream(final Meta meta, final OutputStream outputStream) throws IOException {
-        final StreamSource streamSource = streamStore.openStreamSource(meta.getId());
-        StreamUtil.streamToStream(streamSource.getInputStream(), outputStream);
-        streamStore.closeStreamSource(streamSource);
+        try (final Source streamSource = streamStore.openStreamSource(meta.getId())) {
+            SourceUtil.read(streamSource, outputStream);
+        }
     }
 
     private void compareFiles(final Path expectedFile, final Path actualFile, final List<Exception> exceptions) {

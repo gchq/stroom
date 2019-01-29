@@ -19,8 +19,8 @@ package stroom.pipeline.writer;
 
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.node.api.NodeInfo;
@@ -49,7 +49,7 @@ import javax.inject.Inject;
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class RollingStreamAppender extends AbstractRollingAppender implements RollingDestinationFactory {
 
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final MetaHolder metaHolder;
     private final NodeInfo nodeInfo;
 
@@ -63,7 +63,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     @Inject
     RollingStreamAppender(final RollingDestinations destinations,
                           final TaskContext taskContext,
-                          final StreamStore streamStore,
+                          final Store streamStore,
                           final MetaHolder metaHolder,
                           final NodeInfo nodeInfo) {
         super(destinations, taskContext);
@@ -87,7 +87,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
                 .build();
 
         final String nodeName = nodeInfo.getThisNodeName();
-        final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
+        final Target streamTarget = streamStore.openStreamTarget(metaProperties);
         return new RollingStreamDestination(key,
                 getFrequency(),
                 getSchedule(),

@@ -18,12 +18,9 @@ package stroom.data.store.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
 import stroom.io.StreamCloser;
 import stroom.pipeline.scope.PipelineScoped;
 
-import javax.inject.Inject;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -35,13 +32,6 @@ import java.util.List;
 public class SteamStoreStreamCloserImpl implements StreamCloser {
     private static final Logger LOGGER = LoggerFactory.getLogger(SteamStoreStreamCloserImpl.class);
     private final List<Closeable> list = new ArrayList<>();
-
-    private final StreamStore streamStore;
-
-    @Inject
-    public SteamStoreStreamCloserImpl(final StreamStore streamStore) {
-        this.streamStore = streamStore;
-    }
 
     public SteamStoreStreamCloserImpl add(final Closeable closeable) {
         // Add items to the beginning of the list so that they are closed in the
@@ -87,27 +77,8 @@ public class SteamStoreStreamCloserImpl implements StreamCloser {
                         }
                     }
 
-                    if (closeable instanceof StreamTarget) {
-                        final StreamTarget streamTarget = (StreamTarget) closeable;
-
-                        // Only call the API on the root parent stream
-//                        if (streamTarget.getParent() == null) {
-                        // Close the stream target.
-                        try {
-                            streamStore.closeStreamTarget(streamTarget);
-//                        } catch (final OptimisticLockException e) {
-//                            // This exception will be thrown is the stream target has already been deleted by another thread if it was superseded.
-//                            LOGGER.debug("Optimistic lock exception thrown when closing stream target (see trace for details)");
-//                            LOGGER.trace(e.getMessage(), e);
-                        } catch (final RuntimeException e) {
-                            LOGGER.error(e.getMessage(), e);
-                        }
-//                        }
-                    } else {
-                        // Close the stream.
-                        closeable.close();
-
-                    }
+                    // Close the stream.
+                    closeable.close();
                 }
             } catch (final IOException e) {
                 LOGGER.error("Unable to close stream!", e);

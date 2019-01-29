@@ -19,11 +19,12 @@ package stroom.entity.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.api.InputStreamProvider;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.feed.shared.FeedDoc;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.meta.shared.Meta;
 import stroom.util.date.DateUtil;
@@ -114,7 +115,7 @@ public final class SendStreamDataClient {
     /**
      * Perform the HTTP Post.
      */
-    private static void sendStream(final URL url, final StreamStore streamStore, final FeedDoc feed, final long streamId)
+    private static void sendStream(final URL url, final Store streamStore, final FeedDoc feed, final long streamId)
             throws IOException {
         final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         if (connection instanceof HttpsURLConnection) {
@@ -132,48 +133,49 @@ public final class SendStreamDataClient {
         connection.addRequestProperty(COMPRESSION, GZIP);
         connection.addRequestProperty(FEED, feed.getName());
 
-        final StreamSource streamSource = streamStore.openStreamSource(streamId);
-        final StreamSource metaSource = streamSource.getChildStream(StreamTypeNames.META);
-        final Meta meta = streamSource.getMeta();
+        try (final Source streamSource = streamStore.openStreamSource(streamId)) {
+            final Meta meta = streamSource.getMeta();
 
-        if (meta.getEffectiveMs() != null) {
-            connection.addRequestProperty("effectiveTime",
-                    DateUtil.createNormalDateTimeString(meta.getEffectiveMs()));
-        }
-
-        if (metaSource != null) {
-            final AttributeMap attributeMap = new AttributeMap();
-            AttributeMapUtil.read(metaSource.getInputStream(), true, attributeMap);
-            attributeMap.entrySet().stream().filter(entry -> connection.getRequestProperty(entry.getKey()) == null)
-                    .forEach(entry -> connection.addRequestProperty(entry.getKey(), entry.getValue()));
-        }
-
-        connection.connect();
-
-        try (OutputStream out = new GZIPOutputStream(connection.getOutputStream())) {
-            final InputStream fis = streamSource.getInputStream();
-
-            // Write the output
-            final byte[] buffer = new byte[BUFFER_SIZE];
-            int readSize;
-            while ((readSize = fis.read(buffer)) != -1) {
-                out.write(buffer, 0, readSize);
+            if (meta.getEffectiveMs() != null) {
+                connection.addRequestProperty("effectiveTime",
+                        DateUtil.createNormalDateTimeString(meta.getEffectiveMs()));
             }
 
-            out.flush();
-            out.close();
-            fis.close();
+            try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
+                try (final InputStream metaInputStream = inputStreamProvider.get(StreamTypeNames.META)) {
+                    if (metaInputStream != null) {
+                        final AttributeMap attributeMap = new AttributeMap();
+                        AttributeMapUtil.read(metaInputStream, true, attributeMap);
+                        attributeMap.entrySet().stream().filter(entry -> connection.getRequestProperty(entry.getKey()) == null)
+                                .forEach(entry -> connection.addRequestProperty(entry.getKey(), entry.getValue()));
+                    }
+                }
 
-            final int response = connection.getResponseCode();
-            final String msg = connection.getResponseMessage();
+                connection.connect();
 
-            LOGGER.info("Client Got Response " + response + " Id " + meta.getId());
-            if (msg != null && !msg.isEmpty()) {
-                LOGGER.info(msg);
+                try (final InputStream inputStream = inputStreamProvider.get();
+                     final OutputStream outputStream = new GZIPOutputStream(connection.getOutputStream())) {
+                    // Write the output
+                    final byte[] buffer = new byte[BUFFER_SIZE];
+                    int readSize;
+                    while ((readSize = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, readSize);
+                    }
+
+                    outputStream.flush();
+                    outputStream.close();
+                    inputStream.close();
+
+                    final int response = connection.getResponseCode();
+                    final String msg = connection.getResponseMessage();
+
+                    LOGGER.info("Client Got Response " + response + " Id " + meta.getId());
+                    if (msg != null && !msg.isEmpty()) {
+                        LOGGER.info(msg);
+                    }
+                    connection.disconnect();
+                }
             }
-            connection.disconnect();
-
-            streamStore.closeStreamSource(streamSource);
         }
     }
 }

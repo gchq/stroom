@@ -25,7 +25,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.entity.cluster.ClearServiceClusterTask;
 import stroom.entity.shared.Period;
@@ -100,7 +100,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private Task<?> task;
 
     @Inject
-    BenchmarkClusterExecutor(final StreamStore streamStore,
+    BenchmarkClusterExecutor(final Store streamStore,
                              final MetaService metaService,
                              final TaskContext taskContext,
                              final PipelineStore pipelineStore,

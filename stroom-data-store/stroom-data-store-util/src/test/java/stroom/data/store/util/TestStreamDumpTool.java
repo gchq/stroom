@@ -19,9 +19,9 @@ package stroom.data.store.util;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.meta.shared.MetaProperties;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.store.api.StreamTargetUtil;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
+import stroom.data.store.api.TargetUtil;
 import stroom.persist.ConnectionProvider;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.db.util.DbUtil;
@@ -29,6 +29,8 @@ import stroom.util.io.FileUtil;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -36,7 +38,7 @@ class TestStreamDumpTool {
     @Inject
     private ConnectionProvider connectionProvider;
     @Inject
-    private StreamStore streamStore;
+    private Store streamStore;
 
     @BeforeEach
     void setup() {
@@ -71,8 +73,10 @@ class TestStreamDumpTool {
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
-        StreamTargetUtil.write(streamTarget, data);
-        streamStore.closeStreamTarget(streamTarget);
+        try (final Target streamTarget = streamStore.openStreamTarget(metaProperties)) {
+            TargetUtil.write(streamTarget, data);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

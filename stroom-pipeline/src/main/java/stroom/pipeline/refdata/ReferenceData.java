@@ -18,15 +18,12 @@ package stroom.pipeline.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.Meta;
-import stroom.data.store.api.StreamSourceInputStream;
-import stroom.data.store.api.StreamSourceInputStreamProvider;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.SizeAwareInputStream;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
+import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
-import stroom.pipeline.shared.data.PipelineReference;
-import stroom.pipeline.state.FeedHolder;
-import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.MultiRefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataStore;
@@ -34,6 +31,9 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
+import stroom.pipeline.shared.data.PipelineReference;
+import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.security.DocumentPermissionCache;
 import stroom.security.Security;
 import stroom.security.shared.DocumentPermissionNames;
@@ -43,7 +43,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -218,46 +217,42 @@ public class ReferenceData {
                 pipelineReference.getName(),
                 mapName,
                 keyName));
-        try {
-            // Get nested stream.
-            final long streamNo = metaHolder.getStreamNo();
 
-            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("StreamId {}, parentStreamId {}",
-                    metaHolder.getMeta().getId(),
-                    metaHolder.getMeta().getParentMetaId()));
+        // Get nested stream.
+        final long streamNo = metaHolder.getStreamNo();
 
-            // the parent stream appears to be null at this point so just use the stream id
-            final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                    pipelineReference.getPipeline(),
-                    getPipelineVersion(pipelineReference),
-                    metaHolder.getMeta().getId(),
-                    streamNo);
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("StreamId {}, parentStreamId {}",
+                metaHolder.getMeta().getId(),
+                metaHolder.getMeta().getParentMetaId()));
 
-            // Establish if we have the data for the context stream in the store
-            final RefDataStore onHeapRefDataStore = refDataStoreHolder.getOnHeapRefDataStore();
-            final boolean isEffectiveStreamDataLoaded = onHeapRefDataStore.isDataLoaded(refStreamDefinition);
+        // the parent stream appears to be null at this point so just use the stream id
+        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                pipelineReference.getPipeline(),
+                getPipelineVersion(pipelineReference),
+                metaHolder.getMeta().getId(),
+                streamNo);
 
-            if (!isEffectiveStreamDataLoaded) {
-                // data is not in the store so load it
-                final StreamSourceInputStreamProvider provider = metaHolder.getProvider(pipelineReference.getStreamType());
-                // There may not be a provider for this stream type if we do not
-                // have any context data stream.
-                if (provider != null) {
-                    final StreamSourceInputStream inputStream = provider.getStream(streamNo);
-                    loadContextData(
-                            metaHolder.getMeta(),
-                            inputStream,
-                            pipelineReference.getPipeline(),
-                            refStreamDefinition,
-                            onHeapRefDataStore);
-                }
+        // Establish if we have the data for the context stream in the store
+        final RefDataStore onHeapRefDataStore = refDataStoreHolder.getOnHeapRefDataStore();
+        final boolean isEffectiveStreamDataLoaded = onHeapRefDataStore.isDataLoaded(refStreamDefinition);
+
+        if (!isEffectiveStreamDataLoaded) {
+            // data is not in the store so load it
+            final InputStreamProvider provider = metaHolder.getInputStreamProvider();
+            // There may not be a provider for this stream type if we do not
+            // have any context data stream.
+            if (provider != null) {
+                final SizeAwareInputStream inputStream = provider.get(pipelineReference.getStreamType());
+                loadContextData(
+                        metaHolder.getMeta(),
+                        inputStream,
+                        pipelineReference.getPipeline(),
+                        refStreamDefinition,
+                        onHeapRefDataStore);
             }
-
-            setValueProxyOnResult(onHeapRefDataStore, mapName, keyName, result, refStreamDefinition);
-
-        } catch (final IOException e) {
-            result.log(Severity.ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
         }
+
+        setValueProxyOnResult(onHeapRefDataStore, mapName, keyName, result, refStreamDefinition);
     }
 
     private void setValueProxyOnResult(final RefDataStore refDataStore,
@@ -295,7 +290,7 @@ public class ReferenceData {
 
     private void loadContextData(
             final Meta meta,
-            final StreamSourceInputStream contextStream,
+            final SizeAwareInputStream contextStream,
             final DocRef contextPipeline,
             final RefStreamDefinition refStreamDefinition,
             final RefDataStore refDataStore) {

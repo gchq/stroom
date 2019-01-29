@@ -21,18 +21,17 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.SegmentInputStream;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
+import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
+import stroom.io.StreamCloser;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
-import stroom.data.store.api.SegmentInputStream;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamSourceInputStreamProvider;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
-import stroom.pipeline.feed.FeedProperties;
-import stroom.io.StreamCloser;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.DefaultErrorWriter;
 import stroom.pipeline.ErrorWriterProxy;
@@ -49,15 +48,16 @@ import stroom.pipeline.factory.AbstractElement;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.feed.FeedProperties;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.MetaDataHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.SearchIdHolder;
-import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
@@ -97,7 +97,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private static final Pattern XML_DECL_PATTERN = Pattern.compile("<\\?\\s*xml[^>]*>", Pattern.CASE_INSENSITIVE);
 
     private final PipelineFactory pipelineFactory;
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final PipelineStore pipelineStore;
     private final TaskContext taskContext;
     private final PipelineHolder pipelineHolder;
@@ -122,13 +122,13 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private Processor streamProcessor;
     private ProcessorFilter streamProcessorFilter;
     private ProcessorFilterTask streamTask;
-    private StreamSource streamSource;
+    private Source streamSource;
 
     private long startTime;
 
     @Inject
     PipelineStreamProcessor(final PipelineFactory pipelineFactory,
-                            final StreamStore streamStore,
+                            final Store streamStore,
                             final PipelineStore pipelineStore,
                             final TaskContext taskContext,
                             final PipelineHolder pipelineHolder,
@@ -177,7 +177,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     public void exec(final Processor streamProcessor,
                      final ProcessorFilter streamProcessorFilter,
                      final ProcessorFilterTask streamTask,
-                     final StreamSource streamSource) {
+                     final Source streamSource) {
         this.streamProcessor = streamProcessor;
         this.streamProcessorFilter = streamProcessorFilter;
         this.streamTask = streamTask;
@@ -344,29 +344,23 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
      */
     private void processNestedStreams(final Pipeline pipeline,
                                       final Meta meta,
-                                      final StreamSource streamSource,
+                                      final Source source,
                                       final String feedName,
                                       final String streamTypeName) {
+        boolean startedProcessing = false;
+
+        // Get the stream providers.
+        metaHolder.setMeta(meta);
+
         try {
-            boolean startedProcessing = false;
+            final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
+            locationFactory.setLocationFactory(streamLocationFactory);
 
-            // Get the stream providers.
-            metaHolder.setMeta(meta);
-            metaHolder.addProvider(streamSource);
-            metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
-            metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
-
-            // Get the main stream provider.
-            final StreamSourceInputStreamProvider mainProvider = metaHolder.getProvider(streamTypeName);
-
-            try {
-                final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
-                locationFactory.setLocationFactory(streamLocationFactory);
-
-                // Loop over the stream boundaries and process each
-                // sequentially.
-                final long streamCount = mainProvider.getStreamCount();
-                for (long streamNo = 0; streamNo < streamCount && !Thread.currentThread().isInterrupted(); streamNo++) {
+            // Loop over the stream boundaries and process each
+            // sequentially.
+            final long count = source.count();
+            for (long index = 0; index < count && !Thread.currentThread().isInterrupted(); index++) {
+                try (final InputStreamProvider inputStreamProvider = source.get(index)) {
                     InputStream inputStream;
 
                     // If the task requires specific events to be processed then
@@ -374,7 +368,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                     final String data = streamTask.getData();
                     if (data != null && !data.isEmpty()) {
                         final List<InclusiveRange> ranges = InclusiveRanges.rangesFromString(data);
-                        final SegmentInputStream raSegmentInputStream = mainProvider.getSegmentInputStream(streamNo);
+                        final SegmentInputStream raSegmentInputStream = inputStreamProvider.get(streamTypeName);
                         raSegmentInputStream.include(0);
                         for (final InclusiveRange range : ranges) {
                             for (long i = range.getMin(); i <= range.getMax(); i++) {
@@ -386,7 +380,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
                     } else {
                         // Get the stream.
-                        inputStream = mainProvider.getStream(streamNo);
+                        inputStream = inputStreamProvider.get(streamTypeName);
                     }
 
                     // Get the appropriate encoding for the stream type.
@@ -417,8 +411,9 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                                 pipeline.startProcessing();
                             }
 
-                            metaHolder.setStreamNo(streamNo);
-                            streamLocationFactory.setStreamNo(streamNo + 1);
+                            metaHolder.setInputStreamProvider(inputStreamProvider);
+                            metaHolder.setStreamNo(index);
+                            streamLocationFactory.setStreamNo(index + 1);
 
                             // Process the boundary.
                             try {
@@ -439,31 +434,31 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                             }
                         }
                     }
-                }
-            } catch (final LoggedException e) {
-                // The exception has already been logged so ignore it.
-                if (LOGGER.isTraceEnabled() && meta != null) {
-                    LOGGER.trace("Error while processing data task: id = " + meta.getId(), e);
-                }
-            } catch (final IOException | RuntimeException e) {
-                // An exception that's gets here is definitely a failure.
-                outputError(e);
-
-            } finally {
-                try {
-                    if (startedProcessing) {
-                        pipeline.endProcessing();
-                    }
                 } catch (final LoggedException e) {
                     // The exception has already been logged so ignore it.
                     if (LOGGER.isTraceEnabled() && meta != null) {
                         LOGGER.trace("Error while processing data task: id = " + meta.getId(), e);
                     }
-                } catch (final RuntimeException e) {
+                } catch (final IOException | RuntimeException e) {
+                    // An exception that's gets here is definitely a failure.
                     outputError(e);
+
+                } finally {
+                    try {
+                        if (startedProcessing) {
+                            pipeline.endProcessing();
+                        }
+                    } catch (final LoggedException e) {
+                        // The exception has already been logged so ignore it.
+                        if (LOGGER.isTraceEnabled() && meta != null) {
+                            LOGGER.trace("Error while processing data task: id = " + meta.getId(), e);
+                        }
+                    } catch (final RuntimeException e) {
+                        outputError(e);
+                    }
                 }
             }
-        } catch (final RuntimeException e) {
+        } catch (final IOException | RuntimeException e) {
             outputError(e);
         }
     }
@@ -506,7 +501,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
     private static class ProcessInfoOutputStreamProvider extends AbstractElement
             implements DestinationProvider, Destination, AutoCloseable {
-        private final StreamStore streamStore;
+        private final Store streamStore;
         private final MetaData metaData;
         private final Meta meta;
         private final Processor streamProcessor;
@@ -516,9 +511,9 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         private final SupersededOutputHelper supersededOutputHelper;
 
         private OutputStream processInfoOutputStream;
-        private StreamTarget processInfoStreamTarget;
+        private Target processInfoStreamTarget;
 
-        ProcessInfoOutputStreamProvider(final StreamStore streamStore,
+        ProcessInfoOutputStreamProvider(final Store streamStore,
                                         final MetaData metaData,
                                         final Meta meta,
                                         final Processor streamProcessor,
@@ -577,7 +572,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                         .build();
 
                 processInfoStreamTarget = streamStore.openStreamTarget(dataProperties);
-                processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.getOutputStreamProvider().next()) {
+                processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.next().get()) {
                     @Override
                     public void close() throws IOException {
                         try {
@@ -605,7 +600,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                                     if (supersededOutputHelper.isSuperseded()) {
                                         streamStore.deleteStreamTarget(processInfoStreamTarget);
                                     } else {
-                                        streamStore.closeStreamTarget(processInfoStreamTarget);
+                                        processInfoStreamTarget.close();
                                     }
 //                                } catch (final OptimisticLockException e) {
 //                                    // This exception will be thrown is the stream target has already been deleted by another thread if it was superseded.

@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.SegmentOutputStream;
-import stroom.data.store.api.StreamTargetUtil;
+import stroom.data.store.api.TargetUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -154,10 +154,10 @@ class BenchmarkIO {
 
         if (StreamType.RAW_SEG_TEXT.equals(streamType)) {
             os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), () -> new LockingFileOutputStream(file2, false));
-            StreamTargetUtil.write(new ByteArrayInputStream(data), os, true);
+            TargetUtil.write(new ByteArrayInputStream(data), os, true);
         } else if (StreamType.RAW_SEG_XML.equals(streamType)) {
             os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), () -> new LockingFileOutputStream(file2, false));
-            StreamTargetUtil.write(new ByteArrayInputStream(data), os, true);
+            TargetUtil.write(new ByteArrayInputStream(data), os, true);
         } else {
             int startPos = 0;
             int blockSize = 100;
@@ -209,16 +209,16 @@ class BenchmarkIO {
                 is = new BlockGZIPInputFile(file1);
                 break;
             case BGZIP_SEG:
-                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), new UncompressedInputStream(file2, false));
+                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), () -> new UncompressedInputStream(file2, false));
                 break;
             case BGZIP_SEG_COMPRESS:
-                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), new BlockGZIPInputFile(file2));
+                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), () -> new BlockGZIPInputFile(file2));
                 break;
             case RAW_SEG_TEXT:
-                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), new UncompressedInputStream(file2, false));
+                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), () -> new UncompressedInputStream(file2, false));
                 break;
             case RAW_SEG_XML:
-                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), new UncompressedInputStream(file2, false));
+                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), () -> new UncompressedInputStream(file2, false));
                 break;
         }
         is = new BufferedInputStream(is, FileSystemUtil.STREAM_BUFFER_SIZE);

@@ -19,9 +19,9 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
 import stroom.meta.shared.Meta;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
 import stroom.node.api.NodeInfo;
 import stroom.security.Security;
 import stroom.streamtask.shared.Processor;
@@ -35,6 +35,7 @@ import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -48,7 +49,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamTaskHelper streamTaskHelper;
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final NodeInfo nodeInfo;
     private final TaskContext taskContext;
     private final Security security;
@@ -58,7 +59,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                                final CachedStreamProcessorService streamProcessorService,
                                final CachedStreamProcessorFilterService streamProcessorFilterService,
                                final StreamTaskHelper streamTaskHelper,
-                               final StreamStore streamStore,
+                               final Store streamStore,
                                final NodeInfo nodeInfo,
                                final TaskContext taskContext,
                                final Security security) {
@@ -80,10 +81,8 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
             ProcessorFilterTask streamTask = task.getStreamTask();
             LOGGER.trace("Executing stream task: {}", streamTask.getId());
 
-            StreamSource streamSource = null;
-            try {
-                // Open the stream source.
-                streamSource = streamStore.openStreamSource(streamTask.getStreamId());
+            // Open the stream source.
+            try (Source streamSource = streamStore.openStreamSource(streamTask.getStreamId())) {
                 if (streamSource != null) {
                     final Meta meta = streamSource.getMeta();
 
@@ -143,18 +142,9 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                         }
                     }
                 }
-            } catch (final RuntimeException e) {
+            } catch (final IOException | RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
-                // Close the stream source.
-                if (streamSource != null) {
-                    try {
-                        streamStore.closeStreamSource(streamSource);
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
-                }
-
                 if (complete) {
                     streamTaskHelper.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
                             startTime, System.currentTimeMillis());

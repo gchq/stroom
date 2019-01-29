@@ -18,17 +18,15 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.NestedInputStream;
+import stroom.data.store.api.Source;
+import stroom.io.BasicStreamCloser;
+import stroom.io.StreamCloser;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
-import stroom.data.store.api.CompoundInputStream;
-import stroom.data.store.api.NestedInputStream;
-import stroom.data.store.api.SegmentInputStream;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamSourceInputStreamProvider;
-import stroom.meta.api.AttributeMapUtil;
-import stroom.io.BasicStreamCloser;
-import stroom.io.StreamCloser;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,7 +36,7 @@ import java.nio.file.Path;
 /**
  * A file system implementation of StreamSource.
  */
-final class FileSystemStreamSource implements StreamSource {
+final class FileSystemStreamSource implements Source, NestedInputStreamFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamSource.class);
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
@@ -50,6 +48,7 @@ final class FileSystemStreamSource implements StreamSource {
     private InputStream inputStream;
     private Path file;
     private FileSystemStreamSource parent;
+//    private long index;
 
     private FileSystemStreamSource(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
                                    final Meta meta,
@@ -87,6 +86,29 @@ final class FileSystemStreamSource implements StreamSource {
                                          final String rootPath,
                                          final String streamType) {
         return new FileSystemStreamSource(fileSystemStreamPathHelper, meta, rootPath, streamType);
+    }
+
+    @Override
+    public Meta getMeta() {
+        return meta;
+    }
+
+    @Override
+    public AttributeMap getAttributes() {
+        if (parent != null) {
+            return parent.getAttributes();
+        }
+        if (attributeMap == null) {
+            attributeMap = new AttributeMap();
+            try (final FileSystemStreamSource child = child(InternalStreamTypeNames.MANIFEST)) {
+                try (final InputStream inputStream = child.getInputStream()) {
+                    AttributeMapUtil.read(inputStream, true, attributeMap);
+                }
+            } catch (final IOException e) {
+                LOGGER.error("getAttributes()", e);
+            }
+        }
+        return attributeMap;
     }
 
     private void validate() {
@@ -130,45 +152,70 @@ final class FileSystemStreamSource implements StreamSource {
         return inputStream;
     }
 
+    //
+//    @Override
+    private NestedInputStream getNestedInputStream() {
+//        final InputStream data = getInputStream();
+//        final InputStream boundaryIndex = getChild(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream();
+//        return new RANestedInputStream(data, boundaryIndex);
+
+
+        return new RANestedInputStream(getInputStream(),
+                () -> getChild(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream());
+    }
+//
+//    @Override
+//    public SegmentInputStream getSegmentInputStream() throws IOException {
+//        final InputStream data = getInputStream();
+//        final InputStream segmentIndex = getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream();
+//        return new RASegmentInputStream(data, segmentIndex);
+//    }
+//
+//    @Override
+//    public CompoundInputStream getCompoundInputStream() throws IOException {
+//        final InputStream data = getInputStream();
+//        final InputStream boundaryIndex = getChildStream(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream();
+//        final InputStream segmentIndex = getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream();
+//        final RANestedInputStream nestedInputStream = new RANestedInputStream(data, boundaryIndex);
+//        return new RACompoundInputStream(nestedInputStream, segmentIndex);
+//    }
+
+
     @Override
-    public NestedInputStream getNestedInputStream() throws IOException {
-        final InputStream data = getInputStream();
-        final InputStream boundaryIndex = getChildStream(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream();
-        return new RANestedInputStream(data, boundaryIndex);
+    public InputStreamProvider get(final long index) {
+        return new InputStreamProviderImpl(meta, this, index);
     }
 
     @Override
-    public SegmentInputStream getSegmentInputStream() throws IOException {
-        final InputStream data = getInputStream();
-        final InputStream segmentIndex = getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream();
-        return new RASegmentInputStream(data, segmentIndex);
+    public long count() throws IOException {
+        try (final NestedInputStream nestedInputStream = getNestedInputStream()) {
+            return nestedInputStream.getEntryCount();
+        }
     }
+
+//    @Override
+//    public InputStreamProvider getInputStreamProvider() {
+//        return new StreamSourceInputStreamProviderImpl(this);
+//    }
+//
+//
+//
+//
+//    @Override
+//    public InputStreamProvider next() {
+//        final InputStreamProvider inputStreamProvider = new InputStreamProviderImpl2(meta, this, index);
+//        index++;
+//        return inputStreamProvider;
+//    }
+
+
 
     @Override
-    public CompoundInputStream getCompoundInputStream() throws IOException {
-        final InputStream data = getInputStream();
-        final InputStream boundaryIndex = getChildStream(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream();
-        final InputStream segmentIndex = getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream();
-        final RANestedInputStream nestedInputStream = new RANestedInputStream(data, boundaryIndex);
-        return new RACompoundInputStream(nestedInputStream, segmentIndex);
+    public NestedInputStreamFactory getChild(final String streamTypeName) {
+        return child(streamTypeName);
     }
 
-    @Override
-    public StreamSourceInputStreamProvider getInputStreamProvider() {
-        return new StreamSourceInputStreamProviderImpl(this);
-    }
-
-    @Override
-    public Meta getMeta() {
-        return meta;
-    }
-
-    public void setMeta(final Meta meta) {
-        this.meta = meta;
-    }
-
-    @Override
-    public StreamSource getChildStream(final String streamTypeName) {
+    private FileSystemStreamSource child(final String streamTypeName) {
         Path childFile = fileSystemStreamPathHelper.createChildStreamFile(getFile(), streamTypeName);
         boolean lazy = fileSystemStreamPathHelper.isStreamTypeLazy(streamTypeName);
         boolean isFile = Files.isRegularFile(childFile);
@@ -181,26 +228,78 @@ final class FileSystemStreamSource implements StreamSource {
         }
     }
 
-    @Override
-    public AttributeMap getAttributes() {
-        if (parent != null) {
-            return parent.getAttributes();
-        }
-        if (attributeMap == null) {
-            attributeMap = new AttributeMap();
-            try {
-                final StreamSource streamSource = getChildStream(InternalStreamTypeNames.MANIFEST);
-                if (streamSource != null) {
-                    AttributeMapUtil.read(streamSource.getInputStream(), true, attributeMap);
-                }
-            } catch (final RuntimeException | IOException e) {
-                LOGGER.error("getAttributes()", e);
-            }
-        }
-        return attributeMap;
-    }
+//    @Override
+//    public AttributeMap getAttributes() {
+//        if (parent != null) {
+//            return parent.getAttributes();
+//        }
+//        if (attributeMap == null) {
+//            attributeMap = new AttributeMap();
+//            try (final Source source = getChild(InternalStreamTypeNames.MANIFEST)) {
+//                try (final InputStreamProvider inputStreamProvider = source.get(0)) {
+//                    try (final InputStream inputStream = inputStreamProvider.get()) {
+//                        AttributeMapUtil.read(inputStream, true, attributeMap);
+//                    }
+//                }
+//            } catch (final RuntimeException | IOException e) {
+//                LOGGER.error("getAttributes()", e);
+//            }
+//        }
+//        return attributeMap;
+//    }
 
-    StreamSource getParent() {
+
+//
+//    @Override
+//    public AttributeMap getStoredMeta(final Meta meta) {
+//        final Set<DataVolume> volumeSet = streamVolumeService.findStreamVolume(meta.getId());
+//        if (volumeSet != null && volumeSet.size() > 0) {
+//            final DataVolume streamVolume = volumeSet.iterator().next();
+//            final Path manifest = fileSystemStreamPathHelper.createChildStreamFile(meta, streamVolume, InternalStreamTypeNames.MANIFEST);
+//
+//            if (Files.isRegularFile(manifest)) {
+//                final AttributeMap attributeMap = new AttributeMap();
+//                try {
+//                    AttributeMapUtil.read(Files.newInputStream(manifest), true, attributeMap);
+//                } catch (final IOException ioException) {
+//                    LOGGER.error("loadAttributeMapFromFileSystem() {}", manifest, ioException);
+//                }
+//
+////                for (final String name : attributeMap.keySet()) {
+////                    final StreamAttributeKey key = keyMap.get(name);
+////                    final String value = attributeMap.get(name);
+////                    if (key == null) {
+////                        streamAttributeMap.addAttribute(name, value);
+////                    } else {
+////                        streamAttributeMap.addAttribute(key, value);
+////                    }
+////                }
+//
+//                try {
+//                    final Path rootFile = fileSystemStreamPathHelper.createRootStreamFile(streamVolume.getVolumePath(),
+//                            meta, meta.getTypeName());
+//
+//                    final List<Path> allFiles = fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile);
+//                    attributeMap.put("Files", allFiles.stream().map(FileUtil::getCanonicalPath).collect(Collectors.joining(",")));
+//
+//
+//                    //                streamAttributeMap.setFileNameList(new ArrayList<>());
+//                    //                streamAttributeMap.getFileNameList().add(FileUtil.getCanonicalPath(rootFile));
+//                    //                for (final Path file : allFiles) {
+//                    //                    streamAttributeMap.getFileNameList().add(FileUtil.getCanonicalPath(file));
+//                    //                }
+//                } catch (final RuntimeException e) {
+//                    LOGGER.error("loadAttributeMapFromFileSystem() ", e);
+//                }
+//
+//                return attributeMap;
+//            }
+//        }
+//
+//        return null;
+//    }
+
+    Source getParent() {
         return parent;
     }
 }

@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.dashboard.DashboardStore;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.impl.db.MetaKeyService;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.pipeline.feed.FeedDocCache;
@@ -89,7 +89,7 @@ public final class SetupSampleDataBean {
 
     private final FeedStore feedStore;
     private final FeedDocCache feedDocCache;
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final MetaKeyService metaKeyService;
     private final CommonTestControl commonTestControl;
     private final ImportExportSerializer importExportSerializer;
@@ -106,7 +106,7 @@ public final class SetupSampleDataBean {
     @Inject
     SetupSampleDataBean(final FeedStore feedStore,
                         final FeedDocCache feedDocCache,
-                        final StreamStore streamStore,
+                        final Store streamStore,
                         final MetaKeyService metaKeyService,
                         final CommonTestControl commonTestControl,
                         final ImportExportSerializer importExportSerializer,

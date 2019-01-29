@@ -81,8 +81,8 @@ class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
                             .build());
 
             // Streams are locked initially so unlock.
-            metaService.updateStatus(metaInsideRetention, Status.UNLOCKED);
-            metaService.updateStatus(metaOutsideRetention, Status.UNLOCKED);
+            metaService.updateStatus(metaInsideRetention, Status.UNLOCKED, Status.LOCKED);
+            metaService.updateStatus(metaOutsideRetention, Status.UNLOCKED, Status.LOCKED);
 
             dumpStreams();
 

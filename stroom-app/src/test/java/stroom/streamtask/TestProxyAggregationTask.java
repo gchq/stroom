@@ -18,18 +18,18 @@ package stroom.streamtask;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.ExpressionUtil;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.data.store.api.NestedInputStream;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.SegmentInputStream;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
 import stroom.datafeed.BufferFactory;
 import stroom.entity.shared.BaseResultList;
+import stroom.meta.shared.ExpressionUtil;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
 import stroom.pipeline.feed.FeedDocCache;
 import stroom.pipeline.feed.FeedStore;
-import stroom.io.SeekableInputStream;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.statistic.MetaDataStatistic;
@@ -44,6 +44,7 @@ import stroom.util.test.FileSystemTestUtil;
 import javax.inject.Inject;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -60,7 +61,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
 
     @Inject
-    private StreamStore streamStore;
+    private Store streamStore;
     @Inject
     private MetaService metaService;
     @Inject
@@ -130,26 +131,27 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final BaseResultList<Meta> resultList1 = metaService.find(findMetaCriteria);
         assertThat(resultList1.size()).as("Expecting 2 files to get merged").isEqualTo(1);
 
-        final StreamSource streamSource = streamStore.openStreamSource(resultList1.getFirst().getId());
+        try (final Source streamSource = streamStore.openStreamSource(resultList1.getFirst().getId())) {
+            assertThat(streamSource.count()).isEqualTo(2);
 
-        assertThat(streamSource.getChildStream(StreamTypeNames.META)).isNotNull();
+            try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
+                try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
+                    assertThat(inputStream).isNotNull();
+                }
+                try (final InputStream inputStream = inputStreamProvider.get()) {
+                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("data1\ndata1\n");
+                }
+            }
 
-        final NestedInputStream nestedInputStream = streamSource.getNestedInputStream();
-        assertThat(nestedInputStream.getEntryCount()).isEqualTo(2);
-        nestedInputStream.getNextEntry();
-        assertThat(StreamUtil.streamToString(nestedInputStream, false)).isEqualTo("data1\ndata1\n");
-        nestedInputStream.closeEntry();
-        nestedInputStream.getNextEntry();
-        assertThat(StreamUtil.streamToString(nestedInputStream, false)).isEqualTo("data3\ndata3\n");
-        nestedInputStream.closeEntry();
-
-        final StreamSource metaSource = streamSource.getChildStream(StreamTypeNames.META);
-        final NestedInputStream metaNestedInputStream = metaSource.getNestedInputStream();
-        assertThat(metaNestedInputStream.getEntryCount()).isEqualTo(2);
-
-        nestedInputStream.close();
-        metaNestedInputStream.close();
-        streamStore.closeStreamSource(streamSource);
+            try (final InputStreamProvider inputStreamProvider = streamSource.get(1)) {
+                try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
+                    assertThat(inputStream).isNotNull();
+                }
+                try (final InputStream inputStream = inputStreamProvider.get()) {
+                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("data3\ndata3\n");
+                }
+            }
+        }
 
         final FindMetaCriteria findMetaCriteria2 = new FindMetaCriteria();
         findMetaCriteria2.setExpression(ExpressionUtil.createFeedExpression(feedName2));
@@ -189,19 +191,12 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final List<Meta> list = metaService.find(criteria);
         assertThat(list.size()).isEqualTo(3);
 
-        StreamSource source = streamStore.openStreamSource(list.get(0).getId());
-
-        assertContent("expecting meta data", source.getChildStream(StreamTypeNames.META), true);
-
-        streamStore.closeStreamSource(source);
-        source = streamStore.openStreamSource(list.get(0).getId());
-
-        final NestedInputStream nestedInputStream = source.getNestedInputStream();
-
-        assertThat(nestedInputStream.getEntryCount()).isEqualTo(10);
-        nestedInputStream.close();
-        streamStore.closeStreamSource(source);
-
+        try (final Source source = streamStore.openStreamSource(list.get(0).getId())) {
+            assertContent("expecting meta data", source, true, StreamTypeNames.META);
+        }
+        try (final Source source = streamStore.openStreamSource(list.get(0).getId())) {
+            assertThat(source.count()).isEqualTo(10);
+        }
     }
 
     @Test
@@ -259,39 +254,33 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final List<Meta> list = metaService.find(criteria);
         assertThat(list.size()).isEqualTo(1);
 
-        StreamSource source = streamStore.openStreamSource(list.get(0).getId());
-
-        assertContent("expecting meta data", source.getChildStream(StreamTypeNames.META), true);
-        try {
-            // TODO : @66 No idea what we might get here.
-            assertThat(1).as("expecting NO boundary data").isEqualTo(source.getNestedInputStream().getEntryCount());
-        } catch (final IOException e) {
-            // Ignore.
-        }
+        try (final Source source = streamStore.openStreamSource(list.get(0).getId())) {
+            assertContent("expecting meta data", source, true, StreamTypeNames.META);
+            try {
+                // TODO : @66 No idea what we might get here.
+                assertThat(1).as("expecting NO boundary data").isEqualTo(source.count());
+            } catch (final IOException e) {
+                // Ignore.
+            }
 
 //        assertContent("expecting NO boundary data", source.getChildStream(StreamTypeNames.BOUNDARY_INDEX), false);
-        assertContent("expecting context data", source.getChildStream(StreamTypeNames.CONTEXT), true);
+            assertContent("expecting context data", source, true, StreamTypeNames.CONTEXT);
 
-        streamStore.closeStreamSource(source);
-        source = streamStore.openStreamSource(list.get(0).getId());
+        }
+        try (final Source source = streamStore.openStreamSource(list.get(0).getId())) {
+            assertThat(source.count()).isEqualTo(1);
 
-        final NestedInputStream nestedInputStream = source.getNestedInputStream();
 
-        assertThat(nestedInputStream.getEntryCount()).isEqualTo(1);
-        nestedInputStream.close();
-
-        final NestedInputStream metaNestedInputStream = source.getChildStream(StreamTypeNames.META).getNestedInputStream();
-
-        assertThat(metaNestedInputStream.getEntryCount()).isEqualTo(1);
-        metaNestedInputStream.close();
-
-        final NestedInputStream ctxNestedInputStream = source.getChildStream(StreamTypeNames.CONTEXT).getNestedInputStream();
-
-        assertThat(ctxNestedInputStream.getEntryCount()).isEqualTo(1);
-        ctxNestedInputStream.close();
-
-        streamStore.closeStreamSource(source);
-
+//            final NestedInputStream metaNestedInputStream = source.getChildStream(StreamTypeNames.META).getNestedInputStream();
+//
+//            assertThat(metaNestedInputStream.getEntryCount()).isEqualTo(1);
+//            metaNestedInputStream.close();
+//
+//            final NestedInputStream ctxNestedInputStream = source.getChildStream(StreamTypeNames.CONTEXT).getNestedInputStream();
+//
+//            assertThat(ctxNestedInputStream.getEntryCount()).isEqualTo(1);
+//            ctxNestedInputStream.close();
+        }
     }
 
     @Test
@@ -315,52 +304,59 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final List<Meta> list = metaService.find(criteria);
         assertThat(list.size()).isEqualTo(1);
 
-        StreamSource source = streamStore.openStreamSource(list.get(0).getId());
-
-        assertContent("expecting meta data", source.getChildStream(StreamTypeNames.META), true);
-        try {
-            // TODO : @66 No idea what we might get here.
-            assertThat(2).as("expecting boundary data").isEqualTo(source.getNestedInputStream().getEntryCount());
-        } catch (final IOException e) {
-            // Ignore.
-        }
+        try (final Source source = streamStore.openStreamSource(list.get(0).getId())) {
+            assertContent("expecting meta data", source, true, StreamTypeNames.META);
+            try {
+                // TODO : @66 No idea what we might get here.
+                assertThat(2).as("expecting boundary data").isEqualTo(source.count());
+            } catch (final IOException e) {
+                // Ignore.
+            }
 
 //        assertContent("expecting boundary data", source.getChildStream(StreamTypeNames.BOUNDARY_INDEX), true);
-        assertContent("expecting context data", source.getChildStream(StreamTypeNames.CONTEXT), true);
+            assertContent("expecting context data", source, true, StreamTypeNames.CONTEXT);
 
-        streamStore.closeStreamSource(source);
-        source = streamStore.openStreamSource(list.get(0).getId());
+        }
+        try (final Source source = streamStore.openStreamSource(list.get(0).getId())) {
+            assertThat(source.count()).isEqualTo(2);
 
-        final NestedInputStream nestedInputStream = source.getNestedInputStream();
-
-        assertThat(nestedInputStream.getEntryCount()).isEqualTo(2);
-        nestedInputStream.getNextEntry();
-        assertThat(StreamUtil.streamToString(nestedInputStream, false)).isEqualTo("data1\ndata1\n");
-        nestedInputStream.closeEntry();
-        nestedInputStream.getNextEntry();
-        assertThat(StreamUtil.streamToString(nestedInputStream, false)).isEqualTo("data2\ndata2\n");
-        nestedInputStream.closeEntry();
-        nestedInputStream.close();
-
-        final NestedInputStream metaNestedInputStream = source.getChildStream(StreamTypeNames.META).getNestedInputStream();
-
-        assertThat(metaNestedInputStream.getEntryCount()).isEqualTo(2);
-        metaNestedInputStream.close();
-
-        final NestedInputStream ctxNestedInputStream = source.getChildStream(StreamTypeNames.CONTEXT).getNestedInputStream();
-
-        assertThat(ctxNestedInputStream.getEntryCount()).isEqualTo(2);
-        ctxNestedInputStream.close();
-        streamStore.closeStreamSource(source);
+            try (final InputStreamProvider inputStreamProvider = source.get(0)) {
+                try (final InputStream inputStream = inputStreamProvider.get()) {
+                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("data1\ndata1\n");
+                }
+                try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
+                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("????");
+                }
+                try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.CONTEXT)) {
+                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("????");
+                }
+            }
+            try (final InputStreamProvider inputStreamProvider = source.get(0)) {
+                try (final InputStream inputStream = inputStreamProvider.get()) {
+                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("data2\ndata2\n");
+                }
+                try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
+                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("????");
+                }
+                try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.CONTEXT)) {
+                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("????");
+                }
+            }
+        }
     }
 
-    private void assertContent(final String msg, final StreamSource is, final boolean hasContent) throws IOException {
-        if (hasContent) {
-            assertThat(((SeekableInputStream) is.getInputStream()).getSize() > 0).as(msg).isTrue();
-        } else {
-            assertThat(((SeekableInputStream) is.getInputStream()).getSize()).as(msg).isEqualTo(0);
+    private void assertContent(final String msg, final Source is, final boolean hasContent, final String dataType) throws IOException {
+        try (final InputStreamProvider inputStreamProvider = is.get(0)) {
+            if (hasContent) {
+                try (final SegmentInputStream inputStream = inputStreamProvider.get(dataType)) {
+                    assertThat(inputStream.size() > 0).as(msg).isTrue();
+                }
+            } else {
+                try (final SegmentInputStream inputStream = inputStreamProvider.get(dataType)) {
+                    assertThat(inputStream.size()).as(msg).as(msg).isEqualTo(0);
+                }
+            }
         }
-        is.getInputStream().close();
     }
 
     private OutputStream writeLockedTestFile(final Path testFile, final String eventFeed)

@@ -18,14 +18,14 @@ package stroom.data.store;
 
 import stroom.docref.SharedObject;
 
-public class StreamDownloadResult implements SharedObject {
+public class DataDownloadResult implements SharedObject {
     private static final long serialVersionUID = -5012089569913789389L;
 
     private long recordsWritten = 0;
     private boolean hitMaxFileSize = false;
     private boolean hitMaxFileParts = false;
 
-    public StreamDownloadResult() {
+    public DataDownloadResult() {
     }
 
     public long getRecordsWritten() {

@@ -21,7 +21,6 @@ import stroom.meta.shared.Meta;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * <p>
@@ -29,7 +28,7 @@ import java.io.InputStream;
  * once finished (as this unlocks the file).
  * </p>
  */
-public interface StreamSource extends Closeable {
+public interface Source extends Closeable {
     /**
      * Get the meta data associated with this source.
      *
@@ -44,26 +43,24 @@ public interface StreamSource extends Closeable {
      */
     AttributeMap getAttributes();
 
-    /**
-     * @return the real IO input stream
-     */
-    InputStream getInputStream() throws IOException;
-
-    NestedInputStream getNestedInputStream() throws IOException;
-
-    SegmentInputStream getSegmentInputStream() throws IOException;
-
-    CompoundInputStream getCompoundInputStream() throws IOException;
-
-    StreamSourceInputStreamProvider getInputStreamProvider();
+//    /**
+//     * Get the next nested input stream provider or null if there are no more to return.
+//     * @return
+//     */
+//    InputStreamProvider next();
 
     /**
-     * Depending on the type of stream we we may return back null if the stream
-     * does not exist. Some streams a null file means empty where as others mean
-     * not stream. The STORE_LAZY map in FileSystem util governs this.
-     *
-     * @param type to get
-     * @return back the child stream based on type
+     * Get an input stream provider for the nested data item specified by the provided 0 based index.
+     * @param index The index of the nested data item to get an input stream provider for.
+     * @return An input stream provider for the specified index or throw an IOException if the index is out of bounds.
+     * @throws IOException
      */
-    StreamSource getChildStream(String streamTypeName);
+    InputStreamProvider get(long index) throws IOException;
+
+    /**
+     * How many nested data items does this source contain.
+     * @return
+     * @throws IOException
+     */
+    long count() throws IOException;
 }

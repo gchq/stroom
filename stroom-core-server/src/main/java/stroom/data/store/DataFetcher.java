@@ -20,17 +20,15 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.Status;
-import stroom.data.store.api.CompoundInputStream;
+import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceException;
-import stroom.pipeline.feed.FeedProperties;
-import stroom.io.BasicStreamCloser;
-import stroom.io.StreamCloser;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.Status;
 import stroom.pipeline.MarkerListCreator;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -39,6 +37,7 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.feed.FeedProperties;
 import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.AbstractFetchDataResult;
@@ -48,8 +47,8 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
-import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.pipeline.writer.AbstractWriter;
 import stroom.pipeline.writer.OutputStreamAppender;
@@ -70,6 +69,7 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
@@ -89,7 +89,7 @@ public class DataFetcher {
     private final Long streamsLength = 1L;
     private final boolean streamsTotalIsExact = true;
 
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final FeedProperties feedProperties;
     private final Provider<FeedHolder> feedHolderProvider;
     private final Provider<MetaDataHolder> metaDataHolderProvider;
@@ -103,26 +103,26 @@ public class DataFetcher {
     private final Security security;
     private final PipelineScopeRunnable pipelineScopeRunnable;
 
-    private Long streamsOffset = 0L;
-    private Long streamsTotal = 0L;
+    private Long index = 0L;
+    private Long count = 0L;
     private Long pageOffset = 0L;
     private Long pageLength = 0L;
     private Long pageTotal = 0L;
     private boolean pageTotalIsExact = false;
 
-    public DataFetcher(final StreamStore streamStore,
-                       final FeedProperties feedProperties,
-                       final Provider<FeedHolder> feedHolderProvider,
-                       final Provider<MetaDataHolder> metaDataHolderProvider,
-                       final Provider<PipelineHolder> pipelineHolderProvider,
-                       final Provider<MetaHolder> metaHolderProvider,
-                       final PipelineStore pipelineStore,
-                       final Provider<PipelineFactory> pipelineFactoryProvider,
-                       final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
-                       final PipelineDataCache pipelineDataCache,
-                       final StreamEventLog streamEventLog,
-                       final Security security,
-                       final PipelineScopeRunnable pipelineScopeRunnable) {
+    DataFetcher(final Store streamStore,
+                final FeedProperties feedProperties,
+                final Provider<FeedHolder> feedHolderProvider,
+                final Provider<MetaDataHolder> metaDataHolderProvider,
+                final Provider<PipelineHolder> pipelineHolderProvider,
+                final Provider<MetaHolder> metaHolderProvider,
+                final PipelineStore pipelineStore,
+                final Provider<PipelineFactory> pipelineFactoryProvider,
+                final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
+                final PipelineDataCache pipelineDataCache,
+                final StreamEventLog streamEventLog,
+                final Security security,
+                final PipelineScopeRunnable pipelineScopeRunnable) {
         this.streamStore = streamStore;
         this.feedProperties = feedProperties;
         this.feedHolderProvider = feedHolderProvider;
@@ -139,8 +139,8 @@ public class DataFetcher {
     }
 
     public void reset() {
-        streamsOffset = 0L;
-        streamsTotal = 0L;
+        index = 0L;
+        count = 0L;
         pageOffset = 0L;
         pageLength = 0L;
         pageTotal = 0L;
@@ -157,23 +157,21 @@ public class DataFetcher {
                                            final Severity... expandedSeverities) {
         // Allow users with 'Use' permission to read data, pipelines and XSLT.
         return security.useAsReadResult(() -> {
-            final StreamCloser streamCloser = new BasicStreamCloser();
             List<String> availableChildStreamTypes;
             String feedName = null;
             String streamTypeName = null;
-
-            StreamSource streamSource = null;
-            RuntimeException exception = null;
             String eventId = String.valueOf(streamId);
-            try {
-                // Get the stream source.
-                streamSource = streamStore.openStreamSource(streamId, true);
+            Meta meta = null;
+
+            // Get the stream source.
+            try (final Source source = streamStore.openStreamSource(streamId, true)) {
+                meta = source.getMeta();
 
                 // If we have no stream then let the client know it has been
                 // deleted.
-                if (streamSource == null) {
-                    final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(streamsOffset, streamsLength);
-                    final RowCount<Long> streamsRowCount = new RowCount<>(streamsTotal, streamsTotalIsExact);
+                if (source == null) {
+                    final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(index, streamsLength);
+                    final RowCount<Long> streamsRowCount = new RowCount<>(count, streamsTotalIsExact);
                     final OffsetRange<Long> resultPageRange = new OffsetRange<>(pageOffset, (long) 1);
                     final RowCount<Long> pageRowCount = new RowCount<>((long) 1, true);
 
@@ -184,89 +182,74 @@ public class DataFetcher {
                             "Stream has been deleted", showAsHtml);
                 }
 
-                streamCloser.add(streamSource);
-                streamTypeName = streamSource.getMeta().getTypeName();
-
-                // Find out which child stream types are available.
-                availableChildStreamTypes = getAvailableChildStreamTypes(streamSource);
+                streamTypeName = source.getMeta().getTypeName();
 
                 // Are we getting and are we able to get the child stream?
                 if (childStreamTypeName != null) {
-                    final StreamSource childStreamSource = streamSource.getChildStream(childStreamTypeName);
-
-                    // If we got something then change the stream.
-                    if (childStreamSource != null) {
-                        streamSource = childStreamSource;
+//                    final Source childStreamSource = streamSource.getChildStream(childStreamTypeName);
+//
+//                    // If we got something then change the stream.
+//                    if (childStreamSource != null) {
+//                        streamSource = childStreamSource;
                         streamTypeName = childStreamTypeName;
-                    }
-                    streamCloser.add(streamSource);
+//                    }
+//                    streamCloser.add(streamSource);
                 }
 
                 // Get the feed name.
-                if (streamSource != null && streamSource.getMeta() != null && streamSource.getMeta().getFeedName() != null) {
-                    feedName = streamSource.getMeta().getFeedName();
+                if (source.getMeta() != null && source.getMeta().getFeedName() != null) {
+                    feedName = source.getMeta().getFeedName();
                 }
 
-                // Get the boundary and segment input streams.
-                final CompoundInputStream compoundInputStream = streamSource.getCompoundInputStream();
-                streamCloser.add(compoundInputStream);
+//                // Get the boundary and segment input streams.
+//                final CompoundInputStream compoundInputStream = streamSource.getCompoundInputStream();
+//                streamCloser.add(compoundInputStream);
 
-                streamsOffset = streamsRange.getOffset();
-                streamsTotal = compoundInputStream.getEntryCount();
-                if (streamsOffset >= streamsTotal) {
-                    streamsOffset = streamsTotal - 1;
+                index = streamsRange.getOffset();
+                count = source.count();
+                if (index >= count) {
+                    index = count - 1;
                 }
 
-                final SegmentInputStream segmentInputStream = compoundInputStream.getNextInputStream(streamsOffset);
-                streamCloser.add(segmentInputStream);
+                try (final InputStreamProvider inputStreamProvider = source.get(index)) {
+                    // Find out which child stream types are available.
+                    availableChildStreamTypes = getAvailableChildStreamTypes(inputStreamProvider);
 
-                // Get the event id.
-                eventId = String.valueOf(streamSource.getMeta().getId());
-                if (streamsTotal > 1) {
-                    eventId += ":" + streamsOffset;
+                    try (final SegmentInputStream segmentInputStream = inputStreamProvider.get(streamTypeName)) {
+                        // Get the event id.
+                        eventId = String.valueOf(source.getMeta().getId());
+                        if (count > 1) {
+                            eventId += ":" + index;
+                        }
+                        if (pageRange != null && pageRange.getLength() != null && pageRange.getLength() == 1) {
+                            eventId += ":" + (pageRange.getOffset() + 1);
+                        }
+
+                        writeEventLog(eventId, feedName, streamTypeName, pipeline, null);
+
+                        // If this is an error stream and the UI is requesting markers then
+                        // create a list of markers.
+                        if (StreamTypeNames.ERROR.equals(streamTypeName) && markerMode) {
+                            return createMarkerResult(feedName, streamTypeName, segmentInputStream, pageRange, availableChildStreamTypes, expandedSeverities);
+                        }
+
+                        return createDataResult(feedName, streamTypeName, segmentInputStream, pageRange, availableChildStreamTypes, pipeline, showAsHtml, source, inputStreamProvider);
+                    }
                 }
-                if (pageRange != null && pageRange.getLength() != null && pageRange.getLength() == 1) {
-                    eventId += ":" + (pageRange.getOffset() + 1);
-                }
-
-                writeEventLog(eventId, feedName, streamTypeName, pipeline, null);
-
-                // If this is an error stream and the UI is requesting markers then
-                // create a list of markers.
-                if (StreamTypeNames.ERROR.equals(streamTypeName) && markerMode) {
-                    return createMarkerResult(feedName, streamTypeName, segmentInputStream, pageRange, availableChildStreamTypes, expandedSeverities);
-                }
-
-                return createDataResult(feedName, streamTypeName, segmentInputStream, pageRange, availableChildStreamTypes, pipeline, showAsHtml, streamSource);
 
             } catch (final IOException | RuntimeException e) {
                 writeEventLog(eventId, feedName, streamTypeName, pipeline, e);
 
-                if (Status.LOCKED.equals(streamSource.getMeta().getStatus())) {
-                    return createErrorResult("You cannot view locked streams.");
-                }
-                if (Status.DELETED.equals(streamSource.getMeta().getStatus())) {
-                    return createErrorResult("This data may no longer exist.");
+                if (meta != null) {
+                    if (Status.LOCKED.equals(meta.getStatus())) {
+                        return createErrorResult("You cannot view locked streams.");
+                    }
+                    if (Status.DELETED.equals(meta.getStatus())) {
+                        return createErrorResult("This data may no longer exist.");
+                    }
                 }
 
                 return createErrorResult(e.getMessage());
-
-            } finally {
-                // Close all open streams.
-                try {
-                    streamCloser.close();
-                } catch (final IOException e) {
-                    if (exception != null) {
-                        exception.addSuppressed(e);
-                    } else {
-                        exception = new RuntimeException(e);
-                        throw exception;
-                    }
-                } finally {
-                    if (streamSource != null) {
-                        streamStore.closeStreamSource(streamSource);
-                    }
-                }
             }
         });
     }
@@ -299,8 +282,8 @@ public class DataFetcher {
         }
 
         final String classification = feedProperties.getDisplayClassification(feedName);
-        final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(streamsOffset, streamsLength);
-        final RowCount<Long> streamsRowCount = new RowCount<>(streamsTotal, streamsTotalIsExact);
+        final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(index, streamsLength);
+        final RowCount<Long> streamsRowCount = new RowCount<>(count, streamsTotalIsExact);
         final OffsetRange<Long> resultPageRange = new OffsetRange<>((long) pageOffset,
                 (long) resultList.size());
         final RowCount<Long> pageRowCount = new RowCount<>((long) markersList.size(), true);
@@ -310,7 +293,7 @@ public class DataFetcher {
                 new SharedList<>(resultList));
     }
 
-    private FetchDataResult createDataResult(final String feedName, final String streamTypeName, final SegmentInputStream segmentInputStream, final OffsetRange<Long> pageRange, final List<String> availableChildStreamTypes, final DocRef pipeline, final boolean showAsHtml, final StreamSource streamSource) throws IOException {
+    private FetchDataResult createDataResult(final String feedName, final String streamTypeName, final SegmentInputStream segmentInputStream, final OffsetRange<Long> pageRange, final List<String> availableChildStreamTypes, final DocRef pipeline, final boolean showAsHtml, final Source streamSource, final InputStreamProvider inputStreamProvider) throws IOException {
         // Read the input stream into a string.
         // If the input stream has multiple segments then we are going to
         // read it in segment mode.
@@ -326,7 +309,7 @@ public class DataFetcher {
         if (pipeline != null) {
             try {
                 // If we have a pipeline then use it.
-                output = usePipeline(streamSource, rawData, feedName, pipeline);
+                output = usePipeline(streamSource, rawData, feedName, pipeline, inputStreamProvider);
             } catch (final RuntimeException e) {
                 output = e.getMessage();
                 if (output == null || output.length() == 0) {
@@ -350,8 +333,8 @@ public class DataFetcher {
 
         // Set the result.
         final String classification = feedProperties.getDisplayClassification(feedName);
-        final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(streamsOffset, streamsLength);
-        final RowCount<Long> streamsRowCount = new RowCount<>(streamsTotal, streamsTotalIsExact);
+        final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(index, streamsLength);
+        final RowCount<Long> streamsRowCount = new RowCount<>(count, streamsTotalIsExact);
         final OffsetRange<Long> resultPageRange = new OffsetRange<>(pageOffset, pageLength);
         final RowCount<Long> pageRowCount = new RowCount<>(pageTotal, pageTotalIsExact);
         return new FetchDataResult(streamTypeName, classification, resultStreamsRange,
@@ -465,8 +448,8 @@ public class DataFetcher {
         return sb.toString();
     }
 
-    private String usePipeline(final StreamSource streamSource, final String string, final String feedName,
-                               final DocRef pipelineRef) {
+    private String usePipeline(final Source streamSource, final String string, final String feedName,
+                               final DocRef pipelineRef, final InputStreamProvider inputStreamProvider) {
         return pipelineScopeRunnable.scopeResult(() -> {
             try {
                 String data;
@@ -493,9 +476,7 @@ public class DataFetcher {
                 pipelineHolder.setPipeline(DocRefUtil.create(loadedPipeline));
                 // Get the stream providers.
                 metaHolder.setMeta(streamSource.getMeta());
-                metaHolder.addProvider(streamSource);
-                metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
-                metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
+                metaHolder.setInputStreamProvider(inputStreamProvider);
 
                 final PipelineData pipelineData = pipelineDataCache.get(loadedPipeline);
                 if (pipelineData == null) {
@@ -572,15 +553,17 @@ public class DataFetcher {
         });
     }
 
-    private List<String> getAvailableChildStreamTypes(final StreamSource streamSource) {
+    private List<String> getAvailableChildStreamTypes(final InputStreamProvider inputStreamProvider) throws IOException {
         final List<String> availableChildStreamTypes = new ArrayList<>();
-        final StreamSource metaStreamSource = streamSource.getChildStream(StreamTypeNames.META);
-        if (metaStreamSource != null) {
-            availableChildStreamTypes.add(StreamTypeNames.META);
+        try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
+            if (inputStream != null) {
+                availableChildStreamTypes.add(StreamTypeNames.META);
+            }
         }
-        final StreamSource contextStreamSource = streamSource.getChildStream(StreamTypeNames.CONTEXT);
-        if (contextStreamSource != null) {
-            availableChildStreamTypes.add(StreamTypeNames.CONTEXT);
+        try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.CONTEXT)) {
+            if (inputStream != null) {
+                availableChildStreamTypes.add(StreamTypeNames.CONTEXT);
+            }
         }
         return availableChildStreamTypes;
     }

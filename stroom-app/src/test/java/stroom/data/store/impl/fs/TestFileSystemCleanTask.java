@@ -23,9 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.store.api.StreamTargetUtil;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
+import stroom.data.store.api.TargetUtil;
 import stroom.job.MockTask;
 import stroom.node.api.NodeService;
 import stroom.node.shared.FindNodeCriteria;
@@ -55,7 +55,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     private static Logger LOGGER = LoggerFactory.getLogger(TestFileSystemCleanTask.class);
 
     @Inject
-    private StreamStore streamStore;
+    private Store streamStore;
     @Inject
     private FileSystemStreamMaintenanceService streamMaintenanceService;
     @Inject
@@ -94,8 +94,8 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         // FILE1 LOCKED
         //
         // Write some data
-        final StreamTarget lockstreamTarget1 = streamStore.openStreamTarget(lockfile1);
-        StreamTargetUtil.write(lockstreamTarget1, "MyTest");
+        final Target lockstreamTarget1 = streamStore.openStreamTarget(lockfile1);
+        TargetUtil.write(lockstreamTarget1, "MyTest");
         // Close the file but not the stream (you should use the closeStream
         // API)
         lockstreamTarget1.close();
@@ -111,14 +111,13 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         //
         // FILE2 UNLOCKED
         //
-        final StreamTarget nolockstreamTarget1 = streamStore.openStreamTarget(nolockfile1);
-        StreamTargetUtil.write(nolockstreamTarget1, "MyTest");
-        // Close the file but not the stream (you should use the closeStream
-        // API)
-        streamStore.closeStreamTarget(nolockstreamTarget1);
-
+        Meta meta;
+        try (final Target nolockstreamTarget1 = streamStore.openStreamTarget(nolockfile1)) {
+            meta = nolockstreamTarget1.getMeta();
+            TargetUtil.write(nolockstreamTarget1, "MyTest");
+        }
         final Collection<Path> unlockedFiles = streamMaintenanceService
-                .findAllStreamFile(nolockstreamTarget1.getMeta());
+                .findAllStreamFile(meta);
         final Path directory = unlockedFiles.iterator().next().getParent();
         // Create some other files on the file system
 
@@ -212,9 +211,9 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
                     .typeName(StreamTypeNames.RAW_EVENTS)
                     .createMs(time)
                     .build();
-            final StreamTarget t = streamStore.openStreamTarget(metaProperties);
-            StreamTargetUtil.write(t, "TEST");
-            streamStore.closeStreamTarget(t);
+            try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+                TargetUtil.write(target, "TEST");
+            }
         }
 
         for (final Node node : nodeList) {

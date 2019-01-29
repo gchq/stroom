@@ -18,15 +18,15 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.data.store.api.NestedInputStream;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
 import stroom.datafeed.BufferFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
 import stroom.proxy.repo.StroomFileNameUtil;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
@@ -36,36 +36,35 @@ import stroom.security.Security;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
-import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogItemProgress;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-
-class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, StreamDownloadResult> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamDownloadTaskHandler.class);
+class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTask, DataDownloadResult> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataDownloadTaskHandler.class);
 
     private static final String AGGREGATION_DELIMITER = "_";
 
     private final TaskContext taskContext;
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final MetaService metaService;
     private final Security security;
     private final BufferFactory bufferFactory;
 
     @Inject
-    StreamDownloadTaskHandler(final TaskContext taskContext,
-                              final StreamStore streamStore,
-                              final MetaService metaService,
-                              final Security security,
-                              final BufferFactory bufferFactory) {
+    DataDownloadTaskHandler(final TaskContext taskContext,
+                            final Store streamStore,
+                            final MetaService metaService,
+                            final Security security,
+                            final BufferFactory bufferFactory) {
         this.taskContext = taskContext;
         this.streamStore = streamStore;
         this.metaService = metaService;
@@ -74,20 +73,19 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
     }
 
     @Override
-    public StreamDownloadResult exec(final StreamDownloadTask task) {
+    public DataDownloadResult exec(final DataDownloadTask task) {
         return security.secureResult(() -> {
             taskContext.info(task.getFile().toString());
-            return downloadData(task, task.getCriteria(), task.getFile(), task.getSettings());
+            return downloadData(task.getCriteria(), task.getFile(), task.getSettings());
         });
     }
 
-    private StreamDownloadResult downloadData(final StreamDownloadTask task,
-                                              final FindMetaCriteria findMetaCriteria,
-                                              Path data,
-                                              final StreamDownloadSettings settings) {
+    private DataDownloadResult downloadData(final FindMetaCriteria findMetaCriteria,
+                                            Path data,
+                                            final StreamDownloadSettings settings) {
         final BaseResultList<Meta> list = metaService.find(findMetaCriteria);
 
-        final StreamDownloadResult result = new StreamDownloadResult();
+        final DataDownloadResult result = new DataDownloadResult();
 
         if (list.size() == 0) {
             return result;
@@ -157,102 +155,74 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
         }
     }
 
-    private long downloadStream(final TaskContext taskContext, final long streamId,
-                                final StroomZipOutputStream stroomZipOutputStream, final long startId, final Long maxParts) throws IOException {
+    private long downloadStream(final TaskContext taskContext,
+                                final long streamId,
+                                final StroomZipOutputStream stroomZipOutputStream,
+                                final long startId,
+                                final Long maxParts) throws IOException {
         long id = startId;
 
-        NestedInputStream contextInputStream = null;
-        NestedInputStream metaInputStream = null;
-        NestedInputStream dataInputStream = null;
-        StreamSource dataSource = null;
-
-        try {
+        // Export Source
+        try (final Source source = streamStore.openStreamSource(streamId)) {
             id++;
 
-            // Export Source
-            dataSource = streamStore.openStreamSource(streamId);
-            final StreamSource metaSource = dataSource.getChildStream(StreamTypeNames.META);
-            final StreamSource contextSource = dataSource.getChildStream(StreamTypeNames.CONTEXT);
+            final long count = source.count();
 
-            dataInputStream = dataSource.getNestedInputStream();
-            metaInputStream = null;
-            if (metaSource != null) {
-                metaInputStream = metaSource.getNestedInputStream();
-            }
-            contextInputStream = null;
-            if (contextSource != null) {
-                contextInputStream = contextSource.getNestedInputStream();
-            }
-
-            long entryProgress = 0;
-            final long entryTotal = dataInputStream.getEntryCount();
-
-            if (maxParts == null || entryTotal < maxParts) {
+            if (maxParts == null || count < maxParts) {
                 long part = -1;
-                if (dataInputStream.getEntryCount() > 1) {
+                if (count > 1) {
                     part = 0;
                 }
-                while (dataInputStream.getNextEntry()) {
-                    entryProgress++;
+                for (int index = 0; index < count; index++) {
+                    try (final InputStreamProvider inputStreamProvider = source.get(index)) {
+                        taskContext.info("Data Input {}/{}", index, count);
 
-                    taskContext.info("Stream Input {}/{}", entryProgress, entryTotal);
+                        String basePartName = StroomFileNameUtil.getIdPath(id);
 
-                    String basePartName = StroomFileNameUtil.getIdPath(id);
+                        if (part != -1) {
+                            part++;
+                            basePartName += AGGREGATION_DELIMITER + part;
+                        }
 
-                    if (part != -1) {
-                        part++;
-                        basePartName += AGGREGATION_DELIMITER + part;
-                    }
+                        // Write out the manifest
+                        if (part == 1 || part == -1) {
+                            try (final OutputStream outputStream = stroomZipOutputStream
+                                    .addEntry(new StroomZipEntry(null, basePartName, StroomZipFileType.Manifest).getFullName())) {
+                                AttributeMapUtil.write(source.getAttributes(), outputStream);
+                            }
+                        }
 
-                    // Write out the manifest
-                    if (part == 1 || part == -1) {
-                        try (final OutputStream outputStream = stroomZipOutputStream
-                                .addEntry(new StroomZipEntry(null, basePartName, StroomZipFileType.Manifest).getFullName())) {
-                            AttributeMapUtil.write(dataSource.getAttributes(), outputStream);
+                        try (final InputStream dataInputStream = inputStreamProvider.get()) {
+                            streamToStream(dataInputStream, stroomZipOutputStream, basePartName, StroomZipFileType.Data);
+                        }
+                        try (final InputStream metaInputStream = inputStreamProvider.get(StreamTypeNames.META)) {
+                            streamToStream(metaInputStream, stroomZipOutputStream, basePartName, StroomZipFileType.Meta);
+                        }
+                        try (final InputStream contextInputStream = inputStreamProvider.get(StreamTypeNames.CONTEXT)) {
+                            streamToStream(contextInputStream, stroomZipOutputStream, basePartName, StroomZipFileType.Context);
                         }
                     }
-
-                    // False here as the loop does the next next next
-                    streamToStream(dataInputStream, stroomZipOutputStream, basePartName, StroomZipFileType.Data, false);
-
-                    streamToStream(metaInputStream, stroomZipOutputStream, basePartName, StroomZipFileType.Meta, true);
-
-                    streamToStream(contextInputStream, stroomZipOutputStream, basePartName, StroomZipFileType.Context, true);
-
                 }
             }
-        } finally {
-            CloseableUtil.close(contextInputStream);
-            CloseableUtil.close(metaInputStream);
-            CloseableUtil.close(dataInputStream);
-            CloseableUtil.close(dataSource);
         }
         return id;
     }
 
-    private boolean streamToStream(final NestedInputStream nestedInputStream, final StroomZipOutputStream zipOutputStream,
-                                   final String basePartName, final StroomZipFileType fileType, final boolean getNext) throws IOException {
-        if (nestedInputStream != null) {
-            if (getNext) {
-                if (!nestedInputStream.getNextEntry()) {
-                    return false;
+    private void streamToStream(final InputStream inputStream,
+                                final StroomZipOutputStream zipOutputStream,
+                                final String basePartName,
+                                final StroomZipFileType fileType) throws IOException {
+        if (inputStream != null) {
+            final StroomZipEntry stroomZipEntry = new StroomZipEntry(null, basePartName, fileType);
+            try (final OutputStream outputStream = zipOutputStream.addEntry(stroomZipEntry.getFullName())) {
+                final byte[] buffer = bufferFactory.create();
+
+                int len;
+                while ((len = StreamUtil.eagerRead(inputStream, buffer)) != -1) {
+                    outputStream.write(buffer, 0, len);
                 }
             }
-
-            final StroomZipEntry stroomZipEntry = new StroomZipEntry(null, basePartName, fileType);
-            final OutputStream outputStream = zipOutputStream.addEntry(stroomZipEntry.getFullName());
-            final byte[] buffer = bufferFactory.create();
-
-            int len;
-            while ((len = StreamUtil.eagerRead(nestedInputStream, buffer)) != -1) {
-                outputStream.write(buffer, 0, len);
-            }
-            outputStream.close();
-
-            nestedInputStream.closeEntry();
-            return true;
         }
-        return false;
     }
 
     private void closeDelete(final Path data, final StroomZipOutputStream stroomZipOutputStream) {

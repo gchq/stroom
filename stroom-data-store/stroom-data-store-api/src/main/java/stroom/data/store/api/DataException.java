@@ -16,17 +16,22 @@
 
 package stroom.data.store.api;
 
-import java.io.Closeable;
-import java.io.IOException;
-
 /**
- * Class that wraps 3 streams (data, boundary, and segment) and provides handy
- * access to the nested segments with it.
- * <p>
- * You can call getNextInputStream() multiple times to get each segment stream.
+ * Unchecked error in the data store.
  */
-public interface CompoundInputStream extends Closeable {
-    SegmentInputStream getNextInputStream(long skipCount) throws IOException;
+public class DataException extends RuntimeException {
+    private static final long serialVersionUID = 4306974171835279325L;
 
-    long getEntryCount() throws IOException;
+    public DataException(final String msg) {
+        super(msg);
+    }
+
+    public DataException(final String msg, final Throwable throwable) {
+        super(msg, throwable);
+    }
+
+    public DataException(final Throwable throwable) {
+        super(throwable);
+    }
+
 }

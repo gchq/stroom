@@ -17,13 +17,12 @@
 
 package stroom.headless;
 
+import stroom.docref.DocRef;
+import stroom.feed.shared.FeedDoc;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
-import stroom.docref.DocRef;
-import stroom.meta.api.AttributeMapUtil;
-import stroom.pipeline.feed.FeedStore;
 import stroom.meta.shared.StandardHeaderArguments;
-import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.ErrorWriter;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.PipelineStore;
@@ -35,13 +34,14 @@ import stroom.pipeline.errorhandler.RecordErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.feed.FeedStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.MetaDataHolder;
-import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -120,7 +120,7 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
 
                 // Load the meta and context data.
                 final AttributeMap metaData = new AttributeMap();
-                AttributeMapUtil.read(metaStream, false, metaData);
+                AttributeMapUtil.read(metaStream, metaData);
 
                 // Get the feed.
                 final String feedName = metaData.get(StandardHeaderArguments.FEED);
@@ -168,20 +168,18 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
                         .build();
 
                 // Add stream providers for lookups etc.
-                final BasicInputStreamProvider streamProvider = new BasicInputStreamProvider(
-                        new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
-                metaHolder.setMeta(meta);
-                metaHolder.addProvider(streamProvider, StreamTypeNames.RAW_EVENTS);
+                final BasicInputStreamProvider inputStreamProvider = new BasicInputStreamProvider();
+                inputStreamProvider.put(null, new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
+                inputStreamProvider.put(StreamTypeNames.RAW_EVENTS, new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
                 if (task.getMetaStream() != null) {
-                    final BasicInputStreamProvider metaStreamProvider = new BasicInputStreamProvider(
-                            new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
-                    metaHolder.addProvider(metaStreamProvider, StreamTypeNames.META);
+                    inputStreamProvider.put(StreamTypeNames.META, new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
                 }
                 if (task.getContextStream() != null) {
-                    final BasicInputStreamProvider contextStreamProvider = new BasicInputStreamProvider(
-                            new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
-                    metaHolder.addProvider(contextStreamProvider, StreamTypeNames.CONTEXT);
+                    inputStreamProvider.put(StreamTypeNames.CONTEXT, new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
                 }
+
+                metaHolder.setMeta(meta);
+                metaHolder.setInputStreamProvider(inputStreamProvider);
 
                 try {
                     pipeline.process(dataStream, feed.getEncoding());

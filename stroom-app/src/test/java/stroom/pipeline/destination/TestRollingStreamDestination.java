@@ -19,7 +19,7 @@ package stroom.pipeline.destination;
 
 import org.junit.jupiter.api.Test;
 import stroom.meta.shared.MetaProperties;
-import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.datafeed.TestBase;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -39,7 +39,7 @@ class TestRollingStreamDestination extends TestBase {
     void testFrequency() throws IOException {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
         final MetaProperties dataProperties = new MetaProperties.Builder().typeName(StreamTypeNames.EVENTS).build();
-        final StreamTarget streamTarget = streamStore.openStreamTarget(dataProperties);
+        final Target streamTarget = streamStore.openStreamTarget(dataProperties);
         final StreamKey streamKey = new StreamKey("test", StreamTypeNames.EVENTS, false);
         final RollingStreamDestination rollingStreamDestination = new RollingStreamDestination(streamKey,
                 60000L,
@@ -59,7 +59,7 @@ class TestRollingStreamDestination extends TestBase {
     void testSchedule() throws IOException {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
         final MetaProperties dataProperties = new MetaProperties.Builder().typeName(StreamTypeNames.EVENTS).build();
-        final StreamTarget streamTarget = streamStore.openStreamTarget(dataProperties);
+        final Target streamTarget = streamStore.openStreamTarget(dataProperties);
         final StreamKey streamKey = new StreamKey("test", StreamTypeNames.EVENTS, false);
         final RollingStreamDestination rollingStreamDestination = new RollingStreamDestination(streamKey,
                 null,

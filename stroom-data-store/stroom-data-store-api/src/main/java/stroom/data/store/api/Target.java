@@ -27,7 +27,7 @@ import java.io.Closeable;
  * once finished (as this unlocks the file).
  * </p>
  */
-public interface StreamTarget extends Closeable {
+public interface Target extends Closeable {
     /**
      * Get the meta data associated with this target.
      *
@@ -47,5 +47,5 @@ public interface StreamTarget extends Closeable {
      *
      * @return a supplier of output streams.
      */
-    OutputStreamProvider getOutputStreamProvider();
+    OutputStreamProvider next();
 }

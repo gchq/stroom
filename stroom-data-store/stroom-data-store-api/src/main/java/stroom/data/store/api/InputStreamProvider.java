@@ -16,8 +16,10 @@
 
 package stroom.data.store.api;
 
-import java.io.InputStream;
+import java.io.Closeable;
 
-public abstract class StreamSourceInputStream extends InputStream {
-    public abstract long size();
+public interface InputStreamProvider extends Closeable {
+    SegmentInputStream get();
+
+    SegmentInputStream get(String streamType);
 }

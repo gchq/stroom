@@ -6,18 +6,18 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 
-public final class StreamTargetUtil {
+public final class TargetUtil {
     private static final int BUFFER_SIZE = 8192;
     private static final String DEFAULT_CHARSET_NAME = "UTF-8";
     private static final Charset DEFAULT_CHARSET = Charset.forName(DEFAULT_CHARSET_NAME);
 
-    public static void write(final StreamTarget streamTarget, final String string) {
+    public static void write(final Target streamTarget, final String string) {
         write(streamTarget, string.getBytes(DEFAULT_CHARSET));
     }
 
-    private static void write(final StreamTarget streamTarget, final byte[] bytes) {
-        try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
-            try (final OutputStream outputStream = outputStreamProvider.next()) {
+    private static void write(final Target streamTarget, final byte[] bytes) {
+        try (final OutputStreamProvider outputStreamProvider = streamTarget.next()) {
+            try (final OutputStream outputStream = outputStreamProvider.get()) {
                 outputStream.write(bytes);
             }
         } catch (final IOException e) {
@@ -25,9 +25,9 @@ public final class StreamTargetUtil {
         }
     }
 
-    public static long write(final StreamTarget streamTarget, final InputStream inputStream) {
-        try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
-            try (final OutputStream outputStream = outputStreamProvider.next()) {
+    public static long write(final Target streamTarget, final InputStream inputStream) {
+        try (final OutputStreamProvider outputStreamProvider = streamTarget.next()) {
+            try (final OutputStream outputStream = outputStreamProvider.get()) {
                 return write(inputStream, outputStream, false);
             }
         } catch (final IOException e) {

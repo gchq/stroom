@@ -208,7 +208,7 @@ class TestFormatDate extends StroomUnitTest {
         final Meta meta = mock(Meta.class);
         when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString(referenceDate));
 
-        final MetaHolder metaHolder = new MetaHolder(null);
+        final MetaHolder metaHolder = new MetaHolder();
         metaHolder.setMeta(meta);
 
         return new FormatDate(metaHolder);

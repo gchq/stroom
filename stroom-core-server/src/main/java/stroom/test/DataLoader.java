@@ -23,8 +23,8 @@ import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.MetaProperties;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.pipeline.feed.FeedDocCache;
 import stroom.feed.shared.FeedDoc;
@@ -55,9 +55,9 @@ public class DataLoader {
     private static final String ZIP_EXTENSION = ".zip";
 
     private final FeedDocCache feedDocCache;
-    private final StreamStore streamStore;
+    private final Store streamStore;
 
-    public DataLoader(final FeedDocCache feedDocCache, final StreamStore streamStore) {
+    public DataLoader(final FeedDocCache feedDocCache, final Store streamStore) {
         this.feedDocCache = feedDocCache;
         this.streamStore = streamStore;
     }
@@ -115,23 +115,21 @@ public class DataLoader {
                     .effectiveMs(effectiveMs)
                     .build();
 
-            final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
+            try (final Target streamTarget = streamStore.openStreamTarget(metaProperties)) {
+                try (final OutputStreamProvider outputStreamProvider = streamTarget.next()) {
+                    try (final SegmentOutputStream outputStream = outputStreamProvider.get()) {
+                        StreamUtil.streamToStream(inputStream, outputStream);
+                    }
 
-            try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
-                try (final SegmentOutputStream outputStream = outputStreamProvider.next()) {
-                    StreamUtil.streamToStream(inputStream, outputStream);
-                }
-
-                try (final SegmentOutputStream outputStream = outputStreamProvider.next(StreamTypeNames.META)) {
-                    final AttributeMap map = new AttributeMap();
-                    map.put("TestData", "Loaded By SetupSampleData");
-                    AttributeMapUtil.write(map, outputStream);
+                    try (final SegmentOutputStream outputStream = outputStreamProvider.get(StreamTypeNames.META)) {
+                        final AttributeMap map = new AttributeMap();
+                        map.put("TestData", "Loaded By SetupSampleData");
+                        AttributeMapUtil.write(map, outputStream);
+                    }
                 }
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
-
-            streamStore.closeStreamTarget(streamTarget);
         }
     }
 

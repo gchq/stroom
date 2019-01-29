@@ -287,7 +287,7 @@ public final class RepositoryProcessor {
                 if (anyHeaderStream == null) {
                     stroomZipRepository.addErrorMessage(stroomZipFile, "Unable to find header??", true);
                 } else {
-                    AttributeMapUtil.read(anyHeaderStream, false, attributeMap);
+                    AttributeMapUtil.read(anyHeaderStream, attributeMap);
                 }
             }
         } catch (final IOException ex) {

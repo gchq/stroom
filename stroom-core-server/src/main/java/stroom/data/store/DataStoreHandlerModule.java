@@ -32,7 +32,7 @@ public class DataStoreHandlerModule extends AbstractModule {
                 .bind(FetchDataWithPipelineAction.class, FetchDataWithPipelineHandler.class)
                 .bind(UpdateStatusAction.class, UpdateStatusHandler.class)
                 .bind(DownloadDataAction.class, DownloadDataHandler.class)
-                .bind(StreamDownloadTask.class, StreamDownloadTaskHandler.class)
+                .bind(DataDownloadTask.class, DataDownloadTaskHandler.class)
                 .bind(StreamUploadTask.class, StreamUploadTaskHandler.class)
                 .bind(UploadDataAction.class, UploadDataHandler.class);
     }

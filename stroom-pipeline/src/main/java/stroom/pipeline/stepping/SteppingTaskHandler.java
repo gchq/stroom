@@ -19,17 +19,16 @@ package stroom.pipeline.stepping;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamSourceInputStream;
-import stroom.data.store.api.StreamSourceInputStreamProvider;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.SizeAwareInputStream;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.pipeline.feed.FeedProperties;
 import stroom.io.StreamCloser;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.StreamLocationFactory;
@@ -40,6 +39,7 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.feed.FeedProperties;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
@@ -48,14 +48,13 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.security.util.UserTokenUtil;
-import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
@@ -72,7 +71,7 @@ import java.util.Set;
 class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SteppingTaskHandler.class);
 
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final MetaService metaService;
     private final StreamCloser streamCloser;
     private final FeedProperties feedProperties;
@@ -104,7 +103,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private Set<String> generalErrors;
 
     @Inject
-    SteppingTaskHandler(final StreamStore streamStore,
+    SteppingTaskHandler(final Store streamStore,
                         final MetaService metaService,
                         final StreamCloser streamCloser,
                         final FeedProperties feedProperties,
@@ -303,67 +302,52 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
                 // Get the appropriate stream and source based on the type of
                 // translation.
-                final StreamSource streamSource = streamStore.openStreamSource(streamId);
-                if (streamSource != null) {
-                    StreamSource stepSource = streamSource;
-                    if (StreamTypeNames.CONTEXT.equals(request.getChildStreamType())) {
-                        stepSource = streamSource.getChildStream(StreamTypeNames.CONTEXT);
-                    }
+                try (final Source source = streamStore.openStreamSource(streamId)) {
+                    if (source != null) {
+                        // Load the feed.
+                        final String feedName = source.getMeta().getFeedName();
 
-                    // Load the feed.
-                    final String feedName = streamSource.getMeta().getFeedName();
+                        // Get the stream type.
+                        final String streamTypeName = request.getChildStreamType();
 
-                    // Get the stream type.
-                    final String streamTypeName = stepSource.getMeta().getTypeName();
+                        // Now process the data.
+                        processStream(controller, feedName, streamTypeName, source);
 
-                    // Now process the data.
-                    processStream(controller, feedName, streamTypeName, stepSource);
-
-                    try {
-                        // Close all open streams.
-                        streamCloser.close();
-                    } catch (final IOException e) {
-                        error(e);
-
-                    } finally {
-                        // Close the stream source.
                         try {
-                            streamStore.closeStreamSource(streamSource);
-                        } catch (final RuntimeException e) {
+                            // Close all open streams.
+                            streamCloser.close();
+                        } catch (final IOException e) {
                             error(e);
                         }
-                    }
 
-                    if (controller.isFound()) {
-                        // Set the offset in the task list where we will be able
-                        // to
-                        // find this task. This will enable us to show the right
-                        // stream list page.
-                        if (allStreamIdList != null) {
-                            curentStreamOffset = allStreamIdList.indexOf(streamId);
-                        }
-                    } else {
-                        // If we didn't find what we were looking for then
-                        // process
-                        // the next stream.
-                        switch (stepType) {
-                            case FIRST:
-                                currentStreamIndex++;
-                                break;
-                            case FORWARD:
-                                currentStreamIndex++;
-                                break;
-                            case BACKWARD:
-                                currentStreamIndex--;
-                                break;
-                            case LAST:
-                                currentStreamIndex--;
-                                break;
-                        }
+                        if (controller.isFound()) {
+                            // Set the offset in the task list where we will be able to find this task. This will enable us to show the right stream list page.
+                            if (allStreamIdList != null) {
+                                curentStreamOffset = allStreamIdList.indexOf(streamId);
+                            }
+                        } else {
+                            // If we didn't find what we were looking for then process the next stream.
+                            switch (stepType) {
+                                case FIRST:
+                                    currentStreamIndex++;
+                                    break;
+                                case FORWARD:
+                                    currentStreamIndex++;
+                                    break;
+                                case BACKWARD:
+                                    currentStreamIndex--;
+                                    break;
+                                case LAST:
+                                    currentStreamIndex--;
+                                    break;
+                            }
 
-                        final Long nextStream = getStreamId(request);
-                        process(request, nextStream);
+                            final Long nextStream = getStreamId(request);
+                            process(request, nextStream);
+                        }
                     }
+                } catch (final IOException e) {
+                    error(e);
                 }
 
             } else {
@@ -460,7 +444,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private void processStream(final SteppingController controller,
                                final String feedName,
                                final String streamTypeName,
-                               final StreamSource source) {
+                               final Source source) {
         // If the feed changes then destroy the last pipeline.
         if (lastFeedName != null && !lastFeedName.equals(feedName)) {
             // destroy the last pipeline.
@@ -500,63 +484,58 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     }
 
     private void process(final SteppingController controller, final String feedName, final String streamTypeName,
-                         final StreamSource streamSource) {
+                         final Source source) {
+        final Meta meta = source.getMeta();
+        final SteppingTask request = controller.getRequest();
+        final StepType stepType = request.getStepType();
+        controller.setStreamInfo(createStreamInfo(feedName, meta));
+
+        // Set the source meta.
+        metaHolder.setMeta(meta);
+
         try {
-            final Meta meta = streamSource.getMeta();
-            final SteppingTask request = controller.getRequest();
-            final StepType stepType = request.getStepType();
-            controller.setStreamInfo(createStreamInfo(feedName, meta));
+            final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
+            locationFactory.setLocationFactory(streamLocationFactory);
 
-            // Get the stream providers.
-            metaHolder.setMeta(meta);
-            metaHolder.addProvider(streamSource);
-            metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
-            metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
-
-            // Get the main stream provider.
-            final StreamSourceInputStreamProvider mainProvider = metaHolder.getProvider(streamTypeName);
-
-            try {
-                final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
-                locationFactory.setLocationFactory(streamLocationFactory);
-
-                // Determine which stream number to start with.
-                final long streamCount = mainProvider.getStreamCount();
-                long streamNo = 1;
-                if (currentLocation != null) {
-                    // If stream no has been set beyond the last stream no then
-                    // start at the end.
-                    if (currentLocation.getStreamNo() > streamCount) {
-                        // Start at the last stream number.
-                        streamNo = streamCount;
-                        // Update the current processing location.
-                        currentLocation = new StepLocation(meta.getId(), streamNo, currentLocation.getRecordNo());
-                    } else {
-                        // Else start at the current location.
-                        streamNo = currentLocation.getStreamNo();
-                        // Update the current processing location.
-                        currentLocation = new StepLocation(meta.getId(), streamNo, currentLocation.getRecordNo());
-                    }
+            // Determine which stream number to start with.
+            final long count = source.count();
+            long index = 1;
+            if (currentLocation != null) {
+                // If stream no has been set beyond the last stream no then
+                // start at the end.
+                if (currentLocation.getStreamNo() > count) {
+                    // Start at the last stream number.
+                    index = count;
+                    // Update the current processing location.
+                    currentLocation = new StepLocation(meta.getId(), index, currentLocation.getRecordNo());
+                } else {
+                    // Else start at the current location.
+                    index = currentLocation.getStreamNo();
+                    // Update the current processing location.
+                    currentLocation = new StepLocation(meta.getId(), index, currentLocation.getRecordNo());
                 }
+            }
 
-                // Get the appropriate encoding for the stream type.
-                final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
+            // Get the appropriate encoding for the stream type.
+            final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
-                // Loop over the stream boundaries and process each
-                // sequentially. Loop over the stream boundaries and process
-                // each sequentially until we find a record.
-                boolean done = controller.isFound();
-                while (!done && streamNo > 0 && streamNo <= streamCount && !Thread.currentThread().isInterrupted()) {
-                    // Set the stream number.
-                    metaHolder.setStreamNo(streamNo - 1);
-                    streamLocationFactory.setStreamNo(streamNo);
+            // Loop over the stream boundaries and process each
+            // sequentially. Loop over the stream boundaries and process
+            // each sequentially until we find a record.
+            boolean done = controller.isFound();
+            while (!done && index > 0 && index <= count && !Thread.currentThread().isInterrupted()) {
+                // Set the stream number.
+                metaHolder.setStreamNo(index - 1);
+                streamLocationFactory.setStreamNo(index);
 
-                    // Process the boundary making sure to use the right
-                    // encoding.
-                    controller.clearAllFilters(null);
+                // Process the boundary making sure to use the right
+                // encoding.
+                controller.clearAllFilters(null);
 
-                    // Get the stream.
-                    final StreamSourceInputStream inputStream = mainProvider.getStream(streamNo - 1);
+                // Get the stream.
+                try (final InputStreamProvider inputStreamProvider = source.get(index - 1)) {
+                    metaHolder.setInputStreamProvider(inputStreamProvider);
+                    final SizeAwareInputStream inputStream = inputStreamProvider.get(streamTypeName);
 
                     // Process the boundary.
                     try {
@@ -585,24 +564,24 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         // If we are stepping forward increment the stream
                         // number, otherwise decrement the stream number.
                         if (StepType.FIRST.equals(stepType)) {
-                            streamNo++;
-                            currentLocation = new StepLocation(meta.getId(), streamNo, 0);
+                            index++;
+                            currentLocation = new StepLocation(meta.getId(), index, 0);
                         } else if (StepType.BACKWARD.equals(stepType)) {
-                            streamNo--;
-                            currentLocation = new StepLocation(meta.getId(), streamNo, Long.MAX_VALUE);
+                            index--;
+                            currentLocation = new StepLocation(meta.getId(), index, Long.MAX_VALUE);
                         } else if (StepType.FORWARD.equals(stepType)) {
-                            streamNo++;
-                            currentLocation = new StepLocation(meta.getId(), streamNo, 0);
+                            index++;
+                            currentLocation = new StepLocation(meta.getId(), index, 0);
                         } else if (StepType.LAST.equals(stepType)) {
-                            streamNo--;
-                            currentLocation = new StepLocation(meta.getId(), streamNo, Long.MAX_VALUE);
+                            index--;
+                            currentLocation = new StepLocation(meta.getId(), index, Long.MAX_VALUE);
                         }
                     }
+                } catch (final IOException | RuntimeException e) {
+                    error(e);
                 }
-            } catch (final IOException | RuntimeException e) {
-                error(e);
             }
-        } catch (final RuntimeException e) {
+        } catch (final IOException | RuntimeException e) {
             error(e);
         }
     }

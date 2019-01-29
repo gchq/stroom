@@ -21,9 +21,9 @@ package stroom.test;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.store.api.StreamTargetUtil;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
+import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.index.IndexStore;
@@ -45,6 +45,8 @@ import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.Processor;
 
 import javax.inject.Inject;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,7 +57,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Help class to create some basic scenarios for testing.
  */
 public class CommonTestScenarioCreator {
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final IndexStore indexStore;
@@ -64,7 +66,7 @@ public class CommonTestScenarioCreator {
     private final NodeInfo nodeInfo;
 
     @Inject
-    CommonTestScenarioCreator(final StreamStore streamStore,
+    CommonTestScenarioCreator(final Store streamStore,
                               final StreamProcessorService streamProcessorService,
                               final StreamProcessorFilterService streamProcessorFilterService,
                               final IndexStore indexStore,
@@ -141,12 +143,13 @@ public class CommonTestScenarioCreator {
                 .feedName(feed)
                 .typeName(streamType)
                 .build();
-        final StreamTarget target = streamStore.openStreamTarget(metaProperties);
-        StreamTargetUtil.write(target, "line1\nline2");
-        target.getAttributes().put(StandardHeaderArguments.FEED, feed);
-
-        streamStore.closeStreamTarget(target);
-        return target.getMeta();
+        try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+            TargetUtil.write(target, "line1\nline2");
+            target.getAttributes().put(StandardHeaderArguments.FEED, feed);
+            return target.getMeta();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public Meta createSampleBlankProcessedFile(final String feed, final Meta sourceMeta) {
@@ -156,7 +159,6 @@ public class CommonTestScenarioCreator {
                 .parent(sourceMeta)
                 .build();
 
-        final StreamTarget target = streamStore.openStreamTarget(metaProperties);
         final String data = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<Events xpath-default-namespace=\"records:2\" "
                 + "xmlns:stroom=\"stroom\" "
@@ -164,8 +166,12 @@ public class CommonTestScenarioCreator {
                 + "xmlns=\"event-logging:3\" "
                 + "xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\" "
                 + "Version=\"3.0.0\"/>";
-        StreamTargetUtil.write(target, data);
-        streamStore.closeStreamTarget(target);
-        return target.getMeta();
+
+        try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+            TargetUtil.write(target, data);
+            return target.getMeta();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

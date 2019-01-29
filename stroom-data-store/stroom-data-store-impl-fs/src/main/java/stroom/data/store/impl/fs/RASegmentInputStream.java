@@ -24,6 +24,7 @@ import stroom.util.io.StreamUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.Iterator;
@@ -45,7 +46,8 @@ class RASegmentInputStream extends SegmentInputStream {
     private final byte[] singleByte = new byte[1];
     private final LongBuffer longBuffer = ByteBuffer.wrap(eightBytes).asLongBuffer();
     private InputStream data;
-    private InputStream index;
+    private final SupplierWithIO<InputStream> indexInputStreamSupplier;
+    private InputStream indexInputStream;
     private Set<Long> included;
     private Iterator<Long> includedIterator;
     private Set<Long> excluded;
@@ -60,19 +62,41 @@ class RASegmentInputStream extends SegmentInputStream {
     private long windowSegmentCount = 0;
     private long totalSegmentCount;
 
-    RASegmentInputStream(final InputStream data, final InputStream index) throws IOException {
-        this.data = data;
-        this.index = index;
-
-        initWindow(0, ((SeekableInputStream) data).getSize());
+    RASegmentInputStream(final InputStream data,
+                         final InputStream inputStream) {
+        this(data, () -> inputStream);
     }
 
-    RASegmentInputStream(final InputStream data, final InputStream index, final long byteStart,
-                         final long byteEnd) throws IOException {
-        this.data = data;
-        this.index = index;
+    RASegmentInputStream(final InputStream data,
+                         final InputStream inputStream,
+                         final long byteStart,
+                         final long byteEnd) {
+        this(data, () -> inputStream, byteStart, byteEnd);
+    }
 
-        initWindow(byteStart, byteEnd);
+    RASegmentInputStream(final InputStream data, final SupplierWithIO<InputStream> indexInputStreamSupplier) {
+        try {
+            this.data = data;
+            this.indexInputStreamSupplier = indexInputStreamSupplier;
+
+            initWindow(0, ((SeekableInputStream) data).getSize());
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e.getMessage(), e);
+        }
+    }
+
+    RASegmentInputStream(final InputStream data,
+                         final SupplierWithIO<InputStream> indexInputStreamSupplier,
+                         final long byteStart,
+                         final long byteEnd) {
+        try {
+            this.data = data;
+            this.indexInputStreamSupplier = indexInputStreamSupplier;
+
+            initWindow(byteStart, byteEnd);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e.getMessage(), e);
+        }
     }
 
     private long getDataSize() throws IOException {
@@ -80,7 +104,12 @@ class RASegmentInputStream extends SegmentInputStream {
     }
 
     private void initWindow(final long byteStart, final long byteEnd) throws IOException {
-        totalSegmentCount = (((SeekableInputStream) index).getSize() / INT8) + 1;
+        // Lazily initialise index input stream provider.
+        if (indexInputStream == null) {
+            indexInputStream = indexInputStreamSupplier.getWithIO();
+        }
+
+        totalSegmentCount = (((SeekableInputStream) indexInputStream).getSize() / INT8) + 1;
 
         // If the window starts at 0 we start at segment 0 otherwise we need to
         // look at which segment includes byteStart
@@ -197,7 +226,7 @@ class RASegmentInputStream extends SegmentInputStream {
      */
     @Override
     public int available() throws IOException {
-        if (data == null || index == null) {
+        if (data == null || indexInputStream == null) {
             throw new IOException("Stream closed");
         }
 
@@ -223,16 +252,16 @@ class RASegmentInputStream extends SegmentInputStream {
                 LOGGER.error("Unable to close data stream!", e);
             }
         }
-        if (index != null) {
+        if (indexInputStream != null) {
             try {
-                index.close();
+                indexInputStream.close();
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to close index stream!", e);
             }
         }
 
         data = null;
-        index = null;
+        indexInputStream = null;
 
         super.close();
     }
@@ -334,7 +363,7 @@ class RASegmentInputStream extends SegmentInputStream {
 
         int totalBytesRead = 0;
 
-        if (data == null || index == null) {
+        if (data == null || indexInputStream == null) {
             throw new IOException("Stream closed");
         }
 
@@ -538,9 +567,9 @@ class RASegmentInputStream extends SegmentInputStream {
             return 0;
         }
 
-        ((SeekableInputStream) index).seek((seekPos) * INT8);
+        ((SeekableInputStream) indexInputStream).seek((seekPos) * INT8);
 
-        StreamUtil.eagerRead(index, eightBytes);
+        StreamUtil.eagerRead(indexInputStream, eightBytes);
         longBuffer.rewind();
         return longBuffer.get();
     }
@@ -685,6 +714,7 @@ class RASegmentInputStream extends SegmentInputStream {
 
     }
 
+    @Override
     public long size() {
         return windowByteEnd - windowByteStart;
     }

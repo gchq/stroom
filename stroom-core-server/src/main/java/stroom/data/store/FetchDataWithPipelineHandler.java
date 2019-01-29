@@ -17,7 +17,7 @@
 
 package stroom.data.store;
 
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Store;
 import stroom.entity.shared.EntityServiceException;
 import stroom.pipeline.feed.FeedProperties;
 import stroom.pipeline.PipelineStore;
@@ -44,7 +44,7 @@ class FetchDataWithPipelineHandler extends AbstractTaskHandler<FetchDataWithPipe
     private final DataFetcher dataFetcher;
 
     @Inject
-    FetchDataWithPipelineHandler(final StreamStore streamStore,
+    FetchDataWithPipelineHandler(final Store streamStore,
                                  final FeedProperties feedProperties,
                                  final Provider<FeedHolder> feedHolderProvider,
                                  final Provider<MetaDataHolder> metaDataHolderProvider,

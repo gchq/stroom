@@ -19,12 +19,13 @@ package stroom.data.store.util;
 import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.api.InputStreamProvider;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaService;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
 import stroom.persist.PersistService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -130,7 +131,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         }
 
         final MetaService metaService = injector.getInstance(MetaService.class);
-        final StreamStore streamStore = injector.getInstance(StreamStore.class);
+        final Store streamStore = injector.getInstance(Store.class);
 
         if (feed != null) {
             builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feed);
@@ -156,69 +157,65 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         }
     }
 
-    private void processFile(final StreamStore streamStore, final long streamId, final String match) {
-        try {
-            final StreamSource streamSource = streamStore.openStreamSource(streamId);
-            if (streamSource != null) {
-                final InputStream inputStream = streamSource.getInputStream();
+    private void processFile(final Store streamStore, final long streamId, final String match) {
+        try (final Source streamSource = streamStore.openStreamSource(streamId)) {
+            try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
+                try (final InputStream inputStream = inputStreamProvider.get()) {
 
-                // Build up 2 buffers so we can output the content either side
-                // of
-                // the matching line
-                final ArrayDeque<String> preBuffer = new ArrayDeque<>();
-                final ArrayDeque<String> postBuffer = new ArrayDeque<>();
+                    // Build up 2 buffers so we can output the content either side
+                    // of
+                    // the matching line
+                    final ArrayDeque<String> preBuffer = new ArrayDeque<>();
+                    final ArrayDeque<String> postBuffer = new ArrayDeque<>();
 
-                final LineNumberReader lineNumberReader = new LineNumberReader(
-                        new InputStreamReader(inputStream, StreamUtil.DEFAULT_CHARSET));
+                    final LineNumberReader lineNumberReader = new LineNumberReader(
+                            new InputStreamReader(inputStream, StreamUtil.DEFAULT_CHARSET));
 
-                String aline;
-                while ((aline = lineNumberReader.readLine()) != null) {
-                    String lines[] = new String[]{aline};
-                    if (addLineBreak != null) {
-                        lines = aline.split(addLineBreak);
-                    }
+                    String aline;
+                    while ((aline = lineNumberReader.readLine()) != null) {
+                        String lines[] = new String[]{aline};
+                        if (addLineBreak != null) {
+                            lines = aline.split(addLineBreak);
+                        }
 
-                    for (final String line : lines) {
-                        if (match == null) {
-                            System.out.println(lineNumberReader.getLineNumber() + ":" + line);
-                        } else {
-                            postBuffer.add(lineNumberReader.getLineNumber() + ":" + line);
+                        for (final String line : lines) {
+                            if (match == null) {
+                                System.out.println(lineNumberReader.getLineNumber() + ":" + line);
+                            } else {
+                                postBuffer.add(lineNumberReader.getLineNumber() + ":" + line);
 
-                            if (postBuffer.size() > 5) {
-                                final String searchLine = postBuffer.pop();
+                                if (postBuffer.size() > 5) {
+                                    final String searchLine = postBuffer.pop();
 
-                                checkMatch(match, preBuffer, postBuffer, searchLine);
+                                    checkMatch(match, preBuffer, postBuffer, searchLine);
 
-                                preBuffer.add(searchLine);
+                                    preBuffer.add(searchLine);
 
-                                if (preBuffer.size() > 5) {
-                                    preBuffer.pop();
+                                    if (preBuffer.size() > 5) {
+                                        preBuffer.pop();
+                                    }
                                 }
                             }
                         }
+
                     }
 
-                }
+                    // Look at the end
+                    while (postBuffer.size() > 0) {
+                        final String searchLine = postBuffer.pop();
 
-                // Look at the end
-                while (postBuffer.size() > 0) {
-                    final String searchLine = postBuffer.pop();
+                        checkMatch(match, preBuffer, postBuffer, searchLine);
 
-                    checkMatch(match, preBuffer, postBuffer, searchLine);
+                        preBuffer.add(searchLine);
 
-                    preBuffer.add(searchLine);
-
-                    if (preBuffer.size() > 5) {
-                        preBuffer.pop();
+                        if (preBuffer.size() > 5) {
+                            preBuffer.pop();
+                        }
                     }
                 }
-
-                inputStream.close();
-                streamStore.closeStreamSource(streamSource);
             }
         } catch (final IOException | RuntimeException e) {
             e.printStackTrace();
         }
-
     }
 }
