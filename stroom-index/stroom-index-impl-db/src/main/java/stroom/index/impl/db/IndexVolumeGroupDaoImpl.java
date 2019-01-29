@@ -7,6 +7,8 @@ import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
 
+import java.util.List;
+
 import static stroom.index.impl.db.Tables.INDEX_VOLUME_GROUP;
 import static stroom.index.impl.db.Tables.INDEX_VOLUME_GROUP_LINK;
 
@@ -20,6 +22,14 @@ public class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                                    final ConnectionProvider connectionProvider) {
         this.securityContext = securityContext;
         this.connectionProvider = connectionProvider;
+    }
+
+    @Override
+    public List<String> getNames() {
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select(INDEX_VOLUME_GROUP.NAME)
+                .from(INDEX_VOLUME_GROUP)
+                .fetch(INDEX_VOLUME_GROUP.NAME));
     }
 
     @Override

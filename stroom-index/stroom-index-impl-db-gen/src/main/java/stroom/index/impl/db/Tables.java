@@ -4,12 +4,12 @@
 package stroom.index.impl.db;
 
 
+import javax.annotation.Generated;
+
 import stroom.index.impl.db.tables.IndexShard;
 import stroom.index.impl.db.tables.IndexVolume;
 import stroom.index.impl.db.tables.IndexVolumeGroup;
 import stroom.index.impl.db.tables.IndexVolumeGroupLink;
-
-import javax.annotation.Generated;
 
 
 /**

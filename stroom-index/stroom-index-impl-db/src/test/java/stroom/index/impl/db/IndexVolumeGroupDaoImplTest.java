@@ -12,7 +12,11 @@ import org.testcontainers.containers.MySQLContainer;
 import stroom.index.dao.IndexVolumeGroupDao;
 import stroom.index.shared.IndexVolumeGroup;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,6 +44,30 @@ public class IndexVolumeGroupDaoImplTest {
     public static void afterAll() {
         LOGGER.info(() -> "After All - Stop Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::stop);
+    }
+
+    @Test
+    public void getNames() {
+        // Given
+        final Set<String> namesToDelete = IntStream.range(0, 3)
+                .mapToObj(TestData::createVolumeGroupName).collect(Collectors.toSet());
+        final Set<String> names = IntStream.range(0, 7)
+                .mapToObj(TestData::createVolumeGroupName).collect(Collectors.toSet());
+
+        // When
+        namesToDelete.forEach(indexVolumeGroupDao::create);
+        names.forEach(indexVolumeGroupDao::create);
+        final List<String> found1 = indexVolumeGroupDao.getNames();
+
+        namesToDelete.forEach(indexVolumeGroupDao::delete);
+        final List<String> found2 = indexVolumeGroupDao.getNames();
+
+        // Then
+        assertThat(found1).containsAll(namesToDelete);
+        assertThat(found1).containsAll(names);
+
+        assertThat(found2).doesNotContainAnyElementsOf(namesToDelete);
+        assertThat(found2).containsAll(names);
     }
 
     @Test

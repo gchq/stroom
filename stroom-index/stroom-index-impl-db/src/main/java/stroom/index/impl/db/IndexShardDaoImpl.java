@@ -8,6 +8,7 @@ import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -19,12 +20,15 @@ import static stroom.index.impl.db.tables.IndexVolume.INDEX_VOLUME;
 public class IndexShardDaoImpl implements IndexShardDao {
 
     private final ConnectionProvider connectionProvider;
+    private final SecurityContext securityContext;
     private final IndexVolumeDao indexVolumeDao;
 
     @Inject
     public IndexShardDaoImpl(final ConnectionProvider connectionProvider,
+                             final SecurityContext securityContext,
                              final IndexVolumeDao indexVolumeDao) {
         this.connectionProvider = connectionProvider;
+        this.securityContext = securityContext;
         this.indexVolumeDao = indexVolumeDao;
     }
 
@@ -67,7 +71,8 @@ public class IndexShardDaoImpl implements IndexShardDao {
                     INDEX_SHARD.PARTITION_FROM_MS,
                     INDEX_SHARD.PARTITION_TO_MS,
                     INDEX_SHARD.FK_VOLUME_ID,
-                    INDEX_SHARD.INDEX_VERSION
+                    INDEX_SHARD.INDEX_VERSION,
+                    INDEX_SHARD.STATUS
             )
                     .values(indexShardKey.getIndexUuid(),
                             ownerNodeName,
@@ -75,7 +80,8 @@ public class IndexShardDaoImpl implements IndexShardDao {
                             indexShardKey.getPartitionFromTime(),
                             indexShardKey.getPartitionToTime(),
                             indexVolume.getId(),
-                            indexVersion)
+                            indexVersion,
+                            IndexShard.IndexShardStatus.OPEN.getPrimitiveValue())
                     .returning(INDEX_VOLUME.ID)
                     .fetchOne()
                     .getId();

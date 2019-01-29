@@ -4,6 +4,11 @@
 package stroom.index.impl.db.tables;
 
 
+import java.util.Arrays;
+import java.util.List;
+
+import javax.annotation.Generated;
+
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
@@ -16,14 +21,11 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
+
 import stroom.index.impl.db.Indexes;
 import stroom.index.impl.db.Keys;
 import stroom.index.impl.db.Stroom;
 import stroom.index.impl.db.tables.records.IndexShardRecord;
-
-import javax.annotation.Generated;
-import java.util.Arrays;
-import java.util.List;
 
 
 /**
@@ -39,7 +41,7 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexShard extends TableImpl<IndexShardRecord> {
 
-    private static final long serialVersionUID = 1326748502;
+    private static final long serialVersionUID = -341072685;
 
     /**
      * The reference instance of <code>stroom.index_shard</code>
@@ -60,11 +62,6 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
     public final TableField<IndexShardRecord, Long> ID = createField("id", org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
 
     /**
-     * The column <code>stroom.index_shard.version</code>.
-     */
-    public final TableField<IndexShardRecord, Byte> VERSION = createField("version", org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
-
-    /**
      * The column <code>stroom.index_shard.node_name</code>.
      */
     public final TableField<IndexShardRecord, String> NODE_NAME = createField("node_name", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
@@ -78,26 +75,6 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
      * The column <code>stroom.index_shard.index_uuid</code>.
      */
     public final TableField<IndexShardRecord, String> INDEX_UUID = createField("index_uuid", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
-
-    /**
-     * The column <code>stroom.index_shard.create_time_ms</code>.
-     */
-    public final TableField<IndexShardRecord, Long> CREATE_TIME_MS = createField("create_time_ms", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
-
-    /**
-     * The column <code>stroom.index_shard.create_user</code>.
-     */
-    public final TableField<IndexShardRecord, String> CREATE_USER = createField("create_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
-
-    /**
-     * The column <code>stroom.index_shard.update_time_ms</code>.
-     */
-    public final TableField<IndexShardRecord, Long> UPDATE_TIME_MS = createField("update_time_ms", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
-
-    /**
-     * The column <code>stroom.index_shard.update_user</code>.
-     */
-    public final TableField<IndexShardRecord, String> UPDATE_USER = createField("update_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.index_shard.commit_doc_count</code>.
@@ -117,12 +94,12 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
     /**
      * The column <code>stroom.index_shard.doc_count</code>.
      */
-    public final TableField<IndexShardRecord, Integer> DOC_COUNT = createField("doc_count", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<IndexShardRecord, Integer> DOC_COUNT = createField("doc_count", org.jooq.impl.SQLDataType.INTEGER.defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.INTEGER)), this, "");
 
     /**
      * The column <code>stroom.index_shard.file_size</code>.
      */
-    public final TableField<IndexShardRecord, Long> FILE_SIZE = createField("file_size", org.jooq.impl.SQLDataType.BIGINT, this, "");
+    public final TableField<IndexShardRecord, Long> FILE_SIZE = createField("file_size", org.jooq.impl.SQLDataType.BIGINT.defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BIGINT)), this, "");
 
     /**
      * The column <code>stroom.index_shard.status</code>.
@@ -232,14 +209,6 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
 
     public IndexVolume indexVolume() {
         return new IndexVolume(this, Keys.INDEX_SHARD_FK_VOLUME_ID);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public TableField<IndexShardRecord, Byte> getRecordVersion() {
-        return VERSION;
     }
 
     /**

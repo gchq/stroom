@@ -31,7 +31,7 @@ import java.util.Set;
 /**
  * A place where a indexUuid has been created.
  */
-public class IndexShard implements HasAuditInfo, SharedObject {
+public class IndexShard implements SharedObject {
     public static final Set<IndexShardStatus> NON_DELETED_INDEX_SHARD_STATUS = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.CORRUPT)));
     public static final Set<IndexShardStatus> READABLE_INDEX_SHARD_STATUS = Collections
@@ -39,11 +39,6 @@ public class IndexShard implements HasAuditInfo, SharedObject {
 
 
     private Long id;
-
-    private Long createTime;
-    private Long updateTime;
-    private String createUser;
-    private String updateUser;
 
     /**
      * The time that the partition that this shard belongs to starts
@@ -97,42 +92,6 @@ public class IndexShard implements HasAuditInfo, SharedObject {
         this.id = id;
     }
 
-    public Long getCreateTimeMs() {
-        return createTime;
-    }
-
-    public void setCreateTimeMs(Long createTime) {
-        this.createTime = createTime;
-    }
-
-    public Long getUpdateTimeMs() {
-        return updateTime;
-    }
-
-    public void setUpdateTimeMs(Long updateTime) {
-        this.updateTime = updateTime;
-    }
-
-    @Override
-    public String getCreateUser() {
-        return createUser;
-    }
-
-    @Override
-    public void setCreateUser(String createUser) {
-        this.createUser = createUser;
-    }
-
-    @Override
-    public String getUpdateUser() {
-        return updateUser;
-    }
-
-    @Override
-    public void setUpdateUser(String updateUser) {
-        this.updateUser = updateUser;
-    }
-
     public void setVolume(IndexVolume volume) {
         this.volume = volume;
     }
@@ -181,19 +140,19 @@ public class IndexShard implements HasAuditInfo, SharedObject {
         this.partitionToTime = partitionToTime;
     }
 
-    public byte getPstatus() {
+    public byte getStatus() {
         return pstatus;
     }
 
-    public void setPstatus(final byte pstatus) {
+    public void setStatus(final byte pstatus) {
         this.pstatus = pstatus;
     }
 
-    public IndexShardStatus getStatus() {
-        return IndexShardStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(getPstatus());
+    public IndexShardStatus getStatusE() {
+        return IndexShardStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(getStatus());
     }
 
-    public void setStatus(final IndexShardStatus status) {
+    public void setStatusE(final IndexShardStatus status) {
         this.pstatus = status.getPrimitiveValue();
     }
 
