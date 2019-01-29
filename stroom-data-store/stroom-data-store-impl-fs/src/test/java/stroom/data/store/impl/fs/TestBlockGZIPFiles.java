@@ -17,8 +17,11 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.test.TempDir;
+import stroom.util.test.TempDirExtension;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -30,7 +33,12 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(TempDirExtension.class)
 class TestBlockGZIPFiles {
+
+    @TempDir
+    private Path tempDir;
+
     @Test
     void testSimpleSmallDataInBigBlock() throws IOException {
         testWriteAndRead(10000, 99);
@@ -79,7 +87,7 @@ class TestBlockGZIPFiles {
 
     @Test
     void testBig() throws IOException {
-        final Path testFile = FileUtil.getTempDir().resolve("testBig.bgz");
+        final Path testFile = tempDir.resolve("testBig.bgz");
         FileUtil.deleteFile(testFile);
         final OutputStream os = new BufferedOutputStream(new BlockGZIPOutputFile(testFile, 1000000));
         for (int i = 0; i < 10000; i++) {
@@ -108,13 +116,17 @@ class TestBlockGZIPFiles {
 
         is.close();
 
-        assertThat(FileUtil.delete(testFile)).withFailMessage("Should not have any locks on file").isTrue();
-        assertThat(Files.isRegularFile(testFile)).withFailMessage("file deleted").isFalse();
+        assertThat(FileUtil.delete(testFile))
+                .withFailMessage("Should not have any locks on file")
+                .isTrue();
+        assertThat(Files.isRegularFile(testFile))
+                .withFailMessage("file deleted")
+                .isFalse();
 
     }
 
     private void testWriteAndRead(final int blockSize, final int fileSize) throws IOException {
-        final Path file = Files.createTempFile(FileUtil.getTempDir(), "test", ".bgz");
+        final Path file = Files.createTempFile(tempDir, "test", ".bgz");
         FileUtil.deleteFile(file);
 
         // Stupid Block Size For Testing
@@ -143,7 +155,7 @@ class TestBlockGZIPFiles {
 
     private void testWriteAndReadBuffered(final int blockSize, final int fileSize, final int inBuff, final int outBuf)
             throws IOException {
-        final Path file = Files.createTempFile(FileUtil.getTempDir(), "test", ".bgz");
+        final Path file = Files.createTempFile(tempDir, "test", ".bgz");
         FileUtil.deleteFile(file);
 
         // Stupid Block Size For Testing
@@ -171,7 +183,7 @@ class TestBlockGZIPFiles {
 
     @Test
     void testSeeking() throws IOException {
-        final Path file = FileUtil.getTempDir().resolve("test.bgz");
+        final Path file = tempDir.resolve("test.bgz");
         FileUtil.deleteFile(file);
 
         // Stupid Block Size For Testing

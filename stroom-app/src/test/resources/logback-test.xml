@@ -27,6 +27,7 @@
     <logger name="stroom.pipeline.refdata.store.GenericRefDataValueProxyConsumer" level="trace" />
     -->
 
+    <logger name="stroom.pipeline.writer.FileAppender" level="trace" />
 
     <logger name="org.flywaydb" level="info" />
 

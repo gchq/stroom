@@ -16,6 +16,8 @@
 
 package stroom.pipeline.writer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -45,6 +47,8 @@ import java.nio.file.Paths;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.FILE)
 public class FileAppender extends AbstractAppender {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileAppender.class);
+
     private static final String LOCK_EXTENSION = ".lock";
 
     private final PathCreator pathCreator;
@@ -99,6 +103,7 @@ public class FileAppender extends AbstractAppender {
             if (Files.exists(outFile)) {
                 throw new ProcessException("Output file \"" + FileUtil.getCanonicalPath(outFile) + "\" already exists");
             }
+            LOGGER.trace("Creating output stream for path {}", path);
 
             // Get a writer for the new lock file.
             byteCountOutputStream = new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(lockFile)));
