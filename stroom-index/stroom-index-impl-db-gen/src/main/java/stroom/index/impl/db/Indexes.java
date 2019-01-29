@@ -4,16 +4,15 @@
 package stroom.index.impl.db;
 
 
-import javax.annotation.Generated;
-
 import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.Internal;
-
 import stroom.index.impl.db.tables.IndexShard;
 import stroom.index.impl.db.tables.IndexVolume;
 import stroom.index.impl.db.tables.IndexVolumeGroup;
 import stroom.index.impl.db.tables.IndexVolumeGroupLink;
+
+import javax.annotation.Generated;
 
 
 /**

@@ -25,4 +25,11 @@ public final class TestData {
     static String createPath(final Object o) {
         return String.format("/tmp/index/data/%s/%s", o, UUID.randomUUID());
     }
+
+    static String createIndexName() {
+        return String.format("Index_%s", UUID.randomUUID());
+    }
+    static String createIndexName(final Object o) {
+        return String.format("Index_%s_%s", o, UUID.randomUUID());
+    }
 }

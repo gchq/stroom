@@ -17,9 +17,10 @@
 package stroom.index.shared;
 
 import stroom.docref.HasDisplayValue;
-import stroom.entity.shared.AuditedEntity;
+import stroom.docref.SharedObject;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
+import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.ModelStringUtil;
 
 import java.util.Arrays;
@@ -30,15 +31,19 @@ import java.util.Set;
 /**
  * A place where a indexUuid has been created.
  */
-public class IndexShard extends AuditedEntity {
+public class IndexShard implements HasAuditInfo, SharedObject {
     public static final Set<IndexShardStatus> NON_DELETED_INDEX_SHARD_STATUS = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.CORRUPT)));
     public static final Set<IndexShardStatus> READABLE_INDEX_SHARD_STATUS = Collections
             .unmodifiableSet(new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED)));
 
-    private static final long serialVersionUID = 3699846921846088685L;
 
-    public static final String ENTITY_TYPE = "IndexShard";
+    private Long id;
+
+    private Long createTime;
+    private Long updateTime;
+    private String createUser;
+    private String updateUser;
 
     /**
      * The time that the partition that this shard belongs to starts
@@ -82,6 +87,50 @@ public class IndexShard extends AuditedEntity {
     private String indexUuid;
 
     public IndexShard() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getCreateTimeMs() {
+        return createTime;
+    }
+
+    public void setCreateTimeMs(Long createTime) {
+        this.createTime = createTime;
+    }
+
+    public Long getUpdateTimeMs() {
+        return updateTime;
+    }
+
+    public void setUpdateTimeMs(Long updateTime) {
+        this.updateTime = updateTime;
+    }
+
+    @Override
+    public String getCreateUser() {
+        return createUser;
+    }
+
+    @Override
+    public void setCreateUser(String createUser) {
+        this.createUser = createUser;
+    }
+
+    @Override
+    public String getUpdateUser() {
+        return updateUser;
+    }
+
+    @Override
+    public void setUpdateUser(String updateUser) {
+        this.updateUser = updateUser;
     }
 
     public void setVolume(IndexVolume volume) {
@@ -216,11 +265,6 @@ public class IndexShard extends AuditedEntity {
             return (int) (fileSize / documentCount);
         }
         return null;
-    }
-
-    @Override
-    public String getType() {
-        return ENTITY_TYPE;
     }
 
     /**

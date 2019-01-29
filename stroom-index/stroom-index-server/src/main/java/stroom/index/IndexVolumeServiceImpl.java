@@ -15,17 +15,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
     }
 
     @Override
-    public List<IndexVolume> getVolumesOnNode(final String nodeName) {
-        return indexVolumeDao.getVolumesOnNode(nodeName);
-    }
-
-    @Override
     public List<IndexVolume> getVolumesInGroup(final String groupName) {
         return indexVolumeDao.getVolumesInGroup(groupName);
-    }
-
-    @Override
-    public List<IndexVolume> getVolumesInGroupOnNode(final String groupName, final String nodeName) {
-        return indexVolumeDao.getVolumesInGroupOnNode(groupName, nodeName);
     }
 }

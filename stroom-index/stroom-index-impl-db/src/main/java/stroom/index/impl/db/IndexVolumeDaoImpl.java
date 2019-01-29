@@ -6,7 +6,6 @@ import stroom.index.shared.IndexVolume;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
-
 import java.util.List;
 
 import static stroom.index.impl.db.Tables.INDEX_VOLUME_GROUP_LINK;
@@ -79,15 +78,6 @@ public class IndexVolumeDaoImpl implements IndexVolumeDao {
                 .deleteFrom(INDEX_VOLUME)
                 .where(INDEX_VOLUME.ID.eq(id))
                 .execute()
-        );
-    }
-
-    @Override
-    public List<IndexVolume> getVolumesOnNode(final String nodeName) {
-        return JooqUtil.contextResult(connectionProvider, context -> context.select()
-                .from(INDEX_VOLUME)
-                .where(INDEX_VOLUME.NODE_NAME.eq(nodeName))
-                .fetchInto(IndexVolume.class)
         );
     }
 

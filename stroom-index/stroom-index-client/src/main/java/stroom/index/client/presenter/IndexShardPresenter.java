@@ -117,7 +117,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     private void enableButtons() {
-        final boolean enabled = !readOnly && (selectionCriteria.getIndexShardSet().size() > 0 || Boolean.TRUE.equals(selectionCriteria.getIndexShardSet().getMatchAll()));
+        final boolean enabled = !readOnly && (selectionCriteria.getIndexShardIdSet().size() > 0 || Boolean.TRUE.equals(selectionCriteria.getIndexShardIdSet().getMatchAll()));
         if (buttonFlush != null) {
             if (readOnly) {
                 buttonFlush.setTitle("Flush is not available as index is read only");
@@ -163,8 +163,8 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue(final IndexShard indexShard) {
-                final boolean match = Boolean.TRUE.equals(selectionCriteria.getIndexShardSet().getMatchAll())
-                        || selectionCriteria.getIndexShardSet().contains(indexShard.getId());
+                final boolean match = Boolean.TRUE.equals(selectionCriteria.getIndexShardIdSet().getMatchAll())
+                        || selectionCriteria.getIndexShardIdSet().contains(indexShard.getId());
                 return TickBoxState.fromBoolean(match);
             }
 
@@ -172,9 +172,9 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue() {
-                if (Boolean.TRUE.equals(selectionCriteria.getIndexShardSet().getMatchAll())) {
+                if (Boolean.TRUE.equals(selectionCriteria.getIndexShardIdSet().getMatchAll())) {
                     return TickBoxState.TICK;
-                } else if (selectionCriteria.getIndexShardSet().size() > 0) {
+                } else if (selectionCriteria.getIndexShardIdSet().size() > 0) {
                     return TickBoxState.HALF_TICK;
                 }
                 return TickBoxState.UNTICK;
@@ -185,11 +185,11 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         // Add Handlers
         header.setUpdater(value -> {
             if (value.equals(TickBoxState.UNTICK)) {
-                selectionCriteria.getIndexShardSet().clear();
-                selectionCriteria.getIndexShardSet().setMatchAll(false);
+                selectionCriteria.getIndexShardIdSet().clear();
+                selectionCriteria.getIndexShardIdSet().setMatchAll(false);
             } else if (value.equals(TickBoxState.TICK)) {
-                selectionCriteria.getIndexShardSet().clear();
-                selectionCriteria.getIndexShardSet().setMatchAll(true);
+                selectionCriteria.getIndexShardIdSet().clear();
+                selectionCriteria.getIndexShardIdSet().setMatchAll(true);
             }
 
             if (dataProvider != null) {
@@ -200,14 +200,14 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         });
         column.setFieldUpdater((index, row, value) -> {
             if (value.toBoolean()) {
-                selectionCriteria.getIndexShardSet().add(row);
+                selectionCriteria.getIndexShardIdSet().add(row.getId());
             } else {
                 // De-selecting one and currently matching all ?
-                if (Boolean.TRUE.equals(selectionCriteria.getIndexShardSet().getMatchAll())) {
-                    selectionCriteria.getIndexShardSet().setMatchAll(false);
-                    selectionCriteria.getIndexShardSet().addAll(getResultStreamIdSet());
+                if (Boolean.TRUE.equals(selectionCriteria.getIndexShardIdSet().getMatchAll())) {
+                    selectionCriteria.getIndexShardIdSet().setMatchAll(false);
+                    selectionCriteria.getIndexShardIdSet().addAll(getResultStreamIdSet());
                 }
-                selectionCriteria.getIndexShardSet().remove(row);
+                selectionCriteria.getIndexShardIdSet().remove(row.getId());
             }
             getView().redrawHeaders();
             enableButtons();
@@ -223,7 +223,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
                 TooltipUtil.addRowData(html, "Index UUID", String.valueOf(indexShard.getIndexUuid()));
                 TooltipUtil.addRowData(html, "Shard Id", String.valueOf(indexShard.getId()));
-                TooltipUtil.addRowData(html, "Node", indexShard.getNode().getName());
+                TooltipUtil.addRowData(html, "Node", indexShard.getNodeName());
                 TooltipUtil.addRowData(html, "Partition", indexShard.getPartition());
                 if (indexShard.getPartitionFromTime() != null) {
                     TooltipUtil.addRowData(html, "Partition From",
@@ -257,7 +257,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
             @Override
             public String getValue(final IndexShard indexShard) {
-                return indexShard.getNode().getName();
+                return indexShard.getNodeName();
             }
         }, "Node", 100);
     }
@@ -415,15 +415,15 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private void onChangeData(final ResultList<IndexShard> data) {
         resultList = data;
 
-        if (!Boolean.TRUE.equals(selectionCriteria.getIndexShardSet().getMatchAll())) {
-            if (selectionCriteria.getIndexShardSet().getSet().retainAll(getResultStreamIdSet())) {
+        if (!Boolean.TRUE.equals(selectionCriteria.getIndexShardIdSet().getMatchAll())) {
+            if (selectionCriteria.getIndexShardIdSet().getSet().retainAll(getResultStreamIdSet())) {
                 enableButtons();
             }
         }
     }
 
     private void flush() {
-        if (Boolean.TRUE.equals(selectionCriteria.getIndexShardSet().getMatchAll())) {
+        if (Boolean.TRUE.equals(selectionCriteria.getIndexShardIdSet().getMatchAll())) {
             ConfirmEvent.fire(this, "Are you sure you want to flush the selected index shards?", result -> {
                 if (result) {
                     ConfirmEvent.fire(IndexShardPresenter.this,
@@ -435,7 +435,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                             });
                 }
             });
-        } else if (selectionCriteria.getIndexShardSet().isConstrained()) {
+        } else if (selectionCriteria.getIndexShardIdSet().isConstrained()) {
             ConfirmEvent.fire(this, "Are you sure you want to flush the selected index shards?", result -> {
                 if (result) {
                     doFlush();
@@ -448,7 +448,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     private void delete() {
-        if (Boolean.TRUE.equals(selectionCriteria.getIndexShardSet().getMatchAll())) {
+        if (Boolean.TRUE.equals(selectionCriteria.getIndexShardIdSet().getMatchAll())) {
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected index shards?",
                     result -> {
                         if (result) {
@@ -461,7 +461,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                                     });
                         }
                     });
-        } else if (selectionCriteria.getIndexShardSet().isConstrained()) {
+        } else if (selectionCriteria.getIndexShardIdSet().isConstrained()) {
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected index shards?",
                     result -> {
                         if (result) {

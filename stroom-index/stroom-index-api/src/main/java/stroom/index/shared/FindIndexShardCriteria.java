@@ -16,15 +16,12 @@
 
 package stroom.index.shared;
 
+import stroom.docref.DocRef;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
-import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.Range;
 import stroom.entity.shared.StringCriteria;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.node.shared.Node;
-import stroom.node.shared.VolumeEntity;
-import stroom.docref.DocRef;
 
 public class FindIndexShardCriteria extends BaseCriteria {
     public static final String FIELD_PARTITION = "Partition";
@@ -33,7 +30,7 @@ public class FindIndexShardCriteria extends BaseCriteria {
     private CriteriaSet<String> nodeNameSet = new CriteriaSet<>();
     private CriteriaSet<Long> volumeIdSet = new CriteriaSet<>();
     private CriteriaSet<DocRef> indexSet = new CriteriaSet<>();
-    private EntityIdSet<IndexShard> indexShardSet = new EntityIdSet<>();
+    private CriteriaSet<Long> indexShardIdSet = new CriteriaSet<>();
     private CriteriaSet<IndexShardStatus> indexShardStatusSet = new CriteriaSet<>();
     private StringCriteria partition = new StringCriteria();
 
@@ -47,7 +44,7 @@ public class FindIndexShardCriteria extends BaseCriteria {
         volumeIdSet.copyFrom(criteria.volumeIdSet);
         documentCountRange = criteria.documentCountRange;
         indexSet.copyFrom(criteria.indexSet);
-        indexShardSet.copyFrom(criteria.indexShardSet);
+        indexShardIdSet.copyFrom(criteria.indexShardIdSet);
         indexShardStatusSet.copyFrom(criteria.indexShardStatusSet);
         partition.copyFrom(criteria.partition);
     }
@@ -68,8 +65,8 @@ public class FindIndexShardCriteria extends BaseCriteria {
         return indexSet;
     }
 
-    public EntityIdSet<IndexShard> getIndexShardSet() {
-        return indexShardSet;
+    public CriteriaSet<Long> getIndexShardIdSet() {
+        return indexShardIdSet;
     }
 
     public CriteriaSet<String> getNodeNameSet() {

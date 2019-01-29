@@ -20,6 +20,7 @@ import org.apache.lucene.store.LockObtainFailedException;
 import stroom.docref.DocRef;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
@@ -477,7 +478,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         try {
             LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
             indexShard.setStatus(IndexShardStatus.CLOSED);
-            indexShardService.save(indexShard);
+            indexShardService.setStatus(indexShard.getId(), IndexShardStatus.CLOSED);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }

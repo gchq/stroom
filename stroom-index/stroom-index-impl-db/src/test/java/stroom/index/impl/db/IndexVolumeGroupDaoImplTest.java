@@ -13,7 +13,6 @@ import stroom.index.dao.IndexVolumeGroupDao;
 import stroom.index.shared.IndexVolumeGroup;
 
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;

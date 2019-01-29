@@ -11,8 +11,6 @@ public interface IndexVolumeDao {
 
     void delete(Long id);
 
-    List<IndexVolume> getVolumesOnNode(String nodeName);
-
     List<IndexVolume> getVolumesInGroup(String groupName);
 
     List<IndexVolume> getVolumesInGroupOnNode(String groupName, String nodeName);

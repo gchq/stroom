@@ -17,12 +17,26 @@
 
 package stroom.index;
 
-import stroom.entity.BaseEntityService;
-import stroom.entity.FindService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 
-public interface IndexShardService extends BaseEntityService<IndexShard>, FindService<IndexShard, FindIndexShardCriteria> {
+import java.util.List;
+
+public interface IndexShardService {
+    IndexShard loadById(Long id);
+
+    List<IndexShard> find(FindIndexShardCriteria criteria);
+
     IndexShard createIndexShard(IndexShardKey indexShardKey, String ownerNodeName);
+
+    Boolean delete(IndexShard entity);
+
+    Boolean setStatus(Long id, IndexShard.IndexShardStatus status);
+
+    void update(long indexShardId,
+                Integer documentCount,
+                Long commitDurationMs,
+                Long commitMs,
+                Long fileSize);
 }

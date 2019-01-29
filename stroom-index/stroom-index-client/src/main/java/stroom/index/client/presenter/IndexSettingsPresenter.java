@@ -97,12 +97,6 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
         indexVolumeListPresenter.write(index);
     }
 
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        indexVolumeListPresenter.onReadOnly(readOnly);
-    }
-
     public interface IndexSettingsView extends View, ReadOnlyChangeHandler, HasUiHandlers<IndexSettingsUiHandlers> {
         TextArea getDescription();
 

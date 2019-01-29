@@ -22,13 +22,13 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.index.client.presenter.IndexPresenter;
 import stroom.index.shared.IndexDoc;
-import stroom.docref.DocRef;
 
 public class IndexPlugin extends DocumentPlugin<IndexDoc> {
     private final Provider<IndexPresenter> editorProvider;

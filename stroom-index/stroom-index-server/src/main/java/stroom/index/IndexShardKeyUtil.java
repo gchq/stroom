@@ -55,7 +55,11 @@ public final class IndexShardKeyUtil {
         final String partition = ALL;
         final int shardNo = SEQUENCE.next(index.getShardsPerPartition());
 
-        return new IndexShardKey(index.getUuid(), partition, null, null, shardNo);
+        return new IndexShardKey.Builder()
+                .indexUuid(index.getUuid())
+                .partition(partition)
+                .shardNo(shardNo)
+                .build();
     }
 
     public static IndexShardKey createTimeBasedPartition(final IndexDoc index, final long timeMs) {
@@ -120,7 +124,13 @@ public final class IndexShardKeyUtil {
             partitionToTime = dateTo.atStartOfDay(UTC).toInstant().toEpochMilli();
         }
 
-        return new IndexShardKey(index.getUuid(), partition, partitionFromTime, partitionToTime, shardNo);
+        return new IndexShardKey.Builder()
+                .indexUuid(index.getUuid())
+                .partition(partition)
+                .partitionFromTime(partitionFromTime)
+                .partitionToTime(partitionToTime)
+                .shardNo(shardNo)
+                .build();
     }
 
     private static LocalDate roundDown(final LocalDate dateTime, final TemporalUnit temporalUnit, final int size) {

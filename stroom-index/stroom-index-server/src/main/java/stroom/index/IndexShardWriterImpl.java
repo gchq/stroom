@@ -28,6 +28,7 @@ import org.apache.lucene.store.NIOFSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.index.analyzer.AnalyzerFactory;
+import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexShard;
@@ -362,7 +363,11 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         return documentCount.get();
     }
 
-    private void update(final long indexShardId, final Integer documentCount, final Long commitDurationMs, final Long commitMs, final Long fileSize) {
+    private void update(final long indexShardId,
+                        final Integer documentCount,
+                        final Long commitDurationMs,
+                        final Long commitMs,
+                        final Long fileSize) {
         if (indexShardManager != null) {
             indexShardManager.update(indexShardId, documentCount, commitDurationMs, commitMs, fileSize);
         }

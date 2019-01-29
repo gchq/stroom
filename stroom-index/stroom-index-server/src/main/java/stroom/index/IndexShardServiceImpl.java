@@ -17,102 +17,65 @@
 
 package stroom.index;
 
-import event.logging.BaseAdvancedQueryItem;
 import stroom.docref.DocRef;
-import stroom.entity.CriteriaLoggingUtil;
-import stroom.entity.QueryAppender;
-import stroom.entity.StroomEntityManager;
-import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.shared.PermissionException;
-import stroom.entity.shared.SQLNameConstants;
-import stroom.entity.util.FieldMap;
-import stroom.entity.util.HqlBuilder;
+import stroom.index.dao.IndexShardDao;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexVolume;
-import stroom.node.shared.Node;
-import stroom.node.shared.VolumeEntity;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
-import java.util.Set;
 
 @Singleton
-public class IndexShardServiceImpl
-        extends SystemEntityServiceImpl<IndexShard, FindIndexShardCriteria> implements IndexShardService {
+public class IndexShardServiceImpl implements IndexShardService {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardServiceImpl.class);
 
     private final Security security;
     private final IndexVolumeService indexVolumeService;
     private final IndexStructureCache indexStructureCache;
     private final SecurityContext securityContext;
+    private final IndexShardDao indexShardDao;
 
     @Inject
-    IndexShardServiceImpl(final StroomEntityManager entityManager,
-                          final Security security,
+    IndexShardServiceImpl(final Security security,
                           final IndexVolumeService indexVolumeService,
                           final IndexStructureCache indexStructureCache,
-                          final SecurityContext securityContext) {
-        super(entityManager, security);
+                          final SecurityContext securityContext,
+                          final IndexShardDao indexShardDao) {
         this.security = security;
         this.indexVolumeService = indexVolumeService;
         this.indexStructureCache = indexStructureCache;
         this.securityContext = securityContext;
+        this.indexShardDao = indexShardDao;
     }
 
     @Override
-    public IndexShard createIndexShard(final IndexShardKey indexShardKey, final String ownerNodeName) {
+    public IndexShard loadById(final Long id) {
+        return indexShardDao.loadById(id);
+    }
+
+    @Override
+    public List<IndexShard> find(final FindIndexShardCriteria criteria) {
+        return indexShardDao.find(criteria);
+    }
+
+    @Override
+    public IndexShard createIndexShard(final IndexShardKey indexShardKey,
+                                       final String ownerNodeName) {
         final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
         final IndexDoc index = indexStructure.getIndex();
-        final List<IndexVolume> volumes = indexVolumeService.getVolumesInGroupOnNode(index.getVolumeGroupName(), ownerNodeName);
-        if (volumes == null || volumes.size() == 0) {
-            throw new IndexException("No shard can be created as no volumes are available for index: " + index.getName()
-                    + " (" + index.getUuid() + ")");
-        }
 
-        // The first set should be a set of cache volumes unless no caches have
-        // been defined or they are full.
-        final IndexVolume volume = volumes.iterator().next();
-
-        final IndexShard indexShard = new IndexShard();
-        indexShard.setIndexUuid(index.getUuid());
-        indexShard.setNodeName(ownerNodeName);
-        indexShard.setPartition(indexShardKey.getPartition());
-        indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
-        indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
-        indexShard.setVolume(volume);
-        indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
-
-        return save(indexShard);
-    }
-
-    @Override
-    public Class<IndexShard> getEntityClass() {
-        return IndexShard.class;
-    }
-
-    @Override
-    public FindIndexShardCriteria createCriteria() {
-        return new FindIndexShardCriteria();
-    }
-
-    @Override
-    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindIndexShardCriteria criteria) {
-        CriteriaLoggingUtil.appendRangeTerm(items, "documentCountRange", criteria.getDocumentCountRange());
-        //TODO include these when converting to jOOQ
-        //CriteriaLoggingUtil.appendEntityIdSet(items, "nodeIdSet", criteria.getNodeIdSet());
-        //CriteriaLoggingUtil.appendEntityIdSet(items, "volumeIdSet", criteria.getVolumeIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "indexIdSet", criteria.getIndexShardSet());
-        CriteriaLoggingUtil.appendCriteriaSet(items, "indexShardStatusSet", criteria.getIndexShardStatusSet());
-        CriteriaLoggingUtil.appendStringTerm(items, "partition", criteria.getPartition().getString());
-
-        super.appendCriteria(items, criteria);
+        return indexShardDao.create(indexShardKey, index.getVolumeGroupName(), ownerNodeName, LuceneVersionUtil.getCurrentVersion());
     }
 
     @Override
@@ -122,57 +85,29 @@ public class IndexShardServiceImpl
                 throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete index shard");
             }
 
-            return super.delete(entity);
+            indexShardDao.delete(entity.getId());
+
+            return Boolean.TRUE;
         });
     }
 
     @Override
-    protected QueryAppender<IndexShard, FindIndexShardCriteria> createQueryAppender(StroomEntityManager entityManager) {
-        return new IndexShardQueryAppender(entityManager);
+    public Boolean setStatus(final Long id,
+                             final IndexShard.IndexShardStatus status) {
+        indexShardDao.setStatus(id, status);
+        return Boolean.TRUE;
     }
 
     @Override
-    protected FieldMap createFieldMap() {
-        return super.createFieldMap()
-                .add(FindIndexShardCriteria.FIELD_PARTITION, SQLNameConstants.PARTITION, "partition");
-    }
-
-    @Override
-    protected String permission() {
-        return null;
-    }
-
-    private static class IndexShardQueryAppender extends QueryAppender<IndexShard, FindIndexShardCriteria> {
-        IndexShardQueryAppender(final StroomEntityManager entityManager) {
-            super(entityManager);
-        }
-
-        @Override
-        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
-            super.appendBasicJoin(sql, alias, fetchSet);
-            if (fetchSet != null) {
-                if (fetchSet.contains(Node.ENTITY_TYPE)) {
-                    sql.append(" INNER JOIN FETCH " + alias + ".node");
-                }
-                if (fetchSet.contains(VolumeEntity.ENTITY_TYPE)) {
-                    sql.append(" INNER JOIN FETCH " + alias + ".volume");
-                }
-            }
-        }
-
-        @Override
-        protected void appendBasicCriteria(final HqlBuilder sql, final String alias,
-                                           final FindIndexShardCriteria criteria) {
-            super.appendBasicCriteria(sql, alias, criteria);
-
-            sql.appendDocRefSetQuery(alias + ".indexUuid", criteria.getIndexSet());
-            sql.appendEntityIdSetQuery(alias, criteria.getIndexShardSet());
-            // TODO include these in jOOQ
-            //sql.appendPrimitiveValueSetQuery(alias + ".node", criteria.getNodeIdSet());
-            //sql.appendEntityIdSetQuery(alias + ".volume", criteria.getVolumeIdSet());
-            sql.appendPrimitiveValueSetQuery(alias + ".pstatus", criteria.getIndexShardStatusSet());
-            sql.appendRangeQuery(alias + ".documentCount", criteria.getDocumentCountRange());
-            sql.appendValueQuery(alias + ".partition", criteria.getPartition());
-        }
+    public void update(final long indexShardId,
+                       final Integer documentCount,
+                       final Long commitDurationMs,
+                       final Long commitMs,
+                       final Long fileSize) {
+        // Output some debug so we know how long commits are taking.
+        LOGGER.debug(() -> String.format("Documents written %s (%s)",
+                documentCount,
+                ModelStringUtil.formatDurationString(commitDurationMs)));
+        indexShardDao.update(indexShardId, documentCount, commitDurationMs, commitMs, fileSize);
     }
 }

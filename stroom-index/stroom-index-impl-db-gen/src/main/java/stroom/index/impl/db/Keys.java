@@ -4,13 +4,10 @@
 package stroom.index.impl.db;
 
 
-import javax.annotation.Generated;
-
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.UniqueKey;
 import org.jooq.impl.Internal;
-
 import stroom.index.impl.db.tables.IndexShard;
 import stroom.index.impl.db.tables.IndexVolume;
 import stroom.index.impl.db.tables.IndexVolumeGroup;
@@ -19,6 +16,8 @@ import stroom.index.impl.db.tables.records.IndexShardRecord;
 import stroom.index.impl.db.tables.records.IndexVolumeGroupLinkRecord;
 import stroom.index.impl.db.tables.records.IndexVolumeGroupRecord;
 import stroom.index.impl.db.tables.records.IndexVolumeRecord;
+
+import javax.annotation.Generated;
 
 
 /**

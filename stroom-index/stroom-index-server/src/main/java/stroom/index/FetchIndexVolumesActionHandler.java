@@ -18,7 +18,6 @@ package stroom.index;
 
 import stroom.index.shared.FetchIndexVolumesAction;
 import stroom.index.shared.IndexVolume;
-import stroom.node.shared.VolumeEntity;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.SharedList;

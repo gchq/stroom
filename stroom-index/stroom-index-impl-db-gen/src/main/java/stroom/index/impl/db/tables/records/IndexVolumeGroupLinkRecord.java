@@ -4,14 +4,13 @@
 package stroom.index.impl.db.tables.records;
 
 
-import javax.annotation.Generated;
-
 import org.jooq.Field;
 import org.jooq.Record2;
 import org.jooq.Row2;
 import org.jooq.impl.TableRecordImpl;
-
 import stroom.index.impl.db.tables.IndexVolumeGroupLink;
+
+import javax.annotation.Generated;
 
 
 /**

@@ -23,7 +23,6 @@ import stroom.importexport.api.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 import stroom.index.shared.IndexFields;
 
-import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
 /**
@@ -87,7 +86,6 @@ public class OldIndex extends DocumentEntity {
         this.shardsPerPartition = shardsPerPartition;
     }
 
-    @Transient
     public PartitionBy getPartitionBy() {
         if (pPartitionBy == null) {
             return null;
@@ -120,7 +118,6 @@ public class OldIndex extends DocumentEntity {
         this.indexFields = indexFields;
     }
 
-    @Transient
     @XmlTransient
     public IndexFields getIndexFieldsObject() {
         return indexFieldsObject;
@@ -130,7 +127,6 @@ public class OldIndex extends DocumentEntity {
         this.indexFieldsObject = indexFieldsObject;
     }
 
-    @Transient
     public final String getType() {
         return ENTITY_TYPE;
     }

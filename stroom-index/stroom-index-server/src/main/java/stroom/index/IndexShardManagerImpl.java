@@ -31,7 +31,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -322,7 +321,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                     final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
                     if (allowed.contains(status)) {
                         indexShard.setStatus(status);
-                        indexShardService.save(indexShard);
+                        indexShardService.setStatus(indexShard.getId(), status);
                     }
                 }
             } catch (final RuntimeException e) {
@@ -334,36 +333,21 @@ public class IndexShardManagerImpl implements IndexShardManager {
     }
 
     @Override
-    public void update(final long indexShardId, final Integer documentCount, final Long commitDurationMs, final Long commitMs, final Long fileSize) {
+    public void update(final long indexShardId,
+                       final Integer documentCount,
+                       final Long commitDurationMs,
+                       final Long commitMs,
+                       final Long fileSize) {
         // Allow the thing to run without a service (e.g. benchmark mode)
         if (indexShardService != null) {
             final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
             lock.lock();
             try {
-                final IndexShard indexShard = indexShardService.loadById(indexShardId);
-
-                if (documentCount != null) {
-                    indexShard.setDocumentCount(documentCount);
-                    indexShard.setCommitDocumentCount(documentCount - indexShard.getDocumentCount());
-
-                    // Output some debug so we know how long commits are taking.
-                    LOGGER.debug(() -> {
-                        final String durationString = ModelStringUtil.formatDurationString(commitDurationMs);
-                        return "Documents written since last update " + (documentCount - indexShard.getDocumentCount()) + " ("
-                                + durationString + ")";
-                    });
-                }
-                if (commitDurationMs != null) {
-                    indexShard.setCommitDurationMs(commitDurationMs);
-                }
-                if (commitMs != null) {
-                    indexShard.setCommitMs(commitMs);
-                }
-                if (fileSize != null) {
-                    indexShard.setFileSize(fileSize);
-                }
-
-                indexShardService.save(indexShard);
+                indexShardService.update(indexShardId,
+                        documentCount,
+                        commitDurationMs,
+                        commitMs,
+                        fileSize);
             } finally {
                 lock.unlock();
             }

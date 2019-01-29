@@ -19,7 +19,6 @@ package stroom.index;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.EntityTypeBinder;
-import stroom.entity.FindService;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityEvent;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -70,8 +69,10 @@ public class IndexModule extends AbstractModule {
         EntityTypeBinder.create(binder())
                 .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
 
-        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-//        findServiceBinder.addBinding().to(stroom.index.IndexStoreImpl.class);
-        findServiceBinder.addBinding().to(stroom.index.IndexShardServiceImpl.class);
+        // TODO Shards are no longer Findable Entities
+//
+//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+////        findServiceBinder.addBinding().to(stroom.index.IndexStoreImpl.class);
+//        findServiceBinder.addBinding().to(stroom.index.IndexShardServiceImpl.class);
     }
 }
