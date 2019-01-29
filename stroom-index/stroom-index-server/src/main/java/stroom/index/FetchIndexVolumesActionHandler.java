@@ -16,6 +16,7 @@
 
 package stroom.index;
 
+import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.FetchIndexVolumesAction;
 import stroom.index.shared.IndexVolume;
 import stroom.security.Security;

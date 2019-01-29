@@ -6,7 +6,6 @@ import stroom.index.shared.IndexVolumeGroup;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
-
 import java.util.List;
 
 import static stroom.index.impl.db.Tables.INDEX_VOLUME_GROUP;

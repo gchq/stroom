@@ -31,7 +31,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.IndexStore;
-import stroom.index.IndexVolumeService;
+import stroom.index.service.IndexVolumeService;
 import stroom.volume.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;

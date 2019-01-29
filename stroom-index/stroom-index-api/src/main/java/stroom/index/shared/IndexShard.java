@@ -20,7 +20,6 @@ import stroom.docref.HasDisplayValue;
 import stroom.docref.SharedObject;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
-import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.ModelStringUtil;
 
 import java.util.Arrays;

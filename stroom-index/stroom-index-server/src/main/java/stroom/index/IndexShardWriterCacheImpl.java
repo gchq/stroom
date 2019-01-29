@@ -18,6 +18,7 @@ package stroom.index;
 
 import org.apache.lucene.store.LockObtainFailedException;
 import stroom.docref.DocRef;
+import stroom.index.service.IndexShardService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexException;

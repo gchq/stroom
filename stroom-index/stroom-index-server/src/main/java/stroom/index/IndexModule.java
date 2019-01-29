@@ -24,6 +24,8 @@ import stroom.entity.shared.EntityEvent;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.impl.db.IndexDbModule;
+import stroom.index.service.IndexShardService;
+import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.CloseIndexShardAction;
 import stroom.index.shared.DeleteIndexShardAction;
 import stroom.index.shared.FetchIndexVolumesAction;

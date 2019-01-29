@@ -19,6 +19,8 @@ package stroom.index;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.index.service.IndexShardService;
+import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.api.NodeInfo;

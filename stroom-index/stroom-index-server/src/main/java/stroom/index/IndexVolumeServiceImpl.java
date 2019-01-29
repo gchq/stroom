@@ -1,6 +1,7 @@
 package stroom.index;
 
 import stroom.index.dao.IndexVolumeDao;
+import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
 
 import javax.inject.Inject;

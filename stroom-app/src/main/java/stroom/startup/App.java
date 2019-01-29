@@ -48,7 +48,7 @@ import stroom.feed.RemoteFeedServiceRPC;
 import stroom.guice.AppModule;
 import stroom.importexport.impl.ExportConfigResource;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.index.StroomIndexQueryResource;
+import stroom.index.StroomIndexQueryResourceImpl;
 import stroom.lifecycle.impl.LifecycleService;
 import stroom.persist.PersistLifecycle;
 import stroom.pipeline.PipelineResource;
@@ -251,7 +251,7 @@ public class App extends Application<Config> {
 //        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ServiceDiscoveryRegistrar.class);
 //        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ServiceDiscovererImpl.class);
 //        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, SqlStatisticsQueryResource.class);
-//        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, StroomIndexQueryResource.class);
+//        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, StroomIndexQueryResourceImpl.class);
 //        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, DictionaryResource.class);
 //        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, DictionaryResource2.class);
 //        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RuleSetResource.class);
@@ -293,7 +293,7 @@ public class App extends Application<Config> {
         GuiceUtil.addResource(environment.jersey(), injector, ExportConfigResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource2.class);
-        GuiceUtil.addResource(environment.jersey(), injector, StroomIndexQueryResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, StroomIndexQueryResourceImpl.class);
         GuiceUtil.addResource(environment.jersey(), injector, SqlStatisticsQueryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, AuthorisationResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, UserResourceImpl.class);

@@ -27,7 +27,7 @@ import stroom.data.store.api.StreamTargetUtil;
 import stroom.docref.DocRef;
 import stroom.data.meta.shared.StroomHeaderArguments;
 import stroom.index.IndexStore;
-import stroom.index.IndexVolumeService;
+import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;

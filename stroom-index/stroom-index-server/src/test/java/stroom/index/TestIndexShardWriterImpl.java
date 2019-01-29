@@ -18,6 +18,7 @@
 package stroom.index;
 
 import org.junit.jupiter.api.Test;
+import stroom.index.service.IndexShardService;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 
