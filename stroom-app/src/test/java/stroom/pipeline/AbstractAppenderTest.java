@@ -17,6 +17,8 @@
 package stroom.pipeline;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.data.meta.shared.Data;
 import stroom.data.meta.shared.DataMetaService;
 import stroom.data.meta.shared.FindDataCriteria;
@@ -64,6 +66,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAppenderTest.class);
+
     @Inject
     private Provider<PipelineFactory> pipelineFactoryProvider;
     @Inject
@@ -92,8 +96,13 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     private LoggingErrorReceiver loggingErrorReceiver;
 
     void test(final String name, final String type) {
-        // Delete everything in the temp dir.
-        FileUtil.deleteContents(FileUtil.getTempDir());
+
+        final Path tempDir = getCurrentTestDir();
+
+        // Make sure the config dir is set.
+        FileUtil.setTempDir(tempDir);
+
+        LOGGER.debug("Setting tempDir to {}", FileUtil.getCanonicalPath(tempDir));
 
         final String dir = name + "/";
         final String stem = dir + name + "_" + type;
