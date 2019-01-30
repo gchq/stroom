@@ -22,6 +22,7 @@ package stroom.search.manualtesting;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dictionary.api.DictionaryStore;
@@ -42,7 +43,8 @@ import stroom.search.shard.IndexShardSearchConfig;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
-import stroom.util.io.FileUtil;
+import stroom.util.test.TempDir;
+import stroom.util.test.TempDirExtension;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
@@ -60,6 +62,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 // This spring/junit configuration is copied from AbstractCoreIntegrationTest and StroomIntegrationTest
 // and it is so we can manually run tests using state from a previous run.
 
+@ExtendWith(TempDirExtension.class)
 class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestGroupedCountsInteractiveSearch.class);
 
@@ -70,7 +73,9 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     private static final int STREAM_ROW_COUNT = 100_000;
     private static final int STREAM_COUNT = 100;
     private static final int MAX_DOCS_PER_SHARD = 10_000;
-    Path testDir = FileUtil.getTempDir();
+
+    @TempDir
+    Path testDir;
     @Inject
     private CommonIndexingTest commonIndexingTest;
     @Inject

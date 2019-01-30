@@ -17,8 +17,6 @@
 package stroom.resource.impl;
 
 import org.junit.jupiter.api.Test;
-import stroom.resource.impl.ResourceStoreImpl;
-import stroom.util.io.FileUtil;
 import stroom.util.shared.ResourceKey;
 
 import java.io.IOException;
@@ -31,7 +29,6 @@ class TestResourceStore {
     @Test
     void testSimple() throws IOException {
         final ResourceStoreImpl resourceStore = new ResourceStoreImpl();
-        FileUtil.getTempDir();
         resourceStore.execute();
 
         final ResourceKey key1 = resourceStore.createTempFile("TestResourceStore1.dat");
