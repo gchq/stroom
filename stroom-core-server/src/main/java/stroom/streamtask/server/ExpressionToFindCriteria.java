@@ -2,6 +2,7 @@ package stroom.streamtask.server;
 
 import org.springframework.stereotype.Component;
 import stroom.dictionary.server.DictionaryStore;
+import stroom.entity.server.EntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
@@ -376,6 +377,8 @@ public class ExpressionToFindCriteria {
             if (pipeline != null) {
                 return Collections.singleton(pipeline);
             }
+        } catch(final EntityServiceException e) {
+            throw e;
         } catch (final Exception e) {
             // Ignore.
             exceptionMsgs.append(String.format(", ByUuid: %s", e.getLocalizedMessage()));
@@ -389,6 +392,8 @@ public class ExpressionToFindCriteria {
             if (list != null) {
                 return new HashSet<>(list);
             }
+        } catch(final EntityServiceException e) {
+            throw e;
         } catch (final Exception e) {
             // Ignore.
             exceptionMsgs.append(String.format(", ByName: %s", e.getLocalizedMessage()));
@@ -460,8 +465,9 @@ public class ExpressionToFindCriteria {
         try {
             return getDate(term.getField(), trimmed, context);
         } catch (final RuntimeException e) {
-            final String errorMsg = "Unexpected value '" + value + "' used for " + term.getField();
-            throw new EntityServiceException(errorMsg, e);
+            final String errorMsg = String.format("Unexpected value '%s' used for %s: %s",
+                    value, term.getField(), e.getMessage());
+            throw new EntityServiceException(errorMsg);
         }
     }
 
@@ -470,9 +476,9 @@ public class ExpressionToFindCriteria {
             //empty optional will be caught below
             return DateExpressionParser.parse(value, context.timeZoneId, context.nowEpochMilli).get().toInstant().toEpochMilli();
         } catch (final Exception e) {
-            final String msg = String.format("Expected a standard date value for field \"%s\" but was given string \"%s\"",
-                    fieldName, value);
-            throw new EntityServiceException(msg, e);
+            final String msg = String.format("Expected a standard date value for field '%s' but was given string '%s': %s",
+                    fieldName, value, e.getLocalizedMessage());
+            throw new EntityServiceException(msg);
         }
     }
 
@@ -506,7 +512,7 @@ public class ExpressionToFindCriteria {
                     }
                     break;
                 default:
-                    final String errorMsg = "Unexpected condition '" + term.getCondition() + "' used for " + term.getField();
+                    final String errorMsg = String.format("Unexpected condition '%s' used for %s", term.getCondition(), term.getField());
                     throw new EntityServiceException(errorMsg);
             }
         }
@@ -537,13 +543,15 @@ public class ExpressionToFindCriteria {
             try {
                 T val = mapping.apply(value);
                 if (val == null) {
-                    final String errorMsg = "Unexpected value '" + value + "' used for " + field;
+                    final String errorMsg = String.format("Unexpected value '%s' used for %s", value, field);
                     throw new EntityServiceException(errorMsg);
                 }
                 set.add(val);
+            } catch(final EntityServiceException e) {
+                throw e;
             } catch (final Exception e) {
-                final String errorMsg = String.format("Unexpected value '%s' used for %s", value, field);
-                throw new EntityServiceException(errorMsg, e);
+                final String errorMsg = String.format("Unexpected value '%s' used for %s: %s", value, field, e.getLocalizedMessage());
+                throw new EntityServiceException(errorMsg);
             }
         }
 
@@ -570,13 +578,15 @@ public class ExpressionToFindCriteria {
             try {
                 final Set<T> val = mapping.apply(value);
                 if (val == null) {
-                    final String errorMsg = "Unexpected value '" + value + "' used for " + field;
+                    final String errorMsg = String.format("Unexpected value '%s' used for %s", value, field);
                     throw new EntityServiceException(errorMsg);
                 }
                 entityIdSet.addAllEntities(val);
+            } catch(final EntityServiceException e) {
+                throw e;
             } catch (final Exception e) {
-                final String errorMsg = "Unexpected value '" + value + "' used for " + field;
-                throw new EntityServiceException(errorMsg, e);
+                final String errorMsg = String.format("Unexpected value '%s' used for %s: %s", value, field, e.getLocalizedMessage());
+                throw new EntityServiceException(errorMsg);
             }
         }
 
@@ -603,13 +613,15 @@ public class ExpressionToFindCriteria {
             try {
                 Long val = mapping.apply(value);
                 if (val == null) {
-                    final String errorMsg = "Unexpected value '" + value + "' used for " + field;
+                    final String errorMsg = String.format("Unexpected value '%s' used for %s", value, field);
                     throw new EntityServiceException(errorMsg);
                 }
                 entityIdSet.add(val);
+            } catch(final EntityServiceException e) {
+                throw e;
             } catch (final Exception e) {
-                final String errorMsg = "Unexpected value '" + value + "' used for " + field;
-                throw new EntityServiceException(errorMsg, e);
+                final String errorMsg = String.format("Unexpected value '%s' used for %s: %s", value, field, e.getLocalizedMessage());
+                throw new EntityServiceException(errorMsg);
             }
         }
 

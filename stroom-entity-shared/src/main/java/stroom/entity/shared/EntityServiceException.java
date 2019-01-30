@@ -47,10 +47,6 @@ public class EntityServiceException extends RuntimeException {
         super(message);
     }
 
-    public EntityServiceException(final String message, final Throwable cause) {
-        super(message, cause);
-    }
-
     public EntityServiceException(final String message, final String causeClassName, final boolean networkRelated) {
         super(message);
         this.causeClassName = causeClassName;
