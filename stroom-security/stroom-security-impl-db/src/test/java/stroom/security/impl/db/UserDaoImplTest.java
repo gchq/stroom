@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class UserDaoImplTest {
+class UserDaoImplTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserDaoImplTest.class);
 
     private static MySQLContainer dbContainer = new MySQLContainer()
@@ -29,7 +29,7 @@ public class UserDaoImplTest {
     private static UserDao userDao;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         LOGGER.info(() -> "Before All - Start Database");
         Optional.ofNullable(dbContainer)
                 .ifPresent(MySQLContainer::start);
@@ -40,7 +40,7 @@ public class UserDaoImplTest {
     }
 
     @Test
-    public void createAndGetUser() {
+    void createAndGetUser() {
         // Given
         final String userName = String.format("SomeTestPerson_%s", UUID.randomUUID());
 
@@ -64,7 +64,7 @@ public class UserDaoImplTest {
     }
 
     @Test
-    public void createUserGroup() {
+    void createUserGroup() {
         // Given
         final String userName = String.format("SomeTestPerson_%s", UUID.randomUUID());
 
@@ -88,7 +88,7 @@ public class UserDaoImplTest {
     }
 
     @Test
-    public void deleteUser() {
+    void deleteUser() {
         // Given
         final String userName = String.format("SomeTestPerson_%s", UUID.randomUUID());
 
@@ -105,7 +105,7 @@ public class UserDaoImplTest {
     }
 
     @Test
-    public void findUsersInGroup() {
+    void findUsersInGroup() {
         // Given
         final List<String> userNames = IntStream.range(0, 3)
                 .mapToObj(i -> String.format("SomePerson_%s", UUID.randomUUID()))
@@ -130,7 +130,7 @@ public class UserDaoImplTest {
     }
 
     @Test
-    public void findGroupsForUser() {
+    void findGroupsForUser() {
         // Given
         final List<String> userNames = IntStream.range(0, 3)
                 .mapToObj(i -> String.format("SomePerson_%s", UUID.randomUUID()))
@@ -162,7 +162,7 @@ public class UserDaoImplTest {
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         LOGGER.info(() -> "After All - Stop Database");
         Optional.ofNullable(dbContainer)
                 .ifPresent(MySQLContainer::stop);

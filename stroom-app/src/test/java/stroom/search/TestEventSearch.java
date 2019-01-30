@@ -54,7 +54,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestEventSearch extends AbstractSearchTest {
     private static boolean doneSetup;
     @Inject
-    private CommonIndexingTest commonIndexingTest;
+    private CommonIndexingTestHelper commonIndexingTestHelper;
     @Inject
     private IndexStore indexStore;
 
@@ -62,7 +62,7 @@ class TestEventSearch extends AbstractSearchTest {
     public void onBefore() {
         if (!doneSetup) {
             doneSetup = true;
-            commonIndexingTest.setup();
+            commonIndexingTestHelper.setup();
         }
     }
 
@@ -179,7 +179,7 @@ class TestEventSearch extends AbstractSearchTest {
                 .format(Format.Type.DATE_TIME)
                 .build();
 
-        final DocRef resultPipeline = commonIndexingTest.getSearchResultPipeline();
+        final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
         return new TableSettings(null, Arrays.asList(idField, timeField), extractValues, resultPipeline, null, null);
     }
 

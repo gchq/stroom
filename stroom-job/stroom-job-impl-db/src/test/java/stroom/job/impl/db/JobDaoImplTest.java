@@ -16,7 +16,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class JobDaoImplTest {
+class JobDaoImplTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobDaoImplTest.class);
 
     private static MySQLContainer dbContainer = new MySQLContainer()
@@ -26,7 +26,7 @@ public class JobDaoImplTest {
     private static JobDao jobDao;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         LOGGER.info(() -> "Before All - Start Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
 
@@ -36,7 +36,7 @@ public class JobDaoImplTest {
     }
 
     @Test
-    public void basicCreation() {
+    void basicCreation() {
         Job job = createStandardJob();
 
         // Then
@@ -54,7 +54,7 @@ public class JobDaoImplTest {
     }
 
     @Test
-    public void descriptionTooLong() {
+    void descriptionTooLong() {
         // Given
         Job job = new Job();
         job.setEnabled(true);
@@ -65,13 +65,13 @@ public class JobDaoImplTest {
     }
 
     @Test
-    public void badFetch(){
+    void badFetch(){
         Optional<Job> job = jobDao.fetch(11111);
         assertThat(job.isPresent()).isFalse();
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         LOGGER.info(() -> "After All - Stop Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::stop);
     }

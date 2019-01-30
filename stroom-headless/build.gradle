@@ -49,6 +49,8 @@ dependencies {
 def fatJarName = "stroom-headless-all.jar"
 
 shadowJar {
+    dependsOn test
+    
     // Allows us to build fat jars with lots of files
     zip64 true
     archiveName fatJarName

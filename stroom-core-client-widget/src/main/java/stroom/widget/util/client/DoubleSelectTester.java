@@ -23,7 +23,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.client.Timer;
 
-public class DoubleSelectTest implements HasHandlers {
+public class DoubleSelectTester implements HasHandlers {
     public static final int DOUBLE_SELECT_DELAY = 1000;
 
     private Timer doubleSelectTimer;
@@ -32,7 +32,7 @@ public class DoubleSelectTest implements HasHandlers {
 
     private EventBus eventBus;
 
-    public DoubleSelectTest() {
+    public DoubleSelectTester() {
         // Create timer to deal with double clicks.
         doubleSelectTimer = new Timer() {
             @Override

@@ -24,31 +24,6 @@ apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
 mainClassName = 'stroom.startup.App'
 
-jar {
-    //we need to first generate the swagger spec files so they can be added in to the jar
-//    mustRunAfter generateSwaggerDocumentation
-    manifest {
-        attributes(
-                "Implementation-Title": "Stroom",
-                "Implementation-Version": versions.stroom,
-                "Main-Class": "stroom.startup.App"
-        )
-    }
-    archiveName jarName
-    exclude '**/gwt-unitCache'
-}
-
-shadowJar {    
-    // Allows us to build fat jars with lots of files
-    zip64 true
-
-    // A transformer to merges files in META-INF/services
-    mergeServiceFiles()
-
-    archiveName fatJarName
-    exclude '**/gwt-unitCache'
-}
-
 dependencies {
     implementation project(':stroom-activity:stroom-activity-impl-db')
     implementation project(':stroom-cache:stroom-cache-api')
@@ -218,6 +193,33 @@ dependencies {
     testImplementation libs.dropwizard_client
     testImplementation libs.dropwizard_testing
     testImplementation libs.mockito_core
+}
+
+jar {
+    //we need to first generate the swagger spec files so they can be added in to the jar
+//    mustRunAfter generateSwaggerDocumentation
+    manifest {
+        attributes(
+                "Implementation-Title": "Stroom",
+                "Implementation-Version": versions.stroom,
+                "Main-Class": "stroom.startup.App"
+        )
+    }
+    archiveName jarName
+    exclude '**/gwt-unitCache'
+}
+
+shadowJar {
+    dependsOn test
+
+    // Allows us to build fat jars with lots of files
+    zip64 true
+
+    // A transformer to merges files in META-INF/services
+    mergeServiceFiles()
+
+    archiveName fatJarName
+    exclude '**/gwt-unitCache'
 }
 
 run {
