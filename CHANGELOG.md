@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.25] - 2019-01-30
+
 * Issue **#1079** : Improved the logging of permission errors encountered during stream processing
 
 * Issue **#1058** : Added property `stroom.pipeline.parser.secureProcessing` to enable/disable the XML secure processing feature.
@@ -1425,7 +1427,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.24...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.25...6.0
+[v6.0-beta.25]: https://github.com/gchq/stroom/compare/v6.0-beta.24...v6.0-beta.25
 [v6.0-beta.24]: https://github.com/gchq/stroom/compare/v6.0-beta.23...v6.0-beta.24
 [v6.0-beta.23]: https://github.com/gchq/stroom/compare/v6.0-beta.22...v6.0-beta.23
 [v6.0-beta.22]: https://github.com/gchq/stroom/compare/v6.0-beta.21...v6.0-beta.22
