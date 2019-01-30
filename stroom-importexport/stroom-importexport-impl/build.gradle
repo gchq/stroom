@@ -46,6 +46,7 @@ dependencies {
 
 
 
+    testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
     testImplementation libs.mockito_core

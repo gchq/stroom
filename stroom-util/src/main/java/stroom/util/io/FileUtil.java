@@ -19,6 +19,7 @@ package stroom.util.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
+import stroom.util.logging.LambdaLogger;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -85,6 +86,26 @@ public final class FileUtil {
             }
         }
 
+        return tempDir;
+    }
+
+    /**
+     * Creates a new directory in the default temporary-file directory, using the given prefix to generate its name.
+     * The directory, if empty, will be deleted on a clean JVM exit.
+     * @param prefix The prefix for the new directory's name, e.g. createTempDir(this.getClass().getSimpleName());
+     * @return The path to the new temp directory
+     */
+    public static Path createTempDir(final String prefix) {
+        final Path tempDir;
+        try {
+            tempDir = Files.createTempDirectory(prefix);
+        } catch (IOException e) {
+            throw new RuntimeException(
+                    LambdaLogger.buildMessage("Error creating temporary directory with prefix {}", prefix), e);
+        }
+        // make the jvm delete the file on jvm exit
+        tempDir.toFile().deleteOnExit();
+        LOGGER.debug("Created temp directory {}", tempDir.toAbsolutePath().toString());
         return tempDir;
     }
 

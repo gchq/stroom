@@ -103,6 +103,7 @@ public class PathCreator {
                 path,
                 STROOM_TEMP,
                 () -> FileUtil.getCanonicalPath(FileUtil.getTempDir()));
+//        () -> FileUtil.getCanonicalPath(FileUtil.getTempDir()));
 
         return SystemPropertyUtil.replaceSystemProperty(path, NON_ENV_VARS_SET);
     }
