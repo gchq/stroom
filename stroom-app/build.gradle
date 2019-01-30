@@ -210,12 +210,17 @@ jar {
 }
 
 shadowJar {
+    // We want to run the tests before we build the fat jar. 
     dependsOn test
+    // We want to compile all GWT content before we build the fat jar. 
     dependsOn ':stroom-app-gwt:gwtCompile'
     dependsOn ':stroom-dashboard-gwt:gwtCompile'
 
     // Allows us to build fat jars with lots of files
     zip64 true
+
+    // Ensure we include the GWT generated resources.
+    from './src/main/resources'
 
     // A transformer to merges files in META-INF/services
     mergeServiceFiles()
@@ -223,10 +228,9 @@ shadowJar {
     archiveName fatJarName
     exclude '**/gwt-unitCache'
 }
+// Make sure GWT compilation doesn't run before tests.
 tasks.getByPath(':stroom-app-gwt:gwtCompile').mustRunAfter test
-//tasks.shadowJar.dependsOn(':stroom-app-gwt:gwtCompile')
-//project(':stroom-app-gwt').tasks['JavaExec'].dependsOn test
-//':stroom-dashboard-gwt:gwtCompile'.mustRunAfter test
+tasks.getByPath(':stroom-dashboard-gwt:gwtCompile').mustRunAfter test
 
 run {
 //    //Ensure we have the latest kafka plugin jar available for runtime
@@ -246,12 +250,6 @@ test {
         println "Executed test ${desc.className} ${desc.name} with result: ${result.resultType}"
     }
 }
-
-// The gwtCompile tasks create files in stroom-app/src/main/resources/ui
-// so those tasks MUST be run before processResource else this jar and 
-// the fat jar will be missing all the GWT generated files and the UI will fail to start
-processResources.mustRunAfter(':stroom-app-gwt:gwtCompile')
-processResources.mustRunAfter(':stroom-dashboard-gwt:gwtCompile')
 
 def stroomDockerBuildDir = "${projectDir}/docker/build"
 def proxyDockerBuildDir = "${projectDir}/proxy-docker/build"
