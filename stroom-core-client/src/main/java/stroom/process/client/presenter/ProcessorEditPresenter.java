@@ -5,7 +5,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
@@ -65,14 +65,14 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         this.consumer = consumer;
 
         final QueryData queryData = getOrCreateQueryData(filter);
-        read(queryData.getExpression(), MetaDataSource.STREAM_STORE_DOC_REF, MetaDataSource.getFields());
+        read(queryData.getExpression(), MetaFieldNames.STREAM_STORE_DOC_REF, MetaFieldNames.getFields());
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
                     final ExpressionOperator expression = write();
-                    queryData.setDataSource(MetaDataSource.STREAM_STORE_DOC_REF);
+                    queryData.setDataSource(MetaFieldNames.STREAM_STORE_DOC_REF);
                     queryData.setExpression(expression);
 
                     if (filter != null) {
@@ -122,9 +122,9 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     }
 
     private void validateFeed(final ProcessorFilter filter, final QueryData queryData) {
-        final int feedCount = termCount(queryData, MetaDataSource.FEED_NAME);
-        final int streamIdCount = termCount(queryData, MetaDataSource.STREAM_ID);
-        final int parentStreamIdCount = termCount(queryData, MetaDataSource.PARENT_STREAM_ID);
+        final int feedCount = termCount(queryData, MetaFieldNames.FEED_NAME);
+        final int streamIdCount = termCount(queryData, MetaFieldNames.ID);
+        final int parentStreamIdCount = termCount(queryData, MetaFieldNames.PARENT_ID);
 
         if (streamIdCount == 0
                 && parentStreamIdCount == 0
@@ -141,9 +141,9 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     }
 
     private void validateStreamType(final ProcessorFilter filter, final QueryData queryData) {
-        final int streamTypeCount = termCount(queryData, MetaDataSource.STREAM_TYPE_NAME);
-        final int streamIdCount = termCount(queryData, MetaDataSource.STREAM_ID);
-        final int parentStreamIdCount = termCount(queryData, MetaDataSource.PARENT_STREAM_ID);
+        final int streamTypeCount = termCount(queryData, MetaFieldNames.TYPE_NAME);
+        final int streamIdCount = termCount(queryData, MetaFieldNames.ID);
+        final int parentStreamIdCount = termCount(queryData, MetaFieldNames.PARENT_ID);
 
         if (streamIdCount == 0
                 && parentStreamIdCount == 0
@@ -258,8 +258,8 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
 //
 //    private void validateFeed(final ProcessorFilter filter, final QueryData queryData) {
 //        final int feedCount = termCount(queryData, MetaDataSource.FEED_NAME);
-//        final int streamIdCount = termCount(queryData, MetaDataSource.STREAM_ID);
-//        final int parentStreamIdCount = termCount(queryData, MetaDataSource.PARENT_STREAM_ID);
+//        final int streamIdCount = termCount(queryData, MetaDataSource.ID);
+//        final int parentStreamIdCount = termCount(queryData, MetaDataSource.PARENT_ID);
 //
 //        if (streamIdCount == 0
 //                && parentStreamIdCount == 0
@@ -276,9 +276,9 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
 //    }
 //
 //    private void validateStreamType(final ProcessorFilter filter, final QueryData queryData) {
-//        final int streamTypeCount = termCount(queryData, MetaDataSource.STREAM_TYPE_NAME);
-//        final int streamIdCount = termCount(queryData, MetaDataSource.STREAM_ID);
-//        final int parentStreamIdCount = termCount(queryData, MetaDataSource.PARENT_STREAM_ID);
+//        final int streamTypeCount = termCount(queryData, MetaDataSource.TYPE_NAME);
+//        final int streamIdCount = termCount(queryData, MetaDataSource.ID);
+//        final int parentStreamIdCount = termCount(queryData, MetaDataSource.PARENT_ID);
 //
 //        if (streamIdCount == 0
 //                && parentStreamIdCount == 0

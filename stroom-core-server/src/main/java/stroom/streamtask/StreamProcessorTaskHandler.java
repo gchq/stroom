@@ -19,7 +19,7 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
+import stroom.meta.shared.Meta;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.node.api.NodeInfo;
@@ -85,7 +85,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                 // Open the stream source.
                 streamSource = streamStore.openStreamSource(streamTask.getStreamId());
                 if (streamSource != null) {
-                    final Data stream = streamSource.getStream();
+                    final Meta meta = streamSource.getMeta();
 
                     Processor destStreamProcessor = null;
                     ProcessorFilter destStreamProcessorFilter = null;
@@ -102,19 +102,19 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                     }
 
                     if (destStreamProcessor.getPipelineUuid() != null) {
-                        taskContext.info("Stream {} {} {} {}", stream.getId(),
-                                DateUtil.createNormalDateTimeString(stream.getCreateMs()),
+                        taskContext.info("Stream {} {} {} {}", meta.getId(),
+                                DateUtil.createNormalDateTimeString(meta.getCreateMs()),
                                 destStreamProcessor.getTaskType(), destStreamProcessor.getPipelineUuid());
                     } else {
-                        taskContext.info("Stream {} {} {}", stream.getId(),
-                                DateUtil.createNormalDateTimeString(stream.getCreateMs()),
+                        taskContext.info("Stream {} {} {}", meta.getId(),
+                                DateUtil.createNormalDateTimeString(meta.getCreateMs()),
                                 destStreamProcessor.getTaskType());
                     }
 
                     // Don't process any streams that we have already created
-                    if (stream.getProcessorId() != null && stream.getProcessorId() == destStreamProcessor.getId()) {
+                    if (meta.getProcessorId() != null && meta.getProcessorId() == destStreamProcessor.getId()) {
                         complete = true;
-                        LOGGER.warn("Skipping stream that we seem to have created (avoid processing forever) {} {}", stream,
+                        LOGGER.warn("Skipping data that we seem to have created (avoid processing forever) {} {}", meta,
                                 destStreamProcessor);
 
                     } else {
@@ -139,7 +139,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                                 complete = true;
                             }
                         } catch (final RuntimeException e) {
-                            LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, stream}, e);
+                            LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e);
                         }
                     }
                 }

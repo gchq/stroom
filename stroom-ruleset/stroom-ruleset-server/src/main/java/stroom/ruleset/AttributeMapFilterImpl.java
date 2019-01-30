@@ -18,7 +18,7 @@
 package stroom.ruleset;
 
 import stroom.datafeed.AttributeMapFilter;
-import stroom.data.meta.shared.AttributeMap;
+import stroom.meta.shared.AttributeMap;
 import stroom.datafeed.StroomStatusCode;
 import stroom.datafeed.StroomStreamException;
 import stroom.ruleset.shared.DataReceiptAction;

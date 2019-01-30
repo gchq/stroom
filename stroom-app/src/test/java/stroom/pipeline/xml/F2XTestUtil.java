@@ -102,7 +102,7 @@ public class F2XTestUtil {
         feedHolder.setFeedName(feed.getName());
 
 //        // Setup the meta data holder.
-//        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+//        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, streamProcessorService, pipelineStore));
 
         // Persist the text converter.
         final DocRef textConverterRef = textConverterStore.createDocument("TEST_TRANSLATION");

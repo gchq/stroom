@@ -1,81 +1,56 @@
 package stroom.job.impl.db;
 
-import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.job.impl.db.stroom.tables.records.JobRecord;
 
 import javax.inject.Inject;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Optional;
 
 import static stroom.job.impl.db.stroom.Tables.JOB;
 
+/**
+ * This class is very slim because it uses the GenericDao.
+ * Why event use this class? Why not use the GenericDao directly in the service class?
+ * Some reasons:
+ * 1. Hides knowledge of Jooq classes from the service
+ * 2. Hides connection provider and GenericDao instantiation -- the service class just gets a working thing injected.
+ * 3. It allows the DAO to be easily extended.
+ *
+ * //TODO gh-1072 Maybe the interface could implement the standard methods below? Then this would be even slimmer.
+ */
 class JobDaoImpl implements JobDao {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JobDaoImpl.class);
 
     private final ConnectionProvider connectionProvider;
+    private GenericDao<JobRecord, Job> dao;
 
     @Inject
     JobDaoImpl(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
+        dao = new GenericDao(JOB, JOB.ID, Job.class, connectionProvider);
     }
 
     @Override
     public Job create(final Job job) {
-        try (final Connection connection = connectionProvider.getConnection();
-             final DSLContext context = DSL.using(connection, SQLDialect.MYSQL)) {
-            Integer newJobId = context.insertInto(JOB)
-                    .set(JOB.DESCRIPTION, job.getDescription())
-                    .set(JOB.ENABLED, job.isEnabled())
-                    .set(JOB.VERSION, 0)
-                    .returning(JOB.ID)
-                    .fetchOne()
-                    .getId();
-            job.setId(newJobId);
-            job.setVersion(0);
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-        return job;
+        return dao.create(job);
     }
 
     @Override
     public Job create() {
-        return null;
+        throw new RuntimeException("Not implemented yet -- interface inappropriate for use with GenericDao");
     }
 
     @Override
     public Job update(final Job job) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            //TODO
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-        return job;
+        return dao.update(job);
     }
 
     @Override
     public int delete(int id) {
-        //TODO
-        return 0;
+        return dao.delete(id);
     }
 
     @Override
     public Optional<Job> fetch(int id) {
-        try (final Connection connection = connectionProvider.getConnection();
-             final DSLContext context = DSL.using(connection, SQLDialect.MYSQL)) {
-            Job job = context.selectFrom(JOB).where(JOB.ID.eq(id)).fetchOneInto(Job.class);
-            return Optional.ofNullable(job);
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return dao.fetch(id);
     }
 
 }

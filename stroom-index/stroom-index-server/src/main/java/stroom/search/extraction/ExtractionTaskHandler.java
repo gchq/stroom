@@ -40,7 +40,7 @@ import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.search.SearchException;
 import stroom.security.Security;
@@ -66,7 +66,7 @@ public class ExtractionTaskHandler {
     private final FeedHolder feedHolder;
     private final MetaDataHolder metaDataHolder;
     private final CurrentUserHolder currentUserHolder;
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final PipelineHolder pipelineHolder;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final PipelineFactory pipelineFactory;
@@ -83,7 +83,7 @@ public class ExtractionTaskHandler {
                           final FeedHolder feedHolder,
                           final MetaDataHolder metaDataHolder,
                           final CurrentUserHolder currentUserHolder,
-                          final StreamHolder streamHolder,
+                          final MetaHolder metaHolder,
                           final PipelineHolder pipelineHolder,
                           final ErrorReceiverProxy errorReceiverProxy,
                           final PipelineFactory pipelineFactory,
@@ -96,7 +96,7 @@ public class ExtractionTaskHandler {
         this.feedHolder = feedHolder;
         this.metaDataHolder = metaDataHolder;
         this.currentUserHolder = currentUserHolder;
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.pipelineHolder = pipelineHolder;
         this.errorReceiverProxy = errorReceiverProxy;
         this.pipelineFactory = pipelineFactory;
@@ -248,18 +248,18 @@ public class ExtractionTaskHandler {
                          final SegmentInputStream segmentInputStream, final long count) {
         if (source != null && segmentInputStream != null) {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Reading " + count + " segments from stream " + source.getStream().getId());
+                LOGGER.debug("Reading " + count + " segments from stream " + source.getMeta().getId());
             }
 
             try {
                 // Here we need to reload the feed as this will get the related
                 // objects Translation etc
-                feedHolder.setFeedName(source.getStream().getFeedName());
+                feedHolder.setFeedName(source.getMeta().getFeedName());
 
                 // Setup the meta data holder.
-                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
+                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
-                streamHolder.setStream(source.getStream());
+                metaHolder.setMeta(source.getMeta());
                 pipelineHolder.setPipeline(pipelineRef);
 
                 final InputStream inputStream = new IgnoreCloseInputStream(segmentInputStream);
@@ -271,7 +271,7 @@ public class ExtractionTaskHandler {
                 LAMBDA_LOGGER.logDurationIfDebugEnabled(
                         () -> pipeline.process(inputStream, encoding),
                         () -> LambdaLogger.buildMessage("Processing pipeline {}, stream {}",
-                                pipelineRef.getUuid(), source.getStream().getId()));
+                                pipelineRef.getUuid(), source.getMeta().getId()));
 
             } catch (final TerminatedException e) {
                 // Ignore stopped pipeline exceptions as we are meant to get

@@ -489,9 +489,9 @@ public class SearchRequestMapper {
 //            mapper.setSerializationInclusion(Include.NON_NULL);
 //
 //            final VisSettings visSettings = mapper.readValue(visualisation.getSettings(), VisSettings.class);
-//            if (visSettings != null && visSettings.getData() != null) {
+//            if (visSettings != null && visSettings.getMeta() != null) {
 //                final SettingResolver settingResolver = new SettingResolver(visSettings, visComponentSettings.getJSON());
-//                final Structure structure = visSettings.getData().getStructure();
+//                final Structure structure = visSettings.getMeta().getStructure();
 //                if (structure != null) {
 //                    copy = new VisStructure();
 //                    copy.setNest(mapNest(structure.getNest(), settingResolver));

@@ -19,12 +19,12 @@ package stroom.datafeed;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.AttributeMap;
+import stroom.meta.shared.AttributeMap;
 import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
-import stroom.data.meta.api.AttributeMapUtil;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.pipeline.feed.FeedDocCache;
-import stroom.data.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.security.Security;
@@ -89,7 +89,7 @@ class DataFeedRequestHandler implements RequestHandler {
             final AttributeMap attributeMap = AttributeMapUtil.create(request);
             if (attributeMapFilter == null || attributeMapFilter.filter(attributeMap)) {
                 debug("Receiving data", attributeMap);
-                final String feedName = attributeMap.get(StroomHeaderArguments.FEED);
+                final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
 
                 if (feedName == null || feedName.isEmpty()) {
                     throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
@@ -113,7 +113,7 @@ class DataFeedRequestHandler implements RequestHandler {
                         feedDocCache, metaDataStatistics, feedName, streamTypeName);
 
                 final byte[] buffer = bufferFactory.create();
-                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlers, buffer, "DataFeedRequestHandler-" + attributeMap.get(StroomHeaderArguments.GUID));
+                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlers, buffer, "DataFeedRequestHandler-" + attributeMap.get(StandardHeaderArguments.GUID));
 
                 try {
                     stroomStreamProcessor.processRequestHeader(request);

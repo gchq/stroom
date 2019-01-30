@@ -124,7 +124,7 @@ public abstract class StreamTaskStatsMonitoringPresenter<T extends BaseCriteria>
     // data.add(new OldBasicDataItem(rowData));
     // }
     //
-    // getDataGridPresenter().setData(data);
+    // getDataGridPresenter().setMeta(data);
     // }
     //
     // private List<OldDataHeading> getHeading() {

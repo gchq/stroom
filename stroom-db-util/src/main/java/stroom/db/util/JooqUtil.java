@@ -64,7 +64,7 @@ public final class JooqUtil {
         }
     }
 
-    public static <R> R contextResultWithOptimisticLocking(final DataSource connectionProvider, final Function<DSLContext, R> function) {
+    public static <R> R contextWithOptimisticLocking(final DataSource connectionProvider, final Function<DSLContext, R> function) {
         R result;
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext context = DSL.using(connection, SQLDialect.MYSQL, new Settings().withExecuteWithOptimisticLocking(true));
@@ -97,8 +97,9 @@ public final class JooqUtil {
 
     /**
      * Delete all rows matching the passed id value
+     *
      * @param field The field to match id against
-     * @param id The id value to match on
+     * @param id    The id value to match on
      * @return The number of deleted records
      */
     public static <R extends Record> int deleteById(final DataSource connectionProvider,
@@ -115,6 +116,7 @@ public final class JooqUtil {
 
     /**
      * Delete all rows matching the passed id value
+     *
      * @param id The id value to match on
      * @return The number of deleted records
      */
@@ -133,8 +135,9 @@ public final class JooqUtil {
     /**
      * Fetch a single row using the passed id value. If the id matches zero rows or more than one row then
      * an exception will be thrown.
+     *
      * @param type The type of record to return
-     * @param id The id to match on
+     * @param id   The id to match on
      * @return An optional containing the record if it was found.
      */
     public static <R extends Record, T> Optional<T> fetchById(final DataSource connectionProvider,

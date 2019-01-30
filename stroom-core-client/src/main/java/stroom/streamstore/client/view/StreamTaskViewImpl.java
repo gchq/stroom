@@ -21,8 +21,8 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.streamstore.client.presenter.StreamTaskPresenter;
-import stroom.streamstore.client.presenter.StreamTaskPresenter.StreamTaskView;
+import stroom.streamstore.client.presenter.ProcessorTaskPresenter;
+import stroom.streamstore.client.presenter.ProcessorTaskPresenter.StreamTaskView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class StreamTaskViewImpl extends ViewImpl implements StreamTaskView {
@@ -43,9 +43,9 @@ public class StreamTaskViewImpl extends ViewImpl implements StreamTaskView {
 
     @Override
     public void setInSlot(final Object slot, final Widget content) {
-        if (StreamTaskPresenter.STREAM_TASK_LIST.equals(slot)) {
+        if (ProcessorTaskPresenter.STREAM_TASK_LIST.equals(slot)) {
             streamTaskList.setWidget(content);
-        } else if (StreamTaskPresenter.STREAM_TASK_SUMMARY.equals(slot)) {
+        } else if (ProcessorTaskPresenter.STREAM_TASK_SUMMARY.equals(slot)) {
             streamTaskSummary.setWidget(content);
         }
     }

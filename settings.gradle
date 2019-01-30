@@ -36,6 +36,7 @@ include 'stroom-cache:stroom-cache-impl'
 include 'stroom-cluster-lock:stroom-cluster-lock-api'
 include 'stroom-cluster-lock:stroom-cluster-lock-impl-db'
 include 'stroom-cluster-lock:stroom-cluster-lock-impl-db-gen'
+include 'stroom-cluster-lock:stroom-cluster-lock-impl-mock'
 
 // Config
 include 'stroom-config:stroom-config-app'
@@ -71,11 +72,11 @@ include 'stroom-docstore:stroom-docstore-impl-fs'
 include 'stroom-docstore:stroom-docstore-impl-memory'
 include 'stroom-docstore:stroom-docstore-shared'
 
-// Data meta projects
-include 'stroom-data-meta:stroom-data-meta-api'
-include 'stroom-data-meta:stroom-data-meta-impl-db'
-include 'stroom-data-meta:stroom-data-meta-impl-db-gen'
-include 'stroom-data-meta:stroom-data-meta-impl-mock'
+// Data Meta projects
+include 'stroom-meta:stroom-meta-api'
+include 'stroom-meta:stroom-meta-impl-db'
+include 'stroom-meta:stroom-meta-impl-db-gen'
+include 'stroom-meta:stroom-meta-impl-mock'
 
 // Data store projects
 include 'stroom-data-store:stroom-data-store-api'

@@ -19,10 +19,10 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.FindDataCriteria;
-import stroom.data.meta.shared.MetaDataSource;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.ScanVolumePathResult;
 import stroom.data.store.StreamMaintenanceService;
 import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
@@ -64,7 +64,7 @@ class FileSystemStreamMaintenanceService
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
     private final DataVolumeService streamVolumeService;
-    private final DataMetaService streamMetaService;
+    private final MetaService metaService;
     private final Security security;
 
     private final FileSystemFeedPaths fileSystemFeedPaths;
@@ -75,22 +75,22 @@ class FileSystemStreamMaintenanceService
                                               final FileSystemFeedPaths fileSystemFeedPaths,
                                               final FileSystemTypePaths fileSystemTypePaths,
                                               final DataVolumeService streamVolumeService,
-                                              final DataMetaService streamMetaService,
+                                              final MetaService metaService,
                                               final Security security) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.fileSystemFeedPaths = fileSystemFeedPaths;
         this.fileSystemTypePaths = fileSystemTypePaths;
         this.streamVolumeService = streamVolumeService;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.security = security;
     }
 
-    List<Path> findAllStreamFile(final Data stream) {
-        final Set<DataVolume> streamVolumes = streamVolumeService.findStreamVolume(stream.getId());
+    List<Path> findAllStreamFile(final Meta meta) {
+        final Set<DataVolume> streamVolumes = streamVolumeService.findStreamVolume(meta.getId());
         final List<Path> results = new ArrayList<>();
         for (final DataVolume streamVolume : streamVolumes) {
             final Path rootFile = fileSystemStreamPathHelper.createRootStreamFile(streamVolume.getVolumePath(),
-                    stream, stream.getTypeName());
+                    meta, meta.getTypeName());
             if (Files.isRegularFile(rootFile)) {
                 results.add(rootFile);
                 results.addAll(fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile));
@@ -170,7 +170,7 @@ class FileSystemStreamMaintenanceService
                                              final Map<String, DataVolume> streamsKeyedByBaseName) {
         try {
             // We need to find streams that match the repo path.
-            final BaseResultList<Data> matchingStreams = findMatchingStreams(repoPath);
+            final BaseResultList<Meta> matchingStreams = findMatchingStreams(repoPath);
 
             // If we haven't found any streams then give up.
             if (matchingStreams.size() > 0) {
@@ -178,7 +178,7 @@ class FileSystemStreamMaintenanceService
                 // Now see what is there as per the database.
                 final FindDataVolumeCriteria criteria = new FindDataVolumeCriteria();
 
-                final Map<Long, Data> streamMap = new HashMap<>();
+                final Map<Long, Meta> streamMap = new HashMap<>();
                 final CriteriaSet<Long> streamIdSet = criteria.obtainStreamIdSet();
                 matchingStreams.forEach(stream -> {
                     final long id = stream.getId();
@@ -190,9 +190,9 @@ class FileSystemStreamMaintenanceService
                 final List<DataVolume> matches = streamVolumeService.find(criteria);
 
                 for (final DataVolume streamVolume : matches) {
-                    final Data stream = streamMap.get(streamVolume.getStreamId());
-                    if (stream != null) {
-                        streamsKeyedByBaseName.put(fileSystemStreamPathHelper.getBaseName(stream), streamVolume);
+                    final Meta meta = streamMap.get(streamVolume.getStreamId());
+                    if (meta != null) {
+                        streamsKeyedByBaseName.put(fileSystemStreamPathHelper.getBaseName(meta), streamVolume);
                     }
                 }
             }
@@ -207,13 +207,13 @@ class FileSystemStreamMaintenanceService
      * @param repoPath The repository path to find relevant streams for.
      * @return A list of streams that are relevant to the supplied repository path.
      */
-    private BaseResultList<Data> findMatchingStreams(final String repoPath) {
+    private BaseResultList<Meta> findMatchingStreams(final String repoPath) {
         try {
             // We need to find streams that match the repo path.
             final ExpressionOperator expression = pathToStreamExpression(repoPath);
-            final FindDataCriteria criteria = new FindDataCriteria(expression);
+            final FindMetaCriteria criteria = new FindMetaCriteria(expression);
             criteria.setPageRequest(new PageRequest(0L, 1000));
-            return streamMetaService.find(criteria);
+            return metaService.find(criteria);
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
             LOGGER.warn(e.getMessage());
@@ -235,7 +235,7 @@ class FileSystemStreamMaintenanceService
 
         if (parts.length > 0 && parts[0].length() > 0) {
             final String streamTypeName = fileSystemTypePaths.getType(parts[0]);
-            builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, streamTypeName);
+            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, streamTypeName);
         }
         if (parts.length >= 4) {
             try {
@@ -243,8 +243,8 @@ class FileSystemStreamMaintenanceService
                 final LocalDate localDate = LocalDate.parse(fromDateString, DateTimeFormatter.ISO_LOCAL_DATE);
                 final String toDateString = localDate.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE);
 
-                builder.addTerm(MetaDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, fromDateString + "T00:00:00.000Z");
-                builder.addTerm(MetaDataSource.CREATE_TIME, Condition.LESS_THAN, toDateString + "T00:00:00.000Z");
+                builder.addTerm(MetaFieldNames.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, fromDateString + "T00:00:00.000Z");
+                builder.addTerm(MetaFieldNames.CREATE_TIME, Condition.LESS_THAN, toDateString + "T00:00:00.000Z");
 
             } catch (final RuntimeException e) {
                 // Not a stream path
@@ -280,8 +280,8 @@ class FileSystemStreamMaintenanceService
 
         long toId = fromId + 1000L;
 
-        builder.addTerm(MetaDataSource.STREAM_ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(fromId));
-        builder.addTerm(MetaDataSource.STREAM_ID, Condition.LESS_THAN, String.valueOf(toId));
+        builder.addTerm(MetaFieldNames.ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(fromId));
+        builder.addTerm(MetaFieldNames.ID, Condition.LESS_THAN, String.valueOf(toId));
 
         return builder.build();
     }

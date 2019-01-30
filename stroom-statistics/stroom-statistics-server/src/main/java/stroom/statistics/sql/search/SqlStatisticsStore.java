@@ -124,13 +124,13 @@ public class SqlStatisticsStore implements Store {
 
     @Override
     public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-        // Results are currently assembled synchronously in getData so the store is always complete.
+        // Results are currently assembled synchronously in getMeta so the store is always complete.
         return completionState.awaitCompletion(timeout, unit);
     }
 
     @Override
     public Data getData(String componentId) {
-        LOGGER.debug("getData called for componentId {}", componentId);
+        LOGGER.debug("getMeta called for componentId {}", componentId);
 
         return resultHandler.getResultStore(componentId);
     }

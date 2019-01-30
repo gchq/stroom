@@ -22,8 +22,8 @@ import stroom.feed.client.presenter.FeedPresenter;
 import stroom.feed.client.presenter.FeedSettingsPresenter;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
 import stroom.feed.client.view.FeedSettingsViewImpl;
-import stroom.streamstore.client.presenter.StreamUploadPresenter;
-import stroom.streamstore.client.presenter.StreamUploadPresenter.DataUploadView;
+import stroom.streamstore.client.presenter.DataUploadPresenter;
+import stroom.streamstore.client.presenter.DataUploadPresenter.DataUploadView;
 import stroom.streamstore.client.view.StreamUploadViewImpl;
 
 public class FeedModule extends PluginModule {
@@ -36,6 +36,6 @@ public class FeedModule extends PluginModule {
         bindSharedView(FeedSettingsView.class, FeedSettingsViewImpl.class);
         bind(FeedSettingsPresenter.class);
 
-        bindPresenterWidget(StreamUploadPresenter.class, DataUploadView.class, StreamUploadViewImpl.class);
+        bindPresenterWidget(DataUploadPresenter.class, DataUploadView.class, StreamUploadViewImpl.class);
     }
 }

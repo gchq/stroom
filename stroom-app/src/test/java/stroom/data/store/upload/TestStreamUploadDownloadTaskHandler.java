@@ -18,12 +18,12 @@ package stroom.data.store.upload;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.DataProperties;
-import stroom.data.meta.shared.DataStatus;
-import stroom.data.meta.shared.ExpressionUtil;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.Status;
+import stroom.meta.shared.ExpressionUtil;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.data.store.StreamDownloadSettings;
 import stroom.data.store.StreamDownloadTask;
 import stroom.data.store.StreamUploadTask;
@@ -56,7 +56,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private DataMetaService streamMetaService;
+    private MetaService metaService;
     @Inject
     private TaskManager taskManager;
 
@@ -67,15 +67,15 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
 
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
-        final FindDataCriteria findStreamCriteria = new FindDataCriteria();
-        findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+        findMetaCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
         final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
 
-        assertThat(streamMetaService.find(findStreamCriteria).size()).isEqualTo(2);
+        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(2);
 
-        taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, file, streamDownloadSettings));
+        taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findMetaCriteria, file, streamDownloadSettings));
 
-        assertThat(streamMetaService.find(findStreamCriteria).size()).isEqualTo(2);
+        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(2);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
         assertThat(stroomZipFile.containsEntry("001", StroomZipFileType.Manifest)).isTrue();
@@ -87,14 +87,14 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, feedName,
                 StreamTypeNames.RAW_EVENTS, null, null));
 
-        assertThat(streamMetaService.find(findStreamCriteria).size()).isEqualTo(4);
+        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(4);
     }
 
     @Test
     void testUploadFlatFile() throws IOException {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final FindDataCriteria findStreamCriteria = new FindDataCriteria();
-        findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+        findMetaCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
 
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".dat");
         Files.write(file, "TEST".getBytes());
@@ -102,7 +102,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.dat", file, feedName,
                 StreamTypeNames.RAW_EVENTS, null, "Tom:One\nJames:Two\n"));
 
-        assertThat(streamMetaService.find(findStreamCriteria).size()).isEqualTo(1);
+        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(1);
     }
 
     @Test
@@ -110,11 +110,11 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
+        final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
 
         try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
             try (final OutputStream outputStream = outputStreamProvider.next()) {
@@ -144,13 +144,13 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
 
         streamStore.closeStreamTarget(streamTarget);
 
-        final FindDataCriteria findStreamCriteria = new FindDataCriteria();
-        findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+        findMetaCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
         final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
 
-        assertThat(streamMetaService.find(findStreamCriteria).size()).isEqualTo(1);
+        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(1);
 
-        taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, file, streamDownloadSettings));
+        taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findMetaCriteria, file, streamDownloadSettings));
 
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
         assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Manifest)).isTrue();
@@ -167,20 +167,20 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, feedName,
                 StreamTypeNames.RAW_EVENTS, null, extraMeta));
 
-        final List<Data> streamList = streamMetaService.find(findStreamCriteria);
+        final List<Meta> streamList = metaService.find(findMetaCriteria);
 
         assertThat(streamList.size()).isEqualTo(2);
 
-        final Data originalStream = streamTarget.getStream();
+        final Meta originalMeta = streamTarget.getMeta();
 
-        for (final Data stream : streamList) {
-            assertThat(stream.getStatus()).isEqualTo(DataStatus.UNLOCKED);
-            final StreamSource streamSource = streamStore.openStreamSource(stream.getId());
+        for (final Meta meta : streamList) {
+            assertThat(meta.getStatus()).isEqualTo(Status.UNLOCKED);
+            final StreamSource streamSource = streamStore.openStreamSource(meta.getId());
 
             assertThat(StreamUtil.streamToString(streamSource.getInputStream(), false)).isEqualTo("DATA1DATA2");
             assertThat(StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.CONTEXT).getInputStream(), false)).isEqualTo("CONTEXT1CONTEXT2");
 
-            if (originalStream.equals(stream)) {
+            if (originalMeta.equals(meta)) {
                 assertContains(
                         StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.META).getInputStream(), false),
                         "META:1", "X:1", "META:2", "Y:2");

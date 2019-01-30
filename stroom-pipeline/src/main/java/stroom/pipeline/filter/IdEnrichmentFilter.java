@@ -27,8 +27,8 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.pipeline.state.StreamHolder;
-import stroom.data.meta.shared.Data;
+import stroom.pipeline.state.MetaHolder;
+import stroom.meta.shared.Meta;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -49,7 +49,7 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
     private static final String STREAM_ID = "StreamId";
     private static final String EVENT_ID = "EventId";
 
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final ErrorReceiverProxy errorReceiverProxy;
 
     private int depth;
@@ -60,9 +60,9 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
     private long[] eventIds;
 
     @Inject
-    public IdEnrichmentFilter(final StreamHolder streamHolder,
+    public IdEnrichmentFilter(final MetaHolder metaHolder,
                               final ErrorReceiverProxy errorReceiverProxy) {
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.errorReceiverProxy = errorReceiverProxy;
     }
 
@@ -74,9 +74,9 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
     public void startStream() {
         try {
             if (this.streamId == null) {
-                final Data stream = streamHolder.getStream();
-                if (stream != null) {
-                    streamId = String.valueOf(stream.getId());
+                final Meta meta = metaHolder.getMeta();
+                if (meta != null) {
+                    streamId = String.valueOf(meta.getId());
                 } else {
                     final String msg = "No stream set in stream holder";
                     errorReceiverProxy.log(Severity.WARNING, null, getElementId(), msg, new ProcessException(msg));

@@ -2,7 +2,7 @@ package stroom.proxy.repo;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.AttributeMap;
+import stroom.meta.shared.AttributeMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

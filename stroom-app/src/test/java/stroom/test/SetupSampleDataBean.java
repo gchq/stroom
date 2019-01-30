@@ -20,8 +20,8 @@ package stroom.test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.DashboardStore;
-import stroom.data.meta.shared.MetaDataSource;
-import stroom.data.meta.impl.db.MetaKeyService;
+import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.impl.db.MetaKeyService;
 import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
@@ -90,7 +90,7 @@ public final class SetupSampleDataBean {
     private final FeedStore feedStore;
     private final FeedDocCache feedDocCache;
     private final StreamStore streamStore;
-    private final MetaKeyService streamAttributeKeyService;
+    private final MetaKeyService metaKeyService;
     private final CommonTestControl commonTestControl;
     private final ImportExportSerializer importExportSerializer;
     private final StreamProcessorFilterService streamProcessorFilterService;
@@ -107,7 +107,7 @@ public final class SetupSampleDataBean {
     SetupSampleDataBean(final FeedStore feedStore,
                         final FeedDocCache feedDocCache,
                         final StreamStore streamStore,
-                        final MetaKeyService streamAttributeKeyService,
+                        final MetaKeyService metaKeyService,
                         final CommonTestControl commonTestControl,
                         final ImportExportSerializer importExportSerializer,
                         final StreamProcessorFilterService streamProcessorFilterService,
@@ -122,7 +122,7 @@ public final class SetupSampleDataBean {
         this.feedStore = feedStore;
         this.feedDocCache = feedDocCache;
         this.streamStore = streamStore;
-        this.streamAttributeKeyService = streamAttributeKeyService;
+        this.metaKeyService = metaKeyService;
         this.commonTestControl = commonTestControl;
         this.importExportSerializer = importExportSerializer;
         this.streamProcessorFilterService = streamProcessorFilterService;
@@ -137,7 +137,7 @@ public final class SetupSampleDataBean {
     }
 
 //    private void createStreamAttributes() {
-//        final BaseResultList<StreamAttributeKey> list = streamAttributeKeyService
+//        final BaseResultList<StreamAttributeKey> list = metaKeyService
 //                .find(new FindStreamAttributeKeyCriteria());
 //        final HashSet<String> existingItems = new HashSet<>();
 //        for (final StreamAttributeKey streamAttributeKey : list) {
@@ -146,7 +146,7 @@ public final class SetupSampleDataBean {
 //        for (final String name : StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.keySet()) {
 //            if (!existingItems.contains(name)) {
 //                try {
-//                    streamAttributeKeyService.save(new StreamAttributeKey(name,
+//                    metaKeyService.save(new StreamAttributeKey(name,
 //                            StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.get(name)));
 //                } catch (final RuntimeException e) {
 //                    e.printStackTrace();
@@ -219,12 +219,12 @@ public final class SetupSampleDataBean {
 
                 // Create a processor for this feed.
                 final QueryData criteria = new QueryData.Builder()
-                        .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                        .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed.getName())
+                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed.getName())
                                 .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                                        .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                                        .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                                         .build())
                                 .build())
                         .build();
@@ -256,16 +256,16 @@ public final class SetupSampleDataBean {
 
             final ExpressionOperator.Builder expressionBuilder = new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                     .addTerm(
-                            MetaDataSource.STREAM_TYPE_NAME,
+                            MetaFieldNames.TYPE_NAME,
                             ExpressionTerm.Condition.EQUALS,
                             sourceStreamType);
 
             optFeedName.ifPresent(feedName ->
-                    expressionBuilder.addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName));
+                    expressionBuilder.addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName));
 
             // Create a processor for this index.
             final QueryData criteria = new QueryData.Builder()
-                    .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                    .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                     .expression(expressionBuilder.build())
                     .build();
 

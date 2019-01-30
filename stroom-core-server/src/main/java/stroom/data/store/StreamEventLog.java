@@ -35,8 +35,8 @@ import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.FindDataCriteria;
-import stroom.data.meta.shared.MetaDataSource;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.query.api.v2.ExpressionItem;
@@ -86,15 +86,15 @@ public class StreamEventLog {
         });
     }
 
-    public void exportStream(final FindDataCriteria findStreamCriteria, final Throwable th) {
+    public void exportStream(final FindMetaCriteria findMetaCriteria, final Throwable th) {
         security.insecure(() -> {
             try {
-                if (findStreamCriteria != null) {
+                if (findMetaCriteria != null) {
                     final Event event = eventLoggingService.createAction("ExportData", "Exporting Data");
 
                     final Criteria criteria = new Criteria();
                     criteria.setType("Data");
-                    criteria.setQuery(createQuery(findStreamCriteria));
+                    criteria.setQuery(createQuery(findMetaCriteria));
 
                     final MultiObject multiObject = new MultiObject();
                     multiObject.getObjects().add(criteria);
@@ -134,10 +134,10 @@ public class StreamEventLog {
         });
     }
 
-    private Query createQuery(final FindDataCriteria findStreamCriteria) {
-        if (findStreamCriteria != null) {
+    private Query createQuery(final FindMetaCriteria findMetaCriteria) {
+        if (findMetaCriteria != null) {
             final Advanced advanced = new Advanced();
-            appendCriteria(advanced.getAdvancedQueryItems(), findStreamCriteria);
+            appendCriteria(advanced.getAdvancedQueryItems(), findMetaCriteria);
 
             final Query query = new Query();
             query.setAdvanced(advanced);
@@ -179,45 +179,45 @@ public class StreamEventLog {
         return data;
     }
 
-    private void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindDataCriteria findStreamCriteria) {
+    private void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindMetaCriteria findMetaCriteria) {
 //        CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorIdSet",
-//                findStreamCriteria.getStreamProcessorIdSet());
-//        CriteriaLoggingUtil.appendIncludeExcludeEntityIdSet(items, "feeds", findStreamCriteria.getFeeds());
-//        CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", findStreamCriteria.getPipelineSet());
-//        CriteriaLoggingUtil.appendEntityIdSet(items, "streamTypeIdSet", findStreamCriteria.getStreamTypeIdSet());
-//        CriteriaLoggingUtil.appendEntityIdSet(items, "streamIdSet", findStreamCriteria.getStreamIdSet());
-//        CriteriaLoggingUtil.appendCriteriaSet(items, "statusSet", findStreamCriteria.getStatusSet());
-//        CriteriaLoggingUtil.appendRangeTerm(items, "streamIdRange", findStreamCriteria.getStreamIdRange());
-//        CriteriaLoggingUtil.appendEntityIdSet(items, "parentStreamIdSet", findStreamCriteria.getParentStreamIdSet());
-//        CriteriaLoggingUtil.appendRangeTerm(items, "createPeriod", findStreamCriteria.getCreatePeriod());
-//        CriteriaLoggingUtil.appendRangeTerm(items, "effectivePeriod", findStreamCriteria.getEffectivePeriod());
-//        CriteriaLoggingUtil.appendRangeTerm(items, "statusPeriod", findStreamCriteria.getStatusPeriod());
+//                findMetaCriteria.getStreamProcessorIdSet());
+//        CriteriaLoggingUtil.appendIncludeExcludeEntityIdSet(items, "feeds", findMetaCriteria.getFeeds());
+//        CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", findMetaCriteria.getPipelineSet());
+//        CriteriaLoggingUtil.appendEntityIdSet(items, "streamTypeIdSet", findMetaCriteria.getStreamTypeIdSet());
+//        CriteriaLoggingUtil.appendEntityIdSet(items, "streamIdSet", findMetaCriteria.getStreamIdSet());
+//        CriteriaLoggingUtil.appendCriteriaSet(items, "statusSet", findMetaCriteria.getStatusSet());
+//        CriteriaLoggingUtil.appendRangeTerm(items, "streamIdRange", findMetaCriteria.getStreamIdRange());
+//        CriteriaLoggingUtil.appendEntityIdSet(items, "parentStreamIdSet", findMetaCriteria.getParentStreamIdSet());
+//        CriteriaLoggingUtil.appendRangeTerm(items, "createPeriod", findMetaCriteria.getCreatePeriod());
+//        CriteriaLoggingUtil.appendRangeTerm(items, "effectivePeriod", findMetaCriteria.getEffectivePeriod());
+//        CriteriaLoggingUtil.appendRangeTerm(items, "statusPeriod", findMetaCriteria.getStatusPeriod());
 //        appendStreamAttributeConditionList(items, "attributeConditionList",
-//                findStreamCriteria.getAttributeConditionList());
+//                findMetaCriteria.getAttributeConditionList());
 //
-//        CriteriaLoggingUtil.appendPageRequest(items, findStreamCriteria.getPageRequest());
+//        CriteriaLoggingUtil.appendPageRequest(items, findMetaCriteria.getPageRequest());
 //
 //
 
 
-        if (findStreamCriteria.getSelectedIdSet() != null && findStreamCriteria.getSelectedIdSet().size() > 0) {
+        if (findMetaCriteria.getSelectedIdSet() != null && findMetaCriteria.getSelectedIdSet().size() > 0) {
             final BaseAdvancedQueryOperator and = new And();
             items.add(and);
 
             BaseAdvancedQueryOperator idSetOp = and;
-            if (findStreamCriteria.getSelectedIdSet().size() > 1) {
+            if (findMetaCriteria.getSelectedIdSet().size() > 1) {
                 idSetOp = new Or();
                 and.getAdvancedQueryItems().add(idSetOp);
             }
 
-            for (long id : findStreamCriteria.getSelectedIdSet()) {
-                idSetOp.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(MetaDataSource.STREAM_ID, TermCondition.EQUALS, String.valueOf(id)));
+            for (long id : findMetaCriteria.getSelectedIdSet()) {
+                idSetOp.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(MetaFieldNames.ID, TermCondition.EQUALS, String.valueOf(id)));
             }
 
-            appendOperator(and.getAdvancedQueryItems(), findStreamCriteria.getExpression());
+            appendOperator(and.getAdvancedQueryItems(), findMetaCriteria.getExpression());
 
         } else {
-            appendOperator(items, findStreamCriteria.getExpression());
+            appendOperator(items, findMetaCriteria.getExpression());
         }
     }
 

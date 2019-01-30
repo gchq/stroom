@@ -24,7 +24,7 @@ CREATE PROCEDURE copy ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'ND' > 0) THEN
     INSERT INTO node (id, version, create_time_ms, create_user, update_time_ms, update_user, url, name, priority, enabled)
-    SELECT ID, VER, CRT_MS, CRT_USER, UPD_MS, UPD_USER, CLSTR_URL, NAME, PRIOR, ENBL
+    SELECT ID, 1, CRT_MS, CRT_USER, UPD_MS, UPD_USER, CLSTR_URL, NAME, PRIOR, ENBL
     FROM ND
     WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM node)
     ORDER BY ID;

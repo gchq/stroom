@@ -18,7 +18,7 @@ package stroom.data.store.util;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.DataProperties;
+import stroom.meta.shared.MetaProperties;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
@@ -67,11 +67,11 @@ class TestStreamGrepTool {
     }
 
     private void addData(final String feedName, final String data) {
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
+        final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
         StreamTargetUtil.write(streamTarget, data);
         streamStore.closeStreamTarget(streamTarget);
     }

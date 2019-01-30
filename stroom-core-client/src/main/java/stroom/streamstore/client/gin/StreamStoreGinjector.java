@@ -18,16 +18,16 @@ package stroom.streamstore.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter;
-import stroom.streamstore.client.presenter.StreamListPresenter;
-import stroom.streamstore.client.presenter.StreamPresenter;
-import stroom.streamstore.client.presenter.StreamTaskListPresenter;
+import stroom.streamstore.client.presenter.MetaListPresenter;
+import stroom.streamstore.client.presenter.MetaPresenter;
+import stroom.streamstore.client.presenter.ProcessorTaskListPresenter;
 
 public interface StreamStoreGinjector {
     AsyncProvider<ClassificationWrapperPresenter> getClassificationWrapperPresenter();
 
-    AsyncProvider<StreamPresenter> getStreamPresenter();
+    AsyncProvider<MetaPresenter> getStreamPresenter();
 
-    AsyncProvider<StreamListPresenter> getStreamListPresenter();
+    AsyncProvider<MetaListPresenter> getStreamListPresenter();
 
-    AsyncProvider<StreamTaskListPresenter> getStreamTaskListPresenter();
+    AsyncProvider<ProcessorTaskListPresenter> getStreamTaskListPresenter();
 }

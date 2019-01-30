@@ -29,8 +29,8 @@ import stroom.process.client.presenter.ProcessorPresenter;
 import stroom.docref.DocRef;
 import stroom.security.shared.PermissionNames;
 import stroom.security.client.ClientSecurityContext;
-import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
-import stroom.streamstore.client.presenter.StreamTaskPresenter;
+import stroom.streamstore.client.presenter.ClassificationWrappedMetaPresenter;
+import stroom.streamstore.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.SharedObject;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -48,9 +48,9 @@ public class FolderPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     public FolderPresenter(final EventBus eventBus,
                            final ClientSecurityContext securityContext,
                            final LinkTabPanelView view,
-                           final Provider<ClassificationWrappedStreamPresenter> streamPresenterProvider,
+                           final Provider<ClassificationWrappedMetaPresenter> streamPresenterProvider,
                            final Provider<ProcessorPresenter> processorPresenterProvider,
-                           final Provider<StreamTaskPresenter> streamTaskPresenterProvider) {
+                           final Provider<ProcessorTaskPresenter> streamTaskPresenterProvider) {
         super(eventBus, view, securityContext);
         this.securityContext = securityContext;
 

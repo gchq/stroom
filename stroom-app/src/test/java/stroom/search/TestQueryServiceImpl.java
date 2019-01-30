@@ -179,7 +179,7 @@ class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
 //
 //        assertThat(query).isNotNull();
 //        assertThat(query.getName()).isEqualTo("Test query");
-//        assertThat(query.getData()).isNotNull();
+//        assertThat(query.getMeta()).isNotNull();
 //        final ExpressionOperator root = query.getQuery().getExpression();
 //        assertThat(root.getChildren().size()).isEqualTo(1);
 //    }

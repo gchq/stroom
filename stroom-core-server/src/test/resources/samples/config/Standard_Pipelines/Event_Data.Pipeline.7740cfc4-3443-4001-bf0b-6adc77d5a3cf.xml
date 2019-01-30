@@ -111,7 +111,7 @@
             <element>fileAppender</element>
             <name>outputPaths</name>
             <value>
-               <string>${stroom.temp}/text/output1/${pipeline}/${streamId}_${feed}-${uuid}.out,${stroom.temp}/text/output2/${pipeline}/${streamId}_${feed}-${uuid}.out</string>
+               <string>${stroom.temp}/text/output1/${pipeline}/${metaId}_${feed}-${uuid}.out,${stroom.temp}/text/output2/${pipeline}/${metaId}_${feed}-${uuid}.out</string>
             </value>
          </property>
       </add>

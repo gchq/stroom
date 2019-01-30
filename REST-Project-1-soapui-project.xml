@@ -286,7 +286,7 @@
           <con:settings/>
           <con:parameters>
             <con:parameter required="true">
-              <con:name>streamId</con:name>
+              <con:name>metaId</con:name>
               <con:value/>
               <con:style>QUERY</con:style>
               <con:type xmlns:xs="http://www.w3.org/2001/XMLSchema">xs:long</con:type>

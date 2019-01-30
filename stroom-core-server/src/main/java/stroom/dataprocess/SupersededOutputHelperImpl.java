@@ -2,11 +2,11 @@ package stroom.dataprocess;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.DataStatus;
-import stroom.data.meta.shared.FindDataCriteria;
-import stroom.data.meta.shared.MetaDataSource;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.Status;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.pipeline.scope.PipelineScoped;
 import stroom.pipeline.task.SupersededOutputHelper;
 import stroom.query.api.v2.ExpressionOperator;
@@ -23,9 +23,9 @@ import java.util.Objects;
 public class SupersededOutputHelperImpl implements SupersededOutputHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(SupersededOutputHelperImpl.class);
 
-    private final DataMetaService dataMetaService;
+    private final MetaService dataMetaService;
 
-    private Data sourceStream;
+    private Meta sourceMeta;
     private Processor streamProcessor;
     private ProcessorFilterTask streamTask;
     private long processStartTime;
@@ -34,7 +34,7 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
     private boolean superseded;
 
     @Inject
-    public SupersededOutputHelperImpl(final DataMetaService dataMetaService) {
+    public SupersededOutputHelperImpl(final MetaService dataMetaService) {
         this.dataMetaService = dataMetaService;
     }
 
@@ -53,50 +53,50 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
                 return false;
             }
 
-            Objects.requireNonNull(sourceStream, "Source stream must not be null");
+            Objects.requireNonNull(sourceMeta, "Source stream must not be null");
             Objects.requireNonNull(streamProcessor, "Stream processor must not be null");
 
             if (!superseded) {
                 final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                        .addTerm(MetaDataSource.PARENT_STREAM_ID, Condition.EQUALS, String.valueOf(sourceStream.getId()))
-                        .addTerm(MetaDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, String.valueOf(streamProcessor.getId()))
+                        .addTerm(MetaFieldNames.PARENT_ID, Condition.EQUALS, String.valueOf(sourceMeta.getId()))
+                        .addTerm(MetaFieldNames.PROCESSOR_ID, Condition.EQUALS, String.valueOf(streamProcessor.getId()))
                         .build();
-                final FindDataCriteria findStreamCriteria = new FindDataCriteria(expression);
-                final List<Data> streamList = dataMetaService.find(findStreamCriteria);
+                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
+                final List<Meta> streamList = dataMetaService.find(findMetaCriteria);
 
                 Long latestStreamTaskId = null;
                 long latestStreamCreationTime = processStartTime;
 
                 // Find the latest stream task .... this one is not superseded
-                for (final Data stream : streamList) {
+                for (final Meta meta : streamList) {
                     // TODO : @66 REMOVE STREAM TASK ID FROM STREAM AND QUERY THE STREAM PROCESSOR SERVICE TO FIND THE LATEST TASK ID FOR THE CURRENT INPUT STREAM AND PROCESSOR
 
-                    if (stream.getProcessTaskId() != null && !DataStatus.DELETED.equals(stream.getStatus())) {
-                        if (stream.getCreateMs() > latestStreamCreationTime) {
-                            latestStreamCreationTime = stream.getCreateMs();
-                            latestStreamTaskId = stream.getProcessTaskId();
-                        } else if (stream.getCreateMs() == latestStreamCreationTime
-                                && (latestStreamTaskId == null || stream.getProcessTaskId() > latestStreamTaskId)) {
-                            latestStreamCreationTime = stream.getCreateMs();
-                            latestStreamTaskId = stream.getProcessTaskId();
+                    if (meta.getProcessTaskId() != null && !Status.DELETED.equals(meta.getStatus())) {
+                        if (meta.getCreateMs() > latestStreamCreationTime) {
+                            latestStreamCreationTime = meta.getCreateMs();
+                            latestStreamTaskId = meta.getProcessTaskId();
+                        } else if (meta.getCreateMs() == latestStreamCreationTime
+                                && (latestStreamTaskId == null || meta.getProcessTaskId() > latestStreamTaskId)) {
+                            latestStreamCreationTime = meta.getCreateMs();
+                            latestStreamTaskId = meta.getProcessTaskId();
                         }
                     }
                 }
 
                 // Loop around all the streams found above looking for ones to delete
-                final FindDataCriteria findDeleteStreamCriteria = new FindDataCriteria();
-                for (final Data stream : streamList) {
+                final FindMetaCriteria findDeleteMetaCriteria = new FindMetaCriteria();
+                for (final Meta meta : streamList) {
                     // If the stream is not associated with the latest stream task
                     // and is not already deleted then select it for deletion.
-                    if ((latestStreamTaskId == null || !latestStreamTaskId.equals(stream.getProcessTaskId()))
-                            && !DataStatus.DELETED.equals(stream.getStatus())) {
-                        findDeleteStreamCriteria.obtainSelectedIdSet().add(stream.getId());
+                    if ((latestStreamTaskId == null || !latestStreamTaskId.equals(meta.getProcessTaskId()))
+                            && !Status.DELETED.equals(meta.getStatus())) {
+                        findDeleteMetaCriteria.obtainSelectedIdSet().add(meta.getId());
                     }
                 }
 
                 // If we have found any to delete then delete them now.
-                if (findDeleteStreamCriteria.obtainSelectedIdSet().isConstrained()) {
-                    final long deleteCount = dataMetaService.updateStatus(findDeleteStreamCriteria, DataStatus.DELETED);
+                if (findDeleteMetaCriteria.obtainSelectedIdSet().isConstrained()) {
+                    final long deleteCount = dataMetaService.updateStatus(findDeleteMetaCriteria, Status.DELETED);
                     LOGGER.info("checkSuperseded() - Removed {}", deleteCount);
                 }
 
@@ -110,11 +110,11 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
         return superseded;
     }
 
-    public void init(final Data sourceStream,
+    public void init(final Meta sourceMeta,
                      final Processor streamProcessor,
                      final ProcessorFilterTask streamTask,
                      final long processStartTime) {
-        this.sourceStream = sourceStream;
+        this.sourceMeta = sourceMeta;
         this.streamProcessor = streamProcessor;
         this.streamTask = streamTask;
         this.processStartTime = processStartTime;

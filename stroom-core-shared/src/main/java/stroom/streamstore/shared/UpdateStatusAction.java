@@ -1,27 +1,27 @@
 package stroom.streamstore.shared;
 
-import stroom.data.meta.shared.DataStatus;
+import stroom.meta.shared.Status;
 import stroom.task.shared.Action;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.util.shared.SharedInteger;
 
 public class UpdateStatusAction extends Action<SharedInteger> {
-    private FindDataCriteria criteria;
-    private DataStatus newStatus;
+    private FindMetaCriteria criteria;
+    private Status newStatus;
 
     public UpdateStatusAction() {
     }
 
-    public UpdateStatusAction(final FindDataCriteria criteria, final DataStatus newStatus) {
+    public UpdateStatusAction(final FindMetaCriteria criteria, final Status newStatus) {
         this.criteria = criteria;
         this.newStatus = newStatus;
     }
 
-    public FindDataCriteria getCriteria() {
+    public FindMetaCriteria getCriteria() {
         return criteria;
     }
 
-    public DataStatus getNewStatus() {
+    public Status getNewStatus() {
         return newStatus;
     }
 

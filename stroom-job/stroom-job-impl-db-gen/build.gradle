@@ -42,6 +42,9 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         includes = 'job|job_node'
                         // We don't want to include flyway versioning
                         excludes = 'job_schema_version'
+
+                        // Specify 'version' for use in optimistic concurrency control
+                        recordVersionFields = 'version'
                     }
                     target {
                         packageName = 'stroom.job.impl.db'
