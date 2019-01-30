@@ -36,6 +36,7 @@ include 'stroom-cache:stroom-cache-impl'
 include 'stroom-cluster-lock:stroom-cluster-lock-api'
 include 'stroom-cluster-lock:stroom-cluster-lock-impl-db'
 include 'stroom-cluster-lock:stroom-cluster-lock-impl-db-gen'
+include 'stroom-cluster-lock:stroom-cluster-lock-impl-mock'
 
 // Config
 include 'stroom-config:stroom-config-app'
