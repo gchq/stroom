@@ -418,6 +418,8 @@ rootProject.subprojects { subProj ->
         subProj.tasks.withType(Test) { otherTestTask ->
             //println "subProj ${subProj}, task ${it.name} thisProject.tasks.test ${thisProject.tasks.test}"
             thisProject.tasks.test.mustRunAfter otherTestTask.path
+            thisProject.tasks.jar.mustRunAfter otherTestTask.path
+            thisProject.tasks.shadowJar.mustRunAfter otherTestTask.path
         }
     }
 }
