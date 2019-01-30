@@ -133,7 +133,7 @@ server
     let filtered = testCache
       .data!.usersAndGroups.users.filter(u => !name || u.name.includes(name))
       .filter(u => !uuid || u.uuid === uuid)
-      .filter(u => !isGroup || Boolean(u.group).toString() === isGroup);
+      .filter(u => !isGroup || Boolean(u.isGroup).toString() === isGroup);
     res.json(filtered);
   });
 server
@@ -146,7 +146,7 @@ server
       .map(ugm => ugm.userUuid)
       .map(userUuid =>
         testCache
-          .data!.usersAndGroups.users.filter(user => !user.group)
+          .data!.usersAndGroups.users.filter(user => !user.isGroup)
           .find(user => user.uuid === userUuid)
       );
 
@@ -162,7 +162,7 @@ server
       .map(ugm => ugm.groupUuid)
       .map(groupUuid =>
         testCache
-          .data!.usersAndGroups.users.filter(user => user.group)
+          .data!.usersAndGroups.users.filter(user => user.isGroup)
           .find(user => user.uuid === groupUuid)
       );
     res.json(users);

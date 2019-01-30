@@ -5,7 +5,7 @@ import java.util.Objects;
 /**
  * TODO: Rename this first opportunity, for now it's to distinguish it from the hibernate based user.
  */
-public class UserJooq {
+public class User {
     public static final String ADMIN_USER_NAME = "admin";
 
     // Value of a long to represent an undefined id.
@@ -26,7 +26,7 @@ public class UserJooq {
      * Is this user a user group or a regular user? TODO : At some point split
      * out logon and credential details into another entity.
      */
-    private boolean group;
+    private boolean isGroup;
 
     public long getId() {
         return id;
@@ -52,28 +52,28 @@ public class UserJooq {
         this.uuid = uuid;
     }
 
-    public boolean isGroup() {
-        return group;
+    public boolean getIsGroup() {
+        return isGroup;
     }
 
-    public void setGroup(boolean group) {
-        this.group = group;
+    public void setIsGroup(boolean isGroup) {
+        this.isGroup = isGroup;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        UserJooq user = (UserJooq) o;
+        User user = (User) o;
         return id == user.id &&
-                group == user.group &&
+                isGroup == user.isGroup &&
                 Objects.equals(name, user.name) &&
                 Objects.equals(uuid, user.uuid);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, uuid, group);
+        return Objects.hash(id, name, uuid, isGroup);
     }
 
     @Override
@@ -82,20 +82,20 @@ public class UserJooq {
         sb.append("id=").append(id);
         sb.append(", name='").append(name).append('\'');
         sb.append(", uuid='").append(uuid).append('\'');
-        sb.append(", group=").append(group);
+        sb.append(", isGroup=").append(isGroup);
         sb.append('}');
         return sb.toString();
     }
 
     public static class Builder {
-        private final UserJooq instance;
+        private final User instance;
 
-        public Builder(final UserJooq instance) {
+        public Builder(final User instance) {
             this.instance = instance;
         }
 
         public Builder() {
-            this(new UserJooq());
+            this(new User());
         }
 
         public Builder id(final long value) {
@@ -114,11 +114,11 @@ public class UserJooq {
         }
 
         public Builder isGroup(final Boolean value) {
-            instance.setGroup(value);
+            instance.setIsGroup(value);
             return this;
         }
 
-        public UserJooq build() {
+        public User build() {
             return this.instance;
         }
     }

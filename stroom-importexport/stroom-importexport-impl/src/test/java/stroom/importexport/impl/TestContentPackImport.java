@@ -26,9 +26,6 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import stroom.importexport.impl.ContentPackImport;
-import stroom.importexport.impl.ContentPackImportConfig;
-import stroom.importexport.impl.ImportExportService;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -44,6 +41,7 @@ class TestContentPackImport {
     private static Path CONTENT_PACK_DIR;
 
     static {
+        // We have to use /tmp as the base as that is where the service will fall back to looking
         CONTENT_PACK_DIR = FileUtil.getTempDir().resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
     }
 

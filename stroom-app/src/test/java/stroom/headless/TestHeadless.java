@@ -19,6 +19,7 @@ package stroom.headless;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.test.ComparisonHelper;
@@ -26,6 +27,8 @@ import stroom.test.ContentImportService.ContentPack;
 import stroom.test.ContentPackDownloader;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
+import stroom.util.test.TempDir;
+import stroom.util.test.TempDirExtension;
 import stroom.util.zip.ZipUtil;
 
 import java.io.IOException;
@@ -41,6 +44,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Disabled
+@ExtendWith(TempDirExtension.class)
 class TestHeadless {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHeadless.class);
 
@@ -48,8 +52,7 @@ class TestHeadless {
     private static final Version EVENT_LOGGING_XML_SCHEMA_VERSION = Version.of(1, 0);
 
     @Test
-    void test() throws IOException {
-        Path newTempDir = FileUtil.getTempDir().resolve("headless");
+    void test(@TempDir Path newTempDir) throws IOException {
 //        StroomProperties.setOverrideProperty("stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);
 
         // Make sure the new temp directory is empty.

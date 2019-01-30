@@ -20,6 +20,7 @@ import com.google.common.base.Strings;
 import stroom.util.ArgsUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -40,7 +41,8 @@ abstract class ManualCheckStreamPerformance {
     private static int testSize = 100000;
 
     static Path getTempFile() throws IOException {
-        final Path tempFile = Files.createTempFile(FileUtil.getTempDir(), "test", "test");
+        final Path tempFile = Files.createTempFile(
+                FileUtil.getTempDir(), ManualCheckStreamPerformance.class.getSimpleName(), "test");
         FileUtil.deleteFile(tempFile);
         return tempFile;
     }
@@ -78,8 +80,9 @@ abstract class ManualCheckStreamPerformance {
         }
         final long average = totalTime / threadTimes.size();
 
-        System.out.println(
-                "Average for " + Strings.padStart(msg, 20, ' ') + " is " + Strings.padStart("" + average, 10, ' '));
+        System.out.println(LambdaLogger.buildMessage("Average for {} is {}",
+                Strings.padStart(msg, 20, ' '),
+                Strings.padStart("" + average, 10, ' ')));
     }
 
     public static void main(final String[] args) throws InterruptedException {

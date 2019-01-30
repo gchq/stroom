@@ -91,7 +91,11 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
         final DocRef filteredXSLT = createXSLT(dir + "TestRecordOutputFilter.xsl", "TestRecordOutputFilter");
         final DocRef pipelineRef = createPipeline(dir + "TestRecordOutputFilter Pipeline.xml", textConverterRef,
                 filteredXSLT);
-        test(pipelineRef, dir, "TestRecordOutputFilter-all", "TestRecordOutputFilter", "TestRecordOutputFilter-all",
+        test(pipelineRef,
+                dir,
+                "TestRecordOutputFilter-all",
+                "TestRecordOutputFilter",
+                "TestRecordOutputFilter-all",
                 null);
     }
 
@@ -103,7 +107,11 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
         final DocRef filteredXSLT = createXSLT(dir + "TestRecordOutputFilter.xsl", "TestRecordOutputFilter");
         final DocRef pipelineRef = createPipeline(dir + "TestRecordOutputFilter Pipeline.xml", textConverterRef,
                 filteredXSLT);
-        test(pipelineRef, dir, "TestRecordOutputFilter-pt", "TestRecordOutputFilter", "TestRecordOutputFilter-pt",
+        test(pipelineRef,
+                dir,
+                "TestRecordOutputFilter-pt",
+                "TestRecordOutputFilter",
+                "TestRecordOutputFilter-pt",
                 null);
     }
 
@@ -154,7 +162,9 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
                       final String outputXMLStem, final String outputSAXStem, final String encoding) {
         pipelineScopeRunnable.scopeRunnable(() -> {
             try {
-                final Path tempDir = getCurrentTestDir();
+                // We have to use /tmp here as the pipeline is hard coded to output
+                // to ${stroom.temp}/TestRecordOutputFilter.xml
+                final Path tempDir = FileUtil.getTempDir();
 
                 final Path outputFile = tempDir.resolve("TestRecordOutputFilter.xml");
                 final Path outputLockFile = tempDir.resolve("TestRecordOutputFilter.xml.lock");

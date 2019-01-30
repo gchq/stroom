@@ -17,7 +17,7 @@
 package stroom.security.impl.mock;
 
 import stroom.security.SecurityContext;
-import stroom.security.shared.UserJooq;
+import stroom.security.shared.User;
 
 public class MockSecurityContext implements SecurityContext {
     @Override
@@ -32,7 +32,7 @@ public class MockSecurityContext implements SecurityContext {
 
     @Override
     public String getUserId() {
-        return UserJooq.ADMIN_USER_NAME;
+        return User.ADMIN_USER_NAME;
     }
 
     @Override

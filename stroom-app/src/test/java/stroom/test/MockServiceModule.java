@@ -12,7 +12,7 @@ import stroom.pipeline.xmlschema.MockXmlSchemaModule;
 import stroom.resource.impl.MockResourceModule;
 import stroom.security.UserRefFactory;
 import stroom.security.UserService;
-import stroom.security.shared.UserJooq;
+import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 
 import java.util.List;
@@ -63,10 +63,10 @@ public class MockServiceModule extends AbstractModule {
 //        install(new stroom.servlet.MockServletModule());
 
         final UserService mockUserService = mock(UserService.class);
-        when(mockUserService.loadByUuid(any())).then((Answer<UserJooq>) invocation -> {
+        when(mockUserService.loadByUuid(any())).then((Answer<User>) invocation -> {
             final String uuid = invocation.getArgument(0);
-            final List<UserJooq> list = mockUserService.find(null);
-            for (final UserJooq e : list) {
+            final List<User> list = mockUserService.find(null);
+            for (final User e : list) {
                 if (e.getUuid() != null && e.getUuid().equals(uuid)) {
                     return e;
                 }
@@ -75,7 +75,7 @@ public class MockServiceModule extends AbstractModule {
         });
         when(mockUserService.createUser(any())).then((Answer<UserRef>) invocation -> {
             final String name = invocation.getArgument(0);
-            final UserJooq user = new UserJooq.Builder()
+            final User user = new User.Builder()
                     .uuid(UUID.randomUUID().toString())
                     .name(name)
                     .build();
@@ -83,7 +83,7 @@ public class MockServiceModule extends AbstractModule {
         });
         when(mockUserService.createUserGroup(any())).then((Answer<UserRef>) invocation -> {
             final String name = invocation.getArgument(0);
-            final UserJooq user = new UserJooq.Builder()
+            final User user = new User.Builder()
                     .uuid(UUID.randomUUID().toString())
                     .name(name)
                     .isGroup(true)

@@ -17,14 +17,16 @@
 package stroom.pipeline;
 
 
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.FindMetaCriteria;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
 import stroom.io.StreamCloser;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -64,6 +66,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAppenderTest.class);
+
     @Inject
     private Provider<PipelineFactory> pipelineFactoryProvider;
     @Inject
@@ -92,8 +96,13 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     private LoggingErrorReceiver loggingErrorReceiver;
 
     void test(final String name, final String type) {
-        // Delete everything in the temp dir.
-        FileUtil.deleteContents(FileUtil.getTempDir());
+
+        final Path tempDir = getCurrentTestDir();
+
+        // Make sure the config dir is set.
+        FileUtil.setTempDir(tempDir);
+
+        LOGGER.debug("Setting tempDir to {}", FileUtil.getCanonicalPath(tempDir));
 
         final String dir = name + "/";
         final String stem = dir + name + "_" + type;

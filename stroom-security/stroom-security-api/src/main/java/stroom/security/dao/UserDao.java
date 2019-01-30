@@ -1,29 +1,29 @@
 package stroom.security.dao;
 
-import stroom.security.shared.UserJooq;
+import stroom.security.shared.User;
 
 import java.util.List;
 
 public interface UserDao {
-    List<UserJooq> find(Boolean isGroup, String name);
+    List<User> find(Boolean isGroup, String name);
 
-    UserJooq getById(long id);
+    User getById(long id);
 
-    UserJooq getByUuid(String uuid);
+    User getByUuid(String uuid);
 
-    UserJooq getUserByName(String name);
+    User getUserByName(String name);
 
-    List<UserJooq> findUsersInGroup(String groupUuid);
+    List<User> findUsersInGroup(String groupUuid);
 
-    List<UserJooq> findGroupsForUser(String userUuid);
+    List<User> findGroupsForUser(String userUuid);
 
-    UserJooq createUser(String name);
+    User createUser(String name);
 
-    UserJooq createUserGroup(String name);
+    User createUserGroup(String name);
 
-    Boolean deleteUser(String uuid);
+    void deleteUser(String uuid);
 
-    Boolean addUserToGroup(String userUuid, String groupUuid);
+    void addUserToGroup(String userUuid, String groupUuid);
 
-    Boolean removeUserFromGroup(String userUuid, String groupUuid);
+    void removeUserFromGroup(String userUuid, String groupUuid);
 }
