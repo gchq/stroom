@@ -493,9 +493,9 @@ public class DataFetcher {
                 pipelineHolder.setPipeline(DocRefUtil.create(loadedPipeline));
                 // Get the stream providers.
                 metaHolder.setMeta(streamSource.getMeta());
-                metaHolder.addProvider(streamSource);
-                metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
-                metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
+                metaHolder.addProvider(streamSource, streamSource.getMeta().getTypeName());
+                metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META), StreamTypeNames.META);
+                metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT), StreamTypeNames.CONTEXT);
 
                 final PipelineData pipelineData = pipelineDataCache.get(loadedPipeline);
                 if (pipelineData == null) {

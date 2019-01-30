@@ -266,7 +266,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 // Make sure we have at least one processed stream else it indicates an error in processing somewhere
                 // If we get an error stream you can just run the pipeline in stroom, to try and diagnose the fault
                 // if the above error stream dump doesn't help
-                assertThat(processedMeta.size() > 0).isTrue();
+                assertThat(processedMeta.size()).isGreaterThan(0);
 
                 // Copy the contents of the latest written stream to the output.
                 int i = 1;
@@ -564,7 +564,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private void compareFiles(final Path expectedFile, final Path actualFile, final List<Exception> exceptions) {
         try {
             ComparisonHelper.compare(expectedFile, actualFile, false, true);
-        } catch (final RuntimeException e) {
+            Files.deleteIfExists(actualFile);
+        } catch (final IOException | RuntimeException e) {
             exceptions.add(e);
         }
     }

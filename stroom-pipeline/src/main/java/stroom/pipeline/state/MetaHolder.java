@@ -48,12 +48,10 @@ public class MetaHolder implements Holder {
         this.meta = meta;
     }
 
-    public void addProvider(final StreamSource source) {
+    public void addProvider(final StreamSource source, final String streamType) {
         if (source != null) {
-            final StreamSourceInputStreamProvider provider = source.getInputStreamProvider();
-            streamCloser.add(provider);
             streamCloser.add(source);
-            streamProviders.put(source.getMeta().getTypeName(), provider);
+            addProvider(source.getInputStreamProvider(), streamType);
         }
     }
 

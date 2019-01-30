@@ -19,17 +19,16 @@ package stroom.pipeline.stepping;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.FindMetaCriteria;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamSourceInputStream;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.pipeline.feed.FeedProperties;
 import stroom.io.StreamCloser;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.StreamLocationFactory;
@@ -40,6 +39,7 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.feed.FeedProperties;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
@@ -48,9 +48,9 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
@@ -509,9 +509,9 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
             // Get the stream providers.
             metaHolder.setMeta(meta);
-            metaHolder.addProvider(streamSource);
-            metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
-            metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
+            metaHolder.addProvider(streamSource, streamSource.getMeta().getTypeName());
+            metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META), StreamTypeNames.META);
+            metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT), StreamTypeNames.CONTEXT);
 
             // Get the main stream provider.
             final StreamSourceInputStreamProvider mainProvider = metaHolder.getProvider(streamTypeName);
