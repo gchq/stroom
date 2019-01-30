@@ -2,7 +2,6 @@ package stroom.streamtask.server;
 
 import org.springframework.stereotype.Component;
 import stroom.dictionary.server.DictionaryStore;
-import stroom.entity.server.EntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
