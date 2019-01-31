@@ -21,9 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.job.api.DistributedTask;
 import stroom.job.api.DistributedTaskFetcher;
-import stroom.job.shared.Job;
-import stroom.job.shared.JobNode;
-import stroom.job.shared.JobNode.JobType;
+import stroom.job.api.Job;
+import stroom.job.api.JobNode;
 import stroom.streamtask.TaskStatusTraceLog;
 import stroom.task.GenericServerTask;
 import stroom.task.TaskCallbackAdaptor;
@@ -324,7 +323,7 @@ public class DistributedTaskFetcherImpl implements DistributedTaskFetcher {
             final JobNode jobNode = tracker.getJobNode();
             final Job job = jobNode.getJob();
 
-            if (JobType.DISTRIBUTED.equals(jobNode.getJobType())) {
+            if (JobNode.JobType.DISTRIBUTED.equals(jobNode.getJobType())) {
                 // Update the number of tasks that are still required by this
                 // tracker.
                 final int requiredTaskCount = jobNode.getTaskLimit() - tracker.getCurrentTaskCount();

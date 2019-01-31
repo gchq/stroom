@@ -17,6 +17,7 @@
 package stroom.job.impl.db;
 
 import stroom.entity.BasicCrudDao;
+import stroom.job.api.Job;
 
 public interface JobDao extends BasicCrudDao<Job> {
     Job create(Job job);

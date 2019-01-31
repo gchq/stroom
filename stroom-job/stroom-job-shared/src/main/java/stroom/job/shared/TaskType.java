@@ -16,25 +16,25 @@
 
 package stroom.job.shared;
 
-import stroom.job.shared.JobNode.JobType;
+import stroom.job.api.JobNode;
 import stroom.docref.SharedObject;
 
 public class TaskType implements SharedObject {
     private static final long serialVersionUID = -520024408007948736L;
 
-    private JobType jobType;
+    private JobNode.JobType jobType;
     private String schedule;
 
     public TaskType() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public TaskType(final JobType jobType, final String schedule) {
+    public TaskType(final JobNode.JobType jobType, final String schedule) {
         this.jobType = jobType;
         this.schedule = schedule;
     }
 
-    public JobType getJobType() {
+    public JobNode.JobType getJobType() {
         return jobType;
     }
 

@@ -16,7 +16,7 @@
 
 package stroom.job;
 
-import stroom.job.shared.JobNode.JobType;
+import stroom.job.api.JobNode;
 import stroom.job.shared.ScheduledTimes;
 
 interface ScheduleService {
@@ -29,6 +29,6 @@ interface ScheduleService {
      * @return The scheduled times based on the supplied cron expression.
      * @throws RuntimeException Could be thrown.
      */
-    ScheduledTimes getScheduledTimes(final JobType jobType, final Long scheduleReferenceTime,
+    ScheduledTimes getScheduledTimes(final JobNode.JobType jobType, final Long scheduleReferenceTime,
                                      final Long lastExecutedTime, final String expression);
 }

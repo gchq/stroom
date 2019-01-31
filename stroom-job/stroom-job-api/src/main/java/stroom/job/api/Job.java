@@ -1,8 +1,12 @@
-package stroom.job.impl.db;
+package stroom.job.api;
+
+import stroom.docref.SharedObject;
+import stroom.util.shared.HasAuditInfo;
 
 import java.util.Objects;
 
-public final class Job {
+public final class Job implements HasAuditInfo, SharedObject {
+    public static final String ENTITY_TYPE = "Job";
 
     private Integer id;
     private boolean enabled = false;
@@ -59,6 +63,47 @@ public final class Job {
         this.version = version;
     }
 
+    //TODO gh-1072: add these to the database
+    @Override
+    public Long getCreateTimeMs() {
+        return null;
+    }
+
+    @Override
+    public void setCreateTimeMs(Long createTimeMs) {
+
+    }
+
+    @Override
+    public String getCreateUser() {
+        return null;
+    }
+
+    @Override
+    public void setCreateUser(String createUser) {
+
+    }
+
+    @Override
+    public Long getUpdateTimeMs() {
+        return null;
+    }
+
+    @Override
+    public void setUpdateTimeMs(Long updateTimeMs) {
+
+    }
+
+    @Override
+    public String getUpdateUser() {
+        return null;
+    }
+
+    @Override
+    public void setUpdateUser(String updateUser) {
+
+    }
+
     @Override
     public String toString() {
         return "Job{" +
@@ -81,4 +126,5 @@ public final class Job {
     public int hashCode() {
         return Objects.hash(id);
     }
+
 }

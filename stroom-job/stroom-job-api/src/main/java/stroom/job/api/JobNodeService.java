@@ -17,14 +17,14 @@
 
 package stroom.job.api;
 
-import stroom.entity.shared.BaseResultList;
 import stroom.job.shared.FindJobNodeCriteria;
-import stroom.job.shared.JobNode;
+
+import java.util.List;
 
 public interface JobNodeService {
     void startup();
 
     JobNode save(JobNode job);
 
-    BaseResultList<JobNode> find(FindJobNodeCriteria criteria);
+    List<JobNode> find(FindJobNodeCriteria criteria);
 }

@@ -16,13 +16,13 @@
 
 package stroom.job.shared;
 
+import stroom.job.api.JobNode;
 import stroom.task.shared.Action;
-import stroom.job.shared.JobNode.JobType;
 
 public class GetScheduledTimesAction extends Action<ScheduledTimes> {
     private static final long serialVersionUID = -5419140463010782005L;
 
-    private JobType jobType;
+    private JobNode.JobType jobType;
     private Long scheduleReferenceTime;
     private Long lastExecutedTime;
     private String schedule;
@@ -31,7 +31,7 @@ public class GetScheduledTimesAction extends Action<ScheduledTimes> {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public GetScheduledTimesAction(final JobType jobType, final Long scheduleReferenceTime, final Long lastExecutedTime,
+    public GetScheduledTimesAction(final JobNode.JobType jobType, final Long scheduleReferenceTime, final Long lastExecutedTime,
                                    final String schedule) {
         this.jobType = jobType;
         this.scheduleReferenceTime = scheduleReferenceTime;
@@ -39,7 +39,7 @@ public class GetScheduledTimesAction extends Action<ScheduledTimes> {
         this.schedule = schedule;
     }
 
-    public JobType getJobType() {
+    public JobNode.JobType getJobType() {
         return jobType;
     }
 

@@ -21,11 +21,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
+import stroom.job.api.Job;
+import stroom.job.api.JobNode;
 import stroom.job.api.JobNodeService;
 import stroom.job.shared.FetchJobDataAction;
 import stroom.job.shared.FindJobNodeCriteria;
-import stroom.job.shared.Job;
-import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeRow;
 import stroom.node.shared.Node;
@@ -62,6 +62,19 @@ class FetchJobDataHandler extends AbstractTaskHandler<FetchJobDataAction, Result
     @Override
     public BaseResultList<JobNodeRow> exec(final FetchJobDataAction action) {
         return security.secureResult(() -> {
+            List<Job> result;
+            try {
+                result = jobNodeService.find().fetch(activity.getId());
+                entityEventLog.view(result, null);
+            } catch (final RuntimeException e) {
+                entityEventLog.view(activity, e);
+                throw e;
+            }
+
+
+
+
+            return result;
             // Add the root node.
             final List<JobNodeRow> values = new ArrayList<>();
 

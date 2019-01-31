@@ -4,6 +4,7 @@ dependencies {
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-db-util')
     implementation project(':stroom-job:stroom-job-impl-db-gen')
+    implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 

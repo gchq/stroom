@@ -1,5 +1,6 @@
 package stroom.job.impl.db;
 
+import stroom.job.api.JobNode;
 import stroom.job.impl.db.stroom.tables.records.JobNodeRecord;
 
 import javax.inject.Inject;

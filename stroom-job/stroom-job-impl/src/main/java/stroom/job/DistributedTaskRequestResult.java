@@ -18,7 +18,7 @@ package stroom.job;
 
 import stroom.docref.SharedObject;
 import stroom.job.api.DistributedTask;
-import stroom.job.shared.JobNode;
+import stroom.job.api.JobNode;
 
 import java.util.List;
 import java.util.Map;

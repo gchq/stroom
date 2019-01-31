@@ -16,6 +16,7 @@
 
 package stroom.job.shared;
 
+import stroom.job.api.Job;
 import stroom.task.shared.Action;
 import stroom.entity.shared.ResultList;
 

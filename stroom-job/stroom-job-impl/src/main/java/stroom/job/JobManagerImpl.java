@@ -17,13 +17,13 @@
 
 package stroom.job;
 
+import stroom.job.api.Job;
+import stroom.job.api.JobNode;
 import stroom.job.api.JobNodeService;
 import stroom.job.api.JobService;
 import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.FindJobNodeCriteria;
-import stroom.job.shared.Job;
 import stroom.job.shared.JobManager;
-import stroom.job.shared.JobNode;
 import stroom.node.shared.Node;
 
 import javax.inject.Inject;

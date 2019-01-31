@@ -1,11 +1,15 @@
-package stroom.job.impl.db;
+package stroom.job.api;
 
+import stroom.docref.SharedObject;
+import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
+import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasDisplayValue;
 
-public class JobNode {
-    private Integer id;
+public class JobNode extends BaseEntity implements HasAuditInfo, SharedObject {
+    public static final String ENTITY_TYPE = "JobNode";
+    private long id;
     private String nodeName;
     private Job job;
     private int taskLimit = 20;
@@ -33,8 +37,13 @@ public class JobNode {
         this.nodeName = nodeName;
     }
 
-    public Integer getId() {
+    public long getId() {
         return id;
+    }
+
+    @Override
+    public void setId(long id) {
+
     }
 
     public void setId(Integer id) {
@@ -79,6 +88,52 @@ public class JobNode {
 
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
+    }
+
+    //TODO: gh-1072: add the db
+    @Override
+    public Long getCreateTimeMs() {
+        return null;
+    }
+
+    @Override
+    public void setCreateTimeMs(Long createTimeMs) {
+
+    }
+
+    @Override
+    public String getCreateUser() {
+        return null;
+    }
+
+    @Override
+    public void setCreateUser(String createUser) {
+
+    }
+
+    @Override
+    public Long getUpdateTimeMs() {
+        return null;
+    }
+
+    @Override
+    public void setUpdateTimeMs(Long updateTimeMs) {
+
+    }
+
+    @Override
+    public String getUpdateUser() {
+        return null;
+    }
+
+    @Override
+    public void setUpdateUser(String updateUser) {
+
+    }
+
+    @Override
+    public String getType() {
+        return null;
     }
 
     public enum JobType implements HasDisplayValue, HasPrimitiveValue {

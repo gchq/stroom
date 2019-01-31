@@ -21,15 +21,15 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.entity.EntityTypeBinder;
 import stroom.entity.FindService;
 import stroom.job.api.DistributedTaskFetcher;
+import stroom.job.api.Job;
+import stroom.job.api.JobNode;
 import stroom.job.api.JobNodeService;
 import stroom.job.api.JobService;
 import stroom.job.api.ScheduledJobsModule;
 import stroom.job.api.ScheduledTaskExecutor;
 import stroom.job.shared.FetchJobDataAction;
 import stroom.job.shared.GetScheduledTimesAction;
-import stroom.job.shared.Job;
 import stroom.job.shared.JobManager;
-import stroom.job.shared.JobNode;
 import stroom.task.api.TaskHandlerBinder;
 
 public class JobSystemModule extends AbstractModule {

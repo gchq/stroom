@@ -19,11 +19,10 @@ package stroom.job;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.job.api.Job;
+import stroom.job.api.JobNode;
 import stroom.job.api.JobNodeService;
 import stroom.job.shared.FindJobNodeCriteria;
-import stroom.job.shared.Job;
-import stroom.job.shared.JobNode;
-import stroom.job.shared.JobNode.JobType;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.Node;
 import stroom.util.scheduler.FrequencyScheduler;
@@ -152,8 +151,8 @@ public class JobNodeTrackerCache {
                     try {
                         // Update schedule and frequency times if this job node
                         // has a job type of cron or frequency.
-                        if (JobType.CRON.equals(jobNode.getJobType())
-                                || JobType.FREQUENCY.equals(jobNode.getJobType())) {
+                        if (JobNode.JobType.CRON.equals(jobNode.getJobType())
+                                || JobNode.JobType.FREQUENCY.equals(jobNode.getJobType())) {
                             final String schedule = jobNode.getSchedule();
                             // Update the schedule cache if the schedule has
                             // changed.
@@ -164,10 +163,10 @@ public class JobNodeTrackerCache {
                                     schedulerMap.put(jobNode, previousState.schedulerMap.get(jobNode));
                                 } else {
                                     try {
-                                        if (JobType.CRON.equals(jobNode.getJobType())) {
+                                        if (JobNode.JobType.CRON.equals(jobNode.getJobType())) {
                                             schedulerMap.put(jobNode,
                                                     SimpleCron.compile(jobNode.getSchedule()).createScheduler());
-                                        } else if (JobType.FREQUENCY.equals(jobNode.getJobType())) {
+                                        } else if (JobNode.JobType.FREQUENCY.equals(jobNode.getJobType())) {
                                             schedulerMap.put(jobNode, new FrequencyScheduler(jobNode.getSchedule()));
                                         }
                                     } catch (final RuntimeException e) {

@@ -16,7 +16,8 @@
 
 package stroom.job;
 
-import stroom.job.shared.JobNode.JobType;
+import stroom.job.api.JobNode;
+import stroom.job.api.JobNode.JobType;
 import stroom.job.shared.ScheduledTimes;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.SimpleCron;

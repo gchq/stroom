@@ -11,6 +11,7 @@ import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
+import stroom.job.api.Job;
 import stroom.job.impl.db.stroom.tables.records.JobRecord;
 
 import java.util.Optional;

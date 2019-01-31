@@ -17,6 +17,7 @@
 package stroom.job.shared;
 
 import stroom.entity.shared.EntityRow;
+import stroom.job.api.JobNode;
 import stroom.util.shared.Expander;
 import stroom.util.shared.TreeRow;
 

@@ -18,7 +18,7 @@ package stroom.job;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.job.shared.JobNode;
+import stroom.job.api.JobNode;
 import stroom.util.date.DateUtil;
 
 import java.util.concurrent.atomic.AtomicInteger;
