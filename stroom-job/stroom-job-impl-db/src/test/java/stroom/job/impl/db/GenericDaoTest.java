@@ -19,11 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static stroom.job.impl.db.stroom.Tables.JOB;
 
-/**
- * TODO additional testing for the GenericDao:
- *    - Something that compares the properties of entity and records and ensures they can be mapped.
- *      Otherwise each entity needs a test like this, which would really only be testing the mappings.
- */
 public class GenericDaoTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(GenericDaoTest.class);
 
@@ -61,18 +56,6 @@ public class GenericDaoTest {
         assertThat(loadedJob.getDescription()).isEqualTo("Some description");
         assertThat(loadedJob.isEnabled()).isTrue();
     }
-
-//    @Test
-//    public void quickCreation(){
-//        // Given/when
-//        Job job = dao.create();
-//
-//        // Then
-//        assertThat(job.getDescription()).isNullOrEmpty();
-//        assertThat(job.isEnabled()).isFalse();
-//        assertThat(job.getId()).isNotNull();
-//        assertThat(job.getVersion()).isNotNull();
-//    }
 
     @Test
     public void descriptionTooLong() {
