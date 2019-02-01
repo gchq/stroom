@@ -93,7 +93,7 @@ class TestStroomIndexQueryResource {
     @Test
     void testSavedFromFile() throws IOException {
         // Given
-        String searchRequestJson = new String(Files.readAllBytes(Paths.get("src/integrationTest/resources/searchRequest.json")));
+        String searchRequestJson = new String(Files.readAllBytes(Paths.get("src/test/resources/searchRequest.json")));
         ObjectMapper objectMapper = new ObjectMapper();
         SearchRequest searchRequest = objectMapper.readValue(searchRequestJson, SearchRequest.class);
         Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));

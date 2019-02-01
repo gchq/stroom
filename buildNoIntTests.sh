@@ -1,3 +1,3 @@
 #!/bin/bash
-./gradlew clean build -x integrationTest "$@"
+./gradlew clean build -x test "$@"
 
