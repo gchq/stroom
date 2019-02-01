@@ -29,7 +29,7 @@ import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
@@ -48,7 +48,7 @@ class FetchDataHandler extends AbstractTaskHandler<FetchDataAction, AbstractFetc
                      final Provider<FeedHolder> feedHolderProvider,
                      final Provider<MetaDataHolder> metaDataHolderProvider,
                      final Provider<PipelineHolder> pipelineHolderProvider,
-                     final Provider<StreamHolder> streamHolderProvider,
+                     final Provider<MetaHolder> metaHolderProvider,
                      final PipelineStore pipelineStore,
                      final Provider<PipelineFactory> pipelineFactoryProvider,
                      final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
@@ -61,7 +61,7 @@ class FetchDataHandler extends AbstractTaskHandler<FetchDataAction, AbstractFetc
                 feedHolderProvider,
                 metaDataHolderProvider,
                 pipelineHolderProvider,
-                streamHolderProvider,
+                metaHolderProvider,
                 pipelineStore,
                 pipelineFactoryProvider,
                 errorReceiverProxyProvider,

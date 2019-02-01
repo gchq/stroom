@@ -85,7 +85,7 @@ public class SchemaFilterFactory {
 //        xmlSchema.setName(schemaName);
 //        xmlSchema.setNamespaceURI(namespaceURI);
 //        xmlSchema.setSystemId(systemId);
-//        xmlSchema.setData(StreamUtil.fileToString(file));
+//        xmlSchema.setMeta(StreamUtil.fileToString(file));
 //        xmlSchemaStore.writeDocument(xmlSchema);
     }
 }

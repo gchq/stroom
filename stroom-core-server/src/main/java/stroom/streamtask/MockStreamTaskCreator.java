@@ -17,9 +17,9 @@
 
 package stroom.streamtask;
 
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.FindDataCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.node.api.NodeService;
@@ -40,15 +40,15 @@ import java.util.List;
 
 @Singleton
 public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
-    private final DataMetaService streamMetaService;
+    private final MetaService metaService;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final NodeService nodeService;
 
     @Inject
-    MockStreamTaskCreator(final DataMetaService streamMetaService,
+    MockStreamTaskCreator(final MetaService metaService,
                           final StreamProcessorFilterService streamProcessorFilterService,
                           final NodeService nodeService) {
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.nodeService = nodeService;
     }
@@ -75,21 +75,21 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
             for (final ProcessorFilter filter : streamProcessorFilters) {
                 final QueryData queryData = filter.getQueryData();
 
-                final FindDataCriteria findStreamCriteria = new FindDataCriteria();
-                findStreamCriteria.setExpression(queryData.getExpression());
-                final BaseResultList<Data> streams = streamMetaService.find(findStreamCriteria);
+                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+                findMetaCriteria.setExpression(queryData.getExpression());
+                final BaseResultList<Meta> streams = metaService.find(findMetaCriteria);
 
-                streams.sort(Comparator.comparing(Data::getId));
+                streams.sort(Comparator.comparing(Meta::getId));
 
                 if (streams.size() > 0) {
-                    for (final Data stream : streams) {
-                        if (stream.getId() >= filter.getStreamProcessorFilterTracker().getMinStreamId()) {
+                    for (final Meta meta : streams) {
+                        if (meta.getId() >= filter.getStreamProcessorFilterTracker().getMinStreamId()) {
                             // Only process streams with an id of 1 or more
                             // greater than this stream in future.
-                            filter.getStreamProcessorFilterTracker().setMinStreamId(stream.getId() + 1);
+                            filter.getStreamProcessorFilterTracker().setMinStreamId(meta.getId() + 1);
 
                             final ProcessorFilterTask streamTask = new ProcessorFilterTask();
-                            streamTask.setStreamId(stream.getId());
+                            streamTask.setStreamId(meta.getId());
                             streamTask.setStreamProcessorFilter(filter);
                             streamTask.setNode(node);
                             streamTask.setStatus(TaskStatus.ASSIGNED);

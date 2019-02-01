@@ -3,7 +3,7 @@ package stroom.guice;
 import com.google.inject.AbstractModule;
 import stroom.config.global.impl.db.GlobalConfigDbModule;
 import stroom.config.global.impl.db.GlobalConfigModule;
-import stroom.data.meta.impl.db.DataMetaDbModule;
+import stroom.meta.impl.db.MetaDbModule;
 import stroom.dataprocess.PipelineStreamTaskModule;
 import stroom.dictionary.impl.DictionaryHandlerModule;
 import stroom.dictionary.impl.DictionaryModule;
@@ -94,7 +94,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.statistics.stroomstats.internal.InternalStatisticsModule());
         install(new stroom.statistics.stroomstats.pipeline.StatisticsElementModule());
         install(new stroom.statistics.stroomstats.rollup.StroomStatsRollupModule());
-        install(new DataMetaDbModule());
+        install(new MetaDbModule());
         install(new stroom.data.store.DataStoreHandlerModule());
         install(new stroom.data.store.impl.fs.FileSystemDataStoreModule());
         install(new stroom.streamtask.StreamTaskModule());

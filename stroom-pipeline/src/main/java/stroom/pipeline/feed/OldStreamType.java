@@ -75,7 +75,7 @@ public class OldStreamType extends NamedEntity {
     public static final OldStreamType BOUNDARY_INDEX = new OldStreamType("BOUNDARY_INDEX", "bdy", "Boundary Index", 32,
             Purpose.INDEX);
     /**
-     * Meta stream data
+     * Meta meta data
      */
     public static final OldStreamType META = new OldStreamType("META", "meta", "Meta Data", 33, Purpose.META);
     /**

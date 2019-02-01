@@ -19,17 +19,17 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.DataProperties;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.MetaProperties;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.datafeed.BufferFactory;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
-import stroom.data.meta.api.AttributeMapUtil;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.pipeline.feed.FeedDocCache;
-import stroom.data.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
@@ -113,22 +113,22 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
         }
 
         if (task.getEffectiveMs() != null) {
-            attributeMap.put(StroomHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(task.getEffectiveMs()));
+            attributeMap.put(StandardHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(task.getEffectiveMs()));
         }
-        attributeMap.put(StroomHeaderArguments.REMOTE_FILE, task.getFileName());
-        attributeMap.put(StroomHeaderArguments.FEED, task.getFeedName());
-        attributeMap.put(StroomHeaderArguments.RECEIVED_TIME, DateUtil.createNormalDateTimeString(System.currentTimeMillis()));
-        attributeMap.put(StroomHeaderArguments.USER_AGENT, "STROOM-UI");
+        attributeMap.put(StandardHeaderArguments.REMOTE_FILE, task.getFileName());
+        attributeMap.put(StandardHeaderArguments.FEED, task.getFeedName());
+        attributeMap.put(StandardHeaderArguments.RECEIVED_TIME, DateUtil.createNormalDateTimeString(System.currentTimeMillis()));
+        attributeMap.put(StandardHeaderArguments.USER_AGENT, "STROOM-UI");
 
-        if (name.endsWith(FILE_SEPERATOR + StroomHeaderArguments.COMPRESSION_ZIP)) {
-            attributeMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
+        if (name.endsWith(FILE_SEPERATOR + StandardHeaderArguments.COMPRESSION_ZIP)) {
+            attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
             uploadZipFile(taskContext, task, attributeMap);
         } else {
-            if (name.endsWith(FILE_SEPERATOR + StroomHeaderArguments.COMPRESSION_GZIP)) {
-                attributeMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_GZIP);
+            if (name.endsWith(FILE_SEPERATOR + StandardHeaderArguments.COMPRESSION_GZIP)) {
+                attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_GZIP);
             }
             if (name.endsWith(FILE_SEPERATOR + GZ)) {
-                attributeMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_GZIP);
+                attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_GZIP);
             }
             uploadStreamFile(task, task, attributeMap);
         }
@@ -186,13 +186,13 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
             final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(taskContext,
                     "Read");
 
-            final DataProperties streamProperties = new DataProperties.Builder()
+            final MetaProperties metaProperties = new MetaProperties.Builder()
                     .feedName(task.getFeedName())
                     .typeName(task.getStreamTypeName())
                     .effectiveMs(effectiveMs)
                     .build();
 
-            streamTarget = streamStore.openStreamTarget(streamProperties);
+            streamTarget = streamStore.openStreamTarget(metaProperties);
 
             try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
                 int count = 0;

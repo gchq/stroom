@@ -7,7 +7,7 @@ import stroom.cache.impl.CacheJobsModule;
 import stroom.cluster.lock.impl.db.ClusterLockJobsModule;
 import stroom.config.global.impl.db.GlobalConfigJobsModule;
 import stroom.dashboard.DashboardJobsModule;
-import stroom.data.meta.impl.db.DataMetaDbJobsModule;
+import stroom.meta.impl.db.MetaDbJobsModule;
 import stroom.data.store.impl.fs.FileSystemDataStoreJobsModule;
 import stroom.index.IndexJobsModule;
 import stroom.job.JobSystemJobsModule;
@@ -38,7 +38,7 @@ public class JobsModule extends AbstractModule {
         install(new FileSystemDataStoreJobsModule());
         install(new SQLStatisticsJobsModule());
         install(new SQLStatisticSearchJobsModule());
-        install(new DataMetaDbJobsModule());
+        install(new MetaDbJobsModule());
         install(new JobSystemJobsModule());
         install(new NodeJobsModule());
     }

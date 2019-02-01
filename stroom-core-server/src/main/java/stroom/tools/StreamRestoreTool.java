@@ -18,8 +18,8 @@ package stroom.tools;
 
 import com.google.common.base.Strings;
 import org.apache.commons.lang3.mutable.MutableInt;
-import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.api.AttributeMapUtil;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.node.shared.VolumeEntity;
 import stroom.util.concurrent.SimpleConcurrentMap;
 import stroom.util.date.DateUtil;

@@ -18,26 +18,26 @@ package stroom.streamstore.shared;
 
 import stroom.task.shared.Action;
 import stroom.entity.shared.ResultList;
-import stroom.data.meta.shared.FindDataCriteria;
-import stroom.data.meta.shared.DataRow;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaRow;
 
-public class FindStreamAction extends Action<ResultList<DataRow>> {
+public class FindStreamAction extends Action<ResultList<MetaRow>> {
     private static final long serialVersionUID = -3560107233301674555L;
 
-    private FindDataCriteria criteria;
+    private FindMetaCriteria criteria;
 
     public FindStreamAction() {
     }
 
-    public FindStreamAction(final FindDataCriteria criteria) {
+    public FindStreamAction(final FindMetaCriteria criteria) {
         this.criteria = criteria;
     }
 
-    public FindDataCriteria getCriteria() {
+    public FindMetaCriteria getCriteria() {
         return criteria;
     }
 
-    public void setCriteria(FindDataCriteria criteria) {
+    public void setCriteria(FindMetaCriteria criteria) {
         this.criteria = criteria;
     }
 

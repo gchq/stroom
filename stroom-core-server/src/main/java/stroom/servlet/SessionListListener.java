@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
-import stroom.data.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.TaskManager;
 import stroom.task.api.TaskIdFactory;
@@ -57,7 +57,7 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
         if (httpSession != null) {
             synchronized (httpSession) {
                 if (sessionMap.containsKey(httpSession.getId())) {
-                    final String userAgent = lastRequest.getHeader(StroomHeaderArguments.USER_AGENT);
+                    final String userAgent = lastRequest.getHeader(StandardHeaderArguments.USER_AGENT);
                     if (userAgent != null) {
                         lastRequestUserAgent.put(httpSession.getId(), userAgent);
                     }

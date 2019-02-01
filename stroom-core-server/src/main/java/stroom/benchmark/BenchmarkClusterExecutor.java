@@ -19,12 +19,12 @@ package stroom.benchmark;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.DataRow;
-import stroom.data.meta.shared.DataStatus;
-import stroom.data.meta.shared.FindDataCriteria;
-import stroom.data.meta.shared.MetaDataSource;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.Status;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
 import stroom.entity.cluster.ClearServiceClusterTask;
@@ -84,7 +84,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamProcessorService streamProcessorService;
     private final ClusterDispatchAsyncHelper dispatchHelper;
-    private final DataMetaService streamMetaService;
+    private final MetaService metaService;
     private final JobManager jobManager;
     private final NodeService nodeService;
     private final TaskContext taskContext;
@@ -101,7 +101,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
     @Inject
     BenchmarkClusterExecutor(final StreamStore streamStore,
-                             final DataMetaService streamMetaService,
+                             final MetaService metaService,
                              final TaskContext taskContext,
                              final PipelineStore pipelineStore,
                              final StreamProcessorFilterService streamProcessorFilterService,
@@ -112,12 +112,12 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              final TaskManager taskManager,
                              final Statistics statistics,
                              final BenchmarkClusterConfig benchmarkClusterConfig) {
-        super(streamStore, streamMetaService, taskContext);
+        super(streamStore, metaService, taskContext);
         this.pipelineStore = pipelineStore;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.streamProcessorService = streamProcessorService;
         this.dispatchHelper = dispatchHelper;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.jobManager = jobManager;
         this.nodeService = nodeService;
         this.taskContext = taskContext;
@@ -267,15 +267,15 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final int count = i;
                 final GenericServerTask writerTask = GenericServerTask.create("WriteBenchmarkData", "Writing benchmark data");
                 writerTask.setRunnable(() -> {
-                    final Data stream = writeData(feedName, streamTypeName, data);
+                    final Meta meta = writeData(feedName, streamTypeName, data);
 
                     rangeLock.lock();
                     try {
-                        if (minStreamId == null || minStreamId > stream.getId()) {
-                            minStreamId = stream.getId();
+                        if (minStreamId == null || minStreamId > meta.getId()) {
+                            minStreamId = meta.getId();
                         }
-                        if (maxStreamId == null || maxStreamId < stream.getId()) {
-                            maxStreamId = stream.getId();
+                        if (maxStreamId == null || maxStreamId < meta.getId()) {
+                            maxStreamId = meta.getId();
                         }
                     } finally {
                         rangeLock.unlock();
@@ -311,9 +311,9 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
                 final ExpressionOperator rawExpression = new ExpressionOperator.Builder(Op.AND)
-                        .addTerm(MetaDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
-                        .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName)
-                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, rawStreamType)
+                        .addTerm(MetaFieldNames.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
+                        .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName)
+                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, rawStreamType)
                         .build();
                 final QueryData rawCriteria = new QueryData();
                 rawCriteria.setExpression(rawExpression);
@@ -324,12 +324,12 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
                 // Wait for the cluster to stop processing.
                 final ExpressionOperator processedExpression = new ExpressionOperator.Builder(Op.AND)
-                        .addTerm(MetaDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(startTime))
-                        .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName)
-                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, processedStreamType)
-                        .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                        .addTerm(MetaFieldNames.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(startTime))
+                        .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName)
+                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, processedStreamType)
+                        .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                         .build();
-                final FindDataCriteria processedCriteria = new FindDataCriteria();
+                final FindMetaCriteria processedCriteria = new FindMetaCriteria();
                 processedCriteria.setExpression(processedExpression);
 
                 boolean complete = false;
@@ -342,7 +342,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                     Thread.sleep(10000);
 
                     // Find out how many tasks are complete.
-                    final List<Data> streams = streamMetaService.find(processedCriteria);
+                    final List<Meta> streams = metaService.find(processedCriteria);
 
                     // Things moved on ?
                     if (streams.size() > completedTaskCount) {
@@ -450,16 +450,16 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         // StreamAttributeValueFlush.class));
 
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName)
-                .addTerm(MetaDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
+                .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName)
+                .addTerm(MetaFieldNames.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS)
-                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE)
+                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS)
+                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE)
                         .build())
                 .build();
 
-        final FindDataCriteria criteria = new FindDataCriteria(expression);
-        final List<DataRow> processedStreams = streamMetaService.findRows(criteria);
+        final FindMetaCriteria criteria = new FindMetaCriteria(expression);
+        final List<MetaRow> rows = metaService.findRows(criteria);
 
         final long nowMs = System.currentTimeMillis();
 
@@ -493,16 +493,16 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         }
         final Period clusterPeriod = new Period();
 
-        for (final DataRow processedStream : processedStreams) {
-            checkPeriod(clusterPeriod, processedStream);
+        for (final MetaRow row : rows) {
+            checkPeriod(clusterPeriod, row);
         }
 
         statistics.putEvents(statisticEventList);
     }
 
-    private void checkPeriod(final Period period, final DataRow processedStream) {
-        final long streamStartMs = processedStream.getData().getCreateMs();
-        final long streamDuration = getLong(processedStream, MetaDataSource.DURATION);
+    private void checkPeriod(final Period period, final MetaRow row) {
+        final long streamStartMs = row.getMeta().getCreateMs();
+        final long streamDuration = getLong(row, MetaFieldNames.DURATION);
         final long streamEndMs = streamStartMs + streamDuration;
 
         if (period.getFromMs() == null) {
@@ -521,8 +521,8 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         }
     }
 
-    private long getLong(final DataRow streamAttributeMap, final String name) {
-        final String value = streamAttributeMap.getAttributeValue(name);
+    private long getLong(final MetaRow metaRow, final String name) {
+        final String value = metaRow.getAttributeValue(name);
         if (value != null) {
             return Long.parseLong(value);
         }
@@ -730,7 +730,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // }
     //
     // // Add input stream size stats.
-    // final Stream sourceStream = task.getData();
+    // final Stream sourceStream = task.getMeta();
     // if (sourceStream != null) {
     // if (sourceStream.getStreamSize() != null) {
     // streamBytesRead += sourceStream.getStreamSize();
@@ -741,7 +741,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // }
     //
     // // Add output stream size stats.
-    // final Stream targetMD = task.getTargetStream();
+    // final Stream targetMD = task.getTargetMeta();
     // if (targetMD != null) {
     // if (targetMD.getStreamSize() != null) {
     // streamBytesWritten += targetMD.getStreamSize();
@@ -841,7 +841,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // }
     //
     // // Add input stream size stats.
-    // final Stream sourceStream = task.getData();
+    // final Stream sourceStream = task.getMeta();
     // if (sourceStream != null) {
     // if (sourceStream.getStreamSize() != null) {
     // streamBytesRead += sourceStream.getStreamSize();

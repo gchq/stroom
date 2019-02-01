@@ -20,7 +20,7 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
@@ -34,9 +34,9 @@ import javax.inject.Inject;
 class BitmapLookup extends AbstractLookup {
     @Inject
     BitmapLookup(final ReferenceData referenceData,
-                 final StreamHolder streamHolder,
+                 final MetaHolder metaHolder,
                  final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory) {
-        super(referenceData, streamHolder, consumerFactoryFactory);
+        super(referenceData, metaHolder, consumerFactoryFactory);
     }
 
     @Override

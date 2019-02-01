@@ -41,7 +41,7 @@ import stroom.job.impl.db.stroom.tables.records.JobNodeRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class JobNode extends TableImpl<JobNodeRecord> {
 
-    private static final long serialVersionUID = -1827883890;
+    private static final long serialVersionUID = 1808819141;
 
     /**
      * The reference instance of <code>stroom.job_node</code>
@@ -179,6 +179,14 @@ public class JobNode extends TableImpl<JobNodeRecord> {
 
     public Job job() {
         return new Job(this, Keys.JOB_ID);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public TableField<JobNodeRecord, Integer> getRecordVersion() {
+        return VERSION;
     }
 
     /**

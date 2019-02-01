@@ -18,9 +18,9 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.AttributeMap;
+import stroom.meta.shared.AttributeMap;
 import stroom.datafeed.BufferFactory;
-import stroom.data.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.proxy.handler.StreamHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
 import stroom.data.store.StreamProgressMonitor;
@@ -82,9 +82,9 @@ public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
         }
 
         final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(StroomHeaderArguments.FEED, feed);
-        attributeMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
-        attributeMap.put(StroomHeaderArguments.RECEIVED_PATH, getHostName());
+        attributeMap.put(StandardHeaderArguments.FEED, feed);
+        attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
+        attributeMap.put(StandardHeaderArguments.RECEIVED_PATH, getHostName());
         if (LOGGER.isDebugEnabled()) {
             attributeMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
         }

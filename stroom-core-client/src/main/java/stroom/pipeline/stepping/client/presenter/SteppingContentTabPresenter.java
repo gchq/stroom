@@ -31,7 +31,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.streamstore.client.presenter.ClassificationUiHandlers;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
-import stroom.data.meta.shared.Data;
+import stroom.meta.shared.Meta;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgIcon;
 import stroom.util.client.ImageUtil;
@@ -82,11 +82,11 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
         }
     }
 
-    public void read(final DocRef pipeline, final Data stream, final long eventId,
+    public void read(final DocRef pipeline, final Meta meta, final long eventId,
                      final String childStreamType) {
         reading = true;
         this.pipeline = pipeline;
-        steppingPresenter.read(pipeline, stream, eventId, childStreamType);
+        steppingPresenter.read(pipeline, meta, eventId, childStreamType);
         reading = false;
     }
 

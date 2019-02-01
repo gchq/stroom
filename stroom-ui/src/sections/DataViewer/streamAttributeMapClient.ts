@@ -161,7 +161,7 @@ export const getDetailsForSelectedRow = (dataViewerId: string) => (
 ) => {
   const state = getState();
   const dataView = state.dataViewers[dataViewerId];
-  const streamId =
+  const metaId =
     dataView.streamAttributeMaps &&
     dataView.selectedRow &&
     dataView.streamAttributeMaps[dataView.selectedRow]
@@ -169,7 +169,7 @@ export const getDetailsForSelectedRow = (dataViewerId: string) => (
       : undefined;
   const url = `${
     state.config.values.stroomBaseServiceUrl
-  }/streamattributemap/v1/${streamId}`;
+  }/streamattributemap/v1/${metaId}`;
 
   wrappedGet(
     dispatch,

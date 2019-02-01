@@ -1,0 +1,25 @@
+ext.moduleName = 'stroom.meta.api'
+
+dependencies {
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+    
+    implementation libs.stroomDocRef
+    implementation libs.stroomQueryApi
+
+    implementation libs.javax_servlet_api
+    implementation libs.slf4j_api
+
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}

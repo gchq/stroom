@@ -17,12 +17,12 @@
 
 package stroom.headless;
 
-import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.Data;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.Meta;
 import stroom.docref.DocRef;
-import stroom.data.meta.api.AttributeMapUtil;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.pipeline.feed.FeedStore;
-import stroom.data.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.ErrorWriter;
 import stroom.pipeline.ErrorWriterProxy;
@@ -41,7 +41,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -69,7 +69,7 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
     private final ErrorWriterProxy errorWriterProxy;
     private final RecordErrorReceiver recordErrorReceiver;
     private final PipelineDataCache pipelineDataCache;
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final Security security;
 
     @Inject
@@ -84,7 +84,7 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
                               final ErrorWriterProxy errorWriterProxy,
                               final RecordErrorReceiver recordErrorReceiver,
                               final PipelineDataCache pipelineDataCache,
-                              final StreamHolder streamHolder,
+                              final MetaHolder metaHolder,
                               final Security security) {
         this.pipelineFactory = pipelineFactory;
         this.feedStore = feedStore;
@@ -97,7 +97,7 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
         this.errorWriterProxy = errorWriterProxy;
         this.recordErrorReceiver = recordErrorReceiver;
         this.pipelineDataCache = pipelineDataCache;
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.security = security;
     }
 
@@ -123,12 +123,12 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
                 AttributeMapUtil.read(metaStream, false, metaData);
 
                 // Get the feed.
-                final String feedName = metaData.get(StroomHeaderArguments.FEED);
+                final String feedName = metaData.get(StandardHeaderArguments.FEED);
                 final FeedDoc feed = getFeed(feedName);
                 feedHolder.setFeedName(feedName);
 
                 // Setup the meta data holder.
-                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
+                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
                 // Set the pipeline so it can be used by a filter if needed.
                 final List<DocRef> pipelines = pipelineStore.findByName(feedName);
@@ -153,7 +153,7 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
                 // Set effective time.
                 Long effectiveMs = null;
                 try {
-                    final String effectiveTime = metaData.get(StroomHeaderArguments.EFFECTIVE_TIME);
+                    final String effectiveTime = metaData.get(StandardHeaderArguments.EFFECTIVE_TIME);
                     if (effectiveTime != null && !effectiveTime.isEmpty()) {
                         effectiveMs = DateUtil.parseNormalDateTimeString(effectiveTime);
                     }
@@ -162,7 +162,7 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
                 }
 
                 // Create the stream.
-                final Data stream = new DataImpl.Builder()
+                final Meta meta = new MetaImpl.Builder()
                         .effectiveMs(effectiveMs)
                         .feedName(feedName)
                         .build();
@@ -170,17 +170,17 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
                 // Add stream providers for lookups etc.
                 final BasicInputStreamProvider streamProvider = new BasicInputStreamProvider(
                         new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
-                streamHolder.setStream(stream);
-                streamHolder.addProvider(streamProvider, StreamTypeNames.RAW_EVENTS);
+                metaHolder.setMeta(meta);
+                metaHolder.addProvider(streamProvider, StreamTypeNames.RAW_EVENTS);
                 if (task.getMetaStream() != null) {
                     final BasicInputStreamProvider metaStreamProvider = new BasicInputStreamProvider(
                             new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
-                    streamHolder.addProvider(metaStreamProvider, StreamTypeNames.META);
+                    metaHolder.addProvider(metaStreamProvider, StreamTypeNames.META);
                 }
                 if (task.getContextStream() != null) {
                     final BasicInputStreamProvider contextStreamProvider = new BasicInputStreamProvider(
                             new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
-                    streamHolder.addProvider(contextStreamProvider, StreamTypeNames.CONTEXT);
+                    metaHolder.addProvider(contextStreamProvider, StreamTypeNames.CONTEXT);
                 }
 
                 try {
