@@ -19,9 +19,9 @@ package stroom.pipeline.writer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataProperties;
-import stroom.data.meta.shared.MetaDataSource;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.WrappedSegmentOutputStream;
@@ -38,7 +38,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.RecordCount;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
@@ -58,7 +58,7 @@ public class StreamAppender extends AbstractAppender {
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private final StreamStore streamStore;
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final StreamProcessorHolder streamProcessorHolder;
     private final MetaData metaData;
     private final RecordCount recordCount;
@@ -77,7 +77,7 @@ public class StreamAppender extends AbstractAppender {
     @Inject
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
                           final StreamStore streamStore,
-                          final StreamHolder streamHolder,
+                          final MetaHolder metaHolder,
                           final StreamProcessorHolder streamProcessorHolder,
                           final MetaData metaData,
                           final RecordCount recordCount,
@@ -85,7 +85,7 @@ public class StreamAppender extends AbstractAppender {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
         this.streamStore = streamStore;
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.streamProcessorHolder = streamProcessorHolder;
         this.metaData = metaData;
         this.recordCount = recordCount;
@@ -94,10 +94,10 @@ public class StreamAppender extends AbstractAppender {
 
     @Override
     protected OutputStream createOutputStream() {
-        final Data parentStream = streamHolder.getStream();
+        final Meta parentMeta = metaHolder.getMeta();
 
-        if (feed == null && parentStream != null && parentStream.getFeedName() != null) {
-            feed = parentStream.getFeedName();
+        if (feed == null && parentMeta != null && parentMeta.getFeedName() != null) {
+            feed = parentMeta.getFeedName();
         }
 
         if (streamType == null) {
@@ -118,16 +118,16 @@ public class StreamAppender extends AbstractAppender {
             streamTaskId = streamProcessorHolder.getStreamTask().getId();
         }
 
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feed)
                 .typeName(streamType)
-                .parent(parentStream)
+                .parent(parentMeta)
                 .processorId(processorId)
                 .pipelineUuid(pipelineUuid)
                 .processorTaskId(streamTaskId)
                 .build();
 
-        streamTarget = streamStore.openStreamTarget(streamProperties);
+        streamTarget = streamStore.openStreamTarget(metaProperties);
 
         wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.getOutputStreamProvider().next()) {
             @Override
@@ -193,7 +193,7 @@ public class StreamAppender extends AbstractAppender {
             currentStatistics.write(streamTarget.getAttributes());
 
             // Overwrite the actual output record count.
-            streamTarget.getAttributes().put(MetaDataSource.REC_WRITE, String.valueOf(count));
+            streamTarget.getAttributes().put(MetaFieldNames.REC_WRITE, String.valueOf(count));
 
             // Close the stream target.
             try {

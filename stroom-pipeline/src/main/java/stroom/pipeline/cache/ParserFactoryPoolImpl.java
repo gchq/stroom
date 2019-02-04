@@ -80,7 +80,7 @@ class ParserFactoryPoolImpl
                 // {
                 // final JavaCCParserFactory javaCCParserFactory =
                 // JavaCCParserFactory
-                // .create(StreamUtil.stringToStream(textConverter.getData()),
+                // .create(StreamUtil.stringToStream(textConverter.getMeta()),
                 // errorHandler);
                 //
                 // parserFactory = javaCCParserFactory;

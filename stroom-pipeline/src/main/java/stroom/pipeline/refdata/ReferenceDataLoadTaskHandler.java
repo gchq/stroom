@@ -19,7 +19,7 @@ package stroom.pipeline.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Data;
+import stroom.meta.shared.Meta;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamSourceInputStream;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
@@ -40,7 +40,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
@@ -71,7 +71,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     private final FeedHolder feedHolder;
     private final FeedProperties feedProperties;
     private final MetaDataHolder metaDataHolder;
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final RefDataLoaderHolder refDataLoaderHolder;
     private final RefDataStore refDataStore;
     private final LocationFactoryProxy locationFactory;
@@ -90,7 +90,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  final FeedHolder feedHolder,
                                  final FeedProperties feedProperties,
                                  final MetaDataHolder metaDataHolder,
-                                 final StreamHolder streamHolder,
+                                 final MetaHolder metaHolder,
                                  final RefDataLoaderHolder refDataLoaderHolder,
                                  final RefDataStoreFactory refDataStoreFactory,
                                  final LocationFactoryProxy locationFactory,
@@ -107,7 +107,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         this.refDataStore = refDataStoreFactory.getOffHeapStore();
         this.metaDataHolder = metaDataHolder;
         this.locationFactory = locationFactory;
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.refDataLoaderHolder = refDataLoaderHolder;
         this.streamCloser = streamCloser;
         this.errorReceiverProxy = errorReceiverProxy;
@@ -135,14 +135,14 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 // Open the stream source.
                 final StreamSource streamSource = streamStore.openStreamSource(refStreamDefinition.getStreamId());
                 if (streamSource != null) {
-                    final Data stream = streamSource.getStream();
+                    final Meta meta = streamSource.getMeta();
                     try {
                         // Load the feed.
-                        final String feedName = stream.getFeedName();
+                        final String feedName = meta.getFeedName();
                         feedHolder.setFeedName(feedName);
 
                         // Setup the meta data holder.
-                        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
+                        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
                         // Set the pipeline so it can be used by a filter if needed.
                         final PipelineDoc pipelineDoc = pipelineStore
@@ -155,10 +155,10 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
 
                         populateMaps(
                                 pipeline,
-                                stream,
+                                meta,
                                 streamSource,
                                 feedName,
-                                stream.getTypeName(),
+                                meta.getTypeName(),
                                 task.getRefStreamDefinition());
 
                         LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
@@ -181,20 +181,20 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     }
 
     private void populateMaps(final Pipeline pipeline,
-                              final Data stream,
+                              final Meta meta,
                               final StreamSource streamSource,
                               final String feedName,
                               final String streamTypeName,
                               final RefStreamDefinition refStreamDefinition) {
         try {
             // Get the stream providers.
-            streamHolder.setStream(stream);
-            streamHolder.addProvider(streamSource);
-            streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
-            streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
+            metaHolder.setMeta(meta);
+            metaHolder.addProvider(streamSource, streamSource.getMeta().getTypeName());
+            metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META), StreamTypeNames.META);
+            metaHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT), StreamTypeNames.CONTEXT);
 
             // Get the main stream provider.
-            final StreamSourceInputStreamProvider mainProvider = streamHolder.getProvider(streamSource.getStreamTypeName());
+            final StreamSourceInputStreamProvider mainProvider = metaHolder.getProvider(streamTypeName);
 
             // Start processing.
             try {
@@ -211,7 +211,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
                 locationFactory.setLocationFactory(streamLocationFactory);
 
-                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, stream.getEffectiveMs(), refDataLoader -> {
+                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, meta.getEffectiveMs(), refDataLoader -> {
                     // we are now blocking any other thread loading the same refStreamDefinition
 
                     try {
@@ -220,7 +220,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                         // multiple then overrideExisting may be needed.
                         final long streamCount = mainProvider.getStreamCount();
                         for (long streamNo = 0; streamNo < streamCount && !Thread.currentThread().isInterrupted(); streamNo++) {
-                            streamHolder.setStreamNo(streamNo);
+                            metaHolder.setStreamNo(streamNo);
                             streamLocationFactory.setStreamNo(streamNo + 1);
 
                             // Get the stream.

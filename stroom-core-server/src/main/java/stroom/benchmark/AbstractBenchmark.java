@@ -18,13 +18,13 @@ package stroom.benchmark;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.ExpressionUtil;
-import stroom.data.meta.shared.FindDataCriteria;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.MetaDataSource;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.DataProperties;
-import stroom.data.meta.shared.DataStatus;
+import stroom.meta.shared.ExpressionUtil;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.Status;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -51,14 +51,14 @@ public abstract class AbstractBenchmark {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBenchmark.class);
 
     private final StreamStore streamStore;
-    private final DataMetaService streamMetaService;
+    private final MetaService metaService;
     private final TaskContext taskContext;
 
     AbstractBenchmark(final StreamStore streamStore,
-                      final DataMetaService streamMetaService,
+                      final MetaService metaService,
                       final TaskContext taskContext) {
         this.streamStore = streamStore;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.taskContext = taskContext;
     }
 
@@ -85,18 +85,18 @@ public abstract class AbstractBenchmark {
         Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
     }
 
-    protected Data writeData(final String feedName, final String streamTypeName, final String data) {
+    protected Meta writeData(final String feedName, final String streamTypeName, final String data) {
         // Add the associated data to the stream store.
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feedName)
                 .typeName(streamTypeName)
                 .build();
 
-        final StreamTarget dataTarget = streamStore.openStreamTarget(streamProperties);
+        final StreamTarget dataTarget = streamStore.openStreamTarget(metaProperties);
         StreamTargetUtil.write(dataTarget, data);
         streamStore.closeStreamTarget(dataTarget);
 
-        return dataTarget.getStream();
+        return dataTarget.getMeta();
     }
 
     protected String readData(final long streamId) throws IOException {
@@ -133,19 +133,19 @@ public abstract class AbstractBenchmark {
 
     protected void verifyData(final FeedDoc feed, final String verificationString) throws IOException {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
-        builder.addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feed.getName());
+        builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feed.getName());
         if (feed.isReference()) {
-            builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE);
+            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE);
         } else {
-            builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS);
+            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS);
         }
-        final FindDataCriteria criteria = new FindDataCriteria();
+        final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(builder.build());
-        final BaseResultList<Data> streams = streamMetaService.find(criteria);
-        final Data targetStream = streams.getFirst();
+        final BaseResultList<Meta> list = metaService.find(criteria);
+        final Meta targetMeta = list.getFirst();
 
         // Get back translated result.
-        final StreamSource target = streamStore.openStreamSource(targetStream.getId());
+        final StreamSource target = streamStore.openStreamSource(targetMeta.getId());
         String xml = StreamUtil.streamToString(target.getInputStream(), true);
         streamStore.closeStreamSource(target);
 
@@ -161,9 +161,9 @@ public abstract class AbstractBenchmark {
     }
 
     protected void deleteData(final String... feeds) {
-        final FindDataCriteria criteria = new FindDataCriteria();
+        final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(ExpressionUtil.createFeedsExpression(feeds));
-        streamMetaService.updateStatus(criteria, DataStatus.DELETED);
+        metaService.updateStatus(criteria, Status.DELETED);
     }
 
     protected String createReferenceData(final int recordCount) {

@@ -51,10 +51,11 @@ public class FlywayHelper {
 
   private void run() {
     // Create the FlywayHelper instance
-    Flyway flyway = new Flyway();
-    flyway.setDataSource(url, username, password); //URL, username, password
-    flyway.setTable("schema_version");
-    flyway.setLocations("stroom/db/migration/mysql");
+    final Flyway flyway = Flyway.configure()
+            .dataSource(url, username, password)
+            .locations("stroom/db/migration/mysql")
+            .table("schema_version")
+            .load();
 
     if("migrate".equals(action)){
       flyway.migrate();

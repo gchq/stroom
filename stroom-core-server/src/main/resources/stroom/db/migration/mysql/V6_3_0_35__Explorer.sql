@@ -1,2 +1,0 @@
-RENAME TABLE explorerTreeNode TO OLD_explorerTreeNode;
-RENAME TABLE explorerTreePath TO OLD_explorerTreePath;

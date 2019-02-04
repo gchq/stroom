@@ -1,6 +1,6 @@
 package stroom.proxy.handler;
 
-import stroom.data.meta.shared.AttributeMap;
+import stroom.meta.shared.AttributeMap;
 import stroom.proxy.repo.StroomZipEntry;
 
 import java.io.ByteArrayOutputStream;

@@ -17,14 +17,14 @@
 package stroom.pipeline.stepping;
 
 import com.google.inject.AbstractModule;
-import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
+import stroom.pipeline.shared.stepping.GetPipelineForMetaAction;
 import stroom.task.api.TaskHandlerBinder;
 
 public class PipelineSteppingModule extends AbstractModule {
     @Override
     protected void configure() {
         TaskHandlerBinder.create(binder())
-                .bind(GetPipelineForStreamAction.class, GetPipelineForStreamHandler.class)
+                .bind(GetPipelineForMetaAction.class, GetPipelineForMetaHandler.class)
                 .bind(SteppingTask.class, SteppingTaskHandler.class);
     }
 }

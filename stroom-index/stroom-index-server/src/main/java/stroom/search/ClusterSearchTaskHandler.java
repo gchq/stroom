@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
-import stroom.data.meta.shared.DataMetaService;
+import stroom.meta.shared.MetaService;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.index.IndexStore;
@@ -91,7 +91,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private final IndexShardSearchConfig indexShardSearchConfig;
     private final ExtractionTaskExecutor extractionTaskExecutor;
     private final ExtractionConfig extractionConfig;
-    private final DataMetaService streamMetaService;
+    private final MetaService metaService;
     private final Security security;
     private final int maxBooleanClauseCount;
     private final int maxStoredDataQueueSize;
@@ -114,7 +114,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                              final IndexShardSearchConfig indexShardSearchConfig,
                              final ExtractionTaskExecutor extractionTaskExecutor,
                              final ExtractionConfig extractionConfig,
-                             final DataMetaService streamMetaService,
+                             final MetaService metaService,
                              final Security security,
                              final SearchConfig searchConfig,
                              final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,
@@ -128,7 +128,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         this.indexShardSearchConfig = indexShardSearchConfig;
         this.extractionTaskExecutor = extractionTaskExecutor;
         this.extractionConfig = extractionConfig;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.security = security;
         this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
         this.maxStoredDataQueueSize = searchConfig.getMaxStoredDataQueueSize();
@@ -337,7 +337,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                     // Create an object to make event lists from raw index data.
                     final StreamMapCreator streamMapCreator = new StreamMapCreator(task.getStoredFields(), this,
-                            streamMetaService, security);
+                            metaService, security);
 
                     // Make a task producer that will create event data extraction tasks when requested by the executor.
                     final Executor extractionExecutor = executorProvider.getExecutor(ExtractionTaskProducer.THREAD_POOL);

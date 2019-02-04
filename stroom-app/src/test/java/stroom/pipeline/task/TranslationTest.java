@@ -20,12 +20,12 @@ package stroom.pipeline.task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
-import stroom.data.meta.shared.DataProperties;
-import stroom.data.meta.shared.FindDataCriteria;
-import stroom.data.meta.shared.MetaDataSource;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -34,7 +34,7 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.pipeline.feed.FeedDocCache;
 import stroom.pipeline.feed.FeedStore;
-import stroom.data.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -112,7 +112,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private DataMetaService streamMetaService;
+    private MetaService metaService;
     @Inject
     private FeedDocCache feedDocCache;
     @Inject
@@ -176,10 +176,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 final String streamType = feed.isReference() ?
                         StreamTypeNames.RAW_REFERENCE : StreamTypeNames.RAW_EVENTS;
                 final QueryData findStreamQueryData = new QueryData.Builder()
-                        .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                        .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(Op.AND)
-                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                                .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, streamType)
+                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                                .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, streamType)
                                 .build())
                         .build();
 
@@ -232,23 +232,23 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             final long endStreamId = getLatestStreamId();
 
             if (compareOutput) {
-                final List<Data> processedStreams = new ArrayList<>();
+                final List<Meta> processedMeta = new ArrayList<>();
 
                 for (long streamId = startStreamId + 1; streamId <= endStreamId; streamId++) {
-                    final Data stream = streamMetaService.getData(streamId);
-                    final String streamTypeName = stream.getTypeName();
+                    final Meta meta = metaService.getMeta(streamId);
+                    final String streamTypeName = meta.getTypeName();
                     if (!StreamTypeNames.ERROR.equals(streamTypeName)) {
-                        processedStreams.add(stream);
+                        processedMeta.add(meta);
                     } else {
                         try (StreamSource errorStreamSource = streamStore.openStreamSource(streamId)) {
                             //got an error stream so dump it to console
 
-                            Data parentStream = streamMetaService.getData(stream.getParentDataId());
+                            Meta parentMeta = metaService.getMeta(meta.getParentMetaId());
 
                             String errorStreamStr = StreamUtil.streamToString(errorStreamSource.getInputStream());
                             java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(errorStreamSource.getInputStream());
-                            LOGGER.warn("Stream {} with parent {} of type {} has errors:\n{}",
-                                    stream, parentStream.getId(), parentStream.getTypeName(), errorStreamStr);
+                            LOGGER.warn("Meta {} with parent {} of type {} has errors:\n{}",
+                                    meta, parentMeta.getId(), parentMeta.getTypeName(), errorStreamStr);
 
 //                            // only dump warning if debug enabled
 //                            if (LOGGER.isDebugEnabled()) {
@@ -266,15 +266,15 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 // Make sure we have at least one processed stream else it indicates an error in processing somewhere
                 // If we get an error stream you can just run the pipeline in stroom, to try and diagnose the fault
                 // if the above error stream dump doesn't help
-                assertThat(processedStreams.size() > 0).isTrue();
+                assertThat(processedMeta.size()).isGreaterThan(0);
 
                 // Copy the contents of the latest written stream to the output.
                 int i = 1;
-                for (final Data processedStream : processedStreams) {
+                for (final Meta meta : processedMeta) {
                     String num = "";
                     // If we are going to output more than one file then number
                     // them.
-                    if (processedStreams.size() > 1) {
+                    if (processedMeta.size() > 1) {
                         num = "_" + String.valueOf(i);
                     }
 
@@ -282,7 +282,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     final Path expectedFile = outputDir.resolve(stem + num + ".out");
 
                     try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(actualFile))) {
-                        copyStream(processedStream, outputStream);
+                        copyStream(meta, outputStream);
                     }
 
                     compareFiles(expectedFile, actualFile, exceptions);
@@ -318,12 +318,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             }
 
             // Create the stream.
-            final DataProperties streamProperties = new DataProperties.Builder()
+            final MetaProperties metaProperties = new MetaProperties.Builder()
                     .feedName(feed.getName())
                     .typeName(streamTypeName)
                     .createMs(millis)
                     .build();
-            final StreamTarget target = streamStore.openStreamTarget(streamProperties);
+            final StreamTarget target = streamStore.openStreamTarget(metaProperties);
 
             final InputStream inputStream = new BufferedInputStream(Files.newInputStream(file));
             StreamTargetUtil.write(target, inputStream);
@@ -331,7 +331,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
             // Check that what was written to the store is the same as the
             // contents of the file.
-            final StreamSource checkSource = streamStore.openStreamSource(target.getStream().getId());
+            final StreamSource checkSource = streamStore.openStreamSource(target.getMeta().getId());
             final byte[] original = Files.readAllBytes(file);
             final byte[] stored = StreamUtil.streamToBytes(checkSource.getInputStream());
             streamStore.closeStreamSource(checkSource);
@@ -341,7 +341,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
     private void loadZipData(final Path file, final FeedDoc feed) throws IOException {
         final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
+        attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                 .buildSingleHandlerList(streamStore, feedDocCache, null, feed.getName(), feed.getStreamType());
@@ -387,20 +387,20 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final FeedDoc feed = feeds.get();
 
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName)
+                .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
-                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
-        final FindDataCriteria streamCriteria = new FindDataCriteria();
-        streamCriteria.setExpression(expression);
-        streamCriteria.obtainSelectedIdSet().setMatchAll(Boolean.TRUE);
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+        findMetaCriteria.setExpression(expression);
+        findMetaCriteria.obtainSelectedIdSet().setMatchAll(Boolean.TRUE);
 
         final SteppingTask action = new SteppingTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN);
         action.setPipeline(pipelineRef);
-        action.setCriteria(streamCriteria);
+        action.setCriteria(findMetaCriteria);
 
         SteppingResult response = new SteppingResult();
         response = step(StepType.FORWARD, 40, action, response);
@@ -546,17 +546,17 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private long getLatestStreamId() {
-        final BaseResultList<Data> list = streamMetaService.find(new FindDataCriteria());
+        final BaseResultList<Meta> list = metaService.find(new FindMetaCriteria());
         if (list == null || list.size() == 0) {
             return 0;
         }
-        list.sort(Comparator.comparing(Data::getId));
-        final Data latest = list.get(list.size() - 1);
+        list.sort(Comparator.comparing(Meta::getId));
+        final Meta latest = list.get(list.size() - 1);
         return latest.getId();
     }
 
-    private void copyStream(final Data stream, final OutputStream outputStream) throws IOException {
-        final StreamSource streamSource = streamStore.openStreamSource(stream.getId());
+    private void copyStream(final Meta meta, final OutputStream outputStream) throws IOException {
+        final StreamSource streamSource = streamStore.openStreamSource(meta.getId());
         StreamUtil.streamToStream(streamSource.getInputStream(), outputStream);
         streamStore.closeStreamSource(streamSource);
     }
@@ -564,7 +564,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private void compareFiles(final Path expectedFile, final Path actualFile, final List<Exception> exceptions) {
         try {
             ComparisonHelper.compare(expectedFile, actualFile, false, true);
-        } catch (final RuntimeException e) {
+            Files.deleteIfExists(actualFile);
+        } catch (final IOException | RuntimeException e) {
             exceptions.add(e);
         }
     }

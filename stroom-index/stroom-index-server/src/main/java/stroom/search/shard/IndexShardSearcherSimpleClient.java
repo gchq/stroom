@@ -63,7 +63,7 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
 //                            System.out.println("\t\t" + fieldable.name() + "=" + fieldable.stringValue());
 //                        }
 //
-//                        final Long streamId = Long.valueOf(document.getField(IndexConstants.STREAM_ID).stringValue());
+//                        final Long streamId = Long.valueOf(document.getField(IndexConstants.ID).stringValue());
 //                        final Long segment = Long.valueOf(document.getField(IndexConstants.EVENT_ID).stringValue());
 //
 //                        // Try and open the stream source - pnly open unlocked ones.

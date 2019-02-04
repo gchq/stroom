@@ -27,7 +27,7 @@ BEGIN
 
     SET @insert_sql=''
         ' INSERT INTO activity (id, version, create_time_ms, create_user, update_time_ms, update_user, user_id, json)'
-        ' SELECT ID, VER, CRT_MS, CRT_USER, UPD_MS, UPD_USER, USER_ID, JSON'
+        ' SELECT ID, 1, CRT_MS, CRT_USER, UPD_MS, UPD_USER, USER_ID, JSON'
         ' FROM ACTIVITY'
         ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM activity)'
         ' ORDER BY ID;';

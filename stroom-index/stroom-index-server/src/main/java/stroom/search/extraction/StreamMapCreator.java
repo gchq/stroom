@@ -24,7 +24,7 @@ import stroom.index.shared.IndexField;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.search.Event;
 import stroom.security.Security;
-import stroom.data.meta.shared.DataMetaService;
+import stroom.meta.shared.MetaService;
 import stroom.util.shared.Severity;
 
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ public class StreamMapCreator {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamMapCreator.class);
 
     private final ErrorReceiver errorReceiver;
-    private final DataMetaService streamMetaService;
+    private final MetaService metaService;
 
     private final int streamIdIndex;
     private final int eventIdIndex;
@@ -46,10 +46,10 @@ public class StreamMapCreator {
 
     public StreamMapCreator(final IndexField[] storedFields,
                             final ErrorReceiver errorReceiver,
-                            final DataMetaService streamMetaService,
+                            final MetaService metaService,
                             final Security security) {
         this.errorReceiver = errorReceiver;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.security = security;
 
         // First get the index in the stored data of the stream and event id fields.
@@ -102,7 +102,7 @@ public class StreamMapCreator {
 
         return fiteredStreamCache.computeIfAbsent(streamId, k -> {
             // See if we can read the stream.
-            return streamMetaService.getData(streamId) != null;
+            return metaService.getMeta(streamId) != null;
         });
     }
 

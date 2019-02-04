@@ -3,7 +3,7 @@ ext.moduleName = 'stroom.data.store.api'
 dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-meta:stroom-meta-api')
 //    implementation project(':stroom-entity-shared') // TODO : @66 TRY AND BREAK OUT SHARED CLASSES
 //
     implementation libs.stroomDocRef

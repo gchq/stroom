@@ -2,9 +2,9 @@ package stroom.proxy.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.api.AttributeMapUtil;
-import stroom.data.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.datafeed.StroomStreamException;
 import stroom.proxy.repo.StroomZipEntry;
 
@@ -63,7 +63,7 @@ class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
             LOGGER.info("handleHeader() - " + forwardUrl + " Sending request " + attributeMap);
         }
         startTimeMs = System.currentTimeMillis();
-        guid = attributeMap.computeIfAbsent(StroomHeaderArguments.GUID, k -> UUID.randomUUID().toString());
+        guid = attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
 
         URL url = new URL(forwardUrl);
         connection = (HttpURLConnection) url.openConnection();
@@ -82,7 +82,7 @@ class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
         connection.setDoOutput(true);
         connection.setDoInput(true);
 
-        connection.addRequestProperty(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
+        connection.addRequestProperty(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
 
         AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
         for (Entry<String, String> entry : sendHeader.entrySet()) {

@@ -18,7 +18,7 @@ package stroom.data.store.impl.fs;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.Data;
+import stroom.meta.shared.Meta;
 import stroom.job.MockTask;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -49,7 +49,7 @@ class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Data md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        final Meta md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
 
         commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, md);
 

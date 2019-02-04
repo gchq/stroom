@@ -19,7 +19,7 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.DataMetaService;
+import stroom.meta.shared.MetaService;
 import stroom.docref.DocRef;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
@@ -76,19 +76,19 @@ public class CommonTranslationTestHelper {
     private final StreamTaskCreator streamTaskCreator;
     private final StoreCreationTool storeCreationTool;
     private final TaskManager taskManager;
-    private final DataMetaService streamMetaService;
+    private final MetaService metaService;
 
     @Inject
     CommonTranslationTestHelper(final NodeInfo nodeInfo,
-                                final StreamTaskCreator streamTaskCreator,
-                                final StoreCreationTool storeCreationTool,
-                                final TaskManager taskManager,
-                                final DataMetaService streamMetaService) {
+                          final StreamTaskCreator streamTaskCreator,
+                          final StoreCreationTool storeCreationTool,
+                          final TaskManager taskManager,
+                          final MetaService metaService) {
         this.nodeInfo = nodeInfo;
         this.streamTaskCreator = streamTaskCreator;
         this.storeCreationTool = storeCreationTool;
         this.taskManager = taskManager;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
     }
 
     public List<StreamProcessorTaskExecutor> processAll() {
@@ -153,6 +153,6 @@ public class CommonTranslationTestHelper {
             }
         });
 
-        assertThat(streamMetaService.getLockCount()).isEqualTo(0);
+        assertThat(metaService.getLockCount()).isEqualTo(0);
     }
 }

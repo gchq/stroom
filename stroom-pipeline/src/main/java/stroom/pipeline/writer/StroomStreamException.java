@@ -18,7 +18,7 @@ package stroom.pipeline.writer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -93,7 +93,7 @@ public class StroomStreamException extends RuntimeException {
             responseCode = connection.getResponseCode();
             final String responseMessage = connection.getResponseMessage();
 
-            stroomStatus = connection.getHeaderFieldInt(StroomHeaderArguments.STROOM_STATUS, -1);
+            stroomStatus = connection.getHeaderFieldInt(StandardHeaderArguments.STROOM_STATUS, -1);
 
             if (responseCode == 200) {
                 readAndCloseStream(connection.getInputStream());
@@ -142,7 +142,7 @@ public class StroomStreamException extends RuntimeException {
         }
         LOGGER.error("sendErrorResponse() - " + stroomStatusCode.getHttpCode() + " " + message);
 
-        httpServletResponse.setHeader(StroomHeaderArguments.STROOM_STATUS, String.valueOf(stroomStatusCode.getCode()));
+        httpServletResponse.setHeader(StandardHeaderArguments.STROOM_STATUS, String.valueOf(stroomStatusCode.getCode()));
 
         try {
             httpServletResponse.sendError(stroomStatusCode.getHttpCode(), message);

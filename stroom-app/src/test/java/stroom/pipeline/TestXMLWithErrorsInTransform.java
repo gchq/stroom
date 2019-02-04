@@ -136,7 +136,7 @@ class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest {
 //            feedHolder.setFeedName("");
 //
 //            // Setup the meta data holder.
-//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, streamProcessorService, pipelineStore));
 
             // Set the input.
             final InputStream input = StroomPipelineTestFileUtil.getInputStream(INPUT);

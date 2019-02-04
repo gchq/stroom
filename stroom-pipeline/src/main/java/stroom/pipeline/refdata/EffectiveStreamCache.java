@@ -25,9 +25,9 @@ import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Period;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.Security;
-import stroom.data.meta.shared.EffectiveMetaDataCriteria;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataMetaService;
+import stroom.meta.shared.EffectiveMetaDataCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
 
@@ -46,26 +46,26 @@ public class EffectiveStreamCache implements Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final LoadingCache<EffectiveStreamKey, NavigableSet> cache;
-    private final DataMetaService streamMetaService;
+    private final MetaService metaService;
     private final EffectiveStreamInternPool internPool;
     private final Security security;
 
     @Inject
     EffectiveStreamCache(final CacheManager cacheManager,
-                         final DataMetaService streamMetaService,
+                         final MetaService metaService,
                          final EffectiveStreamInternPool internPool,
                          final Security security) {
-        this(cacheManager, streamMetaService, internPool, security, 10, TimeUnit.MINUTES);
+        this(cacheManager, metaService, internPool, security, 10, TimeUnit.MINUTES);
     }
 
     @SuppressWarnings("unchecked")
     EffectiveStreamCache(final CacheManager cacheManager,
-                         final DataMetaService streamMetaService,
+                         final MetaService metaService,
                          final EffectiveStreamInternPool internPool,
                          final Security security,
                          final long duration,
                          final TimeUnit unit) {
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.internPool = internPool;
         this.security = security;
 
@@ -108,18 +108,18 @@ public class EffectiveStreamCache implements Clearable {
                 criteria.setEffectivePeriod(window);
 
                 // Locate all streams that fit the supplied criteria.
-                final Set<Data> streams = streamMetaService.findEffectiveData(criteria);
+                final Set<Meta> streams = metaService.findEffectiveData(criteria);
 
                 // Add all streams that we have found to the effective stream set.
                 if (streams != null && streams.size() > 0) {
                     effectiveStreamSet = new TreeSet<>();
-                    for (final Data stream : streams) {
+                    for (final Meta meta : streams) {
                         EffectiveStream effectiveStream;
 
-                        if (stream.getEffectiveMs() != null) {
-                            effectiveStream = new EffectiveStream(stream.getId(), stream.getEffectiveMs());
+                        if (meta.getEffectiveMs() != null) {
+                            effectiveStream = new EffectiveStream(meta.getId(), meta.getEffectiveMs());
                         } else {
-                            effectiveStream = new EffectiveStream(stream.getId(), stream.getCreateMs());
+                            effectiveStream = new EffectiveStream(meta.getId(), meta.getCreateMs());
                         }
 
                         final boolean success = effectiveStreamSet.add(effectiveStream);

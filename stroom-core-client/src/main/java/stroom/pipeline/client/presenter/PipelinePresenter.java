@@ -30,8 +30,8 @@ import stroom.process.client.presenter.ProcessorPresenter;
 import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
-import stroom.streamstore.client.presenter.StreamTaskPresenter;
+import stroom.streamstore.client.presenter.ClassificationWrappedMetaPresenter;
+import stroom.streamstore.client.presenter.ProcessorTaskPresenter;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -51,10 +51,10 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
     @Inject
     public PipelinePresenter(final EventBus eventBus, final LinkTabPanelView view,
                              final Provider<PipelineSettingsPresenter> settingsPresenter,
-                             final Provider<ClassificationWrappedStreamPresenter> streamPresenterProvider,
+                             final Provider<ClassificationWrappedMetaPresenter> streamPresenterProvider,
                              final Provider<PipelineStructurePresenter> structurePresenter,
                              final Provider<ProcessorPresenter> processorPresenter,
-                             final Provider<StreamTaskPresenter> streamTaskPresenterProvider,
+                             final Provider<ProcessorTaskPresenter> streamTaskPresenterProvider,
                              final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
 

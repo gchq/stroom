@@ -28,13 +28,13 @@ import stroom.streamstore.client.presenter.EntityChoicePresenter;
 import stroom.streamstore.client.presenter.EntityChoicePresenter.EntityChoiceView;
 import stroom.streamstore.client.presenter.ExpressionPresenter;
 import stroom.streamstore.client.presenter.ExpressionPresenter.ExpressionView;
-import stroom.streamstore.client.presenter.StreamListPresenter;
-import stroom.streamstore.client.presenter.StreamPresenter;
-import stroom.streamstore.client.presenter.StreamPresenter.StreamView;
-import stroom.streamstore.client.presenter.StreamTaskListPresenter;
-import stroom.streamstore.client.presenter.StreamTaskPresenter;
-import stroom.streamstore.client.presenter.StreamTaskPresenter.StreamTaskView;
-import stroom.streamstore.client.presenter.StreamTypeUiManager;
+import stroom.streamstore.client.presenter.MetaListPresenter;
+import stroom.streamstore.client.presenter.MetaPresenter;
+import stroom.streamstore.client.presenter.MetaPresenter.StreamView;
+import stroom.streamstore.client.presenter.ProcessorTaskListPresenter;
+import stroom.streamstore.client.presenter.ProcessorTaskPresenter;
+import stroom.streamstore.client.presenter.ProcessorTaskPresenter.StreamTaskView;
+import stroom.streamstore.client.presenter.DataTypeUiManager;
 import stroom.streamstore.client.presenter.TextPresenter;
 import stroom.streamstore.client.presenter.TextPresenter.TextView;
 import stroom.streamstore.client.view.ClassificationWrapperViewImpl;
@@ -52,20 +52,20 @@ import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 public class StreamStoreModule extends PluginModule {
     @Override
     protected void configure() {
-        bind(StreamTypeUiManager.class).asEagerSingleton();
+        bind(DataTypeUiManager.class).asEagerSingleton();
 
         bindPresenterWidget(ClassificationWrapperPresenter.class, ClassificationWrapperView.class,
                 ClassificationWrapperViewImpl.class);
-        bindPresenterWidget(StreamPresenter.class, StreamView.class, StreamViewImpl.class);
+        bindPresenterWidget(MetaPresenter.class, StreamView.class, StreamViewImpl.class);
         bindPresenterWidget(EditorPresenter.class, EditorView.class, EditorViewImpl.class);
         bindPresenterWidget(DataPresenter.class, DataView.class, DataViewImpl.class);
         bindPresenterWidget(TextPresenter.class, TextView.class, TextViewImpl.class);
-        bindPresenterWidget(StreamTaskPresenter.class, StreamTaskView.class, StreamTaskViewImpl.class);
+        bindPresenterWidget(ProcessorTaskPresenter.class, StreamTaskView.class, StreamTaskViewImpl.class);
         bindPresenterWidget(EntityChoicePresenter.class, EntityChoiceView.class, EntityChoiceViewImpl.class);
         bindPresenterWidget(ExpressionPresenter.class, ExpressionView.class, ExpressionViewImpl.class);
-        bind(StreamListPresenter.class);
+        bind(MetaListPresenter.class);
 
-        bind(StreamTaskListPresenter.class);
+        bind(ProcessorTaskListPresenter.class);
 
         bindSharedView(DropDrownView.class, DropDownViewImpl.class);
         bindSharedView(DropDownTreeView.class, DropDownTreeViewImpl.class);

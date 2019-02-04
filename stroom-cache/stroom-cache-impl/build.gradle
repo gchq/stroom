@@ -4,7 +4,7 @@ dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
 //    implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
-//    implementation project(':stroom-data-meta:stroom-data-meta-api')
+//    implementation project(':stroom-meta:stroom-meta-api')
 //    implementation project(':stroom-data-store:stroom-data-store-api')
 //    implementation project(':stroom-docstore:stroom-docstore-api')
 //    implementation project(':stroom-docstore:stroom-docstore-shared')
@@ -22,7 +22,7 @@ dependencies {
     implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
-//    implementation project(':stroom-data-meta:stroom-data-meta-api')
+//    implementation project(':stroom-meta:stroom-meta-api')
 //    implementation project(':stroom-data-store:stroom-data-store-api')
     
 //

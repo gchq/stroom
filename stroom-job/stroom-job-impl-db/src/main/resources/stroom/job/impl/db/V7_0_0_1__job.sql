@@ -34,13 +34,13 @@ CREATE PROCEDURE copy ()
 BEGIN
     IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'JB' > 0) THEN
         INSERT INTO job (id, description, enabled, version)
-        SELECT ID, NAME, ENBL, VER
+        SELECT ID, NAME, ENBL, 1
         FROM JB;
     END IF;
 
     IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'JB_ND' > 0) THEN
         INSERT INTO job_node (id, node_name, job_type, enabled, task_limit, job_id, schedule, version)
-        SELECT ID, FK_ND_ID, JB_TP, ENBL, TASK_LMT, FK_JB_ID, SCHEDULE, VER
+        SELECT ID, FK_ND_ID, JB_TP, ENBL, TASK_LMT, FK_JB_ID, SCHEDULE, 1
         FROM JB_ND;
     END IF;
 END//

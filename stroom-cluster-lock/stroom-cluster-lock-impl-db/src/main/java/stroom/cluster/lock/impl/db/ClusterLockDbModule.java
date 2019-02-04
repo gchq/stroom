@@ -55,14 +55,14 @@ public class ClusterLockDbModule extends AbstractModule {
                 .table(FLYWAY_TABLE)
                 .baselineOnMigrate(true)
                 .load();
-        LOGGER.info("Applying Flyway migrations to stroom-data-meta in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
+        LOGGER.info("Applying Flyway migrations to stroom-meta in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating stroom-data-meta database", e);
+            LOGGER.error("Error migrating stroom-meta database", e);
             throw e;
         }
-        LOGGER.info("Completed Flyway migrations for stroom-data-meta in {}", FLYWAY_TABLE);
+        LOGGER.info("Completed Flyway migrations for stroom-meta in {}", FLYWAY_TABLE);
         return flyway;
     }
 

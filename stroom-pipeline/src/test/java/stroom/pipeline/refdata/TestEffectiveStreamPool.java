@@ -19,10 +19,10 @@ package stroom.pipeline.refdata;
 
 import org.junit.jupiter.api.Test;
 import stroom.cache.impl.CacheManagerImpl;
-import stroom.data.meta.shared.Data;
-import stroom.data.meta.shared.DataProperties;
-import stroom.data.meta.shared.EffectiveMetaDataCriteria;
-import stroom.data.meta.impl.mock.MockDataMetaService;
+import stroom.meta.impl.mock.MockMetaService;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.security.impl.SecurityImpl;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -51,21 +51,21 @@ class TestEffectiveStreamPool extends StroomUnitTest {
     void testGrowingWindow() {
         final String refFeedName = "TEST_REF";
 
-        final InnerStreamMetaService mockStreamStore = new InnerStreamMetaService() {
+        final InnerStreamMetaService metaService = new InnerStreamMetaService() {
             @Override
-            public Set<Data> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+            public Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
                 findEffectiveStreamSourceCount++;
-                final Set<Data> results = new HashSet<>();
+                final Set<Meta> results = new HashSet<>();
                 long workingDate = criteria.getEffectivePeriod().getFrom();
                 while (workingDate < criteria.getEffectivePeriod().getTo()) {
-                    final Data stream = create(
-                            new DataProperties.Builder()
+                    final Meta meta = create(
+                            new MetaProperties.Builder()
                                     .feedName(refFeedName)
                                     .typeName(StreamTypeNames.RAW_REFERENCE)
                                     .createMs(workingDate)
                                     .build());
 
-                    results.add(stream);
+                    results.add(meta);
                     workingDate = Instant.ofEpochMilli(workingDate)
                             .atZone(ZoneOffset.UTC)
                             .plusDays(1)
@@ -78,7 +78,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
 
         try (CacheManager cacheManager = new CacheManagerImpl()) {
             final EffectiveStreamCache effectiveStreamPool = new EffectiveStreamCache(cacheManager,
-                    mockStreamStore,
+                    metaService,
                     new EffectiveStreamInternPool(),
                     new SecurityImpl(new MockSecurityContext()));
 
@@ -192,8 +192,8 @@ class TestEffectiveStreamPool extends StroomUnitTest {
         return fromMs + APPROX_TEN_DAYS;
     }
 
-    private static class InnerStreamMetaService extends MockDataMetaService {
-        private final List<Data> streams = new ArrayList<>();
+    private static class InnerStreamMetaService extends MockMetaService {
+        private final List<Meta> streams = new ArrayList<>();
         private long callCount = 0;
 
         InnerStreamMetaService() {
@@ -201,7 +201,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
         }
 
         @Override
-        public Set<Data> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+        public Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
             callCount++;
 
             return streams.stream()
@@ -212,13 +212,13 @@ class TestEffectiveStreamPool extends StroomUnitTest {
         }
 
         void addEffectiveStream(final String feedName, long effectiveTimeMs) {
-            final Data stream = create(
-                    new DataProperties.Builder()
+            final Meta meta = create(
+                    new MetaProperties.Builder()
                             .feedName(feedName)
                             .typeName(StreamTypeNames.RAW_REFERENCE)
                             .createMs(effectiveTimeMs)
                             .build());
-            streams.add(stream);
+            streams.add(meta);
         }
 
         long getCallCount() {

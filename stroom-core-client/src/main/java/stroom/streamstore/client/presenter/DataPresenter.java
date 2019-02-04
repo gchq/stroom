@@ -37,7 +37,7 @@ import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.StepLocation;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.data.meta.shared.Data;
+import stroom.meta.shared.Meta;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Marker;
@@ -70,14 +70,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private final ClientDispatchAsync dispatcher;
     private final PagerRows pageRows;
     private final PagerRows streamRows;
-    private final Map<String, OffsetRange<Long>> streamTypeOffsetRangeMap = new HashMap<>();
+    private final Map<String, OffsetRange<Long>> dataTypeOffsetRangeMap = new HashMap<>();
     private final boolean userHasPipelineSteppingPermission;
 
     private boolean errorMarkerMode = true;
-    private Long currentStreamId;
+    private Long currentMetaId;
     private String currentStreamType;
-    private String currentChildStreamType;
-    private OffsetRange<Long> currentStreamRange = new OffsetRange<>(0L, 1L);
+    private String currentChildDataType;
+    private OffsetRange<Long> currentDataRange = new OffsetRange<>(0L, 1L);
     private OffsetRange<Long> currentPageRange = new OffsetRange<>(0L, 100L);
     private AbstractFetchDataResult lastResult;
     private List<FetchDataAction> actionQueue;
@@ -179,39 +179,39 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     @Override
     public void beginStepping() {
         if (beginSteppingHandler != null) {
-            beginSteppingHandler.beginStepping(currentStreamId, currentChildStreamType);
+            beginSteppingHandler.beginStepping(currentMetaId, currentChildDataType);
         }
     }
 
-    private void fetchDataForCurrentStreamNo(final String childStreamType) {
-        currentStreamRange = new OffsetRange<>(currentStreamRange.getOffset(), 1L);
+    private void fetchDataForCurrentStreamNo(final String childDataType) {
+        currentDataRange = new OffsetRange<>(currentDataRange.getOffset(), 1L);
 
-        streamTypeOffsetRangeMap.put(currentChildStreamType, currentPageRange);
-        currentPageRange = streamTypeOffsetRangeMap.get(childStreamType);
+        dataTypeOffsetRangeMap.put(currentChildDataType, currentPageRange);
+        currentPageRange = dataTypeOffsetRangeMap.get(childDataType);
         if (currentPageRange == null) {
             currentPageRange = new OffsetRange<>(0L, 100L);
         }
 
-        this.currentChildStreamType = childStreamType;
+        this.currentChildDataType = childDataType;
         update(true);
     }
 
-    public void fetchData(final boolean fireEvents, final Long streamId, final String childStreamType) {
-        this.currentStreamId = streamId;
-        this.currentChildStreamType = childStreamType;
-        currentStreamRange = new OffsetRange<>(0L, 1L);
+    public void fetchData(final boolean fireEvents, final Long metaId, final String childDataType) {
+        this.currentMetaId = metaId;
+        this.currentChildDataType = childDataType;
+        currentDataRange = new OffsetRange<>(0L, 1L);
         currentPageRange = new OffsetRange<>(0L, 100L);
-        streamTypeOffsetRangeMap.clear();
+        dataTypeOffsetRangeMap.clear();
         markerListPresenter.resetExpandedSeverities();
         update(fireEvents);
     }
 
-    public void fetchData(final Data stream) {
-        this.currentStreamId = stream.getId();
-        this.currentStreamType = stream.getTypeName();
-        currentStreamRange = new OffsetRange<>(0L, 1L);
+    public void fetchData(final Meta meta) {
+        this.currentMetaId = meta.getId();
+        this.currentStreamType = meta.getTypeName();
+        currentDataRange = new OffsetRange<>(0L, 1L);
         currentPageRange = new OffsetRange<>(0L, 100L);
-        streamTypeOffsetRangeMap.clear();
+        dataTypeOffsetRangeMap.clear();
         markerListPresenter.resetExpandedSeverities();
         update(true);
     }
@@ -220,10 +220,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         final Severity[] expandedSeverities = markerListPresenter.getExpandedSeverities();
 
         final FetchDataAction action = new FetchDataAction();
-        action.setStreamId(currentStreamId);
-        action.setStreamRange(currentStreamRange);
+        action.setStreamId(currentMetaId);
+        action.setStreamRange(currentDataRange);
         action.setPageRange(currentPageRange);
-        action.setChildStreamType(currentChildStreamType);
+        action.setChildStreamType(currentChildDataType);
         action.setMarkerMode(errorMarkerMode);
         action.setExpandedSeverities(expandedSeverities);
         action.setFireEvents(fireEvents);
@@ -231,7 +231,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void doFetch(final FetchDataAction action, final boolean fireEvents) {
-        if (currentStreamId != null) {
+        if (currentMetaId != null) {
             getView().setRefreshing(true);
 
             // Create the action queue and delayed refresh timer if we haven't
@@ -423,9 +423,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         // Make sure we have a highlight section to add and that the stream id
         // matches that of the current page, and that the stream number matches
         // the stream number of the current page.
-        if (highlights != null && currentStreamId != null && currentStreamId.equals(highlightStreamId)
+        if (highlights != null && currentMetaId != null && currentMetaId.equals(highlightStreamId)
                 && streamOffset == highlightStreamNo
-                && EqualsUtil.isEquals(currentChildStreamType, highlightChildStreamType)) {
+                && EqualsUtil.isEquals(currentChildDataType, highlightChildStreamType)) {
             // Set the content to be displayed in the source view with a
             // highlight.
             textPresenter.setHighlights(highlights);
@@ -457,7 +457,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         // Set the source type that will be used when the page source is shown.
         // Make sure the right page is shown when the source is displayed.
-        final long oldStreamNo = currentStreamRange.getOffset();
+        final long oldStreamNo = currentDataRange.getOffset();
         long newStreamNo = oldStreamNo;
         final long oldPageOffset = currentPageRange.getOffset();
         final long pageLength = currentPageRange.getLength();
@@ -482,10 +482,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
 
         // Update the stream source.
-        if (!EqualsUtil.isEquals(currentStreamId, highlightStreamId)
-                || !EqualsUtil.isEquals(currentChildStreamType, highlightChildStreamType) || oldStreamNo != newStreamNo
+        if (!EqualsUtil.isEquals(currentMetaId, highlightStreamId)
+                || !EqualsUtil.isEquals(currentChildDataType, highlightChildStreamType) || oldStreamNo != newStreamNo
                 || oldPageOffset != newPageOffset) {
-            currentStreamRange = new OffsetRange<>(newStreamNo, 1L);
+            currentDataRange = new OffsetRange<>(newStreamNo, 1L);
             currentPageRange = new OffsetRange<>(newPageOffset, pageLength);
 
             fetchData(false, highlightStreamId, highlightChildStreamType);
@@ -598,7 +598,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public void setVisibleRange(final Range range) {
-            currentStreamRange = new OffsetRange<>((long) streamRows.visibleRange.getStart(), 1L);
+            currentDataRange = new OffsetRange<>((long) streamRows.visibleRange.getStart(), 1L);
             currentPageRange = new OffsetRange<>((long) range.getStart(), (long) range.getLength());
             update(false);
         }
@@ -611,7 +611,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public void setVisibleRange(final Range range) {
-            currentStreamRange = new OffsetRange<>((long) range.getStart(), 1L);
+            currentDataRange = new OffsetRange<>((long) range.getStart(), 1L);
             currentPageRange = new OffsetRange<>(0L, 100L);
             update(false);
         }

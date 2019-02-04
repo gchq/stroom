@@ -35,18 +35,9 @@ public class DataSourceProvider implements Provider<DataSource> {
     }
 
     private DataSource dataSource() {
-//        try {
         final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
         final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
-
-        // Validate the connection details.
-        connectionConfig.validate();
-
-        // Keep waiting until we can establish a DB connection to allow for the DB to start after the app
-        DbUtil.waitForConnection(connectionConfig);
-
         final HikariConfig config = HikariUtil.createConfig(connectionConfig, connectionPoolConfig);
-
         return new HikariDataSource(config);
 //            dataSource.setDataSourceName("stroom");
 //            dataSource.setDescription("Stroom data source");
