@@ -16,6 +16,8 @@ import { Config } from "../../startup/config";
 import { GlobalStoreState } from "../../startup/reducers";
 import { RouteComponentProps, RouteProps } from "react-router";
 import UserPermissions from "../UserPermissions";
+import IndexVolumes from "../IndexVolumes";
+import IndexVolumeGroups from "../IndexVolumeGroups";
 
 const renderWelcome = () => (
   <AppChrome activeMenuItem="Welcome" content={<Welcome />} />
@@ -96,6 +98,23 @@ export default [
       <AppChrome
         activeMenuItem="User Permissions"
         content={<UserPermissions />}
+      />
+    )
+  },
+  {
+    exact: true,
+    path: "/s/indexing/volumes",
+    render: () => (
+      <AppChrome activeMenuItem="Index Volumes" content={<IndexVolumes />} />
+    )
+  },
+  {
+    exact: true,
+    path: "/s/indexing/groups",
+    render: () => (
+      <AppChrome
+        activeMenuItem="Index Groups"
+        content={<IndexVolumeGroups />}
       />
     )
   },

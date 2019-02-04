@@ -9,7 +9,7 @@ import {
 } from "recompose";
 import { connect } from "react-redux";
 
-import { findUsers } from "./userClient";
+import { findUsers } from "./client";
 import withLocalStorage from "../../lib/withLocalStorage";
 import { GlobalStoreState } from "../../startup/reducers";
 import { User } from "../../types";

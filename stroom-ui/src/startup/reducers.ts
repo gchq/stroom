@@ -97,6 +97,10 @@ import {
   StoreState as DebuggersStoreState
 } from "../components/PipelineDebugger";
 import {
+  reducer as indexVolumeGroups,
+  StoreState as IndexVolumeGroupStoreState
+} from "../sections/IndexVolumeGroups";
+import {
   reducer as processing,
   StoreState as ProcessingStoreState
 } from "../sections/Processing";
@@ -129,6 +133,7 @@ export interface GlobalStoreState {
   dataViewers: DataViewersStoreState;
   routing: RouterState;
   userPermissions: UserStoreState;
+  indexVolumeGroups: IndexVolumeGroupStoreState;
 }
 
 export default combineReducers({
@@ -154,5 +159,6 @@ export default combineReducers({
   debuggers,
   processing,
   dataViewers,
-  userPermissions
+  userPermissions,
+  indexVolumeGroups
 });

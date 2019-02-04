@@ -11,6 +11,7 @@ import stroom.index.shared.IndexVolume;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -43,7 +44,7 @@ public class IndexShardDaoImpl implements IndexShardDao {
 
     @Override
     public List<IndexShard> find(final FindIndexShardCriteria criteria) {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override

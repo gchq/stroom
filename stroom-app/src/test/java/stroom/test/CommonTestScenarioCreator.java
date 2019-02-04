@@ -18,6 +18,8 @@
 package stroom.test;
 
 
+import stroom.index.service.IndexVolumeGroupService;
+import stroom.index.shared.IndexVolumeGroup;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaFieldNames;
@@ -48,6 +50,7 @@ import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -59,8 +62,8 @@ public class CommonTestScenarioCreator {
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final IndexStore indexStore;
-    private final VolumeService volumeService;
     private final IndexVolumeService indexVolumeService;
+    private final IndexVolumeGroupService indexVolumeGroupService;
     private final NodeInfo nodeInfo;
 
     @Inject
@@ -68,15 +71,15 @@ public class CommonTestScenarioCreator {
                               final StreamProcessorService streamProcessorService,
                               final StreamProcessorFilterService streamProcessorFilterService,
                               final IndexStore indexStore,
-                              final VolumeService volumeService,
                               final IndexVolumeService indexVolumeService,
+                              final IndexVolumeGroupService indexVolumeGroupService,
                               final NodeInfo nodeInfo) {
         this.streamStore = streamStore;
         this.streamProcessorService = streamProcessorService;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.indexStore = indexStore;
-        this.volumeService = volumeService;
         this.indexVolumeService = indexVolumeService;
+        this.indexVolumeGroupService = indexVolumeGroupService;
         this.nodeInfo = nodeInfo;
     }
 
@@ -112,16 +115,19 @@ public class CommonTestScenarioCreator {
         // Create a test index.
         final DocRef indexRef = indexStore.createDocument(name);
         final IndexDoc index = indexStore.readDocument(indexRef);
+        final String volumeGroupName = UUID.randomUUID().toString();
+        indexVolumeGroupService.create(volumeGroupName);
+
         index.setMaxDocsPerShard(maxDocsPerShard);
         index.setIndexFields(indexFields);
+        index.setVolumeGroupName(volumeGroupName);
         indexStore.writeDocument(index);
         assertThat(index).isNotNull();
 
         final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
         findVolumeCriteria.getIndexStatusSet().add(VolumeUseStatus.ACTIVE);
         findVolumeCriteria.getNodeIdSet().add(nodeInfo.getThisNode());
-        final Set<VolumeEntity> volumes = new HashSet<>(volumeService.find(findVolumeCriteria));
-        indexVolumeService.setVolumesForIndex(indexRef, volumes);
+        // TODO replace this with new index volumes
 
         return indexRef;
     }

@@ -63,20 +63,6 @@ CREATE PROCEDURE copy ()
 BEGIN
 -- TODO: All needs figuring out, groups need creating etc
 
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'IDX' > 0) THEN
-        INSERT INTO `index` (id, ver, created_by, created_at, updated_by, updated_at, name, description, max_doc, max_shard, partition_by, partition_size, retention_day_age, fields, uuid)
-        SELECT ID, VER, CRT_USER, CRT_MS, UPD_USER, UPD_MS, NAME, DESCRIP, MAX_DOC, MAX_SHRD, PART_BY, PART_SZ, RETEN_DAY_AGE, FLDS, UUID
-        FROM IDX;
-    END IF;
-
---    TODO: Deal with shard
-
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'VOL' > 0) THEN
-        INSERT INTO `index_volume` (id, ver, created_by, created_at, updated_by, updated_at, path, index_status, volume_type, bytes_limit, bytes_used, bytes_free, bytes_total, status_ms, node_name)
-        SELECT V.ID, V.VER, V.CRT_USER, V.CRT_MS, V.UPD_USER, V.UPD_MS, V.PATH, V.IDX_STAT, V.VOL_TP, V.BYTES_LMT, S.BYTES_USED, S.BYTES_FREE, S.BYTES_TOTAL, S.STAT_MS, N.NAME
-        FROM VOL V INNER JOIN VOL_STATE S ON (V.FK_VOL_STATE_ID = S.ID) INNER JOIN ND N ON (N.ID = V.FK_ND_ID);
-    END IF;
-
 END//
 DELIMITER ;
 CALL copy();

@@ -43,7 +43,7 @@ import {
   OperatorType,
   ExpressionOperatorWithUuid,
   OperatorTypeValues,
-  ExpressionItemWithUuid,
+  ExpressionHasUuid,
   ExpressionTermWithUuid
 } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
@@ -322,7 +322,7 @@ const ExpressionOperator = ({
         <div className="operator__placeholder" />
       )}
       {operator.children &&
-        operator.children.map((c: ExpressionItemWithUuid) => {
+        operator.children.map((c: ExpressionHasUuid) => {
           let itemElement;
           switch (c.type) {
             case "term":

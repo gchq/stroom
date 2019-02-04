@@ -30,25 +30,59 @@ import {
   generateTestUser,
   generateTestGroup
 } from "../../sections/UserPermissions/test";
+import createStore from "../../startup/store";
 
-let groups = Array(5)
+import { GlobalStoreState } from "../../startup/reducers";
+import {
+  generateTestIndexVolumeGroup,
+  generateTestIndexVolume
+} from "../../sections/IndexVolumes/test";
+import {
+  IndexVolumeGroupMembership,
+  User,
+  IndexVolumeGroup,
+  IndexVolume
+} from "../../types";
+
+let groups: Array<User> = Array(5)
   .fill(1)
   .map(generateTestGroup);
-let users = Array(30)
+let users: Array<User> = Array(30)
   .fill(1)
   .map(generateTestUser);
 let userGroupMemberships: Array<UserGroupMembership> = [];
 let userIndex = 0;
 groups.forEach(group => {
   for (let x = 0; x < 10; x++) {
-    var user = users[userIndex];
+    var user: User = users[userIndex];
     userGroupMemberships.push({
       userUuid: user.uuid,
       groupUuid: group.uuid
     });
 
-    userIndex++;
-    userIndex %= users.length;
+    userIndex = (userIndex + 1) % users.length;
+  }
+});
+
+let indexVolumeGroups: Array<IndexVolumeGroup> = Array(5)
+  .fill(1)
+  .map(generateTestIndexVolumeGroup);
+
+let indexVolumes: Array<IndexVolume> = Array(30)
+  .fill(1)
+  .map(generateTestIndexVolume);
+
+let indexVolumeGroupMemberships: Array<IndexVolumeGroupMembership> = [];
+let indexVolumeIndex = 0; // Best variable name ever
+indexVolumeGroups.forEach(group => {
+  for (let x = 0; x < 10; x++) {
+    let indexVolume: IndexVolume = indexVolumes[indexVolumeIndex];
+    indexVolumeGroupMemberships.push({
+      groupName: group.name,
+      volumeId: indexVolume.id
+    });
+
+    indexVolumeIndex = (indexVolumeIndex + 1) % indexVolumes.length;
   }
 });
 
@@ -68,11 +102,13 @@ export const testData: TestData = {
   usersAndGroups: {
     users: users.concat(groups),
     userGroupMemberships
+  },
+  indexVolumesAndGroups: {
+    volumes: indexVolumes,
+    groups: indexVolumeGroups,
+    groupMemberships: indexVolumeGroupMemberships
   }
 };
-import createStore from "../../startup/store";
-
-import { GlobalStoreState } from "../../startup/reducers";
 
 interface Props {}
 interface ConnectState {

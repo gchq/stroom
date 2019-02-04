@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import {
   ExpressionOperatorWithUuid,
-  ExpressionItemWithUuid,
+  ExpressionHasUuid,
   ExpressionTermWithUuid
 } from "../../types";
 
@@ -45,7 +45,7 @@ const ROExpressionOperator = ({
       <div className="operator__children">
         {operator.children &&
           operator.children
-            .map((c: ExpressionItemWithUuid) => {
+            .map((c: ExpressionHasUuid) => {
               let itemElement;
               const cIsEnabled = isEnabled && c.enabled;
               switch (c.type) {

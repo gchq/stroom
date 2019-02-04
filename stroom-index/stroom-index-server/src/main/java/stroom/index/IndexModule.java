@@ -25,7 +25,11 @@ import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.impl.db.IndexDbModule;
 import stroom.index.service.IndexShardService;
+import stroom.index.service.IndexShardServiceImpl;
+import stroom.index.service.IndexVolumeGroupService;
+import stroom.index.service.IndexVolumeGroupServiceImpl;
 import stroom.index.service.IndexVolumeService;
+import stroom.index.service.IndexVolumeServiceImpl;
 import stroom.index.shared.CloseIndexShardAction;
 import stroom.index.shared.DeleteIndexShardAction;
 import stroom.index.shared.FetchIndexVolumesAction;
@@ -44,6 +48,7 @@ public class IndexModule extends AbstractModule {
         bind(IndexStructureCache.class).to(IndexStructureCacheImpl.class);
         bind(IndexStore.class).to(IndexStoreImpl.class);
         bind(IndexVolumeService.class).to(IndexVolumeServiceImpl.class);
+        bind(IndexVolumeGroupService.class).to(IndexVolumeGroupServiceImpl.class);
         bind(IndexShardService.class).to(IndexShardServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);
 
@@ -75,6 +80,6 @@ public class IndexModule extends AbstractModule {
 //
 //        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
 ////        findServiceBinder.addBinding().to(stroom.index.IndexStoreImpl.class);
-//        findServiceBinder.addBinding().to(stroom.index.IndexShardServiceImpl.class);
+//        findServiceBinder.addBinding().to(stroom.index.service.IndexShardServiceImpl.class);
     }
 }

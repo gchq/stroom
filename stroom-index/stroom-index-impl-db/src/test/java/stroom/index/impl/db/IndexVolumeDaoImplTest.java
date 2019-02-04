@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class IndexVolumeDaoImplTest {
+class IndexVolumeDaoImplTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexVolumeDaoImplTest.class);
 
     private static MySQLContainer dbContainer = null;
@@ -33,7 +33,7 @@ public class IndexVolumeDaoImplTest {
     private static IndexVolumeGroupDao indexVolumeGroupDao;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         LOGGER.info(() -> "Before All - Start Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
 
@@ -44,13 +44,13 @@ public class IndexVolumeDaoImplTest {
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         LOGGER.info(() -> "After All - Stop Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::stop);
     }
 
     @Test
-    public void testCreate() {
+    void testCreate() {
         // Given
         final String nodeName = TestData.createNodeName();
         final String path = TestData.createPath();
@@ -70,7 +70,7 @@ public class IndexVolumeDaoImplTest {
     }
 
     @Test
-    public void testSimpleGroupMembership() {
+    void testSimpleGroupMembership() {
         // Given
         final String groupName = TestData.createVolumeGroupName();
         final String nodeName = TestData.createNodeName();
@@ -102,7 +102,7 @@ public class IndexVolumeDaoImplTest {
     }
 
     @Test
-    public void testGroupMembershipRemove() {
+    void testGroupMembershipRemove() {
         // Given
         final String groupName = TestData.createVolumeGroupName();
         final String nodeName = TestData.createNodeName();
@@ -125,7 +125,7 @@ public class IndexVolumeDaoImplTest {
     }
 
     @Test
-    public void testGroupMembershipClear() {
+    void testGroupMembershipClear() {
         // Given
         final Set<String> groupNames = IntStream.range(0, 5)
                 .mapToObj(TestData::createVolumeGroupName)

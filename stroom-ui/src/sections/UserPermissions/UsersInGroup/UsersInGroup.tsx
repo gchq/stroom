@@ -8,7 +8,7 @@ import {
   findUsersInGroup,
   addUserToGroup,
   removeUserFromGroup
-} from "../userClient";
+} from "../client";
 import { GlobalStoreState } from "src/startup/reducers";
 
 export interface Props {

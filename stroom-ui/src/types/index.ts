@@ -1,13 +1,40 @@
-export interface ItemWithUuid {
+export interface HasUuid {
   uuid: string;
 }
 
-export interface User extends ItemWithUuid {
+export interface HasAuditInfo {
+  createTimeMs: number;
+  updateTimeMs: number;
+  createUser: string;
+  updateUser: string;
+}
+
+export interface User extends HasUuid {
   name: string;
   isGroup: boolean;
 }
 
-export interface DocRefType extends ItemWithUuid {
+export interface IndexVolumeGroup extends HasAuditInfo {
+  name: string;
+}
+
+export interface IndexVolume extends HasAuditInfo {
+  id: number;
+  path: string;
+  nodeName: string;
+  bytesLimit: number;
+  bytesUsed: number;
+  bytesFree: number;
+  bytesTotal: number;
+  statusMs: number;
+}
+
+export interface IndexVolumeGroupMembership {
+  volumeId: number;
+  groupName: string;
+}
+
+export interface DocRefType extends HasUuid {
   type: string;
   name?: string;
 }
@@ -27,7 +54,7 @@ export interface Tree<T> {
 
 export interface DocRefTree extends DocRefType, Tree<DocRefType> {}
 
-export interface TWithLineage<T extends ItemWithUuid> {
+export interface TWithLineage<T extends HasUuid> {
   node: Tree<T> & T;
   lineage: Array<T>;
 }
@@ -111,18 +138,16 @@ export interface ExpressionTermType extends ExpressionItem {
   dictionary?: Dictionary | null;
 }
 
-export interface ExpressionItemWithUuid extends ExpressionItem, ItemWithUuid {}
+export interface ExpressionHasUuid extends ExpressionItem, HasUuid {}
 
 export interface ExpressionOperatorWithUuid
   extends ExpressionOperatorType,
-    ItemWithUuid {
+    HasUuid {
   enabled: boolean;
   children: Array<ExpressionOperatorWithUuid | ExpressionTermWithUuid>;
 }
 
-export interface ExpressionTermWithUuid
-  extends ExpressionTermType,
-    ItemWithUuid {}
+export interface ExpressionTermWithUuid extends ExpressionTermType, HasUuid {}
 
 export interface ElementDefinition {
   type: string;

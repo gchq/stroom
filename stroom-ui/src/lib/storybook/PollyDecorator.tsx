@@ -43,7 +43,10 @@ import {
   Dictionary,
   DataSourceType,
   StreamTaskType,
-  User
+  User,
+  IndexVolume,
+  IndexVolumeGroup,
+  IndexVolumeGroupMembership
 } from "../../types";
 import { StreamAttributeMapResult } from "../../sections/DataViewer/types";
 import { DocRefTypeList } from "../../components/DocRefTypes/redux";
@@ -97,6 +100,11 @@ export interface TestData {
     users: Array<User>;
     userGroupMemberships: Array<UserGroupMembership>;
   };
+  indexVolumesAndGroups: {
+    volumes: Array<IndexVolume>;
+    groups: Array<IndexVolumeGroup>;
+    groupMemberships: Array<IndexVolumeGroupMembership>;
+  };
 }
 
 // The server is created as a singular thing for the whole app
@@ -124,6 +132,18 @@ server.get("*.hot-update.json").passthrough();
 server.get("/config.json").intercept((req: HttpRequest, res: HttpResponse) => {
   res.json(testConfig);
 });
+
+// Index Volume Group Resource
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/stroom-index/volumeGroup/v1`)
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    res.json(testCache.data!.indexVolumesAndGroups.groups);
+  });
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/stroom-index/volumeGroup/v1/names`)
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    res.json(testCache.data!.indexVolumesAndGroups.groups.map(g => g.name));
+  });
 
 // User Resource
 server
@@ -479,7 +499,8 @@ export const setupTestServer = (testData: TestData) =>
           trackers: [...testData.trackers],
           dataList: { ...testData.dataList },
           dataSource: { ...testData.dataSource },
-          usersAndGroups: { ...testData.usersAndGroups }
+          usersAndGroups: { ...testData.usersAndGroups },
+          indexVolumesAndGroups: { ...testData.indexVolumesAndGroups }
         };
       }
     }),

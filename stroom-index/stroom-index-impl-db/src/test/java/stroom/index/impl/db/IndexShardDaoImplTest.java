@@ -23,7 +23,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class IndexShardDaoImplTest {
+class IndexShardDaoImplTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardDaoImplTest.class);
 
     private static MySQLContainer dbContainer = null;
@@ -35,7 +35,7 @@ public class IndexShardDaoImplTest {
     private static IndexShardDao indexShardDao;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         LOGGER.info(() -> "Before All - Start Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
 
@@ -47,7 +47,7 @@ public class IndexShardDaoImplTest {
     }
 
     @Test
-    public void createAndGet() {
+    void createAndGet() {
         // Given
         final String partitionName = "ALL";
         final DocRef index = new DocRef.Builder()
@@ -81,7 +81,7 @@ public class IndexShardDaoImplTest {
     }
 
     @Test
-    public void createShardEmptyGroup() {
+    void createShardEmptyGroup() {
         // Given
         final String partitionName = "ALL";
         final DocRef index = new DocRef.Builder()
@@ -111,7 +111,7 @@ public class IndexShardDaoImplTest {
     }
 
     @Test
-    public void createShardNonExistentGroup() {
+    void createShardNonExistentGroup() {
         // Given
         final String partitionName = "ALL";
         final DocRef index = new DocRef.Builder()

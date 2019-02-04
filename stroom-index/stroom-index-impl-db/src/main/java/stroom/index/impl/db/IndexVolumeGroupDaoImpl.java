@@ -32,6 +32,15 @@ public class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     }
 
     @Override
+    public List<IndexVolumeGroup> getAll() {
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select()
+                .from(INDEX_VOLUME_GROUP)
+                .fetchInto(IndexVolumeGroup.class)
+        );
+    }
+
+    @Override
     public IndexVolumeGroup create(final String name) {
         return JooqUtil.contextResult(connectionProvider, context -> {
             context

@@ -4,7 +4,7 @@ import {
   ExpressionOperatorType,
   DataSourceType,
   ExpressionOperatorWithUuid,
-  ExpressionItemWithUuid
+  ExpressionHasUuid
 } from "../../types";
 import { Dispatch } from "redux";
 import { DataRow, StreamAttributeMapResult } from "./types";
@@ -122,7 +122,7 @@ const cleanExpression = (
 ): ExpressionOperatorType => {
   // UUIDs are not part of Expression
   delete expression.uuid;
-  expression.children!.forEach((child: ExpressionItemWithUuid) => {
+  expression.children!.forEach((child: ExpressionHasUuid) => {
     delete child.uuid;
   });
 

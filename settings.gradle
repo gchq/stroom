@@ -115,6 +115,7 @@ include 'stroom-importexport:stroom-importexport-migration'
 include 'stroom-index:stroom-index-server'
 include 'stroom-index:stroom-index-client'
 include 'stroom-index:stroom-index-api'
+include 'stroom-index:stroom-index-impl-mock'
 include 'stroom-index:stroom-index-impl-db'
 include 'stroom-index:stroom-index-impl-db-gen'
 
@@ -184,3 +185,5 @@ include 'stroom-test-common'
 // Util
 include 'stroom-util'
 include 'stroom-util-shared'
+include 'stroom-index:stroom-index-impl-mock'
+

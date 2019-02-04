@@ -1,4 +1,4 @@
-package stroom.index;
+package stroom.index.service;
 
 import stroom.index.dao.IndexVolumeDao;
 import stroom.index.service.IndexVolumeService;
@@ -13,6 +13,18 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
     @Inject
     IndexVolumeServiceImpl(final IndexVolumeDao indexVolumeDao) {
         this.indexVolumeDao = indexVolumeDao;
+    }
+
+    @Override
+    public void addVolumeToGroup(final Long volumeId,
+                                 final String name) {
+        indexVolumeDao.addVolumeToGroup(volumeId, name);
+    }
+
+    @Override
+    public void removeVolumeFromGroup(final Long volumeId,
+                                      final String name) {
+        indexVolumeDao.removeVolumeFromGroup(volumeId, name);
     }
 
     @Override

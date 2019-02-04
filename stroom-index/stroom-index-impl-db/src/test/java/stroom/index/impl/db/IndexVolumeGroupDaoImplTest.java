@@ -15,13 +15,14 @@ import stroom.index.shared.IndexVolumeGroup;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class IndexVolumeGroupDaoImplTest {
+class IndexVolumeGroupDaoImplTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexVolumeGroupDaoImplTest.class);
 
     private static MySQLContainer dbContainer = null;
@@ -31,7 +32,7 @@ public class IndexVolumeGroupDaoImplTest {
     private static IndexVolumeGroupDao indexVolumeGroupDao;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         LOGGER.info(() -> "Before All - Start Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
 
@@ -41,14 +42,15 @@ public class IndexVolumeGroupDaoImplTest {
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         LOGGER.info(() -> "After All - Stop Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::stop);
     }
 
     @Test
-    public void getNames() {
+    void getNamesAndAll() {
         // Given
+        final long now = System.currentTimeMillis();
         final Set<String> namesToDelete = IntStream.range(0, 3)
                 .mapToObj(TestData::createVolumeGroupName).collect(Collectors.toSet());
         final Set<String> names = IntStream.range(0, 7)
@@ -57,21 +59,44 @@ public class IndexVolumeGroupDaoImplTest {
         // When
         namesToDelete.forEach(indexVolumeGroupDao::create);
         names.forEach(indexVolumeGroupDao::create);
-        final List<String> found1 = indexVolumeGroupDao.getNames();
+        final List<String> foundNames1 = indexVolumeGroupDao.getNames();
+        final List<IndexVolumeGroup> foundGroups1 = indexVolumeGroupDao.getAll();
 
         namesToDelete.forEach(indexVolumeGroupDao::delete);
-        final List<String> found2 = indexVolumeGroupDao.getNames();
+        final List<String> foundNames2 = indexVolumeGroupDao.getNames();
+        final List<IndexVolumeGroup> foundGroups2 = indexVolumeGroupDao.getAll();
 
         // Then
-        assertThat(found1).containsAll(namesToDelete);
-        assertThat(found1).containsAll(names);
+        assertThat(foundNames1).containsAll(namesToDelete);
+        assertThat(foundNames1).containsAll(names);
+        assertThat(foundGroups1.stream().map(IndexVolumeGroup::getName))
+                .containsAll(namesToDelete);
+        assertThat(foundGroups1.stream().map(IndexVolumeGroup::getName))
+                .containsAll(names);
 
-        assertThat(found2).doesNotContainAnyElementsOf(namesToDelete);
-        assertThat(found2).containsAll(names);
+        assertThat(foundNames2).doesNotContainAnyElementsOf(namesToDelete);
+        assertThat(foundNames2).containsAll(names);
+        assertThat(foundGroups2.stream().map(IndexVolumeGroup::getName))
+                .doesNotContainAnyElementsOf(namesToDelete);
+        assertThat(foundGroups2.stream().map(IndexVolumeGroup::getName))
+                .containsAll(names);
+
+        final Consumer<IndexVolumeGroup> checkAuditFields = indexVolumeGroup -> {
+            assertThat(indexVolumeGroup.getCreateUser())
+                    .isEqualTo(TestModule.TEST_USER);
+            assertThat(indexVolumeGroup.getUpdateUser())
+                    .isEqualTo(TestModule.TEST_USER);
+            assertThat(indexVolumeGroup.getCreateTimeMs())
+                    .isCloseTo(now, Offset.offset(1000L));
+            assertThat(indexVolumeGroup.getUpdateTimeMs())
+                    .isCloseTo(now, Offset.offset(1000L));
+        };
+        assertThat(foundGroups1).allSatisfy(checkAuditFields);
+        assertThat(foundGroups2).allSatisfy(checkAuditFields);
     }
 
     @Test
-    public void testCreateGetDelete() {
+    void testCreateGetDelete() {
         // Given
         final Long now = System.currentTimeMillis();
         final String groupName = TestData.createVolumeGroupName();
@@ -95,7 +120,7 @@ public class IndexVolumeGroupDaoImplTest {
     }
 
     @Test
-    public void testCreateWithDuplicateName() {
+    void testCreateWithDuplicateName() {
         // Given
         final Long now = System.currentTimeMillis();
         final String groupName = TestData.createVolumeGroupName();

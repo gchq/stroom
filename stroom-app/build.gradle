@@ -166,6 +166,7 @@ dependencies {
     testImplementation project(':stroom-headless')
     testImplementation project(':stroom-importexport:stroom-importexport-api')
     testImplementation project(':stroom-index:stroom-index-server')
+    testImplementation project(':stroom-index:stroom-index-impl-mock')
     testImplementation project(':stroom-index:stroom-index-api')
     testImplementation project(':stroom-node:stroom-node-impl-mock')
     testImplementation project(':stroom-pipeline')

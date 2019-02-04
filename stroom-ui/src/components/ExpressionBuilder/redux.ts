@@ -35,7 +35,7 @@ import {
   ExpressionOperatorType,
   ExpressionOperatorWithUuid,
   ExpressionTermWithUuid,
-  ExpressionItemWithUuid
+  ExpressionHasUuid
 } from "../../types";
 
 export const EXPRESSION_EDITOR_CREATED = "EXPRESSION_EDITOR_CREATED";
@@ -93,8 +93,8 @@ export interface ExpressionItemDeleteConfirmedAction
 export interface ExpressionItemMovedAction
   extends Action<"EXPRESSION_ITEM_MOVED">,
     ActionId {
-  itemToMove: ExpressionItemWithUuid;
-  destination: ExpressionItemWithUuid;
+  itemToMove: ExpressionHasUuid;
+  destination: ExpressionHasUuid;
 }
 
 export const actionCreators = {
@@ -162,8 +162,8 @@ export const actionCreators = {
   }),
   expressionItemMoved: (
     id: string,
-    itemToMove: ExpressionItemWithUuid,
-    destination: ExpressionItemWithUuid
+    itemToMove: ExpressionHasUuid,
+    destination: ExpressionHasUuid
   ): ExpressionItemMovedAction => ({
     type: EXPRESSION_ITEM_MOVED,
     id,

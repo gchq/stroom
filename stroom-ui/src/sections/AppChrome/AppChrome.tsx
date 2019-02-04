@@ -189,7 +189,8 @@ const enhance = compose<EnhancedProps, Props>(
           onClick: () => history.push(`${pathPrefix}/welcome/`),
           icon: "home",
           style: "nav",
-          isActive: location && location.pathname.includes("/s/welcome")
+          isActive:
+            location && location.pathname.includes(`${pathPrefix}/welcome/`)
         },
         getDocumentTreeMenuItems(openDocRef, undefined, documentTree),
         {
@@ -198,7 +199,7 @@ const enhance = compose<EnhancedProps, Props>(
           onClick: () => history.push(`${pathPrefix}/data`),
           icon: "database",
           style: "nav",
-          isActive: location && location.pathname.includes("/s/data")
+          isActive: location && location.pathname.includes(`${pathPrefix}/data`)
         },
         {
           key: "processing",
@@ -206,7 +207,42 @@ const enhance = compose<EnhancedProps, Props>(
           onClick: () => history.push(`${pathPrefix}/processing`),
           icon: "play",
           style: "nav",
-          isActive: location && location.pathname.includes("/s/processing")
+          isActive:
+            location && location.pathname.includes(`${pathPrefix}/processing`)
+        },
+        {
+          key: "indexing",
+          title: "Indexing",
+          onClick: () => menuItemOpened("indexing", !areMenuItemsOpen.indexing),
+          icon: "database",
+          style: "nav",
+          skipInContractedMenu: true,
+          isActive:
+            location &&
+            (location.pathname.includes(`${pathPrefix}/indexing/volumes`) ||
+              location.pathname.includes(`${pathPrefix}/indexing/groups`)),
+          children: [
+            {
+              key: "indexing-volumes",
+              title: "Index Volumes",
+              onClick: () => history.push(`${pathPrefix}/indexing/volumes`),
+              icon: "database",
+              style: "nav",
+              isActive:
+                location &&
+                location.pathname.includes(`${pathPrefix}/indexing/volumes`)
+            },
+            {
+              key: "indexing-groups",
+              title: "Index Groups",
+              onClick: () => history.push(`${pathPrefix}/indexing/groups`),
+              icon: "database",
+              style: "nav",
+              isActive:
+                location &&
+                location.pathname.includes(`${pathPrefix}/indexing/groups`)
+            }
+          ]
         },
         {
           key: "admin",

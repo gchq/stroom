@@ -15,13 +15,14 @@
  *
  */
 
-package stroom.index;
+package stroom.index.service;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.PermissionException;
+import stroom.index.IndexStructure;
+import stroom.index.IndexStructureCache;
+import stroom.index.LuceneVersionUtil;
 import stroom.index.dao.IndexShardDao;
-import stroom.index.service.IndexShardService;
-import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;

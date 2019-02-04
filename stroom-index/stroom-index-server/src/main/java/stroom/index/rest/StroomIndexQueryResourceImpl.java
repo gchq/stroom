@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.index;
+package stroom.index.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
+import stroom.index.IndexStore;
 import stroom.index.rest.StroomIndexQueryResource;
 import stroom.index.shared.IndexDoc;
 import stroom.query.api.v2.QueryKey;

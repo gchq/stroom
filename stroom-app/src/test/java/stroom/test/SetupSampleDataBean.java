@@ -182,9 +182,10 @@ public final class SetupSampleDataBean {
         logDocRefs(indexList, "indexes");
         final Set<VolumeEntity> volumeSet = new HashSet<>(volumeList);
 
-        for (final DocRef indexRef : indexList) {
-            indexVolumeService.setVolumesForIndex(indexRef, volumeSet);
-        }
+        // TODO replace this with new volumes index
+//        for (final DocRef indexRef : indexList) {
+//            indexVolumeService.setVolumesForIndex(indexRef, volumeSet);
+//        }
 
         // Create index pipeline processor filters
         createIndexingProcessorFilter("Example index", StreamTypeNames.EVENTS, Optional.empty());

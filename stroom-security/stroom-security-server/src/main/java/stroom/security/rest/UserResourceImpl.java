@@ -1,4 +1,4 @@
-package stroom.security.impl;
+package stroom.security.rest;
 
 import stroom.security.dao.UserDao;
 import stroom.security.rest.CreateDTO;
