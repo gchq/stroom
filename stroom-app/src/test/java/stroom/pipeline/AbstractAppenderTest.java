@@ -46,6 +46,7 @@ import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
@@ -95,6 +96,14 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     private LoggingErrorReceiver loggingErrorReceiver;
 
     void test(final String name, final String type) {
+
+        final Path tempDir = getCurrentTestDir();
+
+        // Make sure the config dir is set.
+        FileUtil.setTempDir(tempDir);
+
+        LOGGER.debug("Setting tempDir to {}", FileUtil.getCanonicalPath(tempDir));
+
         final String dir = name + "/";
         final String stem = dir + name + "_" + type;
         final DocRef textConverterRef = createTextConverter(dir + name + ".ds3.xml", name, TextConverterType.DATA_SPLITTER);

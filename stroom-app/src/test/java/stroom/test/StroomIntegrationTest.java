@@ -81,14 +81,13 @@ public abstract class StroomIntegrationTest implements StroomTest {
     void before(final TestInfo testInfo, @TempDir final Path tempDir) {
         LOGGER.info(String.format("Started test: %s::%s", testInfo.getTestClass().get().getName(), testInfo.getDisplayName()));
 
+        final State state = TestState.getState();
+        state.incrementTestCount();
+
         if (tempDir == null) {
             throw new NullPointerException("Temp dir is null");
         }
         this.testTempDir = tempDir;
-        FileUtil.setTempDir(tempDir);
-
-        final State state = TestState.getState();
-        state.incrementTestCount();
 
         // Setup the database if this is the first test running for this test
         // class or if we always want to recreate the DB between tests.
