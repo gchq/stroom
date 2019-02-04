@@ -25,7 +25,6 @@ import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.pipeline.legacy.OldTextConverter;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.query.api.v2.DocRefInfo;
