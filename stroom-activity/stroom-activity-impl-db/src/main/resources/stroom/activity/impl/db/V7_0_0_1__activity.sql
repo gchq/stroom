@@ -1,4 +1,23 @@
-RENAME TABLE IF EXISTS ACTIVITY TO OLD_ACTIVITY;
+--
+-- Rename the old ACTIVITY table
+--
+DROP PROCEDURE IF EXISTS rename_activity;
+DELIMITER //
+CREATE PROCEDURE rename_activity ()
+BEGIN
+  IF EXISTS (
+      SELECT TABLE_NAME
+      FROM INFORMATION_SCHEMA.TABLES
+      WHERE TABLE_NAME = 'ACTIVITY') THEN
+
+    SET @rename_sql='RENAME TABLE ACTIVITY TO OLD_ACTIVITY';
+    PREPARE stmt FROM @rename_sql;
+    EXECUTE stmt;
+  END IF;
+END//
+DELIMITER ;
+CALL rename_activity();
+DROP PROCEDURE rename_activity;
 
 --
 -- Create the activity table
