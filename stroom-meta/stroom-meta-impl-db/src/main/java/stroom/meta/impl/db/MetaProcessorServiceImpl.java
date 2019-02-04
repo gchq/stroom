@@ -29,7 +29,8 @@ import static stroom.meta.impl.db.tables.MetaProcessor.META_PROCESSOR;
 
 @Singleton
 class MetaProcessorServiceImpl implements MetaProcessorService {
-    private final Map<Integer, MetaProcessorRecord> cache = new ConcurrentHashMap<>();
+    // TODO : @66 Replace with a proper cache.
+    private final Map<String, MetaProcessorRecord> cache = new ConcurrentHashMap<>();
 
     private final ConnectionProvider connectionProvider;
 
@@ -39,49 +40,51 @@ class MetaProcessorServiceImpl implements MetaProcessorService {
     }
 
     @Override
-    public Integer getOrCreate(final Integer processorId, final String pipelineUuid) {
-        if (processorId == null || pipelineUuid == null) {
+    public Integer getOrCreate(final String processorUuid, final String processorFilterUuid, final String pipelineUuid) {
+        if (processorUuid == null || pipelineUuid == null) {
             return null;
         }
 
-        Integer id = get(processorId, pipelineUuid);
+        Integer id = get(processorUuid, processorFilterUuid, pipelineUuid);
         if (id == null) {
             // Create.
-            id = create(processorId, pipelineUuid);
+            id = create(processorUuid, processorFilterUuid, pipelineUuid);
         }
 
         return id;
     }
 
-    private Integer get(final Integer processorId, final String pipelineUuid) {
-        MetaProcessorRecord record = cache.get(processorId);
+    private Integer get(final String processorUuid, final String processorFilterUuid, final String pipelineUuid) {
+        MetaProcessorRecord record = cache.get(processorUuid);
         if (record != null) {
             return record.getId();
         }
 
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .selectFrom(META_PROCESSOR)
-                .where(META_PROCESSOR.PROCESSOR_ID.eq(processorId))
+                .where(META_PROCESSOR.PROCESSOR_UUID.eq(processorUuid)
+                        .and(META_PROCESSOR.PROCESSOR_FILTER_UUID.eq(processorFilterUuid))
+                        .and(META_PROCESSOR.PIPELINE_UUID.eq(pipelineUuid)))
                 .fetchOptional()
                 .map(r -> {
-                    cache.put(processorId, r);
+                    cache.put(processorUuid, r);
                     return r.getId();
                 })
                 .orElse(null));
     }
 
-    private Integer create(final int processorId, final String pipelineUuid) {
+    private Integer create(final String processorUuid, final String processorFilterUuid, final String pipelineUuid) {
         return JooqUtil.contextResult(connectionProvider, context -> context
-                .insertInto(META_PROCESSOR, META_PROCESSOR.PROCESSOR_ID, META_PROCESSOR.PIPELINE_UUID)
-                .values(processorId, pipelineUuid)
+                .insertInto(META_PROCESSOR, META_PROCESSOR.PROCESSOR_UUID, META_PROCESSOR.PROCESSOR_FILTER_UUID, META_PROCESSOR.PIPELINE_UUID)
+                .values(processorUuid, processorFilterUuid, pipelineUuid)
                 .onDuplicateKeyIgnore()
                 .returning(META_PROCESSOR.ID)
                 .fetchOptional()
                 .map(record -> {
-                    cache.put(processorId, record);
+                    cache.put(processorUuid, record);
                     return record.getId();
                 })
-                .orElseGet(() -> get(processorId, pipelineUuid))
+                .orElseGet(() -> get(processorUuid, processorFilterUuid, pipelineUuid))
         );
     }
 

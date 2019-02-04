@@ -22,7 +22,7 @@ import stroom.index.IndexShardManager;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.streamtask.StreamProcessorTaskExecutor;
-import stroom.test.CommonTranslationTest;
+import stroom.test.CommonTranslationTestHelper;
 import stroom.test.StoreCreationTool;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
@@ -39,27 +39,27 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Class to create test data for use in all search tests.
  */
 
-public class CommonIndexingTest {
+public class CommonIndexingTestHelper {
     private static final int N1 = 1;
 
     private static final String DIR = "CommonIndexingTest/";
 
-    public static final Path INDEX_XSLT = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "index.xsl");
-    public static final Path SEARCH_RESULT_XSLT = StroomPipelineTestFileUtil
+    private static final Path INDEX_XSLT = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "index.xsl");
+    private static final Path SEARCH_RESULT_XSLT = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "search_result.xsl");
-    public static final Path SEARCH_RESULT_TEXT_XSLT = StroomPipelineTestFileUtil
+    private static final Path SEARCH_RESULT_TEXT_XSLT = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "search_result_text.xsl");
 
     private final IndexShardManager indexShardManager;
-    private final CommonTranslationTest commonTranslationTest;
+    private final CommonTranslationTestHelper commonTranslationTestHelper;
     private final StoreCreationTool storeCreationTool;
 
     @Inject
-    CommonIndexingTest(final IndexShardManager indexShardManager,
-                       final CommonTranslationTest commonTranslationTest,
-                       final StoreCreationTool storeCreationTool) {
+    CommonIndexingTestHelper(final IndexShardManager indexShardManager,
+                             final CommonTranslationTestHelper commonTranslationTestHelper,
+                             final StoreCreationTool storeCreationTool) {
         this.indexShardManager = indexShardManager;
-        this.commonTranslationTest = commonTranslationTest;
+        this.commonTranslationTestHelper = commonTranslationTestHelper;
         this.storeCreationTool = storeCreationTool;
     }
 
@@ -69,19 +69,19 @@ public class CommonIndexingTest {
 
     public void setup(OptionalInt maxDocsPerShard) {
         // Add data.
-        commonTranslationTest.setup();
+        commonTranslationTestHelper.setup();
         runProcessing(1, maxDocsPerShard);
     }
 
     public void setup(List<Path> dataFiles, OptionalInt maxDocsPerShard) {
         // Add data.
-        commonTranslationTest.setup(new ArrayList<>(dataFiles));
+        commonTranslationTestHelper.setup(new ArrayList<>(dataFiles));
         runProcessing(dataFiles.size(), maxDocsPerShard);
     }
 
     private void runProcessing(final int dataFileCount, final OptionalInt maxDocsPerShard) {
         // Translate data.
-        List<StreamProcessorTaskExecutor> results = commonTranslationTest.processAll();
+        List<StreamProcessorTaskExecutor> results = commonTranslationTestHelper.processAll();
 
         // 3 ref data streams pluss our data streams
         int expectedTaskCount = 3 + dataFileCount;
@@ -97,7 +97,7 @@ public class CommonIndexingTest {
         // Add index.
         storeCreationTool.addIndex("Test index", INDEX_XSLT, maxDocsPerShard);
         // Translate data.
-        results = commonTranslationTest.processAll();
+        results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(N1);
         for (final StreamProcessorTaskExecutor result : results) {
             final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;

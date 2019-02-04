@@ -36,7 +36,7 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.search.AbstractSearchTest;
-import stroom.search.CommonIndexingTest;
+import stroom.search.CommonIndexingTestHelper;
 import stroom.search.LuceneSearchResponseCreatorManager;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.shard.IndexShardSearchConfig;
@@ -77,7 +77,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     @TempDir
     Path testDir;
     @Inject
-    private CommonIndexingTest commonIndexingTest;
+    private CommonIndexingTestHelper commonIndexingTestHelper;
     @Inject
     private IndexStore indexStore;
     @Inject
@@ -127,7 +127,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
 //        } catch (IOException e) {
 //            throw new RuntimeException(e);
 //        }
-        commonIndexingTest.setup(dataFiles, OptionalInt.of(MAX_DOCS_PER_SHARD));
+        commonIndexingTestHelper.setup(dataFiles, OptionalInt.of(MAX_DOCS_PER_SHARD));
 
 //        try {
 //            Files.deleteIfExists(dataFile);
@@ -206,7 +206,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
                 .build();
 
         List<Field> fields = Arrays.asList(groupedUserId, countField);
-        final DocRef resultPipeline = commonIndexingTest.getSearchResultPipeline();
+        final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
 
         final TableSettings tableSettings = new TableSettings.Builder()
                 .addFields(fields)

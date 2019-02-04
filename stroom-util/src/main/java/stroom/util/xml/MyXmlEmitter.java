@@ -48,7 +48,7 @@ public class MyXmlEmitter extends XMLEmitter {
 
     /**
      * Write contents of array to current writer, after escaping special characters.
-     * This method converts the XML special characters (such as < and &) into their
+     * This method converts the XML special characters (such as &lt; and &amp;) into their
      * predefined entities.
      *
      * @param chars       The character sequence containing the string

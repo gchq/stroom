@@ -37,6 +37,10 @@ plugins {
     id 'java-library'
 }
 
+wrapper{
+    gradleVersion = '5.1'
+}
+
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'de.undercouch.download'
 //apply plugin: 'ca.cutterslade.analyze'

@@ -43,6 +43,7 @@ public class Processor extends AuditedEntity {
     private String pipelineUuid;
     private boolean enabled;
 
+    private String uuid;
     private String pipelineName;
 
     public Processor() {
@@ -65,6 +66,12 @@ public class Processor extends AuditedEntity {
 
     public void setTaskType(String taskType) {
         this.taskType = taskType;
+    }
+
+    // TODO : @66 IMPLEMENT UUID
+    @Transient
+    public String getUuid() {
+        return String.valueOf(getId());
     }
 
     @Column(name = PIPELINE_UUID)

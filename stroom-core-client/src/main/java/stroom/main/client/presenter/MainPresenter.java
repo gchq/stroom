@@ -38,7 +38,7 @@ import stroom.task.client.TaskStartEvent;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.tab.client.event.MaximiseEvent;
-import stroom.widget.util.client.DoubleSelectTest;
+import stroom.widget.util.client.DoubleSelectTester;
 
 public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPresenter.MainProxy> {
     @ContentSlot
@@ -103,7 +103,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
                     }
                 };
                 click = true;
-                clickTimer.schedule(DoubleSelectTest.DOUBLE_SELECT_DELAY);
+                clickTimer.schedule(DoubleSelectTester.DOUBLE_SELECT_DELAY);
             }
         }));
         addRegisteredHandler(MaximiseEvent.getType(), event -> view.maximise(event.getView()));

@@ -44,7 +44,7 @@ public class Indexes {
     public static final Index META_KEY_NAME = Indexes0.META_KEY_NAME;
     public static final Index META_KEY_PRIMARY = Indexes0.META_KEY_PRIMARY;
     public static final Index META_PROCESSOR_PRIMARY = Indexes0.META_PROCESSOR_PRIMARY;
-    public static final Index META_PROCESSOR_PROCESSOR_ID = Indexes0.META_PROCESSOR_PROCESSOR_ID;
+    public static final Index META_PROCESSOR_PROCESSOR_UUID = Indexes0.META_PROCESSOR_PROCESSOR_UUID;
     public static final Index META_TYPE_NAME = Indexes0.META_TYPE_NAME;
     public static final Index META_TYPE_PRIMARY = Indexes0.META_TYPE_PRIMARY;
     public static final Index META_VAL_META_VAL_CREATE_TIME_IDX = Indexes0.META_VAL_META_VAL_CREATE_TIME_IDX;
@@ -65,7 +65,7 @@ public class Indexes {
         public static Index META_KEY_NAME = Internal.createIndex("name", MetaKey.META_KEY, new OrderField[] { MetaKey.META_KEY.NAME }, true);
         public static Index META_KEY_PRIMARY = Internal.createIndex("PRIMARY", MetaKey.META_KEY, new OrderField[] { MetaKey.META_KEY.ID }, true);
         public static Index META_PROCESSOR_PRIMARY = Internal.createIndex("PRIMARY", MetaProcessor.META_PROCESSOR, new OrderField[] { MetaProcessor.META_PROCESSOR.ID }, true);
-        public static Index META_PROCESSOR_PROCESSOR_ID = Internal.createIndex("processor_id", MetaProcessor.META_PROCESSOR, new OrderField[] { MetaProcessor.META_PROCESSOR.PROCESSOR_ID }, true);
+        public static Index META_PROCESSOR_PROCESSOR_UUID = Internal.createIndex("processor_uuid", MetaProcessor.META_PROCESSOR, new OrderField[] { MetaProcessor.META_PROCESSOR.PROCESSOR_UUID }, true);
         public static Index META_TYPE_NAME = Internal.createIndex("name", MetaType.META_TYPE, new OrderField[] { MetaType.META_TYPE.NAME }, true);
         public static Index META_TYPE_PRIMARY = Internal.createIndex("PRIMARY", MetaType.META_TYPE, new OrderField[] { MetaType.META_TYPE.ID }, true);
         public static Index META_VAL_META_VAL_CREATE_TIME_IDX = Internal.createIndex("meta_val_create_time_idx", MetaVal.META_VAL, new OrderField[] { MetaVal.META_VAL.CREATE_TIME }, false);

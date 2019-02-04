@@ -41,7 +41,7 @@ import stroom.meta.impl.db.tables.records.MetaProcessorRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaProcessor extends TableImpl<MetaProcessorRecord> {
 
-    private static final long serialVersionUID = 888032511;
+    private static final long serialVersionUID = 1630399227;
 
     /**
      * The reference instance of <code>stroom.meta_processor</code>
@@ -62,14 +62,19 @@ public class MetaProcessor extends TableImpl<MetaProcessorRecord> {
     public final TableField<MetaProcessorRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
-     * The column <code>stroom.meta_processor.pipeline_uuid</code>.
+     * The column <code>stroom.meta_processor.processor_uuid</code>.
      */
-    public final TableField<MetaProcessorRecord, String> PIPELINE_UUID = createField("pipeline_uuid", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<MetaProcessorRecord, String> PROCESSOR_UUID = createField("processor_uuid", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
 
     /**
-     * The column <code>stroom.meta_processor.processor_id</code>.
+     * The column <code>stroom.meta_processor.processor_filter_uuid</code>.
      */
-    public final TableField<MetaProcessorRecord, Integer> PROCESSOR_ID = createField("processor_id", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<MetaProcessorRecord, String> PROCESSOR_FILTER_UUID = createField("processor_filter_uuid", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
+
+    /**
+     * The column <code>stroom.meta_processor.pipeline_uuid</code>.
+     */
+    public final TableField<MetaProcessorRecord, String> PIPELINE_UUID = createField("pipeline_uuid", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
 
     /**
      * Create a <code>stroom.meta_processor</code> table reference
@@ -117,7 +122,7 @@ public class MetaProcessor extends TableImpl<MetaProcessorRecord> {
      */
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.META_PROCESSOR_PRIMARY, Indexes.META_PROCESSOR_PROCESSOR_ID);
+        return Arrays.<Index>asList(Indexes.META_PROCESSOR_PRIMARY, Indexes.META_PROCESSOR_PROCESSOR_UUID);
     }
 
     /**
@@ -141,7 +146,7 @@ public class MetaProcessor extends TableImpl<MetaProcessorRecord> {
      */
     @Override
     public List<UniqueKey<MetaProcessorRecord>> getKeys() {
-        return Arrays.<UniqueKey<MetaProcessorRecord>>asList(Keys.KEY_META_PROCESSOR_PRIMARY, Keys.KEY_META_PROCESSOR_PROCESSOR_ID);
+        return Arrays.<UniqueKey<MetaProcessorRecord>>asList(Keys.KEY_META_PROCESSOR_PRIMARY, Keys.KEY_META_PROCESSOR_PROCESSOR_UUID);
     }
 
     /**

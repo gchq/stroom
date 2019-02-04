@@ -60,7 +60,7 @@ public class Keys {
     public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_PRIMARY = UniqueKeys0.KEY_META_KEY_PRIMARY;
     public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_NAME = UniqueKeys0.KEY_META_KEY_NAME;
     public static final UniqueKey<MetaProcessorRecord> KEY_META_PROCESSOR_PRIMARY = UniqueKeys0.KEY_META_PROCESSOR_PRIMARY;
-    public static final UniqueKey<MetaProcessorRecord> KEY_META_PROCESSOR_PROCESSOR_ID = UniqueKeys0.KEY_META_PROCESSOR_PROCESSOR_ID;
+    public static final UniqueKey<MetaProcessorRecord> KEY_META_PROCESSOR_PROCESSOR_UUID = UniqueKeys0.KEY_META_PROCESSOR_PROCESSOR_UUID;
     public static final UniqueKey<MetaTypeRecord> KEY_META_TYPE_PRIMARY = UniqueKeys0.KEY_META_TYPE_PRIMARY;
     public static final UniqueKey<MetaTypeRecord> KEY_META_TYPE_NAME = UniqueKeys0.KEY_META_TYPE_NAME;
     public static final UniqueKey<MetaValRecord> KEY_META_VAL_PRIMARY = UniqueKeys0.KEY_META_VAL_PRIMARY;
@@ -93,7 +93,7 @@ public class Keys {
         public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_PRIMARY = Internal.createUniqueKey(MetaKey.META_KEY, "KEY_meta_key_PRIMARY", MetaKey.META_KEY.ID);
         public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_NAME = Internal.createUniqueKey(MetaKey.META_KEY, "KEY_meta_key_name", MetaKey.META_KEY.NAME);
         public static final UniqueKey<MetaProcessorRecord> KEY_META_PROCESSOR_PRIMARY = Internal.createUniqueKey(MetaProcessor.META_PROCESSOR, "KEY_meta_processor_PRIMARY", MetaProcessor.META_PROCESSOR.ID);
-        public static final UniqueKey<MetaProcessorRecord> KEY_META_PROCESSOR_PROCESSOR_ID = Internal.createUniqueKey(MetaProcessor.META_PROCESSOR, "KEY_meta_processor_processor_id", MetaProcessor.META_PROCESSOR.PROCESSOR_ID);
+        public static final UniqueKey<MetaProcessorRecord> KEY_META_PROCESSOR_PROCESSOR_UUID = Internal.createUniqueKey(MetaProcessor.META_PROCESSOR, "KEY_meta_processor_processor_uuid", MetaProcessor.META_PROCESSOR.PROCESSOR_UUID);
         public static final UniqueKey<MetaTypeRecord> KEY_META_TYPE_PRIMARY = Internal.createUniqueKey(MetaType.META_TYPE, "KEY_meta_type_PRIMARY", MetaType.META_TYPE.ID);
         public static final UniqueKey<MetaTypeRecord> KEY_META_TYPE_NAME = Internal.createUniqueKey(MetaType.META_TYPE, "KEY_meta_type_name", MetaType.META_TYPE.NAME);
         public static final UniqueKey<MetaValRecord> KEY_META_VAL_PRIMARY = Internal.createUniqueKey(MetaVal.META_VAL, "KEY_meta_val_PRIMARY", MetaVal.META_VAL.ID);
