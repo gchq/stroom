@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.dictionary.impl;
+package stroom.db.migration._V07_00_00.doc.dictionary;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
+import stroom.db.migration._V07_00_00.docref._V07_00_00_DocRef;
+import stroom.db.migration._V07_00_00.docstore.shared._V07_00_00_Doc;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -31,18 +31,14 @@ import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 import java.util.Objects;
 
-// barring class/pkg naming, this should be identical to  stroom.db.migration._V07_00_00.doc.dictionary._V07_00_00_OldDictionaryDoc
+// barring class/pkg naming, this should be identical to stroom.dictionary.legacy.OldDictionaryDoc
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "includes"})
 @JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "dictionary")
 @XmlType(name = "DictionaryDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "imports"})
-/**
- * Used for legacy import migration
- **/
-@Deprecated
-public class OldDictionaryDoc extends Doc {
+public class _V07_00_00_OldDictionaryDoc extends _V07_00_00_Doc {
     private static final long serialVersionUID = -4208920620555926044L;
 
     public static final String DOCUMENT_TYPE = "Dictionary";
@@ -53,9 +49,9 @@ public class OldDictionaryDoc extends Doc {
     private String data;
     @XmlElementWrapper(name = "imports")
     @XmlElement(name = "docRef")
-    private List<DocRef> imports;
+    private List<_V07_00_00_DocRef> imports;
 
-    public OldDictionaryDoc() {
+    public _V07_00_00_OldDictionaryDoc() {
         // Default constructor for GWT serialisation.
     }
 
@@ -75,11 +71,11 @@ public class OldDictionaryDoc extends Doc {
         this.data = data;
     }
 
-    public List<DocRef> getImports() {
+    public List<_V07_00_00_DocRef> getImports() {
         return imports;
     }
 
-    public void setImports(final List<DocRef> imports) {
+    public void setImports(final List<_V07_00_00_DocRef> imports) {
         this.imports = imports;
     }
 
@@ -88,7 +84,7 @@ public class OldDictionaryDoc extends Doc {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
-        final OldDictionaryDoc that = (OldDictionaryDoc) o;
+        final _V07_00_00_OldDictionaryDoc that = (_V07_00_00_OldDictionaryDoc) o;
         return Objects.equals(description, that.description) &&
                 Objects.equals(data, that.data) &&
                 Objects.equals(imports, that.imports);
