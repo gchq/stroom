@@ -1,3 +1,5 @@
+RENAME TABLE IF EXISTS ACTIVITY TO OLD_ACTIVITY;
+
 --
 -- Create the activity table
 --
@@ -23,12 +25,12 @@ BEGIN
   IF EXISTS (
       SELECT TABLE_NAME
       FROM INFORMATION_SCHEMA.TABLES
-      WHERE TABLE_NAME = 'ACTIVITY') THEN
+      WHERE TABLE_NAME = 'OLD_ACTIVITY') THEN
 
     SET @insert_sql=''
         ' INSERT INTO activity (id, version, create_time_ms, create_user, update_time_ms, update_user, user_id, json)'
         ' SELECT ID, 1, CRT_MS, CRT_USER, UPD_MS, UPD_USER, USER_ID, JSON'
-        ' FROM ACTIVITY'
+        ' FROM OLD_ACTIVITY'
         ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM activity)'
         ' ORDER BY ID;';
     PREPARE insert_stmt FROM @insert_sql;
