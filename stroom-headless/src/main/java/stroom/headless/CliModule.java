@@ -18,16 +18,21 @@ package stroom.headless;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import stroom.cache.impl.CacheModule;
+import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
+import stroom.importexport.impl.ImportExportModule;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
-import stroom.node.LocalNodeProvider;
+import stroom.node.api.NodeInfo;
 import stroom.node.shared.Node;
+import stroom.pipeline.cache.PipelineCacheModule;
+import stroom.pipeline.feed.FeedModule;
 import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.pipeline.scope.PipelineScoped;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamtask.statistic.MetaDataStatistic;
-import stroom.task.ExecutorProvider;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskHandlerBinder;
@@ -41,25 +46,25 @@ public class CliModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new stroom.activity.impl.mock.MockActivityModule());
-//        install(new stroom.cache.CacheModule());
-        install(new stroom.cache.PipelineCacheModule());
+        install(new CacheModule());
+        install(new PipelineCacheModule());
 //        install(new ClusterModule());
-        install(new stroom.dictionary.DictionaryModule());
-//        install(new stroom.dictionary.DictionaryHandlerModule());
+        install(new DictionaryModule());
+//        install(new stroom.dictionary.impl.DictionaryHandlerModule());
 //        install(new stroom.docstore.impl.fs.FSPersistenceModule());
 //        install(new stroom.document.DocumentModule());
 //        install(new stroom.entity.EntityModule());
 //        install(new stroom.entity.cluster.EntityClusterModule());
 //        install(new EntityClusterTaskModule());
         install(new stroom.explorer.MockExplorerModule());
-        install(new stroom.feed.FeedModule());
+        install(new FeedModule());
         install(new PipelineScopeModule());
-        install(new stroom.importexport.ImportExportModule());
+        install(new ImportExportModule());
 //        install(new stroom.jobsystem.JobSystemModule());
 //        install(new stroom.lifecycle.LifecycleModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
-//        install(new stroom.node.NodeModule());
-//        install(new stroom.node.MockNodeServiceModule());
+//        install(new stroom.node.impl.NodeModule());
+//        install(new stroom.node.impl.MockNodeServiceModule());
 //        install(new EntityManagerModule());
         install(new stroom.pipeline.PipelineModule());
         install(new stroom.pipeline.factory.PipelineFactoryModule());
@@ -69,7 +74,7 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.pipeline.task.PipelineStreamTaskModule());
 //        install(new stroom.policy.PolicyModule());
 //        install(new stroom.properties.impl.PropertyModule());
-//        install(new stroom.refdata.ReferenceDataModule());
+//        install(new stroom.pipeline.refdata.ReferenceDataModule());
 //        install(new stroom.resource.ResourceModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
 //        install(new DataStoreHandlerModule());
@@ -79,7 +84,6 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.task.TaskModule());
 //        install(new stroom.task.cluster.ClusterTaskModule());
 //        install(new stroom.volume.VolumeModule());
-        install(new stroom.xmlschema.XmlSchemaModule());
 
         bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);
         bind(StreamCloser.class).to(BasicStreamCloser.class).in(PipelineScoped.class);
@@ -112,10 +116,15 @@ public class CliModule extends AbstractModule {
     }
 
     @Provides
-    public LocalNodeProvider localNodeProvider() {
-        return new LocalNodeProvider() {
+    public NodeInfo nodeInfo() {
+        return new NodeInfo() {
             @Override
-            public Node get() {
+            public Node getThisNode() {
+                return null;
+            }
+
+            @Override
+            public String getThisNodeName() {
                 return null;
             }
         };

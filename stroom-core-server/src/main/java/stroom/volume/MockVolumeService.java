@@ -18,7 +18,6 @@
 package stroom.volume;
 
 import stroom.entity.MockEntityService;
-import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;

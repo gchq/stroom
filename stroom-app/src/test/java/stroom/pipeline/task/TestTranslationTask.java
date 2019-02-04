@@ -18,9 +18,10 @@ package stroom.pipeline.task;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.impl.mock.MockDataMetaService;
+import stroom.meta.shared.Meta;
+import stroom.meta.impl.mock.MockMetaService;
 import stroom.data.store.impl.fs.MockStreamStore;
+import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.test.AbstractProcessIntegrationTest;
@@ -45,7 +46,7 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
     private static final String DIR = "TestTranslationTask/";
 
     @Inject
-    private MockDataMetaService streamMetaService;
+    private MockMetaService metaService;
     @Inject
     private MockStreamStore streamStore;
     @Inject
@@ -72,11 +73,11 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
         final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
-        for (final Entry<Long, Data> entry : streamMetaService.getDataMap().entrySet()) {
+        for (final Entry<Long, Meta> entry : metaService.getMetaMap().entrySet()) {
             final long streamId = entry.getKey();
-            final Data stream = entry.getValue();
-            if (StreamTypeNames.EVENTS.equals(stream.getTypeName())) {
-                final byte[] data = streamStore.getFileData().get(streamId).get(stream.getTypeName());
+            final Meta meta = entry.getValue();
+            if (StreamTypeNames.EVENTS.equals(meta.getTypeName())) {
+                final byte[] data = streamStore.getFileData().get(streamId).get(meta.getTypeName());
 
                 // Write the actual XML out.
                 final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir, "TestTranslationTask.out");

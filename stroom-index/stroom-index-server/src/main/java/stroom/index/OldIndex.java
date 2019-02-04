@@ -16,11 +16,11 @@
 
 package stroom.index;
 
-import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.ExternalFile;
+import stroom.importexport.api.ExternalFile;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.importexport.migration.DocumentEntity;
 import stroom.index.shared.IndexFields;
 import stroom.docref.HasDisplayValue;
 
@@ -31,25 +31,16 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
-@Entity
-@Table(name = "IDX")
+/**
+ * Used for legacy migration
+ **/
+@Deprecated
 public class OldIndex extends DocumentEntity {
-    public static final String TABLE_NAME = SQLNameConstants.INDEX;
-    public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String MAX_DOCUMENT = SQLNameConstants.MAX + SEP + SQLNameConstants.DOCUMENT;
-    public static final String MAX_SHARD = SQLNameConstants.MAX + SEP + SQLNameConstants.SHARD;
-    public static final String PARTITION_SIZE = SQLNameConstants.PARTITION + SEP + SQLNameConstants.SIZE;
-    public static final String PARTITION_BY = SQLNameConstants.PARTITION + SEP + SQLNameConstants.BY;
-    public static final String RETENTION_DAY_AGE = SQLNameConstants.RETENTION + SEP + SQLNameConstants.DAY + SEP
-            + SQLNameConstants.AGE;
-    public static final int DEFAULT_MAX_DOCS_PER_SHARD = 1000000000;
-    public static final int DEFAULT_SHARDS_PER_PARTITION = 1;
-    public static final PartitionBy DEFAULT_PARTITION_BY = PartitionBy.MONTH;
-    public static final int DEFAULT_PARTITION_SIZE = 1;
-    public static final String STATUS = SQLNameConstants.STATUS;
-    public static final String ENTITY_TYPE = "Index";
-
-    private static final long serialVersionUID = 2648729644398564919L;
+    private static final int DEFAULT_MAX_DOCS_PER_SHARD = 1000000000;
+    private static final int DEFAULT_SHARDS_PER_PARTITION = 1;
+    private static final PartitionBy DEFAULT_PARTITION_BY = PartitionBy.MONTH;
+    private static final int DEFAULT_PARTITION_SIZE = 1;
+    private static final String ENTITY_TYPE = "Index";
 
     //    private Set<Volume> volumes = new HashSet<>();
     private int maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
@@ -61,8 +52,6 @@ public class OldIndex extends DocumentEntity {
     private String indexFields;
     private IndexFields indexFieldsObject;
 
-    @Column(name = SQLNameConstants.DESCRIPTION)
-    @Lob
     public String getDescription() {
         return description;
     }
@@ -71,17 +60,6 @@ public class OldIndex extends DocumentEntity {
         this.description = description;
     }
 
-//    @ManyToMany(fetch = FetchType.EAGER)
-//    @JoinTable(name = TABLE_NAME_INDEX_VOLUME, joinColumns = @JoinColumn(name = Index.FOREIGN_KEY), inverseJoinColumns = @JoinColumn(name = Volume.FOREIGN_KEY))
-//    public Set<Volume> getVolumes() {
-//        return volumes;
-//    }
-//
-//    public void setVolumes(final Set<Volume> volumes) {
-//        this.volumes = volumes;
-//    }
-
-    @Column(name = MAX_DOCUMENT, nullable = false)
     public int getMaxDocsPerShard() {
         return maxDocsPerShard;
     }
@@ -90,7 +68,6 @@ public class OldIndex extends DocumentEntity {
         this.maxDocsPerShard = maxDocsPerShard;
     }
 
-    @Column(name = PARTITION_BY, nullable = true)
     public Byte getPPartitionBy() {
         return pPartitionBy;
     }
@@ -99,7 +76,6 @@ public class OldIndex extends DocumentEntity {
         this.pPartitionBy = pPartitionBy;
     }
 
-    @Column(name = PARTITION_SIZE, nullable = false)
     public int getPartitionSize() {
         return partitionSize;
     }
@@ -108,7 +84,6 @@ public class OldIndex extends DocumentEntity {
         this.partitionSize = partitionSize;
     }
 
-    @Column(name = MAX_SHARD, nullable = false)
     public int getShardsPerPartition() {
         return shardsPerPartition;
     }
@@ -133,7 +108,6 @@ public class OldIndex extends DocumentEntity {
         }
     }
 
-    @Column(name = RETENTION_DAY_AGE, columnDefinition = INT_UNSIGNED)
     public Integer getRetentionDayAge() {
         return retentionDayAge;
     }
@@ -142,8 +116,6 @@ public class OldIndex extends DocumentEntity {
         this.retentionDayAge = retentionDayAge;
     }
 
-    @Lob
-    @Column(name = SQLNameConstants.FIELDS, length = Integer.MAX_VALUE)
     @ExternalFile
     public String getIndexFields() {
         return indexFields;
@@ -164,7 +136,6 @@ public class OldIndex extends DocumentEntity {
     }
 
     @Transient
-    @Override
     public final String getType() {
         return ENTITY_TYPE;
     }

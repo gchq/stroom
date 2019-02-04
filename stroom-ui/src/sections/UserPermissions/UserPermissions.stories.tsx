@@ -27,8 +27,8 @@ import UsersInGroup from "./UsersInGroup";
 import GroupsForUser from "./GroupsForUser";
 
 // Pick a group
-let aUser: User = testData.usersAndGroups.users.filter(u => !u.group).pop()!;
-let aGroup: User = testData.usersAndGroups.users.filter(u => u.group).pop()!;
+let aUser: User = testData.usersAndGroups.users.filter(u => !u.isGroup).pop()!;
+let aGroup: User = testData.usersAndGroups.users.filter(u => u.isGroup).pop()!;
 
 storiesOf("Sections/User Permissions", module)
   .addDecorator(StroomDecorator)

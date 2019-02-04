@@ -19,8 +19,8 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.NodeCache;
-import stroom.node.VolumeService;
+import stroom.node.api.NodeInfo;
+import stroom.volume.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;
 import stroom.task.AsyncTaskHelper;
@@ -55,7 +55,7 @@ class FileSystemCleanExecutor {
     private final VolumeService volumeService;
     private final TaskContext taskContext;
     private final TaskManager taskManager;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final int batchSize;
     private final long oldAge;
     private final boolean deleteOut;
@@ -66,12 +66,12 @@ class FileSystemCleanExecutor {
     FileSystemCleanExecutor(final VolumeService volumeService,
                             final TaskContext taskContext,
                             final TaskManager taskManager,
-                            final NodeCache nodeCache,
+                            final NodeInfo nodeInfo,
                             final DataStoreServiceConfig config) {
         this.volumeService = volumeService;
         this.taskContext = taskContext;
         this.taskManager = taskManager;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.batchSize = config.getDeleteBatchSize();
 
         Long age;
@@ -107,7 +107,7 @@ class FileSystemCleanExecutor {
     }
 
     public void exec(final Task<?> task) {
-        final long nodeId = nodeCache.getDefaultNode().getId();
+        final long nodeId = nodeInfo.getThisNode().getId();
         clean(task, nodeId);
     }
 

@@ -16,20 +16,20 @@
 
 package stroom.data.store;
 
-import stroom.data.meta.api.FindDataCriteria;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.task.api.ServerTask;
 
 import java.nio.file.Path;
 
 public class StreamDownloadTask extends ServerTask<StreamDownloadResult> {
-    private FindDataCriteria criteria;
+    private FindMetaCriteria criteria;
     private Path file;
     private StreamDownloadSettings settings;
 
     public StreamDownloadTask() {
     }
 
-    public StreamDownloadTask(final String userToken, final FindDataCriteria criteria,
+    public StreamDownloadTask(final String userToken, final FindMetaCriteria criteria,
                               final Path file, final StreamDownloadSettings settings) {
         super(null, userToken);
         this.criteria = criteria;
@@ -37,7 +37,7 @@ public class StreamDownloadTask extends ServerTask<StreamDownloadResult> {
         this.settings = settings;
     }
 
-    public FindDataCriteria getCriteria() {
+    public FindMetaCriteria getCriteria() {
         return criteria;
     }
 

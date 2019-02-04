@@ -27,12 +27,11 @@ import stroom.entity.shared.Entity;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
-import stroom.util.cache.CacheManager;
-import stroom.util.cache.CacheUtil;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.persistence.FlushModeType;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;

@@ -5,6 +5,7 @@ dependencies {
     implementation project(':stroom-activity:stroom-activity-impl-db-gen')
     implementation project(':stroom-activity:stroom-activity-shared')
     implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-db-util')
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-security:stroom-security-api')

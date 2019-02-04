@@ -37,8 +37,7 @@ import stroom.feed.shared.FetchSupportedEncodingsAction;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
-import stroom.security.client.ClientSecurityContext;
-import stroom.streamstore.client.presenter.StreamTypeUiManager;
+import stroom.streamstore.client.presenter.DataTypeUiManager;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.SharedString;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -47,7 +46,7 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
     @Inject
     public FeedSettingsPresenter(final EventBus eventBus,
                                  final FeedSettingsView view,
-                                 final StreamTypeUiManager streamTypeUiManager,
+                                 final DataTypeUiManager streamTypeUiManager,
                                  final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
 

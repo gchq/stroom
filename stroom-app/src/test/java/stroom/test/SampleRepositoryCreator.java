@@ -23,7 +23,7 @@ package stroom.test;
  */
 public final class SampleRepositoryCreator {
 //    private final ApplicationContext appContext;
-//    private final NodeCache nodeCache;
+//    private final NodeInfo nodeInfo;
 //    private final FeedService feedService;
 //    private final CommonTestControl commonTestControl;
 //    private final ImportExportSerializer importExportSerializer;
@@ -35,7 +35,7 @@ public final class SampleRepositoryCreator {
 
 //        appContext = new ClassPathXmlApplicationContext(context);
 //
-//        nodeCache = (NodeCache) appContext.getInstance("nodeCache");
+//        nodeCache = (NodeInfo) appContext.getInstance("nodeCache");
 //
 //        // Force nodes to be created
 //        nodeCache.get();

@@ -22,17 +22,19 @@ import org.slf4j.MarkerFactory;
 import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ServiceName;
-import stroom.node.shared.Node;
+import stroom.docref.SharedObject;
 import stroom.task.CurrentTaskState;
 import stroom.task.GenericServerTask;
 import stroom.task.api.TaskManager;
-import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
-import stroom.docref.SharedObject;
+import stroom.task.cluster.api.ClusterResultCollector;
+import stroom.task.cluster.api.ClusterTask;
+import stroom.task.cluster.api.CollectorId;
 import stroom.task.shared.SimpleThreadPool;
 import stroom.task.shared.Task;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;
+import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import java.util.Set;
@@ -45,7 +47,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     static final ServiceName SERVICE_NAME = new ServiceName("clusterDispatchAsync");
     static final String RECEIVE_RESULT_METHOD = "receiveResult";
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(5);
-    static final Class<?>[] RECEIVE_RESULT_METHOD_ARGS = {ClusterTask.class, Node.class, TaskId.class,
+    static final Class<?>[] RECEIVE_RESULT_METHOD_ARGS = {ClusterTask.class, String.class, TaskId.class,
             CollectorId.class, SharedObject.class, Throwable.class, Boolean.class};
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterDispatchAsyncImpl.class);
     private static final String RECEIVE_RESULT = "receiveResult";
@@ -64,8 +66,10 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     }
 
     @Override
-    public <R extends SharedObject> void execAsync(final ClusterTask<R> task, final ClusterResultCollector<R> collector,
-                                                   final Node sourceNode, final Set<Node> targetNodes) {
+    public <R extends SharedObject> void execAsync(final ClusterTask<R> task,
+                                                   final ClusterResultCollector<R> collector,
+                                                   final String sourceNode,
+                                                   final Set<String> targetNodes) {
 //        // Try and discover the parent task for this task as one hasn't been
 //        // supplied.
 //        if (!TaskScopeContextHolder.contextExists()) {
@@ -76,8 +80,11 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
         execAsync(parentTask, task, collector, sourceNode, targetNodes);
     }
 
-    private <R extends SharedObject> void execAsync(final Task<?> sourceTask, final ClusterTask<R> clusterTask,
-                                                    final ClusterResultCollector<R> collector, final Node sourceNode, final Set<Node> targetNodes) {
+    private <R extends SharedObject> void execAsync(final Task<?> sourceTask,
+                                                    final ClusterTask<R> clusterTask,
+                                                    final ClusterResultCollector<R> collector,
+                                                    final String sourceNode,
+                                                    final Set<String> targetNodes) {
         if (sourceTask == null) {
             throw new NullPointerException("A source task must be provided");
         }
@@ -110,14 +117,14 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
 
         final TaskId sourceTaskId = sourceTask.getId();
         final CollectorId collectorId = collector.getId();
-        for (final Node targetNode : targetNodes) {
+        for (final String targetNode : targetNodes) {
             if (targetNode == null) {
                 throw new NullPointerException("Null target node?");
             }
 
             // Create a task to make the cluster call.
             final String message = "Calling node '" +
-                    targetNode.getName() +
+                    targetNode +
                     "' for task '" +
                     clusterTask.getTaskName() +
                     "'";
@@ -160,9 +167,13 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
      */
     //This method is * executed by spring using a named bean/method, hence 'unused' suppression
     @SuppressWarnings({"unchecked", "unused"})
-    public <R extends SharedObject> Boolean receiveResult(final stroom.task.cluster.ClusterTask<R> task,
-                                                          final Node targetNode, final TaskId sourceTaskId, final CollectorId collectorId, final R result,
-                                                          final Throwable throwable, final Boolean success) {
+    public <R extends SharedObject> Boolean receiveResult(final ClusterTask<R> task,
+                                                          final String targetNode,
+                                                          final TaskId sourceTaskId,
+                                                          final CollectorId collectorId,
+                                                          final R result,
+                                                          final Throwable throwable,
+                                                          final Boolean success) {
         final AtomicBoolean successfullyReceived = new AtomicBoolean();
 
         DebugTrace.debugTraceIn(task, RECEIVE_RESULT, success);
@@ -203,7 +214,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                             sb.append("Receiving failure from ");
                         }
                         sb.append(" '");
-                        sb.append(targetNode.getName());
+                        sb.append(targetNode);
                         sb.append("' for task '");
                         sb.append(task.getTaskName());
                         sb.append("'");

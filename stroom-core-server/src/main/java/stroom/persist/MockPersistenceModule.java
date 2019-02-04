@@ -25,8 +25,6 @@ import com.google.inject.AbstractModule;
 public class MockPersistenceModule extends AbstractModule {
     @Override
     protected void configure() {
-//        bind(DataSource.class).toProvider(DataSourceProvider.class);
-//        bind(PersistService.class).to(PersistServiceImpl.class);
         bind(EntityManagerSupport.class).to(MockEntityManagerSupport.class);
     }
 }

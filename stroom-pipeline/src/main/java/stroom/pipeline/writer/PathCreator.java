@@ -17,11 +17,11 @@
 package stroom.pipeline.writer;
 
 import com.google.common.base.Strings;
-import stroom.node.NodeCache;
+import stroom.node.api.NodeInfo;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.SearchIdHolder;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
@@ -60,21 +60,21 @@ public class PathCreator {
 
     private final FeedHolder feedHolder;
     private final PipelineHolder pipelineHolder;
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final SearchIdHolder searchIdHolder;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
 
     @Inject
     PathCreator(final FeedHolder feedHolder,
                 final PipelineHolder pipelineHolder,
-                final StreamHolder streamHolder,
+                final MetaHolder metaHolder,
                 final SearchIdHolder searchIdHolder,
-                final NodeCache nodeCache) {
+                final NodeInfo nodeInfo) {
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.searchIdHolder = searchIdHolder;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
     }
 
     public static String replaceTimeVars(String path) {
@@ -103,6 +103,7 @@ public class PathCreator {
                 path,
                 STROOM_TEMP,
                 () -> FileUtil.getCanonicalPath(FileUtil.getTempDir()));
+//        () -> FileUtil.getCanonicalPath(FileUtil.getTempDir()));
 
         return SystemPropertyUtil.replaceSystemProperty(path, NON_ENV_VARS_SET);
     }
@@ -203,17 +204,17 @@ public class PathCreator {
         if (pipelineHolder != null && pipelineHolder.getPipeline() != null) {
             path = replace(path, "pipeline", () -> pipelineHolder.getPipeline().getName());
         }
-        if (streamHolder != null && streamHolder.getStream() != null) {
-            path = replace(path, "streamId", () -> streamHolder.getStream().getId(), 0);
+        if (metaHolder != null && metaHolder.getMeta() != null) {
+            path = replace(path, "streamId", () -> metaHolder.getMeta().getId(), 0);
         }
-        if (streamHolder != null) {
-            path = replace(path, "streamNo", () -> String.valueOf(streamHolder.getStreamNo()));
+        if (metaHolder != null) {
+            path = replace(path, "streamNo", () -> String.valueOf(metaHolder.getStreamNo()));
         }
         if (searchIdHolder != null && searchIdHolder.getSearchId() != null) {
             path = replace(path, "searchId", searchIdHolder::getSearchId);
         }
-        if (nodeCache != null) {
-            path = replace(path, "node", () -> nodeCache.getDefaultNode().getName());
+        if (nodeInfo != null) {
+            path = replace(path, "node", () -> nodeInfo.getThisNodeName());
         }
 
         return path;

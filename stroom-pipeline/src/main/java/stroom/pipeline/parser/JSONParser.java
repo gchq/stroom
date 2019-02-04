@@ -24,7 +24,7 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.xml.converter.json.JSONParserFactory;
+import stroom.pipeline.xml.converter.json.JSONParserFactory;
 
 import javax.inject.Inject;
 

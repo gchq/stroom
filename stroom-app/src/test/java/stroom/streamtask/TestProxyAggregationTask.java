@@ -18,22 +18,22 @@ package stroom.streamtask;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.ExpressionUtil;
-import stroom.data.meta.api.FindDataCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.ExpressionUtil;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.datafeed.BufferFactory;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedDocCache;
-import stroom.feed.FeedStore;
+import stroom.pipeline.feed.FeedDocCache;
+import stroom.pipeline.feed.FeedStore;
 import stroom.io.SeekableInputStream;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.statistic.MetaDataStatistic;
-import stroom.task.ExecutorProvider;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.FileUtil;
@@ -62,7 +62,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private DataMetaService streamMetaService;
+    private MetaService metaService;
     @Inject
     private FeedStore feedStore;
     @Inject
@@ -125,9 +125,9 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         assertThat(Files.isRegularFile(testFile3)).as("Expecting task to delete file once loaded into stream store").isFalse();
         assertThat(Files.isRegularFile(testFile4)).as("Expecting task to delete file once loaded into stream store").isFalse();
 
-        final FindDataCriteria findStreamCriteria1 = new FindDataCriteria();
-        findStreamCriteria1.setExpression(ExpressionUtil.createFeedExpression(feedName1));
-        final BaseResultList<Data> resultList1 = streamMetaService.find(findStreamCriteria1);
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+        findMetaCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName1));
+        final BaseResultList<Meta> resultList1 = metaService.find(findMetaCriteria);
         assertThat(resultList1.size()).as("Expecting 2 files to get merged").isEqualTo(1);
 
         final StreamSource streamSource = streamStore.openStreamSource(resultList1.getFirst().getId());
@@ -151,10 +151,10 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         metaNestedInputStream.close();
         streamStore.closeStreamSource(streamSource);
 
-        final FindDataCriteria findStreamCriteria2 = new FindDataCriteria();
-        findStreamCriteria2.setExpression(ExpressionUtil.createFeedExpression(feedName2));
+        final FindMetaCriteria findMetaCriteria2 = new FindMetaCriteria();
+        findMetaCriteria2.setExpression(ExpressionUtil.createFeedExpression(feedName2));
 
-        final BaseResultList<Data> resultList2 = streamMetaService.find(findStreamCriteria2);
+        final BaseResultList<Meta> resultList2 = metaService.find(findMetaCriteria2);
 
         assertThat(resultList2.size()).as("Expecting file 1 ").isEqualTo(1);
     }
@@ -184,9 +184,9 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
-        final FindDataCriteria criteria = new FindDataCriteria();
+        final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(ExpressionUtil.createFeedExpression(feedName1));
-        final List<Data> list = streamMetaService.find(criteria);
+        final List<Meta> list = metaService.find(criteria);
         assertThat(list.size()).isEqualTo(3);
 
         StreamSource source = streamStore.openStreamSource(list.get(0).getId());
@@ -254,9 +254,9 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
-        final FindDataCriteria criteria = new FindDataCriteria();
+        final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(ExpressionUtil.createFeedExpression(feedName1));
-        final List<Data> list = streamMetaService.find(criteria);
+        final List<Meta> list = metaService.find(criteria);
         assertThat(list.size()).isEqualTo(1);
 
         StreamSource source = streamStore.openStreamSource(list.get(0).getId());
@@ -310,9 +310,9 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
-        final FindDataCriteria criteria = new FindDataCriteria();
+        final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(ExpressionUtil.createFeedExpression(feedName1));
-        final List<Data> list = streamMetaService.find(criteria);
+        final List<Meta> list = metaService.find(criteria);
         assertThat(list.size()).isEqualTo(1);
 
         StreamSource source = streamStore.openStreamSource(list.get(0).getId());
@@ -471,9 +471,9 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         aggregate(FileUtil.getCanonicalPath(proxyDir), 50, 1L);
 
-        final FindDataCriteria findStreamCriteria1 = new FindDataCriteria();
-        findStreamCriteria1.setExpression(ExpressionUtil.createFeedExpression(feedName1));
-        assertThat(streamMetaService.find(findStreamCriteria1).size()).isEqualTo(50);
+        final FindMetaCriteria findMetaCriteria1 = new FindMetaCriteria();
+        findMetaCriteria1.setExpression(ExpressionUtil.createFeedExpression(feedName1));
+        assertThat(metaService.find(findMetaCriteria1).size()).isEqualTo(50);
     }
 
     @Test
@@ -494,9 +494,9 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         aggregate(FileUtil.getCanonicalPath(proxyDir), 25);
 
-        final FindDataCriteria findStreamCriteria1 = new FindDataCriteria();
-        findStreamCriteria1.setExpression(ExpressionUtil.createFeedExpression(feedName1));
-        assertThat(streamMetaService.find(findStreamCriteria1).size()).isEqualTo(2);
+        final FindMetaCriteria findMetaCriteria1 = new FindMetaCriteria();
+        findMetaCriteria1.setExpression(ExpressionUtil.createFeedExpression(feedName1));
+        assertThat(metaService.find(findMetaCriteria1).size()).isEqualTo(2);
     }
 
     private void createFeeds(final String... feeds) {

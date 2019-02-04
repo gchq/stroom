@@ -18,21 +18,21 @@
 package stroom.test;
 
 
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataProperties;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
 import stroom.docref.DocRef;
-import stroom.feed.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.index.IndexStore;
 import stroom.index.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
-import stroom.node.NodeCache;
-import stroom.node.VolumeService;
+import stroom.node.api.NodeInfo;
+import stroom.volume.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeUseStatus;
@@ -61,7 +61,7 @@ public class CommonTestScenarioCreator {
     private final IndexStore indexStore;
     private final VolumeService volumeService;
     private final IndexVolumeService indexVolumeService;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
 
     @Inject
     CommonTestScenarioCreator(final StreamStore streamStore,
@@ -70,22 +70,22 @@ public class CommonTestScenarioCreator {
                               final IndexStore indexStore,
                               final VolumeService volumeService,
                               final IndexVolumeService indexVolumeService,
-                              final NodeCache nodeCache) {
+                              final NodeInfo nodeInfo) {
         this.streamStore = streamStore;
         this.streamProcessorService = streamProcessorService;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.indexStore = indexStore;
         this.volumeService = volumeService;
         this.indexVolumeService = indexVolumeService;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
     }
 
     public void createBasicTranslateStreamProcessor(final String feed) {
         final QueryData findStreamQueryData = new QueryData.Builder()
-                .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                        .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed)
-                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed)
+                        .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
@@ -119,7 +119,7 @@ public class CommonTestScenarioCreator {
 
         final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
         findVolumeCriteria.getIndexStatusSet().add(VolumeUseStatus.ACTIVE);
-        findVolumeCriteria.getNodeIdSet().add(nodeCache.getDefaultNode());
+        findVolumeCriteria.getNodeIdSet().add(nodeInfo.getThisNode());
         final Set<VolumeEntity> volumes = new HashSet<>(volumeService.find(findVolumeCriteria));
         indexVolumeService.setVolumesForIndex(indexRef, volumes);
 
@@ -136,27 +136,27 @@ public class CommonTestScenarioCreator {
      * @param feed related
      * @return a basic raw file
      */
-    public Data createSample2LineRawFile(final String feed, final String streamType) {
-        final DataProperties streamProperties = new DataProperties.Builder()
+    public Meta createSample2LineRawFile(final String feed, final String streamType) {
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feed)
                 .typeName(streamType)
                 .build();
-        final StreamTarget target = streamStore.openStreamTarget(streamProperties);
+        final StreamTarget target = streamStore.openStreamTarget(metaProperties);
         StreamTargetUtil.write(target, "line1\nline2");
-        target.getAttributes().put(StroomHeaderArguments.FEED, feed);
+        target.getAttributes().put(StandardHeaderArguments.FEED, feed);
 
         streamStore.closeStreamTarget(target);
-        return target.getStream();
+        return target.getMeta();
     }
 
-    public Data createSampleBlankProcessedFile(final String feed, final Data sourceStream) {
-        final DataProperties streamProperties = new DataProperties.Builder()
+    public Meta createSampleBlankProcessedFile(final String feed, final Meta sourceMeta) {
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feed)
                 .typeName(StreamTypeNames.EVENTS)
-                .parent(sourceStream)
+                .parent(sourceMeta)
                 .build();
 
-        final StreamTarget target = streamStore.openStreamTarget(streamProperties);
+        final StreamTarget target = streamStore.openStreamTarget(metaProperties);
         final String data = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<Events xpath-default-namespace=\"records:2\" "
                 + "xmlns:stroom=\"stroom\" "
@@ -166,6 +166,6 @@ public class CommonTestScenarioCreator {
                 + "Version=\"3.0.0\"/>";
         StreamTargetUtil.write(target, data);
         streamStore.closeStreamTarget(target);
-        return target.getStream();
+        return target.getMeta();
     }
 }

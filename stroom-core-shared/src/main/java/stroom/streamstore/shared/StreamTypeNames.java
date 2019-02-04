@@ -22,7 +22,7 @@ public class StreamTypeNames {
      */
     public static final String RECORDS = "Records";
     /**
-     * Meta stream data
+     * Meta meta data
      */
     public static final String META = "Meta Data";
     /**

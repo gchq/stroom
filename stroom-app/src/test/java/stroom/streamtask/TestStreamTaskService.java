@@ -19,8 +19,8 @@ package stroom.streamtask;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
 import stroom.entity.shared.Period;
 import stroom.node.shared.Node;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -45,20 +45,20 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
     @Inject
     private StreamTaskService streamTaskService;
     @Inject
-    private DataMetaService streamMetaService;
+    private MetaService metaService;
     @Inject
     private StreamTaskCreator streamTaskCreator;
 
     @Test
     void testSaveAndGetAll() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final Data file1 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
-        final Data file2 = commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, file1);
-        final Data file3 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        final Meta file1 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        final Meta file2 = commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, file1);
+        final Meta file3 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
 
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName);
 
-        assertThat(streamMetaService.delete(file3.getId())).as("checking we can delete stand alone files").isEqualTo(1);
+        assertThat(metaService.delete(file3.getId())).as("checking we can delete stand alone files").isEqualTo(1);
 
         // Create all required tasks.
         createTasks();
@@ -84,8 +84,8 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
                         Instant.ofEpochMilli(criteria.getCreatePeriod().getTo()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli()));
         assertThat(streamTaskService.find(criteria).size()).isEqualTo(0);
 
-        assertThat(streamMetaService.getData(file1.getId())).isNotNull();
-        assertThat(streamMetaService.getData(file2.getId())).isNotNull();
+        assertThat(metaService.getMeta(file1.getId())).isNotNull();
+        assertThat(metaService.getMeta(file2.getId())).isNotNull();
 
         criteria = new FindStreamTaskCriteria();
         assertThat(streamTaskService.findSummary(criteria)).isNotNull();

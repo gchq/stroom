@@ -1,0 +1,27 @@
+ext.moduleName = 'stroom.importexport.migration'
+
+dependencies {
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
+
+//
+    implementation libs.stroomDocRef
+//    //implementation libs.stroomQueryApi
+//    //implementation libs.eventLogging
+////    implementation libs.flyway_core
+//    //implementation libs.guice4
+//    //implementation libs.hibernate_jpa_api
+//    //implementation libs.javax_inject
+//
+    implementation libs.jaxb_api
+//
+    implementation libs.slf4j_api
+//    testImplementation libs.junit_jupiter_api
+//
+//    testRuntimeOnly libs.mysql_connector_java
+//    testRuntimeOnly libs.jaxb_runtime
+//    testRuntimeOnly libs.javax_activation
+//    testRuntimeOnly libs.junit_jupiter_engine
+}

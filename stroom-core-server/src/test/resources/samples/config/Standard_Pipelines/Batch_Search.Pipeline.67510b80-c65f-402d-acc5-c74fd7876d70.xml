@@ -63,7 +63,7 @@
             <element>fileAppender</element>
             <name>outputPaths</name>
             <value>
-               <string>${stroom.temp}/search/${searchId}/${streamId}_${feed}-${uuid}.out</string>
+               <string>${stroom.temp}/search/${searchId}/${metaId}_${feed}-${uuid}.out</string>
             </value>
          </property>
       </add>

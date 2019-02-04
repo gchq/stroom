@@ -25,7 +25,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.importexport.ImportExportSerializer;
+import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreDoc;

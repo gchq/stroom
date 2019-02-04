@@ -18,9 +18,8 @@ package stroom.streamtask;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.MetaDataSource;
-import stroom.node.NodeCache;
-import stroom.node.shared.Node;
+import stroom.meta.shared.MetaFieldNames;
+import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;
@@ -47,7 +46,7 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
     @Inject
     private StreamTaskCreator streamTaskCreator;
     @Inject
-    private NodeCache nodeCache;
+    private NodeInfo nodeInfo;
 
     @Test
     void testBasic() {
@@ -92,7 +91,7 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
 
     @Test
     void testMultiFeedInitialCreate() {
-        final Node node = nodeCache.getDefaultNode();
+        final String nodeName = nodeInfo.getThisNodeName();
 
         streamTaskCreator.shutdown();
         streamTaskCreator.startup();
@@ -109,13 +108,13 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
 //        assertThat(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail()).isFalse();
 
         final QueryData findStreamQueryData = new QueryData.Builder()
-                .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                         .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName1)
-                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
+                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName1)
+                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())
-                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
@@ -138,13 +137,13 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         // assertThat(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail()).isTrue();
 
         assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(1000);
-        List<ProcessorFilterTask> tasks = streamTaskCreator.assignStreamTasks(node, 1000);
+        List<ProcessorFilterTask> tasks = streamTaskCreator.assignStreamTasks(nodeName, 1000);
         assertThat(tasks.size()).isEqualTo(1000);
 
         streamTaskCreator.createTasks(new SimpleTaskContext());
 //        assertThat(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail()).isTrue();
         assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(2000);
-        tasks = streamTaskCreator.assignStreamTasks(node, 1000);
+        tasks = streamTaskCreator.assignStreamTasks(nodeName, 1000);
         assertThat(tasks.size()).isEqualTo(1000);
 
         processConfig.setQueueSize(initialQueueSize);

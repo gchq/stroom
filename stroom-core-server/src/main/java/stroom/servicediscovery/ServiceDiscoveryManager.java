@@ -9,7 +9,6 @@ import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -25,7 +24,6 @@ import java.util.function.Consumer;
 
 @Singleton
 public class ServiceDiscoveryManager {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);
 
     private final ServiceDiscoveryConfig serviceDiscoveryConfig;
@@ -132,9 +130,7 @@ public class ServiceDiscoveryManager {
         }
     }
 
-    @StroomShutdown
     public void shutdown() {
-
         closeables.forEach(closeable -> {
             if (closeable != null) {
                 try {
@@ -145,5 +141,4 @@ public class ServiceDiscoveryManager {
             }
         });
     }
-
 }

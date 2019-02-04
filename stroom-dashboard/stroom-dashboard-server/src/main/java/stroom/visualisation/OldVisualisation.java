@@ -16,30 +16,19 @@
 
 package stroom.visualisation;
 
-import stroom.entity.shared.Copyable;
-import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.ExternalFile;
-import stroom.entity.shared.SQLNameConstants;
 import stroom.docref.DocRef;
+import stroom.importexport.api.ExternalFile;
+import stroom.importexport.migration.DocumentEntity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
-import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
-@Entity
-@Table(name = "VIS")
-public class OldVisualisation extends DocumentEntity implements Copyable<OldVisualisation> {
-    public static final String TABLE_NAME = SQLNameConstants.VISUALISATION;
-    public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String FUNCTION_NAME = SQLNameConstants.FUNCTION + SEP + SQLNameConstants.NAME;
-    public static final String SETTINGS = SQLNameConstants.SETTINGS;
-    public static final String ENTITY_TYPE = "Visualisation";
-    public static final String SCRIPT = SQLNameConstants.SCRIPT;
-
-    private static final long serialVersionUID = 4519634323788508083L;
+/**
+ * Used for legacy migration
+ **/
+@Deprecated
+public class OldVisualisation extends DocumentEntity {
+    private static final String ENTITY_TYPE = "Visualisation";
 
     private String description;
     private String functionName;
@@ -48,8 +37,6 @@ public class OldVisualisation extends DocumentEntity implements Copyable<OldVisu
     private String scriptRefXML;
     private DocRef scriptRef;
 
-    @Column(name = SQLNameConstants.DESCRIPTION)
-    @Lob
     public String getDescription() {
         return description;
     }
@@ -58,7 +45,6 @@ public class OldVisualisation extends DocumentEntity implements Copyable<OldVisu
         this.description = description;
     }
 
-    @Column(name = FUNCTION_NAME)
     public String getFunctionName() {
         return functionName;
     }
@@ -67,8 +53,6 @@ public class OldVisualisation extends DocumentEntity implements Copyable<OldVisu
         this.functionName = functionName;
     }
 
-    @Column(name = SETTINGS, length = Integer.MAX_VALUE)
-    @Lob
     @ExternalFile("json")
     public String getSettings() {
         return settings;
@@ -78,8 +62,6 @@ public class OldVisualisation extends DocumentEntity implements Copyable<OldVisu
         this.settings = settings;
     }
 
-    @Column(name = SCRIPT)
-    @Lob
     public String getScriptRefXML() {
         return scriptRefXML;
     }
@@ -99,23 +81,11 @@ public class OldVisualisation extends DocumentEntity implements Copyable<OldVisu
     }
 
     @Transient
-    @Override
     public String getDisplayValue() {
         return String.valueOf(getName());
     }
 
-    @Override
-    public void copyFrom(final OldVisualisation other) {
-        this.description = other.description;
-        this.functionName = other.functionName;
-        this.settings = other.settings;
-        this.scriptRef = other.scriptRef;
-
-        super.copyFrom(other);
-    }
-
     @Transient
-    @Override
     public final String getType() {
         return ENTITY_TYPE;
     }

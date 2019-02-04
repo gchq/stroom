@@ -16,13 +16,13 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.DataStatus;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.cluster.lock.api.ClusterLockService;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.Status;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.entity.shared.BaseResultList;
-import stroom.jobsystem.ClusterLockService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -40,16 +40,16 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
     private static final String LOCK_NAME = "StreamDeleteExecutor";
     private static final String TEMP_STRM_ID_TABLE = "TEMP_STRM_ID";
 
-    private final DataMetaService streamMetaService;
+    private final MetaService metaService;
 
     @Inject
     StreamDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
                          final ClusterLockService clusterLockService,
                          final DataStoreServiceConfig dataStoreServiceConfig,
                          final TaskContext taskContext,
-                         final DataMetaService streamMetaService) {
+                         final MetaService metaService) {
         super(batchIdTransactionHelper, clusterLockService, taskContext, TASK_NAME, LOCK_NAME, dataStoreServiceConfig, TEMP_STRM_ID_TABLE);
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
     }
 
     public void exec() {
@@ -72,7 +72,7 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
         // TODO : @66 MOVE THIS CODE INTO THE STREAM STORE META SERVICE
 
 //        // Delete stream attribute values.
-//        deleteWithJoin(StreamAttributeValue.TABLE_NAME, StreamAttributeValue.STREAM_ID, "stream attribute values",
+//        deleteWithJoin(StreamAttributeValue.TABLE_NAME, StreamAttributeValue.ID, "stream attribute values",
 //                total);
 
         // TODO : @66 MOVE THIS CODE INTO THE STREAM STORE META SERVICE
@@ -84,13 +84,13 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
     @Override
     protected List<Long> getDeleteIdList(final long age, final int batchSize) {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.DELETED.getDisplayValue())
-                .addTerm(MetaDataSource.STATUS_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(age))
+                .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
+                .addTerm(MetaFieldNames.STATUS_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(age))
                 .build();
-        final FindDataCriteria findStreamCriteria = new FindDataCriteria(expression);
-        findStreamCriteria.setSort(MetaDataSource.STREAM_ID);
-        findStreamCriteria.obtainPageRequest().setLength(batchSize);
-        final BaseResultList<Data> streams = streamMetaService.find(findStreamCriteria);
-        return streams.stream().map(Data::getId).collect(Collectors.toList());
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
+        findMetaCriteria.setSort(MetaFieldNames.ID);
+        findMetaCriteria.obtainPageRequest().setLength(batchSize);
+        final BaseResultList<Meta> streams = metaService.find(findMetaCriteria);
+        return streams.stream().map(Meta::getId).collect(Collectors.toList());
     }
 }

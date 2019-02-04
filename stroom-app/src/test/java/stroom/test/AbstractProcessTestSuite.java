@@ -19,9 +19,9 @@ import org.junit.jupiter.api.Disabled;
 ////        stroom.pipeline.task.TestTranslationTaskFactory.class,
 //        stroom.pipeline.task.TestTranslationTaskWithoutTranslation.class,
 //        stroom.streamtask.TestStreamTargetStroomStreamHandler.class,
-////        stroom.xml.converter.datasplitter.TestDataSplitter.class,
-//        stroom.xml.converter.datasplitter.TestDataSplitter2.class,
-//        stroom.xml.converter.xmlfragment.TestXMLFragmentWrapper.class
+////        stroom.pipeline.xml.converter.datasplitter.TestDataSplitter.class,
+//        stroom.pipeline.xml.converter.datasplitter.TestDataSplitter2.class,
+//        stroom.pipeline.xml.converter.xmlfragment.TestXMLFragmentWrapper.class
 //})
 @Disabled
 public class AbstractProcessTestSuite {

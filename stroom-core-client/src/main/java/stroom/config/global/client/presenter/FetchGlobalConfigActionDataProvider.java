@@ -18,23 +18,18 @@ package stroom.config.global.client.presenter;
 
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import stroom.config.global.api.ConfigProperty;
-import stroom.config.global.api.FetchGlobalConfigAction;
+import stroom.config.global.api.ListGlobalConfigAction;
 import stroom.config.global.api.FindGlobalConfigCriteria;
 import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.OrderByColumn;
-import stroom.data.meta.api.DataRow;
-import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.ResultList;
-import stroom.entity.shared.Sort.Direction;
 import stroom.streamstore.client.presenter.ActionDataProvider;
-import stroom.streamstore.shared.FindStreamAction;
 
 public class FetchGlobalConfigActionDataProvider implements Refreshable, ColumnSortEvent.Handler {
     private final ClientDispatchAsync dispatcher;
     private final DataGridView<ConfigProperty> view;
-    private FetchGlobalConfigAction findAction;
+    private ListGlobalConfigAction findAction;
     private ActionDataProvider<ConfigProperty> dataProvider;
     private Boolean allowNoConstraint = null;
 
@@ -52,7 +47,7 @@ public class FetchGlobalConfigActionDataProvider implements Refreshable, ColumnS
     }
 
     public void setCriteria(final FindGlobalConfigCriteria criteria) {
-            findAction = new FetchGlobalConfigAction(criteria);
+            findAction = new ListGlobalConfigAction(criteria);
 
         if (dataProvider == null) {
             this.dataProvider = new ActionDataProvider<ConfigProperty>(dispatcher, findAction) {

@@ -17,14 +17,16 @@
 package stroom.pipeline;
 
 
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.FindDataCriteria;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
 import stroom.io.StreamCloser;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -40,6 +42,8 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
+import stroom.pipeline.textconverter.TextConverterStore;
+import stroom.pipeline.xslt.XsltStore;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
@@ -62,6 +66,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAppenderTest.class);
+
     @Inject
     private Provider<PipelineFactory> pipelineFactoryProvider;
     @Inject
@@ -85,13 +91,18 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private DataMetaService dataMetaService;
+    private MetaService dataMetaService;
 
     private LoggingErrorReceiver loggingErrorReceiver;
 
     void test(final String name, final String type) {
-        // Delete everything in the temp dir.
-        FileUtil.deleteContents(FileUtil.getTempDir());
+
+        final Path tempDir = getCurrentTestDir();
+
+        // Make sure the config dir is set.
+        FileUtil.setTempDir(tempDir);
+
+        LOGGER.debug("Setting tempDir to {}", FileUtil.getCanonicalPath(tempDir));
 
         final String dir = name + "/";
         final String stem = dir + name + "_" + type;
@@ -213,7 +224,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     void validateOuptut(final String outputReference,
                         final String type) {
         try {
-            final List<Data> list = dataMetaService.find(new FindDataCriteria());
+            final List<Meta> list = dataMetaService.find(new FindMetaCriteria());
             assertThat(list.size()).isEqualTo(1);
 
             final long id = list.get(0).getId();

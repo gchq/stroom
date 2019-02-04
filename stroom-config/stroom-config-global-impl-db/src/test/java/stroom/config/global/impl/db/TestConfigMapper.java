@@ -88,16 +88,16 @@ class TestConfigMapper {
         AppConfig appConfig = getAppConfig();
 
         // simulate dropwiz setting a prop from the yaml
-        String initialValue = appConfig.getRefDataStoreConfig().getLocalDir();
+        String initialValue = appConfig.getPipelineConfig().getRefDataStoreConfig().getLocalDir();
         String newValue = initialValue + "xxx";
-        appConfig.getRefDataStoreConfig().setLocalDir(newValue);
+        appConfig.getPipelineConfig().getRefDataStoreConfig().setLocalDir(newValue);
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
 
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
         final ConfigProperty configProperty = configProperties.stream()
-                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.refdata.localDir"))
+                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.pipeline.refdata.localDir"))
                 .findFirst()
                 .orElseThrow();
 
@@ -111,15 +111,15 @@ class TestConfigMapper {
         AppConfig appConfig = getAppConfig();
 
         // simulate a prop not being defined in the yaml
-        String initialValue = appConfig.getRefDataStoreConfig().getLocalDir();
-        appConfig.getRefDataStoreConfig().setLocalDir(null);
+        String initialValue = appConfig.getPipelineConfig().getRefDataStoreConfig().getLocalDir();
+        appConfig.getPipelineConfig().getRefDataStoreConfig().setLocalDir(null);
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
 
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
         final ConfigProperty configProperty = configProperties.stream()
-                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.refdata.localDir"))
+                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.pipeline.refdata.localDir"))
                 .findFirst()
                 .orElseThrow();
 
@@ -145,12 +145,12 @@ class TestConfigMapper {
     void update_boolean() throws IOException, ConfigurationException {
         AppConfig appConfig = getAppConfig();
 
-        BooleanSupplier getter = () -> appConfig.getRefDataStoreConfig().isReadAheadEnabled();
+        BooleanSupplier getter = () -> appConfig.getPipelineConfig().getRefDataStoreConfig().isReadAheadEnabled();
         boolean initialValue = getter.getAsBoolean();
         boolean newValue = !initialValue;
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
-        configMapper.updateConfigObject("stroom.refdata.readAheadEnabled", Boolean.valueOf(newValue).toString().toLowerCase());
+        configMapper.updateConfigObject("stroom.pipeline.refdata.readAheadEnabled", Boolean.valueOf(newValue).toString().toLowerCase());
 
         assertThat(getter.getAsBoolean()).isEqualTo(newValue);
     }
@@ -159,12 +159,12 @@ class TestConfigMapper {
     void update_int() throws IOException, ConfigurationException {
         AppConfig appConfig = getAppConfig();
 
-        IntSupplier getter = () -> appConfig.getRefDataStoreConfig().getMaxPutsBeforeCommit();
+        IntSupplier getter = () -> appConfig.getPipelineConfig().getRefDataStoreConfig().getMaxPutsBeforeCommit();
         int initialValue = getter.getAsInt();
         int newValue = initialValue + 1;
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
-        configMapper.updateConfigObject("stroom.refdata.maxPutsBeforeCommit", Integer.toString(newValue));
+        configMapper.updateConfigObject("stroom.pipeline.refdata.maxPutsBeforeCommit", Integer.toString(newValue));
 
         assertThat(getter.getAsInt()).isEqualTo(newValue);
     }

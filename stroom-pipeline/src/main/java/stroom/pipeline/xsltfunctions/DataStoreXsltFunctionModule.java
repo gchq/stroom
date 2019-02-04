@@ -39,9 +39,9 @@ public class DataStoreXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
-    private static class StreamIdFunction extends StroomExtensionFunctionDefinition<StreamId> {
+    private static class StreamIdFunction extends StroomExtensionFunctionDefinition<MetaId> {
         @Inject
-        StreamIdFunction(final Provider<StreamId> functionCallProvider) {
+        StreamIdFunction(final Provider<MetaId> functionCallProvider) {
             super("stream-id", 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING, functionCallProvider);
         }
     }

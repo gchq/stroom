@@ -1,26 +1,35 @@
 ext.moduleName = 'stroom.pipeline'
 
 dependencies {
-    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-data-store:stroom-data-store-api')
-    implementation project(':stroom-core-server')
+//    implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
+    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-importexport:stroom-importexport-migration')
     implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-cluster-api')
     implementation project(':stroom-task:stroom-task-shared')
+    implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-job:stroom-job-shared')
 
     implementation libs.commons_io
     implementation libs.commons_lang
     implementation libs.commons_text
+    implementation libs.dropwizard_metrics_annotation
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.fast_infoset
     implementation libs.google_findbugs
@@ -50,7 +59,9 @@ dependencies {
     implementation libs.ws_rs_api
     implementation libs.xml_apis
 
-    testImplementation project(':stroom-data-meta:stroom-data-meta-impl-mock')
+    testImplementation project(':stroom-cache:stroom-cache-api')
+    testImplementation project(':stroom-cache:stroom-cache-impl')
+    testImplementation project(':stroom-meta:stroom-meta-impl-mock')
     testImplementation project(':stroom-docstore:stroom-docstore-impl')
     testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
     testImplementation project(':stroom-security:stroom-security-impl-mock')

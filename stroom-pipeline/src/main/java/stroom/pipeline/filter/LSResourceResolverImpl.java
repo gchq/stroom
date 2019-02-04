@@ -18,8 +18,8 @@ package stroom.pipeline.filter;
 
 import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
-import stroom.xmlschema.XmlSchemaCache;
-import stroom.xmlschema.XmlSchemaCache.SchemaSet;
+import stroom.pipeline.xmlschema.XmlSchemaCache;
+import stroom.pipeline.xmlschema.XmlSchemaCache.SchemaSet;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 

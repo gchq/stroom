@@ -22,7 +22,6 @@ import org.slf4j.MarkerFactory;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
 import stroom.util.shared.VoidResult;
-import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -145,8 +144,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
         }
     }
 
-    @StroomShutdown
-    public void shutdown() {
+    void shutdown() {
         // Do a final blocking flush.
         flush(true);
     }

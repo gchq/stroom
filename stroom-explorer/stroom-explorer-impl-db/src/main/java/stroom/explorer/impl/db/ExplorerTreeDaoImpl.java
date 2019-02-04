@@ -1,14 +1,10 @@
 package stroom.explorer.impl.db;
 
-import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.db.util.JooqUtil;
 
 import javax.inject.Inject;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -57,8 +53,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 //    }
 //
 //    private ExplorerTreePath getTreePath(ExplorerTreeNode node) {
-//        try (final Connection connection = connectionProvider.getConnection()) {
-//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//        JooqUtil.context(connectionProvider, context -> context
 //            final List<ExplorerTreePath> result = create
 //                    .selectFrom(p)
 //                    .where(p.ANCESTOR.eq(node.getId()))
@@ -83,8 +78,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 //    }
 //
 //    private ExplorerTreeNode find(Integer id) {
-//        try (final Connection connection = connectionProvider.getConnection()) {
-//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//        JooqUtil.context(connectionProvider, context -> context
 //            return create
 //                    .selectFrom(n)
 //                    .where(n.ID.eq(id))
@@ -98,9 +92,8 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 //    }
 
     private ExplorerTreeNode create(final ExplorerTreeNode node) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            final int id = create
+        return JooqUtil.contextResult(connectionProvider, context -> {
+            final int id = context
                     .insertInto(EXPLORER_NODE)
                     .set(EXPLORER_NODE.TYPE, node.getType())
                     .set(EXPLORER_NODE.UUID, node.getUuid())
@@ -110,74 +103,52 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                     .fetchOne()
                     .getId();
             node.setId(id);
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-        return node;
+            return node;
+        });
     }
 
     @Override
     public void update(final ExplorerTreeNode node) {
         assertUpdate(node);
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            create
-                    .update(EXPLORER_NODE)
-                    .set(EXPLORER_NODE.TYPE, node.getType())
-                    .set(EXPLORER_NODE.UUID, node.getUuid())
-                    .set(EXPLORER_NODE.NAME, node.getName())
-                    .set(EXPLORER_NODE.TAGS, node.getTags())
-                    .where(EXPLORER_NODE.ID.eq(node.getId()))
-                    .execute();
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context -> context
+                .update(EXPLORER_NODE)
+                .set(EXPLORER_NODE.TYPE, node.getType())
+                .set(EXPLORER_NODE.UUID, node.getUuid())
+                .set(EXPLORER_NODE.NAME, node.getName())
+                .set(EXPLORER_NODE.TAGS, node.getTags())
+                .where(EXPLORER_NODE.ID.eq(node.getId()))
+                .execute());
     }
 
     private ExplorerTreePath create(final ExplorerTreePath path) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            create
-                    .insertInto(EXPLORER_PATH)
-                    .set(EXPLORER_PATH.ANCESTOR, path.getAncestor())
-                    .set(EXPLORER_PATH.DESCENDANT, path.getDescendant())
-                    .set(EXPLORER_PATH.DEPTH, path.getDepth())
-                    .set(EXPLORER_PATH.ORDER_INDEX, path.getOrderIndex())
-                    .execute();
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context -> context
+                .insertInto(EXPLORER_PATH)
+                .set(EXPLORER_PATH.ANCESTOR, path.getAncestor())
+                .set(EXPLORER_PATH.DESCENDANT, path.getDescendant())
+                .set(EXPLORER_PATH.DEPTH, path.getDepth())
+                .set(EXPLORER_PATH.ORDER_INDEX, path.getOrderIndex())
+                .execute());
         return path;
     }
 
     private void update(final ExplorerTreePath path) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            create
-                    .update(EXPLORER_PATH)
-                    .set(EXPLORER_PATH.ANCESTOR, path.getAncestor())
-                    .set(EXPLORER_PATH.DESCENDANT, path.getDescendant())
-                    .set(EXPLORER_PATH.DEPTH, path.getDepth())
-                    .set(EXPLORER_PATH.ORDER_INDEX, path.getOrderIndex())
-                    .where(EXPLORER_PATH.ANCESTOR.eq(path.getAncestor()))
-                    .and(EXPLORER_PATH.DESCENDANT.eq(path.getDescendant()))
-                    .execute();
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context -> context
+                .update(EXPLORER_PATH)
+                .set(EXPLORER_PATH.ANCESTOR, path.getAncestor())
+                .set(EXPLORER_PATH.DESCENDANT, path.getDescendant())
+                .set(EXPLORER_PATH.DEPTH, path.getDepth())
+                .set(EXPLORER_PATH.ORDER_INDEX, path.getOrderIndex())
+                .where(EXPLORER_PATH.ANCESTOR.eq(path.getAncestor()))
+                .and(EXPLORER_PATH.DESCENDANT.eq(path.getDescendant()))
+                .execute());
     }
 
 //    private boolean isRoot(ExplorerTreeNode node) {
 //        if (!isPersistent(node)) {
 //            return false;
 //        } else {
-//            try (final Connection connection = connectionProvider.getConnection()) {
-//                final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//            JooqUtil.context(connectionProvider, context -> context
 //                final int count = create
 //                        .selectCount()
 //                        .from(p)
@@ -201,72 +172,46 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
     @Override
     public List<ExplorerTreeNode> getRoots() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .selectFrom(n)
-                    .whereNotExists(create
-                            .selectOne()
-                            .from(p)
-                            .where(p.DESCENDANT.eq(n.ID).and(p.DEPTH.gt(0))))
-                    .fetch()
-                    .stream()
-                    .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()))
-                    .collect(Collectors.toList());
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .selectFrom(n)
+                .whereNotExists(context
+                        .selectOne()
+                        .from(p)
+                        .where(p.DESCENDANT.eq(n.ID).and(p.DEPTH.gt(0))))
+                .fetch()
+                .stream()
+                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()))
+                .collect(Collectors.toList()));
     }
 
     @Override
     public synchronized void removeAll() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            create
-                    .deleteFrom(p)
-                    .execute();
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context -> context
+                .deleteFrom(p)
+                .execute());
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            create
-                    .deleteFrom(n)
-                    .execute();
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context -> context
+                .deleteFrom(n)
+                .execute());
     }
 
     @Override
     public List<ExplorerTreeNode> getTree(final ExplorerTreeNode parent) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .selectFrom(n)
-                    .where(n.ID.in(create
-                            .select(p.DESCENDANT)
-                            .from(p)
-                            .where(p.ANCESTOR.eq(parent.getId()))))
-                    .fetch()
-                    .stream()
-                    .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()))
-                    .collect(Collectors.toList());
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .selectFrom(n)
+                .where(n.ID.in(context
+                        .select(p.DESCENDANT)
+                        .from(p)
+                        .where(p.ANCESTOR.eq(parent.getId()))))
+                .fetch()
+                .stream()
+                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()))
+                .collect(Collectors.toList()));
 
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
     }
 
 //    private int getChildCount(ExplorerTreeNode parent) {
-//        try (final Connection connection = connectionProvider.getConnection()) {
-//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//        JooqUtil.context(connectionProvider, context -> context
 //            return create
 //                    .selectCount()
 //                    .from(p)
@@ -281,25 +226,18 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
     @Override
     public List<ExplorerTreeNode> getChildren(final ExplorerTreeNode parent) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .selectFrom(n)
-                    .where(n.ID.in(create
-                            .select(p.DESCENDANT)
-                            .from(p)
-                            .where(p.ANCESTOR.eq(parent.getId()))
-                            .and(p.DEPTH.eq(1))
-                            .orderBy(p.ORDER_INDEX)))
-                    .fetch()
-                    .stream()
-                    .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()))
-                    .collect(Collectors.toList());
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .selectFrom(n)
+                .where(n.ID.in(context
+                        .select(p.DESCENDANT)
+                        .from(p)
+                        .where(p.ANCESTOR.eq(parent.getId()))
+                        .and(p.DEPTH.eq(1))
+                        .orderBy(p.ORDER_INDEX)))
+                .fetch()
+                .stream()
+                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()))
+                .collect(Collectors.toList()));
     }
 
 //    private ExplorerTreeNode getRoot(ExplorerTreeNode node) {
@@ -313,11 +251,10 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
     @Override
     public ExplorerTreeNode getParent(final ExplorerTreeNode child) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            final List<ExplorerTreeNode> parents = create
+        return JooqUtil.contextResult(connectionProvider, context -> {
+            final List<ExplorerTreeNode> parents = context
                     .selectFrom(n)
-                    .where(n.ID.in(create
+                    .where(n.ID.in(context
                             .select(p.ANCESTOR)
                             .from(p)
                             .where(p.DESCENDANT.eq(child.getId()))
@@ -334,20 +271,15 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
             } else {
                 throw new IllegalArgumentException("More than one parent found: " + parents);
             }
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        });
     }
 
     @Override
     public List<ExplorerTreeNode> getPath(final ExplorerTreeNode node) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            final List<ExplorerTreeNode> path = create
+        return JooqUtil.contextResult(connectionProvider, context -> {
+            final List<ExplorerTreeNode> path = context
                     .selectFrom(n)
-                    .where(n.ID.in(create
+                    .where(n.ID.in(context
                             .select(p.ANCESTOR)
                             .from(p)
                             .where(p.DESCENDANT.eq(node.getId()))
@@ -358,16 +290,11 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                     .collect(Collectors.toList());
             path.remove(path.size() - 1);
             return path;
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        });
     }
 
 //    private int getLevel(ExplorerTreeNode node) {
-//        try (final Connection connection = connectionProvider.getConnection()) {
-//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//        JooqUtil.context(connectionProvider, context -> context
 //            return create
 //                    .selectCount()
 //                    .from(p)
@@ -380,8 +307,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 //    }
 //
 //    private int size(ExplorerTreeNode parent) {
-//        try (final Connection connection = connectionProvider.getConnection()) {
-//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//       JooqUtil.context(connectionProvider, context -> context
 //            return create
 //                    .selectCount()
 //                    .from(p)
@@ -405,8 +331,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 //        if (Objects.equals(parent, child)) {
 //            return false;
 //        } else {
-//            try (final Connection connection = connectionProvider.getConnection()) {
-//                final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//            JooqUtil.context(connectionProvider, context -> context
 //                final int count = create
 //                        .selectCount()
 //                        .from(p)
@@ -487,8 +412,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 //    }
 //
 //    private List<ExplorerTreeNode> find(ExplorerTreeNode parent, Map<String, Object> criteria) {
-//        try (final Connection connection = connectionProvider.getConnection()) {
-//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//        JooqUtil.context(connectionProvider, context -> context
 //
 //            Condition condition = null;
 //            if (parent != null) {
@@ -541,17 +465,11 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     }
 
     private void removePath(final ExplorerTreePath path) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            create
-                    .deleteFrom(p)
-                    .where(p.ANCESTOR.eq(path.getAncestor()))
-                    .and(p.DESCENDANT.eq(path.getDescendant()))
-                    .execute();
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context -> context
+                .deleteFrom(p)
+                .where(p.ANCESTOR.eq(path.getAncestor()))
+                .and(p.DESCENDANT.eq(path.getDescendant()))
+                .execute());
     }
 
 //    private void removeNode(ExplorerTreeNode nodeToRemove) {
@@ -560,36 +478,24 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
     private void removeNode(final Integer id) {
         if (isRemoveReferencedNodes()) {
-            try (final Connection connection = connectionProvider.getConnection()) {
-                final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-                create
-                        .deleteFrom(n)
-                        .where(n.ID.eq(id))
-                        .execute();
-            } catch (final SQLException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException(e.getMessage(), e);
-            }
+            JooqUtil.context(connectionProvider, context -> context
+                    .deleteFrom(n)
+                    .where(n.ID.eq(id))
+                    .execute());
         }
     }
 
     private List<ExplorerTreePath> getPathsToRemove(final Integer nodeId) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .selectFrom(p)
-                    .where(p.DESCENDANT.in(create
-                            .select(p1.DESCENDANT)
-                            .from(p1)
-                            .where(p1.ANCESTOR.eq(nodeId))))
-                    .fetch()
-                    .stream()
-                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
-                    .collect(Collectors.toList());
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .selectFrom(p)
+                .where(p.DESCENDANT.in(context
+                        .select(p1.DESCENDANT)
+                        .from(p1)
+                        .where(p1.ANCESTOR.eq(nodeId))))
+                .fetch()
+                .stream()
+                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
+                .collect(Collectors.toList()));
     }
 
     private ExplorerTreeNode addChild(final ExplorerTreeNode parent,
@@ -616,19 +522,14 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     }
 
     private boolean exists(final ExplorerTreeNode node) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            final int count = create
+        return JooqUtil.contextResult(connectionProvider, context -> {
+            final int count = context
                     .selectCount()
                     .from(p)
                     .where(p.DESCENDANT.eq(node.getId()))
                     .fetchOne(0, int.class);
             return count > 0;
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        });
     }
 
     private void insertSelfReference(final ExplorerTreeNode child) {
@@ -646,20 +547,17 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
             List<ExplorerTreePath> childPaths = getPathsIntoSubtree(nodeToMove);
             connectSubTree(newParent, position, sibling, childPaths);
         }
-
     }
 
     private void disconnectSubTree(final ExplorerTreeNode node) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-
-            final List<ExplorerTreePath> pathsToRemove = create
+        JooqUtil.context(connectionProvider, context -> {
+            final List<ExplorerTreePath> pathsToRemove = context
                     .selectFrom(p)
-                    .where(p.DESCENDANT.in(create
+                    .where(p.DESCENDANT.in(context
                             .select(p1.DESCENDANT)
                             .from(p1)
                             .where(p1.ANCESTOR.eq(node.getId()))))
-                    .and(p.ANCESTOR.notIn(create
+                    .and(p.ANCESTOR.notIn(context
                             .select(p2.DESCENDANT)
                             .from(p2)
                             .where(p2.ANCESTOR.eq(node.getId()))))
@@ -679,27 +577,17 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
             }
 
             closeGap(pathSiblings, oldPosition);
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        });
     }
 
     private List<ExplorerTreePath> getPathsIntoSubtree(final ExplorerTreeNode parent) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .selectFrom(p)
-                    .where(p.ANCESTOR.eq(parent.getId()))
-                    .fetch()
-                    .stream()
-                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
-                    .collect(Collectors.toList());
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .selectFrom(p)
+                .where(p.ANCESTOR.eq(parent.getId()))
+                .fetch()
+                .stream()
+                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
+                .collect(Collectors.toList()));
     }
 
 //    private ExplorerTreeNode copy(ExplorerTreeNode node, ExplorerTreeNode newParent, int position, ExplorerTreeNode sibling) {
@@ -715,8 +603,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 //    }
 //
 //    private List<ExplorerTreePath> getSubTreePathsToCopy(ExplorerTreeNode parent) {
-//        try (final Connection connection = connectionProvider.getConnection()) {
-//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//        JooqUtil.context(connectionProvider, context -> context
 //            return create
 //                    .selectFrom(p)
 //                    .where(p.DESCENDANT.in(create
@@ -786,9 +673,8 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
         assert !relatedNodeIsParent || parent != null;
 
         if (relatedNodeIsParent) {
-            try (final Connection connection = connectionProvider.getConnection()) {
-                final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-                final List<ExplorerTreePath> paths = create
+            JooqUtil.context(connectionProvider, context -> {
+                final List<ExplorerTreePath> paths = context
                         .selectFrom(p)
                         .where(p.DESCENDANT.eq(parent.getId()))
                         .fetch()
@@ -796,14 +682,10 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                         .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
                         .collect(Collectors.toList());
                 pathsToClone.addAll(paths);
-            } catch (final SQLException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException(e.getMessage(), e);
-            }
+            });
         } else if (sibling != null) {
-            try (final Connection connection = connectionProvider.getConnection()) {
-                final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-                final List<ExplorerTreePath> paths = create
+            position = JooqUtil.contextResult(connectionProvider, context -> {
+                final List<ExplorerTreePath> paths = context
                         .selectFrom(p)
                         .where(p.DESCENDANT.eq(parent.getId()))
                         .and(p.DEPTH.gt(0))
@@ -818,14 +700,12 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                     throw new IllegalArgumentException("Sibling seems not to be a child but a root: " + sibling);
                 }
 
-                position = pathsToClone.get(0).getOrderIndex();
+                final int pos = pathsToClone.get(0).getOrderIndex();
 
-                assert position >= 0 : "Position of first path is not valid: " + pathsToClone;
+                assert pos >= 0 : "Position of first path is not valid: " + pathsToClone;
 
-            } catch (final SQLException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException(e.getMessage(), e);
-            }
+                return pos;
+            });
         }
 
         return position;
@@ -879,44 +759,32 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     }
 
     private List<ExplorerTreePath> getAllDirectTreePathChildren(final Integer parentId) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .selectFrom(p)
-                    .where(p.ANCESTOR.eq(parentId))
-                    .and(p.DEPTH.eq(1))
-                    .orderBy(p.ORDER_INDEX)
-                    .fetch()
-                    .stream()
-                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
-                    .collect(Collectors.toList());
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .selectFrom(p)
+                .where(p.ANCESTOR.eq(parentId))
+                .and(p.DEPTH.eq(1))
+                .orderBy(p.ORDER_INDEX)
+                .fetch()
+                .stream()
+                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
+                .collect(Collectors.toList()));
     }
 
     private List<ExplorerTreePath> getAllTreePathSiblings(final Integer nodeId) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .selectFrom(p)
-                    .where(p.DEPTH.eq(1))
-                    .and(p.DESCENDANT.notEqual(nodeId))
-                    .and(p.ANCESTOR.in(create
-                            .select(p2.ANCESTOR)
-                            .from(p2)
-                            .where(p2.DESCENDANT.eq(nodeId))
-                            .and(p2.DEPTH.eq(1))))
-                    .orderBy(p.ORDER_INDEX)
-                    .fetch()
-                    .stream()
-                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
-                    .collect(Collectors.toList());
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .selectFrom(p)
+                .where(p.DEPTH.eq(1))
+                .and(p.DESCENDANT.notEqual(nodeId))
+                .and(p.ANCESTOR.in(context
+                        .select(p2.ANCESTOR)
+                        .from(p2)
+                        .where(p2.DESCENDANT.eq(nodeId))
+                        .and(p2.DEPTH.eq(1))))
+                .orderBy(p.ORDER_INDEX)
+                .fetch()
+                .stream()
+                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
+                .collect(Collectors.toList()));
     }
 
     @Override
@@ -925,9 +793,8 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
             return null;
         }
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            final List<ExplorerTreeNode> list = create
+        return JooqUtil.contextResult(connectionProvider, context -> {
+            final List<ExplorerTreeNode> list = context
                     .selectFrom(n)
                     .where(n.UUID.eq(uuid))
                     .fetch()
@@ -944,10 +811,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
             }
 
             return list.get(0);
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        });
     }
 
     private void assertInsertParameters(final ExplorerTreeNode parent,

@@ -323,7 +323,7 @@ public class VisPanel extends SimplePanel implements VisPane {
     private final native void setData(final JavaScriptObject vis, final JavaScriptObject context,
                                       final JavaScriptObject settings, final JavaScriptObject data)
             /*-{
-            vis.setData(context, settings, data);
+            vis.setMeta(context, settings, data);
             }-*/;
 
     private final native void resize(final JavaScriptObject vis)

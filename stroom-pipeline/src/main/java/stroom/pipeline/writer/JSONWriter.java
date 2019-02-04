@@ -30,7 +30,7 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.xml.converter.json.JSONParser;
+import stroom.pipeline.xml.converter.json.JSONParser;
 
 import javax.inject.Inject;
 import java.io.IOException;

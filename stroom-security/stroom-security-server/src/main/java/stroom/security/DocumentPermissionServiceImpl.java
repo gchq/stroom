@@ -24,7 +24,7 @@ import stroom.security.dao.DocumentPermissionDao;
 import stroom.security.dao.UserDao;
 import stroom.security.shared.DocumentPermissionJooq;
 import stroom.security.shared.DocumentPermissions;
-import stroom.security.shared.UserJooq;
+import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
@@ -58,7 +58,7 @@ class DocumentPermissionServiceImpl implements DocumentPermissionService {
             final DocumentPermissionJooq documentPermission = documentPermissionDao.getPermissionsForDocument(document);
 
             documentPermission.getPermissions().forEach((userUuid, permissions) -> {
-                final UserJooq user = userDao.getByUuid(userUuid);
+                final User user = userDao.getByUuid(userUuid);
                 final UserRef userRef = UserRefFactory.create(user);
                 userPermissions.put(userRef, permissions);
             });

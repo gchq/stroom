@@ -4,13 +4,17 @@ dependencies {
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
-    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-cluster-lock:stroom-cluster-lock-api')
     implementation project(':stroom-data-store:stroom-data-store-api')
     implementation project(':stroom-data-store:stroom-data-store-impl-fs-db-gen')
     implementation project(':stroom-entity-shared')
+    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-shared')
+    implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
     implementation project(':stroom-util-shared')
 

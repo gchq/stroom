@@ -18,9 +18,9 @@ package stroom.pipeline;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.FindDataCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.util.io.ByteCountInputStream;
@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStreamAppender extends AbstractStreamAppenderTest {
     @Inject
-    private DataMetaService dataMetaService;
+    private MetaService dataMetaService;
     @Inject
     private StreamStore streamStore;
 
@@ -47,7 +47,7 @@ class TestStreamAppender extends AbstractStreamAppenderTest {
     void testXMLRolling() throws Exception {
         test("TestStreamAppender", "XML_Rolling");
 
-        final List<Data> list = dataMetaService.find(new FindDataCriteria());
+        final List<Meta> list = dataMetaService.find(new FindMetaCriteria());
         final long id = list.get(0).getId();
         final StreamSource streamSource = streamStore.openStreamSource(id);
         final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(streamSource.getInputStream());

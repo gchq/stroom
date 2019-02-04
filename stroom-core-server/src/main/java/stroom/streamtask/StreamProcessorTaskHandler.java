@@ -19,10 +19,10 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Data;
+import stroom.meta.shared.Meta;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
-import stroom.node.NodeCache;
+import stroom.node.api.NodeInfo;
 import stroom.security.Security;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilter;
@@ -34,7 +34,6 @@ import stroom.util.date.DateUtil;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Provider;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -50,7 +49,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamTaskHelper streamTaskHelper;
     private final StreamStore streamStore;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final TaskContext taskContext;
     private final Security security;
 
@@ -60,7 +59,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                                final CachedStreamProcessorFilterService streamProcessorFilterService,
                                final StreamTaskHelper streamTaskHelper,
                                final StreamStore streamStore,
-                               final NodeCache nodeCache,
+                               final NodeInfo nodeInfo,
                                final TaskContext taskContext,
                                final Security security) {
         this.executorProviders = executorProviders;
@@ -68,7 +67,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.streamTaskHelper = streamTaskHelper;
         this.streamStore = streamStore;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.taskContext = taskContext;
         this.security = security;
     }
@@ -86,7 +85,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                 // Open the stream source.
                 streamSource = streamStore.openStreamSource(streamTask.getStreamId());
                 if (streamSource != null) {
-                    final Data stream = streamSource.getStream();
+                    final Meta meta = streamSource.getMeta();
 
                     Processor destStreamProcessor = null;
                     ProcessorFilter destStreamProcessorFilter = null;
@@ -103,24 +102,24 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                     }
 
                     if (destStreamProcessor.getPipelineUuid() != null) {
-                        taskContext.info("Stream {} {} {} {}", stream.getId(),
-                                DateUtil.createNormalDateTimeString(stream.getCreateMs()),
+                        taskContext.info("Stream {} {} {} {}", meta.getId(),
+                                DateUtil.createNormalDateTimeString(meta.getCreateMs()),
                                 destStreamProcessor.getTaskType(), destStreamProcessor.getPipelineUuid());
                     } else {
-                        taskContext.info("Stream {} {} {}", stream.getId(),
-                                DateUtil.createNormalDateTimeString(stream.getCreateMs()),
+                        taskContext.info("Stream {} {} {}", meta.getId(),
+                                DateUtil.createNormalDateTimeString(meta.getCreateMs()),
                                 destStreamProcessor.getTaskType());
                     }
 
                     // Don't process any streams that we have already created
-                    if (stream.getProcessorId() != null && stream.getProcessorId() == destStreamProcessor.getId()) {
+                    if (meta.getProcessorId() != null && meta.getProcessorId() == destStreamProcessor.getId()) {
                         complete = true;
-                        LOGGER.warn("Skipping stream that we seem to have created (avoid processing forever) {} {}", stream,
+                        LOGGER.warn("Skipping data that we seem to have created (avoid processing forever) {} {}", meta,
                                 destStreamProcessor);
 
                     } else {
                         // Change the task status.... and save
-                        streamTask = streamTaskHelper.changeTaskStatus(streamTask, nodeCache.getDefaultNode(),
+                        streamTask = streamTaskHelper.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(),
                                 TaskStatus.PROCESSING, startTime, null);
                         // Avoid having to do another fetch
                         streamTask.setStreamProcessorFilter(destStreamProcessorFilter);
@@ -140,7 +139,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                                 complete = true;
                             }
                         } catch (final RuntimeException e) {
-                            LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, stream}, e);
+                            LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e);
                         }
                     }
                 }
@@ -157,10 +156,10 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                 }
 
                 if (complete) {
-                    streamTaskHelper.changeTaskStatus(streamTask, nodeCache.getDefaultNode(), TaskStatus.COMPLETE,
+                    streamTaskHelper.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
                             startTime, System.currentTimeMillis());
                 } else {
-                    streamTaskHelper.changeTaskStatus(streamTask, nodeCache.getDefaultNode(), TaskStatus.FAILED, startTime,
+                    streamTaskHelper.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.FAILED, startTime,
                             System.currentTimeMillis());
                 }
             }

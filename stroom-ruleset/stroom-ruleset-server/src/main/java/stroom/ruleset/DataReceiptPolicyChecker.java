@@ -20,14 +20,14 @@ package stroom.ruleset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.dictionary.DictionaryStore;
-import stroom.data.meta.api.AttributeMap;
+import stroom.dictionary.api.DictionaryStore;
+import stroom.meta.shared.AttributeMap;
 import stroom.docref.DocRef;
 import stroom.ruleset.shared.DataReceiptAction;
 import stroom.ruleset.shared.Rule;
 import stroom.ruleset.shared.RuleSet;
 import stroom.data.store.ExpressionMatcher;
-import stroom.data.meta.api.ExpressionUtil;
+import stroom.meta.shared.ExpressionUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;

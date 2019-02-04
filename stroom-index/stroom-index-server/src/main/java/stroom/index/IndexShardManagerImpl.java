@@ -21,7 +21,7 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.node.NodeCache;
+import stroom.node.api.NodeInfo;
 import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
@@ -66,7 +66,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
     private final IndexStore indexStore;
     private final IndexShardService indexShardService;
     private final Provider<IndexShardWriterCache> indexShardWriterCacheProvider;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final TaskManager taskManager;
     private final Security security;
 
@@ -79,13 +79,13 @@ public class IndexShardManagerImpl implements IndexShardManager {
     IndexShardManagerImpl(final IndexStore indexStore,
                           final IndexShardService indexShardService,
                           final Provider<IndexShardWriterCache> indexShardWriterCacheProvider,
-                          final NodeCache nodeCache,
+                          final NodeInfo nodeInfo,
                           final TaskManager taskManager,
                           final Security security) {
         this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.indexShardWriterCacheProvider = indexShardWriterCacheProvider;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.taskManager = taskManager;
         this.security = security;
 
@@ -106,7 +106,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                     final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
 
                     final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-                    criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
+                    criteria.getNodeIdSet().add(nodeInfo.getThisNode());
                     criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
                     criteria.getFetchSet().add(Node.ENTITY_TYPE);
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
@@ -255,7 +255,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
     public void checkRetention() {
         security.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-            criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
+            criteria.getNodeIdSet().add(nodeInfo.getThisNode());
             criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
             criteria.getFetchSet().add(Node.ENTITY_TYPE);
             final List<IndexShard> shards = indexShardService.find(criteria);

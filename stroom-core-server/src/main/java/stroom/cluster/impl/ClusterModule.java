@@ -21,7 +21,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.cluster.api.ClusterCallServiceLocal;
 import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ClusterNodeManager;
-import stroom.entity.event.EntityEvent;
+import stroom.entity.shared.EntityEvent;
 import stroom.task.api.TaskHandlerBinder;
 
 public class ClusterModule extends AbstractModule {

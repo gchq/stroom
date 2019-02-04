@@ -19,6 +19,7 @@ package stroom.importexport;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.importexport.impl.ImportExportService;
 import stroom.importexport.shared.ImportState;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.StroomCoreServerTestFileUtil;

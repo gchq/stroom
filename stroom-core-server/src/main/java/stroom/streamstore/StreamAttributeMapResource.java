@@ -21,9 +21,9 @@ package stroom.streamstore;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.DataRow;
-import stroom.data.meta.api.FindDataCriteria;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.shared.BaseResultList;
@@ -56,11 +56,11 @@ import static stroom.query.api.v2.ExpressionTerm.Condition;
 @Produces(MediaType.APPLICATION_JSON)
 public class StreamAttributeMapResource {
 
-    private DataMetaService dataMetaService;
+    private MetaService dataMetaService;
     private Security security;
 
     @Inject
-    public StreamAttributeMapResource(final DataMetaService dataMetaService,
+    public StreamAttributeMapResource(final MetaService dataMetaService,
                                       final Security security) {
         this.dataMetaService = dataMetaService;
         this.security = security;
@@ -81,7 +81,7 @@ public class StreamAttributeMapResource {
             final long itemOffset = pageOffset * pageSize;
 
             // Configure default criteria
-            FindDataCriteria criteria = new FindDataCriteria();
+            FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setPageRequest(new PageRequest(itemOffset, pageSize));
             criteria.setSort(new Sort("Create Time", Sort.Direction.DESCENDING, false));
 
@@ -90,10 +90,10 @@ public class StreamAttributeMapResource {
             ExpressionOperator expressionOperator = new ExpressionOperator(true, ExpressionOperator.Op.AND, expressionTerm);
             criteria.setExpression(expressionOperator);
 
-            BaseResultList<DataRow> results = dataMetaService.findRows(criteria);
+            BaseResultList<MetaRow> results = dataMetaService.findRows(criteria);
             Object response = new Object() {
                 public PageResponse pageResponse = results.getPageResponse();
-                public List<DataRow> streamAttributeMaps = results.getValues();
+                public List<MetaRow> streamAttributeMaps = results.getValues();
             };
             return Response.ok(response).build();
         });
@@ -116,7 +116,7 @@ public class StreamAttributeMapResource {
             final long itemOffset = pageOffset * pageSize;
 
             // Configure default criteria
-            FindDataCriteria criteria = new FindDataCriteria();
+            FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setPageRequest(new PageRequest(itemOffset, pageSize));
             criteria.setSort(new Sort("Create Time", Sort.Direction.DESCENDING, false));
 
@@ -128,10 +128,10 @@ public class StreamAttributeMapResource {
 
             criteria.setExpression(expression);
 
-            BaseResultList<DataRow> results = dataMetaService.findRows(criteria);
+            BaseResultList<MetaRow> results = dataMetaService.findRows(criteria);
             Object response = new Object() {
                 public PageResponse pageResponse = results.getPageResponse();
-                public List<DataRow> streamAttributeMaps = results.getValues();
+                public List<MetaRow> streamAttributeMaps = results.getValues();
             };
             return Response.ok(response).build();
         });
@@ -160,12 +160,12 @@ public class StreamAttributeMapResource {
     public Response search(@PathParam("id") Long id) {
         return security.secureResult(() -> {
             // Configure default criteria
-            FindDataCriteria criteria = new FindDataCriteria();
+            FindMetaCriteria criteria = new FindMetaCriteria();
             IdSet idSet = new IdSet();
             idSet.add(id);
             criteria.setSelectedIdSet(idSet);
 
-            BaseResultList<DataRow> results = dataMetaService.findRows(criteria);
+            BaseResultList<MetaRow> results = dataMetaService.findRows(criteria);
             if (results.size() == 0) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }

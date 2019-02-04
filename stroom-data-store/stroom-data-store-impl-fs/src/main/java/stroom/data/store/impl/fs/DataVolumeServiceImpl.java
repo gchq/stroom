@@ -1,12 +1,10 @@
 package stroom.data.store.impl.fs;
 
 import org.jooq.Condition;
-import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
 import org.jooq.TableField;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.db.util.JooqUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.PageRequest;
@@ -16,8 +14,6 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.concurrent.AtomicSequence;
 
 import javax.inject.Inject;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -124,9 +120,8 @@ public class DataVolumeServiceImpl implements DataVolumeService {
                 throw new IllegalArgumentException("Not enough criteria to run");
             }
 
-            try (final Connection connection = connectionProvider.getConnection()) {
-                final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-                final List<DataVolume> list = create.select(DATA_VOLUME.DATA_ID, VOL.PATH)
+            return JooqUtil.contextResult(connectionProvider, context -> {
+                final List<DataVolume> list = context.select(DATA_VOLUME.DATA_ID, VOL.PATH)
                         .from(DATA_VOLUME)
                         .join(VOL).on(VOL.ID.eq(DATA_VOLUME.VOLUME_ID))
                         .where(conditions)
@@ -134,10 +129,7 @@ public class DataVolumeServiceImpl implements DataVolumeService {
                         .fetch()
                         .map(r -> new DataVolumeImpl(r.value1(), r.value2()));
                 return BaseResultList.createCriterialBasedList(list, criteria);
-            } catch (final SQLException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException(e.getMessage(), e);
-            }
+            });
 
 
 ////            final StreamRange streamRange = criteria.getStreamRange();
@@ -312,20 +304,15 @@ public class DataVolumeServiceImpl implements DataVolumeService {
      */
     @Override
     public Set<DataVolume> findStreamVolume(final long dataId) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create.select(DATA_VOLUME.DATA_ID, VOL.PATH)
-                    .from(DATA_VOLUME)
-                    .join(VOL).on(VOL.ID.eq(DATA_VOLUME.VOLUME_ID))
-                    .where(DATA_VOLUME.DATA_ID.eq(dataId))
-                    .fetch()
-                    .stream()
-                    .map(r -> new DataVolumeImpl(r.value1(), r.value2()))
-                    .collect(Collectors.toSet());
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select(DATA_VOLUME.DATA_ID, VOL.PATH)
+                .from(DATA_VOLUME)
+                .join(VOL).on(VOL.ID.eq(DATA_VOLUME.VOLUME_ID))
+                .where(DATA_VOLUME.DATA_ID.eq(dataId))
+                .fetch()
+                .stream()
+                .map(r -> new DataVolumeImpl(r.value1(), r.value2()))
+                .collect(Collectors.toSet()));
 
 
 //        final SqlBuilder sql = new SqlBuilder();
@@ -374,22 +361,17 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 //            batch.add(new StrmVolRecord(null, null, dataId, (int) volume.getId()));
 //        }
 
-        final Set<DataVolume> set = new HashSet<>();
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+        return JooqUtil.contextResult(connectionProvider, context -> {
+            final Set<DataVolume> set = new HashSet<>();
             for (final VolumeEntity volume : volumes) {
-                create.insertInto(DATA_VOLUME, DATA_VOLUME.DATA_ID, DATA_VOLUME.VOLUME_ID)
+                context.insertInto(DATA_VOLUME, DATA_VOLUME.DATA_ID, DATA_VOLUME.VOLUME_ID)
                         .values(dataId, (int) volume.getId())
                         .execute();
                 set.add(new DataVolumeImpl(dataId, volume.getPath()));
             }
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-
-        return set;
+            return set;
+        });
 
 
 //        for (final VolumeEntity volume : volumes) {

@@ -18,7 +18,7 @@ package stroom.pipeline.legacy;
 
 import stroom.entity.shared.Copyable;
 import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.ExternalFile;
+import stroom.importexport.api.ExternalFile;
 import stroom.entity.shared.HasData;
 import stroom.entity.shared.SQLNameConstants;
 

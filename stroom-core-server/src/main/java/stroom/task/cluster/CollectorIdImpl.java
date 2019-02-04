@@ -16,6 +16,8 @@
 
 package stroom.task.cluster;
 
+import stroom.task.cluster.api.CollectorId;
+
 public class CollectorIdImpl implements CollectorId {
     private static final long serialVersionUID = 9009491007920826639L;
 

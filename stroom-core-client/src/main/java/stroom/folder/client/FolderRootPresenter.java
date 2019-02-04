@@ -28,9 +28,8 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.process.client.presenter.ProcessorPresenter;
 import stroom.security.shared.PermissionNames;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
-import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
-import stroom.streamstore.client.presenter.StreamTaskPresenter;
+import stroom.streamstore.client.presenter.ClassificationWrappedMetaPresenter;
+import stroom.streamstore.client.presenter.ProcessorTaskPresenter;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPreset;
 import stroom.util.client.ImageUtil;
@@ -51,9 +50,9 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements TabDat
     public FolderRootPresenter(final EventBus eventBus,
                                final ClientSecurityContext securityContext,
                                final LinkTabPanelView view,
-                               final Provider<ClassificationWrappedStreamPresenter> streamPresenterProvider,
+                               final Provider<ClassificationWrappedMetaPresenter> streamPresenterProvider,
                                final Provider<ProcessorPresenter> processorPresenterProvider,
-                               final Provider<StreamTaskPresenter> streamTaskPresenterProvider) {
+                               final Provider<ProcessorTaskPresenter> streamTaskPresenterProvider) {
         super(eventBus, view);
         this.securityContext = securityContext;
 

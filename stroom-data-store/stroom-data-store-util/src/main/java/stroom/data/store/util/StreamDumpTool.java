@@ -17,10 +17,10 @@
 package stroom.data.store.util;
 
 import com.google.inject.Injector;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.persist.PersistService;
@@ -94,11 +94,11 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 
         if (createPeriodFrom != null && !createPeriodFrom.isEmpty() && createPeriodTo != null && !createPeriodTo.isEmpty()) {
-            builder.addTerm(MetaDataSource.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
+            builder.addTerm(MetaFieldNames.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
         } else if (createPeriodFrom != null && !createPeriodFrom.isEmpty()) {
-            builder.addTerm(MetaDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
+            builder.addTerm(MetaFieldNames.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
         } else if (createPeriodTo != null && !createPeriodTo.isEmpty()) {
-            builder.addTerm(MetaDataSource.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
+            builder.addTerm(MetaFieldNames.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
         }
 
         if (outputDir == null || outputDir.length() == 0) {
@@ -116,28 +116,28 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         }
 
         final StreamStore streamStore = injector.getInstance(StreamStore.class);
-        final DataMetaService streamMetaService = injector.getInstance(DataMetaService.class);
+        final MetaService metaService = injector.getInstance(MetaService.class);
 
         if (feed != null) {
-            builder.addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feed);
+            builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feed);
         }
 
         if (streamType != null) {
-            builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, streamType);
+            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, streamType);
         } else {
-            builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
+            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
         }
 
         // Query the stream store
-        final FindDataCriteria criteria = new FindDataCriteria();
+        final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(builder.build());
-        final List<Data> results = streamMetaService.find(criteria);
+        final List<Meta> results = metaService.find(criteria);
         System.out.println("Starting dump of " + results.size() + " streams");
 
         int count = 0;
-        for (final Data stream : results) {
+        for (final Meta meta : results) {
             count++;
-            processFile(count, results.size(), streamStore, stream.getId(), dir);
+            processFile(count, results.size(), streamStore, meta.getId(), dir);
         }
 
         System.out.println("Finished dumping " + results.size() + " streams");

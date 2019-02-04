@@ -17,28 +17,28 @@
 package stroom.streamtask.shared;
 
 import stroom.task.shared.Action;
-import stroom.data.meta.api.FindDataCriteria;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.streamstore.shared.ReprocessDataInfo;
 import stroom.util.shared.SharedList;
 
 public class ReprocessDataAction extends Action<SharedList<ReprocessDataInfo>> {
     private static final long serialVersionUID = -3560107233301674555L;
 
-    private FindDataCriteria criteria;
+    private FindMetaCriteria criteria;
 
     public ReprocessDataAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ReprocessDataAction(final FindDataCriteria criteria) {
+    public ReprocessDataAction(final FindMetaCriteria criteria) {
         this.criteria = criteria;
     }
 
-    public FindDataCriteria getCriteria() {
+    public FindMetaCriteria getCriteria() {
         return criteria;
     }
 
-    public void setCriteria(FindDataCriteria criteria) {
+    public void setCriteria(FindMetaCriteria criteria) {
         this.criteria = criteria;
     }
 

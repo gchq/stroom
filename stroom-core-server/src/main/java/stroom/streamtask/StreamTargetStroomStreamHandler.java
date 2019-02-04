@@ -19,16 +19,16 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataProperties;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaProperties;
 import stroom.data.store.StreamFactory;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
-import stroom.feed.AttributeMapUtil;
-import stroom.feed.FeedDocCache;
-import stroom.feed.StroomHeaderArguments;
+import stroom.meta.api.AttributeMapUtil;
+import stroom.pipeline.feed.FeedDocCache;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomHeaderStreamHandler;
 import stroom.proxy.repo.StroomStreamHandler;
@@ -73,7 +73,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private final StreamStore streamStore;
     private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistics;
-    private final HashSet<Data> streamSet;
+    private final HashSet<Meta> streamSet;
     private final StroomZipNameSet stroomZipNameSet;
     //    private final Map<String, OutputStreamProvider> outputStreamProviderMap = new HashMap<>();
     private final Map<String, OutputStreamSet> outputStreamMap = new HashMap<>();
@@ -204,7 +204,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
             }
 
             // Are we switching feed?
-            final String feedName = currentAttributeMap.get(StroomHeaderArguments.FEED);
+            final String feedName = currentAttributeMap.get(StandardHeaderArguments.FEED);
             if (feedName != null) {
                 if (currentFeedName == null || !currentFeedName.equals(feedName)) {
                     // Yes ... load the new feed
@@ -275,7 +275,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         streamStore.closeStreamTarget(feedStreamTarget.remove(currentFeedName));
     }
 
-    public Set<Data> getStreamSet() {
+    public Set<Meta> getStreamSet() {
         return Collections.unmodifiableSet(streamSet);
     }
 
@@ -315,15 +315,15 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
                 currentStreamTypeName = getStreamTypeName(currentFeedName);
             }
 
-            final DataProperties streamProperties = new DataProperties.Builder()
+            final MetaProperties metaProperties = new MetaProperties.Builder()
                     .feedName(currentFeedName)
                     .typeName(currentStreamTypeName)
                     .effectiveMs(effectiveMs)
                     .build();
 
-            final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
+            final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
             feedStreamTarget.put(currentFeedName, streamTarget);
-            streamSet.add(streamTarget.getStream());
+            streamSet.add(streamTarget.getMeta());
             final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider();
             return new OutputStreamSet(outputStreamProvider);
 
@@ -347,15 +347,15 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 //                currentStreamTypeName = getStreamTypeName(currentFeedName);
 //            }
 //
-//            final DataProperties streamProperties = new DataProperties.Builder()
+//            final DataProperties metaProperties = new DataProperties.Builder()
 //                    .feedName(currentFeedName)
 //                    .typeName(currentStreamTypeName)
 //                    .effectiveMs(effectiveMs)
 //                    .build();
 //
-//            final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
+//            final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
 //            feedStreamTarget.put(currentFeedName, streamTarget);
-//            streamSet.add(streamTarget.getStream());
+//            streamSet.add(streamTarget.getMeta());
 //            outputStreamProvider = streamTarget.getOutputStreamProvider();
 //            outputStreamProviderMap.put(currentFeedName, outputStreamProvider);
 //        }

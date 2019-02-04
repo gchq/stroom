@@ -18,12 +18,12 @@
 package stroom.config.global.impl.db;
 
 
-import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.global.api.ConfigProperty;
+import stroom.config.impl.db.tables.records.ConfigRecord;
+import stroom.db.util.AuditUtil;
+import stroom.db.util.JooqUtil;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -32,8 +32,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -42,8 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import static stroom.config.impl.db.stroom.tables.Config.CONFIG;
-import static stroom.config.impl.db.stroom.tables.ConfigHistory.CONFIG_HISTORY;
+import static stroom.config.impl.db.tables.Config.CONFIG;
 
 @Singleton
 class GlobalConfigServiceImpl implements GlobalConfigService {
@@ -94,57 +91,49 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     }
 
     private void loadDBProperties() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            final Map<String, ConfigProperty> map = new HashMap<>(globalProperties);
+        final Map<String, ConfigProperty> map = new HashMap<>(globalProperties);
 
-            create
-                    .selectFrom(CONFIG)
-                    .fetch()
-                    .forEach(record -> {
-                        if (record.getName() != null && record.getVal() != null) {
-                            final ConfigProperty configProperty = map.remove(record.getName());
-                            if (configProperty != null) {
-                                configProperty.setId(record.getId());
-                                configProperty.setValue(record.getVal());
-                                configProperty.setSource(ConfigProperty.SourceType.DATABASE);
+        final List<ConfigProperty> list = JooqUtil.contextResult(connectionProvider, context -> context
+                .fetch(CONFIG)
+                .into(ConfigProperty.class));
 
-                                updateConfigObject(record.getName(), record.getVal());
-                            } else {
-                                // Delete old property that is not in the object model
-                                deleteFromDb(record.getName());
-                            }
-                        }
-                    });
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
+        list.forEach(record -> {
+            if (record.getName() != null && record.getValue() != null) {
+                final ConfigProperty configProperty = map.remove(record.getName());
+                if (configProperty != null) {
+                    configProperty.setId(record.getId());
+                    configProperty.setValue(record.getValue());
+                    configProperty.setSource(ConfigProperty.SourceType.DATABASE);
+
+                    updateConfigObject(record.getName(), record.getValue());
+                } else {
+                    // Delete old property that is not in the object model
+                    deleteFromDb(record.getName());
+                }
+            }
+        });
     }
 
     private synchronized void updateConfigObjectsFromDB() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            final Map<String, ConfigProperty> map = new HashMap<>(globalProperties);
+        final Map<String, ConfigProperty> map = new HashMap<>(globalProperties);
 
-            create
-                    .selectFrom(CONFIG)
-                    .fetch()
-                    .forEach(record -> {
-                        if (record.getName() != null && record.getVal() != null) {
-                            final ConfigProperty configProperty = map.remove(record.getName());
-                            if (configProperty != null) {
-                                configProperty.setId(record.getId());
-                                configProperty.setValue(record.getVal());
-                                configProperty.setSource(ConfigProperty.SourceType.DATABASE);
+        final List<ConfigProperty> list = JooqUtil.contextResult(connectionProvider, context -> context
+                .fetch(CONFIG)
+                .into(ConfigProperty.class));
 
-                                Object typedValue = updateConfigObject(record.getName(), record.getVal());
+        list.forEach(record -> {
+            if (record.getName() != null && record.getValue() != null) {
+                final ConfigProperty configProperty = map.remove(record.getName());
+                if (configProperty != null) {
+                    configProperty.setId(record.getId());
+                    configProperty.setValue(record.getValue());
+                    configProperty.setSource(ConfigProperty.SourceType.DATABASE);
+
+                    Object typedValue = updateConfigObject(record.getName(), record.getValue());
 //                                configProperty.setTypedValue(typedValue);
-                            }
-                        }
-                    });
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
+                }
+            }
+        });
     }
 
     /**
@@ -167,37 +156,19 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     }
 
     @Override
-    public ConfigProperty load(final ConfigProperty configProperty) {
+    public ConfigProperty fetch(final int id) {
         return security.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
-            final ConfigProperty loaded = globalProperties.get(configProperty.getName());
-
-            try (final Connection connection = connectionProvider.getConnection()) {
-                final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-                create
-                        .selectFrom(CONFIG)
-                        .where(CONFIG.ID.eq(configProperty.getId()))
-                        .fetchOptional()
-                        .ifPresent(record -> {
-                            if (record.getName() != null && record.getVal() != null) {
-                                if (loaded != null) {
-                                    loaded.setId(record.getId());
-                                    loaded.setValue(record.getVal());
-                                    loaded.setSource(ConfigProperty.SourceType.DATABASE);
-                                }
-                            }
-                        });
-            } catch (final SQLException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-
-            return loaded;
+            final ConfigProperty result = JooqUtil.contextResult(connectionProvider, context -> context
+                    .fetchOne(CONFIG, CONFIG.ID.eq(id))
+                    .into(ConfigProperty.class));
+            result.setSource(ConfigProperty.SourceType.DATABASE);
+            return result;
         });
     }
 
 //    public ConfigProperty create(final ConfigProperty configProperty) {
 //        return security.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
-//            try (final Connection connection = connectionProvider.getConnection()) {
-//                final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//            JooqUtil.context(connectionProvider, context -> context
 //
 //                // Insert value.
 //                create
@@ -219,92 +190,91 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
 //    }
 
     @Override
-    public ConfigProperty save(final ConfigProperty configProperty) {
+    public ConfigProperty update(final ConfigProperty configProperty) {
         return security.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
-            try (final Connection connection = connectionProvider.getConnection()) {
-                final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-
-                LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
-                        "Saving property [{}] with new value [{}]",
-                        configProperty.getName(), configProperty.getValue()));
+            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+                    "Saving property [{}] with new value [{}]",
+                    configProperty.getName(), configProperty.getValue()));
 
 
-                // Change value in DB
-                int rowsAffected = create
-                        .update(CONFIG)
-                        .set(CONFIG.VAL, configProperty.getValue())
-                        .where(CONFIG.NAME.eq(configProperty.getName()))
-                        .execute();
+            AuditUtil.stamp(securityContext.getUserId(), configProperty);
 
-                if (rowsAffected == 0) {
-                    LOGGER.debug("No record to update with key {}, so inserting new record", configProperty.getName());
-                    create
-                            .insertInto(CONFIG,
-                                    CONFIG.NAME,
-                                    CONFIG.VAL)
-                            .values(configProperty.getName(), configProperty.getValue())
-                            .execute();
-                }
+            final ConfigProperty result = JooqUtil.contextWithOptimisticLocking(connectionProvider, context -> {
+                final ConfigRecord configRecord = context.newRecord(CONFIG, configProperty);
+                configRecord.update();
+                return configRecord.into(ConfigProperty.class);
+            });
 
-                // Record history.
-                recordHistory(configProperty);
 
-                // Update property in the config object tree
-                updateConfigObject(configProperty.getName(), configProperty.getValue());
+//                // Change value in DB
+//                int rowsAffected = create
+//                        .update(CONFIG)
+//                        .set(CONFIG.VAL, configProperty.getValue())
+//                        .where(CONFIG.NAME.eq(configProperty.getName()))
+//                        .execute();
+//
+//                if (rowsAffected == 0) {
+//                    LOGGER.debug("No record to update with key {}, so inserting new record", configProperty.getName());
+//                    create
+//                            .insertInto(CONFIG,
+//                                    CONFIG.NAME,
+//                                    CONFIG.VAL)
+//                            .values(configProperty.getName(), configProperty.getValue())
+//                            .execute();
+//                }
+//
+//                // Record history.
+//                recordHistory(configProperty);
 
-                // update the property in
-                final ConfigProperty configPropertyFromMap = globalProperties.get(configProperty.getName());
-                if (configPropertyFromMap != null) {
-                    configPropertyFromMap.setSource(ConfigProperty.SourceType.DATABASE);
-                    configPropertyFromMap.setValue(configProperty.getValue());
-                } else {
-                    configProperty.setSource(ConfigProperty.SourceType.DATABASE);
-                    globalProperties.put(configProperty.getName(), configProperty);
-                }
+            // Update property in the config object tree
+            updateConfigObject(result.getName(), result.getValue());
 
-            } catch (final SQLException e) {
-                LOGGER.error(e.getMessage(), e);
+            // update the property in
+            final ConfigProperty configPropertyFromMap = globalProperties.get(result.getName());
+            if (configPropertyFromMap != null) {
+                configPropertyFromMap.setSource(ConfigProperty.SourceType.DATABASE);
+                configPropertyFromMap.setValue(result.getValue());
+            } else {
+                result.setSource(ConfigProperty.SourceType.DATABASE);
+                globalProperties.put(result.getName(), result);
             }
 
-            return configProperty;
+
+            return result;
         });
     }
 
     private void deleteFromDb(final String name) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+        JooqUtil.context(connectionProvider, context -> {
             LAMBDA_LOGGER.warn(() ->
                     LambdaLogger.buildMessage("Deleting property {} as it is not valid " +
                             "in the object model", name));
-            create
+            context
                     .deleteFrom(CONFIG)
                     .where(CONFIG.NAME.eq(name))
                     .execute();
-        } catch (final SQLException e) {
-            LOGGER.error("Error deleting property {}: {}", name, e.getMessage(), e);
-        }
+        });
     }
 
-    private void recordHistory(final ConfigProperty configProperty) {
-        // Record history.
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            create
-                    .insertInto(CONFIG_HISTORY,
-                            CONFIG_HISTORY.UPDATE_TIME,
-                            CONFIG_HISTORY.UPDATE_USER,
-                            CONFIG_HISTORY.NAME,
-                            CONFIG_HISTORY.VAL)
-                    .values(
-                            System.currentTimeMillis(),
-                            securityContext.getUserId(),
-                            configProperty.getName(),
-                            configProperty.getValue())
-                    .execute();
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
+//    private void recordHistory(final ConfigProperty configProperty) {
+//        // Record history.
+//        JooqUtil.context(connectionProvider, context -> context
+//            create
+//                    .insertInto(CONFIG_HISTORY,
+//                            CONFIG_HISTORY.UPDATE_TIME,
+//                            CONFIG_HISTORY.UPDATE_USER,
+//                            CONFIG_HISTORY.NAME,
+//                            CONFIG_HISTORY.VAL)
+//                    .values(
+//                            System.currentTimeMillis(),
+//                            securityContext.getUserId(),
+//                            configProperty.getName(),
+//                            configProperty.getValue())
+//                    .execute();
+//        } catch (final SQLException e) {
+//            LOGGER.error(e.getMessage(), e);
+//        }
+//    }
 
     @Override
     public String toString() {

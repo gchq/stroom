@@ -19,7 +19,7 @@ package stroom.statistics.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.statistics.shared.StatisticType;
-import stroom.util.DatabaseTool;
+import stroom.tools.DatabaseTool;
 import stroom.util.logging.LogExecutionTime;
 
 import java.sql.Connection;

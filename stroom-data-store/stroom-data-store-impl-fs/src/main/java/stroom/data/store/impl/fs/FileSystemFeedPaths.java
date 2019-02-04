@@ -1,15 +1,11 @@
 package stroom.data.store.impl.fs;
 
-import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.db.util.JooqUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,30 +48,20 @@ class FileSystemFeedPaths {
             LOGGER.warn("A non standard feed name was found when registering a file path '" + feedName + "'");
         }
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            create.insertInto(FILE_FEED_PATH, FILE_FEED_PATH.NAME, FILE_FEED_PATH.PATH)
-                    .values(feedName, path)
-                    .execute();
-        } catch (final SQLException e) {
-            LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context -> context
+                .insertInto(FILE_FEED_PATH, FILE_FEED_PATH.NAME, FILE_FEED_PATH.PATH)
+                .values(feedName, path)
+                .execute());
 
         refresh();
     }
 
     private void refresh() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            create.select(FILE_FEED_PATH.NAME, FILE_FEED_PATH.PATH)
-                    .from(FILE_FEED_PATH)
-                    .fetch()
-                    .forEach(r -> put(r.value1(), r.value2()));
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context -> context
+                .select(FILE_FEED_PATH.NAME, FILE_FEED_PATH.PATH)
+                .from(FILE_FEED_PATH)
+                .fetch()
+                .forEach(r -> put(r.value1(), r.value2())));
     }
 
     private void put(final String name, final String path) {

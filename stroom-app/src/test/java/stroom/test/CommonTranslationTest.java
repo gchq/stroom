@@ -19,16 +19,16 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.DataMetaService;
+import stroom.meta.shared.MetaService;
 import stroom.docref.DocRef;
-import stroom.node.NodeCache;
+import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.ProcessorFilterTask;
-import stroom.task.api.TaskManager;
 import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.TaskManager;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
@@ -72,23 +72,23 @@ public class CommonTranslationTest {
     private static final Path EMPLOYEE_REFERENCE_CSV = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "EmployeeReference.in");
 
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final StreamTaskCreator streamTaskCreator;
     private final StoreCreationTool storeCreationTool;
     private final TaskManager taskManager;
-    private final DataMetaService streamMetaService;
+    private final MetaService metaService;
 
     @Inject
-    CommonTranslationTest(final NodeCache nodeCache,
+    CommonTranslationTest(final NodeInfo nodeInfo,
                           final StreamTaskCreator streamTaskCreator,
                           final StoreCreationTool storeCreationTool,
                           final TaskManager taskManager,
-                          final DataMetaService streamMetaService) {
-        this.nodeCache = nodeCache;
+                          final MetaService metaService) {
+        this.nodeInfo = nodeInfo;
         this.streamTaskCreator = streamTaskCreator;
         this.storeCreationTool = storeCreationTool;
         this.taskManager = taskManager;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
     }
 
     public List<StreamProcessorTaskExecutor> processAll() {
@@ -96,14 +96,14 @@ public class CommonTranslationTest {
         streamTaskCreator.createTasks(new SimpleTaskContext());
 
         final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
             for (final ProcessorFilterTask streamTask : streamTasks) {
                 final StreamProcessorTask task = new StreamProcessorTask(streamTask);
                 taskManager.exec(task);
                 results.add(task.getStreamProcessorTaskExecutor());
             }
-            streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+            streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
 
         return results;
@@ -153,6 +153,6 @@ public class CommonTranslationTest {
             }
         });
 
-        assertThat(streamMetaService.getLockCount()).isEqualTo(0);
+        assertThat(metaService.getLockCount()).isEqualTo(0);
     }
 }

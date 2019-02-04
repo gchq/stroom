@@ -21,21 +21,16 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.multibindings.OptionalBinder;
 import stroom.entity.EntityTypeBinder;
 import stroom.entity.FindService;
-import stroom.entity.event.EntityEvent;
-import stroom.entity.event.EntityEvent.Handler;
+import stroom.entity.shared.EntityEvent;
+import stroom.entity.shared.EntityEvent.Handler;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Flushable;
-import stroom.node.NodeServiceModule;
-import stroom.node.VolumeService;
 import stroom.node.shared.VolumeEntity;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 
 public class VolumeModule extends AbstractModule {
     @Override
     protected void configure() {
-        // Volumes depend on nodes.
-        install(new NodeServiceModule());
-
         bind(VolumeService.class).to(VolumeServiceImpl.class);
 
         OptionalBinder.newOptionalBinder(binder(), InternalStatisticsReceiver.class);

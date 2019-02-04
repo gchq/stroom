@@ -16,6 +16,7 @@
 
 package stroom.entity.event;
 
+import stroom.entity.shared.EntityEvent;
 import stroom.util.shared.VoidResult;
 import stroom.task.api.ServerTask;
 

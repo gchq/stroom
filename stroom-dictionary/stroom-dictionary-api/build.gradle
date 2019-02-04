@@ -1,0 +1,85 @@
+ext.moduleName = 'stroom.dictionary.api'
+
+dependencies {
+//    implementation project(':stroom-cache:stroom-cache-api')
+//    implementation project(':stroom-meta:stroom-meta-api')
+//    implementation project(':stroom-data-store:stroom-data-store-api')
+//    implementation project(':stroom-core-server')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docstore:stroom-docstore-shared')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+//    implementation project(':stroom-entity-shared')
+//    implementation project(':stroom-event-logging:stroom-event-logging-api')
+//    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
+//    implementation project(':stroom-node:stroom-node-api')
+//    implementation project(':stroom-security:stroom-security-api')
+//    implementation project(':stroom-statistics:stroom-statistics-api')
+//    implementation project(':stroom-util')
+//    implementation project(':stroom-util-shared')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+//    implementation project(':stroom-importexport:stroom-importexport-migration')
+//    implementation project(':stroom-task:stroom-task-api')
+//    implementation project(':stroom-task:stroom-task-cluster-api')
+//    implementation project(':stroom-task:stroom-task-shared')
+//    implementation project(':stroom-job:stroom-job-api')
+//    implementation project(':stroom-job:stroom-job-shared')
+//
+//    implementation libs.commons_io
+//    implementation libs.commons_lang
+//    implementation libs.commons_text
+//    implementation libs.dropwizard_metrics_annotation
+//    implementation libs.dropwizard_metrics_healthchecks
+//    implementation libs.fast_infoset
+//    implementation libs.google_findbugs
+//    implementation libs.guava
+//    implementation libs.guice4
+//    implementation libs.guice_assistedinject
+//    implementation libs.hadoopCommonShaded
+//    implementation libs.hadoopHdfsShaded
+//    implementation(libs.hbase) { transitive = false } // hbase-common is currently only used for its Bytes class, so exclude all its deps
+//    implementation libs.hibernate_jpa_api
+//    implementation libs.jackson_annotations
+//    implementation libs.jackson_core
+//    implementation libs.javax_inject
+//    implementation libs.javax_validation
+//    implementation libs.jaxb_api
+//    implementation libs.jersey_client
+//    implementation libs.jetty_http
+//    implementation libs.jsr173_api
+//    implementation libs.kryo
+//    implementation libs.lmdbjava
+//    implementation libs.saxon_he
+//    implementation libs.slf4j_api
+    implementation libs.stroomDocRef
+//    implementation libs.stroomQueryApi
+//    implementation libs.swagger_annotations
+//    implementation libs.vavr
+//    implementation libs.ws_rs_api
+//    implementation libs.xml_apis
+//
+//    testImplementation project(':stroom-cache:stroom-cache-api')
+//    testImplementation project(':stroom-cache:stroom-cache-impl')
+//    testImplementation project(':stroom-meta:stroom-meta-impl-mock')
+//    testImplementation project(':stroom-docstore:stroom-docstore-impl')
+//    testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
+//    testImplementation project(':stroom-security:stroom-security-impl-mock')
+//    testImplementation project(':stroom-test-common')
+//
+//    testImplementation libs.assertj_core
+//    testImplementation libs.commons_io
+//    testImplementation libs.mockito_core
+//    testImplementation libs.mockito_junit_jupiter
+//
+//    testImplementation libs.junit_jupiter_api
+//
+//    // The following logging libs are needed when running junits outside dropwizard
+//    testRuntimeOnly libs.javax_activation
+//    testRuntimeOnly libs.jaxb_runtime
+//    testRuntimeOnly libs.jcl_over_slf4j
+//    testRuntimeOnly libs.jul_to_slf4j
+//    testRuntimeOnly libs.junit_jupiter_engine
+//    testRuntimeOnly libs.log4j_over_slf4j
+//    testRuntimeOnly libs.logback_classic
+//    testRuntimeOnly libs.logback_core
+}

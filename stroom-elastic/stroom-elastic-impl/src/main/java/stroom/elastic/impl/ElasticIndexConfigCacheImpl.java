@@ -11,8 +11,8 @@ import stroom.query.audit.client.DocRefResourceHttpClient;
 import stroom.query.security.ServiceUser;
 import stroom.security.SecurityContext;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.cache.CacheManager;
-import stroom.util.cache.CacheUtil;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

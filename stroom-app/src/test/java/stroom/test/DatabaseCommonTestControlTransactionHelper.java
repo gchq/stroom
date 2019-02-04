@@ -17,7 +17,7 @@
 package stroom.test;
 
 import stroom.persist.ConnectionProvider;
-import stroom.util.db.DbUtil;
+import stroom.db.util.DbUtil;
 
 import javax.inject.Inject;
 import java.sql.Connection;

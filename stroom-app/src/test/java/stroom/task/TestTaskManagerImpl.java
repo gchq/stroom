@@ -4,6 +4,7 @@ package stroom.task;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.shared.ThreadPool;
 import stroom.test.AbstractCoreIntegrationTest;
 

@@ -18,13 +18,12 @@ package stroom.entity.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.NodeNotFoundException;
 import stroom.task.cluster.NullClusterStateException;
 import stroom.task.cluster.TargetNodeSetFactory;
+import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -52,10 +51,10 @@ class DispatchEntityEventTaskHandler extends AbstractTaskHandler<DispatchEntityE
         return security.secureResult(() -> {
             try {
                 // Get this node.
-                final Node sourceNode = targetNodeSetFactory.getSourceNode();
+                final String sourceNode = targetNodeSetFactory.getSourceNode();
 
                 // Get the nodes that we are going to send the entity event to.
-                final Set<Node> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
 
                 // Only send the event to remote nodes and not this one.
                 targetNodes.stream().filter(targetNode -> !targetNode.equals(sourceNode)).forEach(targetNode -> {

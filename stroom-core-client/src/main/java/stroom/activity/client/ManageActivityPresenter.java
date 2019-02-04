@@ -28,7 +28,7 @@ import stroom.activity.api.Activity;
 import stroom.activity.shared.DeleteActivityAction;
 import stroom.activity.shared.FetchActivityAction;
 import stroom.activity.shared.FindActivityAction;
-import stroom.activity.shared.FindActivityCriteria;
+import stroom.activity.api.FindActivityCriteria;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.StringCriteria.MatchStyle;

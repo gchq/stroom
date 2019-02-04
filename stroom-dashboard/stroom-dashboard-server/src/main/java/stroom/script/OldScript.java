@@ -17,34 +17,24 @@
 package stroom.script;
 
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.ExternalFile;
-import stroom.entity.shared.SQLNameConstants;
+import stroom.importexport.api.ExternalFile;
+import stroom.importexport.migration.DocumentEntity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
-import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
-@Entity
-@Table(name = "SCRIPT")
+/**
+ * Used for legacy migration
+ **/
+@Deprecated
 public class OldScript extends DocumentEntity {
-    public static final String TABLE_NAME = SQLNameConstants.SCRIPT;
-    public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String DEPENDENCIES = SQLNameConstants.DEPENDENCIES;
-    public static final String ENTITY_TYPE = "Script";
-
-    private static final long serialVersionUID = 4519634323788508083L;
+    private static final String ENTITY_TYPE = "Script";
 
     private String description;
     private String data;
     private String dependenciesXML;
     private DocRefs dependencies;
 
-    @Column(name = SQLNameConstants.DESCRIPTION)
-    @Lob
     public String getDescription() {
         return description;
     }
@@ -53,8 +43,6 @@ public class OldScript extends DocumentEntity {
         this.description = description;
     }
 
-    @Column(name = SQLNameConstants.DATA, length = Integer.MAX_VALUE)
-    @Lob
     @ExternalFile("js")
     public String getResource() {
         return data;
@@ -64,8 +52,6 @@ public class OldScript extends DocumentEntity {
         this.data = data;
     }
 
-    @Column(name = DEPENDENCIES, length = Integer.MAX_VALUE)
-    @Lob
     public String getDependenciesXML() {
         return dependenciesXML;
     }
@@ -85,13 +71,11 @@ public class OldScript extends DocumentEntity {
     }
 
     @Transient
-    @Override
     public String getDisplayValue() {
         return String.valueOf(getName());
     }
 
     @Transient
-    @Override
     public final String getType() {
         return ENTITY_TYPE;
     }

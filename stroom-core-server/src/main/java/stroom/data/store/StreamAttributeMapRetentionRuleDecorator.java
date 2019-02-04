@@ -19,9 +19,9 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.MetaDataSource;
-import stroom.dictionary.DictionaryStore;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFieldNames;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.util.date.DateUtil;
 
@@ -43,17 +43,17 @@ public class StreamAttributeMapRetentionRuleDecorator {
 
     public StreamAttributeMapRetentionRuleDecorator(final DictionaryStore dictionaryStore, final List<DataRetentionRule> rules) {
         this.rules = rules;
-        expressionMatcher = new ExpressionMatcher(MetaDataSource.getFieldMap(), dictionaryStore);
+        expressionMatcher = new ExpressionMatcher(MetaFieldNames.getFieldMap(), dictionaryStore);
     }
 
-    void addMatchingRetentionRuleInfo(final Data stream, final Map<String, String> attributeMap) {
+    void addMatchingRetentionRuleInfo(final Meta meta, final Map<String, String> attributeMap) {
         try {
             int index = -1;
 
             // If there are no active rules then we aren't going to process anything.
             if (rules.size() > 0) {
                 // Create an attribute map we can match on.
-                final Map<String, Object> map = StreamAttributeMapUtil.createAttributeMap(stream, attributeMap);
+                final Map<String, Object> map = StreamAttributeMapUtil.createAttributeMap(meta, attributeMap);
                 index = findMatchingRuleIndex(map);
             }
 
@@ -62,8 +62,8 @@ public class StreamAttributeMapRetentionRuleDecorator {
                 attributeMap.put(RETENTION_AGE, rule.getAgeString());
 
                 String keepUntil = DataRetentionRule.FOREVER;
-                if (stream != null) {
-                    final long millis = stream.getCreateMs();
+                if (meta != null) {
+                    final long millis = meta.getCreateMs();
                     final LocalDateTime createTime = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDateTime();
                     final Long ms = DataRetentionAgeUtil.plus(createTime, rule);
                     if (ms != null) {

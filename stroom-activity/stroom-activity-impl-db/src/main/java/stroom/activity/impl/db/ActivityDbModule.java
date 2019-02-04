@@ -7,6 +7,7 @@ import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.activity.api.ActivityService;
 import stroom.activity.api.CurrentActivity;
 import stroom.activity.shared.CreateActivityAction;
 import stroom.activity.shared.DeleteActivityAction;
@@ -16,8 +17,8 @@ import stroom.activity.shared.SetCurrentActivityAction;
 import stroom.activity.shared.UpdateActivityAction;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
+import stroom.db.util.HikariUtil;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.db.DbUtil;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -46,25 +47,8 @@ public class ActivityDbModule extends AbstractModule {
     @Singleton
     ConnectionProvider getConnectionProvider(final Provider<ActivityConfig> configProvider) {
         final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
-
-        // Keep waiting until we can establish a DB connection to allow for the DB to start after the app
-        DbUtil.waitForConnection(
-                connectionConfig.getJdbcDriverClassName(),
-                connectionConfig.getJdbcDriverUrl(),
-                connectionConfig.getJdbcDriverUsername(),
-                connectionConfig.getJdbcDriverPassword());
-
         final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
-
-        connectionConfig.validate();
-
-        final HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
-        config.setUsername(connectionConfig.getJdbcDriverUsername());
-        config.setPassword(connectionConfig.getJdbcDriverPassword());
-        config.addDataSourceProperty("cachePrepStmts", String.valueOf(connectionPoolConfig.isCachePrepStmts()));
-        config.addDataSourceProperty("prepStmtCacheSize", String.valueOf(connectionPoolConfig.getPrepStmtCacheSize()));
-        config.addDataSourceProperty("prepStmtCacheSqlLimit", String.valueOf(connectionPoolConfig.getPrepStmtCacheSqlLimit()));
+        final HikariConfig config = HikariUtil.createConfig(connectionConfig, connectionPoolConfig);
         final ConnectionProvider connectionProvider = new ConnectionProvider(config);
         flyway(connectionProvider);
         return connectionProvider;
@@ -77,14 +61,14 @@ public class ActivityDbModule extends AbstractModule {
                 .table(FLYWAY_TABLE)
                 .baselineOnMigrate(true)
                 .load();
-        LOGGER.info("Applying Flyway migrations to stroom-data-meta in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
+        LOGGER.info("Applying Flyway migrations to stroom-meta in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating stroom-data-meta database", e);
+            LOGGER.error("Error migrating stroom-meta database", e);
             throw e;
         }
-        LOGGER.info("Completed Flyway migrations for stroom-data-meta in {}", FLYWAY_TABLE);
+        LOGGER.info("Completed Flyway migrations for stroom-meta in {}", FLYWAY_TABLE);
         return flyway;
     }
 

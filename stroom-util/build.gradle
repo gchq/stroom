@@ -15,10 +15,11 @@ dependencies {
     implementation libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.jackson_databind
+    implementation libs.javassist
     implementation libs.javax_servlet_api
     implementation libs.javax_inject
     implementation libs.jaxb_api
-    implementation libs.jooq
+    implementation libs.saxon_he
     implementation libs.slf4j_api
 
     testImplementation libs.assertj_core

@@ -18,21 +18,27 @@ package stroom.data.store.util;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.DataProperties;
+import stroom.meta.shared.MetaProperties;
+import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
+import stroom.db.util.DbUtil;
 import stroom.persist.ConnectionProvider;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.util.db.DbUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.test.FileSystemTestUtil;
+import stroom.util.test.TempDir;
+import stroom.util.test.TempDirExtension;
 
 import javax.inject.Inject;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+@ExtendWith(TempDirExtension.class)
 class TestStreamDumpTool {
+
     @Inject
     private ConnectionProvider connectionProvider;
     @Inject
@@ -50,7 +56,7 @@ class TestStreamDumpTool {
     }
 
     @Test
-    void test() {
+    void test(@TempDir Path tempDir) {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         try {
@@ -58,7 +64,7 @@ class TestStreamDumpTool {
 
             final StreamDumpTool streamDumpTool = new StreamDumpTool();
             streamDumpTool.setFeed(feedName);
-            streamDumpTool.setOutputDir(FileUtil.getCanonicalPath(FileUtil.getTempDir()));
+            streamDumpTool.setOutputDir(FileUtil.getCanonicalPath(tempDir));
             streamDumpTool.run();
 
         } catch (final RuntimeException e) {
@@ -67,11 +73,11 @@ class TestStreamDumpTool {
     }
 
     private void addData(final String feedName, final String data) {
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
+        final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
         StreamTargetUtil.write(streamTarget, data);
         streamStore.closeStreamTarget(streamTarget);
     }

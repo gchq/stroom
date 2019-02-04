@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.docref.DocRef;
 import stroom.kafka.pipeline.KafkaProducer;
@@ -28,8 +27,6 @@ class TestStroomKafkaProducer {
 
     @BeforeEach
     void setup() {
-        MockitoAnnotations.initMocks(this);
-
         final KafkaConfigDoc kafkaConfigDoc = new KafkaConfigDoc();
         final Properties properties = kafkaConfigDoc.getProperties();
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");

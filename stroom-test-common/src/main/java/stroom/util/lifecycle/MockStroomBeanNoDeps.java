@@ -16,16 +16,16 @@
 
 package stroom.util.lifecycle;
 
-public class MockStroomBeanNoDeps extends MockStroomBeanLifeCycleBean {
-    @Override
-    @StroomStartup(priority = 100)
+class MockStroomBeanNoDeps extends MockStroomBeanLifeCycleBean {
     public void start() {
         super.start();
     }
 
-    @Override
-    @StroomShutdown
     public void stop() {
         super.stop();
+    }
+
+    public int priority() {
+        return 100;
     }
 }

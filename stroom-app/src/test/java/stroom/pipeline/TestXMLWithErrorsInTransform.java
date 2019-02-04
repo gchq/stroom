@@ -35,6 +35,8 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
+import stroom.pipeline.textconverter.TextConverterStore;
+import stroom.pipeline.xslt.XsltStore;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
@@ -110,7 +112,7 @@ class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest {
             final Path testDir = getCurrentTestDir();
 
             // Make sure the config dir is set.
-            System.setProperty("stroom.temp", FileUtil.getCanonicalPath(testDir));
+            FileUtil.setTempDir(testDir);
 
             // Delete any output file.
             final Path outputFile = testDir.resolve("XMLWithErrorsInTransform.xml");
@@ -134,7 +136,7 @@ class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest {
 //            feedHolder.setFeedName("");
 //
 //            // Setup the meta data holder.
-//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, streamProcessorService, pipelineStore));
 
             // Set the input.
             final InputStream input = StroomPipelineTestFileUtil.getInputStream(INPUT);

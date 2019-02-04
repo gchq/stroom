@@ -17,16 +17,16 @@
 
 package stroom.pipeline.task;
 
-import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Data;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.Meta;
 import stroom.data.store.api.StreamSourceInputStream;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.docref.DocRef;
-import stroom.feed.AttributeMapUtil;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.state.MetaDataProvider;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
 
@@ -43,16 +43,16 @@ public class StreamMetaDataProvider implements MetaDataProvider {
     private static final String EFFECTIVE_TIME = "EffectiveTime";
     private static final String PIPELINE = "Pipeline";
 
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final PipelineStore pipelineStore;
 
     private Map<String, String> parentData = new ConcurrentHashMap<>();
     private AttributeMap metaData;
     private long lastMetaStreamNo;
 
-    public StreamMetaDataProvider(final StreamHolder streamHolder,
+    public StreamMetaDataProvider(final MetaHolder metaHolder,
                                   final PipelineStore pipelineStore) {
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.pipelineStore = pipelineStore;
     }
 
@@ -80,13 +80,13 @@ public class StreamMetaDataProvider implements MetaDataProvider {
     @Override
     public AttributeMap getMetaData() {
         try {
-            // Determine if we need to read the meta stream.
-            if (metaData == null || lastMetaStreamNo != streamHolder.getStreamNo()) {
+            // Determine if we need to read the Meta meta.
+            if (metaData == null || lastMetaStreamNo != metaHolder.getStreamNo()) {
                 metaData = new AttributeMap();
-                lastMetaStreamNo = streamHolder.getStreamNo();
+                lastMetaStreamNo = metaHolder.getStreamNo();
 
                 // Setup meta data.
-                final StreamSourceInputStreamProvider provider = streamHolder.getProvider(StreamTypeNames.META);
+                final StreamSourceInputStreamProvider provider = metaHolder.getProvider(StreamTypeNames.META);
                 if (provider != null) {
                     // Get the input stream.
                     final StreamSourceInputStream inputStream = provider.getStream(lastMetaStreamNo);
@@ -109,9 +109,9 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     private String getFeed() {
         return parentData.computeIfAbsent(FEED, k -> {
-            final Data stream = streamHolder.getStream();
-            if (stream != null) {
-                return stream.getFeedName();
+            final Meta meta = metaHolder.getMeta();
+            if (meta != null) {
+                return meta.getFeedName();
             }
             return null;
         });
@@ -119,9 +119,9 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     private String getStreamType() {
         return parentData.computeIfAbsent(STREAM_TYPE, k -> {
-            final Data stream = streamHolder.getStream();
-            if (stream != null) {
-                return stream.getTypeName();
+            final Meta meta = metaHolder.getMeta();
+            if (meta != null) {
+                return meta.getTypeName();
             }
             return null;
         });
@@ -129,9 +129,9 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     private String getCreatedTime() {
         return parentData.computeIfAbsent(CREATED_TIME, k -> {
-            final Data stream = streamHolder.getStream();
-            if (stream != null) {
-                return DateUtil.createNormalDateTimeString(stream.getCreateMs());
+            final Meta meta = metaHolder.getMeta();
+            if (meta != null) {
+                return DateUtil.createNormalDateTimeString(meta.getCreateMs());
             }
             return null;
         });
@@ -139,9 +139,9 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     private String getEffectiveTime() {
         return parentData.computeIfAbsent(EFFECTIVE_TIME, k -> {
-            final Data stream = streamHolder.getStream();
-            if (stream != null) {
-                return DateUtil.createNormalDateTimeString(stream.getEffectiveMs());
+            final Meta meta = metaHolder.getMeta();
+            if (meta != null) {
+                return DateUtil.createNormalDateTimeString(meta.getEffectiveMs());
             }
             return null;
         });
@@ -149,15 +149,15 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     private String getPipeline() {
         return parentData.computeIfAbsent(PIPELINE, k -> {
-            final Data stream = streamHolder.getStream();
+            final Meta meta = metaHolder.getMeta();
 //            if (stream != null) {
 //                return stream.getPipelineName();
 //            }
 
-            if (stream != null && stream.getPipelineUuid() != null) {
+            if (meta != null && meta.getPipelineUuid() != null) {
 //                final StreamProcessor streamProcessor = streamProcessorService.load(stream.getStreamProcessor(), FETCH_SET);
 //                if (streamProcessor != null && streamProcessor.getPipelineUuid() != null) {
-                final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, stream.getPipelineUuid()));
+                final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, meta.getPipelineUuid()));
                 if (pipelineDoc != null) {
                     return pipelineDoc.getName();
                 }

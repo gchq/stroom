@@ -24,11 +24,11 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.task.api.TaskContext;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Location;
-import stroom.xml.converter.ds3.DS3Reader;
+import stroom.pipeline.xml.converter.ds3.DS3Reader;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ import java.util.Set;
 public class SteppingController {
     private final Set<ElementMonitor> monitors = new HashSet<>();
 
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
     private final LocationFactoryProxy locationFactory;
     private final SteppingResponseCache steppingResponseCache;
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -57,11 +57,11 @@ public class SteppingController {
     private TaskContext taskContext;
 
     @Inject
-    SteppingController(final StreamHolder streamHolder,
+    SteppingController(final MetaHolder metaHolder,
                        final LocationFactoryProxy locationFactory,
                        final SteppingResponseCache steppingResponseCache,
                        final ErrorReceiverProxy errorReceiverProxy) {
-        this.streamHolder = streamHolder;
+        this.metaHolder = metaHolder;
         this.locationFactory = locationFactory;
         this.steppingResponseCache = steppingResponseCache;
         this.errorReceiverProxy = errorReceiverProxy;
@@ -140,7 +140,7 @@ public class SteppingController {
      */
     public boolean endRecord(final Locator locator, final long currentRecordNo) {
         // Get the current stream number.
-        final long currentStreamNo = streamHolder.getStreamNo() + 1;
+        final long currentStreamNo = metaHolder.getStreamNo() + 1;
 
         if (Thread.currentThread().isInterrupted()) {
             return true;
@@ -189,7 +189,7 @@ public class SteppingController {
 
                 // Create a location for each monitoring filter to store data
                 // against.
-                foundLocation = new StepLocation(streamHolder.getStream().getId(), currentStreamNo, currentRecordNo);
+                foundLocation = new StepLocation(metaHolder.getMeta().getId(), currentStreamNo, currentRecordNo);
                 steppingResponseCache.setStepData(foundLocation, stepData);
 
                 // We want to exit early if we have found a record and are
@@ -273,7 +273,7 @@ public class SteppingController {
      */
     private boolean isRecordPositionOk(final long currentRecordNo) {
         // final PipelineStepTask request = controller.getRequest();
-        final long currentStreamNo = streamHolder.getStreamNo() + 1;
+        final long currentStreamNo = metaHolder.getStreamNo() + 1;
 
         // If we aren't using a step location as a reference point to look
         // before or after then the location will always be ok.

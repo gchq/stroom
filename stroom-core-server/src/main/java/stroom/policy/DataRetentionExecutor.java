@@ -19,12 +19,12 @@ package stroom.policy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.cluster.lock.api.ClusterLockService;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.DataRetentionAgeUtil;
-import stroom.dictionary.DictionaryStore;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.entity.shared.Period;
-import stroom.entity.util.XMLMarshallerUtil;
-import stroom.jobsystem.ClusterLockService;
+import stroom.util.xml.XMLMarshallerUtil;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -235,9 +235,9 @@ public class DataRetentionExecutor {
 //                        final Progress progress = new Progress(ageRange, rowCount);
 //                        Range<Long> streamIdRange = new Range<>(0L, null);
 //                        while (more && !Thread.currentThread().isInterrupted()) {
-//                            if (progress.getStreamId() != null) {
+//                            if (progress.getMetaId() != null) {
 //                                // Process from the next stream id onwards.
-//                                streamIdRange = new Range<>(progress.getStreamId() + 1, null);
+//                                streamIdRange = new Range<>(progress.getMetaId() + 1, null);
 //                            }
 //
 //                            more = finder.findMatches(ageRange, streamIdRange, batchSize, activeRules, ageMap, taskContext, progress, streamIdDeleteList);
@@ -362,8 +362,8 @@ public class DataRetentionExecutor {
             final List<DataRetentionRule> activeRules = new ArrayList<>();
 
             // Find out which fields are used by the expressions so we don't have to do unnecessary joins.
-            fieldSet.add(MetaDataSource.STREAM_ID);
-            fieldSet.add(MetaDataSource.CREATE_TIME);
+            fieldSet.add(MetaFieldNames.ID);
+            fieldSet.add(MetaFieldNames.CREATE_TIME);
 
             // Also make sure we create a list of rules that are enabled and have at least one enabled term.
             rules.forEach(rule -> {

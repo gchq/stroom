@@ -69,7 +69,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
             @Override
             public String getValue(final CacheNodeRow row) {
-                return row.getNode().getName();
+                return row.getNodeName();
             }
         }, "Node", MEDIUM_COL);
 
@@ -108,7 +108,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                 return "Clear";
             }
         };
-        clearColumn.setFieldUpdater((index, row, value) -> dispatcher.exec(new CacheClearAction(row.getCacheInfo().getName(), row.getNode())));
+        clearColumn.setFieldUpdater((index, row, value) -> dispatcher.exec(new CacheClearAction(row.getCacheInfo().getName(), row.getNodeName())));
         getView().addColumn(clearColumn, "</br>", 50);
 
         getView().addEndColumn(new EndColumn<>());
@@ -138,7 +138,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         final CacheInfo cacheInfo = row.getCacheInfo();
 
         final StringBuilder sb = new StringBuilder();
-        TooltipUtil.addHeading(sb, row.getNode().getName());
+        TooltipUtil.addHeading(sb, row.getNodeName());
 
         final Map<String, String> map = cacheInfo.getMap();
         map.keySet().stream().sorted(Comparator.naturalOrder()).forEachOrdered(k -> {

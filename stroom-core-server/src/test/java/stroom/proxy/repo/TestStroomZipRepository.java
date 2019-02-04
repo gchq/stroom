@@ -4,7 +4,7 @@ package stroom.proxy.repo;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.AttributeMap;
+import stroom.meta.shared.AttributeMap;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;

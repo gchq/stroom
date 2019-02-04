@@ -24,8 +24,8 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.config.global.api.ConfigProperty;
-import stroom.config.global.api.LoadGlobalConfigAction;
-import stroom.config.global.api.SaveGlobalConfigAction;
+import stroom.config.global.api.FetchGlobalConfigAction;
+import stroom.config.global.api.UpdateGlobalConfigAction;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -81,7 +81,7 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
 
         if (configProperty.getId() != null) {
             // Reload it so we always have the latest version
-            final LoadGlobalConfigAction action = new LoadGlobalConfigAction(configProperty);
+            final FetchGlobalConfigAction action = new FetchGlobalConfigAction(configProperty.getId());
             dispatcher.exec(action).onSuccess(result -> {
                 setEntity(result);
                 read();
@@ -134,7 +134,7 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
         }
 
         // Save.
-        dispatcher.exec(new SaveGlobalConfigAction(getEntity())).onSuccess(result -> {
+        dispatcher.exec(new UpdateGlobalConfigAction(getEntity())).onSuccess(result -> {
             setEntity(result);
             if (hideOnSave) {
                 hide();
