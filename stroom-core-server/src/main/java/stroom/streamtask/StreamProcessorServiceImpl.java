@@ -23,7 +23,6 @@ import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.util.HqlBuilder;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
@@ -32,7 +31,6 @@ import stroom.streamtask.shared.Processor;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
-import java.util.Set;
 
 @Singleton
 public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<Processor, FindStreamProcessorCriteria>
@@ -44,6 +42,12 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<Processo
                                final Security security) {
         super(entityManager, security);
         this.security = security;
+    }
+
+    @Override
+    public Processor loadByUuid(final String uuid) {
+        // TODO : @66 IMPLEMENT
+        return null;
     }
 
     @Override

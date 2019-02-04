@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.meta.impl.db'
 
 dependencies {
     implementation project(':stroom-cluster-lock:stroom-cluster-lock-api')
+    implementation project(':stroom-cluster-lock:stroom-cluster-lock-impl-mock')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-meta:stroom-meta-impl-db-gen')
     implementation project(':stroom-meta:stroom-meta-api')

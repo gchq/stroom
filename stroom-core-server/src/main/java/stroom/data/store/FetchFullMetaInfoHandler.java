@@ -67,8 +67,11 @@ class FetchFullMetaInfoHandler extends AbstractTaskHandler<FetchFullMetaInfoActi
         entries.add(new Entry("Stream Type", meta.getTypeName()));
         entries.add(new Entry("Feed", meta.getFeedName()));
 
-        if (meta.getProcessorId() != null) {
-            entries.add(new Entry("Processor Id", String.valueOf(meta.getProcessorId())));
+        if (meta.getProcessorUuid() != null) {
+            entries.add(new Entry("Processor", meta.getProcessorUuid()));
+        }
+        if (meta.getProcessorFilterUuid() != null) {
+            entries.add(new Entry("Processor Filter", meta.getProcessorFilterUuid()));
         }
         if (meta.getPipelineUuid() != null) {
             entries.add(new Entry("Processor Pipeline", meta.getPipelineUuid()));

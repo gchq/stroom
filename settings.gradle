@@ -36,6 +36,7 @@ include 'stroom-cache:stroom-cache-impl'
 include 'stroom-cluster-lock:stroom-cluster-lock-api'
 include 'stroom-cluster-lock:stroom-cluster-lock-impl-db'
 include 'stroom-cluster-lock:stroom-cluster-lock-impl-db-gen'
+include 'stroom-cluster-lock:stroom-cluster-lock-impl-mock'
 
 // Config
 include 'stroom-config:stroom-config-app'
@@ -114,6 +115,9 @@ include 'stroom-importexport:stroom-importexport-migration'
 include 'stroom-index:stroom-index-shared'
 include 'stroom-index:stroom-index-server'
 include 'stroom-index:stroom-index-client'
+include 'stroom-index:stroom-index-api'
+include 'stroom-index:stroom-index-impl-db'
+include 'stroom-index:stroom-index-impl-db-gen'
 
 // Kafka
 include 'stroom-kafka:stroom-kafka-shared'
@@ -152,6 +156,7 @@ include 'stroom-security:stroom-security-impl-mock'
 include 'stroom-security:stroom-security-client-api'
 include 'stroom-security:stroom-security-client'
 include 'stroom-security:stroom-security-impl-db'
+include 'stroom-security:stroom-security-impl-db-gen'
 
 // Statistics
 include 'stroom-statistics:stroom-statistics-api'
@@ -180,4 +185,3 @@ include 'stroom-test-common'
 // Util
 include 'stroom-util'
 include 'stroom-util-shared'
-

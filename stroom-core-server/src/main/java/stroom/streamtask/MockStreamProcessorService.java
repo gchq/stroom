@@ -39,6 +39,12 @@ public class MockStreamProcessorService extends MockEntityService<Processor, Fin
     }
 
     @Override
+    public Processor loadByUuid(final String uuid) {
+        // TODO : @66 IMPLEMENT
+        return null;
+    }
+
+    @Override
     public boolean isMatch(final FindStreamProcessorCriteria criteria, final Processor entity) {
         if (!super.isMatch(criteria, entity)) {
             return false;

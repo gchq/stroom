@@ -174,13 +174,13 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     }
 
     @Override
-    public void exec(final Processor streamProcessor,
-                     final ProcessorFilter streamProcessorFilter,
-                     final ProcessorFilterTask streamTask,
+    public void exec(final Processor processor,
+                     final ProcessorFilter processorFilter,
+                     final ProcessorFilterTask processorFilterTask,
                      final Source streamSource) {
-        this.streamProcessor = streamProcessor;
-        this.streamProcessorFilter = streamProcessorFilter;
-        this.streamTask = streamTask;
+        this.streamProcessor = processor;
+        this.streamProcessorFilter = processorFilter;
+        this.streamTask = processorFilterTask;
         this.streamSource = streamSource;
 
         // Record when processing began so we know how long it took
@@ -192,14 +192,15 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
         // Initialise the helper class that will ensure we only keep the latest output for this stream source and processor.
         final Meta meta = streamSource.getMeta();
-        supersededOutputHelper.init(meta, streamProcessor, streamTask, startTime);
+        supersededOutputHelper.init(meta, processor, processorFilterTask, startTime);
 
         // Setup the process info writer.
         try (final ProcessInfoOutputStreamProvider processInfoOutputStreamProvider = new ProcessInfoOutputStreamProvider(streamStore,
                 metaData,
                 meta,
-                streamProcessor,
-                streamTask,
+                processor,
+                processorFilter,
+                processorFilterTask,
                 recordCount,
                 errorReceiverProxy,
                 supersededOutputHelper)) {
@@ -504,8 +505,9 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         private final Store streamStore;
         private final MetaData metaData;
         private final Meta meta;
-        private final Processor streamProcessor;
-        private final ProcessorFilterTask streamTask;
+        private final Processor processor;
+        private final ProcessorFilter processorFilter;
+        private final ProcessorFilterTask processorFilterTask;
         private final RecordCount recordCount;
         private final ErrorReceiverProxy errorReceiverProxy;
         private final SupersededOutputHelper supersededOutputHelper;
@@ -516,16 +518,18 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         ProcessInfoOutputStreamProvider(final Store streamStore,
                                         final MetaData metaData,
                                         final Meta meta,
-                                        final Processor streamProcessor,
-                                        final ProcessorFilterTask streamTask,
+                                        final Processor processor,
+                                        final ProcessorFilter processorFilter,
+                                        final ProcessorFilterTask processorFilterTask,
                                         final RecordCount recordCount,
                                         final ErrorReceiverProxy errorReceiverProxy,
                                         final SupersededOutputHelper supersededOutputHelper) {
             this.streamStore = streamStore;
             this.metaData = metaData;
             this.meta = meta;
-            this.streamProcessor = streamProcessor;
-            this.streamTask = streamTask;
+            this.processor = processor;
+            this.processorFilter = processorFilter;
+            this.processorFilterTask = processorFilterTask;
             this.recordCount = recordCount;
             this.errorReceiverProxy = errorReceiverProxy;
             this.supersededOutputHelper = supersededOutputHelper;
@@ -548,16 +552,20 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         @Override
         public OutputStream getOutputStream(final byte[] header, final byte[] footer) {
             if (processInfoOutputStream == null) {
-                Integer processorId = null;
+                String processorUuid = null;
+                String processorFilterUuid = null;
                 String pipelineUuid = null;
-                Long streamTaskId = null;
+                Long processorTaskId = null;
 
-                if (streamProcessor != null) {
-                    processorId = (int) streamProcessor.getId();
-                    pipelineUuid = streamProcessor.getPipelineUuid();
+                if (processor != null) {
+                    processorUuid = processor.getUuid();
+                    pipelineUuid = processor.getPipelineUuid();
                 }
-                if (streamTask != null) {
-                    streamTaskId = streamTask.getId();
+                if (processorFilter != null) {
+                    processorFilterUuid = processorFilter.getUuid();
+                }
+                if (processorFilterTask != null) {
+                    processorTaskId = processorFilterTask.getId();
                 }
 
                 // Create a processing info stream to write all processing
@@ -566,9 +574,10 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                         .feedName(meta.getFeedName())
                         .typeName(StreamTypeNames.ERROR)
                         .parent(meta)
-                        .processorId(processorId)
+                        .processorUuid(processorUuid)
+                        .processorFilterUuid(processorFilterUuid)
                         .pipelineUuid(pipelineUuid)
-                        .processorTaskId(streamTaskId)
+                        .processorTaskId(processorTaskId)
                         .build();
 
                 processInfoStreamTarget = streamStore.openStreamTarget(dataProperties);

@@ -17,8 +17,11 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.test.TempDir;
+import stroom.util.test.TempDirExtension;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -30,10 +33,11 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(TempDirExtension.class)
 class TestBlockGZIPStreams {
     @Test
-    void testSimple() throws IOException {
-        final Path testFile = Files.createTempFile(FileUtil.getTempDir(), "test", ".bgz");
+    void testSimple(@TempDir Path tempDir) throws IOException {
+        final Path testFile = Files.createTempFile(tempDir, "test", ".bgz");
         FileUtil.deleteFile(testFile);
         final OutputStream os = new BufferedOutputStream(new BlockGZIPOutputFile(testFile, 100));
 

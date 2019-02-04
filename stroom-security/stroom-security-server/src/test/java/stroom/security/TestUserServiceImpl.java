@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.UserJooq;
+import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 
 import java.util.List;
@@ -39,7 +39,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestUserServiceImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestUserServiceImpl.class);
 
-    private static MySQLContainer dbContainer = new MySQLContainer();//= null;//
+    private static MySQLContainer dbContainer = new MySQLContainer()
+            .withDatabaseName(TestModule.DATABASE_NAME);//= null;//pu
 
     private static Injector injector;
 
@@ -137,11 +138,11 @@ class TestUserServiceImpl {
 
         final Set<String> findUsers = userService.find(new FindUserCriteria(false))
                 .stream()
-                .map(UserJooq::getUuid)
+                .map(User::getUuid)
                 .collect(Collectors.toSet());
         final Set<String> findGroups = userService.find(new FindUserCriteria(true))
                 .stream()
-                .map(UserJooq::getUuid)
+                .map(User::getUuid)
                 .collect(Collectors.toSet());
 
         assertThat(findUsers).contains(user1.getUuid(), user2.getUuid());
@@ -155,7 +156,7 @@ class TestUserServiceImpl {
     private UserRef createUser(final String baseName) {
         UserRef userRef = userService.createUser(String.format("%s_%s", baseName, UUID.randomUUID()));
         assertThat(userRef).isNotNull();
-        final UserJooq user = userService.loadByUuid(userRef.getUuid());
+        final User user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
         return UserRefFactory.create(user);
     }
@@ -163,7 +164,7 @@ class TestUserServiceImpl {
     private UserRef createUserGroup(final String baseName) {
         UserRef userRef = userService.createUserGroup(String.format("%s_%s", baseName, UUID.randomUUID()));
         assertThat(userRef).isNotNull();
-        final UserJooq user = userService.loadByUuid(userRef.getUuid());
+        final User user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
         return UserRefFactory.create(user);
     }

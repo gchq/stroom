@@ -104,13 +104,13 @@ interface Values {
 const EditUserPanel = ({ selectedUser, onSelection }: UserSelectionState) => (
   <HorizontalPanel
     title={
-      selectedUser!.group
+      selectedUser!.isGroup
         ? `Users in Group ${selectedUser!.name}`
         : `Groups for User ${selectedUser!.name}`
     }
     onClose={() => onSelection()}
     content={
-      selectedUser!.group ? (
+      selectedUser!.isGroup ? (
         <UsersInGroup group={selectedUser!} />
       ) : (
         <GroupsForUser user={selectedUser!} />

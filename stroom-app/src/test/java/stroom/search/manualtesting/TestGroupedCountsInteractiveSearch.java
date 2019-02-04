@@ -35,14 +35,14 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.search.AbstractSearchTest;
-import stroom.search.CommonIndexingTest;
+import stroom.search.CommonIndexingTestHelper;
 import stroom.search.LuceneSearchResponseCreatorManager;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.shard.IndexShardSearchConfig;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
-import stroom.util.io.FileUtil;
+import stroom.util.test.TempDir;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
@@ -59,7 +59,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 // This spring/junit configuration is copied from AbstractCoreIntegrationTest and StroomIntegrationTest
 // and it is so we can manually run tests using state from a previous run.
-
 class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestGroupedCountsInteractiveSearch.class);
 
@@ -70,9 +69,11 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     private static final int STREAM_ROW_COUNT = 100_000;
     private static final int STREAM_COUNT = 100;
     private static final int MAX_DOCS_PER_SHARD = 10_000;
-    Path testDir = FileUtil.getTempDir();
+
+    @TempDir
+    Path testDir;
     @Inject
-    private CommonIndexingTest commonIndexingTest;
+    private CommonIndexingTestHelper commonIndexingTestHelper;
     @Inject
     private IndexStore indexStore;
     @Inject
@@ -122,7 +123,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
 //        } catch (IOException e) {
 //            throw new RuntimeException(e);
 //        }
-        commonIndexingTest.setup(dataFiles, OptionalInt.of(MAX_DOCS_PER_SHARD));
+        commonIndexingTestHelper.setup(dataFiles, OptionalInt.of(MAX_DOCS_PER_SHARD));
 
 //        try {
 //            Files.deleteIfExists(dataFile);
@@ -201,7 +202,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
                 .build();
 
         List<Field> fields = Arrays.asList(groupedUserId, countField);
-        final DocRef resultPipeline = commonIndexingTest.getSearchResultPipeline();
+        final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
 
         final TableSettings tableSettings = new TableSettings.Builder()
                 .addFields(fields)

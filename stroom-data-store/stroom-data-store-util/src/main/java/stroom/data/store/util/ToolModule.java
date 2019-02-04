@@ -26,6 +26,7 @@ public class ToolModule extends AbstractModule {
         install(new CacheModule());
         install(new stroom.activity.impl.mock.MockActivityModule());
         install(new stroom.cluster.impl.MockClusterModule());
+        install(new stroom.cluster.lock.impl.mock.MockClusterLockModule());
         install(new MetaDbModule());
         install(new stroom.data.store.impl.fs.FileSystemDataStoreModule());
         install(new stroom.persist.EntityManagerModule());

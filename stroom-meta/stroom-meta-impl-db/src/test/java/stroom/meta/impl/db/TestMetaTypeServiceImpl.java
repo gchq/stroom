@@ -20,6 +20,7 @@ package stroom.meta.impl.db;
 import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import stroom.cluster.lock.impl.mock.MockClusterLockModule;
 import stroom.meta.impl.db.MetaDbModule;
 import stroom.meta.impl.db.MetaServiceImpl;
 import stroom.meta.impl.db.MetaTypeServiceImpl;
@@ -37,7 +38,7 @@ class TestMetaTypeServiceImpl {
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(new MetaDbModule(), new MockSecurityContextModule()).injectMembers(this);
+        Guice.createInjector(new MetaDbModule(), new MockClusterLockModule(), new MockSecurityContextModule()).injectMembers(this);
     }
 
     @Test

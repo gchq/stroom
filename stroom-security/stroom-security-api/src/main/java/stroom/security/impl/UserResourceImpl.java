@@ -3,7 +3,7 @@ package stroom.security.impl;
 import stroom.security.dao.UserDao;
 import stroom.security.rest.CreateDTO;
 import stroom.security.rest.UserResource;
-import stroom.security.shared.UserJooq;
+import stroom.security.shared.User;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
@@ -25,7 +25,7 @@ public class UserResourceImpl implements UserResource {
     public Response get(final String name,
                               final Boolean isGroup,
                               final String uuid) {
-        final List<UserJooq> users = new ArrayList<>();
+        final List<User> users = new ArrayList<>();
 
         // If all the identification fields are null, just do a find which should return them all
         if (null == name && null == uuid) {
@@ -45,7 +45,7 @@ public class UserResourceImpl implements UserResource {
             }
         }
 
-        final List<UserJooq> distinct = users.stream()
+        final List<User> distinct = users.stream()
                 .distinct()
                 .collect(Collectors.toList());
 
@@ -54,20 +54,20 @@ public class UserResourceImpl implements UserResource {
 
     @Override
     public Response findUsersInGroup(final String groupUuid) {
-        final List<UserJooq> users = userDao.findUsersInGroup(groupUuid);
+        final List<User> users = userDao.findUsersInGroup(groupUuid);
 
         return Response.ok(users).build();
     }
 
     @Override
     public Response findGroupsForUser(final String userUuid) {
-        final List<UserJooq> groups = userDao.findGroupsForUser(userUuid);
+        final List<User> groups = userDao.findGroupsForUser(userUuid);
         return Response.ok(groups).build();
     }
 
     @Override
     public Response create(final CreateDTO createDTO) {
-        UserJooq user;
+        User user;
 
         if (null != createDTO.getGroup() && createDTO.getGroup()) {
             user = userDao.createUser(createDTO.getName());
@@ -80,36 +80,24 @@ public class UserResourceImpl implements UserResource {
 
     @Override
     public Response deleteUser(final String uuid) {
-        final Boolean ok = userDao.deleteUser(uuid);
+        userDao.deleteUser(uuid);
 
-        if (ok) {
-            return Response.noContent().build();
-        } else {
-            return Response.notModified().build();
-        }
+        return Response.noContent().build();
     }
 
     @Override
     public Response addUserToGroup(final String userUuid,
                                   final String groupUuid) {
-        final Boolean ok = userDao.addUserToGroup(userUuid, groupUuid);
+        userDao.addUserToGroup(userUuid, groupUuid);
 
-        if (ok) {
-            return Response.noContent().build();
-        } else {
-            return Response.notModified().build();
-        }
+        return Response.noContent().build();
     }
 
     @Override
     public Response removeUserFromGroup(final String userUuid,
                                        final String groupUuid) {
-        final Boolean ok = userDao.removeUserFromGroup(userUuid, groupUuid);
+        userDao.removeUserFromGroup(userUuid, groupUuid);
 
-        if (ok) {
-            return Response.noContent().build();
-        } else {
-            return Response.notModified().build();
-        }
+        return Response.noContent().build();
     }
 }

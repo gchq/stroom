@@ -3,12 +3,13 @@ package stroom.meta.impl.db;
 import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import stroom.cluster.lock.impl.mock.MockClusterLockModule;
+import stroom.entity.shared.BaseResultList;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.Status;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaFieldNames;
-import stroom.entity.shared.BaseResultList;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -25,7 +26,7 @@ class TestMetaServiceImpl {
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(new MetaDbModule(), new MockSecurityContextModule()).injectMembers(this);
+        Guice.createInjector(new MetaDbModule(), new MockClusterLockModule(), new MockSecurityContextModule()).injectMembers(this);
     }
 
     @Test
@@ -53,8 +54,9 @@ class TestMetaServiceImpl {
         return new MetaProperties.Builder()
                 .createMs(System.currentTimeMillis())
                 .feedName(feedName)
+                .processorUuid("12345")
+                .processorFilterUuid("12345")
                 .pipelineUuid("PIPELINE_UUID")
-                .processorId(1)
                 .typeName("TEST_STREAM_TYPE")
                 .build();
     }

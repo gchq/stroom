@@ -21,7 +21,7 @@ import stroom.entity.shared.ResultList;
 import stroom.security.shared.FetchUserRefAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.UserJooq;
+import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 import stroom.task.api.AbstractTaskHandler;
 
@@ -65,7 +65,7 @@ class FetchUserRefHandler
                 return BaseResultList.createPageLimitedList(list, findUserCriteria.getPageRequest());
             }
 
-            final List<UserJooq> users = userService.find(findUserCriteria);
+            final List<User> users = userService.find(findUserCriteria);
             final List<UserRef> userRefs = new ArrayList<>();
             users.forEach(user -> userRefs.add(UserRefFactory.create(user)));
             return new BaseResultList<>(userRefs, 0L, (long) users.size(), false);

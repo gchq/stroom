@@ -105,13 +105,13 @@ public class StreamAppender extends AbstractAppender {
             throw new ProcessException("Stream type not specified");
         }
 
-        Integer processorId = null;
+        String processorUuid = null;
         String pipelineUuid = null;
         Long streamTaskId = null;
 
         final Processor processor = streamProcessorHolder.getStreamProcessor();
         if (processor != null) {
-            processorId = (int) processor.getId();
+            processorUuid = processor.getUuid();
             pipelineUuid = processor.getPipelineUuid();
         }
         if (streamProcessorHolder.getStreamTask() != null) {
@@ -122,7 +122,7 @@ public class StreamAppender extends AbstractAppender {
                 .feedName(feed)
                 .typeName(streamType)
                 .parent(parentMeta)
-                .processorId(processorId)
+                .processorUuid(processorUuid)
                 .pipelineUuid(pipelineUuid)
                 .processorTaskId(streamTaskId)
                 .build();

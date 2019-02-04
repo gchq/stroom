@@ -25,7 +25,7 @@ BEGIN
     INSERT INTO config (id, version, create_time_ms, create_user, update_time_ms, update_user, name, val)
     SELECT ID, 1, CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, VAL
     FROM GLOB_PROP
-    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM activity)
+    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM config)
     ORDER BY ID;
 
     -- Work out what to set our auto_increment start value to

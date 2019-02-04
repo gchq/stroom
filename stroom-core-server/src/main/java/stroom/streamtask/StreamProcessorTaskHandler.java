@@ -111,7 +111,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                     }
 
                     // Don't process any streams that we have already created
-                    if (meta.getProcessorId() != null && meta.getProcessorId() == destStreamProcessor.getId()) {
+                    if (meta.getProcessorUuid() != null && meta.getProcessorUuid().equals(destStreamProcessor.getUuid())) {
                         complete = true;
                         LOGGER.warn("Skipping data that we seem to have created (avoid processing forever) {} {}", meta,
                                 destStreamProcessor);

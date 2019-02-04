@@ -4,7 +4,8 @@ public class MetaProperties {
     private Long parentId;
     private String typeName;
     private String feedName;
-    private Integer processorId;
+    private String processorUuid;
+    private String processorFilterUuid;
     private String pipelineUuid;
     private Long processorTaskId;
     private Long createMs;
@@ -23,8 +24,12 @@ public class MetaProperties {
         return typeName;
     }
 
-    public Integer getProcessorId() {
-        return processorId;
+    public String getProcessorUuid() {
+        return processorUuid;
+    }
+
+    public String getProcessorFilterUuid() {
+        return processorFilterUuid;
     }
 
     public String getPipelineUuid() {
@@ -89,8 +94,13 @@ public class MetaProperties {
             return this;
         }
 
-        public Builder processorId(final Integer processorId) {
-            dp.processorId = processorId;
+        public Builder processorFilterUuid(final String processorFilterUuid) {
+            dp.processorFilterUuid = processorFilterUuid;
+            return this;
+        }
+
+        public Builder processorUuid(final String processorUuid) {
+            dp.processorUuid = processorUuid;
             return this;
         }
 
@@ -124,7 +134,7 @@ public class MetaProperties {
             properties.parentId = dp.parentId;
             properties.typeName = dp.typeName;
             properties.feedName = dp.feedName;
-            properties.processorId = dp.processorId;
+            properties.processorUuid = dp.processorUuid;
             properties.pipelineUuid = dp.pipelineUuid;
             properties.processorTaskId = dp.processorTaskId;
             properties.createMs = dp.createMs;

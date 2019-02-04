@@ -38,7 +38,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.util.shared.EqualsUtil;
 import stroom.explorer.shared.HasNodeState;
 import stroom.widget.spinner.client.SpinnerSmall;
-import stroom.widget.util.client.DoubleSelectTest;
+import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectEvent.Handler;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -53,7 +53,7 @@ public class ExplorerTree extends AbstractExplorerTree {
     private final MultiSelectionModel<ExplorerNode> selectionModel;
     private final MaxScrollPanel scrollPanel;
     private final CellTable<ExplorerNode> cellTable;
-    private final DoubleSelectTest doubleClickTest = new DoubleSelectTest();
+    private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     private final boolean allowMultiSelect;
     private String expanderClassName;
 

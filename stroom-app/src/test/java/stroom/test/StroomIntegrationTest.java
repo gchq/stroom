@@ -22,10 +22,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomTest;
+import stroom.util.test.TempDir;
+import stroom.util.test.TempDirExtension;
 import stroom.util.test.TestState;
 import stroom.util.test.TestState.State;
 
@@ -35,11 +38,14 @@ import java.nio.file.Path;
 /**
  * This class should be common to all component and integration tests.
  */
+@ExtendWith(TempDirExtension.class)
 public abstract class StroomIntegrationTest implements StroomTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomIntegrationTest.class);
 
     private static final boolean TEAR_DOWN_DATABASE_BETWEEEN_TESTS = true;
     private static boolean XML_SCHEMAS_DOWNLOADED = false;
+
+    private Path testTempDir;
 
     @Inject
     private CommonTestControl commonTestControl;
@@ -72,11 +78,16 @@ public abstract class StroomIntegrationTest implements StroomTest {
      * Initialise required database entities.
      */
     @BeforeEach
-    void before(final TestInfo testInfo) {
+    void before(final TestInfo testInfo, @TempDir final Path tempDir) {
         LOGGER.info(String.format("Started test: %s::%s", testInfo.getTestClass().get().getName(), testInfo.getDisplayName()));
 
         final State state = TestState.getState();
         state.incrementTestCount();
+
+        if (tempDir == null) {
+            throw new NullPointerException("Temp dir is null");
+        }
+        this.testTempDir = tempDir;
 
         // Setup the database if this is the first test running for this test
         // class or if we always want to recreate the DB between tests.
@@ -163,6 +174,6 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
     @Override
     public Path getCurrentTestDir() {
-        return FileUtil.getTempDir();
+        return testTempDir;
     }
 }

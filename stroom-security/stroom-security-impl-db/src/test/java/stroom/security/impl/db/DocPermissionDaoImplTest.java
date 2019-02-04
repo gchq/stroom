@@ -12,7 +12,7 @@ import stroom.docref.DocRef;
 import stroom.security.dao.DocumentPermissionDao;
 import stroom.security.dao.UserDao;
 import stroom.security.shared.DocumentPermissionJooq;
-import stroom.security.shared.UserJooq;
+import stroom.security.shared.User;
 
 import java.util.Optional;
 import java.util.Set;
@@ -22,12 +22,12 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class DocPermissionDaoImplTest {
+class DocPermissionDaoImplTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserDaoImplTest.class);
 
-    private static MySQLContainer dbContainer = new MySQLContainer();//= null;//
+    private static MySQLContainer dbContainer = new MySQLContainer()
+            .withDatabaseName(Stroom.STROOM.getName());//= null;//
 
-    private static Injector injector;
     private static UserDao userDao;
     private static DocumentPermissionDao documentPermissionDao;
 
@@ -35,29 +35,19 @@ public class DocPermissionDaoImplTest {
     private static final String PERMISSION_USE = "USE";
     private static final String PERMISSION_UPDATE = "UPDATE";
 
-//    DocumentPermissionJooq getPermissionsForDocument(DocRef document);
-//
-//    void addPermission(String userUuid, DocRef document, String permission);
-//
-//    void removePermission(String userUuid, DocRef document, String permission);
-//
-//    void clearDocumentPermissions(DocRef document);
-//
-//    void clearUserPermissions(String userUuid);
-
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         LOGGER.info(() -> "Before All - Start Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
 
-        injector = Guice.createInjector(new SecurityDbModule(), new TestModule(dbContainer));
+        Injector injector = Guice.createInjector(new SecurityDbModule(), new TestModule(dbContainer));
 
         userDao = injector.getInstance(UserDao.class);
         documentPermissionDao = injector.getInstance(DocumentPermissionDao.class);
     }
 
     @Test
-    public void testMissingUser() {
+    void testMissingUser() {
         // Given
         final String userUuid = UUID.randomUUID().toString();
         final DocRef docRef = createTestDocRef();
@@ -67,16 +57,16 @@ public class DocPermissionDaoImplTest {
     }
 
     @Test
-    public void testDocPermissions() {
+    void testDocPermissions() {
         final String userName1 = String.format("SomePerson_1_%s", UUID.randomUUID());
         final String userName2 = String.format("SomePerson_2_%s", UUID.randomUUID());
         final String userName3 = String.format("SomePerson_3_%s", UUID.randomUUID());
         final DocRef docRef1 = createTestDocRef();
         final DocRef docRef2 = createTestDocRef();
 
-        final UserJooq user1 = userDao.createUser(userName1);
-        final UserJooq user2 = userDao.createUser(userName2);
-        final UserJooq user3 = userDao.createUser(userName3);
+        final User user1 = userDao.createUser(userName1);
+        final User user2 = userDao.createUser(userName2);
+        final User user3 = userDao.createUser(userName3);
 
         // Create permissions for multiple documents to check that document selection is working correctly
         Stream.of(docRef1, docRef2).forEach(d -> {
@@ -131,8 +121,72 @@ public class DocPermissionDaoImplTest {
         assertThat(permissionsUser3Doc1_2).isEqualTo(Set.of(PERMISSION_USE));
     }
 
+    @Test
+    void testClearUserPermissions() {
+        // Given
+        final String userName1 = String.format("SomePerson_1_%s", UUID.randomUUID());
+        final String userName2 = String.format("SomePerson_2_%s", UUID.randomUUID());
+        final DocRef docRef1 = createTestDocRef();
+
+        final User user1 = userDao.createUser(userName1);
+        final User user2 = userDao.createUser(userName2);
+
+        // Create permissions for multiple documents to check that document selection is working correctly
+        documentPermissionDao.addPermission(user1.getUuid(), docRef1, PERMISSION_READ);
+        documentPermissionDao.addPermission(user1.getUuid(), docRef1, PERMISSION_USE);
+        documentPermissionDao.addPermission(user2.getUuid(), docRef1, PERMISSION_USE);
+
+        final Set<String> user1Doc1Before = documentPermissionDao.getPermissionsForDocumentForUser(docRef1, user1.getUuid());
+        assertThat(user1Doc1Before).isEqualTo(Set.of(PERMISSION_READ, PERMISSION_USE));
+
+        final Set<String> user2Doc1Before = documentPermissionDao.getPermissionsForDocumentForUser(docRef1, user2.getUuid());
+        assertThat(user2Doc1Before).isEqualTo(Set.of(PERMISSION_USE));
+
+        // When
+        documentPermissionDao.clearUserPermissions(user1.getUuid());
+
+        // Then
+        final Set<String> user1Doc1After = documentPermissionDao.getPermissionsForDocumentForUser(docRef1, user1.getUuid());
+        assertThat(user1Doc1After).isEmpty();
+
+        final Set<String> user2Doc1After = documentPermissionDao.getPermissionsForDocumentForUser(docRef1, user2.getUuid());
+        assertThat(user2Doc1After).isEqualTo(Set.of(PERMISSION_USE));
+    }
+
+    @Test
+    void testClearDocumentPermissions() {
+        // Given
+        final String userName1 = String.format("SomePerson_1_%s", UUID.randomUUID());
+        final DocRef docRef1 = createTestDocRef();
+        final DocRef docRef2 = createTestDocRef();
+
+        final User user1 = userDao.createUser(userName1);
+
+        // Create permissions for multiple documents to check that document selection is working correctly
+        Stream.of(docRef1, docRef2).forEach(d -> {
+            documentPermissionDao.addPermission(user1.getUuid(), d, PERMISSION_READ);
+            documentPermissionDao.addPermission(user1.getUuid(), d, PERMISSION_USE);
+        });
+
+        Stream.of(docRef1, docRef2).forEach(d -> {
+            final Set<String> permissionsBefore = documentPermissionDao.getPermissionsForDocumentForUser(docRef1, user1.getUuid());
+            assertThat(permissionsBefore).isEqualTo(Set.of(PERMISSION_READ, PERMISSION_USE));
+        });
+
+        // When
+        documentPermissionDao.clearDocumentPermissions(docRef1);
+
+        // Then
+        // The two documents will now have different permissions
+        final Set<String> user1Doc1After = documentPermissionDao.getPermissionsForDocumentForUser(docRef1, user1.getUuid());
+        assertThat(user1Doc1After).isEmpty();
+
+        final Set<String> user2Doc1After = documentPermissionDao.getPermissionsForDocumentForUser(docRef2, user1.getUuid());
+        assertThat(user2Doc1After).isEqualTo(Set.of(PERMISSION_READ, PERMISSION_USE));
+    }
+
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         LOGGER.info(() -> "After All - Stop Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::stop);
     }

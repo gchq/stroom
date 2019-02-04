@@ -1,34 +1,21 @@
 package stroom.security.impl.db;
 
-import org.jooq.Field;
 import org.jooq.Record;
-import org.jooq.SQLDialect;
-import org.jooq.Table;
-import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.security.dao.DocumentPermissionDao;
+import stroom.security.impl.db.tables.records.DocPermissionRecord;
 import stroom.security.shared.DocumentPermissionJooq;
 
 import javax.inject.Inject;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Set;
 
-import static org.jooq.impl.DSL.field;
-import static org.jooq.impl.DSL.table;
+import static stroom.security.impl.db.tables.DocPermission.DOC_PERMISSION;
+import static stroom.security.impl.db.tables.StroomUser.STROOM_USER;
 
 public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DocumentPermissionDaoImpl.class);
 
     private final ConnectionProvider connectionProvider;
-
-    private static final Table<Record> TABLE = table("doc_permission");
-    private static final Field<String> FIELD_USER_UUID = field("user_uuid", String.class);
-    private static final Field<String> FIELD_DOC_TYPE = field("doc_type", String.class);
-    private static final Field<String> FIELD_DOC_UUID = field("doc_uuid", String.class);
-    private static final Field<String> FIELD_PERMISSION = field("permission", String.class);
 
     @Inject
     public DocumentPermissionDaoImpl(final ConnectionProvider connectionProvider) {
@@ -38,100 +25,84 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
     @Override
     public Set<String> getPermissionsForDocumentForUser(final DocRef document,
                                                         final String userUuid) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            return DSL.using(connection, SQLDialect.MYSQL)
-                    .select()
-                    .from(TABLE)
-                    .where(FIELD_USER_UUID.equal(userUuid))
-                    .and(FIELD_DOC_TYPE.equal(document.getType()))
-                    .and(FIELD_DOC_UUID.equal(document.getUuid()))
-                    .fetchSet(FIELD_PERMISSION);
-        } catch (final SQLException | RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new SecurityException(e.getMessage(), e);
-        }
+        return JooqUtil.contextResult(connectionProvider, context ->
+                context.select()
+                        .from(DOC_PERMISSION)
+                        .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
+                        .and(DOC_PERMISSION.DOC_TYPE.eq(document.getType()))
+                        .and(DOC_PERMISSION.DOC_UUID.eq(document.getUuid()))
+                        .fetchSet(DOC_PERMISSION.PERMISSION)
+        );
     }
 
     @Override
     public DocumentPermissionJooq getPermissionsForDocument(final DocRef document) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DocumentPermissionJooq.Builder permissions = new DocumentPermissionJooq.Builder()
-                    .docType(document.getType())
-                    .docUuid(document.getUuid());
 
-            DSL.using(connection, SQLDialect.MYSQL)
-                    .select(FIELD_USER_UUID, FIELD_PERMISSION)
-                    .from(TABLE)
-                    .where(FIELD_DOC_TYPE.equal(document.getType()))
-                    .and(FIELD_DOC_UUID.equal(document.getUuid()))
-                    .fetch()
-                    .forEach(r -> permissions.permission(r.get(FIELD_USER_UUID), r.get(FIELD_PERMISSION)));
+        final DocumentPermissionJooq.Builder permissions = new DocumentPermissionJooq.Builder()
+                .docType(document.getType())
+                .docUuid(document.getUuid());
 
-            return permissions.build();
-        } catch (final SQLException | RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new SecurityException(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context ->
+                context.select()
+                        .from(DOC_PERMISSION)
+                        .where(DOC_PERMISSION.DOC_TYPE.eq(document.getType()))
+                        .and(DOC_PERMISSION.DOC_UUID.eq(document.getUuid()))
+                        .fetch()
+                        .forEach(r -> permissions.permission(r.get(DOC_PERMISSION.USER_UUID), r.get(DOC_PERMISSION.PERMISSION)))
+        );
+
+        return permissions.build();
     }
 
     @Override
     public void addPermission(final String userUuid,
                               final DocRef document,
                               final String permission) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            DSL.using(connection, SQLDialect.MYSQL)
-                    .insertInto(TABLE)
-                    .columns(FIELD_USER_UUID, FIELD_DOC_TYPE, FIELD_DOC_UUID, FIELD_PERMISSION)
-                    .values(userUuid, document.getType(), document.getUuid(), permission)
-                    .execute();
-        } catch (final SQLException | RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new SecurityException(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context -> {
+            final Record user = context.fetchOne(STROOM_USER, STROOM_USER.UUID.eq(userUuid));
+            if (null == user) {
+                throw new SecurityException(String.format("Could not find user: %s", userUuid));
+            }
+
+            final DocPermissionRecord r = context.newRecord(DOC_PERMISSION);
+            r.setUserUuid(userUuid);
+            r.setPermission(permission);
+            r.setDocType(document.getType());
+            r.setDocUuid(document.getUuid());
+            r.store();
+        });
     }
 
     @Override
     public void removePermission(final String userUuid,
                                  final DocRef document,
                                  final String permission) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            DSL.using(connection, SQLDialect.MYSQL)
-                    .deleteFrom(TABLE)
-                    .where(FIELD_USER_UUID.equal(userUuid))
-                    .and(FIELD_DOC_TYPE.equal(document.getType()))
-                    .and(FIELD_DOC_UUID.equal(document.getUuid()))
-                    .and(FIELD_PERMISSION.equal(permission))
-                    .execute();
-        } catch (final SQLException | RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new SecurityException(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context ->
+                context.deleteFrom(DOC_PERMISSION)
+                        .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
+                        .and(DOC_PERMISSION.DOC_TYPE.equal(document.getType()))
+                        .and(DOC_PERMISSION.DOC_UUID.equal(document.getUuid()))
+                        .and(DOC_PERMISSION.PERMISSION.eq(permission))
+                        .execute()
+        );
     }
 
     @Override
     public void clearDocumentPermissions(final DocRef document) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            DSL.using(connection, SQLDialect.MYSQL)
-                    .deleteFrom(TABLE)
-                    .where(FIELD_DOC_TYPE.equal(document.getType()))
-                    .and(FIELD_DOC_UUID.equal(document.getUuid()))
-                    .execute();
-        } catch (final SQLException | RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new SecurityException(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context ->
+                context.deleteFrom(DOC_PERMISSION)
+                        .where(DOC_PERMISSION.DOC_TYPE.equal(document.getType()))
+                        .and(DOC_PERMISSION.DOC_UUID.equal(document.getUuid()))
+                        .execute()
+        );
     }
 
     @Override
     public void clearUserPermissions(final String userUuid) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            DSL.using(connection, SQLDialect.MYSQL)
-                    .deleteFrom(TABLE)
-                    .where(FIELD_USER_UUID.equal(userUuid))
-                    .execute();
-        } catch (final SQLException | RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new SecurityException(e.getMessage(), e);
-        }
+        JooqUtil.context(connectionProvider, context ->
+                context.deleteFrom(DOC_PERMISSION)
+                        .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
+                        .execute()
+        );
     }
 }

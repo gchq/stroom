@@ -3,20 +3,20 @@ import * as loremIpsum from "lorem-ipsum";
 
 import { User } from "src/types";
 
-export const adminUser = {
+export const adminUser: User = {
   uuid: uuidv4(),
   name: "admin",
-  group: false
+  isGroup: false
 };
 
 export const generateTestUser = (): User => ({
   uuid: uuidv4(),
   name: loremIpsum({ count: 3, units: "words" }),
-  group: false
+  isGroup: false
 });
 
 export const generateTestGroup = (): User => ({
   uuid: uuidv4(),
   name: loremIpsum({ count: 3, units: "words" }),
-  group: true
+  isGroup: true
 });
