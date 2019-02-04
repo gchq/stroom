@@ -34,9 +34,6 @@ import java.io.UncheckedIOException;
  * found the input stream is treated as XML.
  */
 public class RawInputSegmentWriter {
-    // private static final int BYTES_PER_SEGMENT = 10000;
-    // private static final int TYPE_BUFFER_SIZE = 2000;
-
     /**
      * Writes an input stream to a segment output stream and inserts segment
      * boundaries at appropriate positions depending on the input type. The
