@@ -16,8 +16,6 @@
 
 package stroom.pipeline;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.test.ComparisonHelper;
@@ -28,8 +26,6 @@ import javax.inject.Inject;
 import java.nio.file.Path;
 
 abstract class AbstractFileAppenderTest extends AbstractAppenderTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFileAppenderTest.class);
-
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
 
@@ -40,11 +36,6 @@ abstract class AbstractFileAppenderTest extends AbstractAppenderTest {
               final String outputReference,
               final String encoding) {
         final Path tempDir = getCurrentTestDir();
-
-        // Make sure the config dir is set.
-        FileUtil.setTempDir(tempDir);
-
-        LOGGER.debug("Setting tempDir to {}", FileUtil.getCanonicalPath(tempDir));
 
         // Delete any output file.
         final String outputFileName = name + "_" + type;

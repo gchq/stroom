@@ -20,6 +20,9 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
+import stroom.util.test.TempDir;
+
+import java.nio.file.Path;
 
 
 public abstract class AbstractProcessIntegrationTest extends StroomIntegrationTest {
@@ -30,9 +33,9 @@ public abstract class AbstractProcessIntegrationTest extends StroomIntegrationTe
     }
 
     @BeforeEach
-    void before(final TestInfo testInfo) {
+    void before(final TestInfo testInfo, @TempDir final Path tempDir) {
         injector.injectMembers(this);
-        super.before(testInfo);
+        super.before(testInfo, tempDir);
         super.importSchemas(true);
     }
 }

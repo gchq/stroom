@@ -111,9 +111,6 @@ class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest {
 
             final Path testDir = getCurrentTestDir();
 
-            // Make sure the config dir is set.
-            FileUtil.setTempDir(testDir);
-
             // Delete any output file.
             final Path outputFile = testDir.resolve("XMLWithErrorsInTransform.xml");
             FileUtil.deleteFile(outputFile);

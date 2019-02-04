@@ -11,6 +11,8 @@ import stroom.util.io.FileUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -101,7 +103,7 @@ public class TempDirExtension implements ParameterResolver, TestInstancePostProc
             final String storeKey = tempDir.toAbsolutePath().toString();
             extensionContext.getStore(NAMESPACE).put(storeKey, closablePath);
             LOGGER.info("Created temporary directory {} with storeKey {}",
-                    tempDir.toAbsolutePath().toString(),
+                    FileUtil.getCanonicalPath(tempDir),
                     storeKey);
             return tempDir;
 //        }
@@ -126,8 +128,10 @@ public class TempDirExtension implements ParameterResolver, TestInstancePostProc
          */
         @Override
         public void close() throws Throwable {
-            LOGGER.debug("Deleting temporary directory (and its contents) {}", path.toAbsolutePath().toString());
-            FileUtil.deleteContents(path);
+            LOGGER.debug("Deleting temporary directory (and its contents) {}", FileUtil.getCanonicalPath(path));
+            if (!FileUtil.deleteContents(path)) {
+                throw new IOException("Unable to delete " + FileUtil.getCanonicalPath(path));
+            }
         }
     }
 }

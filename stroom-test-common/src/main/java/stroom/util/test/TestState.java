@@ -16,21 +16,13 @@
 
 package stroom.util.test;
 
-import stroom.util.io.FileUtil;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 public class TestState {
     /**
      * Record and modify the test state in a static thread local as we want to
      * reset in static beforeClass() method.
      */
     private static ThreadLocal<State> stateThreadLocal = ThreadLocal.withInitial(() -> {
-        final State state = new State();
-        state.create();
-        return state;
+        return new State();
     });
 
     public static State getState() {
@@ -38,52 +30,9 @@ public class TestState {
     }
 
     public static class State {
-        private Path testDir;
         private int classTestCount;
         private int threadTestCount;
         private boolean doneSetup;
-
-        public void create() {
-            try {
-                if (testDir == null) {
-                    final Path testDir = Files.createTempDirectory("stroom");
-                    FileUtil.setTempDir(testDir);
-//                    final Path rootTestDir = StroomTestUtil.createRootTestDir(initialTempPath);
-//                    testDir = StroomTestUtil.createPerThreadTestDir(rootTestDir);
-//
-//                    // Redirect the temp dir for the tests.
-//                    StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, FileUtil.getCanonicalPath(testDir), StroomProperties.Source.TEST);
-//
-//                    FileUtil.forgetTempDir();
-
-                    // Let tests update the database
-//                    StroomProperties.setOverrideProperty("stroom.jpaHbm2DdlAuto", "update", "test");
-//                    StroomProperties.setOverrideProperty("stroom.connectionTesterClassName",
-//                            "stroom.entity.util.StroomConnectionTesterOkOnException", "test");
-                }
-            } catch (final IOException e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeException(e.getMessage(), e);
-            } catch (final RuntimeException e) {
-                e.printStackTrace(System.err);
-                throw e;
-            }
-        }
-
-        public void destroy() {
-            try {
-                if (testDir != null) {
-                    FileUtil.deleteDir(testDir);
-                    FileUtil.forgetTempDir();
-//                    StroomProperties.removeOverrides();
-                }
-            } catch (final RuntimeException e) {
-                e.printStackTrace(System.err);
-                throw e;
-            } finally {
-                testDir = null;
-            }
-        }
 
         public void reset() {
             classTestCount = 0;
