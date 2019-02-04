@@ -75,9 +75,9 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                 criteria.obtainPageRequest().setOffset(0L);
                 criteria.obtainPageRequest().setLength(MAX_STREAM_TO_REPROCESS);
 
-                final BaseResultList<Meta> streams = metaService.find(criteria);
+                final BaseResultList<Meta> metaList = metaService.find(criteria);
 
-                if (!streams.isExact()) {
+                if (!metaList.isExact()) {
                     info.add(new ReprocessDataInfo(Severity.ERROR, "Results exceed " + MAX_STREAM_TO_REPROCESS
                             + " configure a pipeline processor for large data sets", null));
 
@@ -88,12 +88,11 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
 
                     final Map<Processor, CriteriaSet<Long>> streamToProcessorSet = new HashMap<>();
 
-                    for (final Meta meta : streams) {
-                        // We can only reprocess streams that have a stream
-                        // processor and a parent stream id.
-                        if (meta.getProcessorId() != null && meta.getParentMetaId() != null) {
-                            final Processor streamProcessor = streamProcessorService.loadByIdInsecure(meta.getProcessorId());
-                            streamToProcessorSet.computeIfAbsent(streamProcessor, k -> new CriteriaSet<>()).add(meta.getParentMetaId());
+                    for (final Meta meta : metaList) {
+                        // We can only reprocess streams that have a stream processor and a parent stream id.
+                        if (meta.getProcessorUuid() != null && meta.getParentMetaId() != null) {
+                            final Processor processor = streamProcessorService.loadByUuid(meta.getProcessorUuid());
+                            streamToProcessorSet.computeIfAbsent(processor, k -> new CriteriaSet<>()).add(meta.getParentMetaId());
                         } else {
                             skippingCount++;
                         }

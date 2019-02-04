@@ -3,10 +3,11 @@
 --
 CREATE TABLE IF NOT EXISTS meta_processor (
   id 				    int(11) NOT NULL AUTO_INCREMENT,
-  pipeline_uuid 	    varchar(255) NOT NULL,
-  processor_id   	    int(11) NOT NULL,
+  processor_uuid 	    varchar(255) DEFAULT NULL,
+  processor_filter_uuid varchar(255) DEFAULT NULL,
+  pipeline_uuid 	    varchar(255) DEFAULT NULL,
   PRIMARY KEY           (id),
-  UNIQUE KEY            processor_id (processor_id)
+  UNIQUE KEY            processor_uuid (processor_uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
@@ -18,8 +19,8 @@ CREATE PROCEDURE copy ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM_PROC' > 0) THEN
     INSERT
-    INTO meta_processor (id, pipeline_uuid, processor_id)
-    SELECT ID, PIPE_UUID, ID
+    INTO meta_processor (id, processor_uuid, pipeline_uuid)
+    SELECT ID, ID, PIPE_UUID
     FROM STRM_PROC
     WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM meta_processor)
     ORDER BY ID;

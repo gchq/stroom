@@ -8,11 +8,12 @@ import java.util.Objects;
 class MetaImpl implements Meta {
     private long id;
     private String feedName;
-    private String streamTypeName;
+    private String typeName;
+    private String processorUuid;
+    private String processorFilterUuid;
     private String pipelineUuid;
-    private Long parentStreamId;
-    private Long streamTaskId;
-    private Integer streamProcessorId;
+    private Long parentDataId;
+    private Long processTaskId;
     private Status status;
     private Long statusMs;
     private long createMs;
@@ -33,7 +34,17 @@ class MetaImpl implements Meta {
 
     @Override
     public String getTypeName() {
-        return streamTypeName;
+        return typeName;
+    }
+
+    @Override
+    public String getProcessorUuid() {
+        return processorUuid;
+    }
+
+    @Override
+    public String getProcessorFilterUuid() {
+        return processorFilterUuid;
     }
 
     @Override
@@ -43,17 +54,12 @@ class MetaImpl implements Meta {
 
     @Override
     public Long getParentMetaId() {
-        return parentStreamId;
+        return parentDataId;
     }
 
     @Override
     public Long getProcessTaskId() {
-        return streamTaskId;
-    }
-
-    @Override
-    public Integer getProcessorId() {
-        return streamProcessorId;
+        return processTaskId;
     }
 
     @Override
@@ -80,8 +86,8 @@ class MetaImpl implements Meta {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final MetaImpl stream = (MetaImpl) o;
-        return id == stream.id;
+        final MetaImpl meta = (MetaImpl) o;
+        return id == meta.id;
     }
 
     @Override
@@ -97,6 +103,24 @@ class MetaImpl implements Meta {
     public static class Builder {
         private final MetaImpl meta = new MetaImpl();
 
+        Builder() {
+        }
+
+        Builder(final Meta meta) {
+            id(meta.getId());
+            feedName(meta.getFeedName());
+            typeName(meta.getTypeName());
+            pipelineUuid(meta.getPipelineUuid());
+            processorUuid(meta.getProcessorUuid());
+            processorFilterUuid(meta.getProcessorFilterUuid());
+            parentDataId(meta.getParentMetaId());
+            processTaskId(meta.getProcessTaskId());
+            status(meta.getStatus());
+            statusMs(meta.getStatusMs());
+            createMs(meta.getCreateMs());
+            effectiveMs(meta.getEffectiveMs());
+        }
+
         public Builder id(final long id) {
             meta.id = id;
             return this;
@@ -107,8 +131,18 @@ class MetaImpl implements Meta {
             return this;
         }
 
-        public Builder streamTypeName(final String streamTypeName) {
-            meta.streamTypeName = streamTypeName;
+        public Builder typeName(final String typeName) {
+            meta.typeName = typeName;
+            return this;
+        }
+
+        public Builder processorUuid(final String processorUuid) {
+            meta.processorUuid = processorUuid;
+            return this;
+        }
+
+        public Builder processorFilterUuid(final String processorFilterUuid) {
+            meta.processorFilterUuid = processorFilterUuid;
             return this;
         }
 
@@ -117,18 +151,13 @@ class MetaImpl implements Meta {
             return this;
         }
 
-        public Builder parentStreamId(final Long parentStreamId) {
-            meta.parentStreamId = parentStreamId;
+        public Builder parentDataId(final Long parentDataId) {
+            meta.parentDataId = parentDataId;
             return this;
         }
 
-        public Builder streamTaskId(final Long streamTaskId) {
-            meta.streamTaskId = streamTaskId;
-            return this;
-        }
-
-        public Builder streamProcessorId(final Integer streamProcessorId) {
-            meta.streamProcessorId = streamProcessorId;
+        public Builder processTaskId(final Long processTaskId) {
+            meta.processTaskId = processTaskId;
             return this;
         }
 

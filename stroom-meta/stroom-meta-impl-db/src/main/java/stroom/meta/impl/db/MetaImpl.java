@@ -9,10 +9,11 @@ class MetaImpl implements Meta {
     private long id;
     private String feedName;
     private String typeName;
+    private String processorUuid;
+    private String processorFilterUuid;
     private String pipelineUuid;
     private Long parentDataId;
     private Long processTaskId;
-    private Integer processorId;
     private Status status;
     private Long statusMs;
     private long createMs;
@@ -37,6 +38,16 @@ class MetaImpl implements Meta {
     }
 
     @Override
+    public String getProcessorUuid() {
+        return processorUuid;
+    }
+
+    @Override
+    public String getProcessorFilterUuid() {
+        return processorFilterUuid;
+    }
+
+    @Override
     public String getPipelineUuid() {
         return pipelineUuid;
     }
@@ -49,11 +60,6 @@ class MetaImpl implements Meta {
     @Override
     public Long getProcessTaskId() {
         return processTaskId;
-    }
-
-    @Override
-    public Integer getProcessorId() {
-        return processorId;
     }
 
     @Override
@@ -105,9 +111,10 @@ class MetaImpl implements Meta {
             feedName(meta.getFeedName());
             typeName(meta.getTypeName());
             pipelineUuid(meta.getPipelineUuid());
+            processorUuid(meta.getProcessorUuid());
+            processorFilterUuid(meta.getProcessorFilterUuid());
             parentDataId(meta.getParentMetaId());
             processTaskId(meta.getProcessTaskId());
-            processorId(meta.getProcessorId());
             status(meta.getStatus());
             statusMs(meta.getStatusMs());
             createMs(meta.getCreateMs());
@@ -129,6 +136,16 @@ class MetaImpl implements Meta {
             return this;
         }
 
+        public Builder processorUuid(final String processorUuid) {
+            meta.processorUuid = processorUuid;
+            return this;
+        }
+
+        public Builder processorFilterUuid(final String processorFilterUuid) {
+            meta.processorFilterUuid = processorFilterUuid;
+            return this;
+        }
+
         public Builder pipelineUuid(final String pipelineUuid) {
             meta.pipelineUuid = pipelineUuid;
             return this;
@@ -141,11 +158,6 @@ class MetaImpl implements Meta {
 
         public Builder processTaskId(final Long processTaskId) {
             meta.processTaskId = processTaskId;
-            return this;
-        }
-
-        public Builder processorId(final Integer processorId) {
-            meta.processorId = processorId;
             return this;
         }
 
