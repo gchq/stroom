@@ -21,9 +21,7 @@ public class TestState {
      * Record and modify the test state in a static thread local as we want to
      * reset in static beforeClass() method.
      */
-    private static ThreadLocal<State> stateThreadLocal = ThreadLocal.withInitial(() -> {
-        return new State();
-    });
+    private static ThreadLocal<State> stateThreadLocal = ThreadLocal.withInitial(State::new);
 
     public static State getState() {
         return stateThreadLocal.get();
@@ -31,7 +29,6 @@ public class TestState {
 
     public static class State {
         private int classTestCount;
-        private int threadTestCount;
         private boolean doneSetup;
 
         public void reset() {
@@ -41,7 +38,6 @@ public class TestState {
 
         public void incrementTestCount() {
             classTestCount++;
-            threadTestCount++;
         }
 
         public boolean isDoneSetup() {

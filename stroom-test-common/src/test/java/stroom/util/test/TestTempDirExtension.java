@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTempDirExtension extends TempDirSuperClass {
-
     @Test
     void testInstanceDir() {
         assertThat(getInstanceTempDir()).isNotNull();
