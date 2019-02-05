@@ -27,7 +27,6 @@ dependencies {
     compile libs.hessian
     compile libs.guava
     compile libs.gwt_servlet
-    compile libs.commons_exec
     compile libs.commons_lang
     compile libs.commons_compress
     compile libs.commons_io

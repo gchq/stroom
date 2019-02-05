@@ -13,10 +13,8 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.util.test.StroomExpectedException;
 import stroom.util.test.StroomJUnit4ClassRunner;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -43,7 +41,6 @@ public class TestHeapHistogramStatisticsExecutor {
             final NodeCache nodeCache = new NodeCache(node1a);
 
             mockStroomPropertyService.setProperty(HeapHistogramService.CLASS_NAME_MATCH_REGEX_PROP_KEY, "^stroom\\..*$");
-            mockStroomPropertyService.setProperty(HeapHistogramService.JMAP_EXECUTABLE_PROP_KEY, "jmap");
 
             executor = new HeapHistogramStatisticsExecutor(heapHistogramService, mockInternalStatisticsReceiver, nodeCache);
         } catch (Exception e) {
@@ -120,23 +117,6 @@ public class TestHeapHistogramStatisticsExecutor {
                     .distinct()
                     .count() > 1);
         }
-    }
-
-    @Test
-    @StroomExpectedException(exception = {RuntimeException.class, IOException.class})
-    public void testExecBadExecutable() throws InterruptedException {
-        //Given
-        mockStroomPropertyService.setProperty(HeapHistogramService.JMAP_EXECUTABLE_PROP_KEY, "badNameForJmapExecutable");
-
-        //When
-        boolean thrownException = false;
-        try {
-            executor.exec();
-        } catch (Exception e) {
-            thrownException = true;
-        }
-
-        Assert.assertTrue(thrownException);
     }
 
     @Test

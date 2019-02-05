@@ -963,7 +963,7 @@ public class DefaultProperties {
         list.add(new GlobalProperty.Builder()
                 .name("stroom.node.status.heapHistogram.classNameMatchRegex")
                 .value("^stroom\\..*$")
-                .description("A single regex that will be used to filter classes from the jmap histogram internal statistic based on their name. e.g '^(stroom\\..*)$'. If no value is supplied all classes will be included. If a value is supplied only those class names matching the regex will be included.")
+                .description("A single regex that will be used to filter classes from the heap histogram internal statistic based on their name. e.g '^(stroom\\..*)$'. If no value is supplied all classes will be included. If a value is supplied only those class names matching the regex will be included.")
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()

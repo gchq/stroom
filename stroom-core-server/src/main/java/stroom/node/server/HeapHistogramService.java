@@ -1,20 +1,17 @@
 package stroom.node.server;
 
 import com.google.common.base.Preconditions;
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.ExecuteWatchdog;
-import org.apache.commons.exec.PumpStreamHandler;
-import org.apache.commons.exec.ShutdownHookProcessDestroyer;
+import com.sun.management.DiagnosticCommandMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import stroom.util.logging.LambdaLogger;
+import sun.management.ManagementFactoryHelper;
 
 import javax.inject.Inject;
-import java.io.ByteArrayOutputStream;
-import java.io.UnsupportedEncodingException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
 import java.lang.management.ManagementFactory;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -26,8 +23,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Class for generating a java heap map histogram using the 'jmap' tool supplied with the JDK. Requires that
- * jmap is available on the filesystem and executable by this java process.
+ * Class for generating a java heap map histogram using the gcClassHistogram action of the
+ * {@link DiagnosticCommandMBean}
  */
 @SuppressWarnings("unused")
 @Component
@@ -37,7 +34,8 @@ class HeapHistogramService {
 
     static final String CLASS_NAME_MATCH_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameMatchRegex";
     static final String ANON_ID_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameReplacementRegex";
-    static final String JMAP_EXECUTABLE_PROP_KEY = "stroom.node.status.heapHistogram.jMapExecutable";
+
+    private static final String ACTION_NAME = "gcClassHistogram";
     private static String ID_REPLACEMENT = "--ID-REMOVED--";
 
     private static final int STRING_TRUNCATE_LIMIT = 200;
@@ -60,99 +58,29 @@ class HeapHistogramService {
     List<HeapHistogramEntry> generateHeapHistogram() {
         String pid = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
 
-        String executable = getExecutable();
-        CommandLine command = new CommandLine(executable);
-        command.addArguments(new String[]{"-histo:live", pid}, false);
-
-        DefaultExecutor executor = new DefaultExecutor();
-        executor.setExitValue(0);
-        ExecuteWatchdog watchdog = new ExecuteWatchdog(120000);
-        executor.setWatchdog(watchdog);
-        //ensure the process is killed if stroom is shutting down
-        executor.setProcessDestroyer(new ShutdownHookProcessDestroyer());
-
-        ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
-        ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
-        PumpStreamHandler pumpStreamHandler = new PumpStreamHandler(stdOut, stdErr);
-        executor.setStreamHandler(pumpStreamHandler);
+        DiagnosticCommandMBean dcmd = ManagementFactoryHelper.getDiagnosticCommandMBean();
+        String[] emptyStringArgs = {};
+        Object[] dcmdArgs = { emptyStringArgs };
+        String[] signature = { String[].class.getName() };
+        Object output = null;
+        LOGGER.info("Executing a heap histogram using action {}", ACTION_NAME);
+        try {
+            output = dcmd.invoke(ACTION_NAME, dcmdArgs, signature);
+        } catch (MBeanException | ReflectionException e) {
+            LOGGER.error("Error invoking action {}", ACTION_NAME, e);
+        }
 
         final List<HeapHistogramEntry> heapHistogramEntries;
-        try {
-            LOGGER.info("Executing a heap histogram using command [{}]", command.toString());
-            int exitCode = executor.execute(command);
-            if (exitCode == 0) {
-                heapHistogramEntries = processSuccess(stdOut, stdErr);
-            } else {
-                logError(stdOut, stdErr, watchdog);
-                heapHistogramEntries = Collections.emptyList();
-            }
-        } catch (Exception e) {
-            logError(stdOut, stdErr, watchdog);
-            throw new RuntimeException(String.format("Error executing command %s", command.toString()), e);
-        }
-        return heapHistogramEntries;
-    }
-
-    private String getExecutable() {
-        String executable = stroomPropertyService.getProperty(JMAP_EXECUTABLE_PROP_KEY);
-
-        if (executable == null || executable.isEmpty()) {
-            throw new RuntimeException(String.format("Property %s has no value", JMAP_EXECUTABLE_PROP_KEY));
-        }
-        return executable;
-    }
-
-    private void logError(final ByteArrayOutputStream stdOut,
-                          final ByteArrayOutputStream stdErr,
-                          final ExecuteWatchdog watchdog) {
-        if (watchdog != null && watchdog.killedProcess()) {
-            LOGGER.error("The jmap call timed out");
+        if (output == null) {
+            LOGGER.warn("Heap histogram produced no output", ACTION_NAME);
+            heapHistogramEntries = Collections.emptyList();
+        } else if (output instanceof String){
+            heapHistogramEntries = processOutput((String) output);
         } else {
-            String stdOutStr;
-            String stdErrStr;
-            try {
-                stdOutStr = getTruncatedStr(getStringOutput(stdOut));
-            } catch (Exception e) {
-                stdOutStr = "Unable to get stdOut str due to error " + e.getMessage();
-            }
-            try {
-                stdErrStr = getTruncatedStr(getStringOutput(stdErr));
-            } catch (Exception e) {
-                stdErrStr = "Unable to get stdErr str due to error " + e.getMessage();
-            }
-            LOGGER.error("The jmap call failed with stdout [%s] and stderr [%s]", stdOutStr, stdErrStr);
+            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", output.getClass().getName()));
         }
-    }
 
-    private List<HeapHistogramEntry> processSuccess(final ByteArrayOutputStream stdOut,
-                                                    final ByteArrayOutputStream stdErr) {
-        String result;
-        String error;
-        List<HeapHistogramEntry> heapHistogramEntries = null;
-        try {
-            result = getStringOutput(stdOut);
-            error = getStringOutput(stdErr);
-
-            if (error != null && !error.isEmpty()) {
-                throw new RuntimeException(String.format("jmap completed with exit code 0 but stderr is not empty [%s]",
-                        getTruncatedStr(error)));
-            } else if (result == null || result.isEmpty()) {
-                throw new RuntimeException("jmap completed with exit code 0 but stdout is empty");
-            }
-            heapHistogramEntries = processStdOut(result);
-
-        } catch (RuntimeException e) {
-            LOGGER.error("Error handling result of jmap call", e);
-        }
         return heapHistogramEntries;
-    }
-
-    private String getStringOutput(final ByteArrayOutputStream outputStream) {
-        try {
-            return outputStream.toString(StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("Error extracting stream output as UTF-8", e);
-        }
     }
 
     private static String getTruncatedStr(final String str) {
@@ -173,7 +101,8 @@ class HeapHistogramService {
             try {
                 return Pattern.compile(classNameRegexStr).asPredicate();
             } catch (Exception e) {
-                throw new RuntimeException(String.format("Error compiling regex string [%s]", classNameRegexStr), e);
+                throw new RuntimeException(
+                        LambdaLogger.buildMessage("Error compiling regex string [{}]", classNameRegexStr), e);
             }
         }
     }
@@ -215,15 +144,15 @@ class HeapHistogramService {
         };
     }
 
-    private List<HeapHistogramEntry> processStdOut(final String stdOut) {
-        Preconditions.checkNotNull(stdOut);
+    private List<HeapHistogramEntry> processOutput(final String output) {
+        Preconditions.checkNotNull(output);
 
         try {
             Predicate<String> classNamePredicate = getClassNameMatchPredicate(stroomPropertyService);
             Function<String, String> classNameReplacer = getClassReplacementMapper();
             Function<String, Optional<HeapHistogramEntry>> lineToEntryMapper = buildLineToEntryMapper(classNameReplacer);
 
-            String[] lines = stdOut.split("\\r?\\n");
+            String[] lines = output.split("\\r?\\n");
 
             LOGGER.debug("processing {} lines of stdout", lines.length);
 
@@ -231,18 +160,19 @@ class HeapHistogramService {
                     .map(lineToEntryMapper)
                     .filter(Optional::isPresent)
                     .map(Optional::get)
-                    .filter(heapHistogramEntry -> classNamePredicate.test(heapHistogramEntry.getClassName()))
+                    .filter(heapHistogramEntry ->
+                            classNamePredicate.test(heapHistogramEntry.getClassName()))
                     .collect(Collectors.toList());
 
-            LOGGER.debug("histogramEntries size [%s]", histogramEntries.size());
+            LOGGER.debug("histogramEntries size [{}]", histogramEntries.size());
             if (histogramEntries.size() == 0) {
                 LOGGER.error("Something has gone wrong filtering the heap histogram, zero entries returned");
             }
             return histogramEntries;
 
         } catch (Exception e) {
-            throw new RuntimeException(String.format("Error processing stdOut string [%s]",
-                    getTruncatedStr(stdOut)), e);
+            throw new RuntimeException(LambdaLogger.buildMessage("Error processing output string [{}]",
+                    getTruncatedStr(output)), e);
         }
     }
 
