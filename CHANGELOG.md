@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Improve resource for setting user's status
+
 ## [v6.0-beta.25] - 2019-01-30
 
 * Issue **#1079** : Improved the logging of permission errors encountered during stream processing
