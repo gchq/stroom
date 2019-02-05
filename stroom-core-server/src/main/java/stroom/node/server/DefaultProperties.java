@@ -963,7 +963,7 @@ public class DefaultProperties {
         list.add(new GlobalProperty.Builder()
                 .name("stroom.node.status.heapHistogram.classNameMatchRegex")
                 .value("^stroom\\..*$")
-                .description("A single regex that will be used to filter classes from the jmap histogram internal statistic based on their name. e.g '^(stroom\\..*)$'. If no value is supplied all classes will be included. If a value is supplied only those class names matching the regex will be included.")
+                .description("A single regex that will be used to filter classes from the heap histogram internal statistic based on their name. e.g '^(stroom\\..*)$'. If no value is supplied all classes will be included. If a value is supplied only those class names matching the regex will be included.")
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
@@ -973,12 +973,6 @@ public class DefaultProperties {
                 .description("A single regex that will be used to replace all matches in the class name with '--REPLACED--'. This is to prevent ids for anonymous inner classes and lambdas from being included in the class name. E.g '....DocRefResourceHttpClient$$Lambda$46/1402766141' becomes '....DocRefResourceHttpClient$$Lambda$--REPLACED--'. ")
                 .editable(true)
                 .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.node.status.heapHistogram.jMapExecutable")
-                .value("jmap")
-                .description("The jmap executable name if it is available on the PATH or a fully qualified form")
-                .build());
-
 
         // External Service properties, including DocRef.type name mappings
         // ========================================START===========================================

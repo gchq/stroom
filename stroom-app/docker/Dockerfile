@@ -19,7 +19,7 @@
 # Intermediate build stage that is common to stroom and proxy to speed up
 # the build
 
-FROM openjdk:8u181-jdk-alpine3.8 as stroom-base-stage
+FROM openjdk:8u181-jre-alpine3.8 as stroom-base-stage
 
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
@@ -46,7 +46,6 @@ COPY ./build/stroom-app-all.jar /stroom-app-all.jar
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Final build stage
 
-# We need the full JDK for the jmap binary as used by the Heap Histogram internal stats
 FROM stroom-base-stage
 
 # IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
