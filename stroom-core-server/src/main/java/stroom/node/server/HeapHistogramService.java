@@ -61,6 +61,7 @@ class HeapHistogramService {
      * list of {@link HeapHistogramEntry}
      */
     List<HeapHistogramEntry> generateHeapHistogram() {
+        LOGGER.info("Executing a heap histogram using action {}", ACTION_NAME);
         final Object output = getRawHistogramOutput();
 
         final List<HeapHistogramEntry> heapHistogramEntries;
