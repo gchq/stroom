@@ -16,18 +16,18 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import fullTestData from "../../lib/storybook/fullTestData";
-import XsltEditor from "./XsltEditor";
+import IndexEditor from "./IndexEditor";
 
 import "../../styles/main.css";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
+import fullTestData from "../../lib/storybook/fullTestData";
 
-const stories = storiesOf("Document Editors/XSLT", module).addDecorator(
+const stories = storiesOf("Document Editors/Index", module).addDecorator(
   StroomDecorator
 );
 
-let uuid: string = Object.entries(fullTestData.xslt)
+let uuid: string = Object.entries(fullTestData.indexes)
   .map(k => k[0])
   .find(() => true)!;
 
-stories.add("editor", () => <XsltEditor xsltUuid={uuid} />);
+stories.add("editor", () => <IndexEditor indexUuid={uuid} />);

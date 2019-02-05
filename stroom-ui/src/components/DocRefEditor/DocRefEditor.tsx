@@ -1,18 +1,31 @@
 import * as React from "react";
+import { connect } from "react-redux";
 import { compose, withHandlers } from "recompose";
 import { withRouter, RouteComponentProps } from "react-router-dom";
+
+import withDocumentTree, {
+  EnhancedProps as WithDocumentTreeProps
+} from "../FolderExplorer/withDocumentTree";
 
 import AppSearchBar from "../AppSearchBar";
 import { DocRefIconHeader } from "../IconHeader";
 import DocRefBreadcrumb from "../DocRefBreadcrumb";
 import Button, { Props as ButtonProps } from "../Button";
-import { DocRefConsumer, DocRefType } from "../../types";
+import { DocRefConsumer, DocRefWithLineage } from "../../types";
+import { GlobalStoreState } from "../../startup/reducers";
+import { findItem } from "../../lib/treeUtils";
 
 export interface Props {
   actionBarItems: Array<ButtonProps>;
-  docRef: DocRefType;
+  docRefUuid: string;
   children?: React.ReactNode;
 }
+
+interface ConnectState {
+  docRefWithLineage: DocRefWithLineage;
+}
+
+interface ConnectDispatch {}
 
 interface WithHandlers {
   openDocRef: DocRefConsumer;
@@ -20,10 +33,24 @@ interface WithHandlers {
 
 export interface EnhancedProps
   extends Props,
+    ConnectState,
+    ConnectDispatch,
     RouteComponentProps<any>,
     WithHandlers {}
 
 const enhance = compose<EnhancedProps, Props>(
+  withDocumentTree,
+  connect<
+    ConnectState,
+    ConnectDispatch,
+    Props & WithDocumentTreeProps,
+    GlobalStoreState
+  >(
+    ({}, { docRefUuid, documentTree }) => ({
+      docRefWithLineage: findItem(documentTree, docRefUuid) as DocRefWithLineage
+    }),
+    {}
+  ),
   withRouter,
   withHandlers<Props & RouteComponentProps<any>, WithHandlers>({
     openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
@@ -31,7 +58,7 @@ const enhance = compose<EnhancedProps, Props>(
 );
 
 const DocRefEditor = ({
-  docRef,
+  docRefWithLineage: { node },
   openDocRef,
   actionBarItems,
   children
@@ -44,14 +71,14 @@ const DocRefEditor = ({
     />
 
     <DocRefIconHeader
-      docRefType={docRef.type}
+      docRefType={node.type}
       className="DocRefEditor__header"
-      text={docRef.uuid}
+      text={node.name || "no name"}
     />
 
     <DocRefBreadcrumb
       className="DocRefEditor__breadcrumb"
-      docRefUuid={docRef.uuid}
+      docRefUuid={node.uuid}
       openDocRef={openDocRef}
     />
 

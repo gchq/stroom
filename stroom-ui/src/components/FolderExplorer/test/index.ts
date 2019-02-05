@@ -1,4 +1,4 @@
-import testTree from './documentTree.testData';
-import fromSetupSampleData from './documentTree.testData.large';
+import smallTree from "./documentTree.smallTree";
+import fromSetupSampleData from "./documentTree.setupSampleData";
 
-export { testTree, fromSetupSampleData };
+export { smallTree, fromSetupSampleData };

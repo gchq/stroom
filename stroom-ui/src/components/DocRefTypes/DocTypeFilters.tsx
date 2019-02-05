@@ -16,11 +16,11 @@
 import * as React from "react";
 import { compose, withProps, withHandlers } from "recompose";
 
-import { DocRefTypeList } from "./redux";
 import DocRefImage from "../DocRefImage";
 import withDocRefTypes, {
   EnhancedProps as WithDocRefTypeProps
 } from "./withDocRefTypes";
+import { DocRefTypeList } from "../../types";
 
 enum AllSelectState {
   ALL,

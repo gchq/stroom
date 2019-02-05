@@ -15,8 +15,8 @@
  */
 import { Action } from "redux";
 import { prepareReducer } from "../../lib/redux-actions-ts";
+import { DocRefTypeList } from "src/types";
 
-export type DocRefTypeList = Array<string>;
 export type StoreState = DocRefTypeList;
 
 export interface DocRefTypesReceived extends Action<"DOC_REF_TYPES_RECEIVED"> {

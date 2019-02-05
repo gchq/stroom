@@ -3,12 +3,11 @@ import { storiesOf } from "@storybook/react";
 
 import FolderExplorer from "./FolderExplorer";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
+import fullTestData from "../../lib/storybook/fullTestData";
 
 import "../../styles/main.css";
 
-const { fromSetupSampleData } = require("./test");
-
-const testFolder1 = fromSetupSampleData.children[0];
+const testFolder1 = fullTestData.documentTree.children![0];
 
 storiesOf("Explorer/Folder", module)
   .addDecorator(StroomDecorator)

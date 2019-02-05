@@ -16,11 +16,9 @@
 import { ExpressionOperatorType, Dictionary } from "../../../types";
 
 const colourDictionary: Dictionary = {
-  docRef: {
-    type: "Dictionary",
-    uuid: "colourDict123",
-    name: "Colours"
-  },
+  type: "Dictionary",
+  uuid: "colourDict123",
+  name: "Colours",
   description: "All the colours of the rainbow",
   data: `red
   orange

@@ -48,6 +48,7 @@ import stroom.feed.RemoteFeedServiceRPC;
 import stroom.guice.AppModule;
 import stroom.importexport.impl.ExportConfigResource;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.index.rest.IndexResourceImpl;
 import stroom.index.rest.IndexShardResourceImpl;
 import stroom.index.rest.IndexVolumeResourceImpl;
 import stroom.index.rest.StroomIndexQueryResourceImpl;
@@ -293,6 +294,7 @@ public class App extends Application<Config> {
         // Add resources.
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource2.class);
+        GuiceUtil.addResource(environment.jersey(), injector, IndexResourceImpl.class);
         GuiceUtil.addResource(environment.jersey(), injector, ExportConfigResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource2.class);

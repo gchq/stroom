@@ -17,7 +17,7 @@ import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
-import { testDictionaries } from "./test";
+import fullTestData from "../../lib/storybook/fullTestData";
 import DictionaryEditor from "./DictionaryEditor";
 
 import "../../styles/main.css";
@@ -26,13 +26,7 @@ const stories = storiesOf("Document Editors/Dictionary", module).addDecorator(
   StroomDecorator
 );
 
-Object.entries(testDictionaries)
-  .map(k => ({
-    name: k[0],
-    data: k[1]
-  }))
-  .forEach(dictionary =>
-    stories.add(dictionary.name, () => (
-      <DictionaryEditor dictionaryUuid={dictionary.name} />
-    ))
-  );
+let uuid: string = Object.entries(fullTestData.dictionaries)
+  .map(k => k[0])
+  .find(() => true)!;
+stories.add("editor", () => <DictionaryEditor dictionaryUuid={uuid} />);

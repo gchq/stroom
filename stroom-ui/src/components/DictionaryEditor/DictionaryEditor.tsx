@@ -96,13 +96,7 @@ const DictionaryEditor = ({
   onDataChange,
   actionBarItems
 }: EnhancedProps) => (
-  <DocRefEditor
-    docRef={{
-      type: "Dictionary",
-      uuid: dictionaryUuid
-    }}
-    actionBarItems={actionBarItems}
-  >
+  <DocRefEditor docRefUuid={dictionaryUuid} actionBarItems={actionBarItems}>
     <textarea value={dictionary && dictionary.data} onChange={onDataChange} />
   </DocRefEditor>
 );

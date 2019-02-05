@@ -25,7 +25,7 @@ import {
   reducer as docRefTypesReducer
 } from "../../DocRefTypes/redux";
 
-import testTree from "./documentTree.testData";
+import testTree from "./documentTree.smallTree";
 import { testDocRefsTypes } from "../../DocRefTypes/test";
 
 const { docTreeReceived } = folderExplorerActionCreators;

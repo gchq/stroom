@@ -13,21 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as React from "react";
-import { storiesOf } from "@storybook/react";
 
-import fullTestData from "../../lib/storybook/fullTestData";
-import XsltEditor from "./XsltEditor";
+import IndexEditor from "./IndexEditor";
+import { actionCreators, reducer, StoreState } from "./redux";
 
-import "../../styles/main.css";
-import StroomDecorator from "../../lib/storybook/StroomDecorator";
+export { IndexEditor, actionCreators, reducer, StoreState };
 
-const stories = storiesOf("Document Editors/XSLT", module).addDecorator(
-  StroomDecorator
-);
-
-let uuid: string = Object.entries(fullTestData.xslt)
-  .map(k => k[0])
-  .find(() => true)!;
-
-stories.add("editor", () => <XsltEditor xsltUuid={uuid} />);
+export default IndexEditor;

@@ -20,23 +20,24 @@ import {
   ActionId,
   StateById
 } from "../../lib/redux-actions-ts";
-import { Dictionary } from "../../types";
+import { Dictionary, DictionaryUpdates } from "../../types";
 
 export const DICTIONARY_RECEIVED = "DICTIONARY_RECEIVED";
 export const DICTIONARY_UPDATED = "DICTIONARY_UPDATED";
 export const DICTIONARY_SAVED = "DICTIONARY_SAVED";
 
-export interface DictionaryEditorAction extends ActionId {
+export interface DictionaryReceivedAction
+  extends Action<"DICTIONARY_RECEIVED">,
+    ActionId {
   dictionary: Dictionary;
   isDirty: boolean;
 }
-
-export interface DictionaryReceivedAction
-  extends Action<"DICTIONARY_RECEIVED">,
-    DictionaryEditorAction {}
 export interface DictionaryUpdatedAction
   extends Action<"DICTIONARY_UPDATED">,
-    DictionaryEditorAction {}
+    ActionId {
+  updates: DictionaryUpdates;
+  isDirty: boolean;
+}
 export interface DictionarySavedAction
   extends Action<"DICTIONARY_SAVED">,
     ActionId {}
@@ -53,11 +54,11 @@ export const actionCreators = {
   }),
   dictionaryUpdated: (
     id: string,
-    dictionary: Dictionary
+    updates: DictionaryUpdates
   ): DictionaryUpdatedAction => ({
     type: DICTIONARY_UPDATED,
     id,
-    dictionary,
+    updates,
     isDirty: true
   }),
   dictionarySaved: (id: string): DictionarySavedAction => ({
@@ -79,9 +80,19 @@ export const defaultStatePerId: StoreStatePerId = {
 };
 
 export const reducer = prepareReducerById(defaultStatePerId)
-  .handleActions<DictionaryEditorAction>(
-    [DICTIONARY_RECEIVED, DICTIONARY_UPDATED],
+  .handleAction<DictionaryReceivedAction>(
+    DICTIONARY_RECEIVED,
     (_, { isDirty, dictionary }) => ({ isDirty, dictionary })
+  )
+  .handleAction<DictionaryUpdatedAction>(
+    DICTIONARY_UPDATED,
+    (state, { isDirty, updates }) => ({
+      isDirty,
+      dictionary: {
+        ...state!.dictionary!,
+        ...updates
+      }
+    })
   )
   .handleAction<DictionarySavedAction>(DICTIONARY_SAVED, state => ({
     ...state,

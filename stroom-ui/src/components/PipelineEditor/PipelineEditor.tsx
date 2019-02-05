@@ -139,13 +139,7 @@ const PipelineEditor = ({
   pipelineElementSelectionCleared,
   actionBarItems
 }: EnhancedProps) => (
-  <DocRefEditor
-    docRef={{
-      type: "Pipeline",
-      uuid: pipelineId
-    }}
-    actionBarItems={actionBarItems}
-  >
+  <DocRefEditor docRefUuid={pipelineId} actionBarItems={actionBarItems}>
     <div className="Pipeline-editor">
       <AddElementModal pipelineId={pipelineId} />
       <DeletePipelineElement pipelineId={pipelineId} />

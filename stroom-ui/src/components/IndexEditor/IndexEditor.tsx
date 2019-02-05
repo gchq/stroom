@@ -28,25 +28,25 @@ import { connect } from "react-redux";
 import DocRefEditor from "../DocRefEditor";
 import { Props as ButtonProps } from "../Button";
 import Loader from "../Loader";
-import { fetchXslt, saveXslt } from "./client";
+import { fetchIndex, saveIndex } from "./client";
 import ThemedAceEditor from "../ThemedAceEditor";
 import { actionCreators, StoreStateById } from "./redux";
 import { GlobalStoreState } from "../../startup/reducers";
 
-const { xsltUpdated } = actionCreators;
+const { indexUpdated } = actionCreators;
 
 export interface Props {
-  xsltUuid: string;
+  indexUuid: string;
 }
 
 interface ConnectState {
-  xsltState: StoreStateById;
+  indexState: StoreStateById;
 }
 
 interface ConnectDispatch {
-  fetchXslt: typeof fetchXslt;
-  xsltUpdated: typeof xsltUpdated;
-  saveXslt: typeof saveXslt;
+  fetchIndex: typeof fetchIndex;
+  indexUpdated: typeof indexUpdated;
+  saveIndex: typeof saveIndex;
 }
 
 interface WithHandlers {
@@ -67,37 +67,37 @@ export interface EnhancedProps
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ xsltEditor }, { xsltUuid }) => ({
-      xsltState: xsltEditor[xsltUuid]
+    ({ indexEditor }, { indexUuid }) => ({
+      indexState: indexEditor[indexUuid]
     }),
     {
-      fetchXslt,
-      xsltUpdated,
-      saveXslt
+      fetchIndex,
+      indexUpdated,
+      saveIndex
     }
   ),
   lifecycle<Props & ConnectState & ConnectDispatch, {}>({
     componentDidMount() {
-      const { fetchXslt, xsltUuid } = this.props;
+      const { fetchIndex, indexUuid } = this.props;
 
-      fetchXslt(xsltUuid);
+      fetchIndex(indexUuid);
     }
   }),
   branch(
-    ({ xsltState }) => !xsltState,
+    ({ indexState }) => !indexState,
     renderComponent(() => <Loader message="Loading XSLT..." />)
   ),
   withHandlers<Props & ConnectState & ConnectDispatch, WithHandlers>({
     onContentChange: ({
-      xsltUpdated,
-      xsltUuid,
-      xsltState: { xsltData }
+      indexUpdated,
+      indexUuid,
+      indexState: { indexData }
     }) => newValue => {
-      if (newValue !== xsltData) xsltUpdated(xsltUuid, newValue);
+      if (newValue !== indexData) indexUpdated(indexUuid, newValue);
     },
-    onClickSave: ({ saveXslt, xsltUuid }) => e => saveXslt(xsltUuid)
+    onClickSave: ({ saveIndex, indexUuid }) => e => saveIndex(indexUuid)
   }),
-  withProps(({ xsltState: { isDirty, isSaving }, onClickSave }) => ({
+  withProps(({ indexState: { isDirty, isSaving }, onClickSave }) => ({
     actionBarItems: [
       {
         icon: "save",
@@ -109,21 +109,21 @@ const enhance = compose<EnhancedProps, Props>(
   }))
 );
 
-const XsltEditor = ({
-  xsltUuid,
-  xsltState: { xsltData },
+const IndexEditor = ({
+  indexUuid,
+  indexState: { indexData },
   onContentChange,
   actionBarItems
 }: EnhancedProps) => (
-  <DocRefEditor docRefUuid={xsltUuid} actionBarItems={actionBarItems}>
+  <DocRefEditor docRefUuid={indexUuid} actionBarItems={actionBarItems}>
     <ThemedAceEditor
       style={{ width: "100%", height: "100%", minHeight: "25rem" }}
-      name={`${xsltUuid}-ace-editor`}
+      name={`${indexUuid}-ace-editor`}
       mode="xml"
-      value={xsltData}
+      value={indexData}
       onChange={onContentChange}
     />
   </DocRefEditor>
 );
 
-export default enhance(XsltEditor);
+export default enhance(IndexEditor);

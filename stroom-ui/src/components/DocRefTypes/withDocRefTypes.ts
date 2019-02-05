@@ -17,8 +17,8 @@ import { connect } from "react-redux";
 import { compose, lifecycle } from "recompose";
 
 import { GlobalStoreState } from "../../startup/reducers";
-import { DocRefTypeList } from "./redux";
 import { fetchDocRefTypes } from "../FolderExplorer/explorerClient";
+import { DocRefTypeList } from "../../types";
 
 export interface Props {}
 

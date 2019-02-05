@@ -1,5 +1,3 @@
-import { DocRefTree, Dictionary } from "../../../types";
-
 /*
  * Copyright 2018 Crown Copyright
  *
@@ -15,67 +13,13 @@ import { DocRefTree, Dictionary } from "../../../types";
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import { testPipelines } from "../../PipelineEditor/test";
-import { testXslt } from "../../XsltEditor/test";
-import { testDictionaries } from "../../DictionaryEditor/test";
+import { DocRefTree } from "../../../types";
 
 export default {
   uuid: "0",
   type: "System",
   name: "System",
   children: [
-    {
-      uuid: "root1234567890",
-      name: "Stuff that exists in test data",
-      type: "Folder",
-      children: [
-        {
-          uuid: "pipelines1234567890",
-          name: "Pipelines",
-          type: "Folder",
-          children: Object.entries(testPipelines)
-            .map(k => ({
-              uuid: k[0],
-              data: k[1]
-            }))
-            .map(pipeline => ({
-              uuid: pipeline.uuid,
-              type: "Pipeline",
-              name: pipeline.uuid
-            }))
-        },
-        {
-          uuid: "dictionaries1234567890",
-          name: "Dictionaries",
-          type: "Folder",
-          children: Object.values(testDictionaries).map(
-            (dict: Dictionary) => dict.docRef
-          )
-        },
-        {
-          uuid: "xslt1234567890",
-          name: "XSLT",
-          type: "Folder",
-          children: Object.entries(testXslt)
-            .map(k => ({
-              uuid: k[0],
-              data: k[1]
-            }))
-            .map(xslt => ({
-              uuid: xslt.uuid,
-              type: "XSLT",
-              name: xslt.uuid
-            }))
-        },
-        {
-          uuid: "empty12323435345",
-          name: "Empty Directory with a Long Name",
-          type: "Folder",
-          children: []
-        }
-      ]
-    },
     {
       uuid: "a4bcf7e6-e4b9-4781-b97a-0fa0af0b700b",
       type: "Folder",

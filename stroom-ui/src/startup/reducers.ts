@@ -69,6 +69,10 @@ import {
   StoreState as DictionaryEditorStoreState
 } from "../components/DictionaryEditor";
 import {
+  reducer as indexEditor,
+  StoreState as IndexEditorStoreState
+} from "../components/IndexEditor";
+import {
   reducer as docRefInfo,
   StoreState as DocRefInfoStoreState
 } from "../components/DocRefInfoModal/redux";
@@ -122,6 +126,7 @@ export interface GlobalStoreState {
   docRefTypes: DocRefTypesStoreState;
   folderExplorer: FolderExplorerStoreState;
   dictionaryEditor: DictionaryEditorStoreState;
+  indexEditor: IndexEditorStoreState;
   xsltEditor: XsltEditorStoreState;
   expressionBuilder: ExpressionBuilderStoreState;
   pipelineEditor: PipelineEditorStoreState;
@@ -151,6 +156,7 @@ export default combineReducers({
   xsltEditor,
   appSearch,
   dictionaryEditor,
+  indexEditor,
   expressionBuilder,
   pipelineEditor,
   recentItems,

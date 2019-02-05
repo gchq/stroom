@@ -221,13 +221,7 @@ const FolderExplorer = ({
   onKeyDownWithShortcuts,
   openDocRef
 }: EnhancedProps) => (
-  <DocRefEditor
-    docRef={{
-      type: "Folder",
-      uuid: folderUuid
-    }}
-    actionBarItems={actionBarItems}
-  >
+  <DocRefEditor docRefUuid={folderUuid} actionBarItems={actionBarItems}>
     <div tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
       {node &&
         node.children &&

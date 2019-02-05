@@ -33,34 +33,14 @@ import {
 import { actionCreators as fetchActionCreators } from "../../lib/fetchTracker.redux";
 import withConfig from "../../startup/withConfig";
 import { Config } from "../../startup/config";
-import {
-  DocRefType,
-  DocRefTree,
-  DocRefWithLineage,
-  PipelineModelType,
-  ElementDefinitions,
-  ElementPropertiesByElementIdType,
-  Dictionary,
-  DataSourceType,
-  StreamTaskType,
-  User,
-  IndexVolume,
-  IndexVolumeGroup,
-  IndexVolumeGroupMembership
-} from "../../types";
-import { StreamAttributeMapResult } from "../../sections/DataViewer/types";
-import { DocRefTypeList } from "../../components/DocRefTypes/redux";
+import { DocRefType, DocRefTree, DocRefWithLineage } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
+import { TestData } from "../test/testTypes";
 
 const { resetAllUrls } = fetchActionCreators;
 
 // Register the fetch adapter so its accessible by all future polly instances
 Polly.register(FetchAdapter);
-
-// Whats this?
-// export const DevServerDecorator = (storyFn: RenderFunction) => (
-//   <DevServerComponent>{storyFn()}</DevServerComponent>
-// );
 
 const testConfig: Config = {
   authenticationServiceUrl: "/authService/authentication/v1",
@@ -73,39 +53,6 @@ const testConfig: Config = {
   advertisedUrl: "/",
   appClientId: "stroom-ui"
 };
-
-export interface UserGroupMembership {
-  userUuid: string;
-  groupUuid: string;
-}
-
-export interface TestData {
-  docRefTypes: DocRefTypeList;
-  documentTree: DocRefTree;
-  pipelines: {
-    [pipelineId: string]: PipelineModelType;
-  };
-  elements: ElementDefinitions;
-  elementProperties: ElementPropertiesByElementIdType;
-  xslt: {
-    [xsltId: string]: string;
-  };
-  dictionaries: {
-    [dictionaryId: string]: Dictionary;
-  };
-  trackers: Array<StreamTaskType>;
-  dataList: StreamAttributeMapResult;
-  dataSource: DataSourceType;
-  usersAndGroups: {
-    users: Array<User>;
-    userGroupMemberships: Array<UserGroupMembership>;
-  };
-  indexVolumesAndGroups: {
-    volumes: Array<IndexVolume>;
-    groups: Array<IndexVolumeGroup>;
-    groupMemberships: Array<IndexVolumeGroupMembership>;
-  };
-}
 
 // The server is created as a singular thing for the whole app
 // Much easier to manage it this way
@@ -396,6 +343,22 @@ server
   .post(`${testConfig.stroomBaseServiceUrl}/pipelines/v1/:pipelineId`)
   .intercept((req: HttpRequest, res: HttpResponse) => res.sendStatus(200));
 
+// Index Resource
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/index/v1/:indexUuid`)
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    const index = testCache.data!.indexes[req.params.indexUuid];
+    if (index) {
+      res.setHeader("Content-Type", "application/xml");
+      res.send(index);
+    } else {
+      res.sendStatus(404);
+    }
+  });
+server
+  .post(`${testConfig.stroomBaseServiceUrl}/xslt/v1/:indexUuid`)
+  .intercept((req: HttpRequest, res: HttpResponse) => res.sendStatus(200));
+
 // XSLT Resource
 server
   .get(`${testConfig.stroomBaseServiceUrl}/xslt/v1/:xsltUuid`)
@@ -496,6 +459,7 @@ export const setupTestServer = (testData: TestData) =>
           elementProperties: { ...testData.elementProperties },
           xslt: { ...testData.xslt },
           dictionaries: { ...testData.dictionaries },
+          indexes: { ...testData.indexes },
           trackers: [...testData.trackers],
           dataList: { ...testData.dataList },
           dataSource: { ...testData.dataSource },

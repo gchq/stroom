@@ -29,6 +29,8 @@ export interface IndexVolume extends HasAuditInfo {
   statusMs: number;
 }
 
+export type DocRefTypeList = Array<string>;
+
 export interface IndexVolumeGroupMembership {
   volumeId: number;
   groupName: string;
@@ -38,6 +40,14 @@ export interface DocRefType extends HasUuid {
   type: string;
   name?: string;
 }
+
+export const copyDocRef = (input: DocRefType): DocRefType => {
+  return {
+    uuid: input.uuid,
+    type: input.type,
+    name: input.name
+  };
+};
 
 export interface DocRefInfoType {
   docRef: DocRefType;
@@ -75,12 +85,26 @@ export interface OptionType {
   value: string;
 }
 
-export interface Dictionary {
-  docRef?: DocRefType;
+export interface DictionaryUpdates {
   description?: string;
   data?: string;
   imports?: Array<DocRefType>;
 }
+
+export interface Dictionary extends DocRefType, DictionaryUpdates {}
+
+export interface IndexUpdates {
+  description?: string;
+}
+
+export interface IndexDoc extends DocRefType, IndexUpdates {}
+
+export interface XsltUpdates {
+  description?: string;
+  data?: string;
+}
+
+export interface XsltDoc extends DocRefType, XsltUpdates {}
 
 export type ConditionType =
   | "EQUALS"
