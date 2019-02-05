@@ -45,6 +45,12 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<Processo
     }
 
     @Override
+    public Processor loadByUuid(final String uuid) {
+        // TODO : @66 IMPLEMENT
+        return null;
+    }
+
+    @Override
     public Processor loadByIdInsecure(final long id) {
         return security.insecureResult(() -> loadById(id));
     }

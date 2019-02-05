@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class URLTest {
+public class URLTestTool {
     public static void main(String[] args) {
         try {
             URL url = new URL(args[0]);

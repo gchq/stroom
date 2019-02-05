@@ -47,8 +47,8 @@ public class MySingleSelectionModel<T> extends AbstractSelectionModel<T> impleme
     private boolean newSelectedPending;
 
     private EventBus eventBus;
-    private DoubleClickTest doubleClickTest;
-    private DoubleSelectTest doubleSelectTest;
+    private DoubleClickTester doubleClickTest;
+    private DoubleSelectTester doubleSelectTest;
 
     /**
      * Constructs a SingleSelectionModel without a key provider.
@@ -184,7 +184,7 @@ public class MySingleSelectionModel<T> extends AbstractSelectionModel<T> impleme
 
     public HandlerRegistration addDoubleSelectHandler(final DoubleSelectEvent.Handler handler) {
         if (doubleSelectTest == null) {
-            doubleSelectTest = new DoubleSelectTest();
+            doubleSelectTest = new DoubleSelectTester();
         }
 
         return doubleSelectTest.addDoubleSelectHandler(handler);
@@ -204,7 +204,7 @@ public class MySingleSelectionModel<T> extends AbstractSelectionModel<T> impleme
     public HandlerRegistration addDoubleClickHandler(final DoubleClickEvent.Handler handler) {
         if (eventBus == null) {
             eventBus = new SimpleEventBus();
-            doubleClickTest = new DoubleClickTest();
+            doubleClickTest = new DoubleClickTester();
         }
 
         return eventBus.addHandler(DoubleClickEvent.getType(), handler);

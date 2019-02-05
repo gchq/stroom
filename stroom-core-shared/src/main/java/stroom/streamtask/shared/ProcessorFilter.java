@@ -78,6 +78,12 @@ public class ProcessorFilter extends AuditedEntity {
         // Default constructor necessary for GWT serialisation.
     }
 
+    // TODO : @66 IMPLEMENT UUID
+    @Transient
+    public String getUuid() {
+        return String.valueOf(getId());
+    }
+
     @Column(name = DATA, nullable = false, length = Integer.MAX_VALUE)
     @Lob
     @ExternalFile

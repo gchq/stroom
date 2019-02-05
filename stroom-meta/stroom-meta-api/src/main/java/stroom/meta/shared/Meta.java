@@ -25,13 +25,15 @@ public interface Meta extends SharedObject {
 
     String getTypeName();
 
+    String getProcessorUuid();
+
+    String getProcessorFilterUuid();
+
     String getPipelineUuid();
 
     Long getParentMetaId();
 
     Long getProcessTaskId();
-
-    Integer getProcessorId();
 
     Status getStatus();
 

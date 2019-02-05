@@ -154,7 +154,7 @@ class MetaServiceImpl implements MetaService {
     public Meta create(final MetaProperties dataProperties) {
         final Integer feedId = feedService.getOrCreate(dataProperties.getFeedName());
         final Integer typeId = dataTypeService.getOrCreate(dataProperties.getTypeName());
-        final Integer processorId = processorService.getOrCreate(dataProperties.getProcessorId(), dataProperties.getPipelineUuid());
+        final Integer processorId = processorService.getOrCreate(dataProperties.getProcessorUuid(), dataProperties.getProcessorFilterUuid(), dataProperties.getPipelineUuid());
 
         final long id = JooqUtil.contextResult(connectionProvider, context -> context
                 .insertInto(META,
@@ -185,10 +185,10 @@ class MetaServiceImpl implements MetaService {
         return new Builder().id(id)
                 .feedName(dataProperties.getFeedName())
                 .typeName(dataProperties.getTypeName())
+                .processorUuid(dataProperties.getProcessorUuid())
                 .pipelineUuid(dataProperties.getPipelineUuid())
                 .parentDataId(dataProperties.getParentId())
                 .processTaskId(dataProperties.getProcessorTaskId())
-                .processorId(processorId)
                 .status(Status.LOCKED)
                 .statusMs(dataProperties.getStatusMs())
                 .createMs(dataProperties.getCreateMs())
@@ -358,10 +358,11 @@ class MetaServiceImpl implements MetaService {
                         meta.ID,
                         dataFeed.NAME,
                         dataType.NAME,
+                        dataProcessor.PROCESSOR_UUID,
+                        dataProcessor.PROCESSOR_FILTER_UUID,
                         dataProcessor.PIPELINE_UUID,
                         meta.PARENT_ID,
                         meta.TASK_ID,
-                        meta.PROCESSOR_ID,
                         meta.STATUS,
                         meta.STATUS_TIME,
                         meta.CREATE_TIME,
@@ -378,14 +379,15 @@ class MetaServiceImpl implements MetaService {
                 .map(r -> new Builder().id(r.component1())
                         .feedName(r.component2())
                         .typeName(r.component3())
-                        .pipelineUuid(r.component4())
-                        .parentDataId(r.component5())
-                        .processTaskId(r.component6())
-                        .processorId(r.component7())
-                        .status(MetaStatusId.getStatus(r.component8()))
-                        .statusMs(r.component9())
-                        .createMs(r.component10())
-                        .effectiveMs(r.component11())
+                        .processorUuid(r.component4())
+                        .processorFilterUuid(r.component5())
+                        .pipelineUuid(r.component6())
+                        .parentDataId(r.component7())
+                        .processTaskId(r.component8())
+                        .status(MetaStatusId.getStatus(r.component9()))
+                        .statusMs(r.component10())
+                        .createMs(r.component11())
+                        .effectiveMs(r.component12())
                         .build()));
     }
 

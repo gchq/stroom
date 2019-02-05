@@ -137,8 +137,9 @@ class TestMetaValueServiceImpl {
         return new MetaProperties.Builder()
                 .createMs(1000L)
                 .feedName(feedName)
+                .processorUuid("12345")
+                .processorFilterUuid("12345")
                 .pipelineUuid("PIPELINE_UUID")
-                .processorId(1)
                 .typeName("TEST_STREAM_TYPE")
                 .build();
     }

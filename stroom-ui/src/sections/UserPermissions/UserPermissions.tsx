@@ -31,6 +31,7 @@ interface ConnectState {
 interface ConnectDispatch {
   findUsers: typeof findUsers;
 }
+
 interface UserSelectionStateValues {
   selectedUser?: User;
 }

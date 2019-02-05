@@ -43,9 +43,9 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CommonTranslationTest {
+public class CommonTranslationTestHelper {
     public static final String FEED_NAME = "TEST_FEED";
-    private static final Logger LOGGER = LoggerFactory.getLogger(CommonTranslationTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommonTranslationTestHelper.class);
     private static final String DIR = "CommonTranslationTest/";
     public static final Path INVALID_RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "Invalid.in");
     private static final Path VALID_RESOURCE_NAME = StroomPipelineTestFileUtil
@@ -79,7 +79,7 @@ public class CommonTranslationTest {
     private final MetaService metaService;
 
     @Inject
-    CommonTranslationTest(final NodeInfo nodeInfo,
+    CommonTranslationTestHelper(final NodeInfo nodeInfo,
                           final StreamTaskCreator streamTaskCreator,
                           final StoreCreationTool storeCreationTool,
                           final TaskManager taskManager,

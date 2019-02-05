@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class DocPermissionDaoImplTest {
+class DocPermissionDaoImplTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserDaoImplTest.class);
 
     private static MySQLContainer dbContainer = new MySQLContainer()
@@ -36,7 +36,7 @@ public class DocPermissionDaoImplTest {
     private static final String PERMISSION_UPDATE = "UPDATE";
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         LOGGER.info(() -> "Before All - Start Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
 
@@ -47,7 +47,7 @@ public class DocPermissionDaoImplTest {
     }
 
     @Test
-    public void testMissingUser() {
+    void testMissingUser() {
         // Given
         final String userUuid = UUID.randomUUID().toString();
         final DocRef docRef = createTestDocRef();
@@ -57,7 +57,7 @@ public class DocPermissionDaoImplTest {
     }
 
     @Test
-    public void testDocPermissions() {
+    void testDocPermissions() {
         final String userName1 = String.format("SomePerson_1_%s", UUID.randomUUID());
         final String userName2 = String.format("SomePerson_2_%s", UUID.randomUUID());
         final String userName3 = String.format("SomePerson_3_%s", UUID.randomUUID());
@@ -122,7 +122,7 @@ public class DocPermissionDaoImplTest {
     }
 
     @Test
-    public void testClearUserPermissions() {
+    void testClearUserPermissions() {
         // Given
         final String userName1 = String.format("SomePerson_1_%s", UUID.randomUUID());
         final String userName2 = String.format("SomePerson_2_%s", UUID.randomUUID());
@@ -154,7 +154,7 @@ public class DocPermissionDaoImplTest {
     }
 
     @Test
-    public void testClearDocumentPermissions() {
+    void testClearDocumentPermissions() {
         // Given
         final String userName1 = String.format("SomePerson_1_%s", UUID.randomUUID());
         final DocRef docRef1 = createTestDocRef();
@@ -186,7 +186,7 @@ public class DocPermissionDaoImplTest {
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         LOGGER.info(() -> "After All - Stop Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::stop);
     }

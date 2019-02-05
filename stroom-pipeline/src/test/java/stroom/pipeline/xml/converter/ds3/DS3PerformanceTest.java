@@ -50,7 +50,7 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class DS3PerformanceTest {
+class DS3PerformanceTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(DS3PerformanceTest.class);
 
     private static final int ITERATIONS = 1;
@@ -59,11 +59,11 @@ public class DS3PerformanceTest {
     private final SchemaFilterFactory schemaFilterFactory = new SchemaFilterFactory();
     private DS3ParserFactory ds3ParserFactory;
 
-    public void testCSVWithHeading() throws IOException, SAXException, TransformerConfigurationException {
+    void testCSVWithHeading() throws IOException, SAXException, TransformerConfigurationException {
         process("CSVWithHeading");
     }
 
-    public void testCSVWithHeadingSplit() throws IOException, SAXException, TransformerConfigurationException {
+    void testCSVWithHeadingSplit() throws IOException, SAXException, TransformerConfigurationException {
         process("CSVWithHeadingSplit");
     }
 

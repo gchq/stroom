@@ -32,10 +32,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(TempDirExtension.class)
 class TestRASegmentStreamsWindow {
-
     @Test
     void testFullWindowNoDataSegments(@TempDir Path tempDir) throws IOException {
-
         final SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
                 () -> Files.newOutputStream(tempDir.resolve("test.idx")));
 
@@ -70,7 +68,6 @@ class TestRASegmentStreamsWindow {
 
     @Test
     void testFullWindowNoDataSegments1(@TempDir Path tempDir) throws IOException {
-
         final SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
                 () -> Files.newOutputStream(tempDir.resolve("test.idx")));
 
@@ -118,8 +115,7 @@ class TestRASegmentStreamsWindow {
     }
 
     @Test
-    void testPartailWindowSegments1(@TempDir Path tempDir) throws IOException {
-
+    void testPartialWindowSegments1(@TempDir Path tempDir) throws IOException {
         final SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
                 () -> Files.newOutputStream(tempDir.resolve("test.idx")));
 
@@ -171,7 +167,7 @@ class TestRASegmentStreamsWindow {
     }
 
     @Test
-    void testPartailWindowSegments2(@TempDir Path tempDir) throws IOException {
+    void testPartialWindowSegments2(@TempDir Path tempDir) throws IOException {
         FileUtil.deleteContents(tempDir);
 
         try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
@@ -210,7 +206,6 @@ class TestRASegmentStreamsWindow {
 
     @Test
     void testFullWindowNoSegments(@TempDir Path tempDir) throws IOException {
-
         try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
                 () -> Files.newOutputStream(tempDir.resolve("test.idx")))) {
             // 0
@@ -237,8 +232,7 @@ class TestRASegmentStreamsWindow {
     }
 
     @Test
-    void testPartailWindowNoSegments(@TempDir Path tempDir) throws IOException {
-
+    void testPartialWindowNoSegments(@TempDir Path tempDir) throws IOException {
         try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
                 () -> Files.newOutputStream(tempDir.resolve("test.idx")))) {
             // 0

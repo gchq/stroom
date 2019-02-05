@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.task.api.TaskManager;
 import stroom.test.CommonTestControl;
-import stroom.test.CommonTranslationTest;
+import stroom.test.CommonTranslationTestHelper;
 import stroom.test.StoreCreationTool;
 
 import javax.inject.Inject;
@@ -31,7 +31,7 @@ class TestPipelineStatistics {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestPipelineStatistics.class);
 
     @Inject
-    private CommonTranslationTest commonPipelineTest;
+    private CommonTranslationTestHelper commonTranslationTestHelper;
     @Inject
     private StoreCreationTool storeCreationTool;
     @Inject

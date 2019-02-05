@@ -45,11 +45,11 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Inject
     private IndexShardService indexShardService;
     @Inject
-    private CommonIndexingTest commonIndexingTest;
+    private CommonIndexingTestHelper commonIndexingTestHelper;
 
     @Override
     protected boolean doSingleSetup() {
-        commonIndexingTest.setup();
+        commonIndexingTestHelper.setup();
         return true;
     }
 

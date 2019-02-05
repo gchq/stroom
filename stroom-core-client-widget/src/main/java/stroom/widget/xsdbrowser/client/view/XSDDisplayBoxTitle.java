@@ -24,13 +24,13 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
-import stroom.widget.util.client.DoubleSelectTest;
+import stroom.widget.util.client.DoubleSelectTester;
 
 public class XSDDisplayBoxTitle extends Composite {
     private final Image imgImage;
     private final Label lblTitle;
     private final ClickPanel layout;
-    private final DoubleSelectTest doubleClickTest = new DoubleSelectTest();
+    private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
 
     public XSDDisplayBoxTitle(final ImageResource image, final String title, final XSDModel model, final XSDNode node) {
         imgImage = AbstractImagePrototype.create(image).createImage();

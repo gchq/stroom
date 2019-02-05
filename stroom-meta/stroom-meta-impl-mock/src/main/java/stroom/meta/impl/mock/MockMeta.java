@@ -7,10 +7,11 @@ class MockMeta implements Meta {
     private long id;
     private String feedName;
     private String typeName;
+    private String processorUuid;
+    private String processorFilterUuid;
     private String pipelineUuid;
     private Long parentDataId;
     private Long processorTaskId;
-    private Integer processorId;
     Status status;
     Long statusMs;
     private long createMs;
@@ -35,6 +36,16 @@ class MockMeta implements Meta {
     }
 
     @Override
+    public String getProcessorUuid() {
+        return processorUuid;
+    }
+
+    @Override
+    public String getProcessorFilterUuid() {
+        return processorFilterUuid;
+    }
+
+    @Override
     public String getPipelineUuid() {
         return pipelineUuid;
     }
@@ -47,11 +58,6 @@ class MockMeta implements Meta {
     @Override
     public Long getProcessTaskId() {
         return processorTaskId;
-    }
-
-    @Override
-    public Integer getProcessorId() {
-        return processorId;
     }
 
     @Override
@@ -92,6 +98,16 @@ class MockMeta implements Meta {
             return this;
         }
 
+        public Builder processorUuid(final String processorUuid) {
+            meta.processorUuid = processorUuid;
+            return this;
+        }
+
+        public Builder processorFilterUuid(final String processorFilterUuid) {
+            meta.processorFilterUuid = processorFilterUuid;
+            return this;
+        }
+
         public Builder pipelineUuid(final String pipelineUuid) {
             meta.pipelineUuid = pipelineUuid;
             return this;
@@ -104,11 +120,6 @@ class MockMeta implements Meta {
 
         public Builder processorTaskId(final Long processorTaskId) {
             meta.processorTaskId = processorTaskId;
-            return this;
-        }
-
-        public Builder processorId(final Integer processorId) {
-            meta.processorId = processorId;
             return this;
         }
 

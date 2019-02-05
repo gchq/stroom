@@ -39,7 +39,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(TempDirExtension.class)
 class TestHDFSFileAppender extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHDFSFileAppender.class);
 //    private static final String ROOT_TEST_PATH = FileUtil.getTempDir() + "/junitTests/TestHDFSFileAppender";
@@ -105,7 +104,7 @@ class TestHDFSFileAppender extends StroomUnitTest {
 
     @Test
     void testCycleDirs() throws IOException {
-        final HDFSFileAppender provider = buildTestObject();
+        final HDFSFileAppender provider = buildTestObject(rootTestDir.toAbsolutePath().toString());
 
         boolean found1 = false;
         boolean found2 = false;
@@ -147,15 +146,15 @@ class TestHDFSFileAppender extends StroomUnitTest {
         assertThat(found1 && found2 && found3).isTrue();
     }
 
-    private HDFSFileAppender buildTestObject() {
+    private HDFSFileAppender buildTestObject(final String dir) {
         final String name = "/${year}-${month}-${day}T${hour}:${minute}:${second}.${millis}Z-${uuid}.xml";
         final PathCreator pathCreator = new PathCreator(null, null, null, null, null);
         final HDFSFileAppender provider = new HDFSFileAppender(null, pathCreator);
 
         provider.setOutputPaths(
-                rootTestDir.toAbsolutePath().toString() + "/t1" + name + "," +
-                rootTestDir.toAbsolutePath().toString() + "/t2" + name + "," +
-                rootTestDir.toAbsolutePath().toString() + "/t3" + name);
+                dir + "/t1" + name + "," +
+                dir + "/t2" + name + "," +
+                dir + "/t3" + name);
         provider.setFileSystemUri(FS_DEFAULT_FS);
         provider.setRunAsUser(RUN_AS_USER);
         provider.setConf(conf);

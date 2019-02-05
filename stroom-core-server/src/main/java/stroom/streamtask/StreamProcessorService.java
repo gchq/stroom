@@ -24,4 +24,6 @@ import stroom.streamtask.shared.Processor;
 
 public interface StreamProcessorService extends BaseEntityService<Processor>, FindService<Processor, FindStreamProcessorCriteria> {
     Processor loadByIdInsecure(long id);
+
+    Processor loadByUuid(String uuid);
 }

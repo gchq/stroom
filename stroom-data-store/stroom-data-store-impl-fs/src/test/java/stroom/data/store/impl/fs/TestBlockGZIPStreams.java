@@ -35,7 +35,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(TempDirExtension.class)
 class TestBlockGZIPStreams {
-
     @Test
     void testSimple(@TempDir Path tempDir) throws IOException {
         final Path testFile = Files.createTempFile(tempDir, "test", ".bgz");
