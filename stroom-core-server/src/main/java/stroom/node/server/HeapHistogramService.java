@@ -6,10 +6,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.util.logging.LambdaLogger;
-import sun.management.ManagementFactoryHelper;
 
 import javax.inject.Inject;
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
@@ -35,6 +38,8 @@ class HeapHistogramService {
     static final String CLASS_NAME_MATCH_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameMatchRegex";
     static final String ANON_ID_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameReplacementRegex";
 
+    private final static String DIAGNOSTIC_COMMAND_MBEAN_OBJECT_NAME = "com.sun.management:type=DiagnosticCommand";
+
     private static final String ACTION_NAME = "gcClassHistogram";
     private static String ID_REPLACEMENT = "--ID-REMOVED--";
 
@@ -56,19 +61,7 @@ class HeapHistogramService {
      * list of {@link HeapHistogramEntry}
      */
     List<HeapHistogramEntry> generateHeapHistogram() {
-        String pid = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
-
-        DiagnosticCommandMBean dcmd = ManagementFactoryHelper.getDiagnosticCommandMBean();
-        String[] emptyStringArgs = {};
-        Object[] dcmdArgs = { emptyStringArgs };
-        String[] signature = { String[].class.getName() };
-        Object output = null;
-        LOGGER.info("Executing a heap histogram using action {}", ACTION_NAME);
-        try {
-            output = dcmd.invoke(ACTION_NAME, dcmdArgs, signature);
-        } catch (MBeanException | ReflectionException e) {
-            LOGGER.error("Error invoking action {}", ACTION_NAME, e);
-        }
+        final Object output = getRawHistogramOutput();
 
         final List<HeapHistogramEntry> heapHistogramEntries;
         if (output == null) {
@@ -81,6 +74,23 @@ class HeapHistogramService {
         }
 
         return heapHistogramEntries;
+    }
+
+    private Object getRawHistogramOutput() {
+        final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        Object output = null;
+        try
+        {
+            final ObjectName objectName = new ObjectName(DIAGNOSTIC_COMMAND_MBEAN_OBJECT_NAME);
+            output = server.invoke(
+                    objectName,
+                    ACTION_NAME,
+                    new Object[] {null},
+                    new String[]{String[].class.getName()});
+        } catch (MalformedObjectNameException | InstanceNotFoundException | ReflectionException | MBeanException e) {
+            LOGGER.error("Error invoking action {}", ACTION_NAME, e);
+        }
+        return output;
     }
 
     private static String getTruncatedStr(final String str) {
