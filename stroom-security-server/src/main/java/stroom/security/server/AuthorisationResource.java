@@ -12,6 +12,7 @@ import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -38,6 +39,7 @@ public class AuthorisationResource {
             put("locked", UserStatus.LOCKED);
             put("inactive", UserStatus.EXPIRED);
             put("active", UserStatus.ENABLED);
+            put("enabled", UserStatus.ENABLED);
             put("disabled", UserStatus.DISABLED);
         }
 
@@ -111,11 +113,11 @@ public class AuthorisationResource {
     /**
      * Updates the user's status
      */
-    @POST
+    @GET
     @Path("setUserStatus")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response setUserStatus(@QueryParam("id") String userId, @QueryParam("status") String status) {
+    public Response setUserStatus(@QueryParam("userId") String userId, @QueryParam("status") String status) {
         try{
             UserStatus newUserStatus = STATUS_MAPPINGS.get(status);
             UserRef existingUser = userService.getUserByName(userId);
