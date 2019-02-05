@@ -18,6 +18,7 @@ import { RouteComponentProps, RouteProps } from "react-router";
 import UserPermissions from "../UserPermissions";
 import IndexVolumes from "../IndexVolumes";
 import IndexVolumeGroups from "../IndexVolumeGroups";
+import IndexVolumeGroupEditor from "../../components/IndexVolumeGroupEditor";
 
 const renderWelcome = () => (
   <AppChrome activeMenuItem="Welcome" content={<Welcome />} />
@@ -115,6 +116,16 @@ export default [
       <AppChrome
         activeMenuItem="Index Groups"
         content={<IndexVolumeGroups />}
+      />
+    )
+  },
+  {
+    exact: true,
+    path: "/s/indexing/groups/:name",
+    render: (props: RouteComponentProps<any>) => (
+      <AppChrome
+        activeMenuItem="Index Groups"
+        content={<IndexVolumeGroupEditor name={props.match.params.name} />}
       />
     )
   },

@@ -91,6 +91,54 @@ server
   .intercept((req: HttpRequest, res: HttpResponse) => {
     res.json(testCache.data!.indexVolumesAndGroups.groups.map(g => g.name));
   });
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/stroom-index/volumeGroup/v1/:name`)
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    res.json(
+      testCache.data!.indexVolumesAndGroups.groups.filter(
+        g => g.name === req.params.name
+      )
+    );
+  });
+server
+  .post(`${testConfig.stroomBaseServiceUrl}/stroom-index/volumeGroup/v1/:name`)
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    let name = req.params.name;
+    let now = Date.now();
+    let newIndexVolumeGroup = {
+      name,
+      createTimeMs: now,
+      updateTimeMs: now,
+      createUser: "test",
+      updateUser: "test"
+    };
+    testCache.data!.indexVolumesAndGroups = {
+      ...testCache.data!.indexVolumesAndGroups,
+      groups: testCache.data!.indexVolumesAndGroups.groups.concat([
+        newIndexVolumeGroup
+      ])
+    };
+
+    res.json(newIndexVolumeGroup);
+  });
+server
+  .delete(
+    `${testConfig.stroomBaseServiceUrl}/stroom-index/volumeGroup/v1/:name`
+  )
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    let oldName = req.params.name;
+    testCache.data!.indexVolumesAndGroups = {
+      ...testCache.data!.indexVolumesAndGroups,
+      groups: testCache.data!.indexVolumesAndGroups.groups.filter(
+        g => g.name !== oldName
+      ),
+      groupMemberships: testCache.data!.indexVolumesAndGroups.groupMemberships.filter(
+        m => m.groupName !== oldName
+      )
+    };
+
+    res.sendStatus(204);
+  });
 
 // User Resource
 server

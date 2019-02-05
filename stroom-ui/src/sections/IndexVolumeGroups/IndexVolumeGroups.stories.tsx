@@ -26,6 +26,8 @@ import IndexVolumeGroupPicker from "./IndexVolumeGroupPicker";
 import { addThemedStories } from "../../lib/themedStoryGenerator";
 
 import "../../styles/main.css";
+import { Switch, Route, RouteComponentProps } from "react-router";
+import IndexVolumeGroupEditor from "../../components/IndexVolumeGroupEditor";
 
 interface IndexVolumeGroupForm {
   groupName?: string;
@@ -53,9 +55,22 @@ const TestForm = () => (
   </Formik>
 );
 
+const IndexVolumeGroupsWithRouter = () => (
+  <Switch>
+    <Route
+      exact
+      path="/s/indexing/groups/:name"
+      render={(props: RouteComponentProps<any>) => (
+        <IndexVolumeGroupEditor name={props.match.params.name} />
+      )}
+    />
+    <Route component={IndexVolumeGroups} />
+  </Switch>
+);
+
 storiesOf("Sections/Index Volume Groups", module)
   .addDecorator(StroomDecorator)
-  .add("Index Volume Groups", () => <IndexVolumeGroups />);
+  .add("Index Volume Groups", () => <IndexVolumeGroupsWithRouter />);
 
 const stories = storiesOf("Pickers/Index Volume Group", module).addDecorator(
   StroomDecorator
