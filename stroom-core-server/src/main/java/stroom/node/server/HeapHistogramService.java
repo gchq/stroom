@@ -79,7 +79,7 @@ class HeapHistogramService {
 
     private Object getRawHistogramOutput() {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        Object output = null;
+        Object output;
         try
         {
             final ObjectName objectName = new ObjectName(DIAGNOSTIC_COMMAND_MBEAN_OBJECT_NAME);
@@ -89,7 +89,7 @@ class HeapHistogramService {
                     new Object[] {null},
                     new String[]{String[].class.getName()});
         } catch (MalformedObjectNameException | InstanceNotFoundException | ReflectionException | MBeanException e) {
-            LOGGER.error("Error invoking action {}", ACTION_NAME, e);
+            throw new RuntimeException(LambdaLogger.buildMessage("Error invoking action {}", ACTION_NAME), e);
         }
         return output;
     }
