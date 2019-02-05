@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.26] - 2019-02-05
+
 * Issue **#1084** : Change heap histogram statistics to java MBean approach rather than jmap binary. Remove stroom.node.status.heapHistogram.jMapExecutable property.
 
 * Improve resource for setting user's status
@@ -1432,6 +1434,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.25...6.0
+[v6.0-beta.26]: https://github.com/gchq/stroom/compare/v6.0-beta.25...v6.0-beta.26
 [v6.0-beta.25]: https://github.com/gchq/stroom/compare/v6.0-beta.24...v6.0-beta.25
 [v6.0-beta.24]: https://github.com/gchq/stroom/compare/v6.0-beta.23...v6.0-beta.24
 [v6.0-beta.23]: https://github.com/gchq/stroom/compare/v6.0-beta.22...v6.0-beta.23
