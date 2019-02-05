@@ -20,7 +20,7 @@ package stroom.search;
 import stroom.docref.DocRef;
 import stroom.index.IndexShardManager;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.pipeline.task.PipelineStreamProcessor;
+import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.processor.StreamProcessorTaskExecutor;
 import stroom.test.CommonTranslationTest;
 import stroom.test.StoreCreationTool;

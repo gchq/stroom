@@ -19,6 +19,7 @@ package stroom.feed;
 
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
+import stroom.pipeline.feed.FeedDocCache;
 import stroom.security.Security;
 
 import javax.inject.Inject;

@@ -18,15 +18,15 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.FindDataCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.datafeed.BufferFactory;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.AttributeMapUtil;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.repo.StroomFileNameUtil;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
@@ -56,19 +56,19 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
 
     private final TaskContext taskContext;
     private final StreamStore streamStore;
-    private final DataMetaService streamMetaService;
+    private final MetaService metaService;
     private final Security security;
     private final BufferFactory bufferFactory;
 
     @Inject
     StreamDownloadTaskHandler(final TaskContext taskContext,
                               final StreamStore streamStore,
-                              final DataMetaService streamMetaService,
+                              final MetaService metaService,
                               final Security security,
                               final BufferFactory bufferFactory) {
         this.taskContext = taskContext;
         this.streamStore = streamStore;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.security = security;
         this.bufferFactory = bufferFactory;
     }
@@ -82,10 +82,10 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
     }
 
     private StreamDownloadResult downloadData(final StreamDownloadTask task,
-                                              final FindDataCriteria findStreamCriteria,
+                                              final FindMetaCriteria findMetaCriteria,
                                               Path data,
                                               final StreamDownloadSettings settings) {
-        final BaseResultList<Data> list = streamMetaService.find(findStreamCriteria);
+        final BaseResultList<Meta> list = metaService.find(findMetaCriteria);
 
         final StreamDownloadResult result = new StreamDownloadResult();
 
@@ -103,13 +103,13 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
             final String fileBasePath = FileUtil.getCanonicalPath(data).substring(0, FileUtil.getCanonicalPath(data).lastIndexOf(".zip"));
 
             final LogItemProgress logItemProgress = new LogItemProgress(0, list.size());
-            taskContext.info("Stream {}", logItemProgress);
+            taskContext.info("Data {}", logItemProgress);
 
-            for (final Data stream : list) {
+            for (final Meta meta : list) {
                 result.incrementRecordsWritten();
                 logItemProgress.incrementProgress();
 
-                id = downloadStream(taskContext, stream.getId(), stroomZipOutputStream, id,
+                id = downloadStream(taskContext, meta.getId(), stroomZipOutputStream, id,
                         settings.getMaxFileParts());
 
                 boolean startNewFile = false;

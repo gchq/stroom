@@ -16,6 +16,8 @@
 
 package stroom.task.cluster;
 
+import stroom.task.cluster.api.CollectorId;
+
 import java.util.UUID;
 
 public class CollectorIdFactory {

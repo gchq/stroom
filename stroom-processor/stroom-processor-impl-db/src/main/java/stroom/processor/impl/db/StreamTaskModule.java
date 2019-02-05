@@ -19,7 +19,7 @@ package stroom.processor.impl.db;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.FindService;
-import stroom.jobsystem.DistributedTaskFactory;
+import stroom.job.api.DistributedTaskFactory;
 import stroom.processor.StreamProcessorFilterService;
 import stroom.processor.StreamProcessorService;
 import stroom.processor.shared.task.CreateProcessorAction;

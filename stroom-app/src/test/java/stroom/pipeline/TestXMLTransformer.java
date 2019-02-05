@@ -34,6 +34,8 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
+import stroom.pipeline.textconverter.TextConverterStore;
+import stroom.pipeline.xslt.XsltStore;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
@@ -178,7 +180,9 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
     private void test(final DocRef pipelineRef, final String inputResource, final String encoding) {
         pipelineScopeRunnable.scopeRunnable(() -> {
             try {
-                final Path tempDir = getCurrentTestDir();
+                // We have to use /tmp here as the pipeline is hard coded to output
+                // to ${stroom.temp}/TestXMLTransformer.xml
+                final Path tempDir = FileUtil.getTempDir();
 
                 // Delete any output file.
                 final Path outputFile = tempDir.resolve("TestXMLTransformer.xml");

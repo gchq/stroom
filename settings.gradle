@@ -28,6 +28,16 @@ include 'stroom-activity:stroom-activity-shared'
 include 'stroom-app'
 include 'stroom-app-gwt'
 
+// Cache
+include 'stroom-cache:stroom-cache-api'
+include 'stroom-cache:stroom-cache-impl'
+
+// Cluster lock
+include 'stroom-cluster-lock:stroom-cluster-lock-api'
+include 'stroom-cluster-lock:stroom-cluster-lock-impl-db'
+include 'stroom-cluster-lock:stroom-cluster-lock-impl-db-gen'
+include 'stroom-cluster-lock:stroom-cluster-lock-impl-mock'
+
 // Config
 include 'stroom-config:stroom-config-app'
 include 'stroom-config:stroom-config-common'
@@ -47,6 +57,13 @@ include 'stroom-dashboard:stroom-dashboard-client'
 include 'stroom-dashboard:stroom-dashboard-server'
 include 'stroom-dashboard:stroom-dashboard-shared'
 
+// DB Utilities
+include 'stroom-db-util'
+
+// Dictionary
+include 'stroom-dictionary:stroom-dictionary-api'
+include 'stroom-dictionary:stroom-dictionary-impl'
+
 // Docstore
 include 'stroom-docstore:stroom-docstore-api'
 include 'stroom-docstore:stroom-docstore-impl'
@@ -55,11 +72,11 @@ include 'stroom-docstore:stroom-docstore-impl-fs'
 include 'stroom-docstore:stroom-docstore-impl-memory'
 include 'stroom-docstore:stroom-docstore-shared'
 
-// Data meta projects
-include 'stroom-data-meta:stroom-data-meta-api'
-include 'stroom-data-meta:stroom-data-meta-impl-db'
-include 'stroom-data-meta:stroom-data-meta-impl-db-gen'
-include 'stroom-data-meta:stroom-data-meta-impl-mock'
+// Data Meta projects
+include 'stroom-meta:stroom-meta-api'
+include 'stroom-meta:stroom-meta-impl-db'
+include 'stroom-meta:stroom-meta-impl-db-gen'
+include 'stroom-meta:stroom-meta-impl-mock'
 
 // Data store projects
 include 'stroom-data-store:stroom-data-store-api'
@@ -92,16 +109,30 @@ include 'stroom-headless'
 // Import Export
 include 'stroom-importexport:stroom-importexport-api'
 include 'stroom-importexport:stroom-importexport-impl'
+include 'stroom-importexport:stroom-importexport-migration'
 
 // Index
 include 'stroom-index:stroom-index-shared'
 include 'stroom-index:stroom-index-server'
 include 'stroom-index:stroom-index-client'
+include 'stroom-index:stroom-index-api'
+include 'stroom-index:stroom-index-impl-db'
+include 'stroom-index:stroom-index-impl-db-gen'
 
 // Kafka
 include 'stroom-kafka:stroom-kafka-shared'
 include 'stroom-kafka:stroom-kafka-impl'
 include 'stroom-kafka:stroom-kafka-pipeline'
+
+// Node
+include 'stroom-node:stroom-node-api'
+include 'stroom-node:stroom-node-impl'
+include 'stroom-node:stroom-node-impl-mock'
+//include 'stroom-node:stroom-node-impl-db-gen'
+
+// Lifecycle
+include 'stroom-lifecycle:stroom-lifecycle-api'
+include 'stroom-lifecycle:stroom-lifecycle-impl'
 
 // Pipeline
 include 'stroom-pipeline'
@@ -116,6 +147,10 @@ include 'stroom-processor:stroom-processor-shared'
 // Proxy project.
 include 'stroom-proxy'
 
+// Resource store
+include 'stroom-resourcestore:stroom-resourcestore-api'
+include 'stroom-resourcestore:stroom-resourcestore-impl'
+
 // Ruleset
 include 'stroom-ruleset:stroom-ruleset-shared'
 include 'stroom-ruleset:stroom-ruleset-server'
@@ -128,6 +163,7 @@ include 'stroom-security:stroom-security-impl-mock'
 include 'stroom-security:stroom-security-client-api'
 include 'stroom-security:stroom-security-client'
 include 'stroom-security:stroom-security-impl-db'
+include 'stroom-security:stroom-security-impl-db-gen'
 
 // Statistics
 include 'stroom-statistics:stroom-statistics-api'
@@ -135,10 +171,20 @@ include 'stroom-statistics:stroom-statistics-shared'
 include 'stroom-statistics:stroom-statistics-client'
 include 'stroom-statistics:stroom-statistics-server'
 
-// Task execution.
+// Task execution
 include 'stroom-task:stroom-task-api'
 include 'stroom-task:stroom-task-impl'
 include 'stroom-task:stroom-task-shared'
+
+// Cluster task execution
+include 'stroom-task:stroom-task-cluster-api'
+
+// Scheduled jobs
+include 'stroom-job:stroom-job-api'
+include 'stroom-job:stroom-job-impl'
+include 'stroom-job:stroom-job-impl-db'
+include 'stroom-job:stroom-job-impl-db-gen'
+include 'stroom-job:stroom-job-shared'
 
 // Test project
 include 'stroom-test-common'
@@ -146,3 +192,4 @@ include 'stroom-test-common'
 // Util
 include 'stroom-util'
 include 'stroom-util-shared'
+

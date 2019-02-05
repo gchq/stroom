@@ -21,7 +21,7 @@ package stroom.datafeed;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.data.store.impl.fs.MockStreamStore;
-import stroom.feed.StroomHeaderArguments;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 
@@ -100,7 +100,7 @@ class TestDataFeedServiceImpl extends TestBase {
         checkOK();
 
         assertThat(StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
+                .streamToString(streamStore.openStreamSource(streamStore.getLastMeta().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
         assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
     }
 
@@ -115,7 +115,7 @@ class TestDataFeedServiceImpl extends TestBase {
         checkOK();
 
         assertThat(StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
+                .streamToString(streamStore.openStreamSource(streamStore.getLastMeta().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
         assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
     }
 
@@ -132,7 +132,7 @@ class TestDataFeedServiceImpl extends TestBase {
         checkOK();
 
         assertThat(StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
+                .streamToString(streamStore.openStreamSource(streamStore.getLastMeta().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
         assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
     }
 
@@ -148,7 +148,7 @@ class TestDataFeedServiceImpl extends TestBase {
         checkOK();
 
         assertThat(StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
+                .streamToString(streamStore.openStreamSource(streamStore.getLastMeta().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
         assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
     }
 
@@ -214,7 +214,7 @@ class TestDataFeedServiceImpl extends TestBase {
         checkOK();
 
         assertThat(StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
+                .streamToString(streamStore.openStreamSource(streamStore.getLastMeta().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
     }
 
     @Test
@@ -239,7 +239,7 @@ class TestDataFeedServiceImpl extends TestBase {
         checkOK();
 
         assertThat(StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("LINE1\nLINE2\n");
+                .streamToString(streamStore.openStreamSource(streamStore.getLastMeta().getId()).getInputStream())).isEqualTo("LINE1\nLINE2\n");
     }
 
     @Test
@@ -247,7 +247,7 @@ class TestDataFeedServiceImpl extends TestBase {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
-        request.addHeader(StroomHeaderArguments.CONTENT_LENGTH, "0");
+        request.addHeader(StandardHeaderArguments.CONTENT_LENGTH, "0");
         request.addHeader("compression", "GZIP");
         request.setInputStream("".getBytes());
 

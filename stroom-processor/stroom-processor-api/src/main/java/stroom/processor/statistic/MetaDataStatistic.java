@@ -16,7 +16,7 @@
 
 package stroom.processor.statistic;
 
-import stroom.data.meta.api.AttributeMap;
+import stroom.meta.shared.AttributeMap;
 
 public interface MetaDataStatistic {
     void recordStatistics(AttributeMap metaData);

@@ -4,7 +4,7 @@ dependencies {
     // Stroom modules
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-data-store:stroom-data-store-api')
-    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-processor:stroom-processor-shared')
     implementation project(':stroom-util-shared')
 

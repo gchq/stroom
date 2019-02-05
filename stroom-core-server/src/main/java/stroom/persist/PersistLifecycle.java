@@ -2,8 +2,6 @@ package stroom.persist;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.lifecycle.StroomShutdown;
-import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -21,7 +19,6 @@ public class PersistLifecycle {
         this.persistServiceProvider = persistServiceProvider;
     }
 
-    @StroomStartup(priority = 1000)
     public void startPersistence() {
         if (running.compareAndSet(false, true)) {
             LOGGER.info("Starting persistence");
@@ -29,8 +26,7 @@ public class PersistLifecycle {
         }
     }
 
-    @StroomShutdown
-    public void stopPersistence() {
+    void stopPersistence() {
         if (running.compareAndSet(true, false)) {
             LOGGER.info("Stopping persistence");
             persistServiceProvider.get().stop();

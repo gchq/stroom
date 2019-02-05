@@ -18,7 +18,7 @@ package stroom.processor.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.jobsystem.ClusterLockService;
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.processor.BatchDeleteConfig;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LogExecutionTime;

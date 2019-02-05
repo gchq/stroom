@@ -17,6 +17,7 @@
 package stroom.task.cluster;
 
 import stroom.entity.shared.BaseResultList;
+import stroom.task.cluster.api.ClusterTask;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TaskProgress;
 

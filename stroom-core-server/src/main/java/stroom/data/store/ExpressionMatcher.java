@@ -19,7 +19,7 @@ package stroom.data.store;
 
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
-import stroom.dictionary.DictionaryStore;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;

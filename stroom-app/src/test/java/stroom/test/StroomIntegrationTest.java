@@ -22,10 +22,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.io.FileUtil;
 import stroom.util.test.StroomTest;
+import stroom.util.test.TempDir;
+import stroom.util.test.TempDirExtension;
 import stroom.util.test.TestState;
 import stroom.util.test.TestState.State;
 
@@ -35,11 +37,14 @@ import java.nio.file.Path;
 /**
  * This class should be common to all component and integration tests.
  */
+@ExtendWith(TempDirExtension.class)
 public abstract class StroomIntegrationTest implements StroomTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomIntegrationTest.class);
 
     private static final boolean TEAR_DOWN_DATABASE_BETWEEEN_TESTS = true;
     private static boolean XML_SCHEMAS_DOWNLOADED = false;
+
+    private Path testTempDir;
 
     @Inject
     private CommonTestControl commonTestControl;
@@ -51,6 +56,11 @@ public abstract class StroomIntegrationTest implements StroomTest {
     public static void beforeClass() {
         final State state = TestState.getState();
         state.reset();
+    }
+
+    @BeforeEach
+    public void setup(@TempDir Path tempDir) {
+        this.testTempDir = tempDir;
     }
 
     @AfterAll
@@ -163,6 +173,6 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
     @Override
     public Path getCurrentTestDir() {
-        return FileUtil.getTempDir();
+        return testTempDir;
     }
 }

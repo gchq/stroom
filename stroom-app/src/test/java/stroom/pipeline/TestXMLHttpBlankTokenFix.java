@@ -36,6 +36,8 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
+import stroom.pipeline.textconverter.TextConverterStore;
+import stroom.pipeline.xslt.XsltStore;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
@@ -135,7 +137,7 @@ class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
 //            feedHolder.setFeed(new Feed());
 
 //            // Setup the meta data holder.
-//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, streamProcessorService, pipelineStore));
 
             // Set the input file to transform.
             final InputStream input = StroomPipelineTestFileUtil.getInputStream(INPUT);

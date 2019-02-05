@@ -22,36 +22,30 @@ import stroom.docstore.shared.Doc;
 import stroom.entity.EntityTypeBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.TextConverterDoc;
-import stroom.pipeline.shared.XsltDoc;
-
-import javax.xml.transform.URIResolver;
+import stroom.pipeline.textconverter.TextConverterModule;
+import stroom.pipeline.xmlschema.XmlSchemaModule;
+import stroom.pipeline.xslt.XsltModule;
 
 public class PipelineModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new TextConverterModule());
+        install(new XmlSchemaModule());
+        install(new XsltModule());
+
         bind(PipelineStore.class).to(PipelineStoreImpl.class);
-        bind(TextConverterStore.class).to(TextConverterStoreImpl.class);
-        bind(XsltStore.class).to(XsltStoreImpl.class);
-        bind(URIResolver.class).to(CustomURIResolver.class);
         bind(LocationFactory.class).to(LocationFactoryProxy.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
         explorerActionHandlerBinder.addBinding().to(stroom.pipeline.PipelineStoreImpl.class);
-        explorerActionHandlerBinder.addBinding().to(stroom.pipeline.TextConverterStoreImpl.class);
-        explorerActionHandlerBinder.addBinding().to(stroom.pipeline.XsltStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.PipelineStoreImpl.class);
-        importExportActionHandlerBinder.addBinding().to(stroom.pipeline.TextConverterStoreImpl.class);
-        importExportActionHandlerBinder.addBinding().to(stroom.pipeline.XsltStoreImpl.class);
 
         EntityTypeBinder.create(binder())
-                .bind(PipelineDoc.DOCUMENT_TYPE, PipelineStoreImpl.class)
-                .bind(TextConverterDoc.DOCUMENT_TYPE, stroom.pipeline.TextConverterStoreImpl.class)
-                .bind(XsltDoc.DOCUMENT_TYPE, stroom.pipeline.XsltStoreImpl.class);
+                .bind(PipelineDoc.DOCUMENT_TYPE, PipelineStoreImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

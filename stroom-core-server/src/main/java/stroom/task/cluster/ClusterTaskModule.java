@@ -21,11 +21,13 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.cluster.impl.ClusterServiceBinder;
 import stroom.entity.shared.Clearable;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
 
 public class ClusterTaskModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ClusterDispatchAsync.class).to(ClusterDispatchAsyncImpl.class);
+        bind(ClusterDispatchAsyncHelper.class).to(ClusterDispatchAsyncHelperImpl.class);
 
         ClusterServiceBinder.create(binder())
                 .bind(ClusterDispatchAsyncImpl.SERVICE_NAME, ClusterDispatchAsyncImpl.class)

@@ -20,7 +20,7 @@ package stroom.streamtask;
 
 import org.junit.jupiter.api.Test;
 import stroom.entity.StroomEntityManager;
-import stroom.node.NodeCache;
+import stroom.node.api.NodeInfo;
 import stroom.processor.impl.db.StreamTaskService;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -35,7 +35,7 @@ class TestStreamTaskServiceBatchLocking extends AbstractCoreIntegrationTest {
     @Inject
     private StroomEntityManager entityManager;
     @Inject
-    private NodeCache nodeCache;
+    private NodeInfo nodeInfo;
 
     private int failedCount = 0;
 

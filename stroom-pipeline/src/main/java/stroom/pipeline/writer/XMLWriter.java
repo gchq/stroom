@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-import stroom.entity.util.XMLUtil;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -34,6 +33,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.CharBuffer;
+import stroom.util.xml.XMLUtil;
 
 import javax.inject.Inject;
 import javax.xml.transform.ErrorListener;

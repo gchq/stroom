@@ -4,17 +4,17 @@ import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.entity.util.XMLMarshallerUtil;
+import stroom.docref.DocRef;
 import stroom.entity.shared.IdRange;
 import stroom.entity.shared.Range;
-import stroom.docref.DocRef;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.stream.OldFindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.StreamDataSource;
 import stroom.util.date.DateUtil;
+import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -217,13 +217,13 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         final Set<Long> includeFeedIds = criteria.obtainFeeds().obtainInclude().getSet();
         if ((includeFeedIds.size() > 0) && (feedDictionariesToInclude.size() > 0)) {
             final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-            applyIncludesTerm(or, includeFeedIds, feedNamesById, StreamDataSource.FEED_NAME);
+            applyIncludesTerm(or, includeFeedIds, feedNamesById, MetaFieldNames.FEED_NAME);
             feedDictionariesToInclude.stream()
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .forEach(dict ->
                             or.addTerm(new ExpressionTerm.Builder()
-                                    .field(StreamDataSource.FEED_NAME)
+                                    .field(MetaFieldNames.FEED_NAME)
                                     .condition(ExpressionTerm.Condition.IN_DICTIONARY)
                                     .dictionary(dict)
                                     .build()
@@ -231,7 +231,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                     );
             rootAnd.addOperator(or.build());
         } else if (includeFeedIds.size() > 0) {
-            applyIncludesTerm(rootAnd, includeFeedIds, feedNamesById, StreamDataSource.FEED_NAME);
+            applyIncludesTerm(rootAnd, includeFeedIds, feedNamesById, MetaFieldNames.FEED_NAME);
         } else if (feedDictionariesToInclude.size() > 0) {
             final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
             feedDictionariesToInclude.stream()
@@ -239,7 +239,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                     .map(Optional::get)
                     .forEach(dict ->
                             or.addTerm(new ExpressionTerm.Builder()
-                                    .field(StreamDataSource.FEED_NAME)
+                                    .field(MetaFieldNames.FEED_NAME)
                                     .condition(ExpressionTerm.Condition.IN_DICTIONARY)
                                     .dictionary(dict)
                                     .build()
@@ -252,21 +252,21 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         final Set<Long> excludeFeedIds = criteria.obtainFeeds().obtainExclude().getSet();
         if (excludeFeedIds.size() > 0) {
             final ExpressionOperator.Builder not = new ExpressionOperator.Builder(ExpressionOperator.Op.NOT);
-            applyIncludesTerm(not, excludeFeedIds, feedNamesById, StreamDataSource.FEED_NAME);
+            applyIncludesTerm(not, excludeFeedIds, feedNamesById, MetaFieldNames.FEED_NAME);
             rootAnd.addOperator(not.build());
         }
 
         // Stream Types
         final Set<Long> streamTypeIds = criteria.obtainStreamTypeIdSet().getSet();
-        applyIncludesTerm(rootAnd, streamTypeIds, streamTypeNamesById, StreamDataSource.STREAM_TYPE_NAME);
+        applyIncludesTerm(rootAnd, streamTypeIds, streamTypeNamesById, MetaFieldNames.TYPE_NAME);
 
         // Pipeline
         final Set<Long> pipelineIds = criteria.obtainPipelineIdSet().getSet();
-        applyIncludesDocRefTerm(rootAnd, pipelineIds, pipeDocRefsById, StreamDataSource.PIPELINE_UUID);
+        applyIncludesDocRefTerm(rootAnd, pipelineIds, pipeDocRefsById, MetaFieldNames.PIPELINE_UUID);
 
         // Parent Stream ID
         final Set<Long> parentStreamIds = criteria.obtainParentStreamIdSet().getSet();
-        applyIncludesTerm(rootAnd, parentStreamIds, i -> Optional.of(i.toString()), StreamDataSource.PARENT_STREAM_ID);
+        applyIncludesTerm(rootAnd, parentStreamIds, i -> Optional.of(i.toString()), MetaFieldNames.PARENT_ID);
 
         // Stream ID, two clauses feed into this, absolute stream ID values and ranges
         final Set<Long> streamIds = criteria.obtainStreamIdSet().getSet();
@@ -274,8 +274,8 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         if ((streamIds.size() > 0) || streamIdRange.isConstrained()) {
             final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
 
-            applyIncludesTerm(or, streamIds, i -> Optional.of(i.toString()), StreamDataSource.STREAM_ID);
-            applyBoundedTerm(or, streamIdRange, StreamDataSource.STREAM_ID, Object::toString);
+            applyIncludesTerm(or, streamIds, i -> Optional.of(i.toString()), MetaFieldNames.ID);
+            applyBoundedTerm(or, streamIdRange, MetaFieldNames.ID, Object::toString);
 
             rootAnd.addOperator(or.build());
         }
@@ -286,17 +286,17 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         });
 
         // Created Period
-        applyBoundedTerm(rootAnd, criteria.obtainCreatePeriod(), StreamDataSource.CREATE_TIME, DateUtil::createNormalDateTimeString);
+        applyBoundedTerm(rootAnd, criteria.obtainCreatePeriod(), MetaFieldNames.CREATE_TIME, DateUtil::createNormalDateTimeString);
 
         // Effective Period
-        applyBoundedTerm(rootAnd, criteria.obtainEffectivePeriod(), StreamDataSource.EFFECTIVE_TIME, DateUtil::createNormalDateTimeString);
+        applyBoundedTerm(rootAnd, criteria.obtainEffectivePeriod(), MetaFieldNames.EFFECTIVE_TIME, DateUtil::createNormalDateTimeString);
 
         // Status Time Period
-        applyBoundedTerm(rootAnd, criteria.obtainStatusPeriod(), StreamDataSource.STATUS_TIME, DateUtil::createNormalDateTimeString);
+        applyBoundedTerm(rootAnd, criteria.obtainStatusPeriod(), MetaFieldNames.STATUS_TIME, DateUtil::createNormalDateTimeString);
 
         // Build and return
         return new QueryData.Builder()
-                .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                 .expression(rootAnd.build())
                 .build();
     }

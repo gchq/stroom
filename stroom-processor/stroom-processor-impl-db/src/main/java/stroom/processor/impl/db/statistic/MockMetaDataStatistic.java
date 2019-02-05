@@ -16,7 +16,7 @@
 
 package stroom.processor.impl.db.statistic;
 
-import stroom.data.meta.api.AttributeMap;
+import stroom.meta.shared.AttributeMap;
 import stroom.processor.statistic.MetaDataStatistic;
 
 class MockMetaDataStatistic implements MetaDataStatistic {

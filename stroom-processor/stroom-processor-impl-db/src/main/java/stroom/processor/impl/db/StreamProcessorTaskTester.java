@@ -30,6 +30,6 @@ public class StreamProcessorTaskTester implements StreamProcessorTaskExecutor {
     @Override
     public void exec(final Processor streamProcessor, final ProcessorFilter streamProcessorFilter,
                      final ProcessorFilterTask streamTask, final StreamSource streamSource) {
-        LOGGER.info("exec() - Processing stream {}", streamSource.getStream());
+        LOGGER.info("exec() - Processing stream {}", streamSource.getMeta());
     }
 }

@@ -83,7 +83,7 @@ public class StreamType extends NamedEntity implements HasPrimitiveValue {
     public static final StreamType BOUNDARY_INDEX = new StreamType("BOUNDARY_INDEX", "bdy", "Boundary Index", 32,
             Purpose.INDEX);
     /**
-     * Meta stream data
+     * Meta meta data
      */
     public static final StreamType META = new StreamType("META", "meta", "Meta Data", 33, Purpose.META);
     /**

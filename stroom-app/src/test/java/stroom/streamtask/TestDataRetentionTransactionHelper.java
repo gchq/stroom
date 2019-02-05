@@ -20,12 +20,12 @@ package stroom.streamtask;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.DataProperties;
-import stroom.data.meta.api.DataStatus;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.dictionary.DictionaryStore;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.Status;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -45,7 +45,7 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionTransactionHelper.class);
     private static final int RETENTION_PERIOD_DAYS = 1;
     @Inject
-    private DataMetaService streamMetaService;
+    private MetaService metaService;
     @Inject
     private DictionaryStore dictionaryStore;
     @Inject
@@ -63,16 +63,16 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
             LOGGER.info("now: %s", DateUtil.createNormalDateTimeString(now));
             LOGGER.info("timeOutsideRetentionPeriod: %s", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
 
-            final Data streamInsideRetention = streamMetaService.create(
-                    new DataProperties.Builder()
+            final Meta metaInsideRetention = metaService.create(
+                    new MetaProperties.Builder()
                             .feedName(feedName)
                             .typeName(StreamTypeNames.RAW_EVENTS)
                             .createMs(now)
                             .statusMs(now)
                             .build());
 
-            final Data streamOutsideRetention = streamMetaService.create(
-                    new DataProperties.Builder()
+            final Meta metaOutsideRetention = metaService.create(
+                    new MetaProperties.Builder()
                             .feedName(feedName)
                             .typeName(StreamTypeNames.RAW_EVENTS)
                             .createMs(timeOutsideRetentionPeriod)
@@ -80,8 +80,8 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
                             .build());
 
             // Streams are locked initially so unlock.
-            streamMetaService.updateStatus(streamInsideRetention, DataStatus.UNLOCKED);
-            streamMetaService.updateStatus(streamOutsideRetention, DataStatus.UNLOCKED);
+            metaService.updateStatus(metaInsideRetention, Status.UNLOCKED);
+            metaService.updateStatus(metaOutsideRetention, Status.UNLOCKED);
 
             dumpStreams();
 
@@ -90,21 +90,21 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
 
             // TODO : @66 Re-implement finding streams for data retention
 //            try (final DataRetentionStreamFinder dataRetentionStreamFinder = new DataRetentionStreamFinder(connection, dictionaryStore)) {
-//                final long count = dataRetentionStreamFinder.getRowCount(ageRange, Collections.singleton(StreamDataSource.STREAM_ID));
+//                final long count = dataRetentionStreamFinder.getRowCount(ageRange, Collections.singleton(StreamDataSource.ID));
 //                assertThat(count).isEqualTo(1);
 //            }
         }
     }
 
     private void dumpStreams() {
-        final BaseResultList<Data> streams = streamMetaService.find(new FindDataCriteria());
+        final BaseResultList<Meta> list = metaService.find(new FindMetaCriteria());
 
-        assertThat(streams.size()).isEqualTo(2);
+        assertThat(list.size()).isEqualTo(2);
 
-        for (final Data stream : streams) {
-            LOGGER.info("stream: %s, createMs: %s, statusMs: %s, status: %s", stream,
-                    DateUtil.createNormalDateTimeString(stream.getCreateMs()),
-                    DateUtil.createNormalDateTimeString(stream.getStatusMs()), stream.getStatus());
+        for (final Meta meta : list) {
+            LOGGER.info("meta: %s, createMs: %s, statusMs: %s, status: %s", meta,
+                    DateUtil.createNormalDateTimeString(meta.getCreateMs()),
+                    DateUtil.createNormalDateTimeString(meta.getStatusMs()), meta.getStatus());
         }
     }
 }

@@ -58,7 +58,7 @@
     <inherits name="stroom.config.Config" />
     <inherits name="stroom.config.global.GlobalConfig" />
     <inherits name="stroom.ui.config.UiConfig" />
-    <inherits name="stroom.data.meta.Meta" />
+    <inherits name="stroom.meta.Meta" />
     <inherits name="stroom.about.About" />
     <inherits name="stroom.activity.Activity" />
     <inherits name="stroom.elastic.Elastic" />
@@ -105,7 +105,7 @@
     <inherits name="stroom.feed.Feed" />
     <inherits name="stroom.help.Help" />
     <inherits name="stroom.importexport.ImportExport" />
-    <inherits name="stroom.jobsystem.JobSystem" />
+    <inherits name="stroom.job.Job" />
     <inherits name="stroom.monitoring.Monitoring" />
     <!--
     <inherits name="stroom.nstat.store.monitoring.StatsMonitoring" />

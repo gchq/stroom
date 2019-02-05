@@ -3,9 +3,10 @@ package stroom.security;
 import com.google.inject.AbstractModule;
 import org.mockito.Mockito;
 import org.testcontainers.containers.MySQLContainer;
+import stroom.cache.impl.CacheModule;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
-import stroom.entity.event.EntityEventBus;
+import stroom.entity.shared.EntityEventBus;
 import stroom.explorer.api.ExplorerService;
 import stroom.security.impl.SecurityImpl;
 import stroom.security.impl.db.SecurityDbConfig;
@@ -15,6 +16,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class TestModule extends AbstractModule {
+    static final String DATABASE_NAME = "stroom";
+
     private final MySQLContainer dbContainer;
 
     public TestModule(final MySQLContainer dbContainer) {
@@ -24,6 +27,7 @@ class TestModule extends AbstractModule {
     @Override
     protected void configure() {
         // We want the 'real' security DB Module
+        install(new CacheModule());
         install(new SecurityDbModule());
 
         if (null != dbContainer) {
@@ -41,9 +45,9 @@ class TestModule extends AbstractModule {
             bind(SecurityDbConfig.class).toInstance(new SecurityDbConfig.Builder()
                     .withConnectionConfig(new ConnectionConfig.Builder()
                             .jdbcDriverClassName("com.mysql.jdbc.Driver")
-                            .jdbcUrl("jdbc:mysql://localhost:14450/test?useUnicode=yes&characterEncoding=UTF-8")
-                            .password("test")
-                            .username("test")
+                            .jdbcUrl(String.format("jdbc:mysql://localhost:14450/%s?useUnicode=yes&characterEncoding=UTF-8", DATABASE_NAME))
+                            .password("stroompassword1")
+                            .username("stroomuser")
                             .build())
                     .withConnectionPoolConfig(new ConnectionPoolConfig.Builder()
                             .build())

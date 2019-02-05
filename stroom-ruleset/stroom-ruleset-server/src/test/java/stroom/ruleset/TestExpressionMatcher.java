@@ -17,7 +17,7 @@
 package stroom.ruleset;
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.ExpressionMatcher;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -50,20 +50,20 @@ class TestExpressionMatcher {
     }
 
     private void test(final Map<String, Object> attributeMap, final ExpressionOperator expression, final boolean outcome) {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(MetaDataSource.getFieldMap(), null);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(MetaFieldNames.getFieldMap(), null);
         assertThat(expressionMatcher.match(attributeMap, expression)).isEqualTo(outcome);
     }
 
     private ExpressionOperator createExpression(final Op op, final String feedName) {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, op);
-        builder.addTerm(MetaDataSource.FEED_NAME, Condition.CONTAINS, feedName);
+        builder.addTerm(MetaFieldNames.FEED_NAME, Condition.CONTAINS, feedName);
         return builder.build();
     }
 
     private Map<String, Object> createAttributeMap() {
         final Map<String, Object> attributeMap = new HashMap<>();
-        attributeMap.put(MetaDataSource.FEED_NAME, "TEST_FEED");
-        attributeMap.put(MetaDataSource.STREAM_TYPE_NAME, "Raw Events");
+        attributeMap.put(MetaFieldNames.FEED_NAME, "TEST_FEED");
+        attributeMap.put(MetaFieldNames.TYPE_NAME, "Raw Events");
         return attributeMap;
     }
 }

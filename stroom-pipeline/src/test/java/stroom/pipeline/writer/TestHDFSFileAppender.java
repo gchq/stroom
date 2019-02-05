@@ -26,10 +26,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.io.FileUtil;
 import stroom.util.test.StroomUnitTest;
+import stroom.util.test.TempDir;
+import stroom.util.test.TempDirExtension;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -37,11 +39,16 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(TempDirExtension.class)
 class TestHDFSFileAppender extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHDFSFileAppender.class);
-    private static final String ROOT_TEST_PATH = FileUtil.getTempDir() + "/junitTests/TestHDFSFileAppender";
+//    private static final String ROOT_TEST_PATH = FileUtil.getTempDir() + "/junitTests/TestHDFSFileAppender";
     private static final String FS_DEFAULT_FS = "file:///";
     private static final String RUN_AS_USER = "hdfs";
+
+    @TempDir
+    private java.nio.file.Path rootTestDir;
+
     private Configuration conf;
     private UserGroupInformation userGroupInformation;
     private FileSystem hdfs;
@@ -59,7 +66,7 @@ class TestHDFSFileAppender extends StroomUnitTest {
         // FS will be shutdown automatically with a JVM shutdown hook
         hdfs = FileSystem.get(conf);
 
-        final Path rootPath = new Path(ROOT_TEST_PATH);
+        final Path rootPath = new Path(rootTestDir.toAbsolutePath().toString());
 
         userGroupInformation = HDFSFileAppender.buildRemoteUser(Optional.of(RUN_AS_USER));
 
@@ -145,8 +152,10 @@ class TestHDFSFileAppender extends StroomUnitTest {
         final PathCreator pathCreator = new PathCreator(null, null, null, null, null);
         final HDFSFileAppender provider = new HDFSFileAppender(null, pathCreator);
 
-        provider.setOutputPaths(ROOT_TEST_PATH + "/t1" + name + "," + ROOT_TEST_PATH + "/t2" + name + ","
-                + ROOT_TEST_PATH + "/t3" + name);
+        provider.setOutputPaths(
+                rootTestDir.toAbsolutePath().toString() + "/t1" + name + "," +
+                rootTestDir.toAbsolutePath().toString() + "/t2" + name + "," +
+                rootTestDir.toAbsolutePath().toString() + "/t3" + name);
         provider.setFileSystemUri(FS_DEFAULT_FS);
         provider.setRunAsUser(RUN_AS_USER);
         provider.setConf(conf);

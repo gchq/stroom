@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
+import stroom.db.util.HikariUtil;
+import stroom.db.util.DbUtil;
 import stroom.util.shared.Version;
 
 import javax.inject.Inject;
@@ -33,20 +35,9 @@ public class DataSourceProvider implements Provider<DataSource> {
     }
 
     private DataSource dataSource() {
-//        try {
         final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
         final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
-
-        connectionConfig.validate();
-
-        final HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
-        config.setUsername(connectionConfig.getJdbcDriverUsername());
-        config.setPassword(connectionConfig.getJdbcDriverPassword());
-        config.addDataSourceProperty("cachePrepStmts", String.valueOf(connectionPoolConfig.isCachePrepStmts()));
-        config.addDataSourceProperty("prepStmtCacheSize", String.valueOf(connectionPoolConfig.getPrepStmtCacheSize()));
-        config.addDataSourceProperty("prepStmtCacheSqlLimit", String.valueOf(connectionPoolConfig.getPrepStmtCacheSqlLimit()));
-
+        final HikariConfig config = HikariUtil.createConfig(connectionConfig, connectionPoolConfig);
         return new HikariDataSource(config);
 //            dataSource.setDataSourceName("stroom");
 //            dataSource.setDescription("Stroom data source");

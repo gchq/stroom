@@ -17,9 +17,11 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.data.store.api.SegmentOutputStream;
-import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.test.TempDir;
+import stroom.util.test.TempDirExtension;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,12 +29,14 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(TempDirExtension.class)
 class TestRASegmentStreamsByteSeeking {
+
     @Test
-    void testByteSeeking() throws IOException {
-        final Path dir = FileUtil.getTempDir();
-        try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(dir.resolve("test.dat")),
-                () -> Files.newOutputStream(dir.resolve("test.idx")))) {
+    void testByteSeeking(@TempDir Path tempDir) throws IOException {
+        assertThat(tempDir).isNotNull();
+        try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(tempDir.resolve("test.dat")),
+                () -> Files.newOutputStream(tempDir.resolve("test.idx")))) {
             os.write("LINE ONE\n".getBytes(StreamUtil.DEFAULT_CHARSET));
             os.addSegment();
             os.write("LINE TWO\n".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -44,10 +48,10 @@ class TestRASegmentStreamsByteSeeking {
             os.flush();
         }
 
-        final UncompressedInputStream debug = new UncompressedInputStream(dir.resolve("test.idx"), true);
+        final UncompressedInputStream debug = new UncompressedInputStream(tempDir.resolve("test.idx"), true);
 
-        RASegmentInputStream is = new RASegmentInputStream(new BlockGZIPInputFile(dir.resolve("test.dat")),
-                new UncompressedInputStream(dir.resolve("test.idx"), true));
+        RASegmentInputStream is = new RASegmentInputStream(new BlockGZIPInputFile(tempDir.resolve("test.dat")),
+                new UncompressedInputStream(tempDir.resolve("test.idx"), true));
 
         assertThat(is.count()).isEqualTo(4);
 
@@ -72,22 +76,22 @@ class TestRASegmentStreamsByteSeeking {
         debug.close();
         is.close();
 
-        is = new RASegmentInputStream(new BlockGZIPInputFile(dir.resolve("test.dat")),
-                new UncompressedInputStream(dir.resolve("test.idx"), true), 5, 8);
+        is = new RASegmentInputStream(new BlockGZIPInputFile(tempDir.resolve("test.dat")),
+                new UncompressedInputStream(tempDir.resolve("test.idx"), true), 5, 8);
 
         assertThat(StreamUtil.streamToString(is)).isEqualTo("ONE");
         is.close();
 
-        is = new RASegmentInputStream(new BlockGZIPInputFile(dir.resolve("test.dat")),
-                new UncompressedInputStream(dir.resolve("test.idx"), true), 5, 39);
+        is = new RASegmentInputStream(new BlockGZIPInputFile(tempDir.resolve("test.dat")),
+                new UncompressedInputStream(tempDir.resolve("test.idx"), true), 5, 39);
 
         is.include(0);
         is.include(2);
         assertThat(StreamUtil.streamToString(is)).isEqualTo("ONE\nLINE THREE\n");
         is.close();
 
-        is = new RASegmentInputStream(new BlockGZIPInputFile(dir.resolve("test.dat")),
-                new UncompressedInputStream(dir.resolve("test.idx"), true), 0, 13);
+        is = new RASegmentInputStream(new BlockGZIPInputFile(tempDir.resolve("test.dat")),
+                new UncompressedInputStream(tempDir.resolve("test.idx"), true), 0, 13);
 
         is.include(0);
         is.include(1);

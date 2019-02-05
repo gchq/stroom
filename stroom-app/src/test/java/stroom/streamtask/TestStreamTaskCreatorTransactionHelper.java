@@ -21,10 +21,10 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
@@ -70,7 +70,7 @@ class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrationTest
     @Inject
     private StroomEntityManager stroomEntityManager;
     @Inject
-    private DataMetaService streamMetaService;
+    private MetaService metaService;
 
     @Test
     void testBasic() {
@@ -78,19 +78,19 @@ class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrationTest
 
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
         assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(0);
-        final List<Data> streams = streamMetaService.find(new FindDataCriteria());
+        final List<Meta> streams = metaService.find(new FindMetaCriteria());
         assertThat(streams.size()).isEqualTo(1);
 
         ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND).build();
         assertThat(streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
 
-        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName).build();
+        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName).build();
         assertThat(streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
 
-        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, "otherFed").build();
+        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, "otherFed").build();
         assertThat(streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
 
-        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.PIPELINE_UUID, Condition.EQUALS, "1234").build();
+        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFieldNames.PIPELINE_UUID, Condition.EQUALS, "1234").build();
         assertThat(streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
     }
 

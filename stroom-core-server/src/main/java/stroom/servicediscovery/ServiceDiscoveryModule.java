@@ -5,7 +5,6 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.util.HasHealthCheck;
 
 public class ServiceDiscoveryModule extends AbstractModule {
-
     @Override
     protected void configure() {
         bind(ServiceDiscoverer.class).to(ServiceDiscovererImpl.class);

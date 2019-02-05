@@ -24,6 +24,6 @@ public class InternalStatisticsModule extends AbstractModule {
     protected void configure() {
         bind(InternalStatisticsReceiver.class).to(InternalStatisticsReceiverImpl.class);
 
-        final Multibinder<InternalStatisticsService> multibinder = Multibinder.newSetBinder(binder(), InternalStatisticsService.class);
+        Multibinder.newSetBinder(binder(), InternalStatisticsService.class);
     }
 }

@@ -18,12 +18,12 @@ package stroom.processor.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.AttributeMap;
+import stroom.meta.shared.AttributeMap;
 import stroom.data.store.StreamProgressMonitor;
 import stroom.data.store.api.StreamStore;
 import stroom.datafeed.BufferFactory;
-import stroom.feed.FeedDocCache;
-import stroom.feed.StroomHeaderArguments;
+import stroom.pipeline.feed.FeedDocCache;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.proxy.repo.ProxyFileProcessor;
@@ -179,7 +179,7 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
         streamTargetStroomStreamHandler.setOneByOne(oneByOne);
 
         final AttributeMap globalAttributeMap = new AttributeMap();
-        globalAttributeMap.put(StroomHeaderArguments.FEED, feed.getName());
+        globalAttributeMap.put(StandardHeaderArguments.FEED, feed.getName());
 
 //        try {
         streamTargetStroomStreamHandler.handleHeader(globalAttributeMap);

@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.util.XMLMarshallerUtil;
+import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;

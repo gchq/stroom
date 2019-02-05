@@ -2,7 +2,7 @@ package stroom.index;
 
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.SqlBuilder;
-import stroom.node.VolumeService;
+import stroom.volume.VolumeService;
 import stroom.node.shared.VolumeEntity;
 import stroom.persist.EntityManagerSupport;
 import stroom.docref.DocRef;

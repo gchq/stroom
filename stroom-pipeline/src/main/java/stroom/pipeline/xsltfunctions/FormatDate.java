@@ -21,7 +21,7 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.util.date.DateFormatterCache;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
@@ -55,13 +55,13 @@ class FormatDate extends StroomExtensionFunctionCall {
     private static final String MONTH_OF_YEAR = "MonthOfYear";
     private static final String DAY_OF_MONTH = "DayOfMonth";
 
-    private final StreamHolder streamHolder;
+    private final MetaHolder metaHolder;
 
     private Instant baseTime;
 
     @Inject
-    FormatDate(final StreamHolder streamHolder) {
-        this.streamHolder = streamHolder;
+    FormatDate(final MetaHolder metaHolder) {
+        this.metaHolder = metaHolder;
     }
 
     @Override
@@ -367,9 +367,9 @@ class FormatDate extends StroomExtensionFunctionCall {
     private Instant getBaseTime() {
         if (baseTime == null) {
             Long createMs = null;
-            if (streamHolder != null) {
-                if (streamHolder.getStream() != null) {
-                    createMs = streamHolder.getStream().getCreateMs();
+            if (metaHolder != null) {
+                if (metaHolder.getMeta() != null) {
+                    createMs = metaHolder.getMeta().getCreateMs();
                 }
             }
             if (createMs != null) {

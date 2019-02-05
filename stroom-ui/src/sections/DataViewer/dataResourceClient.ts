@@ -12,7 +12,7 @@ export const getDataForSelectedRow = (dataViewerId: string) => (
 
   // TODO get other parms, e.g. for paging
   const selectedRow = state.dataViewers[dataViewerId].selectedRow;
-  const streamId =
+  const metaId =
     state.dataViewers[dataViewerId] &&
     state.dataViewers[dataViewerId].streamAttributeMaps &&
     selectedRow
@@ -21,7 +21,7 @@ export const getDataForSelectedRow = (dataViewerId: string) => (
       : undefined;
 
   var url = new URL(`${state.config.values.stroomBaseServiceUrl}/data/v1/`);
-  if (!!streamId) url.searchParams.append("streamId", streamId.toString());
+  if (!!metaId) url.searchParams.append("metaId", metaId.toString());
   url.searchParams.append("streamsOffset", "0");
   url.searchParams.append("streamsLength", "1");
   url.searchParams.append("pageOffset", "0");

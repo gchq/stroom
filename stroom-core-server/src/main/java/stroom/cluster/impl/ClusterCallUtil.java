@@ -17,18 +17,17 @@
 package stroom.cluster.impl;
 
 import stroom.cluster.api.ServiceName;
-import stroom.node.shared.Node;
 import stroom.util.shared.ModelStringUtil;
 
 abstract class ClusterCallUtil {
-    static String logString(final String prefix, final Node sourceNode, final Node targetNode,
+    static String logString(final String prefix, final String sourceNode, final String targetNode,
                             final ServiceName serviceName, final String methodName, final Long ms) {
-        return prefix + " " + sourceNode.getName() + "->" + targetNode.getName() + " - " + serviceName + "." + methodName
+        return prefix + " " + sourceNode + "->" + targetNode + " - " + serviceName + "." + methodName
                 + " took " + ModelStringUtil.formatDurationString(ms);
     }
 
-    static String logString(final String prefix, final Node sourceNode, final Node targetNode,
+    static String logString(final String prefix, final String sourceNode, final String targetNode,
                             final ServiceName serviceName, final String methodName) {
-        return prefix + " " + sourceNode.getName() + "->" + targetNode.getName() + " - " + serviceName + "." + methodName;
+        return prefix + " " + sourceNode + "->" + targetNode + " - " + serviceName + "." + methodName;
     }
 }

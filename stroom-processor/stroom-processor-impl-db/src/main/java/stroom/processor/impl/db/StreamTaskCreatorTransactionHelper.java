@@ -21,15 +21,16 @@ package stroom.processor.impl.db;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.DataStatus;
+import stroom.cluster.lock.api.ClusterLockService;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.Status;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.util.SqlBuilder;
-import stroom.jobsystem.ClusterLockService;
-import stroom.node.NodeCache;
+import stroom.node.api.NodeInfo;
+import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
 import stroom.persist.CoreConfig;
 import stroom.persist.EntityManagerSupport;
@@ -68,26 +69,29 @@ class StreamTaskCreatorTransactionHelper {
 //    }
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
+    private final NodeService nodeService;
     private final ClusterLockService clusterLockService;
     private final StreamTaskService streamTaskService;
-    private final DataMetaService streamMetaService;
+    private final MetaService metaService;
     private final StroomEntityManager stroomEntityManager;
     private final EntityManagerSupport entityManagerSupport;
     private final CoreConfig coreConfig;
 
     @Inject
-    StreamTaskCreatorTransactionHelper(final NodeCache nodeCache,
+    StreamTaskCreatorTransactionHelper(final NodeInfo nodeInfo,
+                                       final NodeService nodeService,
                                        final ClusterLockService clusterLockService,
                                        final StreamTaskService streamTaskService,
-                                       final DataMetaService streamMetaService,
+                                       final MetaService metaService,
                                        final StroomEntityManager stroomEntityManager,
                                        final EntityManagerSupport entityManagerSupport,
                                        final CoreConfig coreConfig) {
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
+        this.nodeService = nodeService;
         this.clusterLockService = clusterLockService;
         this.streamTaskService = streamTaskService;
-        this.streamMetaService = streamMetaService;
+        this.metaService = metaService;
         this.stroomEntityManager = stroomEntityManager;
         this.entityManagerSupport = entityManagerSupport;
         this.coreConfig = coreConfig;
@@ -109,7 +113,7 @@ class StreamTaskCreatorTransactionHelper {
         sql.append(" = NULL WHERE ");
         sql.append(Node.FOREIGN_KEY);
         sql.append(" = ");
-        sql.arg(nodeCache.getDefaultNode().getId());
+        sql.arg(nodeInfo.getThisNode().getId());
         final CriteriaSet<TaskStatus> criteriaSet = new CriteriaSet<>();
         criteriaSet.addAll(Arrays.asList(TaskStatus.UNPROCESSED, TaskStatus.ASSIGNED, TaskStatus.PROCESSING));
         sql.appendPrimitiveValueSetQuery(ProcessorFilterTask.STATUS, criteriaSet);
@@ -118,7 +122,7 @@ class StreamTaskCreatorTransactionHelper {
 
         LOGGER.info(
                 "doStartup() - Set {} Tasks back to UNPROCESSED (Reprocess), NULL that were UNPROCESSED, ASSIGNED, PROCESSING for node {}",
-                results, nodeCache.getDefaultNode().getName());
+                results, nodeInfo.getThisNodeName());
     }
 
 
@@ -177,7 +181,7 @@ class StreamTaskCreatorTransactionHelper {
      *                        processor filter.
      * @param streams         The map of streams and optional event ranges to create stream
      *                        tasks for.
-     * @param thisNode        This node, the node that will own the created tasks.
+     * @param thisNodeName        This node, the node that will own the created tasks.
      * @param reachedLimit    For search based stream task creation this indicates if we
      *                        have reached the limit of stream tasks created for a single
      *                        search. This limit is imposed to stop search based task
@@ -189,10 +193,12 @@ class StreamTaskCreatorTransactionHelper {
     public CreatedTasks createNewTasks(final ProcessorFilter filter,
                                        final ProcessorFilterTracker tracker,
                                        final long streamQueryTime,
-                                       final Map<Data, InclusiveRanges> streams,
-                                       final Node thisNode,
+                                       final Map<Meta, InclusiveRanges> streams,
+                                       final String thisNodeName,
                                        final Long maxMetaId,
                                        final boolean reachedLimit) {
+        final Node node = nodeService.getNode(thisNodeName);
+
         return entityManagerSupport.transactionResult(em -> {
             List<ProcessorFilterTask> availableTaskList = Collections.emptyList();
             int availableTasksCreated = 0;
@@ -226,8 +232,8 @@ class StreamTaskCreatorTransactionHelper {
                     final List<List<Object>> allArgs = new ArrayList<>();
 
 
-                    for (final Entry<Data, InclusiveRanges> entry : streams.entrySet()) {
-                        final Data stream = entry.getKey();
+                    for (final Entry<Meta, InclusiveRanges> entry : streams.entrySet()) {
+                        final Meta meta = entry.getKey();
                         final InclusiveRanges eventRanges = entry.getValue();
 
                         String eventRangeData = null;
@@ -238,7 +244,7 @@ class StreamTaskCreatorTransactionHelper {
 
                         // Update the max event id if this stream id is greater than
                         // any we have seen before.
-                        if (streamIdRange == null || stream.getId() > streamIdRange.getMax()) {
+                        if (streamIdRange == null || meta.getId() > streamIdRange.getMax()) {
                             if (eventRanges != null) {
                                 eventIdRange = eventRanges.getOuterRange();
                             } else {
@@ -246,8 +252,8 @@ class StreamTaskCreatorTransactionHelper {
                             }
                         }
 
-                        streamIdRange = InclusiveRange.extend(streamIdRange, stream.getId());
-                        streamMsRange = InclusiveRange.extend(streamMsRange, stream.getCreateMs());
+                        streamIdRange = InclusiveRange.extend(streamIdRange, meta.getId());
+                        streamMsRange = InclusiveRange.extend(streamMsRange, meta.getCreateMs());
 
                         final List<Object> rowArgs = new ArrayList<>(columnNames.size());
 
@@ -256,17 +262,17 @@ class StreamTaskCreatorTransactionHelper {
                         rowArgs.add(TaskStatus.UNPROCESSED.getPrimitiveValue()); //stat
                         rowArgs.add(streamTaskCreateMs); //stat_ms
 
-                        if (DataStatus.UNLOCKED.equals(stream.getStatus())) {
+                        if (Status.UNLOCKED.equals(meta.getStatus())) {
                             // If the stream is unlocked then take ownership of the
                             // task, i.e. set the node to this node.
-                            rowArgs.add(thisNode.getId()); //fk_node_id
+                            rowArgs.add(node.getId()); //fk_node_id
                             availableTasksCreated++;
                         } else {
                             // If the stream is locked then don't take ownership of
                             // the task at this time, i.e. set the node to null.
                             rowArgs.add(null); //fk_node_id
                         }
-                        rowArgs.add(stream.getId()); //fk_strm_id
+                        rowArgs.add(meta.getId()); //fk_strm_id
                         if (eventRangeData != null && !eventRangeData.isEmpty()) {
                             rowArgs.add(eventRangeData); //dat
                         } else {
@@ -299,7 +305,7 @@ class StreamTaskCreatorTransactionHelper {
 
                     // Select them back
                     final FindStreamTaskCriteria findStreamTaskCriteria = new FindStreamTaskCriteria();
-                    findStreamTaskCriteria.obtainNodeIdSet().add(thisNode.getId());
+                    findStreamTaskCriteria.obtainNodeIdSet().add(node.getId());
                     findStreamTaskCriteria.setCreateMs(streamTaskCreateMs);
                     findStreamTaskCriteria.obtainStreamTaskStatusSet().add(TaskStatus.UNPROCESSED);
                     findStreamTaskCriteria.obtainStreamProcessorFilterIdSet().add(filter.getId());

@@ -16,10 +16,10 @@
 
 package stroom.processor.impl.db;
 
-import stroom.jobsystem.DistributedTaskFactory;
-import stroom.jobsystem.DistributedTaskFactoryBean;
 import stroom.node.shared.Node;
 import stroom.processor.shared.ProcessorFilterTask;
+import stroom.job.api.DistributedTaskFactory;
+import stroom.job.api.DistributedTaskFactoryBean;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -37,15 +37,15 @@ public class StreamProcessorTaskFactory implements DistributedTaskFactory<Stream
     }
 
     @Override
-    public List<StreamProcessorTask> fetch(final Node node, final int count) {
-        final List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(node, count);
+    public List<StreamProcessorTask> fetch(final String nodeName, final int count) {
+        final List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeName, count);
         return wrap(streamTasks);
     }
 
     @Override
-    public void abandon(final Node node, final List<StreamProcessorTask> tasks) {
+    public void abandon(final String nodeName, final List<StreamProcessorTask> tasks) {
         final List<ProcessorFilterTask> streamTasks = unwrap(tasks);
-        streamTaskCreator.abandonStreamTasks(node, streamTasks);
+        streamTaskCreator.abandonStreamTasks(nodeName, streamTasks);
     }
 
     /**

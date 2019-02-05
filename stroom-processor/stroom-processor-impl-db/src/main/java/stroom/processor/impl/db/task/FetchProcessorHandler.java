@@ -19,7 +19,7 @@ package stroom.processor.impl.db.task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.DictionaryStore;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;

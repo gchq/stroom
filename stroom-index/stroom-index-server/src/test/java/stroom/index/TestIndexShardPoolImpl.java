@@ -53,7 +53,7 @@ class TestIndexShardPoolImpl {
     }
 
 //    @Mock
-//    private NodeCache nodeCache;
+//    private NodeInfo nodeInfo;
 //
 //    @BeforeEach
 //    public void init() {
@@ -131,7 +131,7 @@ class TestIndexShardPoolImpl {
             }
         };
 
-//        Mockito.when(nodeCache.getDefaultNode()).thenReturn(defaultNode);
+//        Mockito.when(nodeInfo.getThisNode()).thenReturn(defaultNode);
 
         final IndexShardWriterCache indexShardWriterCache = new MockIndexShardWriterCache(mockIndexShardService, maxDocumentsPerIndexShard);
         final Indexer indexer = new IndexerImpl(indexShardWriterCache, null);

@@ -1,9 +1,9 @@
 package stroom.config.global.impl.db;
 
 import com.google.inject.AbstractModule;
+import stroom.config.global.api.ListGlobalConfigAction;
 import stroom.config.global.api.FetchGlobalConfigAction;
-import stroom.config.global.api.LoadGlobalConfigAction;
-import stroom.config.global.api.SaveGlobalConfigAction;
+import stroom.config.global.api.UpdateGlobalConfigAction;
 import stroom.task.api.TaskHandlerBinder;
 
 public class GlobalConfigModule extends AbstractModule {
@@ -13,9 +13,9 @@ public class GlobalConfigModule extends AbstractModule {
         bind(ConfigInitialiser.class).asEagerSingleton();
 
         TaskHandlerBinder.create(binder())
+                .bind(ListGlobalConfigAction.class, ListGlobalConfigHandler.class)
                 .bind(FetchGlobalConfigAction.class, FetchGlobalConfigHandler.class)
-                .bind(LoadGlobalConfigAction.class, LoadGlobalConfigHandler.class)
-                .bind(SaveGlobalConfigAction.class, SaveGlobalConfigHandler.class);
+                .bind(UpdateGlobalConfigAction.class, UpdateGlobalConfigHandler.class);
     }
 
     @Override

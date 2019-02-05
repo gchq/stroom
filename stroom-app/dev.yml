@@ -137,9 +137,6 @@ appConfig:
       prepStmtCacheSqlLimit: 2048
   export:
     enabled: false
-  lifecycle:
-    enabled: true
-    executionInterval: "10s"
   node:
     node: node1a
     rack: rack1

@@ -1,0 +1,16 @@
+ext.moduleName = 'stroom.meta.impl.mock'
+
+dependencies {
+    implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
+    implementation project(':stroom-entity-shared')
+
+    implementation libs.stroomQueryApi
+    implementation libs.stroomDocRef
+
+    implementation libs.guice4
+
+    implementation libs.javax_inject
+    implementation libs.slf4j_api
+}

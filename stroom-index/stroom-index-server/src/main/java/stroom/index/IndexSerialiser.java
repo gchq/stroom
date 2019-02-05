@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docstore.DocumentSerialiser2;
 import stroom.docstore.Serialiser2;
 import stroom.docstore.Serialiser2Factory;
-import stroom.entity.util.XMLMarshallerUtil;
+import stroom.util.xml.XMLMarshallerUtil;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFields;
 
@@ -33,7 +33,7 @@ public class IndexSerialiser implements DocumentSerialiser2<IndexDoc> {
 
 //        final String js = EncodingUtil.asString(data.get(JS));
 //        if (js != null) {
-//            document.setData(js);
+//            document.setMeta(js);
 //        }
         return document;
     }
@@ -42,8 +42,8 @@ public class IndexSerialiser implements DocumentSerialiser2<IndexDoc> {
     public Map<String, byte[]> write(final IndexDoc document) throws IOException {
         final Map<String, byte[]> data = delegate.write(document);
 
-//        if (document.getData() != null) {
-//            data.put(JS, EncodingUtil.asBytes(document.getData()));
+//        if (document.getMeta() != null) {
+//            data.put(JS, EncodingUtil.asBytes(document.getMeta()));
 //        }
 
         return data;

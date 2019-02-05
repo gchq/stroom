@@ -31,7 +31,6 @@ import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.docref.DocRef;
 import stroom.script.shared.ScriptDoc;
-import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;

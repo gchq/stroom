@@ -1,3 +1,0 @@
--- TODO remove
--- Now handled in /home/dev/git_work/stroom/stroom-config/stroom-config-global-impl-db/src/main/resources/stroom/config/global/impl/db/migration/V7_0_0_1__config.sql
---RENAME TABLE GLOB_PROP TO OLD_GLOB_PROP;

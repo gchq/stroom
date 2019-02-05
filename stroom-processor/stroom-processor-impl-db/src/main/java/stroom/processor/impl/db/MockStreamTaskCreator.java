@@ -17,13 +17,14 @@
 
 package stroom.processor.impl.db;
 
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
-import stroom.node.shared.Node;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
+import stroom.node.api.NodeService;
 import stroom.processor.StreamProcessorFilterService;
+import stroom.node.shared.Node;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.processor.shared.ProcessorFilter;
@@ -40,14 +41,17 @@ import java.util.List;
 
 @Singleton
 public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
-    private final DataMetaService streamMetaService;
+    private final MetaService metaService;
     private final StreamProcessorFilterService streamProcessorFilterService;
+    private final NodeService nodeService;
 
     @Inject
-    MockStreamTaskCreator(final DataMetaService streamMetaService,
-                          final StreamProcessorFilterService streamProcessorFilterService) {
-        this.streamMetaService = streamMetaService;
+    MockStreamTaskCreator(final MetaService metaService,
+                          final StreamProcessorFilterService streamProcessorFilterService,
+                          final NodeService nodeService) {
+        this.metaService = metaService;
         this.streamProcessorFilterService = streamProcessorFilterService;
+        this.nodeService = nodeService;
     }
 
     @Override
@@ -56,7 +60,9 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
     }
 
     @Override
-    public List<ProcessorFilterTask> assignStreamTasks(final Node node, final int count) {
+    public List<ProcessorFilterTask> assignStreamTasks(final String nodeName, final int count) {
+        final Node node = nodeService.getNode(nodeName);
+
         List<ProcessorFilterTask> taskList = Collections.emptyList();
         final FindStreamProcessorFilterCriteria criteria = new FindStreamProcessorFilterCriteria();
         final BaseResultList<ProcessorFilter> streamProcessorFilters = streamProcessorFilterService
@@ -70,21 +76,21 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
             for (final ProcessorFilter filter : streamProcessorFilters) {
                 final QueryData queryData = filter.getQueryData();
 
-                final FindDataCriteria findStreamCriteria = new FindDataCriteria();
-                findStreamCriteria.setExpression(queryData.getExpression());
-                final BaseResultList<Data> streams = streamMetaService.find(findStreamCriteria);
+                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+                findMetaCriteria.setExpression(queryData.getExpression());
+                final BaseResultList<Meta> streams = metaService.find(findMetaCriteria);
 
-                streams.sort(Comparator.comparing(Data::getId));
+                streams.sort(Comparator.comparing(Meta::getId));
 
                 if (streams.size() > 0) {
-                    for (final Data stream : streams) {
-                        if (stream.getId() >= filter.getStreamProcessorFilterTracker().getMinStreamId()) {
+                    for (final Meta meta : streams) {
+                        if (meta.getId() >= filter.getStreamProcessorFilterTracker().getMinStreamId()) {
                             // Only process streams with an id of 1 or more
                             // greater than this stream in future.
-                            filter.getStreamProcessorFilterTracker().setMinStreamId(stream.getId() + 1);
+                            filter.getStreamProcessorFilterTracker().setMinStreamId(meta.getId() + 1);
 
                             final ProcessorFilterTask streamTask = new ProcessorFilterTask();
-                            streamTask.setStreamId(stream.getId());
+                            streamTask.setStreamId(meta.getId());
                             streamTask.setStreamProcessorFilter(filter);
                             streamTask.setNode(node);
                             streamTask.setStatus(TaskStatus.ASSIGNED);
@@ -122,7 +128,7 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
     }
 
     @Override
-    public void abandonStreamTasks(final Node node, final List<ProcessorFilterTask> tasks) {
+    public void abandonStreamTasks(final String nodeName, final List<ProcessorFilterTask> tasks) {
         // NA
     }
 }

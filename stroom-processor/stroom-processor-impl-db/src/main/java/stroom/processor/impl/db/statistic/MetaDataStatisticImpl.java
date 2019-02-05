@@ -19,7 +19,7 @@ package stroom.processor.impl.db.statistic;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.AttributeMap;
+import stroom.meta.shared.AttributeMap;
 import stroom.processor.statistic.MetaDataStatistic;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;

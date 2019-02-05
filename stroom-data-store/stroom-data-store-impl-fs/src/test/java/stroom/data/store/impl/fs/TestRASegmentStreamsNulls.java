@@ -17,9 +17,11 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.data.store.api.SegmentOutputStream;
-import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.test.TempDir;
+import stroom.util.test.TempDirExtension;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,12 +29,13 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(TempDirExtension.class)
 class TestRASegmentStreamsNulls {
+
     @Test
-    void testNoSegments() throws IOException {
-        final Path dir = FileUtil.getTempDir();
-        final Path datFile = dir.resolve("test.bzg");
-        final Path segFile = dir.resolve("test.seg.dat");
+    void testNoSegments(@TempDir Path tempDir) throws IOException {
+        final Path datFile = tempDir.resolve("test.bzg");
+        final Path segFile = tempDir.resolve("test.seg.dat");
 
         final SegmentOutputStream segStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
                 () -> new LockingFileOutputStream(segFile, true));

@@ -19,7 +19,7 @@ package stroom.streamtask;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
@@ -104,15 +104,15 @@ class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
 
         final QueryData findStreamQueryData = new QueryData.Builder()
-                .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                         .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName1)
-                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
+                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName1)
+                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())
                         .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                                .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                                .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                                .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                                 .build())
                         .build())
                 .build();
@@ -130,17 +130,17 @@ class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
 //        filter.getFindStreamCriteria().obtainFeeds().obtainInclude().remove(feed1);
 //        filter = streamProcessorFilterService.save(filter);
 //        xml = buildXML(new long[]{feed2.getId()}, null);
-//        assertThat(filter.getData()).isEqualTo(xml);
+//        assertThat(filter.getMeta()).isEqualTo(xml);
 //
 //        filter.getFindStreamCriteria().obtainFeeds().obtainExclude().add(feed1);
 //        filter = streamProcessorFilterService.save(filter);
 //        xml = buildXML(new long[]{feed2.getId()}, new long[]{feed1.getId()});
-//        assertThat(filter.getData()).isEqualTo(xml);
+//        assertThat(filter.getMeta()).isEqualTo(xml);
 //
 //        filter.getFindStreamCriteria().obtainFeeds().obtainInclude().add(feed1);
 //        filter = streamProcessorFilterService.save(filter);
 //        xml = buildXML(new long[]{feed1.getId(), feed2.getId()}, new long[]{feed1.getId()});
-//        assertThat(filter.getData()).isEqualTo(xml);
+//        assertThat(filter.getMeta()).isEqualTo(xml);
     }
 
     private String buildXML(final String[] include, final String[] exclude) {
@@ -165,7 +165,7 @@ class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
             for (final String feed : include) {
                 xml += "" +
                         "               <term>\n" +
-                        "                  <field>" + MetaDataSource.FEED_NAME + "</field>\n" +
+                        "                  <field>" + MetaFieldNames.FEED_NAME + "</field>\n" +
                         "                  <condition>EQUALS</condition>\n" +
                         "                  <value>" + feed + "</value>\n" +
                         "               </term>\n";
@@ -182,12 +182,12 @@ class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
                 "            <op>OR</op>\n" +
                 "            <children>\n" +
                 "               <term>\n" +
-                "                  <field>" + MetaDataSource.STREAM_TYPE_NAME + "</field>\n" +
+                "                  <field>" + MetaFieldNames.TYPE_NAME + "</field>\n" +
                 "                  <condition>EQUALS</condition>\n" +
                 "                  <value>Raw Events</value>\n" +
                 "               </term>\n" +
                 "               <term>\n" +
-                "                  <field>" + MetaDataSource.STREAM_TYPE_NAME + "</field>\n" +
+                "                  <field>" + MetaFieldNames.TYPE_NAME + "</field>\n" +
                 "                  <condition>EQUALS</condition>\n" +
                 "                  <value>Raw Reference</value>\n" +
                 "               </term>\n" +

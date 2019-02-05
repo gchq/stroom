@@ -19,12 +19,12 @@ package stroom.streamtask;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.AttributeMap;
+import stroom.meta.shared.AttributeMap;
 import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.docref.DocRef;
-import stroom.feed.FeedDocCache;
-import stroom.feed.FeedStore;
-import stroom.feed.StroomHeaderArguments;
+import stroom.pipeline.feed.FeedDocCache;
+import stroom.pipeline.feed.FeedStore;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.processor.impl.db.StreamTargetStroomStreamHandler;
 import stroom.proxy.repo.StroomZipEntry;
@@ -62,7 +62,7 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
         feedStore.writeDocument(feedDoc);
 
         final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(StroomHeaderArguments.FEED, "TEST_FEED");
+        attributeMap.put(StandardHeaderArguments.FEED, "TEST_FEED");
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
                 feedDocCache, null, "TEST_FEED", StreamTypeNames.RAW_REFERENCE);
@@ -95,10 +95,10 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
         streamStore.clear();
 
         final AttributeMap attributeMap1 = new AttributeMap();
-        attributeMap1.put(StroomHeaderArguments.FEED, "TEST_FEED1");
+        attributeMap1.put(StandardHeaderArguments.FEED, "TEST_FEED1");
 
         final AttributeMap attributeMap2 = new AttributeMap();
-        attributeMap2.put(StroomHeaderArguments.FEED, "TEST_FEED2");
+        attributeMap2.put(StandardHeaderArguments.FEED, "TEST_FEED2");
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
                 feedDocCache, null, "TEST_FEED1", StreamTypeNames.RAW_EVENTS);
@@ -132,7 +132,7 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
         streamStore.clear();
 
         final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(StroomHeaderArguments.FEED, "TEST_FEED");
+        attributeMap.put(StandardHeaderArguments.FEED, "TEST_FEED");
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
                 feedDocCache, null, "TEST_FEED", StreamTypeNames.RAW_EVENTS);

@@ -17,13 +17,13 @@
 
 package stroom.pipeline.writer;
 
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataProperties;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaProperties;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
-import stroom.node.NodeCache;
+import stroom.node.api.NodeInfo;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingDestinationFactory;
 import stroom.pipeline.destination.RollingDestinations;
@@ -36,7 +36,7 @@ import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
@@ -50,8 +50,8 @@ import javax.inject.Inject;
 public class RollingStreamAppender extends AbstractRollingAppender implements RollingDestinationFactory {
 
     private final StreamStore streamStore;
-    private final StreamHolder streamHolder;
-    private final NodeCache nodeCache;
+    private final MetaHolder metaHolder;
+    private final NodeInfo nodeInfo;
 
     private DocRef feedRef;
     private String feed;
@@ -64,12 +64,12 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     RollingStreamAppender(final RollingDestinations destinations,
                           final TaskContext taskContext,
                           final StreamStore streamStore,
-                          final StreamHolder streamHolder,
-                          final NodeCache nodeCache) {
+                          final MetaHolder metaHolder,
+                          final NodeInfo nodeInfo) {
         super(destinations, taskContext);
         this.streamStore = streamStore;
-        this.streamHolder = streamHolder;
-        this.nodeCache = nodeCache;
+        this.metaHolder = metaHolder;
+        this.nodeInfo = nodeInfo;
     }
 
     @Override
@@ -80,14 +80,14 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
         // Don't set the processor or the task or else this rolling stream will be deleted automatically because the
         // system will think it is superseded output.
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(key.getFeed())
                 .typeName(key.getStreamType())
-                .parent(streamHolder.getStream())
+                .parent(metaHolder.getMeta())
                 .build();
 
-        final String nodeName = nodeCache.getDefaultNode().getName();
-        final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
+        final String nodeName = nodeInfo.getThisNodeName();
+        final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
         return new RollingStreamDestination(key,
                 getFrequency(),
                 getSchedule(),
@@ -113,13 +113,13 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
             if (feedRef != null) {
                 feed = feedRef.getName();
             } else {
-                final Data parentStream = streamHolder.getStream();
-                if (parentStream == null) {
+                final Meta parentMeta = metaHolder.getMeta();
+                if (parentMeta == null) {
                     throw new ProcessException("Unable to determine feed as no parent stream set");
                 }
 
                 // Use current feed if none other has been specified.
-                feed = parentStream.getFeedName();
+                feed = parentMeta.getFeedName();
             }
         }
 

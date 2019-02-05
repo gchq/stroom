@@ -17,7 +17,7 @@
 
 package stroom.ruleset.shared;
 
-import stroom.entity.shared.ExternalFile;
+import stroom.importexport.api.ExternalFile;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.SQLNameConstants;
 

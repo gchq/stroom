@@ -16,12 +16,10 @@
 
 package stroom.cluster.api;
 
-import stroom.node.shared.Node;
-
 /**
  * Low-level API to generically call any cluster service
  */
 public interface ClusterCallService {
-    Object call(Node sourceNode, Node targetNode, ServiceName serviceName, String methodName, Class<?>[] parameterTypes,
+    Object call(String sourceNode, String targetNode, ServiceName serviceName, String methodName, Class<?>[] parameterTypes,
                 Object[] args);
 }

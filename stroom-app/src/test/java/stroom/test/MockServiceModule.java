@@ -3,9 +3,17 @@ package stroom.test;
 import com.google.inject.AbstractModule;
 import stroom.processor.impl.db.MockStreamTaskModule;
 import org.mockito.stubbing.Answer;
+import stroom.cache.impl.CacheModule;
+import stroom.meta.impl.mock.MockMetaModule;
+import stroom.dataprocess.PipelineStreamTaskModule;
+import stroom.dictionary.impl.MockDictionaryModule;
+import stroom.importexport.impl.ImportExportModule;
+import stroom.node.impl.MockNodeServiceModule;
+import stroom.pipeline.xmlschema.MockXmlSchemaModule;
+import stroom.resource.impl.MockResourceModule;
 import stroom.security.UserRefFactory;
 import stroom.security.UserService;
-import stroom.security.shared.UserJooq;
+import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 
 import java.util.List;
@@ -19,46 +27,47 @@ public class MockServiceModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new stroom.activity.impl.mock.MockActivityModule());
-        install(new stroom.cache.PipelineCacheModule());
-        install(new stroom.data.meta.impl.mock.MockDataMetaModule());
+        install(new CacheModule());
+        install(new MockMetaModule());
         install(new stroom.data.store.impl.fs.MockStreamStoreModule());
-        install(new stroom.dictionary.MockDictionaryModule());
+        install(new MockDictionaryModule());
         install(new stroom.docstore.impl.DocStoreModule());
         install(new stroom.docstore.impl.memory.MemoryPersistenceModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.explorer.MockExplorerModule());
         install(new stroom.feed.MockFeedModule());
-        install(new stroom.importexport.ImportExportModule());
+        install(new ImportExportModule());
         install(new stroom.index.MockIndexModule());
-        install(new stroom.node.MockNodeServiceModule());
+        install(new MockNodeServiceModule());
         install(new stroom.persist.MockPersistenceModule());
         install(new stroom.pipeline.PipelineModule());
+        install(new stroom.pipeline.cache.PipelineCacheModule());
         install(new stroom.pipeline.factory.CommonPipelineElementModule());
         install(new stroom.pipeline.factory.DataStorePipelineElementModule());
         install(new stroom.pipeline.factory.PipelineFactoryModule());
         install(new stroom.pipeline.scope.PipelineScopeModule());
-        install(new stroom.pipeline.task.PipelineStreamTaskModule());
+        install(new PipelineStreamTaskModule());
         install(new stroom.pipeline.xsltfunctions.CommonXsltFunctionModule());
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
-        install(new stroom.refdata.ReferenceDataModule());
-        install(new stroom.resource.MockResourceModule());
+        install(new stroom.pipeline.refdata.ReferenceDataModule());
+        install(new MockResourceModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
         install(new stroom.statistics.internal.MockInternalStatisticsModule());
         install(new MockStreamTaskModule());
         install(new stroom.task.MockTaskModule());
         install(new stroom.test.MockTestControlModule());
         install(new stroom.volume.MockVolumeModule());
-        install(new stroom.xmlschema.MockXmlSchemaModule());
+        install(new MockXmlSchemaModule());
 //        install(new stroom.document.DocumentModule());
 //        install(new stroom.entity.MockEntityModule());
 //        install(new stroom.properties.impl.mock.MockPropertyModule());
 //        install(new stroom.servlet.MockServletModule());
 
         final UserService mockUserService = mock(UserService.class);
-        when(mockUserService.loadByUuid(any())).then((Answer<UserJooq>) invocation -> {
+        when(mockUserService.loadByUuid(any())).then((Answer<User>) invocation -> {
             final String uuid = invocation.getArgument(0);
-            final List<UserJooq> list = mockUserService.find(null);
-            for (final UserJooq e : list) {
+            final List<User> list = mockUserService.find(null);
+            for (final User e : list) {
                 if (e.getUuid() != null && e.getUuid().equals(uuid)) {
                     return e;
                 }
@@ -67,7 +76,7 @@ public class MockServiceModule extends AbstractModule {
         });
         when(mockUserService.createUser(any())).then((Answer<UserRef>) invocation -> {
             final String name = invocation.getArgument(0);
-            final UserJooq user = new UserJooq.Builder()
+            final User user = new User.Builder()
                     .uuid(UUID.randomUUID().toString())
                     .name(name)
                     .build();
@@ -75,7 +84,7 @@ public class MockServiceModule extends AbstractModule {
         });
         when(mockUserService.createUserGroup(any())).then((Answer<UserRef>) invocation -> {
             final String name = invocation.getArgument(0);
-            final UserJooq user = new UserJooq.Builder()
+            final User user = new User.Builder()
                     .uuid(UUID.randomUUID().toString())
                     .name(name)
                     .isGroup(true)

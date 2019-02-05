@@ -17,15 +17,21 @@
 package stroom.config.global.api;
 
 import stroom.docref.SharedObject;
+import stroom.util.shared.HasAuditInfo;
 
 /**
  * This class records global properties that are accessible across the whole
  * cluster.
  */
-public class ConfigProperty implements SharedObject, Comparable<ConfigProperty> {
+public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<ConfigProperty> {
     private static final long serialVersionUID = 8440384191352234225L;
 
     private Integer id;
+    private Integer version;
+    private Long createTimeMs;
+    private String createUser;
+    private Long updateTimeMs;
+    private String updateUser;
     private String name;
     // TODO now that properties are typed in AppConfig we should really be dealing with typed
     // values here so the UI can edit/display/validate them appropriately according to their type,
@@ -51,6 +57,50 @@ public class ConfigProperty implements SharedObject, Comparable<ConfigProperty> 
 
     public void setId(final Integer id) {
         this.id = id;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(final Integer version) {
+        this.version = version;
+    }
+
+    @Override
+    public Long getCreateTimeMs() {
+        return createTimeMs;
+    }
+
+    public void setCreateTimeMs(final Long createTimeMs) {
+        this.createTimeMs = createTimeMs;
+    }
+
+    @Override
+    public String getCreateUser() {
+        return createUser;
+    }
+
+    public void setCreateUser(final String createUser) {
+        this.createUser = createUser;
+    }
+
+    @Override
+    public Long getUpdateTimeMs() {
+        return updateTimeMs;
+    }
+
+    public void setUpdateTimeMs(final Long updateTimeMs) {
+        this.updateTimeMs = updateTimeMs;
+    }
+
+    @Override
+    public String getUpdateUser() {
+        return updateUser;
+    }
+
+    public void setUpdateUser(final String updateUser) {
+        this.updateUser = updateUser;
     }
 
     public String getName() {

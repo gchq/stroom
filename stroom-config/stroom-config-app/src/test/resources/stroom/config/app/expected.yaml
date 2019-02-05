@@ -96,9 +96,21 @@ index:
       minItems: 0
       coreItems: 50
       maxItems: 100
-lifecycle:
+indexDb:
+  connection:
+    jdbcDriverClassName: "com.mysql.jdbc.Driver"
+    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+    jdbcDriverUsername: "stroomuser"
+    jdbcDriverPassword: "stroompassword1"
+  connectionPool:
+    cachePrepStmts: true
+    prepStmtCacheSize: 250
+    prepStmtCacheSqlLimit: 2048
+job:
   enabled: true
   executionInterval: "10s"
+lifecycle:
+  enabled: true
 node:
   node: "tba"
   rack: "tba"
@@ -113,6 +125,14 @@ pipeline:
     maxActiveDestinations: 100
   parser:
     secureProcessing: true
+  refdata:
+    localDir: "${stroom.temp}/refDataOffHeapStore"
+    maxPutsBeforeCommit: 1000
+    maxReaders: 100
+    maxStoreSize: "50G"
+    purgeAge: "30d"
+    valueBufferCapacity: 1000
+    readAheadEnabled: true
   xslt:
     maxElements: 1000000
 policy:
@@ -144,14 +164,6 @@ proxyAggregation:
 queryHistory:
   itemsRetention: 100
   daysRetention: 365
-refdata:
-  localDir: "${stroom.temp}/refDataOffHeapStore"
-  maxPutsBeforeCommit: 1000
-  maxReaders: 100
-  maxStoreSize: "50G"
-  purgeAge: "30d"
-  valueBufferCapacity: 1000
-  readAheadEnabled: true
 search:
   maxStoredDataQueueSize: 1000
   maxBooleanClauseCount: 1024

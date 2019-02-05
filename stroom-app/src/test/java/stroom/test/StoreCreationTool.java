@@ -17,8 +17,8 @@
 package stroom.test;
 
 
-import stroom.data.meta.api.DataProperties;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamSource;
@@ -27,7 +27,7 @@ import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedStore;
+import stroom.pipeline.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.index.IndexStore;
@@ -37,8 +37,8 @@ import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
-import stroom.pipeline.TextConverterStore;
-import stroom.pipeline.XsltStore;
+import stroom.pipeline.textconverter.TextConverterStore;
+import stroom.pipeline.xslt.XsltStore;
 import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
@@ -156,7 +156,7 @@ public final class StoreCreationTool {
         effectiveMs += effectiveMsOffset++;
 
         // Add the associated data to the stream store.
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(referenceFeed.getName())
                 .typeName(StreamTypeNames.RAW_REFERENCE)
                 .createMs(effectiveMs)
@@ -164,12 +164,12 @@ public final class StoreCreationTool {
 
         final String data = StreamUtil.fileToString(dataLocation);
 
-        final StreamTarget target = streamStore.openStreamTarget(streamProperties);
+        final StreamTarget target = streamStore.openStreamTarget(metaProperties);
         StreamTargetUtil.write(target, data);
         streamStore.closeStreamTarget(target);
 
         try {
-            final StreamSource checkSource = streamStore.openStreamSource(target.getStream().getId());
+            final StreamSource checkSource = streamStore.openStreamSource(target.getMeta().getId());
             assertThat(StreamUtil.streamToString(checkSource.getInputStream())).isEqualTo(data);
             streamStore.closeStreamSource(checkSource);
         } catch (final IOException e) {
@@ -212,10 +212,10 @@ public final class StoreCreationTool {
 
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
-                    .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                    .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                            .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                            .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                            .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                             .build())
                     .build();
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 2, findStreamQueryData);
@@ -301,12 +301,12 @@ public final class StoreCreationTool {
                 flatteningXsltLocation, referenceFeeds);
 
         // Add the associated data to the stream store.
-        final DataProperties streamProperties = new DataProperties.Builder()
+        final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
-        final StreamTarget dataTarget = streamStore.openStreamTarget(streamProperties);
+        final StreamTarget dataTarget = streamStore.openStreamTarget(metaProperties);
         try (final OutputStreamProvider outputStreamProvider = dataTarget.getOutputStreamProvider()) {
             try (final InputStream inputStream = Files.newInputStream(dataLocation);
                  final SegmentOutputStream outputStream = outputStreamProvider.next()) {
@@ -324,7 +324,7 @@ public final class StoreCreationTool {
 
         // Check that the data was written ok.
         final String data = StreamUtil.fileToString(dataLocation);
-        final StreamSource checkSource = streamStore.openStreamSource(dataTarget.getStream().getId());
+        final StreamSource checkSource = streamStore.openStreamSource(dataTarget.getMeta().getId());
         assertThat(StreamUtil.streamToString(checkSource.getInputStream())).isEqualTo(data);
         streamStore.closeStreamSource(checkSource);
     }
@@ -378,10 +378,10 @@ public final class StoreCreationTool {
 
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
-                    .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                    .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, docRef.getName())
-                            .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                            .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, docRef.getName())
+                            .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                             .build())
                     .build();
 
@@ -480,7 +480,7 @@ public final class StoreCreationTool {
         // pipelineDataWriter.write(pipelineData, outputStream);
         // data = outputStream.toString();
         //
-        // pipeline.setData(data);
+        // pipeline.setMeta(data);
 
         pipelineStore.writeDocument(pipelineDoc);
 
@@ -517,7 +517,7 @@ public final class StoreCreationTool {
         // pipelineDataWriter.write(pipelineData, outputStream);
         // data = outputStream.toString();
         //
-        // pipeline.setData(data);
+        // pipeline.setMeta(data);
 
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
@@ -616,9 +616,9 @@ public final class StoreCreationTool {
 
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
-                    .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
+                    .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                            .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                             .build())
                     .build();
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);
@@ -669,7 +669,7 @@ public final class StoreCreationTool {
         // pipelineDataWriter.write(pipelineData, outputStream);
         // data = outputStream.toString();
         //
-        // pipeline.setData(data);
+        // pipeline.setMeta(data);
 
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;

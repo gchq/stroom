@@ -16,13 +16,23 @@
 
 package stroom.util.test;
 
-import stroom.util.io.FileUtil;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.nio.file.Path;
 
+@ExtendWith(TempDirExtension.class)
 public abstract class StroomUnitTest implements StroomTest {
+
+    private Path testDir;
+
+    @BeforeEach
+    public void setup(@TempDir Path tempDir) {
+        this.testDir = tempDir;
+    }
+
     @Override
     public Path getCurrentTestDir() {
-        return FileUtil.getTempDir();
+        return testDir;
     }
 }

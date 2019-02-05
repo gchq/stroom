@@ -20,13 +20,14 @@ package stroom.pipeline.task;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.FindDataCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.data.store.api.StreamStore;
+import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.docref.DocRef;
-import stroom.node.NodeCache;
-import stroom.pipeline.XsltStore;
+import stroom.node.api.NodeInfo;
+import stroom.pipeline.xslt.XsltStore;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
@@ -37,6 +38,7 @@ import stroom.processor.impl.db.StreamTaskCreator;
 import stroom.processor.shared.ProcessorFilterTask;
 import stroom.task.api.TaskManager;
 import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.StoreCreationTool;
@@ -85,7 +87,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private DataMetaService streamMetaService;
+    private MetaService metaService;
     @Inject
     private StoreCreationTool storeCreationTool;
     @Inject
@@ -95,7 +97,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     @Inject
     private StreamTaskCreator streamTaskCreator;
     @Inject
-    private NodeCache nodeCache;
+    private NodeInfo nodeInfo;
 
     /**
      * Tests that valid streams are all processed and put into the processed and
@@ -106,20 +108,20 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         // Create a store.
         createStore(VALID_DATA, REFERENCE_DATA, SAMPLE_XSLT);
 
-        assertThat(streamMetaService.getLockCount()).isEqualTo(0);
+        assertThat(metaService.getLockCount()).isEqualTo(0);
 
         // Process the store sequentially.
         final List<StreamProcessorTaskExecutor> results = processAll();
 
         assertThat(results.size()).as("Check that we did the number of jobs expected").isEqualTo(NO_OF_REFERENCE_FILES + NO_OF_EVENT_FILES);
-        assertThat(streamMetaService.getLockCount()).isEqualTo(0);
+        assertThat(metaService.getLockCount()).isEqualTo(0);
 
         // Check we have some raw events.
-        final List<Data> raw = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
+        final List<Meta> raw = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
         assertThat(raw.size()).isEqualTo(NO_OF_EVENT_FILES);
 
         // Check all passed.
-        final List<Data> cooked = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.EVENTS));
+        final List<Meta> cooked = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS));
         assertThat(cooked.size()).isEqualTo(NO_OF_EVENT_FILES);
 
         // Check none failed.
@@ -135,14 +137,14 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      */
     private List<StreamProcessorTaskExecutor> processAll() {
         final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
             for (final ProcessorFilterTask streamTask : streamTasks) {
                 final StreamProcessorTask task = new StreamProcessorTask(streamTask);
                 taskManager.exec(task);
                 results.add(task.getStreamProcessorTaskExecutor());
             }
-            streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+            streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
         return results;
     }
@@ -196,11 +198,11 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         final List<StreamProcessorTaskExecutor> results = processAll();
 
         // Check we have some raw events.
-        final List<Data> raw = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
+        final List<Meta> raw = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
         assertThat(raw.size()).isEqualTo(NO_OF_EVENT_FILES);
 
         // Check no output streams were written.
-        final List<Data> cooked = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.EVENTS));
+        final List<Meta> cooked = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS));
         assertThat(cooked.size()).isEqualTo(0);
 
         // Make sure we got 13 results.
@@ -228,11 +230,11 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         final List<StreamProcessorTaskExecutor> results = processAll();
 
         // Check we have some raw events.
-        final List<Data> raw = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
+        final List<Meta> raw = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
         assertThat(raw.size()).isEqualTo(NO_OF_EVENT_FILES);
 
         // Check no output streams were written.
-        final List<Data> cooked = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.EVENTS));
+        final List<Meta> cooked = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS));
         assertThat(cooked.size()).isEqualTo(0);
 
         // Make sure we got 13 results.
@@ -252,7 +254,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     @Test
     void testInvalidXSLT() {
         // Check none passed.
-        List<Data> cooked = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
+        List<Meta> cooked = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
         assertThat(cooked.size()).isEqualTo(0);
 
         // Create a store.
@@ -262,11 +264,11 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         final List<StreamProcessorTaskExecutor> results = processAll();
 
         // Check we have some raw events.
-        final List<Data> raw = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
+        final List<Meta> raw = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
         assertThat(raw.size()).isEqualTo(NO_OF_EVENT_FILES);
 
         // Check all failed.
-        cooked = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.EVENTS));
+        cooked = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS));
         assertThat(cooked.size()).isEqualTo(0);
 
         assertThat(results.size()).isEqualTo(13);

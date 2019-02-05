@@ -19,11 +19,11 @@ package stroom.statistics.sql.entity;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.EntityTypeBinder;
-import stroom.entity.event.EntityEvent;
-import stroom.entity.event.EntityEvent.Handler;
+import stroom.entity.shared.EntityEvent;
+import stroom.entity.shared.EntityEvent.Handler;
 import stroom.entity.shared.Clearable;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.statistics.shared.StatisticStoreDoc;
 
 public class StatisticStoreModule extends AbstractModule {

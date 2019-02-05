@@ -18,11 +18,12 @@ package stroom.task.cluster;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.task.cluster.api.ClusterTask;
 import stroom.util.concurrent.SimpleConcurrentMap;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class DebugTrace {
+class DebugTrace {
     private static final Logger LOGGER = LoggerFactory.getLogger(DebugTrace.class);
 
     private static final SimpleConcurrentMap<String, AtomicInteger> debugMap = new SimpleConcurrentMap<String, AtomicInteger>() {
@@ -32,7 +33,7 @@ public class DebugTrace {
         }
     };
 
-    public static void debugTraceIn(final ClusterTask<?> task, final String style, final boolean success) {
+    static void debugTraceIn(final ClusterTask<?> task, final String style, final boolean success) {
         final String key = task.getTaskName() + "-" + style + "-" + success;
         final int concurrentCount = debugMap.get(key).incrementAndGet();
         if (concurrentCount > 1) {
@@ -40,7 +41,7 @@ public class DebugTrace {
         }
     }
 
-    public static void debugTraceOut(final ClusterTask<?> task, final String style, final boolean success) {
+    static void debugTraceOut(final ClusterTask<?> task, final String style, final boolean success) {
         final String key = task.getTaskName() + "-" + style + "-" + success;
         debugMap.get(key).decrementAndGet();
     }

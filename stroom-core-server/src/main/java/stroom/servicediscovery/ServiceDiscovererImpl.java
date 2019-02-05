@@ -8,7 +8,6 @@ import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -81,7 +80,6 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
         return provider;
     }
 
-    @StroomShutdown
     public void shutdown() {
         serviceProviders.forEach((key, value) -> {
             try {

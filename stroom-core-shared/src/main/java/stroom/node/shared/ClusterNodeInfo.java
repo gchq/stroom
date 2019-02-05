@@ -47,9 +47,9 @@ public class ClusterNodeInfo implements SharedObject {
         this.clusterURL = clusterURL;
     }
 
-    public void addItem(final Node node, final boolean active, final boolean master) {
+    public void addItem(final String nodeName, final boolean active, final boolean master) {
         final ClusterNodeInfoItem clusterNodeInfoItem = new ClusterNodeInfoItem();
-        clusterNodeInfoItem.setNode(node);
+        clusterNodeInfoItem.setNodeName(nodeName);
         clusterNodeInfoItem.setActive(active);
         clusterNodeInfoItem.setMaster(master);
         itemList.add(clusterNodeInfoItem);
@@ -85,16 +85,16 @@ public class ClusterNodeInfo implements SharedObject {
 
     public static class ClusterNodeInfoItem implements Serializable {
         private static final long serialVersionUID = -8555764783069283678L;
-        private Node node;
+        private String nodeName;
         private boolean active;
         private boolean master;
 
-        public Node getNode() {
-            return node;
+        public String getNodeName() {
+            return nodeName;
         }
 
-        public void setNode(final Node node) {
-            this.node = node;
+        public void setNodeName(final String nodeName) {
+            this.nodeName = nodeName;
         }
 
         public boolean isActive() {

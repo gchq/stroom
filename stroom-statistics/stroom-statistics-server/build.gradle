@@ -1,22 +1,28 @@
 ext.moduleName = 'stroom.statistics.server'
 
 dependencies {
+    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-db-util')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-importexport:stroom-importexport-migration')
     implementation project(':stroom-kafka:stroom-kafka-pipeline')
     implementation project(':stroom-kafka:stroom-kafka-shared')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-statistics:stroom-statistics-shared')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-shared')
+    implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-cluster-lock:stroom-cluster-lock-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 

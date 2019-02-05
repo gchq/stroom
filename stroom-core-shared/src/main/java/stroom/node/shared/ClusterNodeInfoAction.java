@@ -21,18 +21,18 @@ import stroom.task.shared.Action;
 public class ClusterNodeInfoAction extends Action<ClusterNodeInfo> {
     private static final long serialVersionUID = 8503583077432248983L;
 
-    private long nodeId;
+    private String nodeName;
 
     public ClusterNodeInfoAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ClusterNodeInfoAction(final long nodeId) {
-        this.nodeId = nodeId;
+    public ClusterNodeInfoAction(final String nodeName) {
+        this.nodeName = nodeName;
     }
 
-    public long getNodeId() {
-        return nodeId;
+    public String getNodeName() {
+        return nodeName;
     }
 
     @Override

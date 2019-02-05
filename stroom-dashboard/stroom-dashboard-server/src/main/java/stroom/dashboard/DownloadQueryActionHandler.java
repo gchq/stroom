@@ -23,7 +23,7 @@ import stroom.dashboard.shared.SearchRequest;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.query.api.v2.ResultRequest;
-import stroom.resource.ResourceStore;
+import stroom.resource.api.ResourceStore;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.json.JsonUtil;

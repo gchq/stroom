@@ -28,8 +28,8 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.node.NodeCache;
-import stroom.node.VolumeService;
+import stroom.node.api.NodeInfo;
+import stroom.volume.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
@@ -47,7 +47,7 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private IndexShardService indexShardService;
     @Inject
-    private NodeCache nodeCache;
+    private NodeInfo nodeInfo;
     @Inject
     private VolumeService volumeService;
     @Inject
@@ -75,7 +75,7 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
         indexVolumeService.setVolumesForIndex(indexRef2, Collections.singleton(volume));
         final IndexShardKey indexShardKey2 = IndexShardKeyUtil.createTestKey(index2);
 
-        final Node node = nodeCache.getDefaultNode();
+        final Node node = nodeInfo.getThisNode();
 
         final IndexShard call1 = indexShardService.createIndexShard(indexShardKey1, node);
         final IndexShard call2 = indexShardService.createIndexShard(indexShardKey1, node);
@@ -117,7 +117,7 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
         index.setPartitionSize(1);
         indexStore.writeDocument(index);
 
-        final Node node = nodeCache.getDefaultNode();
+        final Node node = nodeInfo.getThisNode();
 
         createShard(index, node, "2013-05-01T00:00:00.000Z", 1);
         createShard(index, node, "2013-05-01T00:00:00.000Z", 2);

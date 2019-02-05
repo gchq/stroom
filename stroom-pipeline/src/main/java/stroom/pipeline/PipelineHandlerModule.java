@@ -30,8 +30,6 @@ public class PipelineHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
         TaskHandlerBinder.create(binder())
-                .bind(FetchDataAction.class, FetchDataHandler.class)
-                .bind(FetchDataWithPipelineAction.class, FetchDataWithPipelineHandler.class)
                 .bind(FetchPipelineDataAction.class, FetchPipelineDataHandler.class)
                 .bind(FetchPipelineXmlAction.class, FetchPipelineXmlHandler.class)
                 .bind(FetchPropertyTypesAction.class, FetchPropertyTypesHandler.class)

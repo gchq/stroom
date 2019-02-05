@@ -17,9 +17,9 @@
 
 package stroom.data.store.api;
 
-import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataProperties;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaProperties;
 
 /**
  * <p>
@@ -44,7 +44,7 @@ public interface StreamStore {
      *
      * @return the stream to write to
      */
-    StreamTarget openStreamTarget(DataProperties streamProperties) throws StreamException;
+    StreamTarget openStreamTarget(MetaProperties metaProperties) throws StreamException;
 
     /**
      * <p>
@@ -53,7 +53,7 @@ public interface StreamStore {
      *
      * @return the stream to write to
      */
-    StreamTarget openExistingStreamTarget(Data stream) throws StreamException;
+    StreamTarget openExistingStreamTarget(Meta meta) throws StreamException;
 
     /**
      * <p>
@@ -114,5 +114,5 @@ public interface StreamStore {
      * @param stream
      * @return
      */
-    AttributeMap getStoredMeta(Data stream);
+    AttributeMap getStoredMeta(Meta meta);
 }

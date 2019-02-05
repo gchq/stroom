@@ -18,10 +18,11 @@ package stroom.pipeline.task;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.impl.mock.MockDataMetaService;
+import stroom.meta.shared.Meta;
+import stroom.meta.impl.mock.MockMetaService;
 import stroom.data.store.impl.fs.MockStreamStore;
-import stroom.node.NodeCache;
+import stroom.dataprocess.PipelineStreamProcessor;
+import stroom.node.api.NodeInfo;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.processor.impl.db.StreamProcessorTask;
 import stroom.processor.StreamProcessorTaskExecutor;
@@ -52,9 +53,9 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
     @Inject
     private MockStreamStore streamStore;
     @Inject
-    private MockDataMetaService streamMetaService;
+    private MockMetaService metaService;
     @Inject
-    private NodeCache nodeCache;
+    private NodeInfo nodeInfo;
     @Inject
     private StreamTaskCreator streamTaskCreator;
     @Inject
@@ -70,7 +71,7 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
     @Test
     void test() throws IOException {
         setup(FEED_NAME, RESOURCE_NAME);
-        assertThat(streamMetaService.getLockCount()).isEqualTo(0);
+        assertThat(metaService.getLockCount()).isEqualTo(0);
 
         final List<StreamProcessorTaskExecutor> results = processAll();
         assertThat(results.size()).isEqualTo(1);
@@ -88,11 +89,11 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
         final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
-        for (final Entry<Long, Data> entry : streamMetaService.getDataMap().entrySet()) {
+        for (final Entry<Long, Meta> entry : metaService.getMetaMap().entrySet()) {
             final long streamId = entry.getKey();
-            final Data stream = entry.getValue();
-            if (StreamTypeNames.EVENTS.equals(stream.getTypeName())) {
-                final byte[] data = streamStore.getFileData().get(streamId).get(stream.getTypeName());
+            final Meta meta = entry.getValue();
+            if (StreamTypeNames.EVENTS.equals(meta.getTypeName())) {
+                final byte[] data = streamStore.getFileData().get(streamId).get(meta.getTypeName());
 
                 // Write the actual XML out.
                 final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir, "TestTask.out");
@@ -115,14 +116,14 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
      */
     private List<StreamProcessorTaskExecutor> processAll() {
         final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
             for (final ProcessorFilterTask streamTask : streamTasks) {
                 final StreamProcessorTask task = new StreamProcessorTask(streamTask);
                 taskManager.exec(task);
                 results.add(task.getStreamProcessorTaskExecutor());
             }
-            streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+            streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
         return results;
     }

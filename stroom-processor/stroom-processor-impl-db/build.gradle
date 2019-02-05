@@ -6,7 +6,7 @@ dependencies {
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-processor:stroom-processor-api')

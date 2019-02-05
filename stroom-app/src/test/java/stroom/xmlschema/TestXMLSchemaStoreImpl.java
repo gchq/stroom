@@ -19,6 +19,7 @@ package stroom.xmlschema;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.pipeline.xmlschema.XmlSchemaStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;

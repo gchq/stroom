@@ -21,8 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.cluster.api.ClusterCallServiceLocal;
 import stroom.cluster.api.ServiceName;
 import stroom.entity.shared.EntityServiceException;
-import stroom.node.NodeCache;
-import stroom.node.shared.Node;
+import stroom.node.api.NodeInfo;
 import stroom.security.Security;
 import stroom.util.logging.LogExecutionTime;
 
@@ -40,27 +39,27 @@ class ClusterCallServiceLocalImpl implements ClusterCallServiceLocal {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterCallServiceLocalImpl.class);
 
     private final Map<ServiceName, Provider<Object>> serviceMap;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final Security security;
 
     @Inject
     ClusterCallServiceLocalImpl(final Map<ServiceName, Provider<Object>> serviceMap,
-                                final NodeCache nodeCache,
+                                final NodeInfo nodeInfo,
                                 final Security security) {
         this.serviceMap = serviceMap;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.security = security;
     }
 
     @Override
-    public Object call(final Node sourceNode, final Node targetNode, final ServiceName serviceName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
+    public Object call(final String sourceNode, final String targetNode, final ServiceName serviceName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
         return security.insecureResult(() -> {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-            final Node thisNode = nodeCache.getDefaultNode();
-            if (!targetNode.equals(thisNode)) {
+            final String thisNodeName = nodeInfo.getThisNodeName();
+            if (!targetNode.equals(thisNodeName)) {
                 throw new EntityServiceException("Something wrong with routing rules as we have just had a request for "
-                        + targetNode.getName() + " when we are " + thisNode.getName());
+                        + targetNode + " when we are " + thisNodeName);
             }
 
             try {

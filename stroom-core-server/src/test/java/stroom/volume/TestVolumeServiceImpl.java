@@ -21,11 +21,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
-import stroom.node.NodeCache;
+import stroom.node.api.NodeInfo;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
@@ -50,6 +52,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class TestVolumeServiceImpl extends StroomUnitTest {
     private static final Path DEFAULT_VOLUMES_PATH;
     private static final Path DEFAULT_INDEX_VOLUME_PATH;
@@ -68,13 +71,25 @@ class TestVolumeServiceImpl extends StroomUnitTest {
     private final Node node1c = Node.create(rack1, "1c");
     private final Node node2a = Node.create(rack2, "2a");
     private final Node node2b = Node.create(rack2, "2b");
-    private final VolumeEntity public1a = VolumeEntity.create(node1a, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_1A")), VolumeType.PUBLIC,
+    private final VolumeEntity public1a = VolumeEntity.create(
+            node1a,
+            FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_1A")),
+            VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
-    private final VolumeEntity public1b = VolumeEntity.create(node1b, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_1B")), VolumeType.PUBLIC,
+    private final VolumeEntity public1b = VolumeEntity.create(
+            node1b,
+            FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_1B")),
+            VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
-    private final VolumeEntity public2a = VolumeEntity.create(node2a, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2A")), VolumeType.PUBLIC,
+    private final VolumeEntity public2a = VolumeEntity.create(
+            node2a,
+            FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2A")),
+            VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
-    private final VolumeEntity public2b = VolumeEntity.create(node2b, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2B")), VolumeType.PUBLIC,
+    private final VolumeEntity public2b = VolumeEntity.create(
+            node2b,
+            FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2B")),
+            VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
     private final Security security = new SecurityImpl(new MockSecurityContext());
     private VolumeConfig volumeConfig = new VolumeConfig();
@@ -83,10 +98,11 @@ class TestVolumeServiceImpl extends StroomUnitTest {
     private StroomEntityManager stroomEntityManager;
     @Mock
     private EntityManagerSupport entityManagerSupport;
+    @Mock
+    private NodeInfo nodeInfo;
 
     @BeforeEach
     void init() {
-        MockitoAnnotations.initMocks(this);
         deleteDefaultVolumesDir();
 
         final List<VolumeEntity> volumeList = new ArrayList<>();
@@ -97,7 +113,16 @@ class TestVolumeServiceImpl extends StroomUnitTest {
 
         volumeConfig.setResilientReplicationCount(2);
 
-        volumeServiceImpl = new MockVolumeService(stroomEntityManager, security, entityManagerSupport, new NodeCache(node1a), volumeConfig, null);
+        Mockito.when(nodeInfo.getThisNodeName()).thenReturn("1a");
+        Mockito.when(nodeInfo.getThisNode()).thenReturn(node1a);
+
+        volumeServiceImpl = new MockVolumeService(
+                stroomEntityManager,
+                security,
+                entityManagerSupport,
+                nodeInfo,
+                volumeConfig,
+                null);
         volumeServiceImpl.volumeList = volumeList;
     }
 
@@ -207,13 +232,13 @@ class TestVolumeServiceImpl extends StroomUnitTest {
         MockVolumeService(final StroomEntityManager stroomEntityManager,
                           final Security security,
                           final EntityManagerSupport entityManagerSupport,
-                          final NodeCache nodeCache,
+                          final NodeInfo nodeInfo,
                           final VolumeConfig volumeConfig,
                           final Optional<InternalStatisticsReceiver> optionalInternalStatisticsReceiver) {
             super(stroomEntityManager,
                     security,
                     entityManagerSupport,
-                    nodeCache,
+                    nodeInfo,
                     volumeConfig,
                     optionalInternalStatisticsReceiver);
         }

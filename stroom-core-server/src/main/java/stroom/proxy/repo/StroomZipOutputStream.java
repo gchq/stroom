@@ -1,6 +1,6 @@
 package stroom.proxy.repo;
 
-import stroom.data.meta.api.AttributeMap;
+import stroom.meta.shared.AttributeMap;
 
 import java.io.Closeable;
 import java.io.IOException;

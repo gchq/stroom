@@ -18,6 +18,8 @@ package stroom.cache.shared;
 
 import stroom.docref.SharedObject;
 
+import java.util.Objects;
+
 public class CacheRow implements SharedObject {
     private static final long serialVersionUID = -7367500560554774611L;
     private String cacheName;
@@ -35,16 +37,15 @@ public class CacheRow implements SharedObject {
     }
 
     @Override
-    public int hashCode() {
-        return cacheName.hashCode();
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final CacheRow cacheRow = (CacheRow) o;
+        return Objects.equals(cacheName, cacheRow.cacheName);
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (obj == null || !(obj instanceof CacheRow)) {
-            return false;
-        }
-
-        return ((CacheRow) obj).cacheName.equals(cacheName);
+    public int hashCode() {
+        return Objects.hash(cacheName);
     }
 }
