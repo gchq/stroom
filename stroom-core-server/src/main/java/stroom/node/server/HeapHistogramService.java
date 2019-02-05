@@ -61,12 +61,11 @@ class HeapHistogramService {
      * list of {@link HeapHistogramEntry}
      */
     List<HeapHistogramEntry> generateHeapHistogram() {
-        LOGGER.info("Executing a heap histogram using action {}", ACTION_NAME);
         final Object output = getRawHistogramOutput();
 
         final List<HeapHistogramEntry> heapHistogramEntries;
         if (output == null) {
-            LOGGER.warn("Heap histogram produced no output", ACTION_NAME);
+            LOGGER.warn("Heap histogram produced no output for action {}", ACTION_NAME);
             heapHistogramEntries = Collections.emptyList();
         } else if (output instanceof String){
             heapHistogramEntries = processOutput((String) output);

@@ -60,7 +60,7 @@ public class HeapHistogramStatisticsExecutor {
     @StroomSimpleCronSchedule(cron = "0 * *")
     @JobTrackedSchedule(
             jobName = "Java Heap Histogram Statistics",
-            description = "Generate Java heap map histogram ('jmap -histo:live') and record statistic events " +
+            description = "Generate Java heap map histogram and record statistic events " +
                     "for the entries. CAUTION: this will pause the JVM, only enable this if you understand the " +
                     "consequences!",
             enabled = false)
