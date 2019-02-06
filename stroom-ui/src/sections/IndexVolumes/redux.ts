@@ -17,9 +17,15 @@ import { Action } from "redux";
 
 import { prepareReducer } from "../../lib/redux-actions-ts";
 import { IndexVolume } from "../../types";
+import { mapObject } from "../../lib/treeUtils";
 
 const INDEX_VOLUMES_RECEIVED = "INDEX_VOLUMES_RECEIVED";
 const INDEX_VOLUMES_IN_GROUP_RECEIVED = "INDEX_VOLUMES_IN_GROUP_RECEIVED";
+const INDEX_VOLUME_RECEIVED = "INDEX_VOLUME_RECEIVED";
+const INDEX_VOLUME_CREATED = "INDEX_VOLUME_CREATED";
+const INDEX_VOLUME_DELETED = "INDEX_VOLUME_DELETED";
+const INDEX_VOLUME_ADDED_TO_GROUP = "INDEX_VOLUME_ADDED_TO_GROUP";
+const INDEX_VOLUME_REMOVED_FROM_GROUP = "INDEX_VOLUME_REMOVED_FROM_GROUP";
 
 export interface IndexVolumesReceivedAction
   extends Action<"INDEX_VOLUMES_RECEIVED"> {
@@ -32,6 +38,32 @@ export interface IndexVolumesInGroupReceivedAction
   indexVolumes: Array<IndexVolume>;
 }
 
+export interface IndexVolumeReceivedAction
+  extends Action<"INDEX_VOLUME_RECEIVED"> {
+  indexVolume: IndexVolume;
+}
+
+export interface IndexVolumeCreatedAction
+  extends Action<"INDEX_VOLUME_CREATED"> {
+  indexVolume: IndexVolume;
+}
+
+export interface IndexVolumeDeletedAction
+  extends Action<"INDEX_VOLUME_DELETED"> {
+  indexVolumeId: number;
+}
+
+export interface IndexVolumeAddedToGroupAction
+  extends Action<"INDEX_VOLUME_ADDED_TO_GROUP"> {
+  indexVolumeId: number;
+  groupName: string;
+}
+
+export interface IndexVolumeRemovedFromGroupAction
+  extends Action<"INDEX_VOLUME_REMOVED_FROM_GROUP"> {
+  indexVolumeId: number;
+  groupName: string;
+}
 export const actionCreators = {
   indexVolumesReceived: (
     indexVolumes: Array<IndexVolume>
@@ -46,6 +78,36 @@ export const actionCreators = {
     type: INDEX_VOLUMES_IN_GROUP_RECEIVED,
     groupName,
     indexVolumes
+  }),
+  indexVolumeReceived: (
+    indexVolume: IndexVolume
+  ): IndexVolumeReceivedAction => ({
+    type: INDEX_VOLUME_RECEIVED,
+    indexVolume
+  }),
+  indexVolumeCreated: (indexVolume: IndexVolume): IndexVolumeCreatedAction => ({
+    type: INDEX_VOLUME_CREATED,
+    indexVolume
+  }),
+  indexVolumeDeleted: (indexVolumeId: number): IndexVolumeDeletedAction => ({
+    type: INDEX_VOLUME_DELETED,
+    indexVolumeId
+  }),
+  indexVolumeAddedToGroup: (
+    indexVolumeId: number,
+    groupName: string
+  ): IndexVolumeAddedToGroupAction => ({
+    type: INDEX_VOLUME_ADDED_TO_GROUP,
+    indexVolumeId,
+    groupName
+  }),
+  indexVolumeRemovedFromGroup: (
+    indexVolumeId: number,
+    groupName: string
+  ): IndexVolumeRemovedFromGroupAction => ({
+    type: INDEX_VOLUME_REMOVED_FROM_GROUP,
+    indexVolumeId,
+    groupName
   })
 };
 
@@ -77,6 +139,66 @@ export const reducer = prepareReducer(defaultState)
         ...state.indexVolumesInGroup,
         [groupName]: indexVolumes
       }
+    })
+  )
+  .handleAction<IndexVolumeReceivedAction>(
+    INDEX_VOLUME_RECEIVED,
+    (state: StoreState, { indexVolume }) => ({
+      ...state,
+      indexVolumes: state.indexVolumes
+        .filter(v => v.id !== indexVolume.id)
+        .concat([indexVolume])
+    })
+  )
+  .handleAction<IndexVolumeCreatedAction>(
+    INDEX_VOLUME_CREATED,
+    (state: StoreState, { indexVolume }) => ({
+      ...state,
+      indexVolumes: state.indexVolumes.concat([indexVolume])
+    })
+  )
+  .handleAction<IndexVolumeDeletedAction>(
+    INDEX_VOLUME_DELETED,
+    (state: StoreState, { indexVolumeId }) => ({
+      indexVolumes: state.indexVolumes.filter(v => v.id !== indexVolumeId),
+      indexVolumesInGroup: mapObject(state.indexVolumesInGroup, (gName, vols) =>
+        vols.filter(v => v.id !== indexVolumeId)
+      )
+    })
+  )
+  .handleAction<IndexVolumeAddedToGroupAction>(
+    INDEX_VOLUME_ADDED_TO_GROUP,
+    (state: StoreState, { indexVolumeId, groupName }) => ({
+      ...state,
+      indexVolumesInGroup: mapObject(
+        state.indexVolumesInGroup,
+        (gName, vols) => {
+          if (gName === groupName) {
+            let indexToAdd: IndexVolume | undefined = state.indexVolumes.find(
+              v => v.id === indexVolumeId
+            );
+            if (indexToAdd) {
+              return vols.concat([indexToAdd]);
+            }
+          }
+          return vols;
+        }
+      )
+    })
+  )
+  .handleAction<IndexVolumeRemovedFromGroupAction>(
+    INDEX_VOLUME_REMOVED_FROM_GROUP,
+    (state: StoreState, { indexVolumeId, groupName }) => ({
+      ...state,
+      indexVolumesInGroup: mapObject(
+        state.indexVolumesInGroup,
+        (gName, vols) => {
+          if (gName === groupName) {
+            return vols.filter(v => v.id !== indexVolumeId);
+          }
+          return vols;
+        }
+      )
     })
   )
   .getReducer();

@@ -3,41 +3,51 @@ import * as React from "react";
 import { path } from "ramda";
 import ReactTable, { RowInfo } from "react-table";
 
-import { IndexVolumeGroup } from "../../types";
+import { IndexVolume } from "../../types";
 
 export interface Props {
-  groups: Array<IndexVolumeGroup>;
-  selectedGroup?: IndexVolumeGroup;
-  onSelection: (name?: string) => void;
+  indexVolumes: Array<IndexVolume>;
+  selectedIndexVolume?: IndexVolume;
+  onSelection: (id?: number) => void;
 }
 
 const COLUMNS = [
   {
-    id: "name",
-    Header: "Name",
-    accessor: (u: IndexVolumeGroup) => u.name
+    id: "id",
+    Header: "ID",
+    accessor: (u: IndexVolume) => u.id
+  },
+  {
+    id: "nodeName",
+    Header: "Node",
+    accessor: (u: IndexVolume) => u.nodeName
+  },
+  {
+    id: "path",
+    Header: "Path",
+    accessor: (u: IndexVolume) => u.path
   }
 ];
 
-const IndexVolumeGroupsTable = ({
-  groups,
-  selectedGroup,
+const IndexVolumesTable = ({
+  indexVolumes,
+  selectedIndexVolume,
   onSelection
 }: Props) => (
   <ReactTable
-    data={groups}
+    data={indexVolumes}
     columns={COLUMNS}
     getTdProps={(state: any, rowInfo: RowInfo) => {
       return {
         onClick: (_: any, handleOriginal: () => void) => {
           if (rowInfo !== undefined) {
             if (
-              !!selectedGroup &&
-              selectedGroup.name === rowInfo.original.name
+              !!selectedIndexVolume &&
+              selectedIndexVolume.id === rowInfo.original.id
             ) {
               onSelection();
             } else {
-              onSelection(rowInfo.original.name);
+              onSelection(rowInfo.original.id);
             }
           }
 
@@ -51,9 +61,9 @@ const IndexVolumeGroupsTable = ({
       // We don't want to see a hover on a row without data.
       // If a row is selected we want to see the selected color.
       const isSelected =
-        !!selectedGroup &&
-        path(["original", "name"], rowInfo) === selectedGroup.name;
-      const hasData = path(["original", "name"], rowInfo) !== undefined;
+        !!selectedIndexVolume &&
+        path(["original", "id"], rowInfo) === selectedIndexVolume.id;
+      const hasData = path(["original", "id"], rowInfo) !== undefined;
       let className;
       if (hasData) {
         className = isSelected ? "selected hoverable" : "hoverable";
@@ -65,4 +75,4 @@ const IndexVolumeGroupsTable = ({
   />
 );
 
-export default IndexVolumeGroupsTable;
+export default IndexVolumesTable;

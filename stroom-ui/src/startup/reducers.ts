@@ -105,6 +105,10 @@ import {
   StoreState as IndexVolumeGroupStoreState
 } from "../sections/IndexVolumeGroups";
 import {
+  reducer as indexVolumes,
+  StoreState as IndexVolumeStoreState
+} from "../sections/IndexVolumes";
+import {
   reducer as processing,
   StoreState as ProcessingStoreState
 } from "../sections/Processing";
@@ -139,6 +143,7 @@ export interface GlobalStoreState {
   routing: RouterState;
   userPermissions: UserStoreState;
   indexVolumeGroups: IndexVolumeGroupStoreState;
+  indexVolumes: IndexVolumeStoreState;
 }
 
 export default combineReducers({
@@ -166,5 +171,6 @@ export default combineReducers({
   processing,
   dataViewers,
   userPermissions,
-  indexVolumeGroups
+  indexVolumeGroups,
+  indexVolumes
 });

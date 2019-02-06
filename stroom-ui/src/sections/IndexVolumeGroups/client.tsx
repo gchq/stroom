@@ -7,7 +7,7 @@ import {
   wrappedPost,
   wrappedDelete
 } from "../../lib/fetchTracker.redux";
-import { IndexVolumeGroup } from "src/types";
+import { IndexVolumeGroup } from "../../types";
 
 const {
   indexVolumeGroupNamesReceived,

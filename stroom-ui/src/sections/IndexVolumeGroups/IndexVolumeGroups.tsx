@@ -16,6 +16,8 @@ import { IndexVolumeGroup } from "../../types";
 import Button from "../../components/Button";
 import NewIndexVolumeGroupDialog from "./NewIndexVolumeGroupDialog";
 import ThemedConfirm from "../../components/ThemedConfirm";
+import IconHeader from "../../components/IconHeader";
+
 export interface Props {}
 
 export interface ConnectState {
@@ -112,7 +114,7 @@ const IndexVolumeGroups = ({
   history
 }: EnhancedProps) => (
   <div>
-    <h2>Index Volume Groups</h2>
+    <IconHeader text="Index Volume Groups" icon="database" />
 
     <Button text="Create" onClick={openNewDialog} />
     <Button
