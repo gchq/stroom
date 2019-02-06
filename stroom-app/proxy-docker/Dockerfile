@@ -19,7 +19,9 @@
 # Intermediate build stage that is common to stroom and proxy to speed up
 # the build
 
-FROM openjdk:8u181-jre-alpine3.8 as stroom-base-stage
+# The JDK (rather than JRE) is required for the diagnostic tools like
+# jstat/jmap/jcmd/etc.
+FROM openjdk:8u191-jdk-alpine3.9 as stroom-base-stage
 
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user

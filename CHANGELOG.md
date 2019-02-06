@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift base docker image to openjdk:8u191-jdk-alpine3.9, reverting back to JDK for access to diagnostic tools.
+
 ## [v6.0-beta.26] - 2019-02-05
 
 * Issue **#1084** : Change heap histogram statistics to java MBean approach rather than jmap binary. Remove stroom.node.status.heapHistogram.jMapExecutable property.
