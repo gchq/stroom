@@ -25,7 +25,7 @@ class JobDaoImpl implements JobDao {
     @Inject
     JobDaoImpl(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
-        dao = new GenericDao(JOB, JOB.ID, Job.class, connectionProvider);
+        dao = new GenericDao<>(JOB, JOB.ID, Job.class, connectionProvider);
     }
 
     @Override

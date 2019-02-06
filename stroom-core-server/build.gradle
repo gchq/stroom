@@ -50,7 +50,6 @@ dependencies {
     implementation libs.dropwizard_lifecycle
     implementation libs.dropwizard_metrics_annotation
     implementation libs.dropwizard_metrics_healthchecks
-    implementation libs.fast_classpath_scanner
     implementation libs.flyway_core
     implementation libs.guava
     implementation libs.guice4

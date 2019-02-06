@@ -166,7 +166,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 Processor streamProcessor = new Processor();
                 streamProcessor.setPipelineUuid(pipelineRef.getUuid());
                 streamProcessor.setEnabled(true);
-                streamProcessor = streamProcessorService.save(streamProcessor);
+                streamProcessor = streamProcessorService.create(streamProcessor);
 
                 int priority = 1;
                 if (feed.isReference()) {

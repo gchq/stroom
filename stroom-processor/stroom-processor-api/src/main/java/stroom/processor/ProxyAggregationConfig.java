@@ -1,4 +1,4 @@
-package stroom.processor.impl.db;
+package stroom.processor;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;

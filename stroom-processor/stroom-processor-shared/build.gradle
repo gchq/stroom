@@ -3,10 +3,9 @@ ext.moduleName = 'stroom.processor.shared'
 dependencies {
 
     // Stroom modules
-    implementation project(':stroom-core-shared')
+    //implementation project(':stroom-core-shared')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-entity-shared')
-    implementation project(':stroom-processor:stroom-processor-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util-shared')

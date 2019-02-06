@@ -17,9 +17,15 @@
 package stroom.processor.shared;
 
 
+import org.apache.commons.lang3.RandomUtils;
+import org.junit.jupiter.api.Test;
+import stroom.util.test.StroomUnitTest;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 
 class TestStreamProcessorFilter extends StroomUnitTest {
@@ -40,9 +46,9 @@ class TestStreamProcessorFilter extends StroomUnitTest {
         t3.getStreamProcessorFilterTracker().setMinStreamId(3L);
         t3.setPriority(3);
 
-        Assertions.assertThat(t1.isHigherPriority(t2)).isTrue();
-        Assertions.assertThat(t3.isHigherPriority(t2)).isTrue();
-        Assertions.assertThat(t3.isHigherPriority(t1)).isTrue();
+        assertThat(t1.isHigherPriority(t2)).isTrue();
+        assertThat(t3.isHigherPriority(t2)).isTrue();
+        assertThat(t3.isHigherPriority(t1)).isTrue();
 
         final ArrayList<ProcessorFilter> taskList = new ArrayList<>();
         taskList.add(t1);
@@ -51,9 +57,9 @@ class TestStreamProcessorFilter extends StroomUnitTest {
 
         Collections.sort(taskList, ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
 
-        Assertions.assertThat(taskList.get(0) == t3).isTrue();
-        Assertions.assertThat(taskList.get(1) == t1).isTrue();
-        Assertions.assertThat(taskList.get(2) == t2).isTrue();
+        assertThat(taskList.get(0) == t3).isTrue();
+        assertThat(taskList.get(1) == t1).isTrue();
+        assertThat(taskList.get(2) == t2).isTrue();
     }
 
     @Test
@@ -84,7 +90,7 @@ class TestStreamProcessorFilter extends StroomUnitTest {
         filter.setMinStreamCreateMs(1414074711896L);
         filter.setMaxStreamCreateMs(1414075927731L);
 
-        Assertions.assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(100);
+        assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(100);
     }
 
     @Test
@@ -98,7 +104,7 @@ class TestStreamProcessorFilter extends StroomUnitTest {
         filter.setMaxStreamCreateMs(1000L);
         filter.setStreamCreateMs(500L);
 
-        Assertions.assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(50);
+        assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(50);
     }
 
     @Test
@@ -109,16 +115,16 @@ class TestStreamProcessorFilter extends StroomUnitTest {
 
         final ProcessorFilterTracker filter = new ProcessorFilterTracker();
 
-        Assertions.assertThat(filter.getTrackerStreamCreatePercentage(now)).isNull();
+        assertThat(filter.getTrackerStreamCreatePercentage(now)).isNull();
 
         filter.setMinStreamCreateMs(0L);
-        Assertions.assertThat(filter.getTrackerStreamCreatePercentage(now)).isNull();
+        assertThat(filter.getTrackerStreamCreatePercentage(now)).isNull();
 
         filter.setStreamCreateMs(100L);
-        Assertions.assertThat(filter.getTrackerStreamCreatePercentage(now)).isNotNull();
+        assertThat(filter.getTrackerStreamCreatePercentage(now)).isNotNull();
 
         filter.setMaxStreamCreateMs(100L);
-        Assertions.assertThat(filter.getTrackerStreamCreatePercentage(now)).isNotNull();
+        assertThat(filter.getTrackerStreamCreatePercentage(now)).isNotNull();
     }
 
     @Test
@@ -130,16 +136,16 @@ class TestStreamProcessorFilter extends StroomUnitTest {
 
         final ProcessorFilterTracker filter = new ProcessorFilterTracker();
 
-        Assertions.assertThat(filter.getTrackerStreamCreatePercentage(now)).isNull();
+        assertThat(filter.getTrackerStreamCreatePercentage(now)).isNull();
 
         filter.setMinStreamCreateMs(now - (10 * oneDayMs));
         filter.setStreamCreateMs(now - (5 * oneDayMs));
 
         // Stream Max derived to be today
-        Assertions.assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(50);
+        assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(50);
 
         filter.setMaxStreamCreateMs(now);
-        Assertions.assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(50);
+        assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(50);
 
     }
 }

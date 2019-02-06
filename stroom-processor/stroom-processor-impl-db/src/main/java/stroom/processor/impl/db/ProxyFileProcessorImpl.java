@@ -25,6 +25,7 @@ import stroom.datafeed.BufferFactory;
 import stroom.pipeline.feed.FeedDocCache;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.feed.shared.FeedDoc;
+import stroom.processor.ProxyAggregationConfig;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.proxy.repo.ProxyFileProcessor;
 import stroom.proxy.repo.StroomZipRepository;
