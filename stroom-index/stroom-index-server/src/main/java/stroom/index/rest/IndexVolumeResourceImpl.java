@@ -21,4 +21,20 @@ public class IndexVolumeResourceImpl implements IndexVolumeResource {
 
         return Response.ok(volumes).build();
     }
+
+    @Override
+    public Response addVolumeToGroup(final Long volumeId,
+                                     final String name) {
+        indexVolumeService.addVolumeToGroup(volumeId, name);
+
+        return Response.noContent().build();
+    }
+
+    @Override
+    public Response removeVolumeFromGroup(final Long volumeId,
+                                          final String name) {
+        indexVolumeService.removeVolumeFromGroup(volumeId, name);
+
+        return Response.noContent().build();
+    }
 }

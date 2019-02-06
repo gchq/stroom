@@ -137,18 +137,51 @@ server
       )
     };
 
-    res.sendStatus(204);
+    res.send(undefined);
+    // res.sendStatus(204);
   });
 
 // User Resource
+server
+  .delete(`${testConfig.stroomBaseServiceUrl}/users/v1/:userUuid`)
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    let oldUuid = req.params.userUuid;
+    testCache.data!.usersAndGroups = {
+      users: testCache.data!.usersAndGroups.users.filter(
+        u => u.uuid !== oldUuid
+      ),
+      userGroupMemberships: testCache.data!.usersAndGroups.userGroupMemberships.filter(
+        m => m.groupUuid !== oldUuid && m.userUuid !== oldUuid
+      )
+    };
+
+    res.send(undefined);
+    // res.sendStatus(204);
+  });
+server
+  .post(`${testConfig.stroomBaseServiceUrl}/users/v1`)
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    const { name, isGroup } = JSON.parse(req.body);
+    let newUser = { name, isGroup, uuid: uuidv4() };
+
+    testCache.data!.usersAndGroups.users = testCache.data!.usersAndGroups.users.concat(
+      [newUser]
+    );
+
+    res.json(newUser);
+  });
 server
   .get(`${testConfig.stroomBaseServiceUrl}/users/v1`)
   .intercept((req: HttpRequest, res: HttpResponse) => {
     const { name, uuid, isGroup } = req.query;
     let filtered = testCache
-      .data!.usersAndGroups.users.filter(u => !name || u.name.includes(name))
-      .filter(u => !uuid || u.uuid === uuid)
-      .filter(u => !isGroup || Boolean(u.isGroup).toString() === isGroup);
+      .data!.usersAndGroups.users.filter(
+        u => name === undefined || u.name.includes(name)
+      )
+      .filter(u => uuid === undefined || u.uuid === uuid)
+      .filter(
+        u => isGroup === undefined || Boolean(u.isGroup).toString() === isGroup
+      );
     res.json(filtered);
   });
 server

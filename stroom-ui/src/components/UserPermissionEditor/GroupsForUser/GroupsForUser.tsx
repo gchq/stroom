@@ -5,22 +5,22 @@ import { compose, lifecycle } from "recompose";
 import { User } from "../../../types";
 
 import {
-  findUsersInGroup,
+  findGroupsForUser,
   addUserToGroup,
   removeUserFromGroup
-} from "../client";
+} from "../../../sections/UserPermissions/client";
 import { GlobalStoreState } from "src/startup/reducers";
 
 export interface Props {
-  group: User;
+  user: User;
 }
 
 export interface ConnectState {
-  users: Array<User>;
+  groups: Array<User>;
 }
 
 export interface ConnectDispatch {
-  findUsersInGroup: typeof findUsersInGroup;
+  findGroupsForUser: typeof findGroupsForUser;
   addUserToGroup: typeof addUserToGroup;
   removeUserFromGroup: typeof removeUserFromGroup;
 }
@@ -29,11 +29,11 @@ export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ userPermissions: { usersInGroup } }, { group: { uuid } }) => ({
-      users: usersInGroup[uuid] || []
+    ({ userPermissions: { groupsForUser } }, { user: { uuid } }) => ({
+      groups: groupsForUser[uuid] || []
     }),
     {
-      findUsersInGroup,
+      findGroupsForUser,
       addUserToGroup,
       removeUserFromGroup
     }
@@ -41,31 +41,30 @@ const enhance = compose<EnhancedProps, Props>(
   lifecycle<Props & ConnectState & ConnectDispatch, {}>({
     componentDidMount() {
       const {
-        group: { uuid },
-        findUsersInGroup
+        user: { uuid },
+        findGroupsForUser
       } = this.props;
-      findUsersInGroup(uuid);
+
+      findGroupsForUser(uuid);
     },
     componentWillUpdate(nextProps) {
-      const { group, findUsersInGroup } = this.props;
+      const { user, findGroupsForUser } = this.props;
 
-      if (!group || group.uuid !== nextProps.group.uuid) {
-        findUsersInGroup(nextProps.group.uuid);
+      if (!user || user.uuid !== nextProps.user.uuid) {
+        findGroupsForUser(nextProps.user.uuid);
       }
     }
   })
 );
 
-const UsersInGroup = ({ group, users }: EnhancedProps) => (
+const GroupsForUser = ({ groups }: EnhancedProps) => (
   <div>
-    <h2>Users In Group</h2>
-    {group.name}
     <ul>
-      {users.map(u => (
-        <li key={u.uuid}>{u.name}</li>
+      {groups.map(g => (
+        <li key={g.uuid}>{g.name}</li>
       ))}
     </ul>
   </div>
 );
 
-export default enhance(UsersInGroup);
+export default enhance(GroupsForUser);

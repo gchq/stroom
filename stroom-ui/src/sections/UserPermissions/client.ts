@@ -29,9 +29,12 @@ export const findUsers = (
   const state = getState();
 
   var url = new URL(`${state.config.values.stroomBaseServiceUrl}/users/v1`);
-  if (!!name && name.length > 0) url.searchParams.append("name", name);
-  if (!!isGroup) url.searchParams.append("isGroup", isGroup.toString());
-  if (!!uuid && uuid.length > 0) url.searchParams.append("uuid", uuid);
+  if (name !== undefined && name.length > 0)
+    url.searchParams.append("name", name);
+  if (isGroup !== undefined)
+    url.searchParams.append("isGroup", isGroup.toString());
+  if (uuid !== undefined && uuid.length > 0)
+    url.searchParams.append("uuid", uuid);
 
   wrappedGet(
     dispatch,

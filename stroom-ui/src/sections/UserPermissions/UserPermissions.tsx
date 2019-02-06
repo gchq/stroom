@@ -9,16 +9,15 @@ import {
 } from "recompose";
 import { connect } from "react-redux";
 
-import { findUsers } from "./client";
-import withLocalStorage from "../../lib/withLocalStorage";
+import { findUsers, deleteUser } from "./client";
 import { GlobalStoreState } from "../../startup/reducers";
 import { User } from "../../types";
 import IconHeader from "../../components/IconHeader";
-import HorizontalPanel from "../../components/HorizontalPanel";
-import PanelGroup from "react-panelgroup";
-import UsersInGroup from "./UsersInGroup";
-import GroupsForUser from "./GroupsForUser";
 import UsersTable from "./UsersTable";
+import { RouteComponentProps, withRouter } from "react-router";
+import Button from "../../components/Button";
+import NewUserDialog from "./NewUserDialog";
+import ThemedConfirm from "../../components/ThemedConfirm";
 
 const LISTING_ID = "user_permissions";
 
@@ -30,47 +29,41 @@ interface ConnectState {
 
 interface ConnectDispatch {
   findUsers: typeof findUsers;
+  deleteUser: typeof deleteUser;
 }
 
 interface UserSelectionStateValues {
   selectedUser?: User;
+  isNewDialogOpen: boolean;
+  isDeleteDialogOpen: boolean;
 }
 interface UserSelectionStateHandlers {
   onSelection: (uuid?: string) => void;
+  openNewDialog: () => void;
+  closeNewDialog: () => void;
+  openDeleteDialog: () => void;
+  closeDeleteDialog: () => void;
 }
 interface UserSelectionState
   extends UserSelectionStateValues,
     UserSelectionStateHandlers {}
 
-interface WithLocalStorage {
-  tableHeight: number;
-  editUserHeight: number;
-  setTableHeight: (tableHeight: number) => void;
-  setEditUserHeight: (editUserHeight: number) => void;
-}
 export interface EnhancedProps
   extends Props,
     ConnectState,
     ConnectDispatch,
     UserSelectionState,
-    WithLocalStorage {}
-
-const withListHeight = withLocalStorage("tableHeight", "setTableHeight", 500);
-const withDetailsHeight = withLocalStorage(
-  "editUserHeight",
-  "setEditUserHeight",
-  500
-);
+    RouteComponentProps<any> {}
 
 const enhance = compose<EnhancedProps, Props>(
-  withListHeight,
-  withDetailsHeight,
+  withRouter,
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ userPermissions: { users } }) => ({
       users: users[LISTING_ID]
     }),
     {
-      findUsers
+      findUsers,
+      deleteUser
     }
   ),
   lifecycle<Props & ConnectState & ConnectDispatch, {}>({
@@ -86,11 +79,25 @@ const enhance = compose<EnhancedProps, Props>(
     ConnectState
   >(
     () => ({
-      selectedUser: undefined
+      selectedUser: undefined,
+      isNewDialogOpen: false,
+      isDeleteDialogOpen: false
     }),
     {
       onSelection: (_, { users }) => selectedUuid => ({
         selectedUser: users.find((u: User) => u.uuid === selectedUuid)
+      }),
+      openNewDialog: () => () => ({
+        isNewDialogOpen: true
+      }),
+      closeNewDialog: () => () => ({
+        isNewDialogOpen: false
+      }),
+      openDeleteDialog: () => () => ({
+        isDeleteDialogOpen: true
+      }),
+      closeDeleteDialog: () => () => ({
+        isDeleteDialogOpen: false
       })
     }
   )
@@ -102,33 +109,19 @@ interface Values {
   uuid: string;
 }
 
-const EditUserPanel = ({ selectedUser, onSelection }: UserSelectionState) => (
-  <HorizontalPanel
-    title={
-      selectedUser!.isGroup
-        ? `Users in Group ${selectedUser!.name}`
-        : `Groups for User ${selectedUser!.name}`
-    }
-    onClose={() => onSelection()}
-    content={
-      selectedUser!.isGroup ? (
-        <UsersInGroup group={selectedUser!} />
-      ) : (
-        <GroupsForUser user={selectedUser!} />
-      )
-    }
-  />
-);
-
 const UserPermissions = ({
   users,
   findUsers,
   selectedUser,
   onSelection,
-  tableHeight,
-  editUserHeight,
-  setTableHeight,
-  setEditUserHeight
+  history,
+  isNewDialogOpen,
+  openNewDialog,
+  closeNewDialog,
+  isDeleteDialogOpen,
+  openDeleteDialog,
+  closeDeleteDialog,
+  deleteUser
 }: EnhancedProps) => (
   <div className="UserPermissions">
     <IconHeader icon="users" text="User Permissions" />
@@ -156,35 +149,35 @@ const UserPermissions = ({
       </Form>
     </Formik>
     <div className="UserTable__container">
-      <div className="UserTable__reactTable__container">
-        {!!selectedUser ? (
-          <PanelGroup
-            direction="row"
-            panelWidths={[
-              {
-                resize: "dynamic",
-                minSize: 100,
-                size: tableHeight
-              },
-              {
-                resize: "dynamic",
-                minSize: 100,
-                size: editUserHeight
-              }
-            ]}
-            onUpdate={(panelWidths: any[]) => {
-              setTableHeight(panelWidths[0].size);
-              setEditUserHeight(panelWidths[1].size);
-            }}
-          >
-            <UsersTable {...{ users, onSelection, selectedUser }} />
-            <EditUserPanel {...{ onSelection, selectedUser }} />
-          </PanelGroup>
-        ) : (
-          <UsersTable {...{ users, onSelection, selectedUser }} />
-        )}
-      </div>
+      <Button text="Create" onClick={openNewDialog} />
+      <Button
+        text="View/Edit"
+        disabled={!selectedUser}
+        onClick={() => history.push(`/s/userPermissions/${selectedUser!.uuid}`)}
+      />
+      <Button
+        text="Delete"
+        disabled={!selectedUser}
+        onClick={openDeleteDialog}
+      />
+
+      <ThemedConfirm
+        question={
+          selectedUser
+            ? `Are you sure you want to delete user ${selectedUser.name}`
+            : "no user?"
+        }
+        isOpen={isDeleteDialogOpen}
+        onConfirm={() => {
+          deleteUser(selectedUser!.uuid);
+          closeDeleteDialog();
+        }}
+        onCancel={closeDeleteDialog}
+      />
+      <UsersTable {...{ users, onSelection, selectedUser }} />
     </div>
+
+    <NewUserDialog isOpen={isNewDialogOpen} onCancel={closeNewDialog} />
   </div>
 );
 

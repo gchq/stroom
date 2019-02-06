@@ -21,11 +21,13 @@ import { storiesOf } from "@storybook/react";
 import UserPermissions from ".";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 import fullTestData from "../../lib/storybook/fullTestData";
+import { Switch, Route, RouteComponentProps } from "react-router";
 
 import "../../styles/main.css";
 import { User } from "src/types";
-import UsersInGroup from "./UsersInGroup";
-import GroupsForUser from "./GroupsForUser";
+import UsersInGroup from "../../components/UserPermissionEditor/UsersInGroup";
+import GroupsForUser from "../../components/UserPermissionEditor/GroupsForUser";
+import UserPermissionEditor from "../../components/UserPermissionEditor";
 
 // Pick a group
 let aUser: User = fullTestData.usersAndGroups.users
@@ -35,8 +37,24 @@ let aGroup: User = fullTestData.usersAndGroups.users
   .filter(u => u.isGroup)
   .pop()!;
 
+const UserPermissionsWithRouter = () => (
+  <Switch>
+    <Route
+      exact
+      path="/s/userPermissions/:userUuid"
+      render={(props: RouteComponentProps<any>) => (
+        <UserPermissionEditor
+          userUuid={props.match.params.userUuid}
+          listingId="storybook"
+        />
+      )}
+    />
+    <Route component={UserPermissions} />
+  </Switch>
+);
+
 storiesOf("Sections/User Permissions", module)
   .addDecorator(StroomDecorator)
-  .add("User Permissions", () => <UserPermissions />)
+  .add("User Permissions", () => <UserPermissionsWithRouter />)
   .add("Groups For User", () => <GroupsForUser user={aUser} />)
   .add("Users In Group", () => <UsersInGroup group={aGroup} />);

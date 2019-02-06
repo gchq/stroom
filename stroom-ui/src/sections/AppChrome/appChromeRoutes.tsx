@@ -19,6 +19,7 @@ import UserPermissions from "../UserPermissions";
 import IndexVolumes from "../IndexVolumes";
 import IndexVolumeGroups from "../IndexVolumeGroups";
 import IndexVolumeGroupEditor from "../../components/IndexVolumeGroupEditor";
+import UserPermissionEditor from "../../components/UserPermissionEditor";
 
 const renderWelcome = () => (
   <AppChrome activeMenuItem="Welcome" content={<Welcome />} />
@@ -99,6 +100,21 @@ export default [
       <AppChrome
         activeMenuItem="User Permissions"
         content={<UserPermissions />}
+      />
+    )
+  },
+  {
+    exact: true,
+    path: "/s/userPermissions/:userUuid",
+    render: (props: RouteComponentProps<any>) => (
+      <AppChrome
+        activeMenuItem="User Permissions"
+        content={
+          <UserPermissionEditor
+            userUuid={props.match.params.userUuid}
+            listingId="app-chrome"
+          />
+        }
       />
     )
   },

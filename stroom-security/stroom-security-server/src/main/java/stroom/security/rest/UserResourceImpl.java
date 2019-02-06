@@ -23,8 +23,8 @@ public class UserResourceImpl implements UserResource {
 
     @Override
     public Response get(final String name,
-                              final Boolean isGroup,
-                              final String uuid) {
+                        final Boolean isGroup,
+                        final String uuid) {
         final List<User> users = new ArrayList<>();
 
         // If all the identification fields are null, just do a find which should return them all
