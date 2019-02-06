@@ -31,42 +31,34 @@ import java.util.Set;
 class UserAppPermissionServiceImpl implements UserAppPermissionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserAppPermissionServiceImpl.class);
 
+    private final Security security;
     private static final Set<String> ALL_PERMISSIONS = Set.of(PermissionNames.PERMISSIONS);
     private final AppPermissionDao appPermissionDao;
 
     @Inject
-    public UserAppPermissionServiceImpl(final AppPermissionDao appPermissionDao) {
+    public UserAppPermissionServiceImpl(final AppPermissionDao appPermissionDao,
+                                        final Security security) {
         this.appPermissionDao = appPermissionDao;
+        this.security = security;
     }
 
     @Override
     public UserAppPermissions getPermissionsForUser(final UserRef userRef) {
-        try {
+        return security.secureResult(() -> {
             final Set<String> userPermissions = appPermissionDao.getPermissionsForUser(userRef.getUuid());
             return new UserAppPermissions(userRef, ALL_PERMISSIONS, userPermissions);
-        } catch (final RuntimeException e) {
-            LOGGER.error("getPermissionsForUser()", e);
-            throw e;
-        }
+        });
     }
 
     @Override
     public void addPermission(final UserRef userRef, final String permission) {
-        try {
-            appPermissionDao.addPermission(userRef.getUuid(), permission);
-        } catch (final RuntimeException e) {
-            LOGGER.error("addPermission()", e);
-            throw e;
-        }
+        security.secure(PermissionNames.MANAGE_USERS_PERMISSION,
+                () -> appPermissionDao.addPermission(userRef.getUuid(), permission));
     }
 
     @Override
     public void removePermission(final UserRef userRef, final String permission) {
-        try {
-            appPermissionDao.removePermission(userRef.getUuid(), permission);
-        } catch (final RuntimeException e) {
-            LOGGER.error("removePermission()", e);
-            throw e;
-        }
+        security.secure(PermissionNames.MANAGE_USERS_PERMISSION,
+                () -> appPermissionDao.removePermission(userRef.getUuid(), permission));
     }
 }

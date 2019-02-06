@@ -64,21 +64,23 @@ public class IndexShardServiceImpl implements IndexShardService {
 
     @Override
     public IndexShard loadById(final Long id) {
-        return indexShardDao.loadById(id);
+        return security.secureResult(() -> indexShardDao.loadById(id));
     }
 
     @Override
     public List<IndexShard> find(final FindIndexShardCriteria criteria) {
-        return indexShardDao.find(criteria);
+        return security.secureResult(() -> indexShardDao.find(criteria));
     }
 
     @Override
     public IndexShard createIndexShard(final IndexShardKey indexShardKey,
                                        final String ownerNodeName) {
-        final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
-        final IndexDoc index = indexStructure.getIndex();
+        return security.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+            final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+            final IndexDoc index = indexStructure.getIndex();
 
-        return indexShardDao.create(indexShardKey, index.getVolumeGroupName(), ownerNodeName, LuceneVersionUtil.getCurrentVersion());
+            return indexShardDao.create(indexShardKey, index.getVolumeGroupName(), ownerNodeName, LuceneVersionUtil.getCurrentVersion());
+        });
     }
 
     @Override
@@ -97,8 +99,10 @@ public class IndexShardServiceImpl implements IndexShardService {
     @Override
     public Boolean setStatus(final Long id,
                              final IndexShard.IndexShardStatus status) {
-        indexShardDao.setStatus(id, status);
-        return Boolean.TRUE;
+        return security.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+            indexShardDao.setStatus(id, status);
+            return Boolean.TRUE;
+        });
     }
 
     @Override
@@ -107,10 +111,12 @@ public class IndexShardServiceImpl implements IndexShardService {
                        final Long commitDurationMs,
                        final Long commitMs,
                        final Long fileSize) {
-        // Output some debug so we know how long commits are taking.
-        LOGGER.debug(() -> String.format("Documents written %s (%s)",
-                documentCount,
-                ModelStringUtil.formatDurationString(commitDurationMs)));
-        indexShardDao.update(indexShardId, documentCount, commitDurationMs, commitMs, fileSize);
+        security.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+            // Output some debug so we know how long commits are taking.
+            LOGGER.debug(() -> String.format("Documents written %s (%s)",
+                    documentCount,
+                    ModelStringUtil.formatDurationString(commitDurationMs)));
+            indexShardDao.update(indexShardId, documentCount, commitDurationMs, commitMs, fileSize);
+        });
     }
 }
