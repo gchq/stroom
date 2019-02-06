@@ -3,7 +3,7 @@ package stroom.entity;
 import javax.annotation.Nonnull;
 import java.util.Optional;
 
-public interface BasicCrudDao<EntityType, IdType> {
+public interface BasicIntCrudDao<EntityType> {
 
     /**
      * Persist the passes record object
@@ -24,12 +24,12 @@ public interface BasicCrudDao<EntityType, IdType> {
      * @param id The unique identifier for the record to delete.
      * @return The number of records deleted.
      */
-    int delete(final IdType id);
+    int delete(final int id);
 
     /**
      * Fetch a record from the database using its unique id value.
      * @param id The id to uniquely identify the required record with
      * @return The record associated with the id in the database, if it exists.
      */
-    Optional<EntityType> fetch(final IdType id);
+    Optional<EntityType> fetch(final int id);
 }
