@@ -13,45 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { compose, withHandlers, withProps } from "recompose";
+import * as React from "react";
+import { compose } from "recompose";
 import { connect } from "react-redux";
 
 import { GlobalStoreState } from "../../startup/reducers";
-import {
-  actionCreators,
-  defaultStatePerId,
-  StoreStatePerId as DeleteStoreState
-} from "./redux/deleteDocRefReducer";
 import { deleteDocuments } from "./explorerClient";
-import ThemedConfirm, { Props as ConfirmProps } from "../ThemedConfirm";
-
-const { completeDocRefDelete } = actionCreators;
+import ThemedConfirm from "../ThemedConfirm";
 
 export interface Props {
-  listingId: string;
+  uuids?: Array<string>;
 }
-interface ConnectState extends DeleteStoreState {}
+
 interface ConnectDispatch {
-  completeDocRefDelete: typeof completeDocRefDelete;
   deleteDocuments: typeof deleteDocuments;
 }
 
-const enhance = compose<ConfirmProps, Props>(
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ folderExplorer: { deleteDocRef } }, { listingId }) => ({
-      ...(deleteDocRef[listingId] || defaultStatePerId)
-    }),
-    { completeDocRefDelete, deleteDocuments }
-  ),
-  withHandlers({
-    onConfirm: ({ deleteDocuments, uuids }) => () => deleteDocuments(uuids),
-    onCancel: ({ completeDocRefDelete, listingId }) => () =>
-      completeDocRefDelete(listingId)
-  }),
-  withProps(({ isDeleting, uuids }) => ({
-    isOpen: isDeleting,
-    question: `Delete these doc refs? ${JSON.stringify(uuids)}?`
-  }))
+interface EnhancedProps extends Props, ConnectDispatch {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<{}, ConnectDispatch, Props, GlobalStoreState>(
+    () => ({}),
+    { deleteDocuments }
+  )
 );
 
-export default enhance(ThemedConfirm);
+const DeleteDocRefDialog = ({ uuids, deleteDocuments }: EnhancedProps) => (
+  <ThemedConfirm
+    onConfirm={() => {
+      if (!!uuids) {
+        deleteDocuments(uuids);
+      }
+    }}
+    onCancel={() => console.log("fuck off")}
+    isOpen={!!uuids}
+    question={`Delete these doc refs? ${JSON.stringify(uuids)}?`}
+  />
+);
+
+export default enhance(DeleteDocRefDialog);

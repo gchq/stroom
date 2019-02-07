@@ -5,12 +5,9 @@ import { storiesOf } from "@storybook/react";
 import DeleteDocRefDialog from "./DeleteDocRefDialog";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 import { fromSetupSampleData } from "./test";
-import { actionCreators } from "./redux";
 import { DocRefType } from "../../types";
 
 import "../../styles/main.css";
-
-const { prepareDocRefDelete } = actionCreators;
 
 const testFolder2 = fromSetupSampleData.children![1];
 
@@ -19,24 +16,16 @@ const LISTING_ID = "test";
 interface Props {
   testUuids: Array<string>;
 }
-interface ConnectState {}
-interface ConnectDispatch {
-  prepareDocRefDelete: typeof prepareDocRefDelete;
-}
-interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 // Delete
-const TestDeleteDialog = connect(
-  ({}) => ({}),
-  { prepareDocRefDelete }
-)(({ prepareDocRefDelete, testUuids }: EnhancedProps) => (
+const TestDeleteDialog = ({testUuids}: Props) => (
   <div>
     <button onClick={() => prepareDocRefDelete(LISTING_ID, testUuids)}>
       Show
     </button>
-    <DeleteDocRefDialog listingId={LISTING_ID} />
+    <DeleteDocRefDialog uuids={} />
   </div>
-));
+);
 
 storiesOf("Explorer/Delete Doc Ref Dialog", module)
   .addDecorator(StroomDecorator)

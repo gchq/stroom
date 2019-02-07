@@ -31,11 +31,6 @@ import {
   StoreState as RenameDocRefStoreState
 } from "./renameDocRefReducer";
 import {
-  actionCreators as deleteDocRefActionCreators,
-  reducer as deleteDocRefReducer,
-  StoreState as DeleteDocRefStoreState
-} from "./deleteDocRefReducer";
-import {
   actionCreators as copyDocRefActionCreators,
   reducer as copyDocRefReducer,
   StoreState as CopyDocRefStoreState
@@ -50,7 +45,6 @@ export const actionCreators = {
   ...documentTreeActionCreators,
   ...moveDocRefActionCreators,
   ...renameDocRefActionCreators,
-  ...deleteDocRefActionCreators,
   ...copyDocRefActionCreators,
   ...newDocActionCreators
 };
@@ -59,7 +53,6 @@ export interface StoreState {
   documentTree: DocumentTreeStoreState;
   moveDocRef: MoveDocRefStoreState;
   renameDocRef: RenameDocRefStoreState;
-  deleteDocRef: DeleteDocRefStoreState;
   copyDocRef: CopyDocRefStoreState;
   newDoc: NewDocStoreState;
 }
@@ -68,7 +61,6 @@ export const reducer = combineReducers({
   documentTree: documentTreeReducer,
   moveDocRef: moveDocRefReducer,
   renameDocRef: renameDocRefReducer,
-  deleteDocRef: deleteDocRefReducer,
   copyDocRef: copyDocRefReducer,
   newDoc: newDocReducer
 });
