@@ -11,6 +11,7 @@ import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
+import stroom.db.util.GenericDao;
 import stroom.job.impl.db.stroom.tables.records.JobRecord;
 
 import java.util.Optional;
@@ -26,7 +27,7 @@ public class GenericDaoTest {
             .withDatabaseName("stroom");
 
     private static Injector injector;
-    private static GenericDao<JobRecord, Job> dao;
+    private static GenericDao<JobRecord, Job, Integer> dao;
 
     @BeforeAll
     public static void beforeAll() {
@@ -36,7 +37,7 @@ public class GenericDaoTest {
         injector = Guice.createInjector(new JobDbModule(), new TestModule(dbContainer));
 
         ConnectionProvider connectionProvider = injector.getInstance(ConnectionProvider.class);
-        dao = new GenericDao(JOB, JOB.ID, Job.class, connectionProvider);
+        dao = new GenericDao<>(JOB, JOB.ID, Job.class, connectionProvider);
     }
 
     @Test
