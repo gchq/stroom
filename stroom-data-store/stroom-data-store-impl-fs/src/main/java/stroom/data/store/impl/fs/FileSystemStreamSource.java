@@ -243,7 +243,6 @@ final class FileSystemStreamSource implements InternalSource, SegmentInputStream
         return inputStream;
     }
 
-    // TODO : WE SHOULD BE ABLE TO REMOVE THIS SOON
     @Override
     public InputStream getChildInputStream(final String type) {
         final InternalSource childSource = getChild(type);

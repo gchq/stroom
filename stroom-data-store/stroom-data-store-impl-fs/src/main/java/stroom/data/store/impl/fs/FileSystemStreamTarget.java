@@ -411,7 +411,6 @@ final class FileSystemStreamTarget implements InternalTarget, SegmentOutputStrea
         return outputStream;
     }
 
-    // TODO : WE SHOULD BE ABLE TO REMOVE THIS SOON
     @Override
     public OutputStream getChildOutputStream(final String type) {
         final InternalTarget childTarget = getChild(type);
