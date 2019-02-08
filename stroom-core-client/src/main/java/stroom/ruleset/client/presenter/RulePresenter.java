@@ -26,13 +26,13 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.ruleset.client.presenter.RulePresenter.RuleView;
 import stroom.ruleset.shared.DataReceiptAction;
-import stroom.ruleset.shared.Rule;
+import stroom.ruleset.shared.DataReceiptRule;
 
 import java.util.List;
 
 public class RulePresenter extends MyPresenterWidget<RuleView> {
     private final EditExpressionPresenter editExpressionPresenter;
-    private Rule originalRule;
+    private DataReceiptRule originalRule;
 
     @Inject
     public RulePresenter(final EventBus eventBus,
@@ -43,7 +43,7 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
-    void read(final Rule rule, final List<DataSourceField> fields) {
+    void read(final DataReceiptRule rule, final List<DataSourceField> fields) {
         editExpressionPresenter.init(null, null, fields);
         this.originalRule = rule;
         getView().setName(rule.getName());
@@ -55,9 +55,9 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
         getView().setAction(rule.getAction());
     }
 
-    Rule write() {
+    DataReceiptRule write() {
         final ExpressionOperator expression = editExpressionPresenter.write();
-        return new Rule(originalRule.getRuleNumber(), originalRule.getCreationTime(), getView().getName(), originalRule.isEnabled(), expression, getView().getAction());
+        return new DataReceiptRule(originalRule.getRuleNumber(), originalRule.getCreationTime(), getView().getName(), originalRule.isEnabled(), expression, getView().getAction());
     }
 
     public interface RuleView extends View {

@@ -37,7 +37,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.ruleset.shared.RuleSet;
+import stroom.ruleset.shared.DataReceiptRuleSet;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -48,7 +48,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FieldListPresenter extends MyPresenterWidget<DataGridView<DataSourceField>>
-        implements HasDocumentRead<RuleSet>, HasWrite<RuleSet>, HasDirtyHandlers, ReadOnlyChangeHandler {
+        implements HasDocumentRead<DataReceiptRuleSet>, HasWrite<DataReceiptRuleSet>, HasDirtyHandlers, ReadOnlyChangeHandler {
     private final FieldEditPresenter fieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;
@@ -299,7 +299,7 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<DataSourc
     }
 
     @Override
-    public void read(final DocRef docRef, final RuleSet policy) {
+    public void read(final DocRef docRef, final DataReceiptRuleSet policy) {
         if (policy != null) {
             fields = policy.getFields();
             refresh();
@@ -307,7 +307,7 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<DataSourc
     }
 
     @Override
-    public void write(final RuleSet policy) {
+    public void write(final DataReceiptRuleSet policy) {
         policy.setFields(fields);
     }
 

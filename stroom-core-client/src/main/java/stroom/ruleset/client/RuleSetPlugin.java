@@ -27,9 +27,9 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.docref.DocRef;
 import stroom.ruleset.client.presenter.RuleSetPresenter;
-import stroom.ruleset.shared.RuleSet;
+import stroom.ruleset.shared.DataReceiptRuleSet;
 
-public class RuleSetPlugin extends DocumentPlugin<RuleSet> {
+public class RuleSetPlugin extends DocumentPlugin<DataReceiptRuleSet> {
     private final Provider<RuleSetPresenter> editorProvider;
 
     @Inject
@@ -49,11 +49,11 @@ public class RuleSetPlugin extends DocumentPlugin<RuleSet> {
 
     @Override
     public String getType() {
-        return RuleSet.DOCUMENT_TYPE;
+        return DataReceiptRuleSet.DOCUMENT_TYPE;
     }
 
     @Override
-    protected DocRef getDocRef(final RuleSet document) {
+    protected DocRef getDocRef(final DataReceiptRuleSet document) {
         return new DocRef(document.getType(), document.getUuid(), document.getName());
     }
 }

@@ -38,8 +38,8 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.ruleset.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
 import stroom.ruleset.shared.DataReceiptAction;
-import stroom.ruleset.shared.Rule;
-import stroom.ruleset.shared.RuleSet;
+import stroom.ruleset.shared.DataReceiptRule;
+import stroom.ruleset.shared.DataReceiptRuleSet;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -50,13 +50,13 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.List;
 
-public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsView> implements HasDocumentRead<RuleSet>, HasWrite<RuleSet>, HasDirtyHandlers, ReadOnlyChangeHandler {
+public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsView> implements HasDocumentRead<DataReceiptRuleSet>, HasWrite<DataReceiptRuleSet>, HasDirtyHandlers, ReadOnlyChangeHandler {
     private final RuleSetListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
     private final Provider<RulePresenter> editRulePresenterProvider;
 
     private List<DataSourceField> fields;
-    private List<Rule> rules;
+    private List<DataReceiptRule> rules;
 
     private ButtonView addButton;
     private ButtonView editButton;
@@ -108,7 +108,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
         }));
         registerHandler(editButton.addClickHandler(event -> {
             if (!readOnly && rules != null) {
-                final Rule selected = listPresenter.getSelectionModel().getSelected();
+                final DataReceiptRule selected = listPresenter.getSelectionModel().getSelected();
                 if (selected != null) {
                     edit(selected);
                 }
@@ -116,9 +116,9 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
         }));
         registerHandler(copyButton.addClickHandler(event -> {
             if (!readOnly && rules != null) {
-                final Rule selected = listPresenter.getSelectionModel().getSelected();
+                final DataReceiptRule selected = listPresenter.getSelectionModel().getSelected();
                 if (selected != null) {
-                    final Rule newRule = new Rule(selected.getRuleNumber() + 1, System.currentTimeMillis(), selected.getName(), selected.isEnabled(), selected.getExpression(), selected.getAction());
+                    final DataReceiptRule newRule = new DataReceiptRule(selected.getRuleNumber() + 1, System.currentTimeMillis(), selected.getName(), selected.isEnabled(), selected.getExpression(), selected.getAction());
 
                     final int index = rules.indexOf(selected);
 
@@ -135,9 +135,9 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
         }));
         registerHandler(disableButton.addClickHandler(event -> {
             if (!readOnly && rules != null) {
-                final Rule selected = listPresenter.getSelectionModel().getSelected();
+                final DataReceiptRule selected = listPresenter.getSelectionModel().getSelected();
                 if (selected != null) {
-                    final Rule newRule = new Rule(selected.getRuleNumber(), selected.getCreationTime(), selected.getName(), !selected.isEnabled(), selected.getExpression(), selected.getAction());
+                    final DataReceiptRule newRule = new DataReceiptRule(selected.getRuleNumber(), selected.getCreationTime(), selected.getName(), !selected.isEnabled(), selected.getExpression(), selected.getAction());
                     final int index = rules.indexOf(selected);
                     rules.remove(index);
                     rules.add(index, newRule);
@@ -151,7 +151,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
             if (!readOnly && rules != null) {
                 ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
                     if (ok) {
-                        final Rule rule = listPresenter.getSelectionModel().getSelected();
+                        final DataReceiptRule rule = listPresenter.getSelectionModel().getSelected();
                         rules.remove(rule);
                         listPresenter.getSelectionModel().clear();
                         update();
@@ -162,7 +162,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
         }));
         registerHandler(moveUpButton.addClickHandler(event -> {
             if (!readOnly && rules != null) {
-                final Rule rule = listPresenter.getSelectionModel().getSelected();
+                final DataReceiptRule rule = listPresenter.getSelectionModel().getSelected();
                 if (rule != null) {
                     int index = rules.indexOf(rule);
                     if (index > 0) {
@@ -176,7 +176,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
         }));
         registerHandler(moveDownButton.addClickHandler(event -> {
             if (!readOnly && rules != null) {
-                final Rule rule = listPresenter.getSelectionModel().getSelected();
+                final DataReceiptRule rule = listPresenter.getSelectionModel().getSelected();
                 if (rule != null) {
                     int index = rules.indexOf(rule);
                     if (index < rules.size() - 1) {
@@ -190,7 +190,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
         }));
         registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
             if (!readOnly) {
-                final Rule rule = listPresenter.getSelectionModel().getSelected();
+                final DataReceiptRule rule = listPresenter.getSelectionModel().getSelected();
                 if (rule != null) {
                     expressionPresenter.read(rule.getExpression());
                     if (event.getSelectionType().isDoubleSelect()) {
@@ -207,7 +207,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
     }
 
     private void add() {
-        final Rule newRule = new Rule(0, System.currentTimeMillis(), "", true, new ExpressionOperator.Builder(Op.AND).build(), DataReceiptAction.RECEIVE);
+        final DataReceiptRule newRule = new DataReceiptRule(0, System.currentTimeMillis(), "", true, new ExpressionOperator.Builder(Op.AND).build(), DataReceiptAction.RECEIVE);
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule, fields);
 
@@ -216,7 +216,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
-                    final Rule rule = editRulePresenter.write();
+                    final DataReceiptRule rule = editRulePresenter.write();
                     rules.add(0, rule);
                     update();
                     listPresenter.getSelectionModel().setSelected(rule);
@@ -233,7 +233,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
         });
     }
 
-    private void edit(final Rule existingRule) {
+    private void edit(final DataReceiptRule existingRule) {
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(existingRule, fields);
 
@@ -242,7 +242,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
-                    final Rule rule = editRulePresenter.write();
+                    final DataReceiptRule rule = editRulePresenter.write();
                     final int index = rules.indexOf(existingRule);
                     rules.remove(index);
                     rules.add(index, rule);
@@ -267,7 +267,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
     }
 
     @Override
-    public void read(final DocRef docRef, final RuleSet policy) {
+    public void read(final DocRef docRef, final DataReceiptRuleSet policy) {
         if (policy != null) {
             this.fields = policy.getFields();
             this.rules = policy.getRules();
@@ -278,7 +278,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
     }
 
     @Override
-    public void write(final RuleSet entity) {
+    public void write(final DataReceiptRuleSet entity) {
     }
 
     @Override
@@ -291,8 +291,8 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
         if (rules != null) {
             // Set rule numbers on all of the rules for display purposes.
             for (int i = 0; i < rules.size(); i++) {
-                final Rule rule = rules.get(i);
-                final Rule newRule = new Rule(i + 1, rule.getCreationTime(), rule.getName(), rule.isEnabled(), rule.getExpression(), rule.getAction());
+                final DataReceiptRule rule = rules.get(i);
+                final DataReceiptRule newRule = new DataReceiptRule(i + 1, rule.getCreationTime(), rule.getName(), rule.isEnabled(), rule.getExpression(), rule.getAction());
                 rules.set(i, newRule);
             }
             listPresenter.setData(rules);
@@ -302,7 +302,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
 
     private void updateButtons() {
         final boolean loadedPolicy = rules != null;
-        final Rule selection = listPresenter.getSelectionModel().getSelected();
+        final DataReceiptRule selection = listPresenter.getSelectionModel().getSelected();
         final boolean selected = loadedPolicy && selection != null;
         int index = -1;
         if (selected) {

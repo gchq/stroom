@@ -26,7 +26,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRefInfo;
-import stroom.ruleset.shared.RuleSet;
+import stroom.ruleset.shared.DataReceiptRuleSet;
 import stroom.util.shared.Message;
 
 import javax.inject.Inject;
@@ -37,13 +37,13 @@ import java.util.Set;
 
 @Singleton
 public class RuleSetServiceImpl implements RuleSetService {
-    private final Store<RuleSet> store;
+    private final Store<DataReceiptRuleSet> store;
 
     @Inject
     public RuleSetServiceImpl(final StoreFactory storeFactory,
                               final Serialiser2Factory serialiser2Factory) {
-        DocumentSerialiser2<RuleSet> serialiser = serialiser2Factory.createSerialiser(RuleSet.class);
-        this.store = storeFactory.createStore(serialiser, RuleSet.DOCUMENT_TYPE, RuleSet.class);
+        DocumentSerialiser2<DataReceiptRuleSet> serialiser = serialiser2Factory.createSerialiser(DataReceiptRuleSet.class);
+        this.store = storeFactory.createStore(serialiser, DataReceiptRuleSet.DOCUMENT_TYPE, DataReceiptRuleSet.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -84,7 +84,7 @@ public class RuleSetServiceImpl implements RuleSetService {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(100, RuleSet.DOCUMENT_TYPE, "Rule Set");
+        return new DocumentType(100, DataReceiptRuleSet.DOCUMENT_TYPE, "Rule Set");
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -96,12 +96,12 @@ public class RuleSetServiceImpl implements RuleSetService {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public RuleSet readDocument(final DocRef docRef) {
+    public DataReceiptRuleSet readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }
 
     @Override
-    public RuleSet writeDocument(final RuleSet document) {
+    public DataReceiptRuleSet writeDocument(final DataReceiptRuleSet document) {
         return store.writeDocument(document);
     }
 
@@ -135,7 +135,7 @@ public class RuleSetServiceImpl implements RuleSetService {
 
     @Override
     public String getType() {
-        return RuleSet.DOCUMENT_TYPE;
+        return DataReceiptRuleSet.DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

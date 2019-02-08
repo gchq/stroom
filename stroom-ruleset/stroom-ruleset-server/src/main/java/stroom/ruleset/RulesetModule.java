@@ -22,7 +22,7 @@ import stroom.datafeed.AttributeMapFilterFactory;
 import stroom.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.ruleset.shared.RuleSet;
+import stroom.ruleset.shared.DataReceiptRuleSet;
 
 public class RulesetModule extends AbstractModule {
     @Override
@@ -37,7 +37,7 @@ public class RulesetModule extends AbstractModule {
         importExportActionHandlerBinder.addBinding().to(stroom.ruleset.RuleSetServiceImpl.class);
 
         EntityTypeBinder.create(binder())
-                .bind(RuleSet.DOCUMENT_TYPE, RuleSetServiceImpl.class);
+                .bind(DataReceiptRuleSet.DOCUMENT_TYPE, RuleSetServiceImpl.class);
 
     }
 }

@@ -24,8 +24,8 @@ import stroom.dictionary.api.DictionaryStore;
 import stroom.meta.shared.AttributeMap;
 import stroom.docref.DocRef;
 import stroom.ruleset.shared.DataReceiptAction;
-import stroom.ruleset.shared.Rule;
-import stroom.ruleset.shared.RuleSet;
+import stroom.ruleset.shared.DataReceiptRule;
+import stroom.ruleset.shared.DataReceiptRuleSet;
 import stroom.data.store.ExpressionMatcher;
 import stroom.meta.shared.ExpressionUtil;
 
@@ -78,7 +78,7 @@ class DataReceiptPolicyChecker {
     private synchronized void refresh() {
         if (needsRefresh()) {
             // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
-            final RuleSet dataReceiptPolicy = ruleSetService.readDocument(policyRef);
+            final DataReceiptRuleSet dataReceiptPolicy = ruleSetService.readDocument(policyRef);
             if (dataReceiptPolicy != null && dataReceiptPolicy.getRules() != null && dataReceiptPolicy.getFields() != null) {
                 // Create a map of fields.
                 final Map<String, DataSourceField> fieldMap = dataReceiptPolicy.getFields()
@@ -87,7 +87,7 @@ class DataReceiptPolicyChecker {
 
                 // Also make sure we create a list of rules that are enabled and have at least one enabled term.
                 final Set<String> fieldSet = new HashSet<>();
-                final List<Rule> activeRules = new ArrayList<>();
+                final List<DataReceiptRule> activeRules = new ArrayList<>();
                 dataReceiptPolicy.getRules().forEach(rule -> {
                     if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
                         final Set<String> set = new HashSet<>();
@@ -117,7 +117,7 @@ class DataReceiptPolicyChecker {
         }
     }
 
-    private void addToFieldSet(final Rule rule, final Set<String> fieldSet) {
+    private void addToFieldSet(final DataReceiptRule rule, final Set<String> fieldSet) {
         if (rule.isEnabled()) {
             fieldSet.addAll(ExpressionUtil.fields(rule.getExpression()));
         }
@@ -136,10 +136,10 @@ class DataReceiptPolicyChecker {
 
     private static class CheckerImpl implements Checker {
         private final ExpressionMatcher expressionMatcher;
-        private final List<Rule> activeRules;
+        private final List<DataReceiptRule> activeRules;
         private final Map<String, DataSourceField> fieldMap;
 
-        CheckerImpl(final ExpressionMatcher expressionMatcher, final List<Rule> activeRules, final Map<String, DataSourceField> fieldMap) {
+        CheckerImpl(final ExpressionMatcher expressionMatcher, final List<DataReceiptRule> activeRules, final Map<String, DataSourceField> fieldMap) {
             this.expressionMatcher = expressionMatcher;
             this.activeRules = activeRules;
             this.fieldMap = fieldMap;
@@ -149,7 +149,7 @@ class DataReceiptPolicyChecker {
         public DataReceiptAction check(final AttributeMap attributeMap) {
             final Map<String, Object> map = createAttributeMap(attributeMap, fieldMap);
 
-            final Rule matchingRule = findMatchingRule(expressionMatcher, map, activeRules);
+            final DataReceiptRule matchingRule = findMatchingRule(expressionMatcher, map, activeRules);
             if (matchingRule != null && matchingRule.getAction() != null) {
                 return matchingRule.getAction();
             }
@@ -190,8 +190,8 @@ class DataReceiptPolicyChecker {
             return null;
         }
 
-        private Rule findMatchingRule(final ExpressionMatcher expressionMatcher, final Map<String, Object> attributeMap, final List<Rule> activeRules) {
-            for (final Rule rule : activeRules) {
+        private DataReceiptRule findMatchingRule(final ExpressionMatcher expressionMatcher, final Map<String, Object> attributeMap, final List<DataReceiptRule> activeRules) {
+            for (final DataReceiptRule rule : activeRules) {
                 try {
                     if (expressionMatcher.match(attributeMap, rule.getExpression())) {
                         return rule;

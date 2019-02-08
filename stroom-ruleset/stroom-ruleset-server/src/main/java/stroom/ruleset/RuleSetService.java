@@ -18,7 +18,7 @@
 package stroom.ruleset;
 
 import stroom.docstore.DocumentStore;
-import stroom.ruleset.shared.RuleSet;
+import stroom.ruleset.shared.DataReceiptRuleSet;
 
-public interface RuleSetService extends DocumentStore<RuleSet> {
+public interface RuleSetService extends DocumentStore<DataReceiptRuleSet> {
 }

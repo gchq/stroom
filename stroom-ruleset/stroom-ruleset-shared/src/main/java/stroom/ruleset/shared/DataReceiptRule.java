@@ -29,7 +29,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "DataReceiptRule", propOrder = {"ruleNumber", "creationTime", "name", "enabled", "expression", "action"})
 @XmlRootElement(name = "dataReceiptRule")
-public class Rule implements SharedObject {
+public class DataReceiptRule implements SharedObject {
     private static final long serialVersionUID = -4466080173384628077L;
 
     @XmlElement(name = "ruleNumber")
@@ -45,16 +45,16 @@ public class Rule implements SharedObject {
     @XmlElement(name = "action")
     private DataReceiptAction action;
 
-    public Rule() {
+    public DataReceiptRule() {
         // Default constructor for GWT serialisation.
     }
 
-    public Rule(final int ruleNumber,
-                final long creationTime,
-                final String name,
-                final boolean enabled,
-                final ExpressionOperator expression,
-                final DataReceiptAction action) {
+    public DataReceiptRule(final int ruleNumber,
+                           final long creationTime,
+                           final String name,
+                           final boolean enabled,
+                           final ExpressionOperator expression,
+                           final DataReceiptAction action) {
         this.ruleNumber = ruleNumber;
         this.creationTime = creationTime;
         this.name = name;
@@ -92,7 +92,7 @@ public class Rule implements SharedObject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final Rule that = (Rule) o;
+        final DataReceiptRule that = (DataReceiptRule) o;
 
         if (ruleNumber != that.ruleNumber) return false;
         if (creationTime != that.creationTime) return false;

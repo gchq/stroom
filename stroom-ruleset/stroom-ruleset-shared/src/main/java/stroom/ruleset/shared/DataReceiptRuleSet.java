@@ -28,15 +28,15 @@ import java.util.List;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "fields", "rules"})
 @JsonInclude(Include.NON_EMPTY)
-public class RuleSet extends Doc implements SharedObject {
+public class DataReceiptRuleSet extends Doc implements SharedObject {
     private static final long serialVersionUID = -7268301402378907741L;
 
     public static final String DOCUMENT_TYPE = "RuleSet";
 
     private List<DataSourceField> fields;
-    private List<Rule> rules;
+    private List<DataReceiptRule> rules;
 
-    public RuleSet() {
+    public DataReceiptRuleSet() {
         // Default constructor for GWT serialisation.
     }
 
@@ -48,11 +48,11 @@ public class RuleSet extends Doc implements SharedObject {
         this.fields = fields;
     }
 
-    public List<Rule> getRules() {
+    public List<DataReceiptRule> getRules() {
         return rules;
     }
 
-    public void setRules(final List<Rule> rules) {
+    public void setRules(final List<DataReceiptRule> rules) {
         this.rules = rules;
     }
 
@@ -62,7 +62,7 @@ public class RuleSet extends Doc implements SharedObject {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
 
-        final RuleSet ruleSet = (RuleSet) o;
+        final DataReceiptRuleSet ruleSet = (DataReceiptRuleSet) o;
 
         if (fields != null ? !fields.equals(ruleSet.fields) : ruleSet.fields != null) return false;
         return rules != null ? rules.equals(ruleSet.rules) : ruleSet.rules == null;

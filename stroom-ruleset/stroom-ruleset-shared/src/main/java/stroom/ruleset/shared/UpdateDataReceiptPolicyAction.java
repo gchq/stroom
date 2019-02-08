@@ -19,25 +19,25 @@ package stroom.ruleset.shared;
 
 import stroom.task.shared.Action;
 
-public class UpdateDataReceiptPolicyAction extends Action<RuleSet> {
+public class UpdateDataReceiptPolicyAction extends Action<DataReceiptRuleSet> {
     private static final long serialVersionUID = 1966204124382806515L;
 
-    private RuleSet dataReceiptPolicy;
+    private DataReceiptRuleSet dataReceiptRuleSet;
 
     public UpdateDataReceiptPolicyAction() {
         // Default constructor for GWT serialisation.
     }
 
-    public UpdateDataReceiptPolicyAction(final RuleSet dataReceiptPolicy) {
-        this.dataReceiptPolicy = dataReceiptPolicy;
+    public UpdateDataReceiptPolicyAction(final DataReceiptRuleSet dataReceiptRuleSet) {
+        this.dataReceiptRuleSet = dataReceiptRuleSet;
     }
 
-    public RuleSet getDataReceiptPolicy() {
-        return dataReceiptPolicy;
+    public DataReceiptRuleSet getDataReceiptRuleSet() {
+        return dataReceiptRuleSet;
     }
 
     @Override
     public String getTaskName() {
-        return "Save Data Receipt Policy";
+        return "Save Data Receipt Rule Set";
     }
 }
