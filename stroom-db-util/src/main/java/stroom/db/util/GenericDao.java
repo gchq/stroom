@@ -35,7 +35,7 @@ public class GenericDao<RecordType extends UpdatableRecord, EntityType, IdType>
     }
 
     public EntityType create(@Nonnull final EntityType entity) {
-        return JooqUtil.contextWithOptimisticLocking(connectionProvider, (context) -> {
+        return JooqUtil.contextResult(connectionProvider, (context) -> {
             LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Creating a {}", table.getName()));
             RecordType record = context.newRecord(table, entity);
             record.store();
@@ -54,7 +54,7 @@ public class GenericDao<RecordType extends UpdatableRecord, EntityType, IdType>
     }
 
     public boolean delete(@Nonnull final IdType id) {
-        return JooqUtil.contextWithOptimisticLocking(connectionProvider, context -> {
+        return JooqUtil.contextResult(connectionProvider, context -> {
             LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
                     "Deleting a {} with id {}", table.getName(), id));
             return context
