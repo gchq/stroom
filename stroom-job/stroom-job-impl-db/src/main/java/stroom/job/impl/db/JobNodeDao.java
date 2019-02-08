@@ -1,7 +1,7 @@
 package stroom.job.impl.db;
 
 import stroom.db.util.GenericDao;
-import stroom.entity.HasIntCrud;
+import stroom.entity.shared.HasIntCrud;
 import stroom.job.impl.db.stroom.tables.records.JobNodeRecord;
 
 import javax.annotation.Nonnull;
