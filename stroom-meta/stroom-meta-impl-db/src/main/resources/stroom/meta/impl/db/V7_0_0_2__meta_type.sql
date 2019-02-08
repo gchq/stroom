@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS meta_type (
 --
 -- Copy meta into the meta_type table
 --
-DROP PROCEDURE IF EXISTS copy;
+DROP PROCEDURE IF EXISTS copy_meta_type;
 DELIMITER //
-CREATE PROCEDURE copy ()
+CREATE PROCEDURE copy_meta_type ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM_TP' > 0) THEN
     INSERT INTO meta_type (id, name)
@@ -32,5 +32,5 @@ BEGIN
   END IF;
 END//
 DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+CALL copy_meta_type();
+DROP PROCEDURE copy_meta_type;

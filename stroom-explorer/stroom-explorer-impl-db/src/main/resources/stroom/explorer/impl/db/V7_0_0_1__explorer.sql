@@ -23,10 +23,11 @@ CREATE TABLE IF NOT EXISTS explorer_path (
 --
 -- Copy data into the explorer table
 --
-DROP PROCEDURE IF EXISTS copy;
+DROP PROCEDURE IF EXISTS copy_explorer;
 DELIMITER //
-CREATE PROCEDURE copy ()
+CREATE PROCEDURE copy_explorer ()
 BEGIN
+  -- TODO get rid of OLD_ table logic, see V7_0_0_1__config.sql as an example
     IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'explorerTreeNode' > 0) THEN
         INSERT INTO explorer_node (id, type, uuid, name, tags)
         SELECT id, type, uuid, name, tags
@@ -50,5 +51,5 @@ BEGIN
     END IF;
 END//
 DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+CALL copy_explorer();
+DROP PROCEDURE copy_explorer;

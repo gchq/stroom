@@ -13,9 +13,9 @@ CREATE TABLE IF NOT EXISTS meta_processor (
 --
 -- Copy meta into the meta_processor table
 --
-DROP PROCEDURE IF EXISTS copy;
+DROP PROCEDURE IF EXISTS copy_meta_processor;
 DELIMITER //
-CREATE PROCEDURE copy ()
+CREATE PROCEDURE copy_meta_processor ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM_PROC' > 0) THEN
     INSERT
@@ -35,5 +35,5 @@ BEGIN
   END IF;
 END//
 DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+CALL copy_meta_processor();
+DROP PROCEDURE copy_meta_processor;
