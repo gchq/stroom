@@ -8,6 +8,10 @@ dependencies {
     implementation project(':stroom-processor:stroom-processor-shared')
     implementation project(':stroom-util-shared')
 
+    // Stroom external bintray libs
+    implementation libs.stroomDocRef
+    implementation libs.stroomQueryApi
+
     // 3rd party libs
     implementation libs.jackson_annotations
     implementation libs.javax_inject

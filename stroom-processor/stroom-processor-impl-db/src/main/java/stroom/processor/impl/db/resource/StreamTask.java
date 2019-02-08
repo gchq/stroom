@@ -1,6 +1,6 @@
 package stroom.processor.impl.db.resource;
 
-import stroom.streamstore.shared.QueryData;
+import stroom.processor.shared.QueryData;
 
 class StreamTask {
 

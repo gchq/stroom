@@ -38,7 +38,7 @@ import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.shared.QueryData;
+import stroom.processor.shared.QueryData;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.processor.StreamProcessorFilterService;
 import stroom.processor.StreamProcessorService;

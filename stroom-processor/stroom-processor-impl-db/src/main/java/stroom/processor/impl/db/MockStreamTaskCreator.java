@@ -25,7 +25,7 @@ import stroom.entity.shared.Clearable;
 import stroom.node.api.NodeService;
 import stroom.processor.StreamProcessorFilterService;
 import stroom.node.shared.Node;
-import stroom.streamstore.shared.QueryData;
+import stroom.processor.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTask;

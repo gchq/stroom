@@ -30,7 +30,7 @@ import stroom.processor.StreamProcessorFilterService;
 import stroom.processor.StreamProcessorService;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.shared.QueryData;
+import stroom.processor.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.processor.shared.Processor;

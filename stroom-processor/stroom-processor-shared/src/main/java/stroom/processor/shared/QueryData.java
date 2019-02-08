@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.shared;
+package stroom.processor.shared;
 
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;

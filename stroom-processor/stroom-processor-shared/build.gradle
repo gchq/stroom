@@ -12,6 +12,7 @@ dependencies {
 
     // Stroom external bintray libs
     implementation libs.stroomDocRef
+    implementation libs.stroomQueryApi
 
     // Stroom test modules
     testImplementation project(':stroom-test-common')

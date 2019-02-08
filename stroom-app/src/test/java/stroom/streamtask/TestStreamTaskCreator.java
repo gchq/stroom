@@ -24,7 +24,7 @@ import stroom.processor.ProcessorConfig;
 import stroom.processor.impl.db.StreamTaskCreator;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.shared.QueryData;
+import stroom.processor.shared.QueryData;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.processor.shared.ProcessorFilterTask;
 import stroom.task.api.SimpleTaskContext;

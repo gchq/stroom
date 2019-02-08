@@ -17,14 +17,14 @@
 package stroom.processor.shared;
 
 import stroom.docref.SharedObject;
-import stroom.streamstore.shared.QueryData;
+import stroom.entity.shared.HasUuid;
 import stroom.util.shared.HasAuditInfo;
 
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.Comparator;
 import java.util.Objects;
 
-public class ProcessorFilter implements HasAuditInfo, SharedObject {
+public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
 
     public static final String ENTITY_TYPE = "StreamProcessorFilter";
 
@@ -115,7 +115,8 @@ public class ProcessorFilter implements HasAuditInfo, SharedObject {
         this.updateUser = updateUser;
     }
 
-    String getUuid() {
+    @Override
+    public String getUuid() {
         return uuid;
     }
 

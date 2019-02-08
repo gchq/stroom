@@ -17,16 +17,18 @@
 
 package stroom.processor;
 
-import stroom.entity.BaseEntityService;
-import stroom.entity.FindService;
 import stroom.docref.DocRef;
-import stroom.streamstore.shared.QueryData;
-import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
+import stroom.entity.shared.BaseResultList;
+import stroom.processor.shared.FindStreamProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.QueryData;
 
-public interface StreamProcessorFilterService
-        extends BaseEntityService<ProcessorFilter>, FindService<ProcessorFilter, FindStreamProcessorFilterCriteria> {
+public interface StreamProcessorFilterService {
+//        extends BaseEntityService<ProcessorFilter>, FindService<ProcessorFilter, FindStreamProcessorFilterCriteria> {
+
+    BaseResultList<ProcessorFilter> find(FindStreamProcessorFilterCriteria criteria);
+
     void addFindStreamCriteria(Processor streamProcessor,
                                int priority,
                                QueryData queryData);

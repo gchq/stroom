@@ -51,7 +51,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.util.UserTokenUtil;
-import stroom.streamstore.shared.QueryData;
+import stroom.processor.shared.QueryData;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.processor.StreamProcessorFilterService;
 import stroom.processor.StreamProcessorService;

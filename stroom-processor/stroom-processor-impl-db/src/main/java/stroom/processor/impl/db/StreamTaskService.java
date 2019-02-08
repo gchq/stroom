@@ -17,12 +17,12 @@
 
 package stroom.processor.impl.db;
 
-import stroom.entity.BaseEntityService;
-import stroom.entity.FindService;
-import stroom.entity.FindSummaryService;
-import stroom.streamtask.shared.FindStreamTaskCriteria;
+import stroom.entity.shared.BaseResultList;
+import stroom.processor.shared.FindStreamTaskCriteria;
 import stroom.processor.shared.ProcessorFilterTask;
 
-public interface StreamTaskService
-        extends BaseEntityService<ProcessorFilterTask>, FindService<ProcessorFilterTask, FindStreamTaskCriteria>, FindSummaryService<FindStreamTaskCriteria> {
+public interface StreamTaskService {
+//        extends BaseEntityService<ProcessorFilterTask>, FindService<ProcessorFilterTask, FindStreamTaskCriteria>, FindSummaryService<FindStreamTaskCriteria> {
+
+    BaseResultList<ProcessorFilterTask> find(FindStreamTaskCriteria criteria);
 }

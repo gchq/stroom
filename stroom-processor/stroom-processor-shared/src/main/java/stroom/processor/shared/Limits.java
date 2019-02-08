@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.shared;
+package stroom.processor.shared;
 
 import stroom.docref.SharedObject;
 

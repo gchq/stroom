@@ -24,7 +24,7 @@ import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
 import stroom.processor.shared.ProcessorFilterTask;
-import stroom.streamtask.shared.TaskStatus;
+import stroom.processor.shared.TaskStatus;
 
 import javax.inject.Inject;
 import javax.persistence.EntityNotFoundException;

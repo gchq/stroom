@@ -18,11 +18,12 @@ package stroom.processor.shared;
 
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
+import stroom.entity.shared.HasUuid;
 import stroom.util.shared.HasAuditInfo;
 
 import java.util.Objects;
 
-public class Processor implements HasAuditInfo, SharedObject {
+public class Processor implements HasAuditInfo, HasUuid, SharedObject {
 
     public static final String ENTITY_TYPE = "StreamProcessor";
 
@@ -107,7 +108,8 @@ public class Processor implements HasAuditInfo, SharedObject {
         this.updateUser = updateUser;
     }
 
-    String getUuid() {
+    @Override
+    public String getUuid() {
         return uuid;
     }
 

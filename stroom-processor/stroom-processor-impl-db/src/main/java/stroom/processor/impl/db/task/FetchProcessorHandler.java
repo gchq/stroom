@@ -44,7 +44,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.shared.QueryData;
+import stroom.processor.shared.QueryData;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.Expander;
 

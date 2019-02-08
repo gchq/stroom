@@ -19,7 +19,7 @@ package stroom.processor.impl.db;
 
 import stroom.entity.MockEntityService;
 import stroom.docref.DocRef;
-import stroom.streamstore.shared.QueryData;
+import stroom.processor.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;

@@ -23,13 +23,13 @@ import stroom.processor.shared.Processor;
 
 public interface StreamProcessorService {
 
-    Processor fetch(int id);
+    Processor fetch(final int id);
 
-    Processor fetchInsecure(int id);
+    Processor fetchInsecure(final int id);
 
-    Processor fetchByUuid(String uuid);
+    Processor fetchByUuid(final String uuid);
 
-    Processor create();
+    Processor create(final Processor processor);
 
     Processor update(Processor processor);
 

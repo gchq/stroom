@@ -16,9 +16,9 @@
 
 package stroom.processor.shared.task;
 
-import stroom.task.shared.Action;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.streamstore.shared.ReprocessDataInfo;
+import stroom.processor.shared.ReprocessDataInfo;
+import stroom.task.shared.Action;
 import stroom.util.shared.SharedList;
 
 public class ReprocessDataAction extends Action<SharedList<ReprocessDataInfo>> {

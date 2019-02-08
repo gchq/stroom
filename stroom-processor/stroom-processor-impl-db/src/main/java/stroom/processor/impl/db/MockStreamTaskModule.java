@@ -21,6 +21,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
 import stroom.processor.StreamProcessorFilterService;
 import stroom.processor.StreamProcessorService;
+import stroom.processor.impl.db.task.StreamProcessorTaskHandler;
 import stroom.task.api.TaskHandlerBinder;
 
 public class MockStreamTaskModule extends AbstractModule {
