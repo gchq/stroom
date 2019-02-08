@@ -19,19 +19,19 @@ package stroom.entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.entity.shared.BaseEntity;
+import stroom.entity.shared.MarshallableEntity;
 import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
-@Deprecated // Considering using stroom.entity.AbstractEntityMarshaller instead
-public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marshaller<E, O> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EntityMarshaller.class);
+public abstract class AbstractEntityMarshaller<T_Entity extends MarshallableEntity, T_Object> implements Marshaller<T_Entity, T_Object> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEntityMarshaller.class);
 
     private final JAXBContext jaxbContext;
 
-    public EntityMarshaller() {
+    public AbstractEntityMarshaller() {
         try {
             jaxbContext = JAXBContext.newInstance(getObjectType());
         } catch (final JAXBException e) {
@@ -41,7 +41,7 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
     }
 
     @Override
-    public E marshal(final E entity) {
+    public T_Entity marshal(final T_Entity entity) {
         try {
             Object object = getObject(entity);
 
@@ -63,10 +63,10 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
     }
 
     @Override
-    public E unmarshal(final E entity) {
+    public T_Entity unmarshal(final T_Entity entity) {
         try {
             final String data = getData(entity);
-            final O object = XMLMarshallerUtil.unmarshal(jaxbContext, getObjectType(), data);
+            final T_Object object = XMLMarshallerUtil.unmarshal(jaxbContext, getObjectType(), data);
             setObject(entity, object);
         } catch (final RuntimeException e) {
             LOGGER.debug("Unable to unmarshal entity!", e);
@@ -75,11 +75,11 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
         return entity;
     }
 
-    protected abstract String getData(E entity);
+    protected abstract String getData(T_Entity entity);
 
-    protected abstract void setData(E entity, String data);
+    protected abstract void setData(T_Entity entity, String data);
 
-    protected abstract Class<O> getObjectType();
+    protected abstract Class<T_Object> getObjectType();
 
     protected abstract String getEntityType();
 }
