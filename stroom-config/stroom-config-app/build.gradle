@@ -6,7 +6,7 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-server')
     implementation project(':stroom-meta:stroom-meta-impl-db')
-    implementation project(':stroom-data-store:stroom-data-store-impl-fs')
+    implementation project(':stroom-data:stroom-data-store-impl-fs')
     implementation project(':stroom-explorer:stroom-explorer-impl-db')
     implementation project(':stroom-importexport:stroom-importexport-impl')
     implementation project(':stroom-index:stroom-index-server')
