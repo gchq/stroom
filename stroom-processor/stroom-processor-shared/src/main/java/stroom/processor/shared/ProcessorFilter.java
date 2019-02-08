@@ -18,13 +18,14 @@ package stroom.processor.shared;
 
 import stroom.docref.SharedObject;
 import stroom.entity.shared.HasUuid;
+import stroom.entity.shared.MarshallableEntity;
 import stroom.util.shared.HasAuditInfo;
 
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.Comparator;
 import java.util.Objects;
 
-public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
+public class ProcessorFilter implements HasAuditInfo, HasUuid, MarshallableEntity, SharedObject {
 
     public static final String ENTITY_TYPE = "StreamProcessorFilter";
 
