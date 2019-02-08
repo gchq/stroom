@@ -20,6 +20,7 @@ package stroom.data.retention;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.DataRetentionAgeUtil;
 import stroom.dictionary.api.DictionaryStore;
@@ -28,8 +29,8 @@ import stroom.util.xml.XMLMarshallerUtil;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.receive.rules.shared.DataRetentionPolicy;
-import stroom.receive.rules.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.DataRetentionRule;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
@@ -58,6 +59,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -74,22 +76,22 @@ public class DataRetentionExecutor {
 
     private final TaskContext taskContext;
     private final ClusterLockService clusterLockService;
-    private final DataRetentionService dataRetentionService;
+    private final DataRetentionRulesService dataRetentionRulesService;
     private final DictionaryStore dictionaryStore;
     private final DataSource dataSource;
-    private final PolicyConfig policyConfig;
+    private final DataRetentionConfig policyConfig;
     private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
     DataRetentionExecutor(final TaskContext taskContext,
                           final ClusterLockService clusterLockService,
-                          final DataRetentionService dataRetentionService,
+                          final DataRetentionRulesService dataRetentionRulesService,
                           final DictionaryStore dictionaryStore,
                           final DataSource dataSource,
-                          final PolicyConfig policyConfig) {
+                          final DataRetentionConfig policyConfig) {
         this.taskContext = taskContext;
         this.clusterLockService = clusterLockService;
-        this.dataRetentionService = dataRetentionService;
+        this.dataRetentionRulesService = dataRetentionRulesService;
         this.dictionaryStore = dictionaryStore;
         this.dataSource = dataSource;
         this.policyConfig = policyConfig;
@@ -119,7 +121,12 @@ public class DataRetentionExecutor {
     }
 
     private synchronized void process() {
-        final DataRetentionPolicy dataRetentionPolicy = dataRetentionService.load();
+        DataRetentionRules dataRetentionPolicy = null;
+        final Set<DocRef> set = dataRetentionRulesService.listDocuments();
+        if (set != null && set.size() == 1) {
+            dataRetentionPolicy = dataRetentionRulesService.readDocument(set.iterator().next());
+        }
+
         if (dataRetentionPolicy != null) {
             final List<DataRetentionRule> rules = dataRetentionPolicy.getRules();
             if (rules != null && rules.size() > 0) {
@@ -137,7 +144,7 @@ public class DataRetentionExecutor {
 
                 // If the data retention policy has changed then we need to assume it has never been run before,
                 // i.e. all data must be considered for retention checking.
-                if (tracker == null || !tracker.policyEquals(dataRetentionPolicy)) {
+                if (tracker == null || !tracker.rulesEquals(dataRetentionPolicy)) {
                     tracker = new Tracker(null, dataRetentionPolicy);
                 }
 
@@ -279,7 +286,7 @@ public class DataRetentionExecutor {
     }
 
     @XmlAccessorType(XmlAccessType.FIELD)
-    @XmlType(name = "Tracker", propOrder = {"lastRun", "dataRetentionPolicy", "policyVersion", "policyHash"})
+    @XmlType(name = "Tracker", propOrder = {"lastRun", "dataRetentionRules", "rulesVersion", "rulesHash"})
     @XmlRootElement(name = "tracker")
     static class Tracker {
         private static final String FILE_NAME = "dataRetentionTracker.json";
@@ -287,12 +294,12 @@ public class DataRetentionExecutor {
         @XmlElement(name = "lastRun")
         private Long lastRun;
 
-        @XmlElement(name = "dataRetentionPolicy")
-        private DataRetentionPolicy dataRetentionPolicy;
-        @XmlElement(name = "policyVersion")
-        private int policyVersion;
-        @XmlElement(name = "policyHash")
-        private int policyHash;
+        @XmlElement(name = "dataRetentionRules")
+        private DataRetentionRules dataRetentionRules;
+        @XmlElement(name = "rulesVersion")
+        private String rulesVersion;
+        @XmlElement(name = "rulesHash")
+        private int rulesHash;
 
         @XmlTransient
         private static JAXBContext jaxbContext;
@@ -300,20 +307,20 @@ public class DataRetentionExecutor {
         Tracker() {
         }
 
-        Tracker(final Long lastRun, final DataRetentionPolicy dataRetentionPolicy) {
+        Tracker(final Long lastRun, final DataRetentionRules dataRetentionRules) {
             this.lastRun = lastRun;
 
-            this.dataRetentionPolicy = dataRetentionPolicy;
-            this.policyVersion = dataRetentionPolicy.getVersion();
-            this.policyHash = dataRetentionPolicy.hashCode();
+            this.dataRetentionRules = dataRetentionRules;
+            this.rulesVersion = dataRetentionRules.getVersion();
+            this.rulesHash = dataRetentionRules.hashCode();
         }
 
-        boolean policyEquals(final DataRetentionPolicy dataRetentionPolicy) {
-            return policyVersion == dataRetentionPolicy.getVersion() && policyHash == dataRetentionPolicy.hashCode() && this.dataRetentionPolicy.equals(dataRetentionPolicy);
+        boolean rulesEquals(final DataRetentionRules dataRetentionRules) {
+            return Objects.equals(rulesVersion, dataRetentionRules.getVersion()) && rulesHash == dataRetentionRules.hashCode() && this.dataRetentionRules.equals(dataRetentionRules);
         }
 
-        public DataRetentionPolicy getDataRetentionPolicy() {
-            return dataRetentionPolicy;
+        public DataRetentionRules getDataRetentionRules() {
+            return dataRetentionRules;
         }
 
         static Tracker load() {

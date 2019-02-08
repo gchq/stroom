@@ -21,7 +21,7 @@ import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.destination.AppenderConfig;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.store.RefDataStoreConfig;
-import stroom.data.retention.PolicyConfig;
+import stroom.data.retention.DataRetentionConfig;
 import stroom.search.SearchConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.shard.IndexShardSearchConfig;
@@ -80,7 +80,7 @@ public class AppConfigModule extends AbstractModule {
         bind(LifecycleConfig.class).toInstance(appConfig.getLifecycleConfig());
         bind(NodeConfig.class).toInstance(appConfig.getNodeConfig());
         bind(PipelineConfig.class).toInstance(appConfig.getPipelineConfig());
-        bind(PolicyConfig.class).toInstance(appConfig.getPolicyConfig());
+        bind(DataRetentionConfig.class).toInstance(appConfig.getPolicyConfig());
         bind(ProcessConfig.class).toInstance(appConfig.getProcessConfig());
         bind(PropertyServiceConfig.class).toInstance(appConfig.getPropertyServiceConfig());
         bind(ProxyAggregationConfig.class).toInstance(appConfig.getProxyAggregationConfig());

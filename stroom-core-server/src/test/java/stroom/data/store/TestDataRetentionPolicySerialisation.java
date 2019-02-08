@@ -24,8 +24,8 @@ import stroom.util.xml.XMLMarshallerUtil;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.receive.rules.shared.DataRetentionPolicy;
-import stroom.receive.rules.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.DataRetentionRule;
 import stroom.streamstore.shared.TimeUnit;
 
 import javax.xml.bind.JAXBContext;
@@ -46,9 +46,9 @@ class TestDataRetentionPolicySerialisation {
         list.add(createRule(2, expression, 1, TimeUnit.MONTHS));
         list.add(createRule(3, expression, 2, TimeUnit.WEEKS));
 
-        final DataRetentionPolicy policies = new DataRetentionPolicy(list);
+        final DataRetentionRules policies = new DataRetentionRules(list);
 
-        final JAXBContext context = JAXBContext.newInstance(DataRetentionPolicy.class);
+        final JAXBContext context = JAXBContext.newInstance(DataRetentionRules.class);
         final String xml = XMLMarshallerUtil.marshal(context, policies);
 
         System.out.println(xml);

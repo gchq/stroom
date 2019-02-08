@@ -18,7 +18,7 @@ import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.persist.CoreConfig;
 import stroom.pipeline.PipelineConfig;
-import stroom.data.retention.PolicyConfig;
+import stroom.data.retention.DataRetentionConfig;
 import stroom.search.SearchConfig;
 import stroom.security.SecurityConfig;
 import stroom.security.impl.db.SecurityDbConfig;
@@ -51,7 +51,7 @@ public class AppConfig implements IsConfig {
     private LifecycleConfig lifecycleConfig;
     private NodeConfig nodeConfig;
     private PipelineConfig pipelineConfig;
-    private PolicyConfig policyConfig;
+    private DataRetentionConfig policyConfig;
     private ProcessConfig processConfig;
     private PropertyServiceConfig propertyServiceConfig;
     private ProxyAggregationConfig proxyAggregationConfig;
@@ -81,7 +81,7 @@ public class AppConfig implements IsConfig {
         this.lifecycleConfig = new LifecycleConfig();
         this.pipelineConfig = new PipelineConfig();
         this.nodeConfig = new NodeConfig();
-        this.policyConfig = new PolicyConfig();
+        this.policyConfig = new DataRetentionConfig();
         this.processConfig = new ProcessConfig();
         this.propertyServiceConfig = new PropertyServiceConfig();
         this.proxyAggregationConfig = new ProxyAggregationConfig();
@@ -112,7 +112,7 @@ public class AppConfig implements IsConfig {
               final LifecycleConfig lifecycleConfig,
               final PipelineConfig pipelineConfig,
               final NodeConfig nodeConfig,
-              final PolicyConfig policyConfig,
+              final DataRetentionConfig policyConfig,
               final ProcessConfig processConfig,
               final PropertyServiceConfig propertyServiceConfig,
               final ProxyAggregationConfig proxyAggregationConfig,
@@ -301,11 +301,11 @@ public class AppConfig implements IsConfig {
     }
 
     @JsonProperty("policy")
-    public PolicyConfig getPolicyConfig() {
+    public DataRetentionConfig getPolicyConfig() {
         return policyConfig;
     }
 
-    public void setPolicyConfig(final PolicyConfig policyConfig) {
+    public void setPolicyConfig(final DataRetentionConfig policyConfig) {
         this.policyConfig = policyConfig;
     }
 

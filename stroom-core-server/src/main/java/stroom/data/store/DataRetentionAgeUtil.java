@@ -17,7 +17,7 @@
 
 package stroom.data.store;
 
-import stroom.receive.rules.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRule;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;

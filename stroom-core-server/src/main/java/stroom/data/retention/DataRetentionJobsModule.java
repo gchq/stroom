@@ -7,7 +7,7 @@ import javax.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.CRON;
 
-public class PolicyJobsModule extends ScheduledJobsModule {
+public class DataRetentionJobsModule extends ScheduledJobsModule {
     @Override
     protected void configure() {
         super.configure();

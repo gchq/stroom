@@ -15,18 +15,29 @@
  *
  */
 
-package stroom.receive.rules.shared;
+package stroom.data.retention.shared;
 
-import stroom.entity.shared.FindDocumentEntityCriteria;
+import stroom.docref.DocRef;
+import stroom.task.shared.Action;
 
-public class FindPolicyCriteria extends FindDocumentEntityCriteria {
-    private static final long serialVersionUID = 8825278722612586147L;
+public class FetchDataRetentionRulesAction extends Action<DataRetentionRules> {
+    private static final long serialVersionUID = 6648093324274652291L;
 
-    public FindPolicyCriteria() {
-        // Default constructor necessary for GWT serialisation.
+    private DocRef docRef;
+
+    public FetchDataRetentionRulesAction() {
     }
 
-    public FindPolicyCriteria(final String name) {
-        super(name);
+    public FetchDataRetentionRulesAction(final DocRef docRef) {
+        this.docRef = docRef;
+    }
+
+    public DocRef getDocRef() {
+        return docRef;
+    }
+
+    @Override
+    public String getTaskName() {
+        return "Fetch Data Retention Rules";
     }
 }

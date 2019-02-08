@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.receive.rules.shared;
+package stroom.data.retention.shared;
 
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.streamstore.shared.TimeUnit;

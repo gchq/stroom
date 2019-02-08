@@ -63,7 +63,7 @@ import stroom.resource.impl.SessionResourceStoreImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResource;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResource2;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
-import stroom.receive.rules.shared.ReceiveDataRuleSet;
+import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.script.ScriptServlet;
 import stroom.security.AuthorisationResource;
 import stroom.security.SecurityFilter;
@@ -223,7 +223,7 @@ public class App extends Application<Config> {
                 configuration.getProxyConfig().getContentSyncConfig().isContentSyncEnabled()) {
             // Create a map of import handlers.
             final Map<String, ImportExportActionHandler> importExportActionHandlers = new HashMap<>();
-            importExportActionHandlers.put(ReceiveDataRuleSet.DOCUMENT_TYPE, injector.getInstance(ReceiveDataRuleSetService.class));
+            importExportActionHandlers.put(ReceiveDataRules.DOCUMENT_TYPE, injector.getInstance(ReceiveDataRuleSetService.class));
             importExportActionHandlers.put(DictionaryDoc.ENTITY_TYPE, injector.getInstance(DictionaryStore.class));
 
             final ContentSyncService contentSyncService = new ContentSyncService(

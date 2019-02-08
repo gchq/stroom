@@ -25,7 +25,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.receive.rules.impl.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
-import stroom.receive.rules.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRule;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.datasource.shared.FetchFieldsAction;
 import stroom.streamstore.shared.TimeUnit;

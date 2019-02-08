@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.dictionary.api.DictionaryStore;
-import stroom.receive.rules.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRule;
 import stroom.util.date.DateUtil;
 
 import java.time.Instant;

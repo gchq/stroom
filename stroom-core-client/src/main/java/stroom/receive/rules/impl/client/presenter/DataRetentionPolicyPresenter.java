@@ -32,10 +32,10 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.receive.rules.shared.DataRetentionPolicy;
-import stroom.receive.rules.shared.DataRetentionRule;
-import stroom.receive.rules.shared.FetchDataRetentionPolicyAction;
-import stroom.receive.rules.shared.SaveDataRetentionPolicyAction;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.FetchDataRetentionRulesAction;
+import stroom.data.retention.shared.SaveDataRetentionRulesAction;
 import stroom.streamstore.shared.TimeUnit;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
@@ -55,7 +55,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
     private final Provider<DataRetentionRulePresenter> editRulePresenterProvider;
     private final ClientDispatchAsync dispatcher;
 
-    private DataRetentionPolicy policy;
+    private DataRetentionRules policy;
     private List<DataRetentionRule> rules;
 
     private ButtonView saveButton;
@@ -102,7 +102,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
 
         updateButtons();
 
-        dispatcher.exec(new FetchDataRetentionPolicyAction()).onSuccess(result -> {
+        dispatcher.exec(new FetchDataRetentionRulesAction()).onSuccess(result -> {
             policy = result;
 
             if (policy.getRules() == null) {
@@ -118,7 +118,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
     @Override
     protected void onBind() {
         registerHandler(saveButton.addClickHandler(event -> {
-            dispatcher.exec(new SaveDataRetentionPolicyAction(policy)).onSuccess(result -> {
+            dispatcher.exec(new SaveDataRetentionRulesAction(policy)).onSuccess(result -> {
                 policy = result;
                 this.rules = policy.getRules();
                 listPresenter.getSelectionModel().clear();

@@ -27,7 +27,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.receive.rules.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRule;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.svg.client.SvgPreset;
 import stroom.util.client.BorderUtil;

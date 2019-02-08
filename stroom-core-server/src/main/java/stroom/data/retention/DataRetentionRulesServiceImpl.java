@@ -15,8 +15,9 @@
  *
  */
 
-package stroom.receive.rules.impl;
+package stroom.data.retention;
 
+import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docref.DocRef;
 import stroom.docstore.DocumentSerialiser2;
 import stroom.docstore.Serialiser2Factory;
@@ -26,7 +27,6 @@ import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRefInfo;
-import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.util.shared.Message;
 
 import javax.inject.Inject;
@@ -36,14 +36,14 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService {
-    private final Store<ReceiveDataRules> store;
+public class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
+    private final Store<DataRetentionRules> store;
 
     @Inject
-    public ReceiveDataRuleSetServiceImpl(final StoreFactory storeFactory,
+    public DataRetentionRulesServiceImpl(final StoreFactory storeFactory,
                                          final Serialiser2Factory serialiser2Factory) {
-        DocumentSerialiser2<ReceiveDataRules> serialiser = serialiser2Factory.createSerialiser(ReceiveDataRules.class);
-        this.store = storeFactory.createStore(serialiser, ReceiveDataRules.DOCUMENT_TYPE, ReceiveDataRules.class);
+        DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(DataRetentionRules.class);
+        this.store = storeFactory.createStore(serialiser, DataRetentionRules.DOCUMENT_TYPE, DataRetentionRules.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -84,7 +84,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(100, ReceiveDataRules.DOCUMENT_TYPE, "Rule Set");
+        return new DocumentType(100, DataRetentionRules.DOCUMENT_TYPE, "Data Retention Rules");
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -96,12 +96,12 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public ReceiveDataRules readDocument(final DocRef docRef) {
+    public DataRetentionRules readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }
 
     @Override
-    public ReceiveDataRules writeDocument(final ReceiveDataRules document) {
+    public DataRetentionRules writeDocument(final DataRetentionRules document) {
         return store.writeDocument(document);
     }
 
@@ -135,7 +135,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
 
     @Override
     public String getType() {
-        return ReceiveDataRules.DOCUMENT_TYPE;
+        return DataRetentionRules.DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -15,18 +15,10 @@
  *
  */
 
-package stroom.receive.rules.shared;
+package stroom.data.retention;
 
-import stroom.task.shared.Action;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.docstore.DocumentStore;
 
-public class FetchDataRetentionPolicyAction extends Action<DataRetentionPolicy> {
-    private static final long serialVersionUID = 6648093324274652291L;
-
-    public FetchDataRetentionPolicyAction() {
-    }
-
-    @Override
-    public String getTaskName() {
-        return "Fetch Data Retention Policy";
-    }
+public interface DataRetentionRulesService extends DocumentStore<DataRetentionRules> {
 }

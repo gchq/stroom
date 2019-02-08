@@ -14,32 +14,29 @@
  * limitations under the License.
  */
 
-package stroom.receive.rules.shared;
+package stroom.data.retention.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.SharedObject;
+import stroom.docstore.shared.Doc;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
 import java.util.List;
+import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "DataRetentionPolicy", propOrder = {"rules"})
-@XmlRootElement(name = "dataRetentionPolicy")
-public class DataRetentionPolicy implements SharedObject {
-    @XmlElement(name = "rule")
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "rules"})
+@JsonInclude(Include.NON_EMPTY)
+public class DataRetentionRules extends Doc implements SharedObject {
+    public static final String DOCUMENT_TYPE = "DataRetentionRules";
+
     private List<DataRetentionRule> rules;
-    @XmlTransient
-    private int version;
 
-    public DataRetentionPolicy() {
+    public DataRetentionRules() {
         // Default constructor for GWT serialisation.
     }
 
-    public DataRetentionPolicy(final List<DataRetentionRule> rules) {
+    public DataRetentionRules(final List<DataRetentionRule> rules) {
         this.rules = rules;
     }
 
@@ -51,26 +48,18 @@ public class DataRetentionPolicy implements SharedObject {
         this.rules = rules;
     }
 
-    public int getVersion() {
-        return version;
-    }
-
-    public void setVersion(final int version) {
-        this.version = version;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
-        final DataRetentionPolicy that = (DataRetentionPolicy) o;
-
-        return rules != null ? rules.equals(that.rules) : that.rules == null;
+        if (!super.equals(o)) return false;
+        final DataRetentionRules that = (DataRetentionRules) o;
+        return Objects.equals(rules, that.rules);
     }
 
     @Override
     public int hashCode() {
-        return rules != null ? rules.hashCode() : 0;
+        return Objects.hash(super.hashCode(), rules);
     }
 }
+

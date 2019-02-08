@@ -27,8 +27,8 @@ import stroom.data.retention.DataRetentionExecutor.Tracker;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.receive.rules.shared.DataRetentionPolicy;
-import stroom.receive.rules.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.DataRetentionRule;
 import stroom.util.date.DateUtil;
 
 import java.util.ArrayList;
@@ -45,14 +45,14 @@ class TestDataRetentionExecutor {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
         builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, "TEST_FEED");
         final DataRetentionRule rule = createRule(1, builder.build(), 1, stroom.streamstore.shared.TimeUnit.DAYS);
-        final DataRetentionPolicy dataRetentionPolicy = new DataRetentionPolicy(Collections.singletonList(rule));
+        final DataRetentionRules dataRetentionPolicy = new DataRetentionRules(Collections.singletonList(rule));
         Tracker tracker = new Tracker(100L, dataRetentionPolicy);
 
         tracker.save();
 
         Tracker tracker2 = Tracker.load();
 
-        assertThat(tracker.policyEquals(tracker2.getDataRetentionPolicy())).isTrue();
+        assertThat(tracker.rulesEquals(tracker2.getDataRetentionRules())).isTrue();
     }
 
     @Test

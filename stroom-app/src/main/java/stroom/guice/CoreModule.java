@@ -3,7 +3,7 @@ package stroom.guice;
 import com.google.inject.AbstractModule;
 import stroom.config.global.impl.db.GlobalConfigDbModule;
 import stroom.config.global.impl.db.GlobalConfigModule;
-import stroom.data.retention.PolicyModule;
+import stroom.data.retention.DataRetentionModule;
 import stroom.meta.impl.db.MetaDbModule;
 import stroom.dataprocess.PipelineStreamTaskModule;
 import stroom.dictionary.impl.DictionaryHandlerModule;
@@ -74,7 +74,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.pipeline.stepping.PipelineSteppingModule());
         install(new PipelineStreamTaskModule());
-        install(new PolicyModule());
+        install(new DataRetentionModule());
 //        install(new stroom.properties.impl.PropertyModule());
         install(new GlobalConfigModule());
         install(new GlobalConfigDbModule());

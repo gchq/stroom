@@ -39,7 +39,7 @@ import stroom.query.client.ExpressionTreePresenter;
 import stroom.receive.rules.impl.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
 import stroom.receive.rules.shared.RuleAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
-import stroom.receive.rules.shared.ReceiveDataRuleSet;
+import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -50,7 +50,7 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.List;
 
-public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsView> implements HasDocumentRead<ReceiveDataRuleSet>, HasWrite<ReceiveDataRuleSet>, HasDirtyHandlers, ReadOnlyChangeHandler {
+public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsView> implements HasDocumentRead<ReceiveDataRules>, HasWrite<ReceiveDataRules>, HasDirtyHandlers, ReadOnlyChangeHandler {
     private final RuleSetListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
     private final Provider<RulePresenter> editRulePresenterProvider;
@@ -267,7 +267,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
     }
 
     @Override
-    public void read(final DocRef docRef, final ReceiveDataRuleSet policy) {
+    public void read(final DocRef docRef, final ReceiveDataRules policy) {
         if (policy != null) {
             this.fields = policy.getFields();
             this.rules = policy.getRules();
@@ -278,7 +278,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
     }
 
     @Override
-    public void write(final ReceiveDataRuleSet entity) {
+    public void write(final ReceiveDataRules entity) {
     }
 
     @Override

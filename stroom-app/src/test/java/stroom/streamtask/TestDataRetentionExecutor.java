@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.retention.DataRetentionRulesService;
+import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.MetaProperties;
@@ -29,12 +31,11 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.entity.shared.BaseResultList;
 import stroom.data.retention.DataRetentionExecutor;
-import stroom.data.retention.DataRetentionService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.receive.rules.shared.DataRetentionPolicy;
-import stroom.receive.rules.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.DataRetentionRule;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
@@ -42,6 +43,7 @@ import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,7 +60,7 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     @Inject
     private DataRetentionExecutor dataRetentionExecutor;
     @Inject
-    private DataRetentionService dataRetentionService;
+    private DataRetentionRulesService dataRetentionRulesService;
 
     @Test
     void testMultipleRuns() {
@@ -75,12 +77,19 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
         builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName);
         final DataRetentionRule rule = createRule(1, builder.build(), RETENTION_PERIOD_DAYS, stroom.streamstore.shared.TimeUnit.DAYS);
-        final DataRetentionPolicy currentPolicy = dataRetentionService.load();
-        final DataRetentionPolicy dataRetentionPolicy = new DataRetentionPolicy(Collections.singletonList(rule));
-        if (currentPolicy != null) {
-            dataRetentionPolicy.setVersion(currentPolicy.getVersion());
+        final Set<DocRef> docs = dataRetentionRulesService.listDocuments();
+        DataRetentionRules dataRetentionRules = null;
+        if(docs.size() > 0) {
+            dataRetentionRules = dataRetentionRulesService.readDocument(docs.iterator().next());
         }
-        dataRetentionService.save(dataRetentionPolicy);
+
+        if (dataRetentionRules == null) {
+            final DocRef docRef = dataRetentionRulesService.createDocument("test");
+            dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
+        }
+
+        dataRetentionRules.setRules(Collections.singletonList(rule));
+        dataRetentionRulesService.writeDocument(dataRetentionRules);
 
         Meta metaInsideRetention = metaService.create(
                 new MetaProperties.Builder()

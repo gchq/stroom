@@ -15,29 +15,29 @@
  *
  */
 
-package stroom.receive.rules.shared;
+package stroom.data.retention.shared;
 
 import stroom.task.shared.Action;
 
-public class ReceiveDataRuleSetAction extends Action<ReceiveDataRuleSet> {
+public class SaveDataRetentionRulesAction extends Action<DataRetentionRules> {
     private static final long serialVersionUID = 1966204124382806515L;
 
-    private ReceiveDataRuleSet receiveDataRuleSet;
+    private DataRetentionRules dataRetentionRules;
 
-    public ReceiveDataRuleSetAction() {
+    public SaveDataRetentionRulesAction() {
         // Default constructor for GWT serialisation.
     }
 
-    public ReceiveDataRuleSetAction(final ReceiveDataRuleSet receiveDataRuleSet) {
-        this.receiveDataRuleSet = receiveDataRuleSet;
+    public SaveDataRetentionRulesAction(final DataRetentionRules dataRetentionRules) {
+        this.dataRetentionRules = dataRetentionRules;
     }
 
-    public ReceiveDataRuleSet getReceiveDataRuleSet() {
-        return receiveDataRuleSet;
+    public DataRetentionRules getDataRetentionRules() {
+        return dataRetentionRules;
     }
 
     @Override
     public String getTaskName() {
-        return "Save Receive Data Rule Set";
+        return "Save Data Retention Rules";
     }
 }

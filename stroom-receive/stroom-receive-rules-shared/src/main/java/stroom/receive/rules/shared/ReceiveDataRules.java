@@ -28,15 +28,15 @@ import java.util.List;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "fields", "rules"})
 @JsonInclude(Include.NON_EMPTY)
-public class ReceiveDataRuleSet extends Doc implements SharedObject {
+public class ReceiveDataRules extends Doc implements SharedObject {
     private static final long serialVersionUID = -7268301402378907741L;
 
-    public static final String DOCUMENT_TYPE = "RuleSet";
+    public static final String DOCUMENT_TYPE = "ReceiveDataRuleSet";
 
     private List<DataSourceField> fields;
     private List<ReceiveDataRule> rules;
 
-    public ReceiveDataRuleSet() {
+    public ReceiveDataRules() {
         // Default constructor for GWT serialisation.
     }
 
@@ -62,7 +62,7 @@ public class ReceiveDataRuleSet extends Doc implements SharedObject {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
 
-        final ReceiveDataRuleSet ruleSet = (ReceiveDataRuleSet) o;
+        final ReceiveDataRules ruleSet = (ReceiveDataRules) o;
 
         if (fields != null ? !fields.equals(ruleSet.fields) : ruleSet.fields != null) return false;
         return rules != null ? rules.equals(ruleSet.rules) : ruleSet.rules == null;

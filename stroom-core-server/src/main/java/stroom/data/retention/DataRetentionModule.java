@@ -17,17 +17,17 @@
 package stroom.data.retention;
 
 import com.google.inject.AbstractModule;
-import stroom.receive.rules.shared.FetchDataRetentionPolicyAction;
-import stroom.receive.rules.shared.SaveDataRetentionPolicyAction;
+import stroom.data.retention.shared.FetchDataRetentionRulesAction;
+import stroom.data.retention.shared.SaveDataRetentionRulesAction;
 import stroom.task.api.TaskHandlerBinder;
 
-public class PolicyModule extends AbstractModule {
+public class DataRetentionModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(PolicyService.class).to(PolicyServiceImpl.class);
+        bind(DataRetentionRulesService.class).to(DataRetentionRulesServiceImpl.class);
 
         TaskHandlerBinder.create(binder())
-                .bind(FetchDataRetentionPolicyAction.class, FetchDataRetentionPolicyHandler.class)
-                .bind(SaveDataRetentionPolicyAction.class, SaveDataRetentionPolicyHandler.class);
+                .bind(FetchDataRetentionRulesAction.class, FetchDataRetentionPolicyHandler.class)
+                .bind(SaveDataRetentionRulesAction.class, SaveDataRetentionPolicyHandler.class);
     }
 }

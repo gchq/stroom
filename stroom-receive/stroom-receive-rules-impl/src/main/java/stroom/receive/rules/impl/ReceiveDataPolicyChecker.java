@@ -25,7 +25,7 @@ import stroom.meta.shared.AttributeMap;
 import stroom.docref.DocRef;
 import stroom.receive.rules.shared.RuleAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
-import stroom.receive.rules.shared.ReceiveDataRuleSet;
+import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.data.store.ExpressionMatcher;
 import stroom.meta.shared.ExpressionUtil;
 
@@ -78,7 +78,7 @@ class ReceiveDataPolicyChecker {
     private synchronized void refresh() {
         if (needsRefresh()) {
             // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
-            final ReceiveDataRuleSet dataReceiptPolicy = ruleSetService.readDocument(policyRef);
+            final ReceiveDataRules dataReceiptPolicy = ruleSetService.readDocument(policyRef);
             if (dataReceiptPolicy != null && dataReceiptPolicy.getRules() != null && dataReceiptPolicy.getFields() != null) {
                 // Create a map of fields.
                 final Map<String, DataSourceField> fieldMap = dataReceiptPolicy.getFields()
