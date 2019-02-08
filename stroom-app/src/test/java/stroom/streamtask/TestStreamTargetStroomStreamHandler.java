@@ -20,7 +20,7 @@ package stroom.streamtask;
 
 import org.junit.jupiter.api.Test;
 import stroom.meta.shared.AttributeMap;
-import stroom.data.store.impl.fs.MockStreamStore;
+import stroom.data.store.impl.mock.MockStreamStore;
 import stroom.docref.DocRef;
 import stroom.pipeline.feed.FeedDocCache;
 import stroom.pipeline.feed.FeedStore;

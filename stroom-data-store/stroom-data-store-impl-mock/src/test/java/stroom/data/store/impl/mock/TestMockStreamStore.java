@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.mock;
 
 import org.junit.jupiter.api.Test;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Target;
+import stroom.data.store.impl.mock.MockStreamStore;
 import stroom.meta.impl.mock.MockMetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;

@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.data.store;
+package stroom.datafeed;
 
 import org.junit.jupiter.api.Test;
-import stroom.datafeed.StroomStatusCode;
-import stroom.datafeed.StroomStreamException;
 
 import java.io.IOException;
 import java.util.zip.ZipException;

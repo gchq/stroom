@@ -16,7 +16,7 @@ public class SegmentOutputStreamProvider {
     private final SegmentOutputStream boundaryOutputStream;
     private final SegmentOutputStream segmentOutputStream;
 
-    SegmentOutputStreamProvider(final InternalTarget target, final String dataTypeName) {
+    public SegmentOutputStreamProvider(final InternalTarget target, final String dataTypeName) {
         this.dataTypeName = dataTypeName;
 
         boundaryOutputStream = new RASegmentOutputStream(target.getOutputStream(),

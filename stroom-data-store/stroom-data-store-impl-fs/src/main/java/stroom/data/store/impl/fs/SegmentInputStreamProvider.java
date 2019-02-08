@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 
-class SegmentInputStreamProvider {
+public class SegmentInputStreamProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(SegmentInputStreamProvider.class);
 
     private final InternalSource source;
@@ -25,7 +25,7 @@ class SegmentInputStreamProvider {
 
 //        private Long segmentCount = null;
 
-    SegmentInputStreamProvider(final InternalSource source, final String dataTypeName) {
+    public SegmentInputStreamProvider(final InternalSource source, final String dataTypeName) {
         this.source = source;
         this.dataTypeName = dataTypeName;
 

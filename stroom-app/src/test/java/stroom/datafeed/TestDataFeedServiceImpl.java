@@ -22,7 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
-import stroom.data.store.impl.fs.MockStreamStore;
+import stroom.data.store.impl.mock.MockStreamStore;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;

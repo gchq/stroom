@@ -39,7 +39,7 @@ import java.util.TreeSet;
  * mode the segments are logical (i.e. they start at 0 regardless of the
  * window).
  */
-class RASegmentInputStream extends SegmentInputStream {
+public class RASegmentInputStream extends SegmentInputStream {
     private static final Logger LOGGER = LoggerFactory.getLogger(RASegmentInputStream.class);
     private static final int INT8 = 8;
     private final byte[] eightBytes = new byte[INT8];
@@ -73,7 +73,7 @@ class RASegmentInputStream extends SegmentInputStream {
 //        this(data, () -> inputStream, byteStart, byteEnd);
 //    }
 
-    RASegmentInputStream(final InputStream data, final InputStream indexInputStream) {
+    public RASegmentInputStream(final InputStream data, final InputStream indexInputStream) {
         try {
             this.data = data;
             this.indexInputStream = indexInputStream;

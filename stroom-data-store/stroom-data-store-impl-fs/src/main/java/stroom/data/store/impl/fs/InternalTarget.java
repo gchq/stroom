@@ -4,7 +4,7 @@ import stroom.data.store.api.Target;
 
 import java.io.OutputStream;
 
-interface InternalTarget extends Target {
+public interface InternalTarget extends Target {
     OutputStream getOutputStream();
 
     OutputStream getChildOutputStream(String type);

@@ -22,7 +22,7 @@ import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.meta.shared.Meta;
 
-class InputStreamProviderImpl implements InputStreamProvider {
+public class InputStreamProviderImpl implements InputStreamProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(InputStreamProviderImpl.class);
 
     private final Meta meta;
@@ -30,7 +30,7 @@ class InputStreamProviderImpl implements InputStreamProvider {
     private final SegmentInputStreamProvider root;
     private final long index;
 
-    InputStreamProviderImpl(final Meta meta,
+    public InputStreamProviderImpl(final Meta meta,
                             final SegmentInputStreamProviderFactory factory,
                             final long index) {
         this.meta = meta;

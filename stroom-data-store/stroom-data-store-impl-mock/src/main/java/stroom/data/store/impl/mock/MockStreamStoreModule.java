@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.mock;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;

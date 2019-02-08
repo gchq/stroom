@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.mock;
 
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
@@ -23,6 +23,16 @@ import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
+import stroom.data.store.impl.fs.InputStreamProviderImpl;
+import stroom.data.store.impl.fs.InternalSource;
+import stroom.data.store.impl.fs.InternalStreamTypeNames;
+import stroom.data.store.impl.fs.InternalTarget;
+import stroom.data.store.impl.fs.OutputStreamProviderImpl;
+import stroom.data.store.impl.fs.RASegmentInputStream;
+import stroom.data.store.impl.fs.SegmentInputStreamProvider;
+import stroom.data.store.impl.fs.SegmentInputStreamProviderFactory;
+import stroom.data.store.impl.fs.SegmentOutputStreamProvider;
+import stroom.data.store.impl.fs.SegmentOutputStreamProviderFactory;
 import stroom.entity.shared.Clearable;
 import stroom.io.SeekableInputStream;
 import stroom.meta.impl.mock.MockMetaService;

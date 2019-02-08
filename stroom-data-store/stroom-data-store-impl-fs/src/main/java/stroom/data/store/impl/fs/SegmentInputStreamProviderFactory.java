@@ -1,5 +1,5 @@
 package stroom.data.store.impl.fs;
 
-interface SegmentInputStreamProviderFactory {
+public interface SegmentInputStreamProviderFactory {
     SegmentInputStreamProvider getSegmentInputStreamProvider(String streamTypeName);
 }
