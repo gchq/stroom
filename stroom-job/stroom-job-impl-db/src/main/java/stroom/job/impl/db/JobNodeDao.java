@@ -1,7 +1,7 @@
 package stroom.job.impl.db;
 
 import stroom.db.util.GenericDao;
-import stroom.entity.BasicIntCrudDao;
+import stroom.entity.shared.HasIntCrud;
 import stroom.job.impl.db.stroom.tables.records.JobNodeRecord;
 
 import javax.annotation.Nonnull;
@@ -10,7 +10,7 @@ import java.util.Optional;
 
 import static stroom.job.impl.db.stroom.Tables.JOB_NODE;
 
-public class JobNodeDao implements BasicIntCrudDao<JobNode> {
+public class JobNodeDao implements HasIntCrud<JobNode> {
 
     private GenericDao<JobNodeRecord, JobNode, Integer> dao;
 
@@ -30,7 +30,7 @@ public class JobNodeDao implements BasicIntCrudDao<JobNode> {
     }
 
     @Override
-    public int delete(int id) {
+    public boolean delete(int id) {
         return dao.delete(id);
     }
 

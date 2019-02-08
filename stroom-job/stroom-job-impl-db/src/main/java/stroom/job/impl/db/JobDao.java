@@ -17,7 +17,7 @@
 package stroom.job.impl.db;
 
 import stroom.db.util.GenericDao;
-import stroom.entity.BasicIntCrudDao;
+import stroom.entity.shared.HasIntCrud;
 import stroom.job.impl.db.stroom.tables.records.JobRecord;
 
 import javax.inject.Inject;
@@ -35,7 +35,7 @@ import static stroom.job.impl.db.stroom.Tables.JOB;
  *
  * //TODO gh-1072 Maybe the interface could implement the standard methods below? Then this would be even slimmer.
  */
-public class JobDao implements BasicIntCrudDao<Job> {
+public class JobDao implements HasIntCrud<Job> {
 
     private GenericDao<JobRecord, Job, Integer> dao;
 
@@ -55,7 +55,7 @@ public class JobDao implements BasicIntCrudDao<Job> {
     }
 
     @Override
-    public int delete(int id) {
+    public boolean delete(int id) {
         return dao.delete(id);
     }
 

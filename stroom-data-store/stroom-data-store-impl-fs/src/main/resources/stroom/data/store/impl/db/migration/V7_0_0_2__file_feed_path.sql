@@ -12,10 +12,11 @@ CREATE TABLE IF NOT EXISTS file_feed_path (
 --
 -- Copy data into the file_feed_path table
 --
-DROP PROCEDURE IF EXISTS copy;
+DROP PROCEDURE IF EXISTS copy_file_feed_path;
 DELIMITER //
-CREATE PROCEDURE copy ()
+CREATE PROCEDURE copy_file_feed_path ()
 BEGIN
+  -- TODO get rid of OLD_ table logic, see V7_0_0_1__config.sql as an example
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'FD' > 0) THEN
     INSERT INTO file_feed_path (id, name, path) SELECT ID, NAME, ID FROM FD WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM file_feed_path) ORDER BY ID;
   END IF;
@@ -24,5 +25,5 @@ BEGIN
   END IF;
 END//
 DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+CALL copy_file_feed_path();
+DROP PROCEDURE copy_file_feed_path;

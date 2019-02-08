@@ -57,13 +57,14 @@ CREATE TABLE IF NOT EXISTS `index_shard` (
 --
 -- Copy data into the explorer table
 --
-DROP PROCEDURE IF EXISTS copy;
+DROP PROCEDURE IF EXISTS copy_index;
 DELIMITER //
-CREATE PROCEDURE copy ()
+CREATE PROCEDURE copy_index ()
 BEGIN
 -- TODO: All needs figuring out, groups need creating etc
+          -- TODO update auto-increment, see V7_0_0_1__config.sql as an example
 
 END//
 DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+CALL copy_index();
+DROP PROCEDURE copy_index;

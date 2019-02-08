@@ -108,10 +108,10 @@ public class GenericDaoTest {
         Job job = createStandardJob();
 
         // When
-        int numberOfDeletedRecords = dao.delete(job.getId());
+        boolean didDeleteSucceed = dao.delete(job.getId());
 
         // Then
-        assertThat(numberOfDeletedRecords).isEqualTo(1);
+        assertThat(didDeleteSucceed).isTrue();
         Optional<Job> optionalJob = dao.fetch(job.getId());
         assertThat(optionalJob.isPresent()).isFalse();
     }
@@ -119,9 +119,9 @@ public class GenericDaoTest {
     @Test
     public void badDelete(){
         // Given/when
-        int numberOfDeletedRecords = dao.delete(111111);
+        boolean didDeleteSucceed = dao.delete(111111);
         // Then
-        assertThat(numberOfDeletedRecords).isEqualTo(0);
+        assertThat(didDeleteSucceed).isFalse();
     }
 
     @Test

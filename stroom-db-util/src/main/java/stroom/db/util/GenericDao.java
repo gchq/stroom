@@ -3,7 +3,7 @@ package stroom.db.util;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.UpdatableRecord;
-import stroom.entity.BasicCrudDao;
+import stroom.entity.shared.HasCrud;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -12,7 +12,7 @@ import javax.sql.DataSource;
 import java.util.Optional;
 
 public class GenericDao<RecordType extends UpdatableRecord, EntityType, IdType>
-        implements BasicCrudDao<EntityType, IdType> {
+        implements HasCrud<EntityType, IdType> {
 
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GenericDao.class);
 
@@ -53,14 +53,14 @@ public class GenericDao<RecordType extends UpdatableRecord, EntityType, IdType>
         });
     }
 
-    public int delete(@Nonnull final IdType id) {
+    public boolean delete(@Nonnull final IdType id) {
         return JooqUtil.contextWithOptimisticLocking(connectionProvider, context -> {
             LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
                     "Deleting a {} with id {}", table.getName(), id));
             return context
                     .deleteFrom(table)
                     .where(idField.eq(id))
-                    .execute();
+                    .execute() > 0;
         });
     }
 
