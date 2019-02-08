@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import * as React from "react";
+import { useState } from "react";
 import { compose } from "recompose";
 import { connect } from "react-redux";
 
@@ -23,6 +24,7 @@ import ThemedConfirm from "../ThemedConfirm";
 
 export interface Props {
   uuids: Array<string>;
+  isOpen: boolean;
   onCloseDialog: () => void;
 }
 
@@ -41,6 +43,7 @@ const enhance = compose<EnhancedProps, Props>(
 
 const DeleteDocRefDialog = ({
   uuids,
+  isOpen,
   deleteDocuments,
   onCloseDialog
 }: EnhancedProps) => (
@@ -52,9 +55,49 @@ const DeleteDocRefDialog = ({
       onCloseDialog();
     }}
     onCancel={onCloseDialog}
-    isOpen={uuids.length > 0}
+    isOpen={isOpen}
     question={`Delete these doc refs? ${JSON.stringify(uuids)}?`}
   />
 );
+
+/**
+ * These are the things returned by the custom hook that allow the owning component to interact
+ * with this dialog.
+ */
+export type UseDeleteDocRefDialog = {
+  /**
+   * The owning component is ready to start a deletion process.
+   * Calling this will open the dialog, and setup the UUIDs
+   */
+  startToDeleteDocRefs: (uuids: Array<string>) => void;
+  /**
+   * These are the properties that the owning component can just give to the Dialog component
+   * using destructing.
+   */
+  componentProps: Props;
+};
+
+/**
+ * This is a React custom hook that sets up things required by the owning component.
+ */
+export const useDeleteDocRefDialog = (): UseDeleteDocRefDialog => {
+  const [uuidsToDelete, setUuidToDelete] = useState<Array<string>>([]);
+  const [isDeleteDocRefOpen, setIsOpen] = useState<boolean>(false);
+
+  return {
+    componentProps: {
+      uuids: uuidsToDelete,
+      isOpen: isDeleteDocRefOpen,
+      onCloseDialog: () => {
+        setIsOpen(false);
+        setUuidToDelete([]);
+      }
+    },
+    startToDeleteDocRefs: _uuids => {
+      setIsOpen(true);
+      setUuidToDelete(_uuids);
+    }
+  };
+};
 
 export default enhance(DeleteDocRefDialog);

@@ -1,8 +1,9 @@
 import * as React from "react";
-import { useState } from "react";
 import { storiesOf } from "@storybook/react";
 
-import DeleteDocRefDialog from "./DeleteDocRefDialog";
+import DeleteDocRefDialog, {
+  useDeleteDocRefDialog
+} from "./DeleteDocRefDialog";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 import { fromSetupSampleData } from "./test";
 import { DocRefType } from "../../types";
@@ -17,12 +18,12 @@ interface Props {
 
 // Delete
 const TestDeleteDialog = ({ testUuids }: Props) => {
-  const [uuids, setUuids] = useState<Array<string>>([]);
+  const { startToDeleteDocRefs, componentProps } = useDeleteDocRefDialog();
 
   return (
     <div>
-      <button onClick={() => setUuids(testUuids)}>Show</button>
-      <DeleteDocRefDialog uuids={uuids} onCloseDialog={() => setUuids([])} />
+      <button onClick={() => startToDeleteDocRefs(testUuids)}>Show</button>
+      <DeleteDocRefDialog {...componentProps} />
     </div>
   );
 };

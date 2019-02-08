@@ -15,7 +15,6 @@
  */
 
 import * as React from "react";
-import { useState } from "react";
 import { connect } from "react-redux";
 import { compose, branch, renderComponent, withHandlers } from "recompose";
 import { withRouter } from "react-router-dom";
@@ -30,7 +29,9 @@ import NewDocRefDialog from "./NewDocRefDialog";
 import CopyDocRefDialog from "./CopyDocRefDialog";
 import MoveDocRefDialog from "./MoveDocRefDialog";
 import RenameDocRefDialog from "./RenameDocRefDialog";
-import DeleteDocRefDialog from "./DeleteDocRefDialog";
+import DeleteDocRefDialog, {
+  useDeleteDocRefDialog
+} from "./DeleteDocRefDialog";
 import DocRefInfoModal from "../DocRefInfoModal";
 import withDocumentTree, {
   EnhancedProps as WithDocumentTreeProps
@@ -151,7 +152,10 @@ const FolderExplorer = ({
   onKeyDownWithShortcuts,
   openDocRef
 }: EnhancedProps) => {
-  const [uuidsToDelete, setUuidsToDelete] = useState<Array<string>>([]);
+  const {
+    startToDeleteDocRefs,
+    componentProps: deleteDialogComponentProps
+  } = useDeleteDocRefDialog();
 
   const actionBarItems: Array<ButtonProps> = [
     {
@@ -196,7 +200,7 @@ const FolderExplorer = ({
     actionBarItems.push({
       icon: "trash",
       text: "Delete",
-      onClick: () => setUuidsToDelete(selectedDocRefUuids),
+      onClick: () => startToDeleteDocRefs(selectedDocRefUuids),
       title: "Delete selected documents"
     });
   }
@@ -219,10 +223,7 @@ const FolderExplorer = ({
       <DocRefInfoModal />
       <MoveDocRefDialog listingId={LISTING_ID} />
       <RenameDocRefDialog listingId={LISTING_ID} />
-      <DeleteDocRefDialog
-        uuids={uuidsToDelete}
-        onCloseDialog={() => setUuidsToDelete([])}
-      />
+      <DeleteDocRefDialog {...deleteDialogComponentProps} />
       <CopyDocRefDialog listingId={LISTING_ID} />
       <NewDocRefDialog listingId={LISTING_ID} />
     </DocRefEditor>
