@@ -23,60 +23,110 @@ import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
+import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.HqlBuilder;
 import stroom.persist.EntityManagerSupport;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.StreamProcessorFilterService;
 import stroom.processor.StreamProcessorService;
-import stroom.security.Security;
-import stroom.security.shared.PermissionNames;
-import stroom.processor.shared.QueryData;
-import stroom.streamtask.shared.FindStreamProcessorCriteria;
-import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
+import stroom.processor.impl.db.dao.ProcessorFilterDao;
+import stroom.processor.shared.FindStreamProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.QueryData;
+import stroom.security.Security;
+import stroom.security.shared.PermissionNames;
 import stroom.streamtask.shared.ProcessorFilterTracker;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Singleton
 class StreamProcessorFilterServiceImpl
-        extends SystemEntityServiceImpl<ProcessorFilter, FindStreamProcessorFilterCriteria>
         implements StreamProcessorFilterService {
+//        extends SystemEntityServiceImpl<ProcessorFilter, FindStreamProcessorFilterCriteria>
+
     private final Security security;
     private final EntityManagerSupport entityManagerSupport;
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterMarshaller marshaller;
+    private final ProcessorFilterDao processorFilterDao;
 
     @Inject
     StreamProcessorFilterServiceImpl(final StroomEntityManager entityManager,
                                      final Security security,
                                      final EntityManagerSupport entityManagerSupport,
-                                     final StreamProcessorService streamProcessorService) {
+                                     final StreamProcessorService streamProcessorService,
+                                     final ProcessorFilterDao processorFilterDao) {
         super(entityManager, security);
         this.security = security;
         this.entityManagerSupport = entityManagerSupport;
         this.streamProcessorService = streamProcessorService;
+        this.processorFilterDao = processorFilterDao;
         this.marshaller = new StreamProcessorFilterMarshaller();
     }
 
+    /**
+     * Creates the passes record object in the persistence implementation
+     *
+     * @param processorFilter Object to persist.
+     * @return The persisted object including any changes such as auto IDs
+     */
     @Override
-    public ProcessorFilter save(final ProcessorFilter entity) {
-        return super.save(entity);
+    public ProcessorFilter create(final ProcessorFilter processorFilter) {
+        return security.secureResult(permission(), () ->
+                processorFilterDao.create(processorFilter));
     }
 
     @Override
-    public Class<ProcessorFilter> getEntityClass() {
-        return ProcessorFilter.class;
+    public ProcessorFilter update(final ProcessorFilter processorFilter) {
+        return security.secureResult(permission(), () ->
+                processorFilterDao.update(processorFilter));
+    }
+
+    /**
+     * Delete the entity associated with the passed id value.
+     *
+     * @param id The unique identifier for the entity to delete.
+     * @return True if the entity was deleted. False if the id doesn't exist.
+     */
+    @Override
+    public boolean delete(final int id) {
+        return security.secureResult(permission(), () ->
+                processorFilterDao.delete(id));
+    }
+
+    /**
+     * Fetch a record from the persistence implementation using its unique id value.
+     *
+     * @param id The id to uniquely identify the required record with
+     * @return The record associated with the id in the database, if it exists.
+     */
+    @Override
+    public Optional<ProcessorFilter> fetch(final int id) {
+        return security.secureResult(permission(), () ->
+                processorFilterDao.fetch(id));
+    }
+
+//    @Override
+//    public Class<ProcessorFilter> getEntityClass() {
+//        return ProcessorFilter.class;
+//    }
+
+    @Override
+    public BaseResultList<ProcessorFilter> find(final FindStreamProcessorFilterCriteria criteria) {
+        return security.secureResult(permission(), () ->
+                processorFilterDao.find(criteria));
     }
 
     @Override
     public void addFindStreamCriteria(final Processor streamProcessor,
                                       final int priority,
                                       final QueryData queryData) {
+
         security.secure(permission(), () -> entityManagerSupport.transaction(entityManager -> {
             ProcessorFilter filter = new ProcessorFilter();
             // Blank tracker
@@ -98,54 +148,27 @@ class StreamProcessorFilterServiceImpl
                                            final QueryData queryData,
                                            final boolean enabled,
                                            final int priority) {
-        return security.secureResult(permission(), () -> entityManagerSupport.transactionResult(entityManager -> {
-            // First see if we can find a stream processor for this pipeline.
-            final FindStreamProcessorCriteria findStreamProcessorCriteria = new FindStreamProcessorCriteria(pipelineRef);
-            final List<Processor> list = streamProcessorService.find(findStreamProcessorCriteria);
-            Processor processor;
-            if (list == null || list.size() == 0) {
-                // We couldn't find one so create a new one.
-                processor = new Processor(pipelineRef);
-                processor.setEnabled(enabled);
-                processor = streamProcessorService.save(processor);
-            } else {
-                processor = list.get(0);
-            }
-
-            ProcessorFilter filter = new ProcessorFilter();
-            // Blank tracker
-            filter.setEnabled(enabled);
-            filter.setPriority(priority);
-            filter.setStreamProcessorFilterTracker(new ProcessorFilterTracker());
-            filter.setStreamProcessor(processor);
-            filter.setQueryData(queryData);
-            filter = marshaller.marshal(filter);
-            // Save initial tracker
-            getEntityManager().saveEntity(filter.getStreamProcessorFilterTracker());
-            getEntityManager().flush();
-            filter = save(filter);
-            filter = marshaller.unmarshal(filter);
-
-            return filter;
-        }));
-    }
-
-    @Override
-    public FindStreamProcessorFilterCriteria createCriteria() {
-        return new FindStreamProcessorFilterCriteria();
-    }
-
-    @Override
-    public Boolean delete(final ProcessorFilter entity) {
         return security.secureResult(permission(), () -> {
-            if (Boolean.TRUE.equals(super.delete(entity))) {
-                return getEntityManager().deleteEntity(entity.getStreamProcessorFilterTracker());
-            }
-            return Boolean.FALSE;
-        });
+
+            processorFilterDao.createNewFilter(pipelineRef, queryData, enabled, priority);
+                }
     }
 
-    @Override
+//    @Override
+//    public FindStreamProcessorFilterCriteria createCriteria() {
+//        return new FindStreamProcessorFilterCriteria();
+//    }
+
+//    @Override
+//    public Boolean delete(final ProcessorFilter entity) {
+//        return security.secureResult(permission(), () -> {
+//            if (Boolean.TRUE.equals(super.delete(entity))) {
+//                return getEntityManager().deleteEntity(entity.getStreamProcessorFilterTracker());
+//            }
+//            return Boolean.FALSE;
+//        });
+//    }
+
     public void appendCriteria(final List<BaseAdvancedQueryItem> items,
                                final FindStreamProcessorFilterCriteria criteria) {
         CriteriaLoggingUtil.appendRangeTerm(items, "priorityRange", criteria.getPriorityRange());

@@ -6,6 +6,7 @@ dependencies {
     implementation project(':stroom-data-store:stroom-data-store-api')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-processor:stroom-processor-shared')
+    implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     // Stroom external bintray libs

@@ -26,6 +26,7 @@ import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 
 import javax.inject.Inject;
+import java.util.Optional;
 
 public class StreamProcessorServiceImpl implements StreamProcessorService {
 
@@ -40,13 +41,19 @@ public class StreamProcessorServiceImpl implements StreamProcessorService {
     }
 
     @Override
-    public Processor fetchInsecure(final int id) {
+    public Optional<Processor> fetchInsecure(final int id) {
         return security.insecureResult(() -> fetch(id));
     }
 
     @Override
-    public Processor create() {
-        return security.secureResult(PERMISSION, processorDao::create);
+    public Optional<Processor> fetchByUuid(final String uuid) {
+        return null;
+    }
+
+    @Override
+    public Processor create(Processor processor) {
+        return security.secureResult(PERMISSION, () ->
+                processorDao.create(processor));
     }
 
     @Override
@@ -56,13 +63,13 @@ public class StreamProcessorServiceImpl implements StreamProcessorService {
     }
 
     @Override
-    public int delete(final int id) {
+    public boolean delete(final int id) {
         return security.secureResult(PERMISSION, () ->
                 processorDao.delete(id));
     }
 
     @Override
-    public Processor fetch(final int id) {
+    public Optional<Processor> fetch(final int id) {
         return security.secureResult(() ->
                 processorDao.fetch(id));
     }

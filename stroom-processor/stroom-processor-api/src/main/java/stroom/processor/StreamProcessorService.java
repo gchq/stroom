@@ -18,22 +18,24 @@
 package stroom.processor;
 
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.HasIntCrud;
 import stroom.processor.shared.FindStreamProcessorCriteria;
 import stroom.processor.shared.Processor;
+import stroom.util.logging.LambdaLogger;
 
-public interface StreamProcessorService {
+import java.util.Optional;
 
-    Processor fetch(final int id);
+public interface StreamProcessorService extends HasIntCrud<Processor> {
 
-    Processor fetchInsecure(final int id);
+    Optional<Processor> fetchInsecure(final int id);
 
-    Processor fetchByUuid(final String uuid);
+    Optional<Processor> fetchByUuid(final String uuid);
 
-    Processor create(final Processor processor);
-
-    Processor update(Processor processor);
-
-    int delete(int id);
+    default Processor fetchByUuidOrThrow(final String uuid) {
+        return fetchByUuid(uuid)
+                .orElseThrow(() -> new RuntimeException(
+                        LambdaLogger.buildMessage("Could not find processor with UUID {}", uuid)));
+    }
 
     BaseResultList<Processor> find(FindStreamProcessorCriteria criteria);
 

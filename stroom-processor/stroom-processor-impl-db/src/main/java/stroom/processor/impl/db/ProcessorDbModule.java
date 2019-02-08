@@ -9,11 +9,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
+import stroom.db.util.DbUtil;
 import stroom.processor.ProcessorConfig;
+import stroom.processor.StreamProcessorFilterService;
 import stroom.processor.StreamProcessorService;
 import stroom.processor.impl.db.dao.ProcessorDao;
 import stroom.processor.impl.db.dao.ProcessorDaoImpl;
-import stroom.util.db.DbUtil;
+import stroom.processor.impl.db.dao.ProcessorFilterDao;
+import stroom.processor.impl.db.dao.ProcessorFilterDaoImpl;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -27,8 +30,10 @@ public class ProcessorDbModule extends AbstractModule {
     @Override
     protected void configure() {
 
-        bind(StreamProcessorService.class).to(StreamProcessorServiceImpl.class);
         bind(ProcessorDao.class).to(ProcessorDaoImpl.class);
+        bind(ProcessorFilterDao.class).to(ProcessorFilterDaoImpl.class);
+        bind(StreamProcessorFilterService.class).to(StreamProcessorFilterServiceImpl.class);
+        bind(StreamProcessorService.class).to(StreamProcessorServiceImpl.class);
 
 //        bind(FeedService.class).to(FeedServiceImpl.class);
 

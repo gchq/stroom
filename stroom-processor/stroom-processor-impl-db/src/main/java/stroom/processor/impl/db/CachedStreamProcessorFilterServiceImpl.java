@@ -12,6 +12,6 @@ import javax.inject.Singleton;
 class CachedStreamProcessorFilterServiceImpl extends StreamProcessorFilterServiceImpl implements CachedStreamProcessorFilterService {
     @Inject
     CachedStreamProcessorFilterServiceImpl(final CachingEntityManager entityManager, final Security security, final EntityManagerSupport entityManagerSupport, final StreamProcessorService streamProcessorService) {
-        super(entityManager, security, entityManagerSupport, streamProcessorService);
+        super(entityManager, security, entityManagerSupport, streamProcessorService, processorFilterDao);
     }
 }

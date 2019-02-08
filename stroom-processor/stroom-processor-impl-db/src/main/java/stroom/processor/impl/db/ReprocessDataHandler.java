@@ -93,7 +93,7 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                     for (final Meta meta : metaList) {
                         // We can only reprocess streams that have a stream processor and a parent stream id.
                         if (meta.getProcessorUuid() != null && meta.getParentMetaId() != null) {
-                            final Processor processor = streamProcessorService.loadByUuid(meta.getProcessorUuid());
+                            final Processor processor = streamProcessorService.fetchByUuidOrThrow(meta.getProcessorUuid());
                             streamToProcessorSet.computeIfAbsent(processor, k -> new CriteriaSet<>()).add(meta.getParentMetaId());
                         } else {
                             skippingCount++;

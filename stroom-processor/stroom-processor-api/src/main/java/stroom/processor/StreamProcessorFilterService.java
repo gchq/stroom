@@ -19,12 +19,13 @@ package stroom.processor;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.HasIntCrud;
 import stroom.processor.shared.FindStreamProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 
-public interface StreamProcessorFilterService {
+public interface StreamProcessorFilterService extends HasIntCrud<ProcessorFilter> {
 //        extends BaseEntityService<ProcessorFilter>, FindService<ProcessorFilter, FindStreamProcessorFilterCriteria> {
 
     BaseResultList<ProcessorFilter> find(FindStreamProcessorFilterCriteria criteria);
