@@ -22,9 +22,9 @@ CREATE TABLE IF NOT EXISTS meta (
 --
 -- Copy meta into the meta table
 --
-DROP PROCEDURE IF EXISTS copy;
+DROP PROCEDURE IF EXISTS copy_meta;
 DELIMITER //
-CREATE PROCEDURE copy ()
+CREATE PROCEDURE copy_meta ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM' > 0) THEN
     INSERT INTO meta (id, create_time, effective_time, parent_id, status, status_time, task_id, feed_id, type_id, processor_id)
@@ -43,5 +43,5 @@ BEGIN
   END IF;
 END//
 DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+CALL copy_meta();
+DROP PROCEDURE copy_meta;

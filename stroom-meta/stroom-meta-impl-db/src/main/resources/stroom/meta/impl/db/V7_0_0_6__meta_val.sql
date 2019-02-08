@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS meta_val (
 --
 -- Copy data into the meta_val table
 --
-DROP PROCEDURE IF EXISTS copy;
+DROP PROCEDURE IF EXISTS copy_meta_val;
 DELIMITER //
-CREATE PROCEDURE copy ()
+CREATE PROCEDURE copy_meta_val ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM_ATR_VAL' > 0) THEN
     INSERT INTO meta_val (id, create_time, meta_id, meta_key_id, val)
@@ -37,5 +37,5 @@ BEGIN
   END IF;
 END//
 DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+CALL copy_meta_val();
+DROP PROCEDURE copy_meta_val;

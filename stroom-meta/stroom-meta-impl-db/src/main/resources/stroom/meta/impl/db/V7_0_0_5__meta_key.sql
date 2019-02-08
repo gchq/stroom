@@ -12,9 +12,9 @@ CREATE TABLE IF NOT EXISTS meta_key (
 --
 -- Copy data into the meta_key table
 --
-DROP PROCEDURE IF EXISTS copy;
+DROP PROCEDURE IF EXISTS copy_meta_key;
 DELIMITER //
-CREATE PROCEDURE copy ()
+CREATE PROCEDURE copy_meta_key ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM_ATR_KEY' > 0) THEN
     INSERT INTO meta_key (id, name, field_type)
@@ -33,5 +33,5 @@ BEGIN
   END IF;
 END//
 DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+CALL copy_meta_key();
+DROP PROCEDURE copy_meta_key;

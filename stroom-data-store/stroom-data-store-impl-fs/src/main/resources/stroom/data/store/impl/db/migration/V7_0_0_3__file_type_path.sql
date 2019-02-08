@@ -12,9 +12,9 @@ CREATE TABLE IF NOT EXISTS file_type_path (
 --
 -- Copy data into the file_feed_path table
 --
-DROP PROCEDURE IF EXISTS copy;
+DROP PROCEDURE IF EXISTS copy_file_type_path;
 DELIMITER //
-CREATE PROCEDURE copy ()
+CREATE PROCEDURE copy_file_type_path ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM_TP' > 0) THEN
   INSERT INTO file_type_path (id, name, path) SELECT ID, NAME, PATH FROM STRM_TP WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM file_type_path) ORDER BY ID;
@@ -24,5 +24,5 @@ BEGIN
   END IF;
 END//
 DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+CALL copy_file_type_path();
+DROP PROCEDURE copy_file_type_path;

@@ -18,9 +18,9 @@ CREATE TABLE IF NOT EXISTS node (
 --
 -- Copy data into the node table
 --
-DROP PROCEDURE IF EXISTS copy;
+DROP PROCEDURE IF EXISTS copy_node;
 DELIMITER //
-CREATE PROCEDURE copy ()
+CREATE PROCEDURE copy_node ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'ND' > 0) THEN
     INSERT INTO node (id, version, create_time_ms, create_user, update_time_ms, update_user, url, name, priority, enabled)
@@ -39,5 +39,5 @@ BEGIN
   END IF;
 END//
 DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+CALL copy_node();
+DROP PROCEDURE copy_node;

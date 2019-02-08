@@ -28,10 +28,11 @@ CREATE TABLE IF NOT EXISTS job_node (
 --
 -- Copy data into the job tables
 --
-DROP PROCEDURE IF EXISTS copy;
+DROP PROCEDURE IF EXISTS copy_job;
 DELIMITER //
-CREATE PROCEDURE copy ()
+CREATE PROCEDURE copy_job ()
 BEGIN
+  -- TODO update auto-increment, see V7_0_0_1__config.sql as an example
     IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'JB' > 0) THEN
         INSERT INTO job (id, description, enabled, version)
         SELECT ID, NAME, ENBL, 1
@@ -45,5 +46,5 @@ BEGIN
     END IF;
 END//
 DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+CALL copy_job();
+DROP PROCEDURE copy_job;
