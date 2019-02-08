@@ -14,111 +14,60 @@
  * limitations under the License.
  */
 import * as React from "react";
+import { useState } from "react";
 
-import { compose, withHandlers } from "recompose";
-import { connect } from "react-redux";
 import { Formik, Field, FieldProps } from "formik";
 
-import { GlobalStoreState } from "../../startup/reducers";
 import IconHeader from "../IconHeader";
-import { findItem } from "../../lib/treeUtils";
-import {
-  actionCreators,
-  defaultStatePerId,
-  StoreStatePerId as CopyStoreState
-} from "./redux/copyDocRefReducer";
-import { copyDocuments } from "./explorerClient";
-import withDocumentTree from "./withDocumentTree";
 import DialogActionButtons from "./DialogActionButtons";
 import ThemedModal from "../ThemedModal";
 import AppSearchBar from "../AppSearchBar";
 import PermissionInheritancePicker from "../PermissionInheritancePicker";
-import {
-  DocRefWithLineage,
-  DocRefType,
-  PermissionInheritance
-} from "../../types";
-
-const { completeDocRefCopy } = actionCreators;
-
-const LISTING_ID = "copy-item-listing";
+import { PermissionInheritance, DocRefType } from "../../types";
 
 export interface Props {
-  listingId: string;
+  uuids: Array<string>;
+  destinationUuid?: string;
+  isOpen: boolean;
+  onConfirm: (
+    uuids: Array<string>,
+    destinationUuid: string,
+    permissionInheritance: PermissionInheritance
+  ) => void;
+  onCloseDialog: () => void;
 }
-
-interface ConnectState extends CopyStoreState {}
-
-interface ConnectDispatch {
-  completeDocRefCopy: typeof completeDocRefCopy;
-  copyDocuments: typeof copyDocuments;
-}
-
-interface WithHandlers {
-  onCancel: React.MouseEventHandler;
-}
-
-export interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    WithHandlers {}
-
-const enhance = compose<EnhancedProps, Props>(
-  withDocumentTree,
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ folderExplorer: { documentTree, copyDocRef } }, { listingId }) => {
-      const thisState: CopyStoreState =
-        copyDocRef[listingId] || defaultStatePerId;
-
-      const initialDestination:
-        | DocRefWithLineage
-        | undefined = thisState.destinationUuid
-        ? findItem(documentTree, thisState.destinationUuid)
-        : undefined;
-
-      return {
-        ...thisState,
-        initialValues: {
-          destination: initialDestination && initialDestination.node
-        }
-      };
-    },
-    { completeDocRefCopy, copyDocuments }
-  ),
-  withHandlers<Props & ConnectState & ConnectDispatch, WithHandlers>({
-    onCancel: ({ completeDocRefCopy, listingId }) => () =>
-      completeDocRefCopy(listingId)
-  })
-);
 
 interface FormValues {
   destination?: DocRefType;
   permissionInheritance: PermissionInheritance;
 }
 
-let CopyDocRefDialog = ({
-  isCopying,
-  onCancel,
-  copyDocuments,
-  uuids
-}: EnhancedProps) => (
+let CopyMoveDocRefDialog = ({
+  uuids,
+  destinationUuid,
+  isOpen,
+  onConfirm,
+  onCloseDialog
+}: Props) => (
   <Formik<FormValues>
     initialValues={{
-      destination: undefined,
+      destination: undefined, // TODO - fix initial value
       permissionInheritance: PermissionInheritance.NONE
     }}
-    onSubmit={values =>
-      copyDocuments(
-        uuids,
-        values.destination!.uuid,
-        values.permissionInheritance
-      )
-    }
+    onSubmit={values => {
+      if (!!values.destination) {
+        onConfirm(
+          uuids,
+          values.destination!.uuid,
+          values.permissionInheritance
+        );
+      }
+      onCloseDialog();
+    }}
   >
     {({ setFieldValue, submitForm }: Formik) => (
       <ThemedModal
-        isOpen={isCopying}
+        isOpen={isOpen}
         header={
           <IconHeader
             icon="copy"
@@ -132,7 +81,7 @@ let CopyDocRefDialog = ({
               <Field name="destination">
                 {({ field: { value } }: FieldProps) => (
                   <AppSearchBar
-                    pickerId={LISTING_ID}
+                    pickerId="copy-dialog"
                     onChange={d => setFieldValue("destination", d)}
                     value={value}
                     typeFilters={[]}
@@ -154,11 +103,52 @@ let CopyDocRefDialog = ({
           </form>
         }
         actions={
-          <DialogActionButtons onCancel={onCancel} onConfirm={submitForm} />
+          <DialogActionButtons
+            onCancel={onCloseDialog}
+            onConfirm={submitForm}
+          />
         }
       />
     )}
   </Formik>
 );
 
-export default enhance(CopyDocRefDialog);
+export type UseCopyDocRefDialog = {
+  showDialog: (uuids: Array<string>, destinationUuid?: string) => void;
+  componentProps: Props;
+};
+
+export const useCopyDocRefDialog = (
+  onConfirm: (
+    uuids: Array<string>,
+    destinationUuid: string,
+    permissionInheritance: PermissionInheritance
+  ) => void
+): UseCopyDocRefDialog => {
+  const [destinationUuid, setDestinationUuid] = useState<string | undefined>(
+    undefined
+  );
+  const [uuidsToCopy, setUuidToCopy] = useState<Array<string>>([]);
+  const [isDeleteDocRefOpen, setIsOpen] = useState<boolean>(false);
+
+  return {
+    componentProps: {
+      onConfirm,
+      uuids: uuidsToCopy,
+      destinationUuid,
+      isOpen: isDeleteDocRefOpen,
+      onCloseDialog: () => {
+        setIsOpen(false);
+        setUuidToCopy([]);
+        setDestinationUuid(undefined);
+      }
+    },
+    showDialog: (_uuids, _destinationUuid) => {
+      setIsOpen(true);
+      setUuidToCopy(_uuids);
+      setDestinationUuid(_destinationUuid);
+    }
+  };
+};
+
+export default CopyMoveDocRefDialog;

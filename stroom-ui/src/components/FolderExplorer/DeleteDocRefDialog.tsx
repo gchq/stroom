@@ -49,9 +49,7 @@ const DeleteDocRefDialog = ({
 }: EnhancedProps) => (
   <ThemedConfirm
     onConfirm={() => {
-      if (uuids.length > 0) {
-        deleteDocuments(uuids);
-      }
+      deleteDocuments(uuids);
       onCloseDialog();
     }}
     onCancel={onCloseDialog}

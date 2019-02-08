@@ -12,19 +12,17 @@ import {
 
 import { canMove } from "../../lib/treeUtils";
 import DocRefListingEntry from "../DocRefListingEntry";
-import { actionCreators as folderExplorerActionCreators } from "./redux";
 import {
   DragDropTypes,
   DragCollectedProps,
   DropCollectedProps,
   DragObject
 } from "./dragDropTypes";
+import { moveDocuments, copyDocuments } from "./explorerClient";
 import { DocRefType, DocRefConsumer } from "../../types";
 import { StoreStatePerId as SelectableItemListingState } from "../../lib/withSelectableItemListing";
 import { GlobalStoreState } from "../../startup/reducers";
 import { StoreState as KeyIsDownStoreState } from "../../lib/KeyIsDown";
-
-const { prepareDocRefCopy, prepareDocRefMove } = folderExplorerActionCreators;
 
 export interface Props {
   listingId: string;
@@ -34,8 +32,8 @@ export interface Props {
 }
 
 interface ConnectDispatch {
-  prepareDocRefCopy: typeof prepareDocRefCopy;
-  prepareDocRefMove: typeof prepareDocRefMove;
+  moveDocuments: typeof moveDocuments;
+  copyDocuments: typeof copyDocuments;
 }
 
 interface ConnectState {
@@ -65,14 +63,16 @@ const dropTarget: DropTargetSpec<DndProps> = {
       )
     );
   },
-  drop({ listingId, prepareDocRefCopy, prepareDocRefMove, docRef }, monitor) {
+  drop({ docRef }, monitor) {
     const { docRefs, isCopy } = monitor.getItem();
-    const docRefUuids = docRefs.map((d: DocRefType) => d.uuid);
+    // TODO - Copy/Move Documents in App Chrome
+    console.log("Copy", { docRefs, isCopy, docRef });
+    //const docRefUuids = docRefs.map((d: DocRefType) => d.uuid);
 
     if (isCopy) {
-      prepareDocRefCopy(listingId, docRefUuids, docRef.uuid);
+      //prepareDocRefCopy(listingId, docRefUuids, docRef.uuid);
     } else {
-      prepareDocRefMove(listingId, docRefUuids, docRef.uuid);
+      //prepareDocRefMove(listingId, docRefUuids, docRef.uuid);
     }
   }
 };
@@ -128,8 +128,8 @@ const enhance = compose<EnhancedProps, Props>(
       keyIsDown
     }),
     {
-      prepareDocRefCopy,
-      prepareDocRefMove
+      copyDocuments,
+      moveDocuments
     }
   ),
   DropTarget([DragDropTypes.DOC_REF_UUIDS], dropTarget, dropCollect),

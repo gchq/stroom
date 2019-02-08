@@ -23,11 +23,12 @@ import DocRefEditor from "../DocRefEditor";
 import Loader from "../Loader";
 import { findItem } from "../../lib/treeUtils";
 import { actionCreators } from "./redux";
-import { fetchDocInfo } from "./explorerClient";
+import { fetchDocInfo, copyDocuments, moveDocuments } from "./explorerClient";
 import DndDocRefListingEntry from "./DndDocRefListingEntry";
 import NewDocRefDialog from "./NewDocRefDialog";
-import CopyDocRefDialog from "./CopyDocRefDialog";
-import MoveDocRefDialog from "./MoveDocRefDialog";
+import CopyMoveDocRefDialog, {
+  useCopyDocRefDialog
+} from "./CopyMoveDocRefDialog";
 import RenameDocRefDialog from "./RenameDocRefDialog";
 import DeleteDocRefDialog, {
   useDeleteDocRefDialog
@@ -46,12 +47,7 @@ import { Props as ButtonProps } from "../Button";
 import { DocRefConsumer, DocRefType, DocRefWithLineage } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
 
-const {
-  prepareDocRefCreation,
-  prepareDocRefCopy,
-  prepareDocRefRename,
-  prepareDocRefMove
-} = actionCreators;
+const { prepareDocRefCreation, prepareDocRefRename } = actionCreators;
 
 const LISTING_ID = "folder-explorer";
 
@@ -70,10 +66,10 @@ interface WithHandlers {
 
 interface ConnectDispatch {
   prepareDocRefCreation: typeof prepareDocRefCreation;
-  prepareDocRefCopy: typeof prepareDocRefCopy;
   prepareDocRefRename: typeof prepareDocRefRename;
-  prepareDocRefMove: typeof prepareDocRefMove;
   fetchDocInfo: typeof fetchDocInfo;
+  copyDocuments: typeof copyDocuments;
+  moveDocuments: typeof moveDocuments;
 }
 
 export interface EnhancedProps
@@ -107,9 +103,9 @@ const enhance = compose<EnhancedProps, Props>(
     }),
     {
       prepareDocRefCreation,
-      prepareDocRefCopy,
       prepareDocRefRename,
-      prepareDocRefMove,
+      copyDocuments,
+      moveDocuments,
       fetchDocInfo
     }
   ),
@@ -144,9 +140,9 @@ const FolderExplorer = ({
   folderUuid,
   folder,
   prepareDocRefCreation,
-  prepareDocRefCopy,
   prepareDocRefRename,
-  prepareDocRefMove,
+  copyDocuments,
+  moveDocuments,
   fetchDocInfo,
   selectableItemListing: { selectedItems },
   onKeyDownWithShortcuts,
@@ -156,6 +152,15 @@ const FolderExplorer = ({
     startToDeleteDocRefs,
     componentProps: deleteDialogComponentProps
   } = useDeleteDocRefDialog();
+
+  const {
+    showDialog: showCopyDialog,
+    componentProps: copyDialogComponentProps
+  } = useCopyDocRefDialog(copyDocuments);
+  const {
+    showDialog: showMoveDialog,
+    componentProps: moveDialogComponentProps
+  } = useCopyDocRefDialog(moveDocuments);
 
   const actionBarItems: Array<ButtonProps> = [
     {
@@ -188,13 +193,13 @@ const FolderExplorer = ({
     actionBarItems.push({
       icon: "copy",
       text: "Copy",
-      onClick: () => prepareDocRefCopy(LISTING_ID, selectedDocRefUuids),
+      onClick: () => showCopyDialog(selectedDocRefUuids),
       title: "Copy selected documents"
     });
     actionBarItems.push({
       icon: "arrows-alt",
       text: "Move",
-      onClick: () => prepareDocRefMove(LISTING_ID, selectedDocRefUuids),
+      onClick: () => showMoveDialog(selectedDocRefUuids),
       title: "Move selected documents"
     });
     actionBarItems.push({
@@ -221,10 +226,10 @@ const FolderExplorer = ({
           ))}
       </div>
       <DocRefInfoModal />
-      <MoveDocRefDialog listingId={LISTING_ID} />
+      <CopyMoveDocRefDialog {...moveDialogComponentProps} />
       <RenameDocRefDialog listingId={LISTING_ID} />
       <DeleteDocRefDialog {...deleteDialogComponentProps} />
-      <CopyDocRefDialog listingId={LISTING_ID} />
+      <CopyMoveDocRefDialog {...copyDialogComponentProps} />
       <NewDocRefDialog listingId={LISTING_ID} />
     </DocRefEditor>
   );

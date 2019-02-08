@@ -19,7 +19,6 @@ import {
   DragCollectedProps,
   DropCollectedProps
 } from "../../components/FolderExplorer/dragDropTypes";
-import { actionCreators as folderExplorerActionCreators } from "../../components/FolderExplorer/redux";
 import { actionCreators as appChromeActionCreators } from "./redux";
 import { StoreState as MenuItemsOpenStoreState } from "./redux/menuItemsOpenReducer";
 import { GlobalStoreState } from "../../startup/reducers";
@@ -27,7 +26,6 @@ import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { DocRefType, StyledComponentProps } from "../../types";
 
 const { menuItemOpened } = appChromeActionCreators;
-const { prepareDocRefCopy, prepareDocRefMove } = folderExplorerActionCreators;
 
 export interface MenuItemType {
   key: string;
@@ -56,8 +54,6 @@ interface ConnectState {
   areMenuItemsOpen: MenuItemsOpenStoreState;
 }
 interface ConnectDispatch {
-  prepareDocRefCopy: typeof prepareDocRefCopy;
-  prepareDocRefMove: typeof prepareDocRefMove;
   menuItemOpened: typeof menuItemOpened;
 }
 
@@ -100,18 +96,16 @@ const dropTarget: DropTargetSpec<DndProps> = {
       )
     );
   },
-  drop(
-    { listingId, prepareDocRefCopy, prepareDocRefMove, menuItem: { docRef } },
-    monitor
-  ) {
+  drop({ menuItem: { docRef } }, monitor) {
     const { docRefs, isCopy } = monitor.getItem();
     const docRefUuids = docRefs.map((d: DocRefType) => d.uuid);
-
+    console.log("Copy/Move", { docRefUuids, docRef, isCopy });
     if (docRef) {
       if (isCopy) {
-        prepareDocRefCopy(listingId, docRefUuids, docRef.uuid);
+        // TODO - Reimplement copy and move
+        //prepareDocRefCopy(listingId, docRefUuids, docRef.uuid);
       } else {
-        prepareDocRefMove(listingId, docRefUuids, docRef.uuid);
+        //prepareDocRefMove(listingId, docRefUuids, docRef.uuid);
       }
     }
   }
@@ -170,8 +164,6 @@ const enhance = compose<EnhancedProps, Props>(
       };
     },
     {
-      prepareDocRefCopy,
-      prepareDocRefMove,
       menuItemOpened
     }
   ),
