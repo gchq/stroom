@@ -17,17 +17,6 @@
 
 package stroom.data.retention;
 
-import stroom.datasource.api.v2.DataSourceField;
-import stroom.ruleset.shared.DataRetentionRule;
-import stroom.streamstore.shared.StreamDataSource;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 // TODO : @66 Re-implement finding streams for data retention
 public class DataRetentionStreamFinder {//implements AutoCloseable {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionStreamFinder.class);

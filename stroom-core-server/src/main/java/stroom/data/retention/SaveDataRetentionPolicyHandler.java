@@ -17,8 +17,8 @@
 
 package stroom.data.retention;
 
-import stroom.ruleset.shared.DataRetentionPolicy;
-import stroom.ruleset.shared.SaveDataRetentionPolicyAction;
+import stroom.receive.rules.shared.DataRetentionPolicy;
+import stroom.receive.rules.shared.SaveDataRetentionPolicyAction;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 

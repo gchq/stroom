@@ -20,9 +20,9 @@ package stroom.data.retention;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.xml.XMLMarshallerUtil;
-import stroom.ruleset.shared.DataRetentionPolicy;
-import stroom.ruleset.shared.FindPolicyCriteria;
-import stroom.ruleset.shared.Policy;
+import stroom.receive.rules.shared.DataRetentionPolicy;
+import stroom.receive.rules.shared.FindPolicyCriteria;
+import stroom.receive.rules.shared.Policy;
 
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;

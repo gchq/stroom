@@ -17,8 +17,8 @@
 package stroom.data.retention;
 
 import com.google.inject.AbstractModule;
-import stroom.ruleset.shared.FetchDataRetentionPolicyAction;
-import stroom.ruleset.shared.SaveDataRetentionPolicyAction;
+import stroom.receive.rules.shared.FetchDataRetentionPolicyAction;
+import stroom.receive.rules.shared.SaveDataRetentionPolicyAction;
 import stroom.task.api.TaskHandlerBinder;
 
 public class PolicyModule extends AbstractModule {

@@ -23,7 +23,7 @@ import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.pipeline.feed.FeedModule;
 import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.receive.ReceiveDataModule;
-import stroom.ruleset.ReceiveDataRulesetModule;
+import stroom.receive.rules.impl.ReceiveDataRulesetModule;
 import stroom.statistics.sql.SQLStatisticsModule;
 
 public class CoreModule extends AbstractModule {

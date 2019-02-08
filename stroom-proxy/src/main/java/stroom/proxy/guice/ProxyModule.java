@@ -13,9 +13,9 @@ import stroom.proxy.handler.ProxyRequestHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryReader;
-import stroom.ruleset.AttributeMapFilterFactoryImpl;
-import stroom.ruleset.ReceiveDataRuleSetService;
-import stroom.ruleset.ReceiveDataRuleSetServiceImpl;
+import stroom.receive.rules.impl.AttributeMapFilterFactoryImpl;
+import stroom.receive.rules.impl.ReceiveDataRuleSetService;
+import stroom.receive.rules.impl.ReceiveDataRuleSetServiceImpl;
 import stroom.security.SecurityContext;
 import stroom.util.HasHealthCheck;
 

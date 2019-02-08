@@ -24,8 +24,8 @@ import stroom.util.xml.XMLMarshallerUtil;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.ruleset.shared.DataRetentionPolicy;
-import stroom.ruleset.shared.DataRetentionRule;
+import stroom.receive.rules.shared.DataRetentionPolicy;
+import stroom.receive.rules.shared.DataRetentionRule;
 import stroom.streamstore.shared.TimeUnit;
 
 import javax.xml.bind.JAXBContext;

@@ -26,7 +26,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.ruleset.client.presenter.EditExpressionPresenter;
+import stroom.receive.rules.impl.client.presenter.EditExpressionPresenter;
 import stroom.streamstore.client.presenter.ExpressionPresenter.ExpressionView;
 
 import java.util.List;

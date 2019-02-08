@@ -19,8 +19,8 @@ package stroom.data.retention;
 
 import stroom.entity.FindService;
 import stroom.entity.NamedEntityService;
-import stroom.ruleset.shared.FindPolicyCriteria;
-import stroom.ruleset.shared.Policy;
+import stroom.receive.rules.shared.FindPolicyCriteria;
+import stroom.receive.rules.shared.Policy;
 
 public interface PolicyService
         extends NamedEntityService<Policy>, FindService<Policy, FindPolicyCriteria> {
