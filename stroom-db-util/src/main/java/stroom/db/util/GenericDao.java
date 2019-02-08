@@ -3,7 +3,7 @@ package stroom.db.util;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.UpdatableRecord;
-import stroom.entity.HasCrud;
+import stroom.entity.shared.HasCrud;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

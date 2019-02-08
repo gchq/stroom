@@ -1,6 +1,5 @@
-package stroom.entity;
+package stroom.entity.shared;
 
-import javax.annotation.Nonnull;
 import java.util.Optional;
 
 public interface HasIntCrud<T_Entity> {
@@ -10,14 +9,14 @@ public interface HasIntCrud<T_Entity> {
      * @param entity Object to persist.
      * @return The persisted object including any changes such as auto IDs
      */
-    T_Entity create(@Nonnull final T_Entity entity);
+    T_Entity create(final T_Entity entity);
 
     /**
      * Update the passed record in the persistence implementation
      * @param entity The record to update.
      * @return The record as it now appears in the persistence implementation
      */
-    T_Entity update(@Nonnull final T_Entity entity);
+    T_Entity update(final T_Entity entity);
 
     /**
      * Delete the entity associated with the passed id value.
