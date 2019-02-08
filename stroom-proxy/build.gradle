@@ -3,7 +3,7 @@ ext.moduleName = 'stroom.proxy'
 dependencies {
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-core-server')
-    implementation project(':stroom-ruleset:stroom-ruleset-server')
+    implementation project(':stroom-receive:stroom-receive-rules-impl')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
     implementation project(':stroom-security:stroom-security-api')

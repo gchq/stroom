@@ -6,7 +6,7 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-ruleset:stroom-ruleset-shared')
+    implementation project(':stroom-receive:stroom-receive-rules-shared')
 
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')

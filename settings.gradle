@@ -145,8 +145,8 @@ include 'stroom-resourcestore:stroom-resourcestore-api'
 include 'stroom-resourcestore:stroom-resourcestore-impl'
 
 // Ruleset
-include 'stroom-ruleset:stroom-ruleset-shared'
-include 'stroom-ruleset:stroom-ruleset-server'
+include 'stroom-receive:stroom-receive-rules-shared'
+include 'stroom-receive:stroom-receive-rules-impl'
 
 // Security
 include 'stroom-security:stroom-security-api'
