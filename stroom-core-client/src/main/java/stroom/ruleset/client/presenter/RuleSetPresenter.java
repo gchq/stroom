@@ -26,18 +26,18 @@ import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.docref.DocRef;
-import stroom.ruleset.shared.DataReceiptRuleSet;
+import stroom.ruleset.shared.ReceiveDataRuleSet;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import java.util.ArrayList;
 
-public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView, DataReceiptRuleSet> implements HasDirtyHandlers {
+public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ReceiveDataRuleSet> implements HasDirtyHandlers {
     private static final TabData RULES = new TabDataImpl("Rules");
     private static final TabData FIELDS = new TabDataImpl("Fields");
 
-    private final TabContentProvider<DataReceiptRuleSet> tabContentProvider = new TabContentProvider<>();
+    private final TabContentProvider<ReceiveDataRuleSet> tabContentProvider = new TabContentProvider<>();
 
     @Inject
     public RuleSetPresenter(final EventBus eventBus,
@@ -68,7 +68,7 @@ public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
     }
 
     @Override
-    public void onRead(final DocRef docRef, final DataReceiptRuleSet dataReceiptPolicy) {
+    public void onRead(final DocRef docRef, final ReceiveDataRuleSet dataReceiptPolicy) {
         super.onRead(docRef, dataReceiptPolicy);
         if (dataReceiptPolicy.getFields() == null) {
             dataReceiptPolicy.setFields(new ArrayList<>());
@@ -81,7 +81,7 @@ public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
     }
 
     @Override
-    protected void onWrite(final DataReceiptRuleSet dataReceiptPolicy) {
+    protected void onWrite(final ReceiveDataRuleSet dataReceiptPolicy) {
         tabContentProvider.write(dataReceiptPolicy);
     }
 
@@ -93,6 +93,6 @@ public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
 
     @Override
     public String getType() {
-        return DataReceiptRuleSet.DOCUMENT_TYPE;
+        return ReceiveDataRuleSet.DOCUMENT_TYPE;
     }
 }

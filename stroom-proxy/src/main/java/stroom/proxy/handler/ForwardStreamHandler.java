@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.StandardHeaderArguments;
-import stroom.data.receipt.StroomStreamException;
+import stroom.receive.StroomStreamException;
 import stroom.proxy.repo.StroomZipEntry;
 
 import javax.net.ssl.HostnameVerifier;

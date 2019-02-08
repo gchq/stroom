@@ -22,7 +22,7 @@ import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
-import stroom.data.receipt.BufferFactory;
+import stroom.receive.BufferFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;

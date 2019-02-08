@@ -37,7 +37,7 @@ import stroom.cluster.ClusterCallServiceRPC;
 import stroom.content.ContentSyncService;
 import stroom.content.ProxySecurityFilter;
 import stroom.data.store.DataResource;
-import stroom.data.receipt.DataFeedServlet;
+import stroom.receive.ReceiveDataServlet;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.impl.DictionaryResource;
 import stroom.dictionary.impl.DictionaryResource2;
@@ -60,10 +60,10 @@ import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
 import stroom.resource.impl.SessionResourceStoreImpl;
-import stroom.ruleset.RuleSetResource;
-import stroom.ruleset.RuleSetResource2;
-import stroom.ruleset.RuleSetService;
-import stroom.ruleset.shared.DataReceiptRuleSet;
+import stroom.ruleset.ReceiveDataRuleSetResource;
+import stroom.ruleset.ReceiveDataRuleSetResource2;
+import stroom.ruleset.ReceiveDataRuleSetService;
+import stroom.ruleset.shared.ReceiveDataRuleSet;
 import stroom.script.ScriptServlet;
 import stroom.security.AuthorisationResource;
 import stroom.security.SecurityFilter;
@@ -202,8 +202,8 @@ public class App extends Application<Config> {
             }
         });
 
-        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed", healthCheckRegistry);
-        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed/*", healthCheckRegistry);
+        GuiceUtil.addServlet(servletContextHandler, injector, ReceiveDataServlet.class, ResourcePaths.ROOT_PATH + "/datafeed", healthCheckRegistry);
+        GuiceUtil.addServlet(servletContextHandler, injector, ReceiveDataServlet.class, ResourcePaths.ROOT_PATH + "/datafeed/*", healthCheckRegistry);
         GuiceUtil.addServlet(servletContextHandler, injector, ProxyWelcomeServlet.class, ResourcePaths.ROOT_PATH + "/ui", healthCheckRegistry);
         GuiceUtil.addServlet(servletContextHandler, injector, ProxyStatusServlet.class, ResourcePaths.ROOT_PATH + "/status", healthCheckRegistry);
         GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, ResourcePaths.ROOT_PATH + "/debug", healthCheckRegistry);
@@ -211,8 +211,8 @@ public class App extends Application<Config> {
         // Add resources.
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource2.class);
-        GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource2.class);
+        GuiceUtil.addResource(environment.jersey(), injector, ReceiveDataRuleSetResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, ReceiveDataRuleSetResource2.class);
 
         // Listen to the lifecycle of the Dropwizard app.
         GuiceUtil.manage(environment.lifecycle(), injector, ProxyLifecycle.class);
@@ -223,7 +223,7 @@ public class App extends Application<Config> {
                 configuration.getProxyConfig().getContentSyncConfig().isContentSyncEnabled()) {
             // Create a map of import handlers.
             final Map<String, ImportExportActionHandler> importExportActionHandlers = new HashMap<>();
-            importExportActionHandlers.put(DataReceiptRuleSet.DOCUMENT_TYPE, injector.getInstance(RuleSetService.class));
+            importExportActionHandlers.put(ReceiveDataRuleSet.DOCUMENT_TYPE, injector.getInstance(ReceiveDataRuleSetService.class));
             importExportActionHandlers.put(DictionaryDoc.ENTITY_TYPE, injector.getInstance(DictionaryStore.class));
 
             final ContentSyncService contentSyncService = new ContentSyncService(
@@ -281,8 +281,8 @@ public class App extends Application<Config> {
         GuiceUtil.addServlet(servletContextHandler, injector, SessionListServlet.class, ResourcePaths.ROOT_PATH + "/sessionList", healthCheckRegistry);
         GuiceUtil.addServlet(servletContextHandler, injector, SessionResourceStoreImpl.class, ResourcePaths.ROOT_PATH + "/resourcestore/*", healthCheckRegistry);
         GuiceUtil.addServlet(servletContextHandler, injector, RemoteFeedServiceRPC.class, ResourcePaths.ROOT_PATH + "/remoting/remotefeedservice.rpc", healthCheckRegistry);
-        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed", healthCheckRegistry);
-        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed/*", healthCheckRegistry);
+        GuiceUtil.addServlet(servletContextHandler, injector, ReceiveDataServlet.class, ResourcePaths.ROOT_PATH + "/datafeed", healthCheckRegistry);
+        GuiceUtil.addServlet(servletContextHandler, injector, ReceiveDataServlet.class, ResourcePaths.ROOT_PATH + "/datafeed/*", healthCheckRegistry);
 
         // Add session listeners.
         GuiceUtil.addServletListener(environment.servlets(), injector, SessionListListener.class);
@@ -291,8 +291,8 @@ public class App extends Application<Config> {
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource2.class);
         GuiceUtil.addResource(environment.jersey(), injector, ExportConfigResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource2.class);
+        GuiceUtil.addResource(environment.jersey(), injector, ReceiveDataRuleSetResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, ReceiveDataRuleSetResource2.class);
         GuiceUtil.addResource(environment.jersey(), injector, StroomIndexQueryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, SqlStatisticsQueryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, AuthorisationResource.class);

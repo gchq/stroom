@@ -27,7 +27,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.item.client.ItemListBox;
 import stroom.ruleset.client.presenter.RulePresenter.RuleView;
-import stroom.ruleset.shared.DataReceiptAction;
+import stroom.ruleset.shared.RuleAction;
 
 public class RuleViewImpl extends ViewImpl implements RuleView {
     private final Widget widget;
@@ -37,15 +37,15 @@ public class RuleViewImpl extends ViewImpl implements RuleView {
     @UiField
     TextBox name;
     @UiField
-    ItemListBox<DataReceiptAction> action;
+    ItemListBox<RuleAction> action;
 
     @Inject
     public RuleViewImpl(final RuleViewImpl.Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        action.addItem(DataReceiptAction.RECEIVE);
-        action.addItem(DataReceiptAction.REJECT);
-        action.addItem(DataReceiptAction.DROP);
+        action.addItem(RuleAction.RECEIVE);
+        action.addItem(RuleAction.REJECT);
+        action.addItem(RuleAction.DROP);
     }
 
     @Override
@@ -69,12 +69,12 @@ public class RuleViewImpl extends ViewImpl implements RuleView {
     }
 
     @Override
-    public DataReceiptAction getAction() {
+    public RuleAction getAction() {
         return action.getSelectedItem();
     }
 
     @Override
-    public void setAction(final DataReceiptAction action) {
+    public void setAction(final RuleAction action) {
         this.action.setSelectedItem(action);
     }
 

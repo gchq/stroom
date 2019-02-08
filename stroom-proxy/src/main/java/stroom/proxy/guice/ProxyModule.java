@@ -4,8 +4,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
-import stroom.data.receipt.AttributeMapFilterFactory;
-import stroom.data.receipt.RequestHandler;
+import stroom.receive.AttributeMapFilterFactory;
+import stroom.receive.RequestHandler;
 import stroom.docstore.Persistence;
 import stroom.docstore.impl.fs.FSPersistence;
 import stroom.proxy.handler.ForwardStreamHandlerFactory;
@@ -14,8 +14,8 @@ import stroom.proxy.handler.StreamHandlerFactory;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryReader;
 import stroom.ruleset.AttributeMapFilterFactoryImpl;
-import stroom.ruleset.RuleSetService;
-import stroom.ruleset.RuleSetServiceImpl;
+import stroom.ruleset.ReceiveDataRuleSetService;
+import stroom.ruleset.ReceiveDataRuleSetServiceImpl;
 import stroom.security.SecurityContext;
 import stroom.util.HasHealthCheck;
 
@@ -38,7 +38,7 @@ public class ProxyModule extends AbstractModule {
         bind(ProxyRepositoryReader.class).asEagerSingleton();
 
         bind(AttributeMapFilterFactory.class).to(AttributeMapFilterFactoryImpl.class);
-        bind(RuleSetService.class).to(RuleSetServiceImpl.class);
+        bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
         bind(SecurityContext.class).to(NoSecurityContext.class);
 
         final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);

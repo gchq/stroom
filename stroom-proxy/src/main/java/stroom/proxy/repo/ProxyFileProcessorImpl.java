@@ -19,7 +19,7 @@ package stroom.proxy.repo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.meta.shared.AttributeMap;
-import stroom.data.receipt.BufferFactory;
+import stroom.receive.BufferFactory;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.proxy.handler.StreamHandler;
 import stroom.proxy.handler.StreamHandlerFactory;

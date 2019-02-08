@@ -25,7 +25,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.ruleset.shared.DataReceiptRule;
+import stroom.ruleset.shared.ReceiveDataRule;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.svg.client.SvgPreset;
 import stroom.util.client.BorderUtil;
@@ -34,7 +34,7 @@ import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.List;
 
-public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<DataReceiptRule>> {
+public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<ReceiveDataRule>> {
     @Inject
     public RuleSetListPresenter(final EventBus eventBus) {
         super(eventBus, new DataGridViewImpl<>(true, false));
@@ -50,36 +50,36 @@ public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<DataRec
      */
     private void initTableColumns() {
         // Rule.
-        final Column<DataReceiptRule, String> ruleColumn = new Column<DataReceiptRule, String>(new TextCell()) {
+        final Column<ReceiveDataRule, String> ruleColumn = new Column<ReceiveDataRule, String>(new TextCell()) {
             @Override
-            public String getValue(final DataReceiptRule row) {
+            public String getValue(final ReceiveDataRule row) {
                 return String.valueOf(row.getRuleNumber());
             }
         };
         getView().addResizableColumn(ruleColumn, "Rule", 40);
 
         // Name.
-        final Column<DataReceiptRule, String> nameColumn = new Column<DataReceiptRule, String>(new TextCell()) {
+        final Column<ReceiveDataRule, String> nameColumn = new Column<ReceiveDataRule, String>(new TextCell()) {
             @Override
-            public String getValue(final DataReceiptRule row) {
+            public String getValue(final ReceiveDataRule row) {
                 return String.valueOf(row.getName());
             }
         };
         getView().addResizableColumn(nameColumn, "Name", ColumnSizeConstants.MEDIUM_COL);
 
         // Expression.
-        final Column<DataReceiptRule, String> expressionColumn = new Column<DataReceiptRule, String>(new TextCell()) {
+        final Column<ReceiveDataRule, String> expressionColumn = new Column<ReceiveDataRule, String>(new TextCell()) {
             @Override
-            public String getValue(final DataReceiptRule row) {
+            public String getValue(final ReceiveDataRule row) {
                 return row.getExpression().toString();
             }
         };
         getView().addResizableColumn(expressionColumn, "Expression", 500);
 
         // Action.
-        final Column<DataReceiptRule, String> actionColumn = new Column<DataReceiptRule, String>(new TextCell()) {
+        final Column<ReceiveDataRule, String> actionColumn = new Column<ReceiveDataRule, String>(new TextCell()) {
             @Override
-            public String getValue(final DataReceiptRule row) {
+            public String getValue(final ReceiveDataRule row) {
                 return row.getAction().getDisplayValue();
             }
         };
@@ -89,12 +89,12 @@ public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<DataRec
         getView().addEndColumn(new EndColumn<>());
     }
 
-    public void setData(final List<DataReceiptRule> data) {
+    public void setData(final List<ReceiveDataRule> data) {
         getView().setRowData(0, data);
         getView().setRowCount(data.size());
     }
 
-    public MultiSelectionModel<DataReceiptRule> getSelectionModel() {
+    public MultiSelectionModel<ReceiveDataRule> getSelectionModel() {
         return getView().getSelectionModel();
     }
 

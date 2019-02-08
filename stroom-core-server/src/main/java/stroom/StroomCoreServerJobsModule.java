@@ -2,7 +2,7 @@ package stroom;
 
 import com.google.inject.AbstractModule;
 import stroom.data.store.DataRetentionJobModule;
-import stroom.policy.PolicyJobsModule;
+import stroom.data.retention.PolicyJobsModule;
 import stroom.streamtask.StreamTaskJobsModule;
 import stroom.volume.VolumeJobsModule;
 

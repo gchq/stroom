@@ -25,14 +25,14 @@ import stroom.datasource.api.v2.DataSourceField;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.ruleset.client.presenter.RulePresenter.RuleView;
-import stroom.ruleset.shared.DataReceiptAction;
-import stroom.ruleset.shared.DataReceiptRule;
+import stroom.ruleset.shared.RuleAction;
+import stroom.ruleset.shared.ReceiveDataRule;
 
 import java.util.List;
 
 public class RulePresenter extends MyPresenterWidget<RuleView> {
     private final EditExpressionPresenter editExpressionPresenter;
-    private DataReceiptRule originalRule;
+    private ReceiveDataRule originalRule;
 
     @Inject
     public RulePresenter(final EventBus eventBus,
@@ -43,7 +43,7 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
-    void read(final DataReceiptRule rule, final List<DataSourceField> fields) {
+    void read(final ReceiveDataRule rule, final List<DataSourceField> fields) {
         editExpressionPresenter.init(null, null, fields);
         this.originalRule = rule;
         getView().setName(rule.getName());
@@ -55,9 +55,9 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
         getView().setAction(rule.getAction());
     }
 
-    DataReceiptRule write() {
+    ReceiveDataRule write() {
         final ExpressionOperator expression = editExpressionPresenter.write();
-        return new DataReceiptRule(originalRule.getRuleNumber(), originalRule.getCreationTime(), getView().getName(), originalRule.isEnabled(), expression, getView().getAction());
+        return new ReceiveDataRule(originalRule.getRuleNumber(), originalRule.getCreationTime(), getView().getName(), originalRule.isEnabled(), expression, getView().getAction());
     }
 
     public interface RuleView extends View {
@@ -67,8 +67,8 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
 
         void setName(String name);
 
-        DataReceiptAction getAction();
+        RuleAction getAction();
 
-        void setAction(DataReceiptAction action);
+        void setAction(RuleAction action);
     }
 }

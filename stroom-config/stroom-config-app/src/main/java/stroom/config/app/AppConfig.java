@@ -6,7 +6,7 @@ import stroom.activity.impl.db.ActivityConfig;
 import stroom.benchmark.BenchmarkClusterConfig;
 import stroom.cluster.ClusterConfig;
 import stroom.dashboard.QueryHistoryConfig;
-import stroom.data.receipt.DataFeedConfig;
+import stroom.receive.ReceiveDataConfig;
 import stroom.datasource.DataSourceUrlConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
@@ -18,7 +18,7 @@ import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.persist.CoreConfig;
 import stroom.pipeline.PipelineConfig;
-import stroom.policy.PolicyConfig;
+import stroom.data.retention.PolicyConfig;
 import stroom.search.SearchConfig;
 import stroom.security.SecurityConfig;
 import stroom.security.impl.db.SecurityDbConfig;
@@ -41,7 +41,7 @@ public class AppConfig implements IsConfig {
     private ContentPackImportConfig contentPackImportConfig;
     private CoreConfig coreConfig;
     private DataConfig dataConfig;
-    private DataFeedConfig dataFeedConfig;
+    private ReceiveDataConfig dataFeedConfig;
     private DataSourceUrlConfig dataSourceUrlConfig;
     private ExplorerConfig explorerConfig;
     private ExportConfig exportConfig;
@@ -71,7 +71,7 @@ public class AppConfig implements IsConfig {
         this.contentPackImportConfig = new ContentPackImportConfig();
         this.coreConfig = new CoreConfig();
         this.dataConfig = new DataConfig();
-        this.dataFeedConfig = new DataFeedConfig();
+        this.dataFeedConfig = new ReceiveDataConfig();
         this.dataSourceUrlConfig = new DataSourceUrlConfig();
         this.explorerConfig = new ExplorerConfig();
         this.exportConfig = new ExportConfig();
@@ -102,7 +102,7 @@ public class AppConfig implements IsConfig {
               final ContentPackImportConfig contentPackImportConfig,
               final CoreConfig coreConfig,
               final DataConfig dataConfig,
-              final DataFeedConfig dataFeedConfig,
+              final ReceiveDataConfig dataFeedConfig,
               final DataSourceUrlConfig dataSourceUrlConfig,
               final ExplorerConfig explorerConfig,
               final ExportConfig exportConfig,
@@ -211,11 +211,11 @@ public class AppConfig implements IsConfig {
     }
 
     @JsonProperty("feed")
-    public DataFeedConfig getDataFeedConfig() {
+    public ReceiveDataConfig getDataFeedConfig() {
         return dataFeedConfig;
     }
 
-    public void setDataFeedConfig(final DataFeedConfig dataFeedConfig) {
+    public void setDataFeedConfig(final ReceiveDataConfig dataFeedConfig) {
         this.dataFeedConfig = dataFeedConfig;
     }
 

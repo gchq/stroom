@@ -3,6 +3,7 @@ package stroom.guice;
 import com.google.inject.AbstractModule;
 import stroom.config.global.impl.db.GlobalConfigDbModule;
 import stroom.config.global.impl.db.GlobalConfigModule;
+import stroom.data.retention.PolicyModule;
 import stroom.meta.impl.db.MetaDbModule;
 import stroom.dataprocess.PipelineStreamTaskModule;
 import stroom.dictionary.impl.DictionaryHandlerModule;
@@ -21,6 +22,8 @@ import stroom.persist.EntityManagerModule;
 import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.pipeline.feed.FeedModule;
 import stroom.pipeline.scope.PipelineScopeModule;
+import stroom.receive.ReceiveDataModule;
+import stroom.ruleset.ReceiveDataRulesetModule;
 import stroom.statistics.sql.SQLStatisticsModule;
 
 public class CoreModule extends AbstractModule {
@@ -32,7 +35,7 @@ public class CoreModule extends AbstractModule {
         install(new PipelineCacheModule());
         install(new stroom.dashboard.DashboardModule());
         install(new stroom.dashboard.logging.LoggingModule());
-        install(new stroom.data.receipt.DataFeedModule());
+        install(new ReceiveDataModule());
         install(new stroom.datasource.DatasourceModule());
         install(new DictionaryModule());
         install(new DictionaryHandlerModule());
@@ -71,13 +74,13 @@ public class CoreModule extends AbstractModule {
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.pipeline.stepping.PipelineSteppingModule());
         install(new PipelineStreamTaskModule());
-        install(new stroom.policy.PolicyModule());
+        install(new PolicyModule());
 //        install(new stroom.properties.impl.PropertyModule());
         install(new GlobalConfigModule());
         install(new GlobalConfigDbModule());
         install(new stroom.query.QueryModule());
         install(new stroom.pipeline.refdata.ReferenceDataModule());
-        install(new stroom.ruleset.RulesetModule());
+        install(new ReceiveDataRulesetModule());
         install(new stroom.script.ScriptModule());
         install(new stroom.search.SearchModule());
         install(new stroom.search.shard.ShardModule());

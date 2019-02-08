@@ -16,7 +16,7 @@
 
 package stroom.feed;
 
-import stroom.data.receipt.StroomStatusCode;
+import stroom.receive.StroomStatusCode;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 
 public class GetFeedStatusResponse extends RemoteResponse {

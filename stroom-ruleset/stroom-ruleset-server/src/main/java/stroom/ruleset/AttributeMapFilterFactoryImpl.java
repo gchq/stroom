@@ -17,19 +17,19 @@
 
 package stroom.ruleset;
 
-import stroom.data.receipt.AttributeMapFilter;
-import stroom.data.receipt.AttributeMapFilterFactory;
+import stroom.receive.AttributeMapFilter;
+import stroom.receive.AttributeMapFilterFactory;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 
 import javax.inject.Inject;
 
 public class AttributeMapFilterFactoryImpl implements AttributeMapFilterFactory {
-    private final RuleSetService ruleSetService;
+    private final ReceiveDataRuleSetService ruleSetService;
     private final DictionaryStore dictionaryStore;
 
     @Inject
-    AttributeMapFilterFactoryImpl(final RuleSetService ruleSetService,
+    AttributeMapFilterFactoryImpl(final ReceiveDataRuleSetService ruleSetService,
                                   final DictionaryStore dictionaryStore) {
         this.ruleSetService = ruleSetService;
         this.dictionaryStore = dictionaryStore;
@@ -42,6 +42,6 @@ public class AttributeMapFilterFactoryImpl implements AttributeMapFilterFactory 
 
     @Override
     public AttributeMapFilter create(final DocRef policyRef) {
-        return new AttributeMapFilterImpl(new DataReceiptPolicyChecker(ruleSetService, dictionaryStore, policyRef));
+        return new AttributeMapFilterImpl(new ReceiveDataPolicyChecker(ruleSetService, dictionaryStore, policyRef));
     }
 }

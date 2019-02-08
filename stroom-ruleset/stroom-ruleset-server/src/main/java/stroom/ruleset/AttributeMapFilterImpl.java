@@ -17,16 +17,16 @@
 
 package stroom.ruleset;
 
-import stroom.data.receipt.AttributeMapFilter;
+import stroom.receive.AttributeMapFilter;
 import stroom.meta.shared.AttributeMap;
-import stroom.data.receipt.StroomStatusCode;
-import stroom.data.receipt.StroomStreamException;
-import stroom.ruleset.shared.DataReceiptAction;
+import stroom.receive.StroomStatusCode;
+import stroom.receive.StroomStreamException;
+import stroom.ruleset.shared.RuleAction;
 
 class AttributeMapFilterImpl implements AttributeMapFilter {
-    private final DataReceiptPolicyChecker dataReceiptPolicyChecker;
+    private final ReceiveDataPolicyChecker dataReceiptPolicyChecker;
 
-    AttributeMapFilterImpl(final DataReceiptPolicyChecker dataReceiptPolicyChecker) {
+    AttributeMapFilterImpl(final ReceiveDataPolicyChecker dataReceiptPolicyChecker) {
         this.dataReceiptPolicyChecker = dataReceiptPolicyChecker;
     }
 
@@ -35,13 +35,13 @@ class AttributeMapFilterImpl implements AttributeMapFilter {
         boolean allowThrough = true;
         if (dataReceiptPolicyChecker != null) {
             // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
-            final DataReceiptAction dataReceiptAction = dataReceiptPolicyChecker.check(attributeMap);
+            final RuleAction dataReceiptAction = dataReceiptPolicyChecker.check(attributeMap);
 
-            if (DataReceiptAction.REJECT.equals(dataReceiptAction)) {
+            if (RuleAction.REJECT.equals(dataReceiptAction)) {
                 throw new StroomStreamException(StroomStatusCode.RECEIPT_POLICY_SET_TO_REJECT_DATA);
             }
 
-            allowThrough = DataReceiptAction.RECEIVE.equals(dataReceiptAction);
+            allowThrough = RuleAction.RECEIVE.equals(dataReceiptAction);
         }
         return allowThrough;
     }

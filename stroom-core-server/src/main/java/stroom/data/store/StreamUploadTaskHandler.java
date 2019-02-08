@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
-import stroom.data.receipt.BufferFactory;
+import stroom.receive.BufferFactory;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.meta.api.AttributeMapUtil;
