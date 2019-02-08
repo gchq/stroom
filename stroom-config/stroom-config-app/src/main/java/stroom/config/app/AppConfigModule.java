@@ -6,7 +6,7 @@ import stroom.cluster.ClusterConfig;
 import stroom.dashboard.QueryHistoryConfig;
 import stroom.meta.impl.db.MetaServiceConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
-import stroom.datafeed.DataFeedConfig;
+import stroom.data.receipt.DataFeedConfig;
 import stroom.datasource.DataSourceUrlConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.importexport.impl.ContentPackImportConfig;

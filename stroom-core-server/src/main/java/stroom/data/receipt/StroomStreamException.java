@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.datafeed;
+package stroom.data.receipt;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

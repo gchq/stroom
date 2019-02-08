@@ -37,7 +37,7 @@ import stroom.cluster.ClusterCallServiceRPC;
 import stroom.content.ContentSyncService;
 import stroom.content.ProxySecurityFilter;
 import stroom.data.store.DataResource;
-import stroom.datafeed.DataFeedServlet;
+import stroom.data.receipt.DataFeedServlet;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.impl.DictionaryResource;
 import stroom.dictionary.impl.DictionaryResource2;

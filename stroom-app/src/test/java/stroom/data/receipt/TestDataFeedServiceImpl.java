@@ -15,9 +15,11 @@
  *
  */
 
-package stroom.datafeed;
+package stroom.data.receipt;
 
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.data.store.api.Source;
@@ -45,7 +47,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * The combination of mock and prod classes means this test needs its own
  * context.
  */
-class TestDataFeedServiceImpl extends TestBase {
+class TestDataFeedServiceImpl {
     @Inject
     private DataFeedServlet dataFeedService;
     @Inject
@@ -57,6 +59,9 @@ class TestDataFeedServiceImpl extends TestBase {
 
     @BeforeEach
     void init() {
+        final Injector injector = Guice.createInjector(new TestBaseModule());
+        injector.injectMembers(this);
+
         request.resetMock();
         response.resetMock();
         streamStore.clear();

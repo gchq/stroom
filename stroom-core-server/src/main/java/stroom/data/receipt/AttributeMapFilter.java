@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.datafeed;
+package stroom.data.receipt;
 
 import stroom.meta.shared.AttributeMap;
 

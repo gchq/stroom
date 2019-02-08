@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
-import stroom.datafeed.BufferFactory;
+import stroom.data.receipt.BufferFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.FindMetaCriteria;

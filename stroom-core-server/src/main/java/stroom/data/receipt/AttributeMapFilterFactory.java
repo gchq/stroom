@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,15 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package stroom.datafeed;
+package stroom.data.receipt;
 
-import com.google.inject.AbstractModule;
+import stroom.docref.DocRef;
 
-public class DataFeedModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        bind(RequestHandler.class).to(DataFeedRequestHandler.class);
-    }
+public interface AttributeMapFilterFactory {
+    AttributeMapFilter create();
+
+    AttributeMapFilter create(DocRef policyRef);
 }

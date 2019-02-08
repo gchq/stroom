@@ -3,8 +3,8 @@ package stroom.proxy.repo;
 
 import org.junit.jupiter.api.Test;
 import stroom.meta.shared.AttributeMap;
-import stroom.datafeed.StroomStatusCode;
-import stroom.datafeed.StroomStreamException;
+import stroom.data.receipt.StroomStatusCode;
+import stroom.data.receipt.StroomStreamException;
 import stroom.util.io.StreamUtil;
 
 import java.io.ByteArrayInputStream;

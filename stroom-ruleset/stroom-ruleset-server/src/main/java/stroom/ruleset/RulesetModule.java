@@ -18,7 +18,7 @@ package stroom.ruleset;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.datafeed.AttributeMapFilterFactory;
+import stroom.data.receipt.AttributeMapFilterFactory;
 import stroom.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;

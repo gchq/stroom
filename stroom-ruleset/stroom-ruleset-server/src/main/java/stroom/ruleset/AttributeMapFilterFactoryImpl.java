@@ -17,8 +17,8 @@
 
 package stroom.ruleset;
 
-import stroom.datafeed.AttributeMapFilter;
-import stroom.datafeed.AttributeMapFilterFactory;
+import stroom.data.receipt.AttributeMapFilter;
+import stroom.data.receipt.AttributeMapFilterFactory;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 

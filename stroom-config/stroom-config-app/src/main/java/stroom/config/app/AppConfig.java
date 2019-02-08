@@ -6,7 +6,7 @@ import stroom.activity.impl.db.ActivityConfig;
 import stroom.benchmark.BenchmarkClusterConfig;
 import stroom.cluster.ClusterConfig;
 import stroom.dashboard.QueryHistoryConfig;
-import stroom.datafeed.DataFeedConfig;
+import stroom.data.receipt.DataFeedConfig;
 import stroom.datasource.DataSourceUrlConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.importexport.impl.ContentPackImportConfig;

@@ -69,7 +69,7 @@ public class MockStreamStore implements Store, Clearable {
 
     @SuppressWarnings("unused")
     @Inject
-    MockStreamStore(final MetaService metaService) {
+    public MockStreamStore(final MetaService metaService) {
         this.metaService = metaService;
     }
 

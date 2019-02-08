@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.datafeed;
+package stroom.data.receipt;
 
-import com.google.inject.AbstractModule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
- * @Configuration specific to TesetDataFeedServiceImpl.
- * <p>
- * The combination of mock and prod classes means this test needs
- * its own context.
+ * Class to handle every incoming feed request.
  */
-public class TestDataFeedServiceImplModule extends AbstractModule {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestDataFeedServiceImplModule.class);
-
-    @Override
-    protected void configure() {
-        LOGGER.info("TestDataFeedServiceImplModule loading...");
-    }
+public interface RequestHandler {
+    /**
+     * Handle the request and return a HTTP response code.
+     *
+     * @return HTTP response code
+     */
+    void handle(HttpServletRequest request, HttpServletResponse response);
 }

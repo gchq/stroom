@@ -19,7 +19,7 @@ package stroom.proxy.repo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.meta.shared.AttributeMap;
-import stroom.datafeed.BufferFactory;
+import stroom.data.receipt.BufferFactory;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;

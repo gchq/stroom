@@ -1,4 +1,4 @@
-package stroom.datafeed;
+package stroom.data.receipt;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.shared.IsConfig;

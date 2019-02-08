@@ -1,4 +1,4 @@
-package stroom.datafeed;
+package stroom.data.receipt;
 
 import com.google.inject.AbstractModule;
 import stroom.cache.impl.CacheModule;

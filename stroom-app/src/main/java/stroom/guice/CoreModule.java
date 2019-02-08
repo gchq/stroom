@@ -32,7 +32,7 @@ public class CoreModule extends AbstractModule {
         install(new PipelineCacheModule());
         install(new stroom.dashboard.DashboardModule());
         install(new stroom.dashboard.logging.LoggingModule());
-        install(new stroom.datafeed.DataFeedModule());
+        install(new stroom.data.receipt.DataFeedModule());
         install(new stroom.datasource.DatasourceModule());
         install(new DictionaryModule());
         install(new DictionaryHandlerModule());
