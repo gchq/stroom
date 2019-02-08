@@ -29,7 +29,7 @@ export interface PrepareDocRefCopyAction
   extends ActionId,
     Action<"PREPARE_DOC_REF_COPY"> {
   uuids: Array<string>;
-  destinationUuid: string;
+  destinationUuid?: string;
 }
 
 export interface CompleteDocRefCopyAction
@@ -40,7 +40,7 @@ export const actionCreators = {
   prepareDocRefCopy: (
     id: string,
     uuids: Array<string>,
-    destinationUuid: string
+    destinationUuid?: string
   ): PrepareDocRefCopyAction => ({
     type: PREPARE_DOC_REF_COPY,
     id,

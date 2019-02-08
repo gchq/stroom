@@ -188,6 +188,13 @@ const resourceBuilder: ResourceBuilder = (
   server
     .delete(`${testConfig.stroomBaseServiceUrl}/explorer/v1/delete`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
+      const docRefsToDelete: Array<DocRefType> = JSON.parse(req.body);
+      const docRefUuidsToDelete = docRefsToDelete.map(d => d.uuid);
+
+      testCache.data!.documentTree = deleteItemsFromTree(
+        testCache.data!.documentTree,
+        docRefUuidsToDelete
+      );
       //const docRefs = JSON.parse(req.body);
       res.json(testCache.data!.documentTree);
     });

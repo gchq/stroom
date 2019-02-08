@@ -35,7 +35,6 @@ import {
   MoveDocRefDialog,
   RenameDocRefDialog,
   CopyDocRefDialog,
-  DeleteDocRefDialog,
   NewDocRefDialog,
   withDocumentTree,
   WithDocumentTreeProps
@@ -389,7 +388,7 @@ const AppChrome = ({
         <NewDocRefDialog listingId={LISTING_ID} />
         <MoveDocRefDialog listingId={LISTING_ID} />
         <RenameDocRefDialog listingId={LISTING_ID} />
-        <DeleteDocRefDialog listingId={LISTING_ID} />
+        {/* <DeleteDocRefDialog listingId={LISTING_ID} /> */}
         <CopyDocRefDialog listingId={LISTING_ID} />
         <div className={`app-chrome__sidebar raised-high ${sidebarClassName}`}>
           <React.Fragment>

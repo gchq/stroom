@@ -22,7 +22,8 @@ import { deleteDocuments } from "./explorerClient";
 import ThemedConfirm from "../ThemedConfirm";
 
 export interface Props {
-  uuids?: Array<string>;
+  uuids: Array<string>;
+  onCloseDialog: () => void;
 }
 
 interface ConnectDispatch {
@@ -38,15 +39,20 @@ const enhance = compose<EnhancedProps, Props>(
   )
 );
 
-const DeleteDocRefDialog = ({ uuids, deleteDocuments }: EnhancedProps) => (
+const DeleteDocRefDialog = ({
+  uuids,
+  deleteDocuments,
+  onCloseDialog
+}: EnhancedProps) => (
   <ThemedConfirm
     onConfirm={() => {
-      if (!!uuids) {
+      if (uuids.length > 0) {
         deleteDocuments(uuids);
       }
+      onCloseDialog();
     }}
-    onCancel={() => console.log("fuck off")}
-    isOpen={!!uuids}
+    onCancel={onCloseDialog}
+    isOpen={uuids.length > 0}
     question={`Delete these doc refs? ${JSON.stringify(uuids)}?`}
   />
 );

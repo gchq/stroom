@@ -15,14 +15,9 @@
  */
 
 import * as React from "react";
+import { useState } from "react";
 import { connect } from "react-redux";
-import {
-  compose,
-  withProps,
-  branch,
-  renderComponent,
-  withHandlers
-} from "recompose";
+import { compose, branch, renderComponent, withHandlers } from "recompose";
 import { withRouter } from "react-router-dom";
 
 import DocRefEditor from "../DocRefEditor";
@@ -52,7 +47,6 @@ import { GlobalStoreState } from "../../startup/reducers";
 
 const {
   prepareDocRefCreation,
-  prepareDocRefDelete,
   prepareDocRefCopy,
   prepareDocRefRename,
   prepareDocRefMove
@@ -75,15 +69,10 @@ interface WithHandlers {
 
 interface ConnectDispatch {
   prepareDocRefCreation: typeof prepareDocRefCreation;
-  prepareDocRefDelete: typeof prepareDocRefDelete;
   prepareDocRefCopy: typeof prepareDocRefCopy;
   prepareDocRefRename: typeof prepareDocRefRename;
   prepareDocRefMove: typeof prepareDocRefMove;
   fetchDocInfo: typeof fetchDocInfo;
-}
-
-interface WithProps {
-  actionBarItems: Array<ButtonProps>;
 }
 
 export interface EnhancedProps
@@ -92,8 +81,7 @@ export interface EnhancedProps
     WithHandlers,
     ConnectState,
     ConnectDispatch,
-    SelectableItemListingProps<DocRefType>,
-    WithProps {}
+    SelectableItemListingProps<DocRefType> {}
 
 const enhance = compose<EnhancedProps, Props>(
   withDocumentTree,
@@ -118,7 +106,6 @@ const enhance = compose<EnhancedProps, Props>(
     }),
     {
       prepareDocRefCreation,
-      prepareDocRefDelete,
       prepareDocRefCopy,
       prepareDocRefRename,
       prepareDocRefMove,
@@ -148,100 +135,98 @@ const enhance = compose<EnhancedProps, Props>(
         }
       }
     })
-  ),
-  withProps(
-    ({
-      folder,
-      prepareDocRefCreation,
-      prepareDocRefDelete,
-      prepareDocRefCopy,
-      prepareDocRefRename,
-      prepareDocRefMove,
-      fetchDocInfo,
-      selectableItemListing: { selectedItems, items }
-    }) => {
-      const actionBarItems: Array<ButtonProps> = [
-        {
-          icon: "file",
-          onClick: () => prepareDocRefCreation(LISTING_ID, folder.node),
-          title: "Create a Document",
-          text: "Create"
-        }
-      ];
-
-      const singleSelectedDocRef =
-        selectedItems.length === 1 ? selectedItems[0] : undefined;
-      const selectedDocRefUuids = selectedItems.map((d: DocRefType) => d.uuid);
-
-      if (selectedItems.length > 0) {
-        if (singleSelectedDocRef) {
-          actionBarItems.push({
-            icon: "info",
-            text: "Info",
-            onClick: () => fetchDocInfo(singleSelectedDocRef),
-            title: "View Information about this document"
-          });
-          actionBarItems.push({
-            icon: "edit",
-            text: "Rename",
-            onClick: () =>
-              prepareDocRefRename(LISTING_ID, singleSelectedDocRef),
-            title: "Rename this document"
-          });
-        }
-        actionBarItems.push({
-          icon: "copy",
-          text: "Copy",
-          onClick: d => prepareDocRefCopy(LISTING_ID, selectedDocRefUuids),
-          title: "Copy selected documents"
-        });
-        actionBarItems.push({
-          icon: "arrows-alt",
-          text: "Move",
-          onClick: () => prepareDocRefMove(LISTING_ID, selectedDocRefUuids),
-          title: "Move selected documents"
-        });
-        actionBarItems.push({
-          icon: "trash",
-          text: "Delete",
-          onClick: () => prepareDocRefDelete(LISTING_ID, selectedDocRefUuids),
-          title: "Delete selected documents"
-        });
-      }
-
-      return { actionBarItems };
-    }
   )
 );
 
 const FolderExplorer = ({
   folder: { node },
   folderUuid,
-  actionBarItems,
+  folder,
+  prepareDocRefCreation,
+  prepareDocRefCopy,
+  prepareDocRefRename,
+  prepareDocRefMove,
+  fetchDocInfo,
+  selectableItemListing: { selectedItems },
   onKeyDownWithShortcuts,
   openDocRef
-}: EnhancedProps) => (
-  <DocRefEditor docRefUuid={folderUuid} actionBarItems={actionBarItems}>
-    <div tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
-      {node &&
-        node.children &&
-        node.children.map(docRef => (
-          <DndDocRefListingEntry
-            key={docRef.uuid}
-            listingId={LISTING_ID}
-            docRef={docRef}
-            onNameClick={openDocRef}
-            openDocRef={openDocRef}
-          />
-        ))}
-    </div>
-    <DocRefInfoModal />
-    <MoveDocRefDialog listingId={LISTING_ID} />
-    <RenameDocRefDialog listingId={LISTING_ID} />
-    <DeleteDocRefDialog listingId={LISTING_ID} />
-    <CopyDocRefDialog listingId={LISTING_ID} />
-    <NewDocRefDialog listingId={LISTING_ID} />
-  </DocRefEditor>
-);
+}: EnhancedProps) => {
+  const [uuidsToDelete, setUuidsToDelete] = useState<Array<string>>([]);
+
+  const actionBarItems: Array<ButtonProps> = [
+    {
+      icon: "file",
+      onClick: () => prepareDocRefCreation(LISTING_ID, folder.node),
+      title: "Create a Document",
+      text: "Create"
+    }
+  ];
+
+  const singleSelectedDocRef =
+    selectedItems.length === 1 ? selectedItems[0] : undefined;
+  const selectedDocRefUuids = selectedItems.map((d: DocRefType) => d.uuid);
+
+  if (selectedItems.length > 0) {
+    if (singleSelectedDocRef) {
+      actionBarItems.push({
+        icon: "info",
+        text: "Info",
+        onClick: () => fetchDocInfo(singleSelectedDocRef),
+        title: "View Information about this document"
+      });
+      actionBarItems.push({
+        icon: "edit",
+        text: "Rename",
+        onClick: () => prepareDocRefRename(LISTING_ID, singleSelectedDocRef),
+        title: "Rename this document"
+      });
+    }
+    actionBarItems.push({
+      icon: "copy",
+      text: "Copy",
+      onClick: () => prepareDocRefCopy(LISTING_ID, selectedDocRefUuids),
+      title: "Copy selected documents"
+    });
+    actionBarItems.push({
+      icon: "arrows-alt",
+      text: "Move",
+      onClick: () => prepareDocRefMove(LISTING_ID, selectedDocRefUuids),
+      title: "Move selected documents"
+    });
+    actionBarItems.push({
+      icon: "trash",
+      text: "Delete",
+      onClick: () => setUuidsToDelete(selectedDocRefUuids),
+      title: "Delete selected documents"
+    });
+  }
+
+  return (
+    <DocRefEditor docRefUuid={folderUuid} actionBarItems={actionBarItems}>
+      <div tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
+        {node &&
+          node.children &&
+          node.children.map(docRef => (
+            <DndDocRefListingEntry
+              key={docRef.uuid}
+              listingId={LISTING_ID}
+              docRef={docRef}
+              onNameClick={openDocRef}
+              openDocRef={openDocRef}
+            />
+          ))}
+      </div>
+      <DocRefInfoModal />
+      <MoveDocRefDialog listingId={LISTING_ID} />
+      <RenameDocRefDialog listingId={LISTING_ID} />
+      <DeleteDocRefDialog
+        uuids={uuidsToDelete}
+        onCloseDialog={() => setUuidsToDelete([])}
+      />
+      <CopyDocRefDialog listingId={LISTING_ID} />
+      <NewDocRefDialog listingId={LISTING_ID} />
+    </DocRefEditor>
+  );
+};
 
 export default enhance(FolderExplorer);

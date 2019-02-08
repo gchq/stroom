@@ -1,5 +1,5 @@
 import * as React from "react";
-import { connect } from "react-redux";
+import { useState } from "react";
 import { storiesOf } from "@storybook/react";
 
 import DeleteDocRefDialog from "./DeleteDocRefDialog";
@@ -11,21 +11,21 @@ import "../../styles/main.css";
 
 const testFolder2 = fromSetupSampleData.children![1];
 
-const LISTING_ID = "test";
-
 interface Props {
   testUuids: Array<string>;
 }
 
 // Delete
-const TestDeleteDialog = ({testUuids}: Props) => (
-  <div>
-    <button onClick={() => prepareDocRefDelete(LISTING_ID, testUuids)}>
-      Show
-    </button>
-    <DeleteDocRefDialog uuids={} />
-  </div>
-);
+const TestDeleteDialog = ({ testUuids }: Props) => {
+  const [uuids, setUuids] = useState<Array<string>>([]);
+
+  return (
+    <div>
+      <button onClick={() => setUuids(testUuids)}>Show</button>
+      <DeleteDocRefDialog uuids={uuids} onCloseDialog={() => setUuids([])} />
+    </div>
+  );
+};
 
 storiesOf("Explorer/Delete Doc Ref Dialog", module)
   .addDecorator(StroomDecorator)

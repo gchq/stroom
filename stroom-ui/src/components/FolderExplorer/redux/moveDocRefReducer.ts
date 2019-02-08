@@ -29,7 +29,7 @@ export interface PrepareDocRefMoveAction
   extends ActionId,
     Action<"PREPARE_DOC_REF_MOVE"> {
   uuids: Array<string>;
-  destinationUuid: string;
+  destinationUuid?: string;
 }
 
 export interface CompleteDocRefMoveAction
@@ -40,7 +40,7 @@ export const actionCreators = {
   prepareDocRefMove: (
     id: string,
     uuids: Array<string>,
-    destinationUuid: string
+    destinationUuid?: string
   ): PrepareDocRefMoveAction => ({
     type: PREPARE_DOC_REF_MOVE,
     id,
