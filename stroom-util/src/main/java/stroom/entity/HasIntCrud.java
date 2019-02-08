@@ -3,26 +3,26 @@ package stroom.entity;
 import javax.annotation.Nonnull;
 import java.util.Optional;
 
-public interface BasicIntCrudDao<EntityType> {
+public interface HasIntCrud<T_Entity> {
 
     /**
      * Creates the passes record object in the persistence implementation
-     * @param record Object to persist.
+     * @param entity Object to persist.
      * @return The persisted object including any changes such as auto IDs
      */
-    EntityType create(@Nonnull final EntityType record);
+    T_Entity create(@Nonnull final T_Entity entity);
 
     /**
      * Update the passed record in the persistence implementation
-     * @param record The record to update.
+     * @param entity The record to update.
      * @return The record as it now appears in the persistence implementation
      */
-    EntityType update(@Nonnull final EntityType record);
+    T_Entity update(@Nonnull final T_Entity entity);
 
     /**
-     * Delete the record associated with the passed id value.
-     * @param id The unique identifier for the record to delete.
-     * @return The number of records deleted.
+     * Delete the entity associated with the passed id value.
+     * @param id The unique identifier for the entity to delete.
+     * @return True if the entity was deleted. False if the id doesn't exist.
      */
     boolean delete(final int id);
 
@@ -31,5 +31,5 @@ public interface BasicIntCrudDao<EntityType> {
      * @param id The id to uniquely identify the required record with
      * @return The record associated with the id in the database, if it exists.
      */
-    Optional<EntityType> fetch(final int id);
+    Optional<T_Entity> fetch(final int id);
 }
