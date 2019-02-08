@@ -31,13 +31,15 @@ import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 import java.util.Objects;
 
+// barring class/pkg naming, this should be identical to  stroom.db.migration._V07_00_00.doc.dictionary._V07_00_00_OldDictionaryDoc
+
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "includes"})
 @JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "dictionary")
 @XmlType(name = "DictionaryDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "imports"})
 /**
- * Used for legacy migration
+ * Used for legacy import migration
  **/
 @Deprecated
 public class OldDictionaryDoc extends Doc {

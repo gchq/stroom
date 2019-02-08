@@ -377,7 +377,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         getView().addResizableColumn(new Column<MetaRow, String>(new TextCell()) {
             @Override
             public String getValue(final MetaRow row) {
-                if (row.getMeta().getProcessorId() != null) {
+                if (row.getMeta().getProcessorUuid() != null) {
                     if (row.getMeta().getPipelineUuid() != null) {
                         return row.getMeta().getPipelineUuid();
                     } else {

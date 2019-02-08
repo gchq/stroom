@@ -21,10 +21,10 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
-import stroom.widget.util.client.DoubleSelectTest;
+import stroom.widget.util.client.DoubleSelectTester;
 
 public class XSDNodeLabel extends Composite implements SelectableItem {
-    private final DoubleSelectTest doubleClickTest = new DoubleSelectTest();
+    private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     private boolean selected;
 
     public XSDNodeLabel(final String title, final SelectionMap selectionMap, final XSDModel model, final XSDNode node,

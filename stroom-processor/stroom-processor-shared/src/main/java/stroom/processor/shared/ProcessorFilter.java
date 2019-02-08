@@ -45,6 +45,7 @@ public class ProcessorFilter implements HasAuditInfo, SharedObject {
     private Long updateTimeMs;
     private String updateUser;
 
+    private String uuid;
     private String data;
     private QueryData queryData;
 
@@ -112,6 +113,10 @@ public class ProcessorFilter implements HasAuditInfo, SharedObject {
 
     public void setUpdateUser(final String updateUser) {
         this.updateUser = updateUser;
+    }
+
+    String getUuid() {
+        return uuid;
     }
 
     public String getData() {

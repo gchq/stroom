@@ -23,7 +23,11 @@ import stroom.processor.shared.Processor;
 
 public interface StreamProcessorService {
 
+    Processor fetch(int id);
+
     Processor fetchInsecure(int id);
+
+    Processor fetchByUuid(String uuid);
 
     Processor create();
 
@@ -31,7 +35,6 @@ public interface StreamProcessorService {
 
     int delete(int id);
 
-    Processor fetch(int id);
-
     BaseResultList<Processor> find(FindStreamProcessorCriteria criteria);
+
 }

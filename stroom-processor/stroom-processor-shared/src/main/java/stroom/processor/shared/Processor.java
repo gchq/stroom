@@ -37,11 +37,14 @@ public class Processor implements HasAuditInfo, SharedObject {
     private Long updateTimeMs;
     private String updateUser;
 
+    private String uuid;
+
     // Only One type for the moment
     private String taskType = PIPELINE_STREAM_PROCESSOR_TASK_TYPE;
     private String pipelineUuid;
     private boolean enabled;
 
+    //TODO do we need pipelineName?
 //    private String pipelineName;
 
     public Processor() {
@@ -102,6 +105,14 @@ public class Processor implements HasAuditInfo, SharedObject {
 
     public void setUpdateUser(final String updateUser) {
         this.updateUser = updateUser;
+    }
+
+    String getUuid() {
+        return uuid;
+    }
+
+    void setUuid(final String uuid) {
+        this.uuid = uuid;
     }
 
     public String getTaskType() {

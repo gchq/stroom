@@ -29,7 +29,7 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
-import stroom.widget.util.client.DoubleSelectTest;
+import stroom.widget.util.client.DoubleSelectTester;
 
 /**
  * An editable text cell. Click to edit, escape to cancel, return to commit.
@@ -37,7 +37,7 @@ import stroom.widget.util.client.DoubleSelectTest;
 public class FieldEditTextCell extends AbstractEditableCell<String, FieldEditTextCell.ViewData> {
     private static Template template;
     private final FieldsManager fieldsManager;
-    private final DoubleSelectTest doubleClickTest = new DoubleSelectTest();
+    private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
 
     /**
      * Construct a new EditTextCell that will use a given

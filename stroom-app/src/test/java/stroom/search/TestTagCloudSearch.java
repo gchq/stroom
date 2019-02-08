@@ -54,7 +54,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestTagCloudSearch.class);
     private static boolean doneSetup;
     @Inject
-    private CommonIndexingTest commonIndexingTest;
+    private CommonIndexingTestHelper commonIndexingTestHelper;
     @Inject
     private IndexStore indexStore;
 
@@ -62,7 +62,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
     public void onBefore() {
         if (!doneSetup) {
             doneSetup = true;
-            commonIndexingTest.setup();
+            commonIndexingTestHelper.setup();
         }
     }
 
@@ -89,7 +89,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
                 .format(Format.Type.NUMBER)
                 .build();
 
-        final DocRef resultPipeline = commonIndexingTest.getSearchResultTextPipeline();
+        final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultTextPipeline();
         final TableSettings tableSettings = new TableSettings(null, Arrays.asList(fldText, fldCount), true, resultPipeline, null, null);
 
         final ExpressionOperator.Builder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");

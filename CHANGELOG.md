@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1079** : Improved the logging of permission errors encountered during stream processing
+
 * Issue **#1058** : Added property `stroom.pipeline.parser.secureProcessing` to enable/disable the XML secure processing feature.
 
 * Issue **#1062** : Add env var for UI path

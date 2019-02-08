@@ -94,7 +94,7 @@ const DetailsTabs = ({ data, details, dataViewerId }: Props) => {
                     <tr>
                       <td>Stream processor uuid</td>
                       TODO
-                      {/* <td>{details.stream.streamProcessor.id}</td> */}
+                      {/* <td>{details.stream.processor.id}</td> */}
                     </tr>
                     <tr>
                       <td>Files</td>

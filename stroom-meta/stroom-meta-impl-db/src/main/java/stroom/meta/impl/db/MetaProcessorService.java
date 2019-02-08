@@ -18,5 +18,5 @@
 package stroom.meta.impl.db;
 
 interface MetaProcessorService {
-    Integer getOrCreate(Integer processorId, String pipelineUuid);
+    Integer getOrCreate(String processorUuid, String processorFilterUuid, String pipelineUuid);
 }

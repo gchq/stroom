@@ -23,6 +23,9 @@ import org.junit.jupiter.api.TestInfo;
 import stroom.db.util.HikariUtil;
 import stroom.persist.PersistService;
 import stroom.task.api.TaskManager;
+import stroom.util.test.TempDir;
+
+import java.nio.file.Path;
 
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
     private static final Injector injector;
@@ -41,12 +44,12 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
     }
 
     @BeforeEach
-    void before(final TestInfo testInfo) {
+    void before(final TestInfo testInfo, @TempDir final Path tempDir) {
 //        final Injector childInjector = injector.createChildInjector();
 //        childInjector.injectMembers(this);
 
         injector.injectMembers(this);
-        super.before(testInfo);
+        super.before(testInfo, tempDir);
     }
 //
 //    @After

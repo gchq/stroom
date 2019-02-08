@@ -54,7 +54,7 @@ import stroom.data.pager.client.Pager;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.DoubleSelectTest;
+import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -70,7 +70,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     private final SimplePanel emptyTableWidget = new SimplePanel();
     private final SimplePanel loadingTableWidget = new SimplePanel();
     private final List<ColSettings> colSettings = new ArrayList<>();
-    private final DoubleSelectTest doubleClickTest = new DoubleSelectTest();
+    private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     private final boolean allowMultiSelect;
     /**
      * The main DataGrid.

@@ -37,7 +37,7 @@ import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabListPresenter;
-import stroom.widget.util.client.DoubleClickTest;
+import stroom.widget.util.client.DoubleClickTester;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,7 +50,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     private final Map<TabData, AbstractTab> tabWidgetMap = new HashMap<>();
     private final List<TabData> tabPriority = new ArrayList<>();
     private final List<TabData> tabs = new ArrayList<>();
-    private final DoubleClickTest doubleClickTest = new DoubleClickTest();
+    private final DoubleClickTester doubleClickTest = new DoubleClickTester();
     private TabData selectedTab;
     private int overflowTabCount;
     private TabListPresenter tabItemListPresenter;

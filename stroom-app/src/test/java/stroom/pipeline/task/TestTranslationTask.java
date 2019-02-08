@@ -25,7 +25,7 @@ import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.processor.StreamProcessorTaskExecutor;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.CommonTranslationTest;
+import stroom.test.CommonTranslationTestHelper;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
@@ -50,7 +50,7 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
     @Inject
     private MockStreamStore streamStore;
     @Inject
-    private CommonTranslationTest commonPipelineTest;
+    private CommonTranslationTestHelper commonTranslationTestHelper;
 
     /**
      * Tests Task with a valid resource and feed.
@@ -59,9 +59,9 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
      */
     @Test
     void testBothValid() throws IOException {
-        commonPipelineTest.setup();
+        commonTranslationTestHelper.setup();
 
-        final List<StreamProcessorTaskExecutor> results = commonPipelineTest.processAll();
+        final List<StreamProcessorTaskExecutor> results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(N4);
         for (final StreamProcessorTaskExecutor result : results) {
             final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
@@ -101,9 +101,9 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
      */
     @Test
     void testInvalidResource() {
-        commonPipelineTest.setup(CommonTranslationTest.FEED_NAME, CommonTranslationTest.INVALID_RESOURCE_NAME);
+        commonTranslationTestHelper.setup(CommonTranslationTestHelper.FEED_NAME, CommonTranslationTestHelper.INVALID_RESOURCE_NAME);
 
-        final List<StreamProcessorTaskExecutor> results = commonPipelineTest.processAll();
+        final List<StreamProcessorTaskExecutor> results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(N4);
 
         // Make sure no records were written.
