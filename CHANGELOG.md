@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add migration script to remove property `stroom.node.status.heapHistogram.jMapExecutable`.
+
 ## [v6.0-beta.27] - 2019-02-07
 
 * Uplift base docker image to openjdk:8u191-jdk-alpine3.9, reverting back to JDK for access to diagnostic tools.
