@@ -46,7 +46,6 @@ class RASegmentInputStream extends SegmentInputStream {
     private final byte[] singleByte = new byte[1];
     private final LongBuffer longBuffer = ByteBuffer.wrap(eightBytes).asLongBuffer();
     private InputStream data;
-    private final SupplierWithIO<InputStream> indexInputStreamSupplier;
     private InputStream indexInputStream;
     private Set<Long> included;
     private Iterator<Long> includedIterator;
@@ -62,22 +61,22 @@ class RASegmentInputStream extends SegmentInputStream {
     private long windowSegmentCount = 0;
     private long totalSegmentCount;
 
-    RASegmentInputStream(final InputStream data,
-                         final InputStream inputStream) {
-        this(data, () -> inputStream);
-    }
+//    RASegmentInputStream(final InputStream data,
+//                         final InputStream inputStream) {
+//        this(data, inputStream);
+//    }
+//
+//    RASegmentInputStream(final InputStream data,
+//                         final InputStream inputStream,
+//                         final long byteStart,
+//                         final long byteEnd) {
+//        this(data, () -> inputStream, byteStart, byteEnd);
+//    }
 
-    RASegmentInputStream(final InputStream data,
-                         final InputStream inputStream,
-                         final long byteStart,
-                         final long byteEnd) {
-        this(data, () -> inputStream, byteStart, byteEnd);
-    }
-
-    RASegmentInputStream(final InputStream data, final SupplierWithIO<InputStream> indexInputStreamSupplier) {
+    RASegmentInputStream(final InputStream data, final InputStream indexInputStream) {
         try {
             this.data = data;
-            this.indexInputStreamSupplier = indexInputStreamSupplier;
+            this.indexInputStream = indexInputStream;
 
             initWindow(0, ((SeekableInputStream) data).getSize());
         } catch (final IOException e) {
@@ -86,12 +85,12 @@ class RASegmentInputStream extends SegmentInputStream {
     }
 
     RASegmentInputStream(final InputStream data,
-                         final SupplierWithIO<InputStream> indexInputStreamSupplier,
+                         final InputStream indexInputStream,
                          final long byteStart,
                          final long byteEnd) {
         try {
             this.data = data;
-            this.indexInputStreamSupplier = indexInputStreamSupplier;
+            this.indexInputStream = indexInputStream;
 
             initWindow(byteStart, byteEnd);
         } catch (final IOException e) {
@@ -104,11 +103,6 @@ class RASegmentInputStream extends SegmentInputStream {
     }
 
     private void initWindow(final long byteStart, final long byteEnd) throws IOException {
-        // Lazily initialise index input stream provider.
-        if (indexInputStream == null) {
-            indexInputStream = indexInputStreamSupplier.getWithIO();
-        }
-
         totalSegmentCount = (((SeekableInputStream) indexInputStream).getSize() / INT8) + 1;
 
         // If the window starts at 0 we start at segment 0 otherwise we need to

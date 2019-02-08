@@ -381,7 +381,7 @@ public class StreamRestoreTool extends DatabaseTool {
         if (Files.isRegularFile(manifest)) {
             final AttributeMap attributeMap = new AttributeMap();
             try (final InputStream inputStream = Files.newInputStream(manifest)) {
-                AttributeMapUtil.read(inputStream, true, attributeMap);
+                AttributeMapUtil.read(inputStream, attributeMap);
             } catch (final IOException ioEx) {
             }
             rtnMap.putAll(attributeMap);

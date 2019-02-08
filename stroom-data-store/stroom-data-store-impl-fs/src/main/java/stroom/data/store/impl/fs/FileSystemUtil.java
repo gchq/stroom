@@ -120,6 +120,15 @@ final class FileSystemUtil {
     static boolean deleteAnyPath(final Collection<Path> files) {
         boolean ok = true;
         for (Path file : files) {
+            if (!deleteAnyPath(file)) {
+                ok = false;
+            }
+        }
+        return ok;
+    }
+
+    static boolean deleteAnyPath(final Path file) {
+        boolean ok = true;
             if (Files.isRegularFile(file)) {
                 try {
                     Files.delete(file);
@@ -131,7 +140,6 @@ final class FileSystemUtil {
                     ok &= FileUtil.deleteDir(file);
                 }
             }
-        }
         return ok;
     }
 

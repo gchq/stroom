@@ -107,7 +107,7 @@ class TestFileSystemUtil {
 
         final FileSystemStreamPathHelper fileSystemStreamPathHelper = new FileSystemStreamPathHelper(fileSystemFeedPaths, new MockFileSystemTypePaths());
 
-        final Path rootFile = fileSystemStreamPathHelper.createRootStreamFile(buildTestVolume().getPath(), meta, StreamTypeNames.EVENTS);
+        final Path rootFile = fileSystemStreamPathHelper.getRootPath(buildTestVolume().getPath(), meta, StreamTypeNames.EVENTS);
 
         assertThat(rootFile).isNotNull();
         assertPathEndsWith(rootFile, "EVENTS/2010/01/01/001/001/1=001001001.evt.bgz");
@@ -126,20 +126,20 @@ class TestFileSystemUtil {
 
         final FileSystemStreamPathHelper fileSystemStreamPathHelper = new FileSystemStreamPathHelper(fileSystemFeedPaths, new MockFileSystemTypePaths());
 
-        final Path rootFile = fileSystemStreamPathHelper.createRootStreamFile(buildTestVolume().getPath(), meta,
+        final Path rootFile = fileSystemStreamPathHelper.getRootPath(buildTestVolume().getPath(), meta,
                 StreamTypeNames.RAW_EVENTS);
 
         touch(rootFile);
 
-        final Path child1 = fileSystemStreamPathHelper.createChildStreamFile(rootFile, StreamTypeNames.CONTEXT);
+        final Path child1 = fileSystemStreamPathHelper.getChildPath(rootFile, StreamTypeNames.CONTEXT);
         touch(child1);
         assertPathEndsWith(child1, "EVENTS/2010/01/01/001/001/1=001001001.revt.ctx.bgz");
 
-        final Path child2 = fileSystemStreamPathHelper.createChildStreamFile(rootFile, InternalStreamTypeNames.SEGMENT_INDEX);
+        final Path child2 = fileSystemStreamPathHelper.getChildPath(rootFile, InternalStreamTypeNames.SEGMENT_INDEX);
         touch(child2);
         assertPathEndsWith(child2, "EVENTS/2010/01/01/001/001/1=001001001.revt.seg.dat");
 
-        final Path child1_1 = fileSystemStreamPathHelper.createChildStreamFile(child1, InternalStreamTypeNames.SEGMENT_INDEX);
+        final Path child1_1 = fileSystemStreamPathHelper.getChildPath(child1, InternalStreamTypeNames.SEGMENT_INDEX);
         touch(child1_1);
         assertPathEndsWith(child1_1, "EVENTS/2010/01/01/001/001/1=001001001.revt.ctx.seg.dat");
 

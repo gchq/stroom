@@ -317,6 +317,9 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
             assertContent("expecting context data", source, true, StreamTypeNames.CONTEXT);
 
         }
+
+        final String meta = "Feed:" + feedName1 + "\nProxy:ProxyTest\nCompression:Zip\nReceivedTime:2010-01-01T00:00:00.000Z\n";
+
         try (final Source source = streamStore.openStreamSource(list.get(0).getId())) {
             assertThat(source.count()).isEqualTo(2);
 
@@ -325,21 +328,21 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                     assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("data1\ndata1\n");
                 }
                 try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
-                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("????");
+                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo(meta);
                 }
                 try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.CONTEXT)) {
-                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("????");
+                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("context1\ncontext1\n");
                 }
             }
-            try (final InputStreamProvider inputStreamProvider = source.get(0)) {
+            try (final InputStreamProvider inputStreamProvider = source.get(1)) {
                 try (final InputStream inputStream = inputStreamProvider.get()) {
                     assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("data2\ndata2\n");
                 }
                 try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
-                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("????");
+                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo(meta);
                 }
                 try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.CONTEXT)) {
-                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("????");
+                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo("context2\ncontext2\n");
                 }
             }
         }

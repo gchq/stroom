@@ -91,6 +91,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 
     private OutputStreamProvider currentOutputStreamProvider;
     private OutputStream currentOutputStream;
+    private Layer currentLayer;
 
     public StreamTargetStroomStreamHandler(final Store streamStore,
                                            final FeedDocCache feedDocCache,
@@ -146,7 +147,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         closeCurrentOutput();
 
         currentFileType = stroomZipEntry.getStroomZipFileType();
-        final String streamTypeName = convertType(currentFileType);
+//        final String streamTypeName = convertType(currentFileType);
 
         // We don't want to aggregate reference feeds.
         final boolean singleEntry = isReference(currentFeedName) || oneByOne;
@@ -169,24 +170,45 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         if (StroomZipFileType.Meta.equals(currentFileType)) {
             // Header we just buffer up
             currentHeaderByteArrayOutputStream.reset();
-        } else if (StroomZipFileType.Data.equals(currentFileType) || StroomZipFileType.Context.equals(currentFileType)) {
-            currentOutputStreamProvider = getTarget().next();
-            currentOutputStream = currentOutputStreamProvider.get(streamTypeName);
+        } else if (StroomZipFileType.Data.equals(currentFileType)) {
+            // Check to see if we need to move to the next output and do so if necessary.
+            checkLayer(currentFileType);
+            currentOutputStream = currentOutputStreamProvider.get();
+        } else if (StroomZipFileType.Context.equals(currentFileType)) {
+            // Check to see if we need to move to the next output and do so if necessary.
+            checkLayer(currentFileType);
+            currentOutputStream = currentOutputStreamProvider.get(StreamTypeNames.CONTEXT);
         }
     }
 
-    private String convertType(StroomZipFileType type) {
-        if (type == null || StroomZipFileType.Data.equals(type)) {
-            return null;
+    /**
+     * Layers are used to synchronise writing context, meta and actual data to the current output stream provider.
+     * @param type The type that needs to be added to the current layer.
+     */
+    private void checkLayer(final StroomZipFileType type) {
+        if (currentLayer == null || currentLayer.hasType(type)) {
+            // We have either not initialised any layer or the current layer already includes this type so start a new layer.
+            currentLayer = new Layer();
+            // Tell the new layer that it will contain the requested type.
+            currentLayer.hasType(type);
+            // Get a new output stream provider for the new layer.
+            currentOutputStreamProvider = getTarget().next();
         }
-        switch (type) {
-            case Meta:
-                return StreamTypeNames.META;
-            case Context:
-                return StreamTypeNames.CONTEXT;
-        }
-        return null;
     }
+
+
+//    private String convertType(StroomZipFileType type) {
+//        if (type == null || StroomZipFileType.Data.equals(type)) {
+//            return null;
+//        }
+//        switch (type) {
+//            case Meta:
+//                return StreamTypeNames.META;
+//            case Context:
+//                return StreamTypeNames.CONTEXT;
+//        }
+//        return null;
+//    }
 
     private String getStreamTypeName(final String feedName) {
         return feedDocCache.get(feedName)
@@ -202,7 +224,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 
     @Override
     public void handleEntryEnd() throws IOException {
-        final String streamTypeName = convertType(currentFileType);
+//        final String streamTypeName = convertType(currentFileType);
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("handleEntryEnd() - " + currentFileType);
@@ -244,7 +266,8 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
                 }
             }
 
-            try (final OutputStream outputStream = currentOutputStreamProvider.get(streamTypeName)) {
+            checkLayer(StroomZipFileType.Meta);
+            try (final OutputStream outputStream = currentOutputStreamProvider.get(StreamTypeNames.META)) {
                 outputStream.write(headerBytes);
             }
         }
@@ -279,7 +302,6 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     @Override
     public void close() {
         targetMap.values().forEach(CloseableUtil::closeLogAndIgnoreException);
-
         targetMap.clear();
     }
 
@@ -302,12 +324,12 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     }
 
 //    private void nextOutputStream(final String feedName, final StroomZipFileType stroomZipFileType) {
-//        final OutputStream outputStream = getOutputStreamProvider().next();
+//        final OutputStream outputStream = getOutputStreamProvider().checkLayer();
 //        targetMap.put(currentFeedName, outputStream);
 //    }
 //
 //    private void nextOutputStream(final String type) {
-//        final OutputStream outputStream = getOutputStreamProvider().next(type);
+//        final OutputStream outputStream = getOutputStreamProvider().checkLayer(type);
 //        targetMap.put(currentFeedName, outputStream);
 //    }
 //
@@ -379,5 +401,12 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 //            outputStreamProviderMap.put(currentFeedName, outputStreamProvider);
 //        }
 //        return outputStreamProvider;
+    }
+
+    private static class Layer {
+        final Set<StroomZipFileType> types = new HashSet<>();
+        boolean hasType(final StroomZipFileType type) {
+            return !types.add(type);
+        }
     }
 }

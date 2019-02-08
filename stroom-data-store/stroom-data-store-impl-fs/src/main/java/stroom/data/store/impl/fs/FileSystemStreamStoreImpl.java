@@ -38,10 +38,7 @@ import stroom.volume.VolumeService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -79,18 +76,18 @@ class FileSystemStreamStoreImpl implements Store {
     public Target openStreamTarget(final MetaProperties metaProperties) {
         LOGGER.debug("openStreamTarget() " + metaProperties);
 
-        final Set<VolumeEntity> volumeSet = volumeService.getStreamVolumeSet(nodeInfo.getThisNode());
-        if (volumeSet.isEmpty()) {
+        final VolumeEntity volume = volumeService.getStreamVolume(nodeInfo.getThisNode());
+        if (volume == null) {
             throw new DataException("Failed to get lock as no writeable volumes");
         }
 
         // First time call (no file yet exists)
         final Meta meta = metaService.create(metaProperties);
 
-        final Set<DataVolume> streamVolumes = streamVolumeService.createStreamVolumes(meta.getId(), volumeSet);
-        final Set<String> rootPaths = streamVolumes.stream().map(DataVolume::getVolumePath).collect(Collectors.toSet());
+        final DataVolume dataVolume = streamVolumeService.createStreamVolume(meta.getId(), volume);
+        final String rootPath = dataVolume.getVolumePath();
         final String streamType = meta.getTypeName();
-        final FileSystemStreamTarget target = FileSystemStreamTarget.create(metaService, fileSystemStreamPathHelper, meta, rootPaths, streamType, false);
+        final FileSystemStreamTarget target = FileSystemStreamTarget.create(metaService, fileSystemStreamPathHelper, meta, rootPath, streamType, false);
 
         // Force Creation of the files
         target.getOutputStream();
@@ -106,15 +103,15 @@ class FileSystemStreamStoreImpl implements Store {
         LOGGER.debug("openExistingStreamTarget() " + meta);
 
         // Lock the object
-        final Set<DataVolume> streamVolumes = streamVolumeService.findStreamVolume(meta.getId());
-        if (streamVolumes.isEmpty()) {
+        final DataVolume dataVolume = streamVolumeService.findStreamVolume(meta.getId());
+        if (dataVolume == null) {
             throw new DataException("Not all volumes are unlocked");
         }
-        final Meta lockedMeta = metaService.updateStatus(meta, Status.LOCKED, Status.UNLOCKED);
-        final Set<String> rootPaths = streamVolumes.stream().map(DataVolume::getVolumePath).collect(Collectors.toSet());
+        final Meta lockedMeta = metaService.updateStatus(meta, Status.UNLOCKED, Status.LOCKED);
+        final String rootPath = dataVolume.getVolumePath();
 
         final String streamType = lockedMeta.getTypeName();
-        final FileSystemStreamTarget target = FileSystemStreamTarget.create(metaService, fileSystemStreamPathHelper, lockedMeta, rootPaths,
+        final FileSystemStreamTarget target = FileSystemStreamTarget.create(metaService, fileSystemStreamPathHelper, lockedMeta, rootPath,
                 streamType, true);
 
         syncAttributes(lockedMeta, target);
@@ -148,7 +145,7 @@ class FileSystemStreamStoreImpl implements Store {
 //
 //            // Are we appending?
 //            if (fileSystemStreamTarget.isAppend()) {
-//                final Set<Path> childFile = fileSystemStreamPathHelper.createChildStreamPath(
+//                final Set<Path> childFile = fileSystemStreamPathHelper.getChildPathSet(
 //                        ((FileSystemStreamTarget) streamTarget).getFiles(false), InternalStreamTypeNames.MANIFEST);
 //
 //                // Does the manifest exist ... overwrite it
@@ -186,16 +183,14 @@ class FileSystemStreamStoreImpl implements Store {
 //    }
 
     @Override
-    public int deleteStreamTarget(final Target target) {
+    public Target deleteStreamTarget(final Target target) {
         // Make sure the stream is closed.
         try {
-            target.close();
-        } catch (final IOException e) {
+            ((FileSystemStreamTarget)target).delete();
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to delete stream target!", e.getMessage(), e);
         }
-
-        // Make sure the stream data is deleted.
-        return metaService.delete(target.getMeta().getId(), false);
+        return target;
     }
 
     /**
@@ -236,21 +231,21 @@ class FileSystemStreamStoreImpl implements Store {
         if (meta != null) {
             LOGGER.debug("openStreamSource() {}", meta.getId());
 
-            final Set<DataVolume> volumeSet = streamVolumeService.findStreamVolume(meta.getId());
-            if (volumeSet.isEmpty()) {
+            final DataVolume dataVolume = streamVolumeService.findStreamVolume(meta.getId());
+            if (dataVolume == null) {
                 final String message = "Unable to find any volume for " + meta;
                 LOGGER.warn(message);
                 throw new DataException(message);
             }
-            final Node node = nodeInfo.getThisNode();
-            final DataVolume streamVolume = streamVolumeService.pickBestVolume(volumeSet, node.getId(), node.getRack().getId());
-            if (streamVolume == null) {
-                final String message = "Unable to access any volume for " + meta
-                        + " perhaps the data is on a private volume";
-                LOGGER.warn(message);
-                throw new DataException(message);
-            }
-            streamSource = FileSystemStreamSource.create(fileSystemStreamPathHelper, meta, streamVolume.getVolumePath(), meta.getTypeName());
+//            final Node node = nodeInfo.getThisNode();
+//            final DataVolume streamVolume = streamVolumeService.pickBestVolume(volumeSet, node.getId(), node.getRack().getId());
+//            if (streamVolume == null) {
+//                final String message = "Unable to access any volume for " + meta
+//                        + " perhaps the data is on a private volume";
+//                LOGGER.warn(message);
+//                throw new DataException(message);
+//            }
+            streamSource = FileSystemStreamSource.create(fileSystemStreamPathHelper, meta, dataVolume.getVolumePath(), meta.getTypeName());
         }
 
         return streamSource;
@@ -271,7 +266,7 @@ class FileSystemStreamStoreImpl implements Store {
 //        final Set<DataVolume> volumeSet = streamVolumeService.findStreamVolume(meta.getId());
 //        if (volumeSet != null && volumeSet.size() > 0) {
 //            final DataVolume streamVolume = volumeSet.iterator().next();
-//            final Path manifest = fileSystemStreamPathHelper.createChildStreamFile(meta, streamVolume, InternalStreamTypeNames.MANIFEST);
+//            final Path manifest = fileSystemStreamPathHelper.getChildPath(meta, streamVolume, InternalStreamTypeNames.MANIFEST);
 //
 //            if (Files.isRegularFile(manifest)) {
 //                final AttributeMap attributeMap = new AttributeMap();
@@ -292,7 +287,7 @@ class FileSystemStreamStoreImpl implements Store {
 ////                }
 //
 //                try {
-//                    final Path rootFile = fileSystemStreamPathHelper.createRootStreamFile(streamVolume.getVolumePath(),
+//                    final Path rootFile = fileSystemStreamPathHelper.getRootPath(streamVolume.getVolumePath(),
 //                            meta, meta.getTypeName());
 //
 //                    final List<Path> allFiles = fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile);

@@ -136,10 +136,11 @@ public class ProxyRepositoryCreator {
                     newName = Strings.padStart(newName, 3, '0');
 
                     // Add meta data.
-                    InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
                     final AttributeMap map = createMap(feed, effectiveMs);
-                    if (inputStream != null) {
-                        AttributeMapUtil.read(inputStream, true, map);
+                    try (final InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta)) {
+                        if (inputStream != null) {
+                            AttributeMapUtil.read(inputStream,  map);
+                        }
                     }
                     try (final OutputStream outputStream = zipOutputStream
                             .addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Meta).getFullName())) {
@@ -147,20 +148,22 @@ public class ProxyRepositoryCreator {
                     }
 
                     // Add context data.
-                    inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
-                    if (inputStream != null) {
-                        try (final OutputStream outputStream = zipOutputStream
-                                .addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Context).getFullName())) {
-                            StreamUtil.streamToStream(inputStream, outputStream);
+                    try (InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context)) {
+                        if (inputStream != null) {
+                            try (final OutputStream outputStream = zipOutputStream
+                                    .addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Context).getFullName())) {
+                                StreamUtil.streamToStream(inputStream, outputStream);
+                            }
                         }
                     }
 
                     // Add data.
-                    inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
-                    if (inputStream != null) {
-                        try (final OutputStream outputStream = zipOutputStream
-                                .addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Data).getFullName())) {
-                            StreamUtil.streamToStream(inputStream, outputStream);
+                    try (InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data)) {
+                        if (inputStream != null) {
+                            try (final OutputStream outputStream = zipOutputStream
+                                    .addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Data).getFullName())) {
+                                StreamUtil.streamToStream(inputStream, outputStream);
+                            }
                         }
                     }
                 }

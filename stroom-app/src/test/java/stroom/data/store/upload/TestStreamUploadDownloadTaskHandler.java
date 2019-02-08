@@ -120,31 +120,19 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         try (final Target streamTarget = streamStore.openStreamTarget(metaProperties)) {
             originalMeta = streamTarget.getMeta();
 
-            try (final OutputStreamProvider outputStreamProvider = streamTarget.next()) {
-                try (final OutputStream outputStream = outputStreamProvider.get()) {
-                    outputStream.write("DATA1".getBytes(StreamUtil.DEFAULT_CHARSET));
-                }
+            for (int i = 1; i <= 2; i++) {
+                try (final OutputStreamProvider outputStreamProvider = streamTarget.next()) {
+                    try (final OutputStream outputStream = outputStreamProvider.get()) {
+                        outputStream.write(("DATA" + i).getBytes(StreamUtil.DEFAULT_CHARSET));
+                    }
 
-                try (final OutputStream outputStream = outputStreamProvider.get(StreamTypeNames.META)) {
-                    outputStream.write("META:1\nX:1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-                }
+                    try (final OutputStream outputStream = outputStreamProvider.get(StreamTypeNames.META)) {
+                        outputStream.write(("META:" + i + "\nX:" + i + "\n").getBytes(StreamUtil.DEFAULT_CHARSET));
+                    }
 
-                try (final OutputStream outputStream = outputStreamProvider.get(StreamTypeNames.CONTEXT)) {
-                    outputStream.write("CONTEXT1".getBytes(StreamUtil.DEFAULT_CHARSET));
-                }
-            }
-
-            try (final OutputStreamProvider outputStreamProvider = streamTarget.next()) {
-                try (final OutputStream outputStream = outputStreamProvider.get()) {
-                    outputStream.write("DATA2".getBytes(StreamUtil.DEFAULT_CHARSET));
-                }
-
-                try (final OutputStream outputStream = outputStreamProvider.get(StreamTypeNames.META)) {
-                    outputStream.write("META:2\nY:2\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-                }
-
-                try (final OutputStream outputStream = outputStreamProvider.get(StreamTypeNames.CONTEXT)) {
-                    outputStream.write("CONTEXT2".getBytes(StreamUtil.DEFAULT_CHARSET));
+                    try (final OutputStream outputStream = outputStreamProvider.get(StreamTypeNames.CONTEXT)) {
+                        outputStream.write(("CONTEXT" + i).getBytes(StreamUtil.DEFAULT_CHARSET));
+                    }
                 }
             }
         }
@@ -179,19 +167,16 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         for (final Meta meta : streamList) {
             assertThat(meta.getStatus()).isEqualTo(Status.UNLOCKED);
             try (final Source streamSource = streamStore.openStreamSource(meta.getId())) {
-                try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
-                    assertThat(StreamUtil.streamToString(inputStreamProvider.get(), false)).isEqualTo("DATA1DATA2");
-                    assertThat(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.CONTEXT), false)).isEqualTo("CONTEXT1CONTEXT2");
+                for (int i = 1; i <= streamSource.count(); i++) {
+                    try (final InputStreamProvider inputStreamProvider = streamSource.get(i - 1)) {
+                        assertThat(StreamUtil.streamToString(inputStreamProvider.get(), false)).isEqualTo("DATA" + i);
+                        assertThat(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.CONTEXT), false)).isEqualTo("CONTEXT" + i);
 
-                    if (originalMeta.equals(meta)) {
-                        assertContains(
-                                StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META), false),
-                                "META:1", "X:1", "META:2", "Y:2");
-                    } else {
-                        assertContains(
-                                StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META), false),
-                                "Compression:ZIP\n", "META:1\n", "X:1\n", "Z:ALL\n", "Compression:ZIP\n", "META:2\n", "Y:2\n",
-                                "Z:ALL\n");
+                        if (originalMeta.equals(meta)) {
+                            assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META), false), "META:" + i, "X:" + i);
+                        } else {
+                            assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META), false), "Compression:ZIP\n", "META:" + i + "\n", "X:" + i + "\n", "Z:ALL\n");
+                        }
                     }
                 }
             }

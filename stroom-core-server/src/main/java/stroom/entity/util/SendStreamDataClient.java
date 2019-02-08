@@ -145,7 +145,7 @@ public final class SendStreamDataClient {
                 try (final InputStream metaInputStream = inputStreamProvider.get(StreamTypeNames.META)) {
                     if (metaInputStream != null) {
                         final AttributeMap attributeMap = new AttributeMap();
-                        AttributeMapUtil.read(metaInputStream, true, attributeMap);
+                        AttributeMapUtil.read(metaInputStream, attributeMap);
                         attributeMap.entrySet().stream().filter(entry -> connection.getRequestProperty(entry.getKey()) == null)
                                 .forEach(entry -> connection.addRequestProperty(entry.getKey(), entry.getValue()));
                     }

@@ -53,6 +53,7 @@ import stroom.volume.VolumeConfig;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.time.ZoneOffset;
@@ -649,19 +650,13 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             meta = streamTarget.getMeta();
             t = streamTarget;
             TargetUtil.write(streamTarget, testString);
+            streamStore.deleteStreamTarget(t);
         }
-
-//        // Create tasks.
-//        streamTaskCreator.createTasks(new SimpleTaskContext());
-
-        Meta reloadedMeta = metaService.getMeta(meta.getId());
-        assertThat(reloadedMeta).isNotNull();
 
         // We shouldn't be able to close a stream target again.
         assertThatThrownBy(t::close).isInstanceOf(RuntimeException.class);
 
-        streamStore.deleteStreamTarget(t);
-        reloadedMeta = metaService.find(FindMetaCriteria.createFromMeta(meta)).getFirst();
+        Meta reloadedMeta = metaService.find(FindMetaCriteria.createFromMeta(meta)).getFirst();
         assertThat(reloadedMeta).isNull();
 
         streamStore.deleteStreamTarget(t);
@@ -692,23 +687,19 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             streamTarget.getAttributes().put(MetaFieldNames.REC_READ, "100");
         }
 
-        final Set<DataVolume> streamVolumes = streamVolumeService.findStreamVolume(meta.getId());
-        final Set<Path> rootFile = new HashSet<>();
+        final DataVolume streamVolume = streamVolumeService.findStreamVolume(meta.getId());
+        final Path rootFile = fileSystemStreamPathHelper.getRootPath(streamVolume.getVolumePath(), meta, StreamTypeNames.RAW_EVENTS);
 
-        for (final DataVolume streamVolume : streamVolumes) {
-            rootFile.add(fileSystemStreamPathHelper.createRootStreamFile(streamVolume.getVolumePath(), meta,
-                    StreamTypeNames.RAW_EVENTS));
-        }
-        assertThat(FileSystemUtil.isAllFile(rootFile)).isTrue();
+        assertThat(Files.isRegularFile(rootFile)).isTrue();
 
         try (final Source streamSource = streamStore.openStreamSource(meta.getId())) {
             meta = streamSource.getMeta();
             assertThat(streamSource.getAttributes().get(testString1)).isEqualTo(testString2);
         }
 
-        final Set<Path> manifestFile = fileSystemStreamPathHelper.createChildStreamPath(rootFile, InternalStreamTypeNames.MANIFEST);
+        final Path manifestFile = fileSystemStreamPathHelper.getChildPath(rootFile, InternalStreamTypeNames.MANIFEST);
 
-        assertThat(FileSystemUtil.isAllFile(manifestFile)).isTrue();
+        assertThat(Files.isRegularFile(manifestFile)).isTrue();
 
         try (final Target streamTarget = streamStore.openExistingStreamTarget(meta)) {
             meta = streamTarget.getMeta();
@@ -752,29 +743,20 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
-        Target t;
-        try (final Target streamTarget = streamStore.openStreamTarget(metaProperties)) {
-            t = streamTarget;
-            TargetUtil.write(streamTarget, testString);
-        }
-        final Set<Path> dirSet = new HashSet<>();
-        for (final Path file : ((FileSystemStreamTarget) t).getFiles(true)) {
-            dirSet.add(file.getParent());
-        }
-
+        Path dir = null;
         try {
-            for (final Path dir : dirSet) {
+            try (final Target streamTarget = streamStore.openStreamTarget(metaProperties)) {
+                TargetUtil.write(streamTarget, testString);
+
+                dir = ((FileSystemStreamTarget) streamTarget).getFile().getParent();
                 FileUtil.removeFilePermision(dir, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.OTHERS_WRITE);
             }
 
-            t.close();
             fail("Expecting an error");
         } catch (final RuntimeException e) {
             // Expected.
         } finally {
-            for (final Path dir : dirSet) {
-                FileUtil.addFilePermision(dir, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.OTHERS_WRITE);
-            }
+            FileUtil.addFilePermision(dir, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.OTHERS_WRITE);
         }
     }
 

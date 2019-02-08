@@ -9,11 +9,9 @@ import java.util.Set;
 public interface DataVolumeService {
     BaseResultList<DataVolume> find(FindDataVolumeCriteria criteria);
 
-    Set<DataVolume> findStreamVolume(long dataId);
+    DataVolume findStreamVolume(long dataId);
 
-    Set<DataVolume> createStreamVolumes(long dataId, Set<VolumeEntity> volumes);
-
-    DataVolume pickBestVolume(Set<DataVolume> mdVolumeSet, long nodeId, long rackId);
+    DataVolume createStreamVolume(long dataId, VolumeEntity volume);
 
     interface DataVolume extends SharedObject {
         long getStreamId();

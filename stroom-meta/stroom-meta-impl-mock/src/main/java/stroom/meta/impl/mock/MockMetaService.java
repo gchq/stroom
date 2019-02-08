@@ -79,7 +79,7 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public Meta updateStatus(final Meta meta, final Status newStatus, final Status currentStatus) {
+    public Meta updateStatus(final Meta meta, final Status currentStatus, final Status newStatus) {
         Objects.requireNonNull(meta, "Null data");
 
         final MockMeta result = (MockMeta) metaMap.get(meta.getId());

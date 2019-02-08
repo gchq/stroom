@@ -86,15 +86,13 @@ class FileSystemStreamMaintenanceService
     }
 
     List<Path> findAllStreamFile(final Meta meta) {
-        final Set<DataVolume> streamVolumes = streamVolumeService.findStreamVolume(meta.getId());
+        final DataVolume streamVolume = streamVolumeService.findStreamVolume(meta.getId());
         final List<Path> results = new ArrayList<>();
-        for (final DataVolume streamVolume : streamVolumes) {
-            final Path rootFile = fileSystemStreamPathHelper.createRootStreamFile(streamVolume.getVolumePath(),
-                    meta, meta.getTypeName());
-            if (Files.isRegularFile(rootFile)) {
-                results.add(rootFile);
-                results.addAll(fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile));
-            }
+        final Path rootFile = fileSystemStreamPathHelper.getRootPath(streamVolume.getVolumePath(),
+                meta, meta.getTypeName());
+        if (Files.isRegularFile(rootFile)) {
+            results.add(rootFile);
+            results.addAll(fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile));
         }
 
         return results;

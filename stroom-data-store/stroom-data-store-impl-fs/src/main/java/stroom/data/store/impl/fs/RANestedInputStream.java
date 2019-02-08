@@ -30,8 +30,8 @@ import java.io.InputStream;
  * You must call getNextEntry and closeEntry like the ZIP API.
  */
 class RANestedInputStream extends NestedInputStream {
-    protected final InputStream data;
-    protected final SupplierWithIO<InputStream> indexInputStreamSupplier;
+    private final InputStream data;
+    private final InputStream indexInputStream;
     private final StreamCloser streamCloser;
     private long currentEntry = -1;
     private boolean currentEntryClosed = true;
@@ -39,13 +39,9 @@ class RANestedInputStream extends NestedInputStream {
     private Long segmentCount = null;
     private RASegmentInputStream segmentInputStream;
 
-    RANestedInputStream(final InputStream data, final InputStream inputStream) {
-        this(data, () -> inputStream);
-    }
-
-    RANestedInputStream(final InputStream data, final SupplierWithIO<InputStream> indexInputStreamSupplier) {
+    RANestedInputStream(final InputStream data, final InputStream indexInputStream) {
         this.data = data;
-        this.indexInputStreamSupplier = indexInputStreamSupplier;
+        this.indexInputStream = indexInputStream;
 
         streamCloser = new BasicStreamCloser();
         streamCloser.add(data);
@@ -60,7 +56,7 @@ class RANestedInputStream extends NestedInputStream {
         segmentInputStream = null;
     }
 
-    public long getEntryCount() throws IOException {
+    public long getEntryCount() {
         return getSegmentCount();
     }
 
@@ -94,7 +90,7 @@ class RANestedInputStream extends NestedInputStream {
         // Record the entry we are going to open and create an input stream for
         // the entry.
         currentEntry = entryNo;
-        segmentInputStream = new RASegmentInputStream(data, indexInputStreamSupplier);
+        segmentInputStream = new RASegmentInputStream(data, indexInputStream);
 
         // If this stream has segments, include the requested segment
         // otherwise we will use the whole stream.
@@ -121,10 +117,10 @@ class RANestedInputStream extends NestedInputStream {
         return offset;
     }
 
-    private long getSegmentCount() throws IOException {
+    private long getSegmentCount() {
         if (segmentCount == null) {
             if (segmentInputStream == null) {
-                segmentInputStream = new RASegmentInputStream(data, indexInputStreamSupplier);
+                segmentInputStream = new RASegmentInputStream(data, indexInputStream);
             }
             segmentCount = segmentInputStream.count();
         }

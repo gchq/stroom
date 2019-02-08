@@ -209,16 +209,16 @@ class BenchmarkIO {
                 is = new BlockGZIPInputFile(file1);
                 break;
             case BGZIP_SEG:
-                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), () -> new UncompressedInputStream(file2, false));
+                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), new UncompressedInputStream(file2, false));
                 break;
             case BGZIP_SEG_COMPRESS:
-                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), () -> new BlockGZIPInputFile(file2));
+                is = new RASegmentInputStream(new BlockGZIPInputFile(file1),  new BlockGZIPInputFile(file2));
                 break;
             case RAW_SEG_TEXT:
-                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), () -> new UncompressedInputStream(file2, false));
+                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), new UncompressedInputStream(file2, false));
                 break;
             case RAW_SEG_XML:
-                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), () -> new UncompressedInputStream(file2, false));
+                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), new UncompressedInputStream(file2, false));
                 break;
         }
         is = new BufferedInputStream(is, FileSystemUtil.STREAM_BUFFER_SIZE);

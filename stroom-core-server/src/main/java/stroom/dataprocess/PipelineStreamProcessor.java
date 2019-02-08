@@ -275,7 +275,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             // Process the streams.
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
-            processNestedStreams(pipeline, meta, streamSource, feedName, meta.getTypeName());
+            processNestedStreams(pipeline, meta, streamSource);
 
             // Create processing finished message.
             final String finishedInfo = "" +
@@ -345,9 +345,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
      */
     private void processNestedStreams(final Pipeline pipeline,
                                       final Meta meta,
-                                      final Source source,
-                                      final String feedName,
-                                      final String streamTypeName) {
+                                      final Source source) {
         boolean startedProcessing = false;
 
         // Get the stream providers.
@@ -369,7 +367,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                     final String data = streamTask.getData();
                     if (data != null && !data.isEmpty()) {
                         final List<InclusiveRange> ranges = InclusiveRanges.rangesFromString(data);
-                        final SegmentInputStream raSegmentInputStream = inputStreamProvider.get(streamTypeName);
+                        final SegmentInputStream raSegmentInputStream = inputStreamProvider.get();
                         raSegmentInputStream.include(0);
                         for (final InclusiveRange range : ranges) {
                             for (long i = range.getMin(); i <= range.getMax(); i++) {
@@ -381,11 +379,11 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
                     } else {
                         // Get the stream.
-                        inputStream = inputStreamProvider.get(streamTypeName);
+                        inputStream = inputStreamProvider.get();
                     }
 
                     // Get the appropriate encoding for the stream type.
-                    final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
+                    final String encoding = feedProperties.getEncoding(meta.getFeedName(), meta.getTypeName());
 
                     // We want to get a preview of the input stream so we can
                     // skip it if it is effectively empty.
@@ -422,7 +420,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                             } catch (final LoggedException e) {
                                 // The exception has already been logged so
                                 // ignore it.
-                                if (LOGGER.isTraceEnabled() && meta != null) {
+                                if (LOGGER.isTraceEnabled()) {
                                     LOGGER.trace("Error while processing data task: id = " + meta.getId(), e);
                                 }
                             } catch (final RuntimeException e) {
@@ -435,32 +433,30 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                             }
                         }
                     }
-                } catch (final LoggedException e) {
-                    // The exception has already been logged so ignore it.
-                    if (LOGGER.isTraceEnabled() && meta != null) {
-                        LOGGER.trace("Error while processing data task: id = " + meta.getId(), e);
-                    }
-                } catch (final IOException | RuntimeException e) {
-                    // An exception that's gets here is definitely a failure.
-                    outputError(e);
-
-                } finally {
-                    try {
-                        if (startedProcessing) {
-                            pipeline.endProcessing();
-                        }
-                    } catch (final LoggedException e) {
-                        // The exception has already been logged so ignore it.
-                        if (LOGGER.isTraceEnabled() && meta != null) {
-                            LOGGER.trace("Error while processing data task: id = " + meta.getId(), e);
-                        }
-                    } catch (final RuntimeException e) {
-                        outputError(e);
-                    }
                 }
             }
+        } catch (final LoggedException e) {
+            // The exception has already been logged so ignore it.
+            if (LOGGER.isTraceEnabled() && meta != null) {
+                LOGGER.trace("Error while processing data task: id = " + meta.getId(), e);
+            }
         } catch (final IOException | RuntimeException e) {
+            // An exception that's gets here is definitely a failure.
             outputError(e);
+
+        } finally {
+            try {
+                if (startedProcessing) {
+                    pipeline.endProcessing();
+                }
+            } catch (final LoggedException e) {
+                // The exception has already been logged so ignore it.
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace("Error while processing data task: id = " + meta.getId(), e);
+                }
+            } catch (final RuntimeException e) {
+                outputError(e);
+            }
         }
     }
 

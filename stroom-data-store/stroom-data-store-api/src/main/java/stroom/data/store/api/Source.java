@@ -43,12 +43,6 @@ public interface Source extends Closeable {
      */
     AttributeMap getAttributes();
 
-//    /**
-//     * Get the next nested input stream provider or null if there are no more to return.
-//     * @return
-//     */
-//    InputStreamProvider next();
-
     /**
      * Get an input stream provider for the nested data item specified by the provided 0 based index.
      * @param index The index of the nested data item to get an input stream provider for.

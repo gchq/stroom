@@ -37,7 +37,7 @@ public interface VolumeService extends BaseEntityService<VolumeEntity>, FindServ
      * @param node The local node required if we prefer to use local volumes.
      * @return set of volumes to write to
      */
-    Set<VolumeEntity> getStreamVolumeSet(Node node);
+    VolumeEntity getStreamVolume(Node node);
 
     /**
      * Get a list of volumes that can support indexes. The order will always be the same.

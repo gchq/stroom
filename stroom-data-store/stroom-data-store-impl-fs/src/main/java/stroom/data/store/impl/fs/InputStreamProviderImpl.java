@@ -20,29 +20,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
-import stroom.data.store.api.WrappedSegmentInputStream;
 import stroom.meta.shared.Meta;
-
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.util.HashMap;
 
 class InputStreamProviderImpl implements InputStreamProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(InputStreamProviderImpl.class);
 
     private final Meta meta;
-    private final NestedInputStreamFactory nestedInputStreamFactory;
+    private final SegmentInputStreamProviderFactory factory;
     private final SegmentInputStreamProvider root;
-    private final HashMap<String, SegmentInputStreamProvider> nestedOutputStreamMap = new HashMap<>(10);
     private final long index;
 
     InputStreamProviderImpl(final Meta meta,
-                            final NestedInputStreamFactory nestedInputStreamFactory,
+                            final SegmentInputStreamProviderFactory factory,
                             final long index) {
         this.meta = meta;
-        this.nestedInputStreamFactory = nestedInputStreamFactory;
+        this.factory = factory;
         this.index = index;
-        root = new SegmentInputStreamProvider(nestedInputStreamFactory, null);
+        root = factory.getSegmentInputStreamProvider(null);
     }
 
     private void logDebug(String msg) {
@@ -55,65 +49,30 @@ class InputStreamProviderImpl implements InputStreamProvider {
             logDebug("get()");
         }
 
-        return root.getInputStream(index);
+        return root.get(index);
     }
 
     @Override
     public SegmentInputStream get(final String streamTypeName) {
+        if (streamTypeName == null) {
+            return get();
+        }
+
         if (LOGGER.isDebugEnabled()) {
             logDebug("get() - " + streamTypeName);
         }
 
-        return getSegmentInputStreamProvider(streamTypeName).getInputStream(index);
-    }
-
-    private SegmentInputStreamProvider getSegmentInputStreamProvider(final String streamTypeName) {
-        return nestedOutputStreamMap.computeIfAbsent(streamTypeName, k -> {
-            final NestedInputStreamFactory childNestedInputStreamFactory = nestedInputStreamFactory.getChild(k);
-            return new SegmentInputStreamProvider(childNestedInputStreamFactory, k);
-        });
+        final SegmentInputStreamProvider segmentInputStreamProvider = factory.getSegmentInputStreamProvider(streamTypeName);
+        if (segmentInputStreamProvider == null) {
+            return null;
+        }
+        return segmentInputStreamProvider.get(index);
     }
 
     @Override
-    public void close() throws IOException {
-        for (SegmentInputStreamProvider nestedOutputStream : nestedOutputStreamMap.values()) {
-            nestedOutputStream.nestedInputStream.close();
-        }
-    }
-
-    private static class SegmentInputStreamProvider {
-        private long index = -1;
-        private final String dataTypeName;
-        private final RANestedInputStream nestedInputStream;
-        private final SegmentInputStream inputStream;
-
-        SegmentInputStreamProvider(final NestedInputStreamFactory nestedInputStreamFactory, final String dataTypeName) {
-            this.dataTypeName = dataTypeName;
-
-            nestedInputStream = new RANestedInputStream(nestedInputStreamFactory.getInputStream(),
-                    () -> nestedInputStreamFactory.getChild(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream());
-            inputStream = new RASegmentInputStream(nestedInputStream,
-                    () -> nestedInputStreamFactory.getChild(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream());
-        }
-
-        public SegmentInputStream getInputStream(final long index) {
-            try {
-                if (this.index >= index) {
-                    throw new IOException("Input stream already provided for index " + index);
-                }
-
-                this.index++;
-                nestedInputStream.getEntry(index);
-
-                return new WrappedSegmentInputStream(inputStream) {
-                    @Override
-                    public void close() throws IOException {
-                        nestedInputStream.closeEntry();
-                    }
-                };
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        }
+    public void close() {
+//        for (SegmentInputStreamProvider segmentInputStreamProvider : providerMap.values()) {
+//            segmentInputStreamProvider.close();
+//        }
     }
 }

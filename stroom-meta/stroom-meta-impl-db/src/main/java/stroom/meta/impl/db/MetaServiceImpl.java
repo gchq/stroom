@@ -212,7 +212,7 @@ class MetaServiceImpl implements MetaService {
     }
 
     @Override
-    public Meta updateStatus(final Meta meta, final Status newStatus, final Status currentStatus) {
+    public Meta updateStatus(final Meta meta, final Status currentStatus, final Status newStatus) {
         Objects.requireNonNull(meta, "Null data");
 
         final long now = System.currentTimeMillis();

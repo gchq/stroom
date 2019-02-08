@@ -303,16 +303,15 @@ public class DataVolumeServiceImpl implements DataVolumeService {
      * Return the meta data volumes for a stream id.
      */
     @Override
-    public Set<DataVolume> findStreamVolume(final long dataId) {
+    public DataVolume findStreamVolume(final long dataId) {
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .select(DATA_VOLUME.DATA_ID, VOL.PATH)
                 .from(DATA_VOLUME)
                 .join(VOL).on(VOL.ID.eq(DATA_VOLUME.VOLUME_ID))
                 .where(DATA_VOLUME.DATA_ID.eq(dataId))
-                .fetch()
-                .stream()
+                .fetchOptional()
                 .map(r -> new DataVolumeImpl(r.value1(), r.value2()))
-                .collect(Collectors.toSet()));
+                .orElse(null));
 
 
 //        final SqlBuilder sql = new SqlBuilder();
@@ -355,7 +354,7 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 //    }
 //
 //    @Override
-    public Set<DataVolume> createStreamVolumes(final long dataId, final Set<VolumeEntity> volumes) {
+    public DataVolume createStreamVolume(final long dataId, final VolumeEntity volume) {
 //        final List<StrmVolRecord> batch = new ArrayList<>();
 //        for (final VolumeEntity volume : volumes) {
 //            batch.add(new StrmVolRecord(null, null, dataId, (int) volume.getId()));
@@ -363,14 +362,10 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 
 
         return JooqUtil.contextResult(connectionProvider, context -> {
-            final Set<DataVolume> set = new HashSet<>();
-            for (final VolumeEntity volume : volumes) {
                 context.insertInto(DATA_VOLUME, DATA_VOLUME.DATA_ID, DATA_VOLUME.VOLUME_ID)
                         .values(dataId, (int) volume.getId())
                         .execute();
-                set.add(new DataVolumeImpl(dataId, volume.getPath()));
-            }
-            return set;
+                return new DataVolumeImpl(dataId, volume.getPath());
         });
 
 

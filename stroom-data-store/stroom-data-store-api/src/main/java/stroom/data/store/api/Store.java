@@ -70,7 +70,7 @@ public interface Store {
      *
      * @return items deleted
      */
-    int deleteStreamTarget(Target target);
+    Target deleteStreamTarget(Target target);
 
     /**
      * <p>

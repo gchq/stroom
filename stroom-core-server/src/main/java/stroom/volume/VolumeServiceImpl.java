@@ -131,15 +131,19 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
     }
 
     @Override
-    public Set<VolumeEntity> getStreamVolumeSet(final Node node) {
+    public VolumeEntity getStreamVolume(final Node node) {
         return security.insecureResult(() -> {
             LocalVolumeUse localVolumeUse = null;
             if (volumeConfig.isPreferLocalVolumes()) {
                 localVolumeUse = LocalVolumeUse.PREFERRED;
             }
 
-            return getVolumeSet(node, VolumeType.PUBLIC, VolumeUseStatus.ACTIVE, null, localVolumeUse, null,
+            final Set<VolumeEntity> set = getVolumeSet(node, VolumeType.PUBLIC, VolumeUseStatus.ACTIVE, null, localVolumeUse, null,
                     getResilientReplicationCount());
+            if (set.size() > 0) {
+                return set.iterator().next();
+            }
+            return null;
         });
     }
 

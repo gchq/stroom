@@ -204,7 +204,7 @@ public class StroomStreamProcessor {
 
         final ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(byteCountInputStream);
 
-        ZipArchiveEntry zipEntry = null;
+        ZipArchiveEntry zipEntry;
         while (true) {
             // We have to wrap our stream reading code in a individual try/catch
             // so we can return to the client an error in the case of a corrupt

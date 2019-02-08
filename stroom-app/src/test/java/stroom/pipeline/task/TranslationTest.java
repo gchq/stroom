@@ -281,7 +281,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     // If we are going to output more than one file then number
                     // them.
                     if (processedMeta.size() > 1) {
-                        num = "_" + String.valueOf(i);
+                        num = "_" + i;
                     }
 
                     final Path actualFile = outputDir.resolve(stem + num + ".out_tmp");
