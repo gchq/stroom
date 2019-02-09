@@ -14,46 +14,33 @@
  * limitations under the License.
  */
 import * as React from "react";
+import { useState } from "react";
 
 import { connect } from "react-redux";
-import { compose, withHandlers } from "recompose";
+import { compose } from "recompose";
 import { Formik, Field } from "formik";
 
 import DialogActionButtons from "./DialogActionButtons";
 import IconHeader from "../IconHeader";
-import {
-  actionCreators,
-  defaultStatePerId,
-  StoreStateById as RenameStoreState
-} from "./redux/renameDocRefReducer";
 import { renameDocument } from "./explorerClient";
 import ThemedModal from "../ThemedModal";
 import { required, minLength2 } from "../../lib/reduxFormUtils";
 import { GlobalStoreState } from "../../startup/reducers";
-
-const { completeDocRefRename } = actionCreators;
+import { DocRefType } from "src/types";
 
 export interface Props {
-  listingId: string;
+  isOpen: boolean;
+  docRef?: DocRefType;
+  onCloseDialog: () => void;
 }
 
-interface ConnectState extends RenameStoreState {}
+interface ConnectState {}
 
 interface ConnectDispatch {
-  completeDocRefRename: typeof completeDocRefRename;
   renameDocument: typeof renameDocument;
 }
 
-interface WithHandlers {
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-export interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    WithHandlers {}
+export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 interface FormValues {
   docRefName: string;
@@ -61,42 +48,29 @@ interface FormValues {
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ folderExplorer: { renameDocRef } }, { listingId }) => {
-      let renameState: RenameStoreState =
-        renameDocRef[listingId] || defaultStatePerId;
-
-      return {
-        ...renameState
-      };
-    },
-    { completeDocRefRename, renameDocument }
-  ),
-  withHandlers({
-    onConfirm: ({
-      renameDocument,
-      docRef,
-      renameDocRefForm: {
-        values: { docRefName }
-      }
-    }) => () => renameDocument(docRef, docRefName),
-    onCancel: ({ completeDocRefRename, listingId }) => () =>
-      completeDocRefRename(listingId)
-  })
+    () => ({}),
+    { renameDocument }
+  )
 );
 
 let RenameDocRefDialog = ({
-  isRenaming,
+  isOpen,
   docRef,
-  onCancel,
-  renameDocument
+  renameDocument,
+  onCloseDialog
 }: EnhancedProps) => (
   <Formik<FormValues>
-    initialValues={{ docRefName: "" }}
-    onSubmit={values => renameDocument(docRef!, values.docRefName)}
+    initialValues={{ docRefName: !!docRef && !!docRef.name ? docRef.name : "" }}
+    onSubmit={values => {
+      if (!!docRef) {
+        renameDocument(docRef, values.docRefName);
+      }
+      onCloseDialog();
+    }}
   >
     {({ submitForm }) => (
       <ThemedModal
-        isOpen={isRenaming}
+        isOpen={isOpen}
         header={<IconHeader icon="edit" text="Enter New Name for Doc Ref" />}
         content={
           <form>
@@ -110,11 +84,54 @@ let RenameDocRefDialog = ({
           </form>
         }
         actions={
-          <DialogActionButtons onCancel={onCancel} onConfirm={submitForm} />
+          <DialogActionButtons
+            onCancel={onCloseDialog}
+            onConfirm={submitForm}
+          />
         }
       />
     )}
   </Formik>
 );
+
+/**
+ * These are the things returned by the custom hook that allow the owning component to interact
+ * with this dialog.
+ */
+export type UseRenameDocRefDialog = {
+  /**
+   * The owning component is ready to start a deletion process.
+   * Calling this will open the dialog, and setup the UUIDs
+   */
+  showRenameDialog: (docRef: DocRefType) => void;
+  /**
+   * These are the properties that the owning component can just give to the Dialog component
+   * using destructing.
+   */
+  componentProps: Props;
+};
+
+/**
+ * This is a React custom hook that sets up things required by the owning component.
+ */
+export const useRenameDocRefDialog = (): UseRenameDocRefDialog => {
+  const [docRef, setDocRef] = useState<DocRefType | undefined>(undefined);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+
+  return {
+    componentProps: {
+      docRef,
+      isOpen,
+      onCloseDialog: () => {
+        setIsOpen(false);
+        setDocRef(undefined);
+      }
+    },
+    showRenameDialog: _docRef => {
+      setIsOpen(true);
+      setDocRef(_docRef);
+    }
+  };
+};
 
 export default enhance(RenameDocRefDialog);

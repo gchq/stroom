@@ -17,8 +17,8 @@ import { createStore, Store } from "redux";
 import { combineReducers } from "redux";
 
 import {
-  actionCreators as folderExplorerActionCreators,
-  reducer as folderExplorerReducer
+  actionCreators as documentTreeActionCreators,
+  reducer as documentTreeReducer
 } from "../redux";
 import {
   actionCreators as docRefTypesActionCreators,
@@ -28,14 +28,14 @@ import {
 import testTree from "./documentTree.smallTree";
 import { testDocRefsTypes } from "../../DocRefTypes/test";
 
-const { docTreeReceived } = folderExplorerActionCreators;
+const { docTreeReceived } = documentTreeActionCreators;
 
 const { docRefTypesReceived } = docRefTypesActionCreators;
 
 // Rebuilt for each test
 let store: Store;
 const reducer = combineReducers({
-  folderExplorer: folderExplorerReducer,
+  documentTree: documentTreeReducer,
   docRefTypes: docRefTypesReducer
 });
 
@@ -49,9 +49,8 @@ describe("Doc Explorer Reducer", () => {
   describe("Explorer Tree", () => {
     it("should contain the test tree", () => {
       const state = store.getState();
-      expect(state).toHaveProperty("folderExplorer");
-      expect(state.folderExplorer).toHaveProperty("documentTree");
-      expect(state.folderExplorer.documentTree).toBe(testTree);
+      expect(state).toHaveProperty("documentTree");
+      expect(state.documentTree).toBe(testTree);
     });
   });
 });

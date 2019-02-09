@@ -18,11 +18,11 @@ interface Props {
 
 // Delete
 const TestDeleteDialog = ({ testUuids }: Props) => {
-  const { startToDeleteDocRefs, componentProps } = useDeleteDocRefDialog();
+  const { showDeleteDialog, componentProps } = useDeleteDocRefDialog();
 
   return (
     <div>
-      <button onClick={() => startToDeleteDocRefs(testUuids)}>Show</button>
+      <button onClick={() => showDeleteDialog(testUuids)}>Show</button>
       <DeleteDocRefDialog {...componentProps} />
     </div>
   );

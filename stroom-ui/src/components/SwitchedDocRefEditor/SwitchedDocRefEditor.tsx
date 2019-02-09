@@ -10,7 +10,7 @@ import XsltEditor from "../XsltEditor";
 import PathNotFound from "../PathNotFound";
 import { actionCreators } from "./redux";
 import { GlobalStoreState } from "../../startup/reducers";
-import { StoreState as DocumentTreeStoreState } from "../FolderExplorer/redux/documentTree";
+import { StoreState as DocumentTreeStoreState } from "../FolderExplorer/redux";
 import { DocRefType } from "../../types";
 
 const { docRefOpened } = actionCreators;
@@ -28,7 +28,7 @@ export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ folderExplorer: { documentTree } }) => ({ documentTree }),
+    ({ documentTree }) => ({ documentTree }),
     { docRefOpened }
   ),
   lifecycle<Props & ConnectState & ConnectDispatch, {}>({

@@ -4,13 +4,13 @@ import withDocumentTree, {
   EnhancedProps as WithDocumentTreeProps
 } from "./withDocumentTree";
 
-import NewDocRefDialog from "./NewDocRefDialog";
+import CreateDocRefDialog from "./CreateDocRefDialog";
 import RenameDocRefDialog from "./RenameDocRefDialog";
 import CopyDocRefDialog from "./CopyMoveDocRefDialog";
 import DeleteDocRefDialog from "./DeleteDocRefDialog";
 
 export {
-  NewDocRefDialog,
+  CreateDocRefDialog,
   FolderExplorer,
   RenameDocRefDialog,
   CopyDocRefDialog,

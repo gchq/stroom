@@ -174,7 +174,7 @@ export const copyDocuments = (
     config: {
       values: { stroomBaseServiceUrl }
     },
-    folderExplorer: { documentTree }
+    documentTree
   } = state;
   const url = `${stroomBaseServiceUrl}/explorer/v1/copy`;
   const docRefs = findByUuids(documentTree, uuids);
@@ -210,7 +210,7 @@ export const moveDocuments = (
     config: {
       values: { stroomBaseServiceUrl }
     },
-    folderExplorer: { documentTree }
+    documentTree
   } = state;
 
   const url = `${stroomBaseServiceUrl}/explorer/v1/move`;
@@ -242,7 +242,7 @@ export const deleteDocuments = (uuids: Array<string>) => (
 ) => {
   const state = getState();
   const url = `${state.config.values.stroomBaseServiceUrl}/explorer/v1/delete`;
-  const docRefs = findByUuids(state.folderExplorer.documentTree, uuids);
+  const docRefs = findByUuids(state.documentTree, uuids);
   wrappedDelete(
     dispatch,
     state,

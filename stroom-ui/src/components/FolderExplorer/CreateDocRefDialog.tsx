@@ -15,8 +15,9 @@
  */
 
 import * as React from "react";
+import { useState } from "react";
 
-import { compose, withHandlers } from "recompose";
+import { compose } from "recompose";
 import { connect } from "react-redux";
 import { Formik, Field, FieldProps } from "formik";
 
@@ -24,53 +25,31 @@ import IconHeader from "../IconHeader";
 import ThemedModal from "../ThemedModal";
 import DialogActionButtons from "./DialogActionButtons";
 import { required, minLength2 } from "../../lib/reduxFormUtils";
-import {
-  actionCreators,
-  defaultStatePerId,
-  StoreStatePerId as NewDocStoreState
-} from "./redux/newDocReducer";
 import { DocRefTypePicker } from "../DocRefTypes";
 import explorerClient from "./explorerClient";
 import PermissionInheritancePicker from "../PermissionInheritancePicker";
 import { GlobalStoreState } from "../../startup/reducers";
-import { PermissionInheritance } from "../../types";
+import { PermissionInheritance, DocRefType } from "../../types";
 
 const { createDocument } = explorerClient;
 
-const { completeDocRefCreation } = actionCreators;
-
 export interface Props {
-  listingId: string;
+  destination?: DocRefType;
+  isOpen: boolean;
+  onCloseDialog: () => void;
 }
 
-interface ConnectState extends NewDocStoreState {}
-
 interface ConnectDispatch {
-  completeDocRefCreation: typeof completeDocRefCreation;
   createDocument: typeof createDocument;
 }
 
-interface WithHandlers {
-  onCancel: () => void;
-}
-
-export interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    WithHandlers {}
+export interface EnhancedProps extends Props, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ folderExplorer: { newDoc } }, { listingId }) => ({
-      ...(newDoc[listingId] || defaultStatePerId)
-    }),
-    { completeDocRefCreation, createDocument }
-  ),
-  withHandlers({
-    onCancel: ({ completeDocRefCreation, listingId }) => () =>
-      completeDocRefCreation(listingId)
-  })
+  connect<{}, ConnectDispatch, Props, GlobalStoreState>(
+    () => ({}),
+    { createDocument }
+  )
 );
 
 interface FormValues {
@@ -79,10 +58,10 @@ interface FormValues {
   permissionInheritance: PermissionInheritance;
 }
 
-let NewDocRefDialog = ({
+let CreateDocRefDialog = ({
   isOpen,
   destination,
-  onCancel,
+  onCloseDialog,
   createDocument
 }: EnhancedProps) => (
   <Formik<FormValues>
@@ -90,19 +69,20 @@ let NewDocRefDialog = ({
       docRefType: undefined,
       permissionInheritance: PermissionInheritance.NONE
     }}
-    onSubmit={values =>
+    onSubmit={values => {
       createDocument(
         values.docRefType!,
         values.docRefName!,
         destination!,
         values.permissionInheritance
-      )
-    }
+      );
+      onCloseDialog();
+    }}
   >
     {({ setFieldValue, submitForm }) => (
       <ThemedModal
         isOpen={isOpen}
-        onRequestClose={onCancel}
+        onRequestClose={onCloseDialog}
         header={
           <IconHeader
             icon="plus"
@@ -146,11 +126,56 @@ let NewDocRefDialog = ({
           </form>
         }
         actions={
-          <DialogActionButtons onCancel={onCancel} onConfirm={submitForm} />
+          <DialogActionButtons
+            onCancel={onCloseDialog}
+            onConfirm={submitForm}
+          />
         }
       />
     )}
   </Formik>
 );
 
-export default enhance(NewDocRefDialog);
+/**
+ * These are the things returned by the custom hook that allow the owning component to interact
+ * with this dialog.
+ */
+export type UseCreateDocRefDialog = {
+  /**
+   * The owning component is ready to start a deletion process.
+   * Calling this will open the dialog, and setup the UUIDs
+   */
+  showCreateDialog: (docRef: DocRefType) => void;
+  /**
+   * These are the properties that the owning component can just give to the Dialog component
+   * using destructing.
+   */
+  componentProps: Props;
+};
+
+/**
+ * This is a React custom hook that sets up things required by the owning component.
+ */
+export const useCreateDocRefDialog = (): UseCreateDocRefDialog => {
+  const [destination, setDestinatino] = useState<DocRefType | undefined>(
+    undefined
+  );
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+
+  return {
+    componentProps: {
+      destination,
+      isOpen,
+      onCloseDialog: () => {
+        setIsOpen(false);
+        setDestinatino(undefined);
+      }
+    },
+    showCreateDialog: _destination => {
+      setIsOpen(true);
+      setDestinatino(_destination);
+    }
+  };
+};
+
+export default enhance(CreateDocRefDialog);

@@ -129,14 +129,14 @@ export const useCopyDocRefDialog = (
     undefined
   );
   const [uuidsToCopy, setUuidToCopy] = useState<Array<string>>([]);
-  const [isDeleteDocRefOpen, setIsOpen] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
 
   return {
     componentProps: {
       onConfirm,
       uuids: uuidsToCopy,
       destinationUuid,
-      isOpen: isDeleteDocRefOpen,
+      isOpen,
       onCloseDialog: () => {
         setIsOpen(false);
         setUuidToCopy([]);

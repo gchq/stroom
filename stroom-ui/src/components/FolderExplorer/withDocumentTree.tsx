@@ -26,7 +26,7 @@ export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
  */
 export default compose<Props, EnhancedProps>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ folderExplorer: { documentTree } }) => ({
+    ({ documentTree }) => ({
       documentTree
     }),
     {

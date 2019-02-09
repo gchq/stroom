@@ -123,7 +123,7 @@ const enhance = compose<EnhancedProps, Props>(
         appSearch,
         recentItems,
         selectableItemListings,
-        folderExplorer: { documentTree }
+        documentTree
       },
       { pickerId, typeFilters = [], value, textFocus }
     ) => {

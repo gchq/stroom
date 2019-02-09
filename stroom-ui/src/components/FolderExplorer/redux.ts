@@ -15,9 +15,9 @@
  */
 import { Action } from "redux";
 
-import { prepareReducer } from "../../../lib/redux-actions-ts";
-import { updateItemInTree } from "../../../lib/treeUtils";
-import { DocRefType, DocRefTree } from "../../../types";
+import { prepareReducer } from "../../lib/redux-actions-ts";
+import { updateItemInTree } from "../../lib/treeUtils";
+import { DocRefType, DocRefTree } from "../../types";
 
 export const DOC_TREE_RECEIVED = "DOC_TREE_RECEIVED";
 export const DOC_REFS_MOVED = "DOC_REFS_MOVED";

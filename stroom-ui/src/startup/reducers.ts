@@ -77,8 +77,8 @@ import {
   StoreState as DocRefInfoStoreState
 } from "../components/DocRefInfoModal/redux";
 import {
-  reducer as folderExplorer,
-  StoreState as FolderExplorerStoreState
+  reducer as documentTree,
+  StoreState as DocumentTreeStoreState
 } from "../components/FolderExplorer/redux";
 import {
   reducer as expressionBuilder,
@@ -128,7 +128,7 @@ export interface GlobalStoreState {
   userSettings: UserSettingsStoreState;
   selectableItemListings: SelectableItemListingStoreState;
   docRefTypes: DocRefTypesStoreState;
-  folderExplorer: FolderExplorerStoreState;
+  documentTree: DocumentTreeStoreState;
   dictionaryEditor: DictionaryEditorStoreState;
   indexEditor: IndexEditorStoreState;
   xsltEditor: XsltEditorStoreState;
@@ -157,7 +157,7 @@ export default combineReducers({
   userSettings,
   selectableItemListings,
   docRefTypes,
-  folderExplorer,
+  documentTree,
   xsltEditor,
   appSearch,
   dictionaryEditor,

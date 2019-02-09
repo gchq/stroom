@@ -67,7 +67,7 @@ export type UseDeleteDocRefDialog = {
    * The owning component is ready to start a deletion process.
    * Calling this will open the dialog, and setup the UUIDs
    */
-  startToDeleteDocRefs: (uuids: Array<string>) => void;
+  showDeleteDialog: (uuids: Array<string>) => void;
   /**
    * These are the properties that the owning component can just give to the Dialog component
    * using destructing.
@@ -80,18 +80,18 @@ export type UseDeleteDocRefDialog = {
  */
 export const useDeleteDocRefDialog = (): UseDeleteDocRefDialog => {
   const [uuidsToDelete, setUuidToDelete] = useState<Array<string>>([]);
-  const [isDeleteDocRefOpen, setIsOpen] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
 
   return {
     componentProps: {
       uuids: uuidsToDelete,
-      isOpen: isDeleteDocRefOpen,
+      isOpen,
       onCloseDialog: () => {
         setIsOpen(false);
         setUuidToDelete([]);
       }
     },
-    startToDeleteDocRefs: _uuids => {
+    showDeleteDialog: _uuids => {
       setIsOpen(true);
       setUuidToDelete(_uuids);
     }

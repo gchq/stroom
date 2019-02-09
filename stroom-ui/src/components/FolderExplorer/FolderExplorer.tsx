@@ -22,14 +22,17 @@ import { withRouter } from "react-router-dom";
 import DocRefEditor from "../DocRefEditor";
 import Loader from "../Loader";
 import { findItem } from "../../lib/treeUtils";
-import { actionCreators } from "./redux";
 import { fetchDocInfo, copyDocuments, moveDocuments } from "./explorerClient";
 import DndDocRefListingEntry from "./DndDocRefListingEntry";
-import NewDocRefDialog from "./NewDocRefDialog";
+import CreateDocRefDialog, {
+  useCreateDocRefDialog
+} from "./CreateDocRefDialog";
 import CopyMoveDocRefDialog, {
   useCopyDocRefDialog
 } from "./CopyMoveDocRefDialog";
-import RenameDocRefDialog from "./RenameDocRefDialog";
+import RenameDocRefDialog, {
+  useRenameDocRefDialog
+} from "./RenameDocRefDialog";
 import DeleteDocRefDialog, {
   useDeleteDocRefDialog
 } from "./DeleteDocRefDialog";
@@ -47,8 +50,6 @@ import { Props as ButtonProps } from "../Button";
 import { DocRefConsumer, DocRefType, DocRefWithLineage } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
 
-const { prepareDocRefCreation, prepareDocRefRename } = actionCreators;
-
 const LISTING_ID = "folder-explorer";
 
 export interface Props {
@@ -65,8 +66,6 @@ interface WithHandlers {
 }
 
 interface ConnectDispatch {
-  prepareDocRefCreation: typeof prepareDocRefCreation;
-  prepareDocRefRename: typeof prepareDocRefRename;
   fetchDocInfo: typeof fetchDocInfo;
   copyDocuments: typeof copyDocuments;
   moveDocuments: typeof moveDocuments;
@@ -93,17 +92,12 @@ const enhance = compose<EnhancedProps, Props>(
     Props & WithDocumentTreeProps,
     GlobalStoreState
   >(
-    (
-      { folderExplorer: { documentTree }, selectableItemListings },
-      { folderUuid }
-    ) => ({
+    ({ documentTree, selectableItemListings }, { folderUuid }) => ({
       folder: findItem(documentTree, folderUuid)!,
       selectableItemListing:
         selectableItemListings[LISTING_ID] || defaultSelectableItemListing
     }),
     {
-      prepareDocRefCreation,
-      prepareDocRefRename,
       copyDocuments,
       moveDocuments,
       fetchDocInfo
@@ -139,8 +133,6 @@ const FolderExplorer = ({
   folder: { node },
   folderUuid,
   folder,
-  prepareDocRefCreation,
-  prepareDocRefRename,
   copyDocuments,
   moveDocuments,
   fetchDocInfo,
@@ -149,10 +141,9 @@ const FolderExplorer = ({
   openDocRef
 }: EnhancedProps) => {
   const {
-    startToDeleteDocRefs,
+    showDeleteDialog,
     componentProps: deleteDialogComponentProps
   } = useDeleteDocRefDialog();
-
   const {
     showDialog: showCopyDialog,
     componentProps: copyDialogComponentProps
@@ -161,11 +152,19 @@ const FolderExplorer = ({
     showDialog: showMoveDialog,
     componentProps: moveDialogComponentProps
   } = useCopyDocRefDialog(moveDocuments);
+  const {
+    showRenameDialog,
+    componentProps: renameDialogComponentProps
+  } = useRenameDocRefDialog();
+  const {
+    showCreateDialog,
+    componentProps: createDialogComponentProps
+  } = useCreateDocRefDialog();
 
   const actionBarItems: Array<ButtonProps> = [
     {
       icon: "file",
-      onClick: () => prepareDocRefCreation(LISTING_ID, folder.node),
+      onClick: () => showCreateDialog(folder.node),
       title: "Create a Document",
       text: "Create"
     }
@@ -186,7 +185,7 @@ const FolderExplorer = ({
       actionBarItems.push({
         icon: "edit",
         text: "Rename",
-        onClick: () => prepareDocRefRename(LISTING_ID, singleSelectedDocRef),
+        onClick: () => showRenameDialog(singleSelectedDocRef),
         title: "Rename this document"
       });
     }
@@ -205,7 +204,7 @@ const FolderExplorer = ({
     actionBarItems.push({
       icon: "trash",
       text: "Delete",
-      onClick: () => startToDeleteDocRefs(selectedDocRefUuids),
+      onClick: () => showDeleteDialog(selectedDocRefUuids),
       title: "Delete selected documents"
     });
   }
@@ -227,10 +226,10 @@ const FolderExplorer = ({
       </div>
       <DocRefInfoModal />
       <CopyMoveDocRefDialog {...moveDialogComponentProps} />
-      <RenameDocRefDialog listingId={LISTING_ID} />
+      <RenameDocRefDialog {...renameDialogComponentProps} />
       <DeleteDocRefDialog {...deleteDialogComponentProps} />
       <CopyMoveDocRefDialog {...copyDialogComponentProps} />
-      <NewDocRefDialog listingId={LISTING_ID} />
+      <CreateDocRefDialog {...createDialogComponentProps} />
     </DocRefEditor>
   );
 };

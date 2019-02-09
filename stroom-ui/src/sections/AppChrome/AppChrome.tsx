@@ -32,8 +32,6 @@ import { StoreState as MenuItemsOpenStoreState } from "./redux/menuItemsOpenRedu
 import withLocalStorage from "../../lib/withLocalStorage";
 import MenuItem, { MenuItemType } from "./MenuItem";
 import {
-  RenameDocRefDialog,
-  NewDocRefDialog,
   withDocumentTree,
   WithDocumentTreeProps
 } from "../../components/FolderExplorer";
@@ -383,9 +381,9 @@ const AppChrome = ({
   return (
     <div className={`app-container ${theme}`}>
       <div className="app-chrome flat">
-        <NewDocRefDialog listingId={LISTING_ID} />
+        {/* <CreateDocRefDialog listingId={LISTING_ID} /> */}
         {/* <MoveDocRefDialog listingId={LISTING_ID} /> */}
-        <RenameDocRefDialog listingId={LISTING_ID} />
+        {/* <RenameDocRefDialog listingId={LISTING_ID} /> */}
         {/* <DeleteDocRefDialog listingId={LISTING_ID} /> */}
         {/* <CopyDocRefDialog listingId={LISTING_ID} /> */}
         <div className={`app-chrome__sidebar raised-high ${sidebarClassName}`}>
