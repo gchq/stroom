@@ -39,11 +39,11 @@ import {
 } from "./streamAttributeMapClient";
 import { getDataForSelectedRow } from "./dataResourceClient";
 import DetailsTabs from "./DetailsTabs";
-import withLocalStorage from "../../lib/withLocalStorage";
 import DataList from "./DataList/DataList";
 import { actionCreators } from "./redux";
 import { GlobalStoreState } from "../../startup/reducers";
 import { Direction } from "../../types";
+import useLocalStorage from "../../lib/useLocalStorage";
 
 export interface Props {
   dataViewerId: string;
@@ -51,7 +51,6 @@ export interface Props {
 interface EnhancedProps
   extends Props,
     WithHandlers,
-    WithLocalStorage,
     ConnectState,
     ConnectDispatch {}
 
@@ -78,25 +77,9 @@ interface WithHandlers {
   onRowSelected: (dataViewerId: string, selectedRow: number) => void;
 }
 
-interface WithLocalStorage {
-  listHeight: number;
-  detailsHeight: number;
-  setListHeight: (listHeight: number) => void;
-  setDetailsHeight: (detailsHeight: number) => void;
-}
-
-const withListHeight = withLocalStorage("listHeight", "setListHeight", 500);
-const withDetailsHeight = withLocalStorage(
-  "detailsHeight",
-  "setDetailsHeight",
-  500
-);
-
 const { selectRow, deselectRow } = actionCreators;
 
 const enhance = compose<EnhancedProps, Props>(
-  withListHeight,
-  withDetailsHeight,
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     (state, props) => {
       let dataSource,
@@ -247,10 +230,6 @@ const DataViewer = ({
   selectedRow,
   dataForSelectedRow,
   detailsForSelectedRow,
-  listHeight,
-  setListHeight,
-  detailsHeight,
-  setDetailsHeight,
   dataSource,
   searchWithExpression
 }: // onRowSelected,
@@ -258,6 +237,14 @@ const DataViewer = ({
 // tableData
 EnhancedProps) => {
   const table = <DataList dataViewerId={dataViewerId} />;
+  const { value: listHeight, setValue: setListHeight } = useLocalStorage(
+    "listHeight",
+    500
+  );
+  const { value: detailsHeight, setValue: setDetailsHeight } = useLocalStorage(
+    "detailsHeight",
+    500
+  );
 
   const details = (
     <HorizontalPanel

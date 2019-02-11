@@ -1,5 +1,5 @@
-import DocRefListingEntry from './DocRefListingEntry';
+import DocRefListingEntry, { Props } from "./DocRefListingEntry";
 
 export default DocRefListingEntry;
 
-export { DocRefListingEntry };
+export { DocRefListingEntry, Props };

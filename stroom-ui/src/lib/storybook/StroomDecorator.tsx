@@ -14,7 +14,6 @@ import { GlobalStoreState } from "../../startup/reducers";
 import { setupTestServer } from "../../lib/storybook/PollyDecorator";
 
 import FontAwesomeProvider from "../../startup/FontAwesomeProvider";
-import KeyIsDown from "../../lib/KeyIsDown";
 import testData from "./fullTestData";
 
 interface Props {}
@@ -33,7 +32,6 @@ const enhanceLocal = compose(
     }),
     {}
   ),
-  KeyIsDown(),
   FontAwesomeProvider
 );
 

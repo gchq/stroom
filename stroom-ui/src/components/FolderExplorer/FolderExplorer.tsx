@@ -28,7 +28,7 @@ import CreateDocRefDialog, {
   useCreateDocRefDialog
 } from "./CreateDocRefDialog";
 import CopyMoveDocRefDialog, {
-  useCopyDocRefDialog
+  useCopyMoveDocRefDialog
 } from "./CopyMoveDocRefDialog";
 import RenameDocRefDialog, {
   useRenameDocRefDialog
@@ -40,17 +40,12 @@ import DocRefInfoModal from "../DocRefInfoModal";
 import withDocumentTree, {
   EnhancedProps as WithDocumentTreeProps
 } from "./withDocumentTree";
-import withSelectableItemListing, {
-  SelectionBehaviour,
-  StoreStatePerId as SelectableItemListingStatePerId,
-  EnhancedProps as SelectableItemListingProps,
-  defaultStatePerId as defaultSelectableItemListing
-} from "../../lib/withSelectableItemListing";
 import { Props as ButtonProps } from "../Button";
 import { DocRefConsumer, DocRefType, DocRefWithLineage } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
-
-const LISTING_ID = "folder-explorer";
+import useSelectableItemListing, {
+  SelectionBehaviour
+} from "../../lib/useSelectableItemListing";
 
 export interface Props {
   folderUuid: string;
@@ -58,7 +53,6 @@ export interface Props {
 
 interface ConnectState {
   folder: DocRefWithLineage;
-  selectableItemListing: SelectableItemListingStatePerId;
 }
 
 interface WithHandlers {
@@ -76,8 +70,7 @@ export interface EnhancedProps
     WithDocumentTreeProps,
     WithHandlers,
     ConnectState,
-    ConnectDispatch,
-    SelectableItemListingProps<DocRefType> {}
+    ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   withDocumentTree,
@@ -92,10 +85,8 @@ const enhance = compose<EnhancedProps, Props>(
     Props & WithDocumentTreeProps,
     GlobalStoreState
   >(
-    ({ documentTree, selectableItemListings }, { folderUuid }) => ({
-      folder: findItem(documentTree, folderUuid)!,
-      selectableItemListing:
-        selectableItemListings[LISTING_ID] || defaultSelectableItemListing
+    ({ documentTree }, { folderUuid }) => ({
+      folder: findItem(documentTree, folderUuid)!
     }),
     {
       copyDocuments,
@@ -106,38 +97,15 @@ const enhance = compose<EnhancedProps, Props>(
   branch(
     ({ folder }) => !folder,
     renderComponent(() => <Loader message="Loading folder..." />)
-  ),
-  withSelectableItemListing<DocRefType>(
-    ({
-      openDocRef,
-      folder: {
-        lineage,
-        node: { children }
-      }
-    }) => ({
-      listingId: LISTING_ID,
-      items: children,
-      selectionBehaviour: SelectionBehaviour.MULTIPLE,
-      getKey: d => d.uuid,
-      openItem: openDocRef,
-      goBack: () => {
-        if (lineage.length > 0) {
-          openDocRef(lineage[lineage.length - 1]);
-        }
-      }
-    })
   )
 );
 
 const FolderExplorer = ({
-  folder: { node },
+  folder: { node, lineage },
   folderUuid,
-  folder,
   copyDocuments,
   moveDocuments,
   fetchDocInfo,
-  selectableItemListing: { selectedItems },
-  onKeyDownWithShortcuts,
   openDocRef
 }: EnhancedProps) => {
   const {
@@ -147,11 +115,11 @@ const FolderExplorer = ({
   const {
     showDialog: showCopyDialog,
     componentProps: copyDialogComponentProps
-  } = useCopyDocRefDialog(copyDocuments);
+  } = useCopyMoveDocRefDialog(copyDocuments);
   const {
     showDialog: showMoveDialog,
     componentProps: moveDialogComponentProps
-  } = useCopyDocRefDialog(moveDocuments);
+  } = useCopyMoveDocRefDialog(moveDocuments);
   const {
     showRenameDialog,
     componentProps: renameDialogComponentProps
@@ -160,21 +128,37 @@ const FolderExplorer = ({
     showCreateDialog,
     componentProps: createDialogComponentProps
   } = useCreateDocRefDialog();
+  const {
+    onKeyDownWithShortcuts,
+    selectedItems: selectedDocRefs,
+    selectionToggled,
+    keyIsDown
+  } = useSelectableItemListing({
+    items: node.children || [],
+    selectionBehaviour: SelectionBehaviour.MULTIPLE,
+    getKey: d => d.uuid,
+    openItem: openDocRef,
+    goBack: () => {
+      if (lineage.length > 0) {
+        openDocRef(lineage[lineage.length - 1]);
+      }
+    }
+  });
 
   const actionBarItems: Array<ButtonProps> = [
     {
       icon: "file",
-      onClick: () => showCreateDialog(folder.node),
+      onClick: () => showCreateDialog(node),
       title: "Create a Document",
       text: "Create"
     }
   ];
 
   const singleSelectedDocRef =
-    selectedItems.length === 1 ? selectedItems[0] : undefined;
-  const selectedDocRefUuids = selectedItems.map((d: DocRefType) => d.uuid);
+    selectedDocRefs.length === 1 ? selectedDocRefs[0] : undefined;
+  const selectedDocRefUuids = selectedDocRefs.map(d => d.uuid);
 
-  if (selectedItems.length > 0) {
+  if (selectedDocRefs.length > 0) {
     if (singleSelectedDocRef) {
       actionBarItems.push({
         icon: "info",
@@ -217,10 +201,13 @@ const FolderExplorer = ({
           node.children.map(docRef => (
             <DndDocRefListingEntry
               key={docRef.uuid}
-              listingId={LISTING_ID}
               docRef={docRef}
-              onNameClick={openDocRef}
               openDocRef={openDocRef}
+              keyIsDown={keyIsDown}
+              showCopyDialog={showCopyDialog}
+              showMoveDialog={showMoveDialog}
+              selectedDocRefs={selectedDocRefs}
+              selectionToggled={selectionToggled}
             />
           ))}
       </div>

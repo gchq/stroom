@@ -1,6 +1,5 @@
 import * as React from "react";
 import { compose } from "recompose";
-import { connect } from "react-redux";
 import {
   DragSource,
   DropTarget,
@@ -11,42 +10,28 @@ import {
 } from "react-dnd";
 
 import { canMove } from "../../lib/treeUtils";
-import DocRefListingEntry from "../DocRefListingEntry";
+import DocRefListingEntry, {
+  Props as DocRefListingEntryProps
+} from "../DocRefListingEntry";
 import {
   DragDropTypes,
   DragCollectedProps,
   DropCollectedProps,
   DragObject
 } from "./dragDropTypes";
-import { moveDocuments, copyDocuments } from "./explorerClient";
-import { DocRefType, DocRefConsumer } from "../../types";
-import { StoreStatePerId as SelectableItemListingState } from "../../lib/withSelectableItemListing";
-import { GlobalStoreState } from "../../startup/reducers";
-import { StoreState as KeyIsDownStoreState } from "../../lib/KeyIsDown";
+import { DocRefType } from "../../types";
+import { KeyDownState } from "src/lib/useKeyIsDown/useKeyIsDown";
 
-export interface Props {
-  listingId: string;
-  docRef: DocRefType;
-  onNameClick: DocRefConsumer;
-  openDocRef: DocRefConsumer;
+export interface Props extends DocRefListingEntryProps {
+  keyIsDown: KeyDownState;
+  showCopyDialog: (docRefUuids: Array<string>, destinationUuid: string) => void;
+  showMoveDialog: (docRefUuids: Array<string>, destinationUuid: string) => void;
 }
 
-interface ConnectDispatch {
-  moveDocuments: typeof moveDocuments;
-  copyDocuments: typeof copyDocuments;
-}
-
-interface ConnectState {
-  selectableItemListing: SelectableItemListingState;
-  keyIsDown: KeyIsDownStoreState;
-}
-
-export interface DndProps extends Props, ConnectDispatch, ConnectState {}
+export interface DndProps extends Props {}
 
 export interface EnhancedProps
   extends Props,
-    ConnectState,
-    ConnectDispatch,
     DragCollectedProps,
     DropCollectedProps {}
 
@@ -64,15 +49,18 @@ const dropTarget: DropTargetSpec<DndProps> = {
     );
   },
   drop({ docRef }, monitor) {
-    const { docRefs, isCopy } = monitor.getItem();
-    // TODO - Copy/Move Documents in App Chrome
-    console.log("Copy", { docRefs, isCopy, docRef });
-    //const docRefUuids = docRefs.map((d: DocRefType) => d.uuid);
+    const {
+      docRefs,
+      isCopy,
+      showCopyDialog,
+      showMoveDialog
+    } = monitor.getItem();
+    const docRefUuids = docRefs.map((d: DocRefType) => d.uuid);
 
     if (isCopy) {
-      //prepareDocRefCopy(listingId, docRefUuids, docRef.uuid);
+      showCopyDialog(docRefUuids, docRef.uuid);
     } else {
-      //prepareDocRefMove(listingId, docRefUuids, docRef.uuid);
+      showMoveDialog(docRefUuids, docRef.uuid);
     }
   }
 };
@@ -92,17 +80,13 @@ const dragSource: DragSourceSpec<DndProps, DragObject> = {
   canDrag(props) {
     return true;
   },
-  beginDrag({
-    docRef,
-    selectableItemListing: { selectedItems },
-    keyIsDown: { Control, Meta }
-  }) {
+  beginDrag({ docRef, selectedDocRefs, keyIsDown: { Control, Meta } }) {
     let docRefs = [docRef];
 
     // If we are dragging one of the items in a selection, bring across the entire selection
-    let selectedDocRefUuids = selectedItems.map(d => d.uuid);
+    let selectedDocRefUuids = selectedDocRefs.map(d => d.uuid);
     if (selectedDocRefUuids.includes(docRef.uuid)) {
-      docRefs = selectedItems;
+      docRefs = selectedDocRefs;
     }
 
     return {
@@ -122,39 +106,19 @@ const dragCollect: DragSourceCollector<
 };
 
 const enhance = compose<EnhancedProps, Props>(
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ selectableItemListings, keyIsDown }, { listingId }) => ({
-      selectableItemListing: selectableItemListings[listingId],
-      keyIsDown
-    }),
-    {
-      copyDocuments,
-      moveDocuments
-    }
-  ),
   DropTarget([DragDropTypes.DOC_REF_UUIDS], dropTarget, dropCollect),
   DragSource(DragDropTypes.DOC_REF_UUIDS, dragSource, dragCollect)
 );
 
 let DndDocRefListingEntry = ({
-  docRef,
-  listingId,
-  openDocRef,
-  connectDropTarget,
   connectDragSource,
-  isOver,
-  canDrop
+  connectDropTarget,
+  ...rest
 }: EnhancedProps) =>
   connectDragSource(
     connectDropTarget(
       <div>
-        <DocRefListingEntry
-          dndIsOver={isOver}
-          dndCanDrop={canDrop}
-          openDocRef={openDocRef}
-          docRef={docRef}
-          listingId={listingId}
-        />
+        <DocRefListingEntry {...rest} />
       </div>
     )
   );

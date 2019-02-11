@@ -38,7 +38,6 @@ import {
   searchWithExpression
 } from "../streamAttributeMapClient";
 import { getDataForSelectedRow } from "../dataResourceClient";
-import withLocalStorage from "../../../lib/withLocalStorage";
 import {
   actionCreators,
   defaultStatePerId,
@@ -92,18 +91,9 @@ export interface EnhancedProps
     ConnectState,
     ConnectDispatch {}
 
-const withListHeight = withLocalStorage("listHeight", "setListHeight", 500);
-const withDetailsHeight = withLocalStorage(
-  "detailsHeight",
-  "setDetailsHeight",
-  500
-);
-
 const { selectRow, deselectRow } = actionCreators;
 
 const enhance = compose<EnhancedProps, Props>(
-  withListHeight,
-  withDetailsHeight,
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     (state, props) =>
       state.dataViewers[props.dataViewerId] || defaultStatePerId,
@@ -224,110 +214,97 @@ const enhance = compose<EnhancedProps, Props>(
     ({ dataSource }) => !dataSource,
     renderComponent(() => <Loader message="Loading data source..." />)
   ),
-  withProps(
-    ({
-      streamAttributeMaps,
-      onHandleLoadMoreRows,
-      listHeight,
-      detailsHeight
-    }) => {
-      let tableData: TableData[] = streamAttributeMaps.map(
-        (streamAttributeMap: DataRow) => {
-          return {
-            metaId: streamAttributeMap.data.id,
-            created: moment(streamAttributeMap.data.createMs).format(
-              "MMMM Do YYYY, h:mm:ss a"
-            ),
-            type: streamAttributeMap.data.typeName,
-            feed: streamAttributeMap.data.feedName,
-            pipeline: streamAttributeMap.data.pipelineUuid
-          };
-        }
-      );
+  withProps(({ streamAttributeMaps, onHandleLoadMoreRows }) => {
+    let tableData: TableData[] = streamAttributeMaps.map(
+      (streamAttributeMap: DataRow) => {
+        return {
+          metaId: streamAttributeMap.data.id,
+          created: moment(streamAttributeMap.data.createMs).format(
+            "MMMM Do YYYY, h:mm:ss a"
+          ),
+          type: streamAttributeMap.data.typeName,
+          feed: streamAttributeMap.data.feedName,
+          pipeline: streamAttributeMap.data.pipelineUuid
+        };
+      }
+    );
 
-      // Just keep rows with data, more 'load more' rows
-      tableData = tableData.filter(
-        (row: TableData) => row.metaId !== undefined
-      );
-      const dummyRowForLoadMore = {
-        metaId: undefined,
-        created: undefined,
-        type: undefined,
-        feed: undefined,
-        pipeline: undefined
-      };
-      tableData.push(dummyRowForLoadMore);
+    // Just keep rows with data, more 'load more' rows
+    tableData = tableData.filter((row: TableData) => row.metaId !== undefined);
+    const dummyRowForLoadMore = {
+      metaId: undefined,
+      created: undefined,
+      type: undefined,
+      feed: undefined,
+      pipeline: undefined
+    };
+    tableData.push(dummyRowForLoadMore);
 
-      return {
-        tableData,
-        tableColumns: [
-          {
-            Header: "",
-            accessor: "type",
-            Cell: (row: RowInfo): React.ReactNode => {
-              // This block of code is mostly about making a sensible looking popup.
-              const stream = streamAttributeMaps.find(
-                (streamAttributeMap: DataRow) =>
-                  streamAttributeMap.data.id === row.original.metaId
-              );
+    return {
+      tableData,
+      tableColumns: [
+        {
+          Header: "",
+          accessor: "type",
+          Cell: (row: RowInfo): React.ReactNode => {
+            // This block of code is mostly about making a sensible looking popup.
+            const stream = streamAttributeMaps.find(
+              (streamAttributeMap: DataRow) =>
+                streamAttributeMap.data.id === row.original.metaId
+            );
 
-              const eventIcon = <FontAwesomeIcon color="blue" icon="file" />;
-              const warningIcon = (
-                <FontAwesomeIcon color="orange" icon="exclamation-circle" />
-              );
+            const eventIcon = <FontAwesomeIcon color="blue" icon="file" />;
+            const warningIcon = (
+              <FontAwesomeIcon color="orange" icon="exclamation-circle" />
+            );
 
-              let icon;
-              if (stream !== undefined) {
-                if (stream.data.typeName === "Error") {
-                  icon = warningIcon;
-                } else {
-                  icon = eventIcon;
-                }
+            let icon;
+            if (stream !== undefined) {
+              if (stream.data.typeName === "Error") {
+                icon = warningIcon;
               } else {
-                icon = <span />;
+                icon = eventIcon;
               }
-
-              return icon;
-            },
-            width: 35
-          },
-          {
-            Header: "Type",
-            accessor: "type"
-          },
-          {
-            Header: "Created",
-            accessor: "created",
-            Cell: (row: RowInfo): React.ReactNode => {
-              if (row.original.metaId) {
-                return <span>{row.original.created}</span>;
-              } else {
-                return (
-                  <Button
-                    className="border hoverable load-more-button"
-                    onClick={() => onHandleLoadMoreRows()}
-                    text="Load more rows"
-                  />
-                );
-              }
+            } else {
+              icon = <span />;
             }
+
+            return icon;
           },
-          {
-            Header: "Feed",
-            accessor: "feed"
-          },
-          {
-            Header: "Pipeline",
-            accessor: "pipeline"
+          width: 35
+        },
+        {
+          Header: "Type",
+          accessor: "type"
+        },
+        {
+          Header: "Created",
+          accessor: "created",
+          Cell: (row: RowInfo): React.ReactNode => {
+            if (row.original.metaId) {
+              return <span>{row.original.created}</span>;
+            } else {
+              return (
+                <Button
+                  className="border hoverable load-more-button"
+                  onClick={() => onHandleLoadMoreRows()}
+                  text="Load more rows"
+                />
+              );
+            }
           }
-        ],
-        // We need to parse these because localstorage, which is
-        // where these come from, is always string.
-        listHeight: Number.parseInt(listHeight, 10),
-        detailsHeight: Number.parseInt(detailsHeight, 10)
-      };
-    }
-  )
+        },
+        {
+          Header: "Feed",
+          accessor: "feed"
+        },
+        {
+          Header: "Pipeline",
+          accessor: "pipeline"
+        }
+      ]
+    };
+  })
 );
 
 const DataList = ({

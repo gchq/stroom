@@ -11,7 +11,6 @@ import {
 import { DragSource } from "react-dnd";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-import { StoreState as KeyIsDownStoreState } from "../../lib/KeyIsDown";
 import { canMove } from "../../lib/treeUtils";
 import {
   DragDropTypes,
@@ -24,6 +23,7 @@ import { StoreState as MenuItemsOpenStoreState } from "./redux/menuItemsOpenRedu
 import { GlobalStoreState } from "../../startup/reducers";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { DocRefType, StyledComponentProps } from "../../types";
+import { KeyDownState } from "../../lib/useKeyIsDown/useKeyIsDown";
 
 const { menuItemOpened } = appChromeActionCreators;
 
@@ -46,12 +46,14 @@ interface Props extends StyledComponentProps {
   isCollapsed?: boolean;
   selectedItems: Array<MenuItemType>;
   focussedItem?: MenuItemType;
+  keyIsDown: KeyDownState;
+  showCopyDialog: (docRefUuids: Array<string>, destinationUuid: string) => void;
+  showMoveDialog: (docRefUuids: Array<string>, destinationUuid: string) => void;
 }
 
 interface ConnectState {
   isSelected: boolean;
   inFocus: boolean;
-  keyIsDown: KeyIsDownStoreState;
   areMenuItemsOpen: MenuItemsOpenStoreState;
 }
 interface ConnectDispatch {
@@ -97,16 +99,15 @@ const dropTarget: DropTargetSpec<DndProps> = {
       )
     );
   },
-  drop({ menuItem: { docRef } }, monitor) {
+  drop({ menuItem: { docRef }, showCopyDialog, showMoveDialog }, monitor) {
     const { docRefs, isCopy } = monitor.getItem();
     const docRefUuids = docRefs.map((d: DocRefType) => d.uuid);
-    console.log("Copy/Move", { docRefUuids, docRef, isCopy });
+
     if (docRef) {
       if (isCopy) {
-        // TODO - Reimplement copy and move
-        //prepareDocRefCopy(listingId, docRefUuids, docRef.uuid);
+        showCopyDialog(docRefUuids, docRef.uuid);
       } else {
-        //prepareDocRefMove(listingId, docRefUuids, docRef.uuid);
+        showMoveDialog(docRefUuids, docRef.uuid);
       }
     }
   }
@@ -146,7 +147,7 @@ const dragCollect: DragSourceCollector<
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     (
-      { keyIsDown, appChrome: { areMenuItemsOpen } },
+      { appChrome: { areMenuItemsOpen } },
       { selectedItems, focussedItem, menuItem: { key } }
     ) => {
       const isSelected: boolean = selectedItems
@@ -157,7 +158,6 @@ const enhance = compose<EnhancedProps, Props>(
       return {
         isSelected,
         inFocus,
-        keyIsDown,
         areMenuItemsOpen
       };
     },

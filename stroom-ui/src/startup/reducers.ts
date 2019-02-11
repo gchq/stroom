@@ -16,10 +16,7 @@
 
 import { combineReducers } from "redux";
 import { routerReducer, RouterState } from "react-router-redux";
-import {
-  reducer as keyIsDown,
-  StoreState as KeyIsDownState
-} from "../lib/KeyIsDown";
+
 import {
   reducer as errorPage,
   StoreState as ErrorPageState
@@ -42,11 +39,6 @@ import {
   reducer as userSettings,
   StoreState as UserSettingsStoreState
 } from "../sections/UserSettings/redux";
-
-import {
-  reducer as selectableItemListings,
-  StoreState as SelectableItemListingStoreState
-} from "../lib/withSelectableItemListing";
 
 import {
   reducer as appSearch,
@@ -119,14 +111,12 @@ import {
 
 export interface GlobalStoreState {
   appSearch: AppSearchStoreState;
-  keyIsDown: KeyIsDownState;
   errorPage: ErrorPageState;
   config: ConfigStoreState;
   authentication: AuthenticationStoreState;
   authorisation: AuthorisationStoreState;
   fetch: FetchStoreStore;
   userSettings: UserSettingsStoreState;
-  selectableItemListings: SelectableItemListingStoreState;
   docRefTypes: DocRefTypesStoreState;
   documentTree: DocumentTreeStoreState;
   dictionaryEditor: DictionaryEditorStoreState;
@@ -148,14 +138,12 @@ export interface GlobalStoreState {
 
 export default combineReducers({
   routing: routerReducer,
-  keyIsDown,
   errorPage,
   config,
   authentication,
   authorisation,
   fetch,
   userSettings,
-  selectableItemListings,
   docRefTypes,
   documentTree,
   xsltEditor,

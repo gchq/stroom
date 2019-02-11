@@ -1,5 +1,7 @@
-import useSelectableItemListing from './useSelectableItemListing'
+import useSelectableItemListing, {
+  SelectionBehaviour
+} from "./useSelectableItemListing";
 
-export {useSelectableItemListing}
+export { useSelectableItemListing, SelectionBehaviour };
 
 export default useSelectableItemListing;

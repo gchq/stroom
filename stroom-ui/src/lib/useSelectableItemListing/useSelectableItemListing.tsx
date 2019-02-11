@@ -1,5 +1,6 @@
 import { useState } from "react";
 import useKeyIsDown from "../useKeyIsDown";
+import { KeyDownState } from "../useKeyIsDown/useKeyIsDown";
 
 export enum SelectionBehaviour {
   NONE,
@@ -24,6 +25,7 @@ export interface OutProps {
   selectedItemIndexes: Set<number>;
   selectionToggled: (itemKey: string) => void;
   onKeyDownWithShortcuts: React.KeyboardEventHandler<HTMLDivElement>;
+  keyIsDown: KeyDownState;
 }
 
 function useSelectableItemListing<TItem>({
@@ -117,6 +119,7 @@ function useSelectableItemListing<TItem>({
     selectedItems,
     selectedItemIndexes,
     selectionToggled,
+    keyIsDown,
     onKeyDownWithShortcuts: (e: React.KeyboardEvent) => {
       if (e.key === "ArrowUp" || e.key === "k") {
         focusUp();

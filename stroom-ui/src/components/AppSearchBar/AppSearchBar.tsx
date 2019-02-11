@@ -113,7 +113,7 @@ const enhance = compose<EnhancedProps, Props>(
     GlobalStoreState
   >(
     (
-      { appSearch, recentItems, selectableItemListings, documentTree },
+      { appSearch, recentItems, documentTree },
       { pickerId, typeFilters = [], value, textFocus }
     ) => {
       const appSearchForPicker =
@@ -293,7 +293,11 @@ const AppSearchBar = ({
   onSearchBlur,
   onSearchTermChange
 }: EnhancedProps) => {
-  const { onKeyDownWithShortcuts } = useSelectableItemListing({
+  const {
+    onKeyDownWithShortcuts,
+    selectionToggled,
+    selectedItems: selectedDocRefs
+  } = useSelectableItemListing({
     items: docRefs,
     openItem: onThisChange,
     getKey: d => d.uuid,
@@ -333,10 +337,11 @@ const AppSearchBar = ({
           {docRefs.map(searchResult => (
             <DocRefListingEntry
               key={searchResult.uuid}
-              listingId={pickerId}
               docRef={searchResult}
               openDocRef={onThisChange}
               enterFolder={thisNavigateToFolder}
+              selectionToggled={selectionToggled}
+              selectedDocRefs={selectedDocRefs}
             >
               {provideBreadcrumbs && (
                 <DocRefBreadcrumb

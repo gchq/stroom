@@ -113,12 +113,17 @@ let CopyMoveDocRefDialog = ({
   </Formik>
 );
 
+export type ShowCopyDocRefDialog = (
+  uuids: Array<string>,
+  destinationUuid?: string
+) => void;
+
 export type UseCopyDocRefDialog = {
-  showDialog: (uuids: Array<string>, destinationUuid?: string) => void;
+  showDialog: ShowCopyDocRefDialog;
   componentProps: Props;
 };
 
-export const useCopyDocRefDialog = (
+export const useCopyMoveDocRefDialog = (
   onConfirm: (
     uuids: Array<string>,
     destinationUuid: string,

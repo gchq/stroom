@@ -3,7 +3,9 @@ import { storiesOf } from "@storybook/react";
 
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 import { fromSetupSampleData } from "./test";
-import CopyDocRefDialog, { useCopyDocRefDialog } from "./CopyMoveDocRefDialog";
+import CopyDocRefDialog, {
+  useCopyMoveDocRefDialog
+} from "./CopyMoveDocRefDialog";
 
 import "../../styles/main.css";
 import { PermissionInheritance } from "src/types";
@@ -17,7 +19,7 @@ interface Props {
 
 // Copy
 const TestCopyDialog = ({ testUuids, testDestination }: Props) => {
-  const { showDialog, componentProps } = useCopyDocRefDialog(
+  const { showDialog, componentProps } = useCopyMoveDocRefDialog(
     (
       uuids: Array<string>,
       destinationUuid: string,

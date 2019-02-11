@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 import * as React from "react";
-import { compose, withStateHandlers } from "recompose";
+import { useState } from "react";
 import { storiesOf } from "@storybook/react";
 
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 import { fromSetupSampleData } from "../FolderExplorer/test";
-import withSelectableItemListing, {
-  EnhancedProps as SelectableItemListingProps
-} from "../../lib/withSelectableItemListing";
+import useSelectableItemListing from "../../lib/useSelectableItemListing";
 import DocRefListingEntry from "./DocRefListingEntry";
-import { DocRefType, DocRefConsumer } from "../../types";
+import { DocRefType } from "../../types";
 
 import "../../styles/main.css";
 import { DocRefBreadcrumb } from "../DocRefBreadcrumb";
@@ -33,65 +31,46 @@ const testDocRef = fromSetupSampleData.children![0].children![0].children![0];
 
 interface Props {
   listingId: string;
-  docRefs?: Array<DocRefType>;
+  docRefs: Array<DocRefType>;
   dndIsOver?: boolean;
   dndCanDrop?: boolean;
   provideBreadcrumbs?: boolean;
 }
 
-interface WithStateHandlers {
-  enteredFolder?: DocRefType;
-  openedDocRef?: DocRefType;
-  wentBack?: boolean;
+let TestDocRefListingEntry = ({
+  docRefs,
+  dndIsOver,
+  dndCanDrop,
+  provideBreadcrumbs
+}: Props) => {
+  const [enteredFolder, enterFolder] = useState<DocRefType | undefined>(
+    undefined
+  );
+  const [openedDocRef, openDocRef] = useState<DocRefType | undefined>(
+    undefined
+  );
+  const [wentBack, setWentBack] = useState<boolean>(false);
 
-  enterFolder: DocRefConsumer;
-  openDocRef: DocRefConsumer;
-  onClickClear: () => void;
-}
+  const goBack = () => setWentBack(true);
+  const onClickClear = () => {
+    enterFolder(undefined);
+    openDocRef(undefined);
+    setWentBack(false);
+  };
 
-interface EnhancedProps
-  extends Props,
-    WithStateHandlers,
-    SelectableItemListingProps<DocRefType> {}
-
-const enhance = compose<EnhancedProps, Props>(
-  withStateHandlers(({}) => ({}), {
-    enterFolder: () => enteredFolder => ({ enteredFolder }),
-    openDocRef: () => openedDocRef => ({ openedDocRef }),
-    goBack: () => () => ({ wentBack: true }),
-    onClickClear: () => () => ({
-      enteredFolder: undefined,
-      openedDocRef: undefined,
-      wentBack: false
-    })
-  }),
-  withSelectableItemListing<DocRefType>(
-    ({ listingId, docRefs, openDocRef, goBack, enterFolder }) => ({
-      listingId,
-      items: docRefs,
-      openItem: openDocRef,
-      getKey: d => d.uuid,
-      enterItem: enterFolder,
-      goBack
-    })
-  )
-);
-
-let TestDocRefListingEntry = enhance(
-  ({
-    listingId,
-    onClickClear,
-    enteredFolder,
-    openedDocRef,
-    wentBack,
-    openDocRef,
-    enterFolder,
-    docRefs,
+  const {
     onKeyDownWithShortcuts,
-    dndIsOver,
-    dndCanDrop,
-    provideBreadcrumbs
-  }: EnhancedProps) => (
+    selectionToggled,
+    selectedItems: selectedDocRefs
+  } = useSelectableItemListing<DocRefType>({
+    items: docRefs,
+    openItem: openDocRef,
+    getKey: d => d.uuid,
+    enterItem: enterFolder,
+    goBack
+  });
+
+  return (
     <div style={{ width: "50%" }}>
       <div
         tabIndex={0}
@@ -102,12 +81,13 @@ let TestDocRefListingEntry = enhance(
           docRefs.map(docRef => (
             <DocRefListingEntry
               key={docRef.uuid}
-              listingId={listingId}
               docRef={docRef}
               openDocRef={openDocRef}
               enterFolder={enterFolder}
               dndIsOver={dndIsOver}
               dndCanDrop={dndCanDrop}
+              selectionToggled={selectionToggled}
+              selectedDocRefs={selectedDocRefs}
             >
               {provideBreadcrumbs && (
                 <DocRefBreadcrumb
@@ -132,8 +112,8 @@ let TestDocRefListingEntry = enhance(
       </div>
       <button onClick={onClickClear}>Clear</button>
     </div>
-  )
-);
+  );
+};
 
 storiesOf("Doc Ref/Listing Entry", module)
   .addDecorator(StroomDecorator)
@@ -157,12 +137,12 @@ storiesOf("Doc Ref/Listing Entry", module)
     />
   ))
   .add("folder", () => (
-    <TestDocRefListingEntry listingId="four" docRefs={testFolder.children} />
+    <TestDocRefListingEntry listingId="four" docRefs={testFolder.children!} />
   ))
   .add("folder (w/breadcrumbs)", () => (
     <TestDocRefListingEntry
       listingId="four"
-      docRefs={testFolder.children}
+      docRefs={testFolder.children!}
       provideBreadcrumbs
     />
   ));

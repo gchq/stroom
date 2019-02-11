@@ -24,23 +24,30 @@ import "simplebar/dist/simplebar.css";
 
 import { actionCreators as appChromeActionCreators } from "./redux";
 import { StoreState as MenuItemsOpenStoreState } from "./redux/menuItemsOpenReducer";
-import withLocalStorage from "../../lib/withLocalStorage";
 import MenuItem, { MenuItemType } from "./MenuItem";
 import {
   withDocumentTree,
   WithDocumentTreeProps
 } from "../../components/FolderExplorer";
 
+import {
+  copyDocuments,
+  moveDocuments
+} from "../../components/FolderExplorer/explorerClient";
 import { actionCreators as userSettingsActionCreators } from "../UserSettings";
 import useSelectableItemListing from "../../lib/useSelectableItemListing";
 import { DocRefType, DocRefConsumer, DocRefTree } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { KeyDownState } from "src/lib/useKeyIsDown/useKeyIsDown";
+import CopyMoveDocRefDialog, {
+  useCopyMoveDocRefDialog,
+  ShowCopyDocRefDialog
+} from "../../components/FolderExplorer/CopyMoveDocRefDialog";
+import useLocalStorage from "../../lib/useLocalStorage";
 
 const { menuItemOpened } = appChromeActionCreators;
 const { themeChanged } = userSettingsActionCreators;
-
-const withIsExpanded = withLocalStorage("isExpanded", "setIsExpanded", true);
 
 const pathPrefix = "/s";
 
@@ -100,6 +107,8 @@ interface ConnectState {
 interface ConnectDispatch {
   menuItemOpened: typeof menuItemOpened;
   themeChanged: typeof themeChanged;
+  copyDocuments: typeof copyDocuments;
+  moveDocuments: typeof moveDocuments;
 }
 interface WithIsExpanded {
   isExpanded: boolean;
@@ -144,10 +153,11 @@ const enhance = compose<EnhancedProps, Props>(
     }),
     {
       menuItemOpened,
-      themeChanged
+      themeChanged,
+      copyDocuments,
+      moveDocuments
     }
   ),
-  withIsExpanded,
   // We need to work out how to do these global shortcuts from scratch, now that we don't have dedicated pages
   // lifecycle({
   //   componentDidMount() {
@@ -289,6 +299,9 @@ const getMenuItems = (
   isCollapsed: boolean = false,
   menuItems: Array<MenuItemType>,
   areMenuItemsOpen: MenuItemsOpenStoreState,
+  keyIsDown: KeyDownState,
+  showCopyDialog: ShowCopyDocRefDialog,
+  showMoveDialog: ShowCopyDocRefDialog,
   selectedItems: Array<MenuItemType>,
   focussedItem?: MenuItemType,
   depth: number = 0
@@ -296,6 +309,7 @@ const getMenuItems = (
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
       <MenuItem
+        keyIsDown={keyIsDown}
         selectedItems={selectedItems}
         focussedItem={focussedItem}
         className={`sidebar__text-color ${isCollapsed ? "collapsed" : ""} ${
@@ -305,6 +319,8 @@ const getMenuItems = (
         menuItem={menuItem}
         depth={depth}
         isCollapsed={isCollapsed}
+        showCopyDialog={showCopyDialog}
+        showMoveDialog={showMoveDialog}
       />
       {/* TODO: we only want the 'children' class on the first set of children. We're using it to pad the bottom. Any better ideas? */}
       {menuItem.children && areMenuItemsOpen[menuItem.key] ? (
@@ -313,6 +329,9 @@ const getMenuItems = (
             isCollapsed,
             menuItem.children,
             areMenuItemsOpen,
+            keyIsDown,
+            showCopyDialog,
+            showMoveDialog,
             selectedItems,
             focussedItem,
             depth + 1
@@ -326,25 +345,31 @@ const getMenuItems = (
 
 const AppChrome = ({
   content,
-  isExpanded,
   menuItems,
   areMenuItemsOpen,
-  setIsExpanded,
   theme,
   themeChanged,
   openMenuItems,
-  menuItemOpened
+  menuItemOpened,
+  copyDocuments,
+  moveDocuments
 }: EnhancedProps) => {
   if (theme === undefined) {
     theme = "theme-dark";
     themeChanged(theme);
   }
 
+  const { value: isExpanded, setValue: setIsExpanded } = useLocalStorage(
+    "isExpanded",
+    true
+  );
+
   const {
     onKeyDownWithShortcuts,
     selectionToggled,
     selectedItems,
-    focussedItem
+    focussedItem,
+    keyIsDown
   } = useSelectableItemListing<MenuItemType>({
     items: openMenuItems,
     getKey: m => m.key,
@@ -368,17 +393,23 @@ const AppChrome = ({
     }
   });
 
+  const {
+    showDialog: showCopyDialog,
+    componentProps: copyDialogComponentProps
+  } = useCopyMoveDocRefDialog(copyDocuments);
+  const {
+    showDialog: showMoveDialog,
+    componentProps: moveDialogComponentProps
+  } = useCopyMoveDocRefDialog(moveDocuments);
+
   const sidebarClassName = isExpanded
     ? "app-chrome__sidebar--expanded"
     : "app-chrome__sidebar--collapsed";
   return (
     <div className={`app-container ${theme}`}>
       <div className="app-chrome flat">
-        {/* <CreateDocRefDialog listingId={LISTING_ID} /> */}
-        {/* <MoveDocRefDialog listingId={LISTING_ID} /> */}
-        {/* <RenameDocRefDialog listingId={LISTING_ID} /> */}
-        {/* <DeleteDocRefDialog listingId={LISTING_ID} /> */}
-        {/* <CopyDocRefDialog listingId={LISTING_ID} /> */}
+        <CopyMoveDocRefDialog {...copyDialogComponentProps} />
+        <CopyMoveDocRefDialog {...moveDialogComponentProps} />
         <div className={`app-chrome__sidebar raised-high ${sidebarClassName}`}>
           <React.Fragment>
             <div
@@ -412,6 +443,9 @@ const AppChrome = ({
                   !isExpanded,
                   menuItems,
                   areMenuItemsOpen,
+                  keyIsDown,
+                  showCopyDialog,
+                  showMoveDialog,
                   selectedItems,
                   focussedItem
                 )}
