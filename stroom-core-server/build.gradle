@@ -6,6 +6,7 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-data:stroom-data-store-api')
+    implementation project(':stroom-data:stroom-data-retention-shared')
     implementation project(':stroom-db-util')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docstore:stroom-docstore-api')

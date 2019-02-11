@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.data.retention;
+package stroom.data.retention.impl;
 
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docref.DocRef;
@@ -36,11 +36,11 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-public class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
+class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     private final Store<DataRetentionRules> store;
 
     @Inject
-    public DataRetentionRulesServiceImpl(final StoreFactory storeFactory,
+    DataRetentionRulesServiceImpl(final StoreFactory storeFactory,
                                          final Serialiser2Factory serialiser2Factory) {
         DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(DataRetentionRules.class);
         this.store = storeFactory.createStore(serialiser, DataRetentionRules.DOCUMENT_TYPE, DataRetentionRules.class);

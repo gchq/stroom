@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.retention;
+package stroom.data.retention.impl;
 
 public class DataRetentionStreamDeleter {//implements AutoCloseable {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionStreamDeleter.class);

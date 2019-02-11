@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-package stroom.data.retention;
+package stroom.data.retention.impl;
 
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.data.retention.impl.DataRetentionExecutor.Progress;
+import stroom.data.retention.impl.DataRetentionExecutor.Tracker;
+import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.TimeUnit;
 import stroom.entity.shared.Period;
-import stroom.data.retention.DataRetentionExecutor.Progress;
-import stroom.data.retention.DataRetentionExecutor.Tracker;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.data.retention.shared.DataRetentionRules;
-import stroom.data.retention.shared.DataRetentionRule;
 import stroom.util.date.DateUtil;
 
 import java.util.ArrayList;
@@ -37,14 +38,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestDataRetentionExecutor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionExecutor.class);
+class TestDataRetentionRules {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionRules.class);
 
     @Test
     void testTracker() {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
         builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, "TEST_FEED");
-        final DataRetentionRule rule = createRule(1, builder.build(), 1, stroom.streamstore.shared.TimeUnit.DAYS);
+        final DataRetentionRule rule = createRule(1, builder.build(), 1, TimeUnit.DAYS);
         final DataRetentionRules dataRetentionPolicy = new DataRetentionRules(Collections.singletonList(rule));
         Tracker tracker = new Tracker(100L, dataRetentionPolicy);
 
@@ -85,7 +86,7 @@ class TestDataRetentionExecutor {
         assertThat(streamIdDeleteList.size()).isEqualTo(0);
     }
 
-    private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final stroom.streamstore.shared.TimeUnit timeUnit) {
+    private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final TimeUnit timeUnit) {
         return new DataRetentionRule(num, System.currentTimeMillis(), "rule " + num, true, expression, age, timeUnit, false);
     }
 }

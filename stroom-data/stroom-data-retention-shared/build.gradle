@@ -1,0 +1,25 @@
+ext.moduleName = 'stroom.data.retention.shared'
+
+dependencies {
+//    implementation project(':stroom-entity-shared')
+//    implementation project(':stroom-util-shared')
+    implementation project(':stroom-docstore:stroom-docstore-shared')
+//    implementation project(':stroom-explorer:stroom-explorer-api')
+//    implementation project(':stroom-importexport:stroom-importexport-api')
+//    implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-task:stroom-task-shared')
+
+    implementation libs.stroomDocRef
+    implementation libs.stroomQueryApi
+
+//    implementation libs.gwt_servlet
+//    implementation libs.hibernate_jpa_api
+//    implementation libs.jackson_annotations
+
+    implementation libs.jaxb_api
+//    implementation libs.javax_inject;
+//    implementation libs.validation_api
+//
+//    testRuntimeOnly libs.jaxb_runtime
+//    testRuntimeOnly libs.javax_activation
+}

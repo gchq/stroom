@@ -19,14 +19,14 @@ package stroom.data.store;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.TimeUnit;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.util.xml.XMLMarshallerUtil;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.data.retention.shared.DataRetentionRules;
-import stroom.data.retention.shared.DataRetentionRule;
-import stroom.streamstore.shared.TimeUnit;
+import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;

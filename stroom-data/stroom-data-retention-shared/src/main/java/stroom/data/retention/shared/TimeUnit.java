@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.shared;
+package stroom.data.retention.shared;
 
 import stroom.docref.HasDisplayValue;
 

@@ -1,4 +1,4 @@
-package stroom.data.retention;
+package stroom.data.retention.impl;
 
 import stroom.util.shared.IsConfig;
 
@@ -19,7 +19,7 @@ public class DataRetentionConfig implements IsConfig {
 
     @Override
     public String toString() {
-        return "PolicyConfig{" +
+        return "DataRetentionConfig{" +
                 "deleteBatchSize=" + deleteBatchSize +
                 '}';
     }

@@ -17,7 +17,6 @@
 package stroom.data.retention.shared;
 
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.streamstore.shared.TimeUnit;
 import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;

@@ -15,14 +15,14 @@
  *
  */
 
-package stroom.data.retention;
+package stroom.data.retention.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.data.retention.api.DataRetentionAgeUtil;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.data.store.DataRetentionAgeUtil;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.entity.shared.Period;
 import stroom.util.xml.XMLMarshallerUtil;

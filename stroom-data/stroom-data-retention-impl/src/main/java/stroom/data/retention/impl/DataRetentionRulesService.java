@@ -15,10 +15,10 @@
  *
  */
 
-package stroom.data.retention;
+package stroom.data.retention.impl;
 
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docstore.DocumentStore;
 
-public interface DataRetentionRulesService extends DocumentStore<DataRetentionRules> {
+interface DataRetentionRulesService extends DocumentStore<DataRetentionRules> {
 }

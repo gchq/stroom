@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.data.retention;
+package stroom.data.retention.impl;
 
 // TODO : @66 Re-implement finding streams for data retention
 public class DataRetentionStreamFinder {//implements AutoCloseable {

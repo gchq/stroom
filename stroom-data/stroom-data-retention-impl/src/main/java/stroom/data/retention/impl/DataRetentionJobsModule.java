@@ -1,4 +1,4 @@
-package stroom.data.retention;
+package stroom.data.retention.impl;
 
 import stroom.job.api.ScheduledJobsModule;
 import stroom.job.api.TaskConsumer;

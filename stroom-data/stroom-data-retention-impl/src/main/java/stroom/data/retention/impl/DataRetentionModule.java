@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.retention;
+package stroom.data.retention.impl;
 
 import com.google.inject.AbstractModule;
 import stroom.data.retention.shared.FetchDataRetentionRulesAction;
