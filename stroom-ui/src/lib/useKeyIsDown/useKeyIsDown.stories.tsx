@@ -19,25 +19,42 @@ import { storiesOf } from "@storybook/react";
 import useKeyIsDown, { KeyDownState, DEFAULT_FILTERS } from "./useKeyIsDown";
 import StroomDecorator from "../storybook/StroomDecorator";
 
-const TestHarness = () => {
-  const keysDown1: KeyDownState = useKeyIsDown();
-  const keysDown2: KeyDownState = useKeyIsDown();
-  return (
-    <div>
-      <h3>Test Keys Down/Up</h3>
-      <form>
-        {DEFAULT_FILTERS.map(f => (
-          <div key={f}>
-            <label>{f}</label>
-            <input type="checkbox" checked={keysDown1[f]} onChange={() => {}} />
-            <input type="checkbox" checked={keysDown2[f]} onChange={() => {}} />
-          </div>
-        ))}
-      </form>
-    </div>
-  );
-};
-
 storiesOf("General Purpose/useKeyIsDown", module)
   .addDecorator(StroomDecorator)
-  .add("Test Component", () => <TestHarness />);
+  .add("Test Component", () => {
+    const keyIsDown1: KeyDownState = useKeyIsDown();
+    const filters2: Array<string> = ["Control", "Alt"];
+    const keyIsDown2: KeyDownState = useKeyIsDown(filters2);
+    return (
+      <div>
+        <h3>Test Keys Down/Up (instance 1)</h3>
+
+        <form>
+          {DEFAULT_FILTERS.map(f => (
+            <div key={f}>
+              <label>{f}</label>
+              <input
+                type="checkbox"
+                checked={keyIsDown1[f]}
+                onChange={() => {}}
+              />
+            </div>
+          ))}
+        </form>
+
+        <h3>Test Keys Down/Up (instance 2)</h3>
+        <form>
+          {filters2.map(f => (
+            <div key={f}>
+              <label>{f}</label>
+              <input
+                type="checkbox"
+                checked={keyIsDown2[f]}
+                onChange={() => {}}
+              />
+            </div>
+          ))}
+        </form>
+      </div>
+    );
+  });

@@ -1,20 +1,11 @@
 import { useState } from "react";
+import useKeyIsDown from "../useKeyIsDown";
 
 export enum SelectionBehaviour {
   NONE,
   SINGLE,
   MULTIPLE
 }
-
-const isArraysEqual = (a: Array<any>, b: Array<any>) => {
-  if (a && !b) return false;
-  if (!a && b) return false;
-  if (!a && !b) return true;
-
-  if (a.length !== b.length) return false;
-
-  return a.filter(aItem => b.indexOf(aItem) === -1).length === 0;
-};
 
 export interface InProps<TItem> {
   getKey: (x: TItem) => string;
@@ -26,10 +17,16 @@ export interface InProps<TItem> {
 }
 
 export interface OutProps {
+  focusIndex: number;
+  focussedItem?: any;
+  lastSelectedIndex?: number;
+  selectedItems: Array<any>;
+  selectedItemIndexes: Set<number>;
+  selectionToggled: (itemKey: string) => void;
   onKeyDownWithShortcuts: React.KeyboardEventHandler<HTMLDivElement>;
 }
 
-let bob = false;
+// let bob = false;
 
 function useSelectableItemListing<TItem>({
   getKey,
@@ -37,8 +34,9 @@ function useSelectableItemListing<TItem>({
   openItem,
   enterItem,
   goBack,
-  selectionBehaviour
+  selectionBehaviour = SelectionBehaviour.NONE
 }: InProps<TItem>): OutProps {
+  const keyIsDown = useKeyIsDown();
   const [focusIndex, setFocusIndex] = useState<number>(-1);
   const [focussedItem, setFocussedItem] = useState<TItem | undefined>(
     undefined
@@ -49,30 +47,78 @@ function useSelectableItemListing<TItem>({
     new Set()
   );
 
-  const focusChanged = (direction: number) => () => {};
+  const focusChanged = (direction: number) => () => {
+    let nextIndex = 0;
+    if (focusIndex !== -1) {
+      nextIndex = (items.length + (focusIndex + direction)) % items.length;
+    }
+
+    setFocusIndex(nextIndex);
+    setFocussedItem(items[nextIndex]);
+  };
   const focusUp = focusChanged(-1);
   const focusDown = focusChanged(+1);
-  const selectFocussed = () => {};
+  const selectionToggled = (itemKey?: string) => {
+    const index = items.map(getKey).findIndex(k => k === itemKey);
+    const indexToUse = index !== undefined && index >= 0 ? index : focusIndex;
+    let newSelectedItemIndexes = new Set();
 
-  if (!bob) {
-    console.log({
-      getKey,
-      items,
-      focusIndex,
-      setFocusIndex,
-      setFocussedItem,
-      lastSelectedIndex,
-      setLastSelectedIndex,
-      selectedItemIndexes,
-      selectedItems,
-      setSelectedItems,
-      setSelectedItemIndexes,
-      isArraysEqual
-    });
-    bob = true;
-  }
+    if (selectionBehaviour !== SelectionBehaviour.NONE) {
+      const isCurrentlySelected = selectedItemIndexes.has(indexToUse);
+      if (isCurrentlySelected) {
+        if (keyIsDown.Control || keyIsDown.Meta) {
+          selectedItemIndexes.forEach(i => {
+            if (i !== indexToUse) {
+              newSelectedItemIndexes.add(i);
+            }
+          });
+        }
+      } else if (selectionBehaviour === SelectionBehaviour.MULTIPLE) {
+        if (keyIsDown.Control || keyIsDown.Meta) {
+          selectedItemIndexes.forEach(i => newSelectedItemIndexes.add(i));
+          newSelectedItemIndexes.add(indexToUse);
+        } else if (keyIsDown.Shift) {
+          newSelectedItemIndexes = new Set();
+
+          if (lastSelectedIndex < 0) {
+            newSelectedItemIndexes.add(indexToUse);
+          } else if (indexToUse < lastSelectedIndex) {
+            for (let i = indexToUse; i <= lastSelectedIndex; i++) {
+              newSelectedItemIndexes.add(i);
+            }
+          } else {
+            for (let i = lastSelectedIndex; i <= indexToUse; i++) {
+              newSelectedItemIndexes.add(i);
+            }
+          }
+        } else {
+          newSelectedItemIndexes.add(indexToUse);
+        }
+      } else {
+        newSelectedItemIndexes.add(indexToUse);
+      }
+    }
+
+    const newSelectedItems: Array<any> = [];
+    newSelectedItemIndexes.forEach((i: number) =>
+      newSelectedItems.push(items[i])
+    );
+    const newFocussedItem = items[indexToUse];
+
+    setFocussedItem(newFocussedItem);
+    setSelectedItems(newSelectedItems);
+    setSelectedItemIndexes(newSelectedItemIndexes);
+    setFocusIndex(indexToUse);
+    setLastSelectedIndex(indexToUse);
+  };
 
   return {
+    focusIndex,
+    focussedItem,
+    lastSelectedIndex,
+    selectedItems,
+    selectedItemIndexes,
+    selectionToggled,
     onKeyDownWithShortcuts: (e: React.KeyboardEvent) => {
       if (e.key === "ArrowUp" || e.key === "k") {
         focusUp();
@@ -99,7 +145,7 @@ function useSelectableItemListing<TItem>({
         }
       } else if (e.key === " ") {
         if (selectionBehaviour !== SelectionBehaviour.NONE) {
-          selectFocussed();
+          selectionToggled();
           e.preventDefault();
         }
       }
