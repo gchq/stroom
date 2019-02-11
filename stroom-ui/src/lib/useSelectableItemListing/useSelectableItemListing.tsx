@@ -26,8 +26,6 @@ export interface OutProps {
   onKeyDownWithShortcuts: React.KeyboardEventHandler<HTMLDivElement>;
 }
 
-// let bob = false;
-
 function useSelectableItemListing<TItem>({
   getKey,
   items,

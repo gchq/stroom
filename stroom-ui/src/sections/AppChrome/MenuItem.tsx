@@ -41,10 +41,11 @@ export interface MenuItemType {
 }
 
 interface Props extends StyledComponentProps {
-  listingId: string;
   menuItem: MenuItemType;
   depth: number;
   isCollapsed?: boolean;
+  selectedItems: Array<MenuItemType>;
+  focussedItem?: MenuItemType;
 }
 
 interface ConnectState {
@@ -145,16 +146,13 @@ const dragCollect: DragSourceCollector<
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     (
-      { keyIsDown, appChrome: { areMenuItemsOpen }, selectableItemListings },
-      { listingId, menuItem: { key } }
+      { keyIsDown, appChrome: { areMenuItemsOpen } },
+      { selectedItems, focussedItem, menuItem: { key } }
     ) => {
-      const { selectedItems = [], focussedItem } = selectableItemListings[
-        listingId
-      ];
-      const isSelected = selectedItems
+      const isSelected: boolean = selectedItems
         .map((d: MenuItemType) => d.key)
         .includes(key);
-      const inFocus = focussedItem && focussedItem.key === key;
+      const inFocus: boolean = !!focussedItem && focussedItem.key === key;
 
       return {
         isSelected,

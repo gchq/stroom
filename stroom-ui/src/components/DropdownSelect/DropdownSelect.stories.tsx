@@ -53,9 +53,8 @@ const ColorOption = ({
   </div>
 );
 
-const ColourPicker = ({ onChange, value, pickerId }: PickerProps) => (
+const ColourPicker = ({ onChange, value }: PickerProps) => (
   <DropdownSelect
-    pickerId="colourPicker"
     onChange={onChange}
     value={value}
     options={colourOptions}
@@ -92,7 +91,6 @@ const TestForm = () => (
             <Field name="colour">
               {({ field: { value } }: FieldProps) => (
                 <ColourPicker
-                  pickerId="colourPicker"
                   onChange={e => setFieldValue("colour", e)}
                   value={value}
                 />
@@ -104,7 +102,6 @@ const TestForm = () => (
             <Field name="weekday">
               {({ field: { value } }: FieldProps) => (
                 <WeekdayPicker
-                  pickerId="wdPicker"
                   onChange={e => setFieldValue("weekday", e)}
                   value={value}
                 />

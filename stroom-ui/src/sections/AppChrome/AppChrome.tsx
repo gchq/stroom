@@ -22,11 +22,6 @@ import { withRouter, RouteComponentProps } from "react-router-dom";
 import "simplebar";
 import "simplebar/dist/simplebar.css";
 
-import {
-  actionCreators as selectableItemListingActionCreators,
-  EnhancedProps as WithSelectableItemListingProps,
-  StoreStatePerId as WithSelectableItemListingStatePerId
-} from "../../lib/withSelectableItemListing";
 import { actionCreators as appChromeActionCreators } from "./redux";
 import { StoreState as MenuItemsOpenStoreState } from "./redux/menuItemsOpenReducer";
 import withLocalStorage from "../../lib/withLocalStorage";
@@ -37,18 +32,16 @@ import {
 } from "../../components/FolderExplorer";
 
 import { actionCreators as userSettingsActionCreators } from "../UserSettings";
-import withSelectableItemListing from "../../lib/withSelectableItemListing";
+import useSelectableItemListing from "../../lib/useSelectableItemListing";
 import { DocRefType, DocRefConsumer, DocRefTree } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-const { selectionToggled } = selectableItemListingActionCreators;
 const { menuItemOpened } = appChromeActionCreators;
 const { themeChanged } = userSettingsActionCreators;
 
 const withIsExpanded = withLocalStorage("isExpanded", "setIsExpanded", true);
 
-const LISTING_ID = "app-chrome-menu";
 const pathPrefix = "/s";
 
 const getDocumentTreeMenuItems = (
@@ -82,7 +75,7 @@ const getOpenMenuItems = function<
   menuItems: Array<T>,
   areMenuItemsOpen: MenuItemsOpenStoreState,
   openMenuItems: Array<T> = []
-) {
+): Array<T> {
   menuItems.forEach(menuItem => {
     openMenuItems.push(menuItem);
     if (menuItem.children && areMenuItemsOpen[menuItem.key]) {
@@ -103,12 +96,10 @@ interface WithHandlers {
 interface ConnectState {
   areMenuItemsOpen: MenuItemsOpenStoreState;
   theme: string;
-  selectableItemListing: WithSelectableItemListingStatePerId;
 }
 interface ConnectDispatch {
   menuItemOpened: typeof menuItemOpened;
   themeChanged: typeof themeChanged;
-  selectionToggled: typeof selectionToggled;
 }
 interface WithIsExpanded {
   isExpanded: boolean;
@@ -116,7 +107,7 @@ interface WithIsExpanded {
 }
 interface WithProps {
   menuItems: Array<MenuItemType>;
-  openMenuItems: { [key: string]: boolean };
+  openMenuItems: Array<MenuItemType>;
 }
 
 interface EnhancedProps
@@ -127,8 +118,7 @@ interface EnhancedProps
     ConnectState,
     ConnectDispatch,
     WithIsExpanded,
-    WithProps,
-    WithSelectableItemListingProps<MenuItemType> {}
+    WithProps {}
 
 const enhance = compose<EnhancedProps, Props>(
   withDocumentTree,
@@ -145,19 +135,16 @@ const enhance = compose<EnhancedProps, Props>(
   >(
     ({
       routing: { location },
-      selectableItemListings,
       userSettings: { theme },
       appChrome: { areMenuItemsOpen }
     }) => ({
       areMenuItemsOpen,
       theme,
-      selectableItemListing: selectableItemListings[LISTING_ID],
       location
     }),
     {
       menuItemOpened,
-      themeChanged,
-      selectionToggled
+      themeChanged
     }
   ),
   withIsExpanded,
@@ -295,34 +282,6 @@ const enhance = compose<EnhancedProps, Props>(
         openMenuItems
       };
     }
-  ),
-  withSelectableItemListing<MenuItemType>(
-    ({
-      openMenuItems,
-      menuItemOpened,
-      areMenuItemsOpen,
-      selectionToggled
-    }) => ({
-      listingId: LISTING_ID,
-      items: openMenuItems,
-      getKey: m => m.key,
-      openItem: m => m.onClick(),
-      enterItem: m => menuItemOpened(m.key, true),
-      goBack: m => {
-        if (m) {
-          if (areMenuItemsOpen[m.key]) {
-            menuItemOpened(m.key, false);
-          } else if (m.parentDocRef) {
-            // Can we bubble back up to the parent folder of the current selection?
-            let newSelection = openMenuItems.find(
-              ({ key }: MenuItemType) => key === m.parentDocRef!.uuid
-            );
-            selectionToggled(LISTING_ID, newSelection.key);
-            menuItemOpened(m.parentDocRef.uuid, false);
-          }
-        }
-      }
-    })
   )
 );
 
@@ -330,18 +289,21 @@ const getMenuItems = (
   isCollapsed: boolean = false,
   menuItems: Array<MenuItemType>,
   areMenuItemsOpen: MenuItemsOpenStoreState,
+  selectedItems: Array<MenuItemType>,
+  focussedItem?: MenuItemType,
   depth: number = 0
 ) =>
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
       <MenuItem
+        selectedItems={selectedItems}
+        focussedItem={focussedItem}
         className={`sidebar__text-color ${isCollapsed ? "collapsed" : ""} ${
           depth > 0 ? "child" : ""
         }`}
         key={menuItem.key}
         menuItem={menuItem}
         depth={depth}
-        listingId={LISTING_ID}
         isCollapsed={isCollapsed}
       />
       {/* TODO: we only want the 'children' class on the first set of children. We're using it to pad the bottom. Any better ideas? */}
@@ -351,6 +313,8 @@ const getMenuItems = (
             isCollapsed,
             menuItem.children,
             areMenuItemsOpen,
+            selectedItems,
+            focussedItem,
             depth + 1
           )}
         </div>
@@ -368,12 +332,41 @@ const AppChrome = ({
   setIsExpanded,
   theme,
   themeChanged,
-  onKeyDownWithShortcuts
+  openMenuItems,
+  menuItemOpened
 }: EnhancedProps) => {
   if (theme === undefined) {
     theme = "theme-dark";
     themeChanged(theme);
   }
+
+  const {
+    onKeyDownWithShortcuts,
+    selectionToggled,
+    selectedItems,
+    focussedItem
+  } = useSelectableItemListing<MenuItemType>({
+    items: openMenuItems,
+    getKey: m => m.key,
+    openItem: m => m.onClick(),
+    enterItem: m => menuItemOpened(m.key, true),
+    goBack: m => {
+      if (m) {
+        if (areMenuItemsOpen[m.key]) {
+          menuItemOpened(m.key, false);
+        } else if (m.parentDocRef) {
+          // Can we bubble back up to the parent folder of the current selection?
+          let newSelection = openMenuItems.find(
+            ({ key }: MenuItemType) => key === m.parentDocRef!.uuid
+          );
+          if (!!newSelection) {
+            selectionToggled(newSelection.key);
+          }
+          menuItemOpened(m.parentDocRef.uuid, false);
+        }
+      }
+    }
+  });
 
   const sidebarClassName = isExpanded
     ? "app-chrome__sidebar--expanded"
@@ -415,7 +408,13 @@ const AppChrome = ({
               data-simplebar
             >
               <div className="app-chrome__sidebar-menu__container">
-                {getMenuItems(!isExpanded, menuItems, areMenuItemsOpen)}
+                {getMenuItems(
+                  !isExpanded,
+                  menuItems,
+                  areMenuItemsOpen,
+                  selectedItems,
+                  focussedItem
+                )}
               </div>
             </div>
           </React.Fragment>

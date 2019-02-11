@@ -19,11 +19,6 @@ import {
 import { searchApp } from "../FolderExplorer/explorerClient";
 import { DocRefBreadcrumb } from "../DocRefBreadcrumb";
 import DocRefListingEntry from "../DocRefListingEntry";
-import withSelectableItemListing, {
-  EnhancedProps as SelectableItemListingProps,
-  defaultStatePerId as selectableItemListingDefaultStatePerId,
-  StoreStatePerId as SelectableItemListingState
-} from "../../lib/withSelectableItemListing";
 import withDocumentTree, {
   EnhancedProps as WithDocumentTreeProps
 } from "../FolderExplorer/withDocumentTree";
@@ -31,6 +26,7 @@ import withDocumentTree, {
 import ModeOptionButtons from "./ModeOptionButtons";
 import { GlobalStoreState } from "../../startup/reducers";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import useSelectableItemListing from "../../lib/useSelectableItemListing";
 
 const { searchTermUpdated, navigateToFolder } = appSearchBarActionCreators;
 
@@ -55,7 +51,6 @@ interface ConnectState {
   searchTerm: string;
   searchMode: SearchMode;
   valueToShow: string;
-  selectableItemListing: SelectableItemListingState;
   docRefs: Array<DocRefType>;
   hasNoResults: boolean;
   noResultsText: string;
@@ -93,7 +88,6 @@ export interface EnhancedProps
     ConnectState,
     ConnectDispatch,
     WithHandlers1,
-    SelectableItemListingProps<DocRefType>,
     WithHandlers2,
     WithProps {}
 
@@ -119,19 +113,11 @@ const enhance = compose<EnhancedProps, Props>(
     GlobalStoreState
   >(
     (
-      {
-        appSearch,
-        recentItems,
-        selectableItemListings,
-        documentTree
-      },
+      { appSearch, recentItems, selectableItemListings, documentTree },
       { pickerId, typeFilters = [], value, textFocus }
     ) => {
       const appSearchForPicker =
         appSearch[pickerId] || appSearchDefaultStatePerId;
-      const selectableItemListing =
-        selectableItemListings[pickerId] ||
-        selectableItemListingDefaultStatePerId;
       const {
         searchTerm,
         navFolder,
@@ -194,7 +180,6 @@ const enhance = compose<EnhancedProps, Props>(
         searchTerm,
         searchMode,
         valueToShow,
-        selectableItemListing,
         docRefs,
         hasNoResults: docRefs.length === 0,
         noResultsText:
@@ -230,16 +215,6 @@ const enhance = compose<EnhancedProps, Props>(
       }
     }
   }),
-  withSelectableItemListing<DocRefType>(
-    ({ pickerId, docRefs, navigateToFolder, parentFolder, onThisChange }) => ({
-      listingId: pickerId,
-      items: docRefs,
-      openItem: onThisChange,
-      getKey: d => d.uuid,
-      enterItem: d => navigateToFolder(pickerId, d),
-      goBack: () => navigateToFolder(pickerId, parentFolder)
-    })
-  ),
   withHandlers<
     Props & ConnectState & ConnectDispatch & WithHandlers1,
     WithHandlers2
@@ -304,8 +279,8 @@ const AppSearchBar = ({
   className,
   pickerId,
   docRefs,
+  parentFolder,
   thisNavigateToFolder,
-  onKeyDownWithShortcuts,
   headerTitle,
   headerIcon,
   headerAction,
@@ -317,53 +292,65 @@ const AppSearchBar = ({
   onSearchFocus,
   onSearchBlur,
   onSearchTermChange
-}: EnhancedProps) => (
-  <div className={`dropdown app-search-bar ${className || ""}`}>
-    <input
-      className="app-search-bar__input"
-      //icon="search" // TODO
-      placeholder="Search..."
-      value={valueToShow}
-      onFocus={onSearchFocus}
-      onBlur={onSearchBlur}
-      onChange={onSearchTermChange}
-    />
-    <div
-      tabIndex={0}
-      onKeyDown={onKeyDownWithShortcuts}
-      className="dropdown__content app-search-bar__dropdown-content"
-    >
-      <div className="app-search-header">
-        <div onClick={headerAction}>
-          <FontAwesomeIcon icon={headerIcon} size="lg" />
+}: EnhancedProps) => {
+  const { onKeyDownWithShortcuts } = useSelectableItemListing({
+    items: docRefs,
+    openItem: onThisChange,
+    getKey: d => d.uuid,
+    enterItem: d => navigateToFolder(pickerId, d),
+    goBack: () => {
+      if (!!parentFolder) navigateToFolder(pickerId, parentFolder);
+    }
+  });
+
+  return (
+    <div className={`dropdown app-search-bar ${className || ""}`}>
+      <input
+        className="app-search-bar__input"
+        //icon="search" // TODO
+        placeholder="Search..."
+        value={valueToShow}
+        onFocus={onSearchFocus}
+        onBlur={onSearchBlur}
+        onChange={onSearchTermChange}
+      />
+      <div
+        tabIndex={0}
+        onKeyDown={onKeyDownWithShortcuts}
+        className="dropdown__content app-search-bar__dropdown-content"
+      >
+        <div className="app-search-header">
+          <div onClick={headerAction}>
+            <FontAwesomeIcon icon={headerIcon} size="lg" />
+          </div>
+          <div className="app-search-header__text">{headerTitle}</div>
+          <ModeOptionButtons pickerId={pickerId} />
         </div>
-        <div className="app-search-header__text">{headerTitle}</div>
-        <ModeOptionButtons pickerId={pickerId} />
-      </div>
-      <div className="app-search-listing">
-        {hasNoResults && (
-          <div className="app-search-listing__empty">{noResultsText}</div>
-        )}
-        {docRefs.map(searchResult => (
-          <DocRefListingEntry
-            key={searchResult.uuid}
-            listingId={pickerId}
-            docRef={searchResult}
-            openDocRef={onThisChange}
-            enterFolder={thisNavigateToFolder}
-          >
-            {provideBreadcrumbs && (
-              <DocRefBreadcrumb
-                docRefUuid={searchResult.uuid}
-                openDocRef={thisNavigateToFolder}
-              />
-            )}
-          </DocRefListingEntry>
-        ))}
+        <div className="app-search-listing">
+          {hasNoResults && (
+            <div className="app-search-listing__empty">{noResultsText}</div>
+          )}
+          {docRefs.map(searchResult => (
+            <DocRefListingEntry
+              key={searchResult.uuid}
+              listingId={pickerId}
+              docRef={searchResult}
+              openDocRef={onThisChange}
+              enterFolder={thisNavigateToFolder}
+            >
+              {provideBreadcrumbs && (
+                <DocRefBreadcrumb
+                  docRefUuid={searchResult.uuid}
+                  openDocRef={thisNavigateToFolder}
+                />
+              )}
+            </DocRefListingEntry>
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default enhance(AppSearchBar);
 
