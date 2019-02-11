@@ -1,5 +1,5 @@
 import * as React from "react";
-import { compose, withProps } from "recompose";
+import { compose } from "recompose";
 
 import DocRefImage from "../DocRefImage";
 import { OptionType } from "../../types";
@@ -21,26 +21,26 @@ const DocRefTypeOption = ({
 );
 
 export interface Props {
-  pickerId: string;
   onChange: (docRefType: string) => any;
   value: string;
 }
 
-interface WithProps {
-  options: Array<OptionType>;
-}
+export interface EnhancedProps extends Props, WithDocRefTypeProps {}
 
-export interface EnhancedProps extends Props, WithDocRefTypeProps, WithProps {}
+const enhance = compose<EnhancedProps, Props>(withDocRefTypes);
 
-const enhance = compose<EnhancedProps, Props>(
-  withDocRefTypes,
-  withProps(({ docRefTypes }) => ({
-    options: docRefTypes.map((d: string) => ({ text: d, value: d }))
-  }))
-);
-
-let DocRefTypePicker = (props: EnhancedProps) => (
-  <DropdownSelect {...props} OptionComponent={DocRefTypeOption} />
-);
+let DocRefTypePicker = ({ docRefTypes, ...rest }: EnhancedProps) => {
+  let options: Array<OptionType> = docRefTypes.map((d: string) => ({
+    text: d,
+    value: d
+  }));
+  return (
+    <DropdownSelect
+      {...rest}
+      options={options}
+      OptionComponent={DocRefTypeOption}
+    />
+  );
+};
 
 export default enhance(DocRefTypePicker);

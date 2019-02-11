@@ -96,7 +96,6 @@ let CreateDocRefDialog = ({
               <Field name="docRefType">
                 {({ field: { value } }: FieldProps) => (
                   <DocRefTypePicker
-                    pickerId="new-doc-ref-type"
                     onChange={d => setFieldValue("docRefType", d)}
                     value={value}
                   />

@@ -18,7 +18,7 @@ import { useState } from "react";
 import { storiesOf } from "@storybook/react";
 
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
-import { fromSetupSampleData } from "../FolderExplorer/test";
+import { smallTree } from "../FolderExplorer/test";
 import useSelectableItemListing from "../../lib/useSelectableItemListing";
 import DocRefListingEntry from "./DocRefListingEntry";
 import { DocRefType } from "../../types";
@@ -26,8 +26,8 @@ import { DocRefType } from "../../types";
 import "../../styles/main.css";
 import { DocRefBreadcrumb } from "../DocRefBreadcrumb";
 
-const testFolder = fromSetupSampleData.children![0];
-const testDocRef = fromSetupSampleData.children![0].children![0].children![0];
+const testFolder = smallTree.children![0];
+const testDocRef = smallTree.children![0].children![0].children![0];
 
 interface Props {
   listingId: string;

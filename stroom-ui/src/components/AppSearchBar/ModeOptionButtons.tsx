@@ -1,36 +1,12 @@
 import * as React from "react";
-import { compose } from "recompose";
-import { connect } from "react-redux";
 
 import Button from "../Button";
-import {
-  actionCreators as appSearchBarActionCreators,
-  SearchMode
-} from "./redux";
-import { GlobalStoreState } from "../../startup/reducers";
+import { SearchMode } from "./redux";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 
-const { switchMode } = appSearchBarActionCreators;
-
 export interface Props {
-  pickerId: string;
+  switchMode: (m: SearchMode) => void;
 }
-
-interface ConnectState {}
-interface ConnectDispatch {
-  switchMode: typeof switchMode;
-}
-
-export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
-
-const enhance = compose<EnhancedProps, Props>(
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    undefined,
-    {
-      switchMode
-    }
-  )
-);
 
 export interface ModeOption {
   mode: SearchMode;
@@ -56,17 +32,17 @@ const MODE_OPTIONS: Array<ModeOption> = [
   }
 ];
 
-const ModeOptionButtons = ({ switchMode, pickerId }: EnhancedProps) => (
+const ModeOptionButtons = ({ switchMode }: Props) => (
   <React.Fragment>
     {MODE_OPTIONS.map(modeOption => (
       <Button
         key={modeOption.mode}
         icon={modeOption.icon}
         groupPosition={modeOption.position}
-        onClick={e => switchMode(pickerId, modeOption.mode)}
+        onClick={e => switchMode(modeOption.mode)}
         onKeyDown={e => {
           if (e.key === " ") {
-            switchMode(pickerId, modeOption.mode);
+            switchMode(modeOption.mode);
           }
           e.stopPropagation();
         }}
@@ -75,4 +51,4 @@ const ModeOptionButtons = ({ switchMode, pickerId }: EnhancedProps) => (
   </React.Fragment>
 );
 
-export default enhance(ModeOptionButtons);
+export default ModeOptionButtons;

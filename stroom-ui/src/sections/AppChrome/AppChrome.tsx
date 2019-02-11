@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import * as React from "react";
+import { useEffect } from "react";
 
 import { connect } from "react-redux";
 import { compose, withProps, withHandlers } from "recompose";
@@ -25,10 +26,6 @@ import "simplebar/dist/simplebar.css";
 import { actionCreators as appChromeActionCreators } from "./redux";
 import { StoreState as MenuItemsOpenStoreState } from "./redux/menuItemsOpenReducer";
 import MenuItem, { MenuItemType } from "./MenuItem";
-import {
-  withDocumentTree,
-  WithDocumentTreeProps
-} from "../../components/FolderExplorer";
 
 import {
   copyDocuments,
@@ -45,6 +42,7 @@ import CopyMoveDocRefDialog, {
 } from "../../components/FolderExplorer/CopyMoveDocRefDialog";
 import useLocalStorage from "../../lib/useLocalStorage";
 import { useTheme } from "../../lib/theme";
+import { fetchDocTree } from "../../components/FolderExplorer/explorerClient";
 
 const { menuItemOpened } = appChromeActionCreators;
 
@@ -101,11 +99,13 @@ interface WithHandlers {
 }
 interface ConnectState {
   areMenuItemsOpen: MenuItemsOpenStoreState;
+  documentTree: DocRefTree;
 }
 interface ConnectDispatch {
   menuItemOpened: typeof menuItemOpened;
   copyDocuments: typeof copyDocuments;
   moveDocuments: typeof moveDocuments;
+  fetchDocTree: typeof fetchDocTree;
 }
 interface WithIsExpanded {
   isExpanded: boolean;
@@ -118,7 +118,6 @@ interface WithProps {
 
 interface EnhancedProps
   extends Props,
-    WithDocumentTreeProps,
     RouteComponentProps<any>,
     WithHandlers,
     ConnectState,
@@ -127,7 +126,6 @@ interface EnhancedProps
     WithProps {}
 
 const enhance = compose<EnhancedProps, Props>(
-  withDocumentTree,
   withRouter,
   withHandlers({
     openDocRef: ({ history }) => (d: DocRefType) =>
@@ -136,17 +134,23 @@ const enhance = compose<EnhancedProps, Props>(
   connect<
     ConnectState,
     ConnectDispatch,
-    Props & WithDocumentTreeProps & RouteComponentProps<any> & WithHandlers,
+    Props & RouteComponentProps<any> & WithHandlers,
     GlobalStoreState
   >(
-    ({ routing: { location }, appChrome: { areMenuItemsOpen } }) => ({
+    ({
+      documentTree,
+      routing: { location },
+      appChrome: { areMenuItemsOpen }
+    }) => ({
       areMenuItemsOpen,
-      location
+      location,
+      documentTree
     }),
     {
       menuItemOpened,
       copyDocuments,
-      moveDocuments
+      moveDocuments,
+      fetchDocTree
     }
   ),
   // We need to work out how to do these global shortcuts from scratch, now that we don't have dedicated pages
@@ -341,9 +345,14 @@ const AppChrome = ({
   openMenuItems,
   menuItemOpened,
   copyDocuments,
-  moveDocuments
+  moveDocuments,
+  fetchDocTree
 }: EnhancedProps) => {
   const { theme } = useTheme();
+
+  useEffect(() => {
+    fetchDocTree();
+  });
 
   const { value: isExpanded, setValue: setIsExpanded } = useLocalStorage(
     "isExpanded",

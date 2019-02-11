@@ -1,14 +1,13 @@
 import * as React from "react";
+import { useEffect } from "react";
 import { connect } from "react-redux";
-import { compose, branch, renderComponent } from "recompose";
+import { compose } from "recompose";
 
-import withDocumentTree, {
-  EnhancedProps as WithDocumentTreeProps
-} from "../FolderExplorer/withDocumentTree";
 import { findItem } from "../../lib/treeUtils";
 import { DocRefConsumer, DocRefWithLineage } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
 import Loader from "../Loader";
+import { fetchDocTree } from "../FolderExplorer/explorerClient";
 
 export interface Props {
   docRefUuid: string;
@@ -20,61 +19,61 @@ interface ConnectState {
   docRefWithLineage: DocRefWithLineage;
 }
 
-interface ConnectDispatch {}
+interface ConnectDispatch {
+  fetchDocTree: typeof fetchDocTree;
+}
 
-export interface EnhancedProps
-  extends Props,
-    WithDocumentTreeProps,
-    ConnectState,
-    ConnectDispatch {}
+export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
-  withDocumentTree,
-  connect<
-    ConnectState,
-    ConnectDispatch,
-    Props & WithDocumentTreeProps,
-    GlobalStoreState
-  >(
-    ({}, { docRefUuid, documentTree }) => ({
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
+    ({ documentTree }, { docRefUuid }) => ({
       docRefWithLineage: findItem(documentTree, docRefUuid) as DocRefWithLineage
     }),
-    {}
-  ),
-  branch(
-    ({ docRefWithLineage }) => !docRefWithLineage || !docRefWithLineage.node,
-    renderComponent<Props>(({ docRefUuid }) => (
-      <Loader message={`Loading Doc Ref ${docRefUuid}...`} />
-    ))
+    { fetchDocTree }
   )
 );
 
 const Divider = () => <div className="DocRefBreadcrumb__divider">/</div>;
 
 const DocRefBreadcrumb = ({
-  docRefWithLineage: {
+  docRefUuid,
+  docRefWithLineage,
+  openDocRef,
+  fetchDocTree,
+  className = ""
+}: EnhancedProps) => {
+  useEffect(() => {
+    fetchDocTree();
+  });
+
+  if (!docRefWithLineage || !docRefWithLineage.node) {
+    return <Loader message={`Loading Doc Ref ${docRefUuid}...`} />;
+  }
+
+  const {
     lineage,
     node: { name }
-  },
-  openDocRef,
-  className = ""
-}: EnhancedProps) => (
-  <div className={`DocRefBreadcrumb ${className || ""}`}>
-    {lineage.map(l => (
-      <React.Fragment key={l.uuid}>
-        <Divider />
-        <a
-          className="DocRefBreadcrumb__link"
-          title={l.name}
-          onClick={() => openDocRef(l)}
-        >
-          {l.name}
-        </a>
-      </React.Fragment>
-    ))}
-    <Divider />
-    <div className="DocRefBreadcrumb__name">{name}</div>
-  </div>
-);
+  } = docRefWithLineage;
+
+  return (
+    <div className={`DocRefBreadcrumb ${className || ""}`}>
+      {lineage.map(l => (
+        <React.Fragment key={l.uuid}>
+          <Divider />
+          <a
+            className="DocRefBreadcrumb__link"
+            title={l.name}
+            onClick={() => openDocRef(l)}
+          >
+            {l.name}
+          </a>
+        </React.Fragment>
+      ))}
+      <Divider />
+      <div className="DocRefBreadcrumb__name">{name}</div>
+    </div>
+  );
+};
 
 export default enhance(DocRefBreadcrumb);

@@ -40,7 +40,6 @@ const TestForm = () => (
           <Field name="docType">
             {({ field: { value } }: FieldProps) => (
               <DocRefTypePicker
-                pickerId="test1"
                 onChange={d => setFieldValue("docType", d)}
                 value={value}
               />

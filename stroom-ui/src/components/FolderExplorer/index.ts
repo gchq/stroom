@@ -1,8 +1,5 @@
 import FolderExplorer from "./FolderExplorer";
 import explorerClient from "./explorerClient";
-import withDocumentTree, {
-  EnhancedProps as WithDocumentTreeProps
-} from "./withDocumentTree";
 
 import CreateDocRefDialog from "./CreateDocRefDialog";
 import RenameDocRefDialog from "./RenameDocRefDialog";
@@ -15,9 +12,7 @@ export {
   RenameDocRefDialog,
   CopyDocRefDialog,
   DeleteDocRefDialog,
-  explorerClient,
-  withDocumentTree,
-  WithDocumentTreeProps
+  explorerClient
 };
 
 export default FolderExplorer;

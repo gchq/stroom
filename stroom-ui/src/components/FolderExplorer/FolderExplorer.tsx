@@ -15,6 +15,7 @@
  */
 
 import * as React from "react";
+import { useEffect } from "react";
 import { connect } from "react-redux";
 import { compose, branch, renderComponent, withHandlers } from "recompose";
 import { withRouter } from "react-router-dom";
@@ -37,9 +38,7 @@ import DeleteDocRefDialog, {
   useDeleteDocRefDialog
 } from "./DeleteDocRefDialog";
 import DocRefInfoModal from "../DocRefInfoModal";
-import withDocumentTree, {
-  EnhancedProps as WithDocumentTreeProps
-} from "./withDocumentTree";
+import { fetchDocTree } from "../FolderExplorer/explorerClient";
 import { Props as ButtonProps } from "../Button";
 import { DocRefConsumer, DocRefType, DocRefWithLineage } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
@@ -63,35 +62,30 @@ interface ConnectDispatch {
   fetchDocInfo: typeof fetchDocInfo;
   copyDocuments: typeof copyDocuments;
   moveDocuments: typeof moveDocuments;
+  fetchDocTree: typeof fetchDocTree;
 }
 
 export interface EnhancedProps
   extends Props,
-    WithDocumentTreeProps,
     WithHandlers,
     ConnectState,
     ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
-  withDocumentTree,
   withRouter,
   withHandlers({
     openDocRef: ({ history }) => (d: DocRefType) =>
       history.push(`/s/doc/${d.type}/${d.uuid}`)
   }),
-  connect<
-    ConnectState,
-    ConnectDispatch,
-    Props & WithDocumentTreeProps,
-    GlobalStoreState
-  >(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ documentTree }, { folderUuid }) => ({
       folder: findItem(documentTree, folderUuid)!
     }),
     {
       copyDocuments,
       moveDocuments,
-      fetchDocInfo
+      fetchDocInfo,
+      fetchDocTree
     }
   ),
   branch(
@@ -106,7 +100,8 @@ const FolderExplorer = ({
   copyDocuments,
   moveDocuments,
   fetchDocInfo,
-  openDocRef
+  openDocRef,
+  fetchDocTree
 }: EnhancedProps) => {
   const {
     showDeleteDialog,
@@ -143,6 +138,9 @@ const FolderExplorer = ({
         openDocRef(lineage[lineage.length - 1]);
       }
     }
+  });
+  useEffect(() => {
+    fetchDocTree();
   });
 
   const actionBarItems: Array<ButtonProps> = [

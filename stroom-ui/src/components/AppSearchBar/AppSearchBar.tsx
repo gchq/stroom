@@ -1,43 +1,22 @@
 import * as React from "react";
+import { useState, useEffect } from "react";
 
-import { compose, withHandlers, withProps, withStateHandlers } from "recompose";
+import { compose } from "recompose";
 import { connect } from "react-redux";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { findItem, filterTree } from "../../lib/treeUtils";
-import {
-  actionCreators as appSearchBarActionCreators,
-  defaultStatePerId as appSearchDefaultStatePerId,
-  SearchMode
-} from "./redux";
-import {
-  DocRefType,
-  DocRefConsumer,
-  DocRefTree,
-  DocRefWithLineage
-} from "../../types";
+import { StoreState as AppSearchStoreState, SearchMode } from "./redux";
+import { DocRefType, DocRefTree, DocRefWithLineage } from "../../types";
 import { searchApp } from "../FolderExplorer/explorerClient";
 import { DocRefBreadcrumb } from "../DocRefBreadcrumb";
 import DocRefListingEntry from "../DocRefListingEntry";
-import withDocumentTree, {
-  EnhancedProps as WithDocumentTreeProps
-} from "../FolderExplorer/withDocumentTree";
+import { fetchDocTree } from "../FolderExplorer/explorerClient";
 
 import ModeOptionButtons from "./ModeOptionButtons";
 import { GlobalStoreState } from "../../startup/reducers";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import useSelectableItemListing from "../../lib/useSelectableItemListing";
-
-const { searchTermUpdated, navigateToFolder } = appSearchBarActionCreators;
-
-interface FocusStateProps {
-  textFocus: boolean;
-}
-
-interface FocusHandlerProps {
-  onSearchFocus: (a: any) => any;
-  onSearchBlur: (a: any) => any;
-}
 
 interface Props {
   pickerId: string;
@@ -48,264 +27,186 @@ interface Props {
 }
 
 interface ConnectState {
-  searchTerm: string;
-  searchMode: SearchMode;
-  valueToShow: string;
-  docRefs: Array<DocRefType>;
-  hasNoResults: boolean;
-  noResultsText: string;
-  provideBreadcrumbs: boolean;
-  thisFolder?: DocRefTree;
-  parentFolder?: DocRefType;
+  appSearch: AppSearchStoreState;
+  documentTree: DocRefTree;
+  recentItems: Array<DocRefType>;
 }
 
 interface ConnectDispatch {
   searchApp: typeof searchApp;
-  searchTermUpdated: typeof searchTermUpdated;
-  navigateToFolder: typeof navigateToFolder;
+  fetchDocTree: typeof fetchDocTree;
 }
 
-interface WithHandlers1 {
-  onThisChange: DocRefConsumer;
-}
-
-interface WithHandlers2 {
-  onSearchTermChange: React.ChangeEventHandler<HTMLInputElement>;
-  thisNavigateToFolder: DocRefConsumer;
-}
-
-interface WithProps {
-  headerTitle: string;
-  headerIcon: IconProp;
-  headerAction: () => any;
-}
-
-export interface EnhancedProps
-  extends Props,
-    WithDocumentTreeProps,
-    FocusStateProps,
-    FocusHandlerProps,
-    ConnectState,
-    ConnectDispatch,
-    WithHandlers1,
-    WithHandlers2,
-    WithProps {}
+export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
-  withDocumentTree,
-  withStateHandlers(
-    _ => ({
-      textFocus: false
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
+    ({ appSearch, recentItems, documentTree }) => ({
+      appSearch,
+      recentItems,
+      documentTree
     }),
     {
-      onSearchFocus: () => e => ({
-        textFocus: true
-      }),
-      onSearchBlur: () => e => ({
-        textFocus: false
-      })
-    }
-  ),
-  connect<
-    ConnectState,
-    ConnectDispatch,
-    Props & FocusStateProps & FocusHandlerProps,
-    GlobalStoreState
-  >(
-    (
-      { appSearch, recentItems, documentTree },
-      { pickerId, typeFilters = [], value, textFocus }
-    ) => {
-      const appSearchForPicker =
-        appSearch[pickerId] || appSearchDefaultStatePerId;
-      const {
-        searchTerm,
-        navFolder,
-        searchResults,
-        searchMode
-      } = appSearchForPicker;
-      const documentTreeToUse: DocRefTree =
-        typeFilters.length > 0
-          ? filterTree(documentTree, d => typeFilters.includes(d.type))!
-          : documentTree;
-
-      let docRefs: Array<DocRefType> = [];
-      let thisFolder: DocRefTree | undefined = undefined;
-      let parentFolder: DocRefType | undefined;
-      let valueToShow: string;
-
-      if (textFocus) {
-        valueToShow = searchTerm;
-      } else if (value) {
-        valueToShow = value.name || "UNKNOWN_NAME";
-      } else {
-        valueToShow = "";
-      }
-
-      switch (searchMode) {
-        case SearchMode.NAVIGATION: {
-          const navFolderToUse = navFolder || documentTreeToUse;
-          const navFolderWithLineage: DocRefWithLineage = findItem(
-            documentTreeToUse,
-            navFolderToUse.uuid
-          )!;
-          docRefs = navFolderWithLineage.node.children || [];
-          thisFolder = navFolderWithLineage.node;
-
-          if (
-            navFolderWithLineage.lineage &&
-            navFolderWithLineage.lineage.length > 0
-          ) {
-            parentFolder =
-              navFolderWithLineage.lineage[
-                navFolderWithLineage.lineage.length - 1
-              ];
-          }
-          break;
-        }
-        case SearchMode.GLOBAL_SEARCH: {
-          docRefs = searchResults;
-          break;
-        }
-        case SearchMode.RECENT_ITEMS: {
-          docRefs = recentItems;
-          break;
-        }
-        default:
-          docRefs = [];
-          break;
-      }
-
-      return {
-        searchTerm,
-        searchMode,
-        valueToShow,
-        docRefs,
-        hasNoResults: docRefs.length === 0,
-        noResultsText:
-          searchMode === SearchMode.NAVIGATION ? "empty" : "no results",
-        provideBreadcrumbs: searchMode !== SearchMode.NAVIGATION,
-        thisFolder,
-        parentFolder
-      };
-    },
-    {
       searchApp,
-      searchTermUpdated,
-      navigateToFolder
-    }
-  ),
-  withHandlers({
-    // Prevent folders being selected if they aren't actually valid selections
-    onThisChange: ({ onChange, typeFilters, pickerId, navigateToFolder }) => (
-      docRef: DocRefType
-    ) => {
-      if (docRef.type === "Folder") {
-        if (
-          !typeFilters ||
-          typeFilters.length === 0 ||
-          typeFilters.includes("Folder")
-        ) {
-          onChange(docRef);
-        } else {
-          navigateToFolder(pickerId, docRef);
-        }
-      } else {
-        onChange(docRef);
-      }
-    }
-  }),
-  withHandlers<
-    Props & ConnectState & ConnectDispatch & WithHandlers1,
-    WithHandlers2
-  >({
-    onSearchTermChange: ({ pickerId, searchTermUpdated, searchApp }) => ({
-      target: { value }
-    }) => {
-      searchTermUpdated(pickerId, value);
-      searchApp(pickerId, { term: value });
-    },
-    thisNavigateToFolder: ({ navigateToFolder, pickerId }) => d =>
-      navigateToFolder(pickerId, d)
-  }),
-  withProps(
-    ({
-      pickerId,
-      searchMode,
-      thisFolder,
-      parentFolder,
-      thisNavigateToFolder,
-      searchTerm
-    }) => {
-      let headerTitle;
-      let headerIcon;
-      let headerAction = () => {};
-
-      switch (searchMode) {
-        case SearchMode.NAVIGATION: {
-          headerTitle = thisFolder.name;
-          if (parentFolder) {
-            headerIcon = "arrow-left";
-            headerAction = () => thisNavigateToFolder(parentFolder);
-          } else {
-            headerIcon = "folder";
-          }
-          break;
-        }
-        case SearchMode.GLOBAL_SEARCH: {
-          headerIcon = "search";
-          headerTitle = `Search for '${searchTerm}'`;
-          break;
-        }
-        case SearchMode.RECENT_ITEMS: {
-          headerTitle = "Recent Items";
-          headerIcon = "history";
-          break;
-        }
-        default:
-          break;
-      }
-
-      return {
-        headerTitle,
-        headerIcon,
-        headerAction
-      };
+      fetchDocTree
     }
   )
 );
 
 const AppSearchBar = ({
+  fetchDocTree,
   className,
   pickerId,
-  docRefs,
-  parentFolder,
-  thisNavigateToFolder,
-  headerTitle,
-  headerIcon,
-  headerAction,
-  hasNoResults,
-  noResultsText,
-  provideBreadcrumbs,
-  onThisChange,
-  valueToShow,
-  onSearchFocus,
-  onSearchBlur,
-  onSearchTermChange
+  typeFilters = [],
+  onChange,
+  appSearch,
+  value,
+  documentTree,
+  recentItems,
+  searchApp
 }: EnhancedProps) => {
+  let searchResults = appSearch[pickerId] || [];
+
+  let [textFocus, setTextFocus] = useState<boolean>(false);
+  let [searchTerm, setSearchTerm] = useState<string>("");
+  let [searchMode, setSearchMode] = useState<SearchMode>(SearchMode.NAVIGATION);
+  let [navFolder, setNavFolder] = useState<DocRefType | undefined>(undefined);
+
+  const onSearchFocus = () => setTextFocus(true);
+  const onSearchBlur = () => setTextFocus(false);
+
+  const documentTreeToUse: DocRefTree =
+    typeFilters.length > 0
+      ? filterTree(documentTree, d => typeFilters.includes(d.type))!
+      : documentTree;
+
+  let docRefs: Array<DocRefType> = [];
+  let thisFolder: DocRefTree | undefined = undefined;
+  let parentFolder: DocRefType | undefined = undefined;
+  let valueToShow: string;
+
+  if (textFocus) {
+    valueToShow = searchTerm;
+  } else if (value) {
+    valueToShow = value.name || "UNKNOWN_NAME";
+  } else {
+    valueToShow = "";
+  }
+
+  switch (searchMode) {
+    case SearchMode.NAVIGATION: {
+      const navFolderToUse = navFolder || documentTreeToUse;
+      const navFolderWithLineage: DocRefWithLineage = findItem(
+        documentTreeToUse,
+        navFolderToUse.uuid
+      )!;
+      docRefs = navFolderWithLineage.node.children || [];
+      thisFolder = navFolderWithLineage.node;
+
+      if (
+        navFolderWithLineage.lineage &&
+        navFolderWithLineage.lineage.length > 0
+      ) {
+        parentFolder =
+          navFolderWithLineage.lineage[navFolderWithLineage.lineage.length - 1];
+      }
+      break;
+    }
+    case SearchMode.GLOBAL_SEARCH: {
+      docRefs = searchResults;
+      break;
+    }
+    case SearchMode.RECENT_ITEMS: {
+      docRefs = recentItems;
+      break;
+    }
+    default:
+      docRefs = [];
+      break;
+  }
+
+  let hasNoResults = docRefs.length === 0;
+  let noResultsText =
+    searchMode === SearchMode.NAVIGATION ? "empty" : "no results";
+  let provideBreadcrumbs = searchMode !== SearchMode.NAVIGATION;
+
+  const onThisChange = (docRef: DocRefType) => {
+    if (docRef.type === "Folder") {
+      if (
+        !typeFilters ||
+        typeFilters.length === 0 ||
+        typeFilters.includes("Folder")
+      ) {
+        onChange(docRef);
+      } else {
+        setNavFolder(docRef);
+      }
+    } else {
+      onChange(docRef);
+    }
+  };
+
   const {
     onKeyDownWithShortcuts,
     selectionToggled,
-    selectedItems: selectedDocRefs
+    selectedItems: selectedDocRefs,
+    focussedItem: focussedDocRef
   } = useSelectableItemListing({
     items: docRefs,
     openItem: onThisChange,
     getKey: d => d.uuid,
-    enterItem: d => navigateToFolder(pickerId, d),
+    enterItem: d => setNavFolder(d),
     goBack: () => {
-      if (!!parentFolder) navigateToFolder(pickerId, parentFolder);
+      if (!!parentFolder) {
+        setNavFolder(parentFolder);
+      }
     }
   });
+
+  useEffect(() => {
+    fetchDocTree();
+  });
+
+  let headerTitle = "unknown";
+  let headerIcon: IconProp = "cross";
+  let headerAction = () => {};
+
+  switch (searchMode) {
+    case SearchMode.NAVIGATION: {
+      if (!!thisFolder) {
+        headerTitle = thisFolder.name || "no name";
+        if (!!parentFolder) {
+          headerIcon = "arrow-left";
+          headerAction = () => setNavFolder(parentFolder!);
+        } else {
+          headerIcon = "folder";
+        }
+      }
+      break;
+    }
+    case SearchMode.GLOBAL_SEARCH: {
+      headerIcon = "search";
+      headerTitle = `Search for '${searchTerm}'`;
+      break;
+    }
+    case SearchMode.RECENT_ITEMS: {
+      headerTitle = "Recent Items";
+      headerIcon = "history";
+      break;
+    }
+    default:
+      break;
+  }
+
+  const onSearchTermChange: React.ChangeEventHandler<HTMLInputElement> = ({
+    target: { value }
+  }) => {
+    setSearchTerm(value);
+    setSearchMode(
+      value.length > 0 ? SearchMode.GLOBAL_SEARCH : SearchMode.NAVIGATION
+    );
+    searchApp(pickerId, { term: value });
+  };
 
   return (
     <div className={`dropdown app-search-bar ${className || ""}`}>
@@ -328,7 +229,7 @@ const AppSearchBar = ({
             <FontAwesomeIcon icon={headerIcon} size="lg" />
           </div>
           <div className="app-search-header__text">{headerTitle}</div>
-          <ModeOptionButtons pickerId={pickerId} />
+          <ModeOptionButtons switchMode={setSearchMode} />
         </div>
         <div className="app-search-listing">
           {hasNoResults && (
@@ -339,14 +240,15 @@ const AppSearchBar = ({
               key={searchResult.uuid}
               docRef={searchResult}
               openDocRef={onThisChange}
-              enterFolder={thisNavigateToFolder}
+              enterFolder={setNavFolder}
               selectionToggled={selectionToggled}
               selectedDocRefs={selectedDocRefs}
+              focussedDocRef={focussedDocRef}
             >
               {provideBreadcrumbs && (
                 <DocRefBreadcrumb
                   docRefUuid={searchResult.uuid}
-                  openDocRef={thisNavigateToFolder}
+                  openDocRef={setNavFolder}
                 />
               )}
             </DocRefListingEntry>

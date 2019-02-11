@@ -1,12 +1,10 @@
 import * as React from "react";
+import { useEffect } from "react";
 import { connect } from "react-redux";
 import { compose, withHandlers } from "recompose";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 
-import withDocumentTree, {
-  EnhancedProps as WithDocumentTreeProps
-} from "../FolderExplorer/withDocumentTree";
-
+import { fetchDocTree } from "../FolderExplorer/explorerClient";
 import AppSearchBar from "../AppSearchBar";
 import { DocRefIconHeader } from "../IconHeader";
 import DocRefBreadcrumb from "../DocRefBreadcrumb";
@@ -25,7 +23,9 @@ interface ConnectState {
   docRefWithLineage: DocRefWithLineage;
 }
 
-interface ConnectDispatch {}
+interface ConnectDispatch {
+  fetchDocTree: typeof fetchDocTree;
+}
 
 interface WithHandlers {
   openDocRef: DocRefConsumer;
@@ -39,17 +39,11 @@ export interface EnhancedProps
     WithHandlers {}
 
 const enhance = compose<EnhancedProps, Props>(
-  withDocumentTree,
-  connect<
-    ConnectState,
-    ConnectDispatch,
-    Props & WithDocumentTreeProps,
-    GlobalStoreState
-  >(
-    ({}, { docRefUuid, documentTree }) => ({
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
+    ({ documentTree }, { docRefUuid }) => ({
       docRefWithLineage: findItem(documentTree, docRefUuid) as DocRefWithLineage
     }),
-    {}
+    { fetchDocTree }
   ),
   withRouter,
   withHandlers<Props & RouteComponentProps<any>, WithHandlers>({
@@ -61,34 +55,41 @@ const DocRefEditor = ({
   docRefWithLineage: { node },
   openDocRef,
   actionBarItems,
-  children
-}: EnhancedProps) => (
-  <div className="DocRefEditor">
-    <AppSearchBar
-      pickerId="doc-ref-editor-app-search"
-      className="DocRefEditor__searchBar"
-      onChange={openDocRef}
-    />
+  children,
+  fetchDocTree
+}: EnhancedProps) => {
+  useEffect(() => {
+    fetchDocTree();
+  });
 
-    <DocRefIconHeader
-      docRefType={node.type}
-      className="DocRefEditor__header"
-      text={node.name || "no name"}
-    />
+  return (
+    <div className="DocRefEditor">
+      <AppSearchBar
+        pickerId="doc-ref-editor-app-search"
+        className="DocRefEditor__searchBar"
+        onChange={openDocRef}
+      />
 
-    <DocRefBreadcrumb
-      className="DocRefEditor__breadcrumb"
-      docRefUuid={node.uuid}
-      openDocRef={openDocRef}
-    />
+      <DocRefIconHeader
+        docRefType={node.type}
+        className="DocRefEditor__header"
+        text={node.name || "no name"}
+      />
 
-    <div className="DocRefEditor__actionButtons">
-      {actionBarItems.map((actionBarItem, i) => (
-        <Button key={i} circular {...actionBarItem} />
-      ))}
+      <DocRefBreadcrumb
+        className="DocRefEditor__breadcrumb"
+        docRefUuid={node.uuid}
+        openDocRef={openDocRef}
+      />
+
+      <div className="DocRefEditor__actionButtons">
+        {actionBarItems.map((actionBarItem, i) => (
+          <Button key={i} circular {...actionBarItem} />
+        ))}
+      </div>
+      <div className="DocRefEditor__main">{children}</div>
     </div>
-    <div className="DocRefEditor__main">{children}</div>
-  </div>
-);
+  );
+};
 
 export default enhance(DocRefEditor);
