@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 import UserSettings from "./UserSettings";
-import { actionCreators, reducer, StoreState } from "./redux";
 
 export default UserSettings;
 
-export { UserSettings, actionCreators, reducer, StoreState };
+export { UserSettings };

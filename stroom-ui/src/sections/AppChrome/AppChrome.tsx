@@ -34,20 +34,19 @@ import {
   copyDocuments,
   moveDocuments
 } from "../../components/FolderExplorer/explorerClient";
-import { actionCreators as userSettingsActionCreators } from "../UserSettings";
 import useSelectableItemListing from "../../lib/useSelectableItemListing";
 import { DocRefType, DocRefConsumer, DocRefTree } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { KeyDownState } from "src/lib/useKeyIsDown/useKeyIsDown";
+import { KeyDownState } from "../../lib/useKeyIsDown/useKeyIsDown";
 import CopyMoveDocRefDialog, {
   useCopyMoveDocRefDialog,
   ShowCopyDocRefDialog
 } from "../../components/FolderExplorer/CopyMoveDocRefDialog";
 import useLocalStorage from "../../lib/useLocalStorage";
+import { useTheme } from "../../lib/theme";
 
 const { menuItemOpened } = appChromeActionCreators;
-const { themeChanged } = userSettingsActionCreators;
 
 const pathPrefix = "/s";
 
@@ -102,11 +101,9 @@ interface WithHandlers {
 }
 interface ConnectState {
   areMenuItemsOpen: MenuItemsOpenStoreState;
-  theme: string;
 }
 interface ConnectDispatch {
   menuItemOpened: typeof menuItemOpened;
-  themeChanged: typeof themeChanged;
   copyDocuments: typeof copyDocuments;
   moveDocuments: typeof moveDocuments;
 }
@@ -142,18 +139,12 @@ const enhance = compose<EnhancedProps, Props>(
     Props & WithDocumentTreeProps & RouteComponentProps<any> & WithHandlers,
     GlobalStoreState
   >(
-    ({
-      routing: { location },
-      userSettings: { theme },
-      appChrome: { areMenuItemsOpen }
-    }) => ({
+    ({ routing: { location }, appChrome: { areMenuItemsOpen } }) => ({
       areMenuItemsOpen,
-      theme,
       location
     }),
     {
       menuItemOpened,
-      themeChanged,
       copyDocuments,
       moveDocuments
     }
@@ -347,17 +338,12 @@ const AppChrome = ({
   content,
   menuItems,
   areMenuItemsOpen,
-  theme,
-  themeChanged,
   openMenuItems,
   menuItemOpened,
   copyDocuments,
   moveDocuments
 }: EnhancedProps) => {
-  if (theme === undefined) {
-    theme = "theme-dark";
-    themeChanged(theme);
-  }
+  const { theme } = useTheme();
 
   const { value: isExpanded, setValue: setIsExpanded } = useLocalStorage(
     "isExpanded",

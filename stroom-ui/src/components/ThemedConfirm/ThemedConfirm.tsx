@@ -15,14 +15,12 @@
  */
 
 import * as React from "react";
-import { compose, withProps } from "recompose";
-import { connect } from "react-redux";
 import * as ReactModal from "react-modal";
 
 import Button from "../Button";
 import IconHeader from "../IconHeader";
 import reactModalOptions from "../ThemedModal/reactModalOptions";
-import { GlobalStoreState } from "../../startup/reducers";
+import { useTheme } from "../../lib/theme";
 
 export interface Props extends ReactModal.Props {
   question: string;
@@ -31,55 +29,31 @@ export interface Props extends ReactModal.Props {
   onCancel: () => void;
 }
 
-interface ConnectState {
-  theme: string;
-}
-interface ConnectDispatch {}
-interface WithProps {
-  dimmer: "inverted" | true;
-}
-
-export interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    WithProps {}
-
-const enhance = compose<EnhancedProps, Props>(
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ userSettings: { theme } }) => ({
-      theme
-    }),
-    {}
-  ),
-  withProps(({ theme }) => ({
-    dimmer: theme === "theme-light" ? "inverted" : true
-  }))
-);
-
 const ThemedConfirm = ({
-  dimmer,
-  theme,
   question,
   details,
   onCancel,
   onConfirm,
   ...rest
-}: EnhancedProps) => (
-  <ReactModal className={`${theme}`} {...rest} style={reactModalOptions}>
-    <div className="raised-low themed-modal">
-      <header className="raised-low themed-modal__header">
-        <IconHeader text={question} icon="question-circle" />
-      </header>
-      {details && (
-        <div className="raised-low themed-modal__content">{details}</div>
-      )}
-      <div className="raised-low themed-modal__footer__actions">
-        <Button icon="times" text="Cancel" onClick={onCancel} />
-        <Button onClick={onConfirm} icon="check" text="Confirm" />
-      </div>
-    </div>
-  </ReactModal>
-);
+}: Props) => {
+  const { theme } = useTheme();
 
-export default enhance(ThemedConfirm);
+  return (
+    <ReactModal className={`${theme}`} {...rest} style={reactModalOptions}>
+      <div className="raised-low themed-modal">
+        <header className="raised-low themed-modal__header">
+          <IconHeader text={question} icon="question-circle" />
+        </header>
+        {details && (
+          <div className="raised-low themed-modal__content">{details}</div>
+        )}
+        <div className="raised-low themed-modal__footer__actions">
+          <Button icon="times" text="Cancel" onClick={onCancel} />
+          <Button onClick={onConfirm} icon="check" text="Confirm" />
+        </div>
+      </div>
+    </ReactModal>
+  );
+};
+
+export default ThemedConfirm;

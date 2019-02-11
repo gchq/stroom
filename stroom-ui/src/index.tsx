@@ -13,6 +13,7 @@ import FontAwesomeProvider from "./startup/FontAwesomeProvider";
 import { history } from "./startup/middleware";
 
 import "./styles/main.css";
+import { ThemeContextProvider } from "./lib/theme";
 
 const DndRoutes = compose(
   FontAwesomeProvider,
@@ -24,9 +25,11 @@ const store = createStore();
 
 ReactDOM.render(
   <Provider store={store}>
-    <ConnectedRouter history={history}>
-      <DndRoutes />
-    </ConnectedRouter>
+    <ThemeContextProvider>
+      <ConnectedRouter history={history}>
+        <DndRoutes />
+      </ConnectedRouter>
+    </ThemeContextProvider>
   </Provider>,
   document.getElementById("root") as HTMLElement
 );

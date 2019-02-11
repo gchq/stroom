@@ -36,11 +36,6 @@ import {
 } from "../lib/fetchTracker.redux";
 
 import {
-  reducer as userSettings,
-  StoreState as UserSettingsStoreState
-} from "../sections/UserSettings/redux";
-
-import {
   reducer as appSearch,
   StoreState as AppSearchStoreState
 } from "../components/AppSearchBar/redux";
@@ -116,7 +111,6 @@ export interface GlobalStoreState {
   authentication: AuthenticationStoreState;
   authorisation: AuthorisationStoreState;
   fetch: FetchStoreStore;
-  userSettings: UserSettingsStoreState;
   docRefTypes: DocRefTypesStoreState;
   documentTree: DocumentTreeStoreState;
   dictionaryEditor: DictionaryEditorStoreState;
@@ -143,7 +137,6 @@ export default combineReducers({
   authentication,
   authorisation,
   fetch,
-  userSettings,
   docRefTypes,
   documentTree,
   xsltEditor,

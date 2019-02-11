@@ -15,76 +15,36 @@
  */
 
 import * as React from "react";
-import { connect } from "react-redux";
-import { compose, withHandlers } from "recompose";
 
 import IconHeader from "../../components/IconHeader";
-import { actionCreators } from "./redux";
-import { GlobalStoreState } from "../../startup/reducers";
+import { themeOptions, useTheme } from "../../lib/theme";
 
-const { themeChanged } = actionCreators;
+const UserSettings = () => {
+  const { theme, setTheme } = useTheme();
 
-const themeOptions = [
-  {
-    text: "Light",
-    value: "theme-light"
-  },
-  {
-    text: "Dark",
-    value: "theme-dark"
-  }
-];
+  const onThemeChanged: React.ChangeEventHandler<HTMLSelectElement> = ({
+    target: { value }
+  }) => {
+    setTheme(value);
+  };
 
-export interface Props {}
-
-interface ConnectState {
-  theme: string;
-}
-
-interface ConnectDispatch {
-  themeChanged: typeof themeChanged;
-}
-
-interface Handlers {
-  onThemeChanged: React.ChangeEventHandler<HTMLSelectElement>;
-}
-
-export interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    Handlers {}
-
-const enhance = compose<EnhancedProps, Props>(
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ userSettings: { theme } }) => ({
-      theme
-    }),
-    { themeChanged }
-  ),
-  withHandlers<Props & ConnectState & ConnectDispatch, Handlers>({
-    onThemeChanged: ({ themeChanged }) => ({ target: { value } }) => {
-      themeChanged(value);
-    }
-  })
-);
-
-const UserSettings = ({ theme, onThemeChanged }: EnhancedProps) => (
-  <div className="UserSettings">
-    <IconHeader text="User Settings" icon="user" />
-    <div className="UserSettings__container">
-      <div>
-        <label>Theme:</label>
-        <select onChange={onThemeChanged} value={theme}>
-          {themeOptions.map(theme => (
-            <option key={theme.value} value={theme.value}>
-              {theme.text}
-            </option>
-          ))}
-        </select>
+  return (
+    <div className="UserSettings">
+      <IconHeader text="User Settings" icon="user" />
+      <div className="UserSettings__container">
+        <div>
+          <label>Theme:</label>
+          <select onChange={onThemeChanged} value={theme}>
+            {themeOptions.map(theme => (
+              <option key={theme.value} value={theme.value}>
+                {theme.text}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
-export default enhance(UserSettings);
+export default UserSettings;

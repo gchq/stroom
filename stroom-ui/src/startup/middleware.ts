@@ -18,7 +18,6 @@ import { applyMiddleware, compose } from "redux";
 import { routerMiddleware } from "react-router-redux";
 import thunk from "redux-thunk";
 import createHistory from "history/createBrowserHistory";
-import persistState from "redux-localstorage";
 import logger from "redux-logger";
 
 const enhancers = [];
@@ -34,6 +33,5 @@ export const history = createHistory();
 
 export default compose(
   applyMiddleware(thunk, routerMiddleware(history), logger),
-  persistState("userSettings"),
   ...enhancers
 );
