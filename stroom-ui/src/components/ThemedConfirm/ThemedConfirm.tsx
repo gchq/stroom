@@ -15,6 +15,7 @@
  */
 
 import * as React from "react";
+import { useState } from "react";
 import * as ReactModal from "react-modal";
 
 import Button from "../Button";
@@ -22,17 +23,20 @@ import IconHeader from "../IconHeader";
 import reactModalOptions from "../ThemedModal/reactModalOptions";
 import { useTheme } from "../../lib/theme";
 
-export interface Props extends ReactModal.Props {
+export interface NewProps {
   question: string;
   details?: string;
   onConfirm: () => void;
-  onCancel: () => void;
+}
+
+export interface Props extends ReactModal.Props, NewProps {
+  onCloseDialog: () => void;
 }
 
 const ThemedConfirm = ({
   question,
   details,
-  onCancel,
+  onCloseDialog,
   onConfirm,
   ...rest
 }: Props) => {
@@ -48,12 +52,52 @@ const ThemedConfirm = ({
           <div className="raised-low themed-modal__content">{details}</div>
         )}
         <div className="raised-low themed-modal__footer__actions">
-          <Button icon="times" text="Cancel" onClick={onCancel} />
-          <Button onClick={onConfirm} icon="check" text="Confirm" />
+          <Button icon="times" text="Cancel" onClick={onCloseDialog} />
+          <Button
+            onClick={() => {
+              onConfirm();
+              onCloseDialog();
+            }}
+            icon="check"
+            text="Confirm"
+          />
         </div>
       </div>
     </ReactModal>
   );
+};
+
+export type UseDialog = {
+  /**
+   * The owning component is ready to start a deletion process.
+   * Calling this will open the dialog, and setup the UUIDs
+   */
+  showDialog: () => void;
+  /**
+   * These are the properties that the owning component can just give to the Dialog component
+   * using destructing.
+   */
+  componentProps: Props;
+};
+
+/**
+ * This is a React custom hook that sets up things required by the owning component.
+ */
+export const useDialog = (props: NewProps): UseDialog => {
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+
+  return {
+    componentProps: {
+      ...props,
+      isOpen,
+      onCloseDialog: () => {
+        setIsOpen(false);
+      }
+    },
+    showDialog: () => {
+      setIsOpen(true);
+    }
+  };
 };
 
 export default ThemedConfirm;

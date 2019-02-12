@@ -62,12 +62,12 @@ const DeleteDocRefDialog = ({
  * These are the things returned by the custom hook that allow the owning component to interact
  * with this dialog.
  */
-export type UseDeleteDocRefDialog = {
+export type UseDialog = {
   /**
    * The owning component is ready to start a deletion process.
    * Calling this will open the dialog, and setup the UUIDs
    */
-  showDeleteDialog: (uuids: Array<string>) => void;
+  showDialog: (uuids: Array<string>) => void;
   /**
    * These are the properties that the owning component can just give to the Dialog component
    * using destructing.
@@ -78,7 +78,7 @@ export type UseDeleteDocRefDialog = {
 /**
  * This is a React custom hook that sets up things required by the owning component.
  */
-export const useDeleteDocRefDialog = (): UseDeleteDocRefDialog => {
+export const useDialog = (): UseDialog => {
   const [uuidsToDelete, setUuidToDelete] = useState<Array<string>>([]);
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
@@ -91,7 +91,7 @@ export const useDeleteDocRefDialog = (): UseDeleteDocRefDialog => {
         setUuidToDelete([]);
       }
     },
-    showDeleteDialog: _uuids => {
+    showDialog: _uuids => {
       setIsOpen(true);
       setUuidToDelete(_uuids);
     }

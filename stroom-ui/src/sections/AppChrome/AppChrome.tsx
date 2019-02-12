@@ -39,8 +39,8 @@ import { GlobalStoreState } from "../../startup/reducers";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { KeyDownState } from "../../lib/useKeyIsDown/useKeyIsDown";
 import CopyMoveDocRefDialog, {
-  useCopyMoveDocRefDialog,
-  ShowCopyDocRefDialog
+  useDialog as useCopyMoveDocRefDialog,
+  ShowDialog as ShowCopyDocRefDialog
 } from "../../components/FolderExplorer/CopyMoveDocRefDialog";
 import useLocalStorage, {
   storeBoolean,

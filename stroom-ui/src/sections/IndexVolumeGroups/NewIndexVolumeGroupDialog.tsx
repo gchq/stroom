@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState } from "react";
 
 import { connect } from "react-redux";
 import { compose } from "recompose";
@@ -10,7 +11,7 @@ import DialogActionButtons from "../../components/FolderExplorer/DialogActionBut
 
 export interface Props {
   isOpen: boolean;
-  onCancel: () => void;
+  onCloseDialog: () => void;
 }
 
 interface ConnectState {}
@@ -36,7 +37,7 @@ const enhance = compose<EnhancedProps, Props>(
 
 const NewIndexVolumeGroupDialog = ({
   isOpen,
-  onCancel,
+  onCloseDialog,
   createIndexVolumeGroup
 }: EnhancedProps) => (
   <Formik<FormValues>
@@ -46,7 +47,7 @@ const NewIndexVolumeGroupDialog = ({
     onSubmit={values => {
       if (values.name) {
         createIndexVolumeGroup(values.name);
-        onCancel();
+        onCloseDialog();
       }
     }}
   >
@@ -63,11 +64,33 @@ const NewIndexVolumeGroupDialog = ({
           </form>
         }
         actions={
-          <DialogActionButtons onCancel={onCancel} onConfirm={submitForm} />
+          <DialogActionButtons
+            onCancel={onCloseDialog}
+            onConfirm={submitForm}
+          />
         }
       />
     )}
   </Formik>
 );
+
+export interface OpenDialogProps {}
+
+export interface UseDialog {
+  showDialog: () => void;
+  componentProps: Props;
+}
+
+export const useDialog = (): UseDialog => {
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+
+  return {
+    showDialog: () => setIsOpen(true),
+    componentProps: {
+      onCloseDialog: () => setIsOpen(false),
+      isOpen
+    }
+  };
+};
 
 export default enhance(NewIndexVolumeGroupDialog);

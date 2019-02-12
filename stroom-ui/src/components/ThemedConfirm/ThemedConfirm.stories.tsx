@@ -15,76 +15,37 @@
  */
 
 import * as React from "react";
+import { useState } from "react";
 import { storiesOf } from "@storybook/react";
-import { compose, withState } from "recompose";
 
 import Button from "../Button";
-import ThemedConfirm from "./ThemedConfirm";
+import ThemedConfirm, { useDialog } from "./ThemedConfirm";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 import { addThemedStories } from "../../lib/themedStoryGenerator";
 
 import "../../styles/main.css";
 
-interface WithModalOpen {
-  modalIsOpen: boolean;
-  setModalIsOpen: (v: boolean) => any;
-}
-interface WithWasConfirmed {
-  isConfirmed: ConfirmState;
-  setIsConfirmed: (v: ConfirmState) => any;
-}
+let TestConfirm = () => {
+  const [confirmCount, setConfirmCount] = useState<number>(0);
 
-interface Props {}
-interface EnhancedProps extends Props, WithModalOpen, WithWasConfirmed {}
+  const { showDialog, componentProps } = useDialog({
+    question: "Are you sure about this?",
+    details: "Because...nothing will really happen anyway",
+    onConfirm: () => setConfirmCount(confirmCount + 1)
+  });
 
-const withModalOpen = withState("modalIsOpen", "setModalIsOpen", false);
-
-enum ConfirmState {
-  UNUSED = "unused",
-  CONFIRMED = "confirmed",
-  CANCELLED = "cancelled"
-}
-const withWasConfirmed = withState(
-  "isConfirmed",
-  "setIsConfirmed",
-  ConfirmState.UNUSED
-);
-
-const enhance = compose<EnhancedProps, Props>(
-  withModalOpen,
-  withWasConfirmed
-);
-
-let TestConfirm = enhance(
-  ({
-    modalIsOpen,
-    setModalIsOpen,
-    isConfirmed,
-    setIsConfirmed
-  }: EnhancedProps) => (
+  return (
     <React.Fragment>
-      <ThemedConfirm
-        isOpen={modalIsOpen}
-        question="Are you sure about this?"
-        details="Because...nothing will really happen anyway"
-        onConfirm={() => {
-          setIsConfirmed(ConfirmState.CONFIRMED);
-          setModalIsOpen(false);
-        }}
-        onCancel={() => {
-          setIsConfirmed(ConfirmState.CANCELLED);
-          setModalIsOpen(false);
-        }}
-        onRequestClose={() => setModalIsOpen(false)}
-      />
-      <Button onClick={() => setModalIsOpen(!modalIsOpen)} text="Check" />
-      <div>Current State: {isConfirmed}</div>
+      <ThemedConfirm {...componentProps} />
+      <Button onClick={showDialog} text="Check" />
+      <div>Number of Confirmations: {confirmCount}</div>
     </React.Fragment>
-  )
-);
+  );
+};
 
-const stories = storiesOf("General Purpose/Themed Confirm", module).addDecorator(
-  StroomDecorator
-);
+const stories = storiesOf(
+  "General Purpose/Themed Confirm",
+  module
+).addDecorator(StroomDecorator);
 
 addThemedStories(stories, <TestConfirm />);

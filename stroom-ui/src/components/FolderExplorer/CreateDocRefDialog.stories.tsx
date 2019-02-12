@@ -1,9 +1,7 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import CreateDocRefDialog, {
-  useCreateDocRefDialog
-} from "./CreateDocRefDialog";
+import CreateDocRefDialog, { useDialog } from "./CreateDocRefDialog";
 import { fromSetupSampleData } from "./test";
 import { DocRefType } from "../../types";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
@@ -18,12 +16,12 @@ interface Props {
 
 // New Doc
 const TestNewDocRefDialog = ({ testDestination }: Props) => {
-  const { showCreateDialog, componentProps } = useCreateDocRefDialog();
+  const { showDialog, componentProps } = useDialog();
 
   return (
     <div>
       <h1>Create Doc Ref Test</h1>
-      <button onClick={() => showCreateDialog(testDestination)}>Show</button>
+      <button onClick={() => showDialog(testDestination)}>Show</button>
       <CreateDocRefDialog {...componentProps} />
     </div>
   );

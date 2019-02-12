@@ -1,11 +1,7 @@
 import * as React from "react";
+import { useState, useEffect } from "react";
 
-import {
-  compose,
-  lifecycle,
-  withStateHandlers,
-  StateHandlerMap
-} from "recompose";
+import { compose } from "recompose";
 import { connect } from "react-redux";
 import { withRouter, RouteComponentProps } from "react-router";
 
@@ -14,8 +10,12 @@ import { getIndexVolumeGroups, deleteIndexVolumeGroup } from "./client";
 import IndexVolumeGroupsTable from "./IndexVolumeGroupsTable";
 import { IndexVolumeGroup } from "../../types";
 import Button from "../../components/Button";
-import NewIndexVolumeGroupDialog from "./NewIndexVolumeGroupDialog";
-import ThemedConfirm from "../../components/ThemedConfirm";
+import NewIndexVolumeGroupDialog, {
+  useDialog as useNewDialog
+} from "./NewIndexVolumeGroupDialog";
+import ThemedConfirm, {
+  useDialog as useConfirmDialog
+} from "../../components/ThemedConfirm";
 import IconHeader from "../../components/IconHeader";
 
 export interface Props {}
@@ -31,15 +31,9 @@ export interface ConnectDispatch {
 
 interface GroupSelectionStateValues {
   selectedGroup?: IndexVolumeGroup;
-  isNewDialogOpen: boolean;
-  isDeleteDialogOpen: boolean;
 }
 interface GroupSelectionStateHandlers {
   onSelection: (name?: string) => void;
-  openNewDialog: () => void;
-  closeNewDialog: () => void;
-  openDeleteDialog: () => void;
-  closeDeleteDialog: () => void;
 }
 interface GroupSelectionState
   extends GroupSelectionStateValues,
@@ -62,93 +56,70 @@ const enhance = compose<EnhancedProps, Props>(
       getIndexVolumeGroups,
       deleteIndexVolumeGroup
     }
-  ),
-  lifecycle<Props & ConnectState & ConnectDispatch, {}>({
-    componentDidMount() {
-      this.props.getIndexVolumeGroups();
-    }
-  }),
-  withStateHandlers<
-    GroupSelectionStateValues,
-    StateHandlerMap<GroupSelectionStateValues>,
-    ConnectState
-  >(
-    () => ({
-      selectedGroup: undefined,
-      isNewDialogOpen: false,
-      isDeleteDialogOpen: false
-    }),
-    {
-      onSelection: (_, { groups }) => selectedName => ({
-        selectedGroup: groups.find(
-          (u: IndexVolumeGroup) => u.name === selectedName
-        )
-      }),
-      openNewDialog: () => () => ({
-        isNewDialogOpen: true
-      }),
-      closeNewDialog: () => () => ({
-        isNewDialogOpen: false
-      }),
-      openDeleteDialog: () => () => ({
-        isDeleteDialogOpen: true
-      }),
-      closeDeleteDialog: () => () => ({
-        isDeleteDialogOpen: false
-      })
-    }
   )
 );
 
 const IndexVolumeGroups = ({
   groups,
-  selectedGroup,
-  onSelection,
-  isNewDialogOpen,
-  openNewDialog,
-  closeNewDialog,
-  isDeleteDialogOpen,
-  openDeleteDialog,
-  closeDeleteDialog,
   deleteIndexVolumeGroup,
+  getIndexVolumeGroups,
   history
-}: EnhancedProps) => (
-  <div>
-    <IconHeader text="Index Volume Groups" icon="database" />
+}: EnhancedProps) => {
+  useEffect(() => {
+    getIndexVolumeGroups();
+  }, []);
+  const [selectedGroup, setSelectedGroup] = useState<
+    IndexVolumeGroup | undefined
+  >(undefined);
 
-    <Button text="Create" onClick={openNewDialog} />
-    <Button
-      text="View/Edit"
-      disabled={!selectedGroup}
-      onClick={() => history.push(`/s/indexing/groups/${selectedGroup!.name}`)}
-    />
-    <Button
-      text="Delete"
-      disabled={!selectedGroup}
-      onClick={openDeleteDialog}
-    />
+  const onSelection = (selectedName?: string) => {
+    setSelectedGroup(
+      groups.find((u: IndexVolumeGroup) => u.name === selectedName)
+    );
+  };
 
-    <NewIndexVolumeGroupDialog
-      isOpen={isNewDialogOpen}
-      onCancel={closeNewDialog}
-    />
+  const {
+    showDialog: showNewDialog,
+    componentProps: newDialogComponentProps
+  } = useNewDialog();
 
-    <ThemedConfirm
-      question={
-        selectedGroup
-          ? `Are you sure you want to delete ${selectedGroup.name}`
-          : "no group?"
-      }
-      isOpen={isDeleteDialogOpen}
-      onConfirm={() => {
-        deleteIndexVolumeGroup(selectedGroup!.name);
-        closeDeleteDialog();
-      }}
-      onCancel={closeDeleteDialog}
-    />
+  const {
+    showDialog: showDeleteDialog,
+    componentProps: deleteDialogComponentProps
+  } = useConfirmDialog({
+    question: selectedGroup
+      ? `Are you sure you want to delete ${selectedGroup.name}`
+      : "no group?",
+    onConfirm: () => {
+      deleteIndexVolumeGroup(selectedGroup!.name);
+    }
+  });
 
-    <IndexVolumeGroupsTable {...{ groups, selectedGroup, onSelection }} />
-  </div>
-);
+  return (
+    <div>
+      <IconHeader text="Index Volume Groups" icon="database" />
+
+      <Button text="Create" onClick={showNewDialog} />
+      <Button
+        text="View/Edit"
+        disabled={!selectedGroup}
+        onClick={() =>
+          history.push(`/s/indexing/groups/${selectedGroup!.name}`)
+        }
+      />
+      <Button
+        text="Delete"
+        disabled={!selectedGroup}
+        onClick={() => showDeleteDialog()}
+      />
+
+      <NewIndexVolumeGroupDialog {...newDialogComponentProps} />
+
+      <ThemedConfirm {...deleteDialogComponentProps} />
+
+      <IndexVolumeGroupsTable {...{ groups, selectedGroup, onSelection }} />
+    </div>
+  );
+};
 
 export default enhance(IndexVolumeGroups);

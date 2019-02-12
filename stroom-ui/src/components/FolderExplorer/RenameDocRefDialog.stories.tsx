@@ -2,9 +2,7 @@ import * as React from "react";
 import { storiesOf } from "@storybook/react";
 import { DocRefType } from "../../types";
 
-import RenameDocRefDialog, {
-  useRenameDocRefDialog
-} from "./RenameDocRefDialog";
+import RenameDocRefDialog, { useDialog } from "./RenameDocRefDialog";
 import { fromSetupSampleData } from "./test";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 
@@ -18,12 +16,12 @@ interface Props {
 
 // Rename
 const TestRenameDialog = ({ testDocRef }: Props) => {
-  const { showRenameDialog, componentProps } = useRenameDocRefDialog();
+  const { showDialog, componentProps } = useDialog();
 
   return (
     <div>
       <h1>Rename Document Test</h1>
-      <button onClick={() => showRenameDialog(testDocRef)}>Show</button>
+      <button onClick={() => showDialog(testDocRef)}>Show</button>
       <RenameDocRefDialog {...componentProps} />
     </div>
   );

@@ -4,7 +4,7 @@ import { storiesOf } from "@storybook/react";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 import { fromSetupSampleData } from "./test";
 import CopyDocRefDialog, {
-  useCopyMoveDocRefDialog
+  useDialog as useCopyMoveDocRefDialog
 } from "./CopyMoveDocRefDialog";
 
 import "../../styles/main.css";

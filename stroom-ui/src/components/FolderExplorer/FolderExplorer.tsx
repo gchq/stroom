@@ -26,16 +26,16 @@ import { findItem } from "../../lib/treeUtils";
 import { copyDocuments, moveDocuments } from "./explorerClient";
 import DndDocRefListingEntry from "./DndDocRefListingEntry";
 import CreateDocRefDialog, {
-  useCreateDocRefDialog
+  useDialog as useCreateDialog
 } from "./CreateDocRefDialog";
 import CopyMoveDocRefDialog, {
-  useCopyMoveDocRefDialog
+  useDialog as useCopyMoveDialog
 } from "./CopyMoveDocRefDialog";
 import RenameDocRefDialog, {
-  useRenameDocRefDialog
+  useDialog as useRenameDialog
 } from "./RenameDocRefDialog";
 import DeleteDocRefDialog, {
-  useDeleteDocRefDialog
+  useDialog as useDeleteDialog
 } from "./DeleteDocRefDialog";
 import DocRefInfoModal from "../DocRefInfoModal";
 import { fetchDocTree } from "../FolderExplorer/explorerClient";
@@ -93,29 +93,29 @@ const FolderExplorer = ({
     history.push(`/s/doc/${d.type}/${d.uuid}`);
 
   const {
-    showDeleteDialog,
+    showDialog: showDeleteDialog,
     componentProps: deleteDialogComponentProps
-  } = useDeleteDocRefDialog();
+  } = useDeleteDialog();
   const {
     showDialog: showCopyDialog,
     componentProps: copyDialogComponentProps
-  } = useCopyMoveDocRefDialog(copyDocuments);
+  } = useCopyMoveDialog(copyDocuments);
   const {
     showDialog: showMoveDialog,
     componentProps: moveDialogComponentProps
-  } = useCopyMoveDocRefDialog(moveDocuments);
+  } = useCopyMoveDialog(moveDocuments);
   const {
-    showRenameDialog,
+    showDialog: showRenameDialog,
     componentProps: renameDialogComponentProps
-  } = useRenameDocRefDialog();
+  } = useRenameDialog();
   const {
     showDialog: showDocRefInfoDialog,
     componentProps: docRefInfoDialogComponentProps
   } = useDocRefInfoDialog();
   const {
-    showCreateDialog,
+    showDialog: showCreateDialog,
     componentProps: createDialogComponentProps
-  } = useCreateDocRefDialog();
+  } = useCreateDialog();
   const {
     onKeyDownWithShortcuts,
     selectedItems: selectedDocRefs,

@@ -98,12 +98,12 @@ let RenameDocRefDialog = ({
  * These are the things returned by the custom hook that allow the owning component to interact
  * with this dialog.
  */
-export type UseRenameDocRefDialog = {
+export type UseDialog = {
   /**
    * The owning component is ready to start a deletion process.
    * Calling this will open the dialog, and setup the UUIDs
    */
-  showRenameDialog: (docRef: DocRefType) => void;
+  showDialog: (docRef: DocRefType) => void;
   /**
    * These are the properties that the owning component can just give to the Dialog component
    * using destructing.
@@ -114,7 +114,7 @@ export type UseRenameDocRefDialog = {
 /**
  * This is a React custom hook that sets up things required by the owning component.
  */
-export const useRenameDocRefDialog = (): UseRenameDocRefDialog => {
+export const useDialog = (): UseDialog => {
   const [docRef, setDocRef] = useState<DocRefType | undefined>(undefined);
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
@@ -127,7 +127,7 @@ export const useRenameDocRefDialog = (): UseRenameDocRefDialog => {
         setDocRef(undefined);
       }
     },
-    showRenameDialog: _docRef => {
+    showDialog: _docRef => {
       setIsOpen(true);
       setDocRef(_docRef);
     }

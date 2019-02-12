@@ -139,12 +139,12 @@ let CreateDocRefDialog = ({
  * These are the things returned by the custom hook that allow the owning component to interact
  * with this dialog.
  */
-export type UseCreateDocRefDialog = {
+export type UseDialog = {
   /**
    * The owning component is ready to start a deletion process.
    * Calling this will open the dialog, and setup the UUIDs
    */
-  showCreateDialog: (docRef: DocRefType) => void;
+  showDialog: (destination: DocRefType) => void;
   /**
    * These are the properties that the owning component can just give to the Dialog component
    * using destructing.
@@ -155,7 +155,7 @@ export type UseCreateDocRefDialog = {
 /**
  * This is a React custom hook that sets up things required by the owning component.
  */
-export const useCreateDocRefDialog = (): UseCreateDocRefDialog => {
+export const useDialog = (): UseDialog => {
   const [destination, setDestination] = useState<DocRefType | undefined>(
     undefined
   );
@@ -170,7 +170,7 @@ export const useCreateDocRefDialog = (): UseCreateDocRefDialog => {
         setDestination(undefined);
       }
     },
-    showCreateDialog: _destination => {
+    showDialog: _destination => {
       setIsOpen(true);
       setDestination(_destination);
     }
