@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import * as React from "react";
-import { compose, withProps, withHandlers } from "recompose";
 
 import DocRefImage from "../DocRefImage";
 import withDocRefTypes, {
@@ -33,93 +32,66 @@ export interface Props {
   onChange: (a: DocRefTypeList) => any;
 }
 
-interface WithProps {
-  allSelectState: AllSelectState;
-}
+export interface EnhancedProps extends Props, WithDocRefTypeProps {}
 
-interface Handlers {
-  onAllCheckboxChanged: React.ChangeEventHandler<HTMLInputElement>;
-}
+let DocTypeFilters = ({ docRefTypes, onChange, value }: EnhancedProps) => {
+  let allSelectState = AllSelectState.INDETERMINATE;
+  if (value.length === 0) {
+    allSelectState = AllSelectState.NONE;
+  } else if (value.length === docRefTypes.length) {
+    allSelectState = AllSelectState.ALL;
+  }
 
-export interface EnhancedProps
-  extends Props,
-    WithDocRefTypeProps,
-    WithProps,
-    Handlers {}
-
-const enhance = compose<EnhancedProps, Props>(
-  withDocRefTypes,
-  withProps(({ docRefTypes, value, onChange }) => {
-    let allSelectState;
-    if (value.length === 0) {
-      allSelectState = AllSelectState.NONE;
-    } else if (value.length === docRefTypes.length) {
-      allSelectState = AllSelectState.ALL;
-    } else {
-      allSelectState = AllSelectState.INDETERMINATE;
+  const onAllCheckboxChanged = () => {
+    switch (allSelectState) {
+      case AllSelectState.ALL:
+      case AllSelectState.INDETERMINATE:
+        onChange([]);
+        break;
+      case AllSelectState.NONE:
+        onChange(docRefTypes);
+        break;
+      default:
+        break;
     }
-    return {
-      allSelectState
-    };
-  }),
-  withHandlers({
-    onAllCheckboxChanged: ({ allSelectState, onChange, docRefTypes }) => () => {
-      switch (allSelectState) {
-        case AllSelectState.ALL:
-        case AllSelectState.INDETERMINATE:
-          onChange([]);
-          break;
-        case AllSelectState.NONE:
-          onChange(docRefTypes);
-          break;
-        default:
-          break;
-      }
-    }
-  })
-);
+  };
 
-let DocTypeFilters = ({
-  docRefTypes,
-  onChange,
-  value,
-  allSelectState,
-  onAllCheckboxChanged
-}: EnhancedProps) => (
-  <React.Fragment>
-    <div>
-      <DocRefImage size="sm" docRefType="System" />
-      <label>All</label>
-      <input
-        type="checkbox"
-        checked={allSelectState === AllSelectState.ALL}
-        onChange={onAllCheckboxChanged}
-      />
-      ;
-    </div>
-    {docRefTypes
-      .map(docRefType => ({
-        docRefType,
-        isSelected: value.indexOf(docRefType) !== -1
-      }))
-      .map(({ docRefType, isSelected }) => (
-        <div key={docRefType}>
-          <DocRefImage size="sm" docRefType={docRefType} />
-          <label>{docRefType}</label>
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={() => {
-              if (isSelected) {
-                onChange(value.filter(v => v !== docRefType));
-              } else {
-                onChange(value.concat([docRefType]));
-              }
-            }}
-          />
-        </div>
-      ))}
-  </React.Fragment>
-);
+  return (
+    <React.Fragment>
+      <div>
+        <DocRefImage size="sm" docRefType="System" />
+        <label>All</label>
+        <input
+          type="checkbox"
+          checked={allSelectState === AllSelectState.ALL}
+          onChange={onAllCheckboxChanged}
+        />
+        ;
+      </div>
+      {docRefTypes
+        .map(docRefType => ({
+          docRefType,
+          isSelected: value.indexOf(docRefType) !== -1
+        }))
+        .map(({ docRefType, isSelected }) => (
+          <div key={docRefType}>
+            <DocRefImage size="sm" docRefType={docRefType} />
+            <label>{docRefType}</label>
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => {
+                if (isSelected) {
+                  onChange(value.filter(v => v !== docRefType));
+                } else {
+                  onChange(value.concat([docRefType]));
+                }
+              }}
+            />
+          </div>
+        ))}
+    </React.Fragment>
+  );
+};
 
-export default enhance(DocTypeFilters);
+export default withDocRefTypes<Props>()(DocTypeFilters);

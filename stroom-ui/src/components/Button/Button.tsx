@@ -17,13 +17,8 @@
 import * as React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconProp, SizeProp } from "@fortawesome/fontawesome-svg-core";
-import { withProps } from "recompose";
 
-export type IconSize =
-  | "small"
-  | "medium"
-  | "large"
-  | "xlarge";
+export type IconSize = "small" | "medium" | "large" | "xlarge";
 
 /**
  * Button Properties
@@ -45,63 +40,53 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: IconSize;
 }
 
-interface WithProps {
-  fontAwesomeSize: SizeProp;
-}
-
-interface EnhancedProps
-  extends Props,
-  WithProps { }
-
-
-const enhance = withProps<EnhancedProps, Props>(
-  ({ className, groupPosition, circular, text, selected, size }) => {
-    let classNames = ["button"];
-
-    if (className) classNames.push(className);
-    if (groupPosition) classNames.push(groupPosition);
-    if (circular) classNames.push("circular");
-    if (text) classNames.push("has-text");
-    if (selected) classNames.push("selected");
-
-    let fontAwesomeSize: SizeProp;
-    switch (size) {
-      case 'small':
-        fontAwesomeSize = 'sm';
-        break;
-      case 'medium':
-        fontAwesomeSize = '1x';
-        break;
-      case 'large':
-        fontAwesomeSize = 'lg';
-        break;
-      case 'xlarge':
-        fontAwesomeSize = '2x';
-        break;
-      default: fontAwesomeSize = '1x';
-    }
-
-    return {
-      className: classNames.join(" "),
-      fontAwesomeSize
-    };
-  }
-);
-
 export const Button = ({
   text,
   icon,
-  className,
+  className: rawClassName,
   groupPosition,
   circular,
-  fontAwesomeSize,
   selected,
+  size,
   ...rest
-}: EnhancedProps) => (
+}: Props) => {
+  let classNames = ["button"];
+
+  if (rawClassName) classNames.push(rawClassName);
+  if (groupPosition) classNames.push(groupPosition);
+  if (circular) classNames.push("circular");
+  if (text) classNames.push("has-text");
+  if (selected) classNames.push("selected");
+
+  let fontAwesomeSize: SizeProp;
+  switch (size) {
+    case "small":
+      fontAwesomeSize = "sm";
+      break;
+    case "medium":
+      fontAwesomeSize = "1x";
+      break;
+    case "large":
+      fontAwesomeSize = "lg";
+      break;
+    case "xlarge":
+      fontAwesomeSize = "2x";
+      break;
+    default:
+      fontAwesomeSize = "1x";
+  }
+  const className = classNames.join(" ");
+
+  return (
     <button className={className} {...rest}>
-      {icon ? <FontAwesomeIcon size={fontAwesomeSize} icon={icon} /> : undefined}
+      {icon ? (
+        <FontAwesomeIcon size={fontAwesomeSize} icon={icon} />
+      ) : (
+        undefined
+      )}
       {text ? <span className="button__text">{text}</span> : undefined}
     </button>
   );
+};
 
-export default enhance(Button);
+export default Button;

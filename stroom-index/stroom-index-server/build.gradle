@@ -49,6 +49,7 @@ dependencies {
 
 //    testImplementation project(path: ':stroom-core-server', configuration: 'testArtifacts')
     testImplementation project(':stroom-test-common')
+    implementation project(':stroom-index:stroom-index-impl-mock')
 
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api

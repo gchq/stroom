@@ -122,7 +122,7 @@ class TestIndexShardPoolImpl {
                 indexShard.setPartition(indexShardKey.getPartition());
                 indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
                 indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
-                indexShard.setNode(node);
+                indexShard.setNodeName(node.getName());
                 indexShard.setId(indexShardId.incrementAndGet());
                 indexShard.setVolume(volumeEntity);
                 indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());

@@ -1,5 +1,4 @@
 import * as React from "react";
-import { compose } from "recompose";
 
 import DocRefImage from "../DocRefImage";
 import { OptionType } from "../../types";
@@ -27,8 +26,6 @@ export interface Props {
 
 export interface EnhancedProps extends Props, WithDocRefTypeProps {}
 
-const enhance = compose<EnhancedProps, Props>(withDocRefTypes);
-
 let DocRefTypePicker = ({ docRefTypes, ...rest }: EnhancedProps) => {
   let options: Array<OptionType> = docRefTypes.map((d: string) => ({
     text: d,
@@ -43,4 +40,4 @@ let DocRefTypePicker = ({ docRefTypes, ...rest }: EnhancedProps) => {
   );
 };
 
-export default enhance(DocRefTypePicker);
+export default withDocRefTypes<Props>()(DocRefTypePicker);

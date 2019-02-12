@@ -20,8 +20,6 @@ import { GlobalStoreState } from "../../startup/reducers";
 import { fetchDocRefTypes } from "../FolderExplorer/explorerClient";
 import { DocRefTypeList } from "../../types";
 
-export interface Props {}
-
 interface ConnectState {
   docRefTypes: DocRefTypeList;
 }
@@ -29,24 +27,25 @@ interface ConnectDispatch {
   fetchDocRefTypes: typeof fetchDocRefTypes;
 }
 
-export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
+export interface EnhancedProps extends ConnectState, ConnectDispatch {}
 
 /**
  * Higher Order Component that kicks off the fetch of the doc ref types, and waits by rendering a Loader until
  * they are returned.
  */
-export default compose<EnhancedProps, Props>(
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ docRefTypes }) => ({
-      docRefTypes
-    }),
-    {
-      fetchDocRefTypes
-    }
-  ),
-  lifecycle<ConnectState & ConnectDispatch, {}>({
-    componentDidMount() {
-      this.props.fetchDocRefTypes();
-    }
-  })
-);
+export default <T>() =>
+  compose<EnhancedProps, T>(
+    connect<ConnectState, ConnectDispatch, T, GlobalStoreState>(
+      ({ docRefTypes }) => ({
+        docRefTypes
+      }),
+      {
+        fetchDocRefTypes
+      }
+    ),
+    lifecycle<ConnectState & ConnectDispatch, {}>({
+      componentDidMount() {
+        this.props.fetchDocRefTypes();
+      }
+    })
+  );
