@@ -2,7 +2,7 @@
   <configuration default="false" name="Stroom Proxy 2 (Dropwizard)" type="Application" factoryName="Application">
     <option name="ALTERNATIVE_JRE_PATH" value="1.8" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
-    <option name="MAIN_CLASS_NAME" value="stroom.startup.App" />
+    <option name="MAIN_CLASS_NAME" value="stroom.app.App" />
     <module name="stroom.stroom-app.main" />
     <option name="PROGRAM_PARAMETERS" value="server proxy2.yml" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/stroom-app" />

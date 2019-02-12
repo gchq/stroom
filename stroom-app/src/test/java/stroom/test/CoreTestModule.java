@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.YamlUtil;
-import stroom.guice.CoreModule;
+import stroom.app.guice.CoreModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.impl.NodeTestConfigModule;
 import stroom.resource.impl.ResourceModule;

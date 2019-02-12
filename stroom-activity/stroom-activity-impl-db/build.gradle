@@ -2,7 +2,7 @@ ext.moduleName = 'stroom.activity.impl.db'
 
 dependencies {
     implementation project(':stroom-activity:stroom-activity-api')
-    implementation project(':stroom-activity:stroom-activity-impl-db-gen')
+    implementation project(':stroom-activity:stroom-activity-impl-db-jooq')
     implementation project(':stroom-activity:stroom-activity-shared')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-db-util')
