@@ -1,4 +1,4 @@
-package stroom.proxy.test;
+package stroom.proxy.app;
 
 
 import java.io.IOException;

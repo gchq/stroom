@@ -40,6 +40,7 @@ import stroom.ui.config.shared.SplashConfig;
 import stroom.ui.config.shared.ThemeConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UrlConfig;
+import stroom.util.io.PathConfig;
 import stroom.volume.VolumeConfig;
 
 public class AppConfigModule extends AbstractModule {
@@ -79,6 +80,7 @@ public class AppConfigModule extends AbstractModule {
         bind(JobSystemConfig.class).toInstance(appConfig.getJobSystemConfig());
         bind(LifecycleConfig.class).toInstance(appConfig.getLifecycleConfig());
         bind(NodeConfig.class).toInstance(appConfig.getNodeConfig());
+        bind(PathConfig.class).toInstance(appConfig.getPathConfig());
         bind(PipelineConfig.class).toInstance(appConfig.getPipelineConfig());
         bind(DataRetentionConfig.class).toInstance(appConfig.getPolicyConfig());
         bind(ProcessConfig.class).toInstance(appConfig.getProcessConfig());

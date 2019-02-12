@@ -27,6 +27,7 @@ import stroom.statistics.StatisticsConfig;
 import stroom.streamtask.ProcessConfig;
 import stroom.streamtask.ProxyAggregationConfig;
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.io.PathConfig;
 import stroom.util.shared.IsConfig;
 import stroom.volume.VolumeConfig;
 
@@ -50,6 +51,7 @@ public class AppConfig implements IsConfig {
     private JobSystemConfig jobSystemConfig;
     private LifecycleConfig lifecycleConfig;
     private NodeConfig nodeConfig;
+    private PathConfig pathConfig;
     private PipelineConfig pipelineConfig;
     private DataRetentionConfig policyConfig;
     private ProcessConfig processConfig;
@@ -81,6 +83,7 @@ public class AppConfig implements IsConfig {
         this.lifecycleConfig = new LifecycleConfig();
         this.pipelineConfig = new PipelineConfig();
         this.nodeConfig = new NodeConfig();
+        this.pathConfig = new PathConfig();
         this.policyConfig = new DataRetentionConfig();
         this.processConfig = new ProcessConfig();
         this.propertyServiceConfig = new PropertyServiceConfig();
@@ -112,6 +115,7 @@ public class AppConfig implements IsConfig {
               final LifecycleConfig lifecycleConfig,
               final PipelineConfig pipelineConfig,
               final NodeConfig nodeConfig,
+              final PathConfig pathConfig,
               final DataRetentionConfig policyConfig,
               final ProcessConfig processConfig,
               final PropertyServiceConfig propertyServiceConfig,
@@ -140,6 +144,7 @@ public class AppConfig implements IsConfig {
         this.lifecycleConfig = lifecycleConfig;
         this.pipelineConfig = pipelineConfig;
         this.nodeConfig = nodeConfig;
+        this.pathConfig = pathConfig;
         this.policyConfig = policyConfig;
         this.processConfig = processConfig;
         this.propertyServiceConfig = propertyServiceConfig;
@@ -289,6 +294,15 @@ public class AppConfig implements IsConfig {
 
     public void setNodeConfig(final NodeConfig nodeConfig) {
         this.nodeConfig = nodeConfig;
+    }
+
+    @JsonProperty("path")
+    public PathConfig getPathConfig() {
+        return pathConfig;
+    }
+
+    public void setPathConfig(final PathConfig pathConfig) {
+        this.pathConfig = pathConfig;
     }
 
     @JsonProperty("pipeline")

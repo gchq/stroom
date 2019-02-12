@@ -1,4 +1,4 @@
-package stroom.proxy.handler;
+package stroom.proxy.app.handler;
 
 
 import org.junit.jupiter.api.Test;

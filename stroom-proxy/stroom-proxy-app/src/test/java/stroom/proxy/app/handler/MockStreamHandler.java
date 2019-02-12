@@ -1,4 +1,4 @@
-package stroom.proxy.handler;
+package stroom.proxy.app.handler;
 
 import stroom.data.zip.StroomZipEntry;
 import stroom.meta.shared.AttributeMap;

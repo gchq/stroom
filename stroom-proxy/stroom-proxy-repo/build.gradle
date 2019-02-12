@@ -2,7 +2,6 @@ ext.moduleName = 'stroom.proxy.repo'
 
 dependencies {
     implementation project(':stroom-meta:stroom-meta-api')
-//    implementation project(':stroom-core-server')
     implementation project(':stroom-receive:stroom-receive-rules-impl')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')

@@ -131,7 +131,7 @@ class TestConfigMapper {
     void update_string() throws IOException, ConfigurationException {
         AppConfig appConfig = getAppConfig();
 
-        Supplier<String> getter = () -> appConfig.getCoreConfig().getTemp();
+        Supplier<String> getter = () -> appConfig.getPathConfig().getTemp();
         String initialValue = getter.get();
         String newValue = initialValue + "/xxx";
 

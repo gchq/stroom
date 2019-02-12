@@ -32,6 +32,7 @@ import stroom.task.ExternalShutdownController;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
+import stroom.util.io.PathConfig;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.xml.XMLUtil;
@@ -73,7 +74,7 @@ public class Cli extends AbstractCommandLineTool {
     private Path tmpDir;
 
     @Inject
-    private CoreConfig coreConfig;
+    private PathConfig pathConfig;
     @Inject
     private FSPersistenceConfig fsPersistenceConfig;
     @Inject
@@ -171,7 +172,7 @@ public class Cli extends AbstractCommandLineTool {
 
             // Setup temp dir.
             final Path tempDir = Paths.get(tmp);
-            coreConfig.setTemp(FileUtil.getCanonicalPath(tempDir));
+            pathConfig.setTemp(FileUtil.getCanonicalPath(tempDir));
 
             process();
         } finally {
