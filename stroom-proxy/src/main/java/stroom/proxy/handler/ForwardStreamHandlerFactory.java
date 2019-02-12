@@ -4,7 +4,7 @@ import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Strings;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.util.HasHealthCheck;
-import stroom.tools.HealthCheckUtils;
+import stroom.util.HealthCheckUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
