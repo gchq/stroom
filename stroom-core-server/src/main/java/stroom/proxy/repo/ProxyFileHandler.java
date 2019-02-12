@@ -18,14 +18,20 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.AttributeMap;
-import stroom.receive.BufferFactory;
+import stroom.data.zip.StreamProgressMonitor;
+import stroom.data.zip.StroomFileNameUtil;
+import stroom.data.zip.StroomZipEntry;
+import stroom.data.zip.StroomZipFile;
+import stroom.data.zip.StroomZipFileType;
+import stroom.io.BufferFactory;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.shared.AttributeMap;
+import stroom.receive.common.StroomHeaderStreamHandler;
+import stroom.receive.common.StroomStreamHandler;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.InitialByteArrayOutputStream;
 import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
-import stroom.data.store.StreamProgressMonitor;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;

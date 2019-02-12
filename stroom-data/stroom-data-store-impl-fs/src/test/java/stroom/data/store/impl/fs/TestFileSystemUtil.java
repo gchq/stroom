@@ -18,9 +18,9 @@ package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import stroom.data.store.impl.fs.shared.FileSystemVolume;
 import stroom.meta.shared.Meta;
 import stroom.node.shared.Node;
-import stroom.node.shared.VolumeEntity;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
@@ -52,17 +52,10 @@ class TestFileSystemUtil {
     @TempDir
     private Path tempDir;
 
-    private VolumeEntity buildTestVolume() {
-        final VolumeEntity config = new VolumeEntity();
+    private FileSystemVolume buildTestVolume() {
+        final FileSystemVolume config = new FileSystemVolume();
         config.setPath(FileUtil.getCanonicalPath(tempDir));
-        config.setNode(buildTestNode());
         return config;
-    }
-
-    private Node buildTestNode() {
-        final Node node = new Node();
-        node.setName("Test");
-        return node;
     }
 
     @Test

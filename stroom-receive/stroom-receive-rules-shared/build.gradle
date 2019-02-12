@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.ruleset.shared'
+ext.moduleName = 'stroom.receive.rules.shared'
 
 dependencies {
     implementation project(':stroom-docstore:stroom-docstore-shared')

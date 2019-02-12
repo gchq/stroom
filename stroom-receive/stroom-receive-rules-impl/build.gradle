@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.ruleset.server'
+ext.moduleName = 'stroom.receive.rules.impl'
 
 dependencies {
     implementation project(':stroom-meta:stroom-meta-api')
@@ -6,6 +6,7 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-receive:stroom-receive-rules-shared')
 
     implementation project(':stroom-util-shared')

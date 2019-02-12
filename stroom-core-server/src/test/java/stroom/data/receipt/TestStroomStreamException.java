@@ -17,8 +17,8 @@
 package stroom.data.receipt;
 
 import org.junit.jupiter.api.Test;
-import stroom.receive.StroomStatusCode;
-import stroom.receive.StroomStreamException;
+import stroom.receive.common.StroomStatusCode;
+import stroom.receive.common.StroomStreamException;
 
 import java.io.IOException;
 import java.util.zip.ZipException;

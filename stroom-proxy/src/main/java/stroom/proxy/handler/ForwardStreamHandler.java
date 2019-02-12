@@ -2,11 +2,11 @@ package stroom.proxy.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.AttributeMap;
+import stroom.data.zip.StroomZipEntry;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.StandardHeaderArguments;
-import stroom.receive.StroomStreamException;
-import stroom.proxy.repo.StroomZipEntry;
+import stroom.receive.common.StroomStreamException;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -166,7 +166,7 @@ class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
     }
 
     @Override
-    public void handleError() throws IOException {
+    public void handleError() {
         LOGGER.info("handleError() - " + forwardUrl);
         if (connection != null) {
             connection.disconnect();

@@ -1,13 +1,15 @@
 ext.moduleName = 'stroom.meta.api'
 
 dependencies {
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    api project(':stroom-dictionary:stroom-dictionary-api')
+    api project(':stroom-docstore:stroom-docstore-api')
+    api project(':stroom-util')
+    api project(':stroom-util-shared')
     
-    implementation libs.stroomDocRef
-    implementation libs.stroomQueryApi
+    api libs.stroomDocRef
+    api libs.stroomQueryApi
 
-    implementation libs.javax_servlet_api
+    api libs.javax_servlet_api
     implementation libs.slf4j_api
 
     testImplementation libs.assertj_core

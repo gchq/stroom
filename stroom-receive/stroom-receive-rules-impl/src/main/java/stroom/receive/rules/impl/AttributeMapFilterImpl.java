@@ -17,10 +17,10 @@
 
 package stroom.receive.rules.impl;
 
-import stroom.receive.AttributeMapFilter;
 import stroom.meta.shared.AttributeMap;
-import stroom.receive.StroomStatusCode;
-import stroom.receive.StroomStreamException;
+import stroom.receive.AttributeMapFilter;
+import stroom.receive.common.StroomStatusCode;
+import stroom.receive.common.StroomStreamException;
 import stroom.receive.rules.shared.RuleAction;
 
 class AttributeMapFilterImpl implements AttributeMapFilter {

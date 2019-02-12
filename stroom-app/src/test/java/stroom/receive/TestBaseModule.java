@@ -2,16 +2,16 @@ package stroom.receive;
 
 import com.google.inject.AbstractModule;
 import stroom.cache.impl.CacheModule;
-import stroom.meta.impl.mock.MockMetaModule;
 import stroom.data.store.impl.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.docstore.impl.memory.MemoryPersistenceModule;
-import stroom.pipeline.feed.FeedModule;
+import stroom.feed.impl.FeedModule;
+import stroom.meta.impl.mock.MockMetaModule;
+import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.receive.rules.impl.ReceiveDataRulesetModule;
 import stroom.security.impl.mock.MockSecurityContextModule;
-import stroom.streamtask.statistic.MockMetaDataStatisticModule;
 
 public class TestBaseModule extends AbstractModule {
     @Override
@@ -25,8 +25,7 @@ public class TestBaseModule extends AbstractModule {
         install(new DocStoreModule());
         install(new DictionaryModule());
         install(new MemoryPersistenceModule());
-        install(new MockMetaDataStatisticModule());
-//        install(new MockPropertyModule());
+        install(new MockMetaStatisticsModule());
         install(new MockMetaModule());
         install(new MockStreamStoreModule());
     }

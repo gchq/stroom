@@ -27,7 +27,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.Node;
-import stroom.task.TaskCallbackAdaptor;
+import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.date.DateUtil;

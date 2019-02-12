@@ -19,7 +19,7 @@ package stroom.statistics.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.task.TaskCallbackAdaptor;
+import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
 import stroom.util.shared.VoidResult;
 

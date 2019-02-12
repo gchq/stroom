@@ -11,6 +11,7 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-feed:stroom-feed-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-security:stroom-security-api')
@@ -65,6 +66,7 @@ dependencies {
     testImplementation project(':stroom-data:stroom-data-store-impl-mock')
     testImplementation project(':stroom-docstore:stroom-docstore-impl')
     testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    testImplementation project(':stroom-feed:stroom-feed-impl')
     testImplementation project(':stroom-security:stroom-security-impl-mock')
     testImplementation project(':stroom-test-common')
 

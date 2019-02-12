@@ -37,9 +37,8 @@ import stroom.docstore.impl.DocStoreModule;
 import stroom.docstore.Persistence;
 import stroom.docstore.impl.memory.MemoryPersistenceModule;
 import stroom.entity.shared.Range;
-import stroom.pipeline.feed.FeedModule;
-import stroom.pipeline.feed.FeedSerialiser;
-import stroom.pipeline.feed.FeedStore;
+import stroom.feed.api.FeedStore;
+import stroom.feed.impl.FeedModule;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineModule;
 import stroom.pipeline.PipelineSerialiser;
@@ -114,8 +113,6 @@ class TestReferenceData extends AbstractLmdbDbTest {
     private RefDataStoreFactory refDataStoreFactory;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
-    @Inject
-    private FeedSerialiser feedSerialiser;
     @Inject
     private PipelineSerialiser pipelineSerialiser;
 

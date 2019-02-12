@@ -20,21 +20,19 @@ package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaProperties;
-import stroom.data.store.DataRetentionExecutor;
+import stroom.data.retention.impl.DataRetentionExecutor;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
 import stroom.docref.DocRef;
-import stroom.pipeline.feed.FeedStore;
+import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.job.MockTask;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaProperties;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.node.shared.FindNodeCriteria;
-import stroom.node.shared.Node;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;
@@ -98,11 +96,7 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
 
     @Test
     void testCheckArchive() throws IOException {
-        nodeInfo.getThisNode();
-        final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
-        for (final Node node : nodeList) {
-            fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
-        }
+        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
         final ZonedDateTime oldDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(SIXTY);
         final ZonedDateTime newDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(FIFTY);
@@ -154,7 +148,7 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
         assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
 
         streamRetentionExecutor.exec();
-        streamDeleteExecutor.delete(System.currentTimeMillis());
+//        streamDeleteExecutor.delete(System.currentTimeMillis());
 
         // Test Again
         oldVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(oldFileMeta));

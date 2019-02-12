@@ -22,12 +22,12 @@ import org.junit.jupiter.api.Test;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
+import stroom.feed.api.FeedProperties;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.StandardHeaderArguments;
-import stroom.pipeline.feed.FeedDocCache;
-import stroom.proxy.repo.StroomStreamProcessor;
+import stroom.receive.common.StreamTargetStroomStreamHandler;
+import stroom.receive.common.StroomStreamProcessor;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
@@ -45,7 +45,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -56,9 +55,9 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     @Inject
     private Store streamStore;
     @Inject
-    private FeedDocCache feedDocCache;
+    private FeedProperties feedProperties;
     @Inject
-    private FileSystemStreamMaintenanceService streamMaintenanceService;
+    private FileSystemDataStoreMaintenanceService streamMaintenanceService;
 
     @Test
     void testSimpleSingleFile() throws IOException {
@@ -240,7 +239,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
-                .buildSingleHandlerList(streamStore, feedDocCache, null, feedName, StreamTypeNames.RAW_EVENTS);
+                .buildSingleHandlerList(streamStore, feedProperties, null, feedName, StreamTypeNames.RAW_EVENTS);
 
         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlerList, new byte[1000],
                 "DefaultDataFeedRequest-" + attributeMap.get(StandardHeaderArguments.GUID));

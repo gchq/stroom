@@ -17,7 +17,6 @@
 package stroom.test;
 
 
-import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.Source;
@@ -27,6 +26,7 @@ import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
+import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.index.IndexStore;
@@ -39,7 +39,6 @@ import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaProperties;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
-import stroom.pipeline.feed.FeedStore;
 import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;

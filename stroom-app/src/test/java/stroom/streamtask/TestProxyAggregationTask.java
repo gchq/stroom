@@ -22,17 +22,17 @@ import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
-import stroom.receive.BufferFactory;
+import stroom.data.zip.StroomZipFile;
 import stroom.entity.shared.BaseResultList;
+import stroom.feed.api.FeedProperties;
+import stroom.feed.api.FeedStore;
+import stroom.io.BufferFactory;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
-import stroom.pipeline.feed.FeedDocCache;
-import stroom.pipeline.feed.FeedStore;
-import stroom.proxy.repo.StroomZipFile;
+import stroom.meta.statistics.api.MetaStatistics;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -67,9 +67,9 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Inject
     private FeedStore feedStore;
     @Inject
-    private FeedDocCache feedDocCache;
+    private FeedProperties feedProperties;
     @Inject
-    private MetaDataStatistic metaDataStatistic;
+    private MetaStatistics metaStatistics;
     @Inject
     private TaskContext taskContext;
     @Inject
@@ -80,7 +80,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private void aggregate(final String proxyDir,
                            final int maxAggregation,
                            final long maxStreamSize) {
-        final ProxyFileProcessorImpl proxyFileProcessor = new ProxyFileProcessorImpl(streamStore, feedDocCache, metaDataStatistic, maxAggregation, maxStreamSize, bufferFactory);
+        final ProxyFileProcessorImpl proxyFileProcessor = new ProxyFileProcessorImpl(streamStore, feedProperties, metaStatistics, maxAggregation, maxStreamSize, bufferFactory);
         final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(proxyFileProcessor, taskContext, executorProvider, proxyDir, 10, maxAggregation, 10000, maxStreamSize);
         proxyAggregationExecutor.exec();
     }
@@ -499,7 +499,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     }
 
     private void createFeeds(final String... feeds) {
-        feedDocCache.clear();
+//        feedDocCache.clear();
         for (final String feed : feeds) {
             feedStore.createDocument(feed);
         }

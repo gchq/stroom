@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest {
     @Inject
-    private FileSystemStreamMaintenanceService streamMaintenanceService;
+    private FileSystemDataStoreMaintenanceService streamMaintenanceService;
     @Inject
     private DataVolumeService streamVolumeService;
     @Inject

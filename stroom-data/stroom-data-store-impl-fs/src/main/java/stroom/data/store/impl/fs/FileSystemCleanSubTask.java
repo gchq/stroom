@@ -16,13 +16,13 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.node.shared.VolumeEntity;
+import stroom.data.store.impl.fs.shared.FileSystemVolume;
+import stroom.task.api.ServerTask;
 import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;
-import stroom.task.api.ServerTask;
 
 class FileSystemCleanSubTask extends ServerTask<VoidResult> {
-    private final VolumeEntity volume;
+    private final FileSystemVolume volume;
     private final String path;
     private final String logPrefix;
     private final Task<?> parentTask;
@@ -30,7 +30,7 @@ class FileSystemCleanSubTask extends ServerTask<VoidResult> {
     private final FileSystemCleanProgress taskProgress;
 
     FileSystemCleanSubTask(final FileSystemCleanExecutor parentHandler, final Task<?> parentTask,
-                           final FileSystemCleanProgress taskProgress, final VolumeEntity volume, final String path,
+                           final FileSystemCleanProgress taskProgress, final FileSystemVolume volume, final String path,
                            final String logPrefix) {
         super(parentTask);
         this.volume = volume;
@@ -41,7 +41,7 @@ class FileSystemCleanSubTask extends ServerTask<VoidResult> {
         this.taskProgress = taskProgress;
     }
 
-    VolumeEntity getVolume() {
+    FileSystemVolume getVolume() {
         return volume;
     }
 

@@ -61,10 +61,12 @@ include 'stroom-dashboard:stroom-dashboard-shared'
 include 'stroom-data:stroom-data-retention-impl'
 include 'stroom-data:stroom-data-retention-shared'
 include 'stroom-data:stroom-data-store-api'
+include 'stroom-data:stroom-data-store-impl'
 include 'stroom-data:stroom-data-store-impl-fs'
 include 'stroom-data:stroom-data-store-impl-fs-db-gen'
 include 'stroom-data:stroom-data-store-impl-mock'
 include 'stroom-data:stroom-data-store-util'
+include 'stroom-data:stroom-data-zip'
 
 // DB Utilities
 include 'stroom-db-util'
@@ -86,6 +88,8 @@ include 'stroom-meta:stroom-meta-api'
 include 'stroom-meta:stroom-meta-impl-db'
 include 'stroom-meta:stroom-meta-impl-db-gen'
 include 'stroom-meta:stroom-meta-impl-mock'
+include 'stroom-meta:stroom-meta-statistics-api'
+include 'stroom-meta:stroom-meta-statistics-impl'
 
 // Elastic
 include 'stroom-elastic:stroom-elastic-api'
@@ -104,6 +108,10 @@ include 'stroom-explorer:stroom-explorer-api'
 include 'stroom-explorer:stroom-explorer-impl'
 include 'stroom-explorer:stroom-explorer-impl-db'
 include 'stroom-explorer:stroom-explorer-impl-db-gen'
+
+// Feed
+include 'stroom-feed:stroom-feed-api'
+include 'stroom-feed:stroom-feed-impl'
 
 // Headless
 include 'stroom-headless'
@@ -145,6 +153,9 @@ include 'stroom-proxy'
 // Resource store
 include 'stroom-resourcestore:stroom-resourcestore-api'
 include 'stroom-resourcestore:stroom-resourcestore-impl'
+
+// Data Receipt
+include 'stroom-receive:stroom-receive-common'
 
 // Ruleset
 include 'stroom-receive:stroom-receive-rules-shared'

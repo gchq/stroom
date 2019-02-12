@@ -21,15 +21,12 @@ package stroom.data.store.impl.fs;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaProperties;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.job.MockTask;
-import stroom.node.api.NodeService;
-import stroom.node.shared.FindNodeCriteria;
-import stroom.node.shared.Node;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaProperties;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -44,7 +41,6 @@ import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collection;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -57,7 +53,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     @Inject
     private Store streamStore;
     @Inject
-    private FileSystemStreamMaintenanceService streamMaintenanceService;
+    private FileSystemDataStoreMaintenanceService streamMaintenanceService;
     @Inject
     private DataVolumeService streamVolumeService;
     @Inject
@@ -66,15 +62,10 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     private TaskManager taskManager;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Inject
-    private NodeService nodeService;
 
     @Test
     void testCheckCleaning() throws IOException {
-        final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
-        for (final Node node : nodeList) {
-            fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
-        }
+        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
         waitForTaskManagerToComplete();
 
@@ -140,9 +131,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         FileUtil.setLastModified(oldfileinnewdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_FOUR).toInstant().toEpochMilli());
 
         // Run the clean
-        for (final Node node : nodeList) {
-            fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
-        }
+        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
         waitForTaskManagerToComplete();
 
@@ -173,10 +162,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         assertThat(streamVolumeService.find(streamVolumeCriteria).size() >= 1).as("Must be saved to at least one volume").isTrue();
 
-        final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
-        for (final Node node : nodeList) {
-            fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
-        }
+        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
         files = streamMaintenanceService.findAllStreamFile(meta);
 
@@ -184,19 +170,14 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         assertThat(streamVolumeService.find(streamVolumeCriteria).size() >= 1).as("Volumes should still exist as they are new").isTrue();
 
-        for (final Node node : nodeList) {
-            fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
-        }
+        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
         waitForTaskManagerToComplete();
     }
 
     @Test
     void testCheckCleaningLotsOfFiles() throws IOException {
-        final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
-        for (final Node node : nodeList) {
-            fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
-        }
+        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
         waitForTaskManagerToComplete();
 
@@ -216,9 +197,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
             }
         }
 
-        for (final Node node : nodeList) {
-            fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
-        }
+        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
         waitForTaskManagerToComplete();
 

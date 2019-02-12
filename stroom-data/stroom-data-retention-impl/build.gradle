@@ -3,44 +3,25 @@ ext.moduleName = 'stroom.data.retention.impl'
 dependencies {
     implementation project(':stroom-data:stroom-data-retention-shared')
     implementation project(':stroom-docstore:stroom-docstore-api')
-//    implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
-//    implementation project(':stroom-config:stroom-config-common')
-////    implementation project(':stroom-core-server')
-//    implementation project(':stroom-core-shared')
     implementation project(':stroom-meta:stroom-meta-api')
-//    implementation project(':stroom-db-util')
     implementation project(':stroom-cluster-lock:stroom-cluster-lock-api')
-//    implementation project(':stroom-data:stroom-data-store-api')
-//    implementation project(':stroom-data:stroom-data-store-impl-fs-db-gen')
-//    implementation project(':stroom-entity-shared')
-//    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-job:stroom-job-api')
-    implementation project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
+    implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     implementation libs.stroomDocRef
     implementation libs.stroomQueryApi
-//    implementation libs.eventLogging
-//
-//    implementation libs.flyway_core
-//    implementation libs.guava
+    
     implementation libs.guice4
-//    implementation libs.hibernate_jpa_api
-//    implementation libs.hikari
-//    implementation libs.jackson_annotations
-//    implementation libs.javax_inject
-//    implementation libs.jooq
     implementation libs.slf4j_api
 
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
-//    testImplementation libs.mockito_core
-//    testImplementation project(':stroom-test-common')
-
+    
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation
     testRuntimeOnly libs.jaxb_runtime

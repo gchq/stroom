@@ -6,13 +6,13 @@ import org.slf4j.LoggerFactory;
 import stroom.meta.shared.AttributeMap;
 import stroom.receive.AttributeMapFilter;
 import stroom.receive.AttributeMapFilterFactory;
-import stroom.receive.BufferFactory;
+import stroom.io.BufferFactory;
 import stroom.receive.RequestHandler;
-import stroom.receive.StroomStatusCode;
-import stroom.receive.StroomStreamException;
+import stroom.receive.common.StroomStatusCode;
+import stroom.receive.common.StroomStreamException;
 import stroom.docref.DocRef;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.proxy.repo.StroomStreamProcessor;
+import stroom.receive.common.StroomStreamProcessor;
 import stroom.util.io.ByteCountInputStream;
 
 import javax.inject.Inject;

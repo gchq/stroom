@@ -1,5 +1,9 @@
 package stroom.proxy.repo;
 
+import stroom.data.zip.StroomZipEntry;
+import stroom.data.zip.StroomZipNameSet;
+import stroom.data.zip.StroomZipOutputStream;
+import stroom.receive.common.StroomStreamHandler;
 import stroom.util.io.CloseableUtil;
 
 import java.io.IOException;

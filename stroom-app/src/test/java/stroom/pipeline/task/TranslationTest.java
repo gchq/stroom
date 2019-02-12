@@ -20,26 +20,25 @@ package stroom.pipeline.task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.store.api.InputStreamProvider;
-import stroom.data.store.api.SourceUtil;
-import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.Source;
+import stroom.data.store.api.SourceUtil;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
-import stroom.pipeline.feed.FeedDocCache;
-import stroom.pipeline.feed.FeedStore;
-import stroom.meta.shared.StandardHeaderArguments;
+import stroom.feed.api.FeedProperties;
+import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.SharedElementData;
@@ -47,18 +46,18 @@ import stroom.pipeline.shared.SharedStepData;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.pipeline.stepping.SteppingTask;
-import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.receive.common.StreamTargetStroomStreamHandler;
+import stroom.receive.common.StroomStreamProcessor;
 import stroom.security.util.UserTokenUtil;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.StreamProcessorTask;
-import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilterTask;
@@ -116,7 +115,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private MetaService metaService;
     @Inject
-    private FeedDocCache feedDocCache;
+    private FeedProperties feedProperties;
     @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject
@@ -352,7 +351,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
-                .buildSingleHandlerList(streamStore, feedDocCache, null, feed.getName(), feed.getStreamType());
+                .buildSingleHandlerList(streamStore, feedProperties, null, feed.getName(), feed.getStreamType());
 
         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlerList, new byte[1000],
                 "DefaultDataFeedRequest-");
@@ -385,14 +384,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final List<Exception> exceptions = new ArrayList<>();
 
         // feedCriteria.setFeedType(FeedType.REFERENCE);
-        final Optional<FeedDoc> feeds = feedDocCache.get(feedName);
-        assertThat(feeds.isPresent()).as("No feeds found").isTrue();
+//        final Optional<FeedDoc> feeds = feedDocCache.get(feedName);
+//        assertThat(feeds.isPresent()).as("No feeds found").isTrue();
         final List<DocRef> pipelines = pipelineStore.findByName(feedName);
         assertThat(pipelines != null && pipelines.size() > 0).as("No pipelines found").isTrue();
         assertThat(pipelines.size()).as("Expected 1 pipeline").isEqualTo(1);
 
         final DocRef pipelineRef = pipelines.get(0);
-        final FeedDoc feed = feeds.get();
+//        final FeedDoc feed = feeds.get();
 
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName)
@@ -443,7 +442,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             assertThat(elementData.getCodeIndicators() != null
                     && elementData.getCodeIndicators().getMaxSeverity() != null).as("Translation stepping has code indicators.").isFalse();
 
-            final String stem = feed.getName() + "~STEPPING~" + elementId;
+            final String stem = feedName + "~STEPPING~" + elementId;
             if (elementData.getInput() != null) {
                 final Path actualFile = dir.resolve(stem + "~input.out_tmp");
                 final Path expectedFile = dir.resolve(stem + "~input.out");

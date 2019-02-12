@@ -16,7 +16,7 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.ScanVolumePathResult;
+import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.util.shared.ModelStringUtil;
 
 import java.util.Queue;

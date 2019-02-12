@@ -18,22 +18,22 @@ package stroom.data.store.upload;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.store.DataDownloadTask;
-import stroom.data.store.StreamDownloadSettings;
-import stroom.data.store.StreamUploadTask;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
+import stroom.data.store.impl.DataDownloadTask;
+import stroom.data.store.impl.StreamDownloadSettings;
+import stroom.data.store.impl.StreamUploadTask;
+import stroom.data.zip.StroomZipFile;
+import stroom.data.zip.StroomZipFileType;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
-import stroom.proxy.repo.StroomZipFile;
-import stroom.proxy.repo.StroomZipFileType;
 import stroom.security.util.UserTokenUtil;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.TaskManager;

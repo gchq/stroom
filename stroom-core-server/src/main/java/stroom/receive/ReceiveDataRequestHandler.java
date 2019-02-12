@@ -19,18 +19,19 @@ package stroom.receive;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.AttributeMap;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
+import stroom.feed.api.FeedProperties;
+import stroom.io.BufferFactory;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.pipeline.feed.FeedDocCache;
+import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.StandardHeaderArguments;
-import stroom.feed.shared.FeedDoc;
-import stroom.proxy.repo.StroomStreamProcessor;
+import stroom.meta.statistics.api.MetaStatistics;
+import stroom.receive.common.StreamTargetStroomStreamHandler;
+import stroom.receive.common.StroomStatusCode;
+import stroom.receive.common.StroomStreamException;
+import stroom.receive.common.StroomStreamProcessor;
 import stroom.security.Security;
-import stroom.streamstore.shared.StreamTypeNames;
-import stroom.streamtask.StreamTargetStroomStreamHandler;
-import stroom.streamtask.statistic.MetaDataStatistic;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -38,7 +39,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -51,8 +51,8 @@ class ReceiveDataRequestHandler implements RequestHandler {
 
     private final Security security;
     private final Store streamStore;
-    private final FeedDocCache feedDocCache;
-    private final MetaDataStatistic metaDataStatistics;
+    private final FeedProperties feedProperties;
+    private final MetaStatistics metaDataStatistics;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final ReceiveDataConfig dataFeedConfig;
     private final BufferFactory bufferFactory;
@@ -62,14 +62,14 @@ class ReceiveDataRequestHandler implements RequestHandler {
     @Inject
     public ReceiveDataRequestHandler(final Security security,
                                      final Store streamStore,
-                                     final FeedDocCache feedDocCache,
-                                     final MetaDataStatistic metaDataStatistics,
+                                     final FeedProperties feedProperties,
+                                     final MetaStatistics metaDataStatistics,
                                      final AttributeMapFilterFactory attributeMapFilterFactory,
                                      final ReceiveDataConfig dataFeedConfig,
                                      final BufferFactory bufferFactory) {
         this.security = security;
         this.streamStore = streamStore;
-        this.feedDocCache = feedDocCache;
+        this.feedProperties = feedProperties;
         this.metaDataStatistics = metaDataStatistics;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.dataFeedConfig = dataFeedConfig;
@@ -95,10 +95,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
                     throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
                 }
 
-                final Optional<FeedDoc> optional = feedDocCache.get(feedName);
-                final String streamTypeName = optional
-                        .map(FeedDoc::getStreamType)
-                        .orElse(StreamTypeNames.RAW_EVENTS);
+                final String streamTypeName = feedProperties.getStreamTypeName(feedName);
 
 //                final String feedName = attributeMap.get(StroomHeaderArguments.FEED);
 //                if (feedName == null) {
@@ -110,7 +107,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
 //                }
 
                 List<StreamTargetStroomStreamHandler> handlers = StreamTargetStroomStreamHandler.buildSingleHandlerList(streamStore,
-                        feedDocCache, metaDataStatistics, feedName, streamTypeName);
+                        feedProperties, metaDataStatistics, feedName, streamTypeName);
 
                 final byte[] buffer = bufferFactory.create();
                 final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlers, buffer, "DataFeedRequestHandler-" + attributeMap.get(StandardHeaderArguments.GUID));

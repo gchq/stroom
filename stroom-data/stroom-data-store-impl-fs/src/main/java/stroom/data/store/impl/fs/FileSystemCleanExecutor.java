@@ -19,14 +19,12 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.api.NodeInfo;
-import stroom.volume.VolumeService;
-import stroom.node.shared.FindVolumeCriteria;
-import stroom.node.shared.VolumeEntity;
-import stroom.task.AsyncTaskHelper;
-import stroom.task.TaskCallbackAdaptor;
-import stroom.task.api.TaskManager;
+import stroom.data.store.impl.fs.shared.FileSystemVolume;
+import stroom.data.store.impl.fs.shared.FindFileSystemVolumeCriteria;
+import stroom.task.api.AsyncTaskHelper;
+import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskManager;
 import stroom.task.shared.Task;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
@@ -52,10 +50,9 @@ class FileSystemCleanExecutor {
     private static final String DELETE_OUT = "delete.out";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemCleanExecutor.class);
-    private final VolumeService volumeService;
+    private final FileSystemVolumeService volumeService;
     private final TaskContext taskContext;
     private final TaskManager taskManager;
-    private final NodeInfo nodeInfo;
     private final int batchSize;
     private final long oldAge;
     private final boolean deleteOut;
@@ -63,15 +60,13 @@ class FileSystemCleanExecutor {
     private AsyncTaskHelper<VoidResult> asyncTaskHelper;
 
     @Inject
-    FileSystemCleanExecutor(final VolumeService volumeService,
+    FileSystemCleanExecutor(final FileSystemVolumeService volumeService,
                             final TaskContext taskContext,
                             final TaskManager taskManager,
-                            final NodeInfo nodeInfo,
                             final DataStoreServiceConfig config) {
         this.volumeService = volumeService;
         this.taskContext = taskContext;
         this.taskManager = taskManager;
-        this.nodeInfo = nodeInfo;
         this.batchSize = config.getDeleteBatchSize();
 
         Long age;
@@ -107,13 +102,12 @@ class FileSystemCleanExecutor {
     }
 
     public void exec(final Task<?> task) {
-        final long nodeId = nodeInfo.getThisNode().getId();
-        clean(task, nodeId);
+        clean(task);
     }
 
-    public void clean(final Task<?> task, final long nodeId) {
-        final Map<VolumeEntity, FileSystemCleanProgress> taskProgressMap = new HashMap<>();
-        final Map<VolumeEntity, PrintWriter> printWriterMap = new HashMap<>();
+    public void clean(final Task<?> task) {
+        final Map<FileSystemVolume, FileSystemCleanProgress> taskProgressMap = new HashMap<>();
+        final Map<FileSystemVolume, PrintWriter> printWriterMap = new HashMap<>();
 
         // Load the node.
         asyncTaskHelper = new AsyncTaskHelper<>(null, taskContext, taskManager, batchSize);
@@ -122,15 +116,13 @@ class FileSystemCleanExecutor {
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-        final FindVolumeCriteria criteria = new FindVolumeCriteria();
-        criteria.getNodeIdSet().add(nodeId);
-        final List<VolumeEntity> volumeList = volumeService.find(criteria);
+        final List<FileSystemVolume> volumeList = volumeService.find(new FindFileSystemVolumeCriteria());
 
         try {
             if (volumeList != null && volumeList.size() > 0) {
                 // Add to the task steps remaining.
 
-                for (final VolumeEntity volume : volumeList) {
+                for (final FileSystemVolume volume : volumeList) {
                     final FileSystemCleanProgress taskProgress = new FileSystemCleanProgress();
                     if (deleteOut) {
                         final Path dir = Paths.get(volume.getPath());
@@ -148,7 +140,7 @@ class FileSystemCleanExecutor {
                     final FileSystemCleanSubTask subTask = new FileSystemCleanSubTask(this, task, taskProgress, volume,
                             "", "");
 
-                    asyncTaskHelper.fork(subTask, new TaskCallbackAdaptor<VoidResult>() {
+                    asyncTaskHelper.fork(subTask, new TaskCallbackAdaptor<>() {
                         @Override
                         public void onSuccess(final VoidResult result) {
                             taskProgress.addScanComplete();
@@ -179,7 +171,7 @@ class FileSystemCleanExecutor {
 
                     final StringBuilder trace = new StringBuilder();
 
-                    for (final VolumeEntity volume : volumeList) {
+                    for (final FileSystemVolume volume : volumeList) {
                         final FileSystemCleanProgress taskProgress = taskProgressMap.get(volume);
 
                         trace.append(volume.getPath());

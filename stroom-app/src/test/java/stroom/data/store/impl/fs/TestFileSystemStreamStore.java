@@ -20,7 +20,6 @@ package stroom.data.store.impl.fs;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import stroom.data.store.StreamMaintenanceService;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
@@ -83,8 +82,6 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private MetaService metaService;
     @Inject
     private DataVolumeService streamVolumeService;
-    @Inject
-    private StreamMaintenanceService streamMaintenanceService;
     @Inject
     private FileSystemStreamPathHelper fileSystemStreamPathHelper;
 

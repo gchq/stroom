@@ -26,8 +26,8 @@ public class FindDataVolumeCriteria extends BaseCriteria {
 //    private StreamRange streamRange;
 //
 //    private CriteriaSet<StreamStatus> streamStatusSet = null;
-    private CriteriaSet<Long> nodeIdSet = null;
-    private CriteriaSet<Long> volumeIdSet = null;
+//    private CriteriaSet<Long> nodeIdSet = null;
+    private CriteriaSet<Integer> volumeIdSet = null;
     private CriteriaSet<Long> streamIdSet = null;
 
     public static FindDataVolumeCriteria create(final Meta meta) {
@@ -51,17 +51,17 @@ public class FindDataVolumeCriteria extends BaseCriteria {
 //    public void setStreamRange(StreamRange streamRange) {
 //        this.streamRange = streamRange;
 //    }
-
-    public CriteriaSet<Long> getNodeIdSet() {
-        return nodeIdSet;
-    }
-
-    public CriteriaSet<Long> obtainNodeIdSet() {
-        if (nodeIdSet == null) {
-            nodeIdSet = new CriteriaSet<>();
-        }
-        return nodeIdSet;
-    }
+//
+//    public CriteriaSet<Long> getNodeIdSet() {
+//        return nodeIdSet;
+//    }
+//
+//    public CriteriaSet<Long> obtainNodeIdSet() {
+//        if (nodeIdSet == null) {
+//            nodeIdSet = new CriteriaSet<>();
+//        }
+//        return nodeIdSet;
+//    }
 
     public CriteriaSet<Long> getStreamIdSet() {
         return streamIdSet;
@@ -74,11 +74,11 @@ public class FindDataVolumeCriteria extends BaseCriteria {
         return streamIdSet;
     }
 
-    public CriteriaSet<Long> getVolumeIdSet() {
+    public CriteriaSet<Integer> getVolumeIdSet() {
         return volumeIdSet;
     }
 
-    public CriteriaSet<Long> obtainVolumeIdSet() {
+    public CriteriaSet<Integer> obtainVolumeIdSet() {
         if (volumeIdSet == null) {
             volumeIdSet = new CriteriaSet<>();
         }

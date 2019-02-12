@@ -18,6 +18,7 @@ package stroom.receive;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.receive.common.StroomStreamException;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

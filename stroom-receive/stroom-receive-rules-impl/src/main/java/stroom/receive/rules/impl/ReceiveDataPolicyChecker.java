@@ -21,13 +21,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.dictionary.api.DictionaryStore;
-import stroom.meta.shared.AttributeMap;
 import stroom.docref.DocRef;
-import stroom.receive.rules.shared.RuleAction;
+import stroom.meta.api.ExpressionMatcher;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.ExpressionUtil;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.data.store.ExpressionMatcher;
-import stroom.meta.shared.ExpressionUtil;
+import stroom.receive.rules.shared.RuleAction;
 
 import java.util.ArrayList;
 import java.util.HashMap;

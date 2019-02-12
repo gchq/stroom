@@ -18,6 +18,11 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.zip.CharsetConstants;
+import stroom.data.zip.StroomFileNameUtil;
+import stroom.data.zip.StroomZipFile;
+import stroom.data.zip.StroomZipOutputStream;
+import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.shared.AttributeMap;
 import stroom.util.io.AbstractFileVisitor;
 

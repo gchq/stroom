@@ -24,7 +24,7 @@ import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ServiceName;
 import stroom.docref.SharedObject;
 import stroom.node.api.NodeInfo;
-import stroom.task.TaskCallbackAdaptor;
+import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
 import stroom.task.cluster.api.ClusterTask;
 import stroom.task.cluster.api.CollectorId;

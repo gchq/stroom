@@ -17,10 +17,12 @@
 package stroom.receive;
 
 import com.google.inject.AbstractModule;
+import stroom.io.BufferFactory;
 
 public class ReceiveDataModule extends AbstractModule {
     @Override
     protected void configure() {
+        bind(BufferFactory.class).to(BufferFactoryImpl.class);
         bind(RequestHandler.class).to(ReceiveDataRequestHandler.class);
     }
 }

@@ -26,15 +26,12 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
+import stroom.data.store.impl.fs.shared.FileSystemVolume;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
-import stroom.node.api.NodeInfo;
-import stroom.node.shared.Node;
-import stroom.node.shared.VolumeEntity;
-import stroom.volume.VolumeService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -55,19 +52,16 @@ class FileSystemStreamStoreImpl implements Store {
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
     private final MetaService metaService;
-    private final NodeInfo nodeInfo;
-    private final VolumeService volumeService;
+    private final FileSystemVolumeService volumeService;
     private final DataVolumeService streamVolumeService;
 
     @Inject
     FileSystemStreamStoreImpl(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
                               final MetaService metaService,
-                              final NodeInfo nodeInfo,
-                              final VolumeService volumeService,
+                              final FileSystemVolumeService volumeService,
                               final DataVolumeService streamVolumeService) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
-        this.nodeInfo = nodeInfo;
         this.volumeService = volumeService;
         this.streamVolumeService = streamVolumeService;
     }
@@ -76,7 +70,7 @@ class FileSystemStreamStoreImpl implements Store {
     public Target openStreamTarget(final MetaProperties metaProperties) {
         LOGGER.debug("openStreamTarget() " + metaProperties);
 
-        final VolumeEntity volume = volumeService.getStreamVolume(nodeInfo.getThisNode());
+        final FileSystemVolume volume = volumeService.getVolume();
         if (volume == null) {
             throw new DataException("Failed to get lock as no writeable volumes");
         }

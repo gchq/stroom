@@ -1,17 +1,15 @@
 package stroom.data.store.impl.fs;
 
+import stroom.data.store.impl.fs.shared.FileSystemVolume;
 import stroom.docref.SharedObject;
 import stroom.entity.shared.BaseResultList;
-import stroom.node.shared.VolumeEntity;
-
-import java.util.Set;
 
 public interface DataVolumeService {
     BaseResultList<DataVolume> find(FindDataVolumeCriteria criteria);
 
     DataVolume findStreamVolume(long dataId);
 
-    DataVolume createStreamVolume(long dataId, VolumeEntity volume);
+    DataVolume createStreamVolume(long dataId, FileSystemVolume volume);
 
     interface DataVolume extends SharedObject {
         long getStreamId();

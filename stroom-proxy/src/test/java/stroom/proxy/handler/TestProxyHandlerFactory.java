@@ -16,9 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestProxyHandlerFactory extends StroomUnitTest {
-    @SuppressWarnings("unchecked")
     @Test
-    void testStoreAndForward() throws Exception {
+    void testStoreAndForward() {
         final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(true, true);
         final List<StreamHandler> incomingHandlers = proxyHandlerFactory.addReceiveHandlers(new ArrayList<>());
 
@@ -30,7 +29,7 @@ class TestProxyHandlerFactory extends StroomUnitTest {
     }
 
     @Test
-    void testForward() throws Exception {
+    void testForward() {
         final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(false, true);
 
         for (int i = 0; i < 2; i++) {
@@ -46,9 +45,8 @@ class TestProxyHandlerFactory extends StroomUnitTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    void testStore() throws Exception {
+    void testStore() {
         final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(true, false);
 
         final List<StreamHandler> incomingHandlers = proxyHandlerFactory.addReceiveHandlers(new ArrayList<>());

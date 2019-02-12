@@ -18,8 +18,10 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.AttributeMap;
+import stroom.data.zip.StroomZipFile;
+import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.shared.AttributeMap;
 import stroom.task.api.TaskContext;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.CloseableUtil;

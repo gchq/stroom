@@ -49,7 +49,7 @@ import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilter;
-import stroom.task.AsyncTaskHelper;
+import stroom.task.api.AsyncTaskHelper;
 import stroom.task.GenericServerTask;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;

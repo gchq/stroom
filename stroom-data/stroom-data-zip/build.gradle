@@ -1,0 +1,44 @@
+ext.moduleName = 'stroom.data.zip'
+
+dependencies {
+//    implementation project(':stroom-activity:stroom-activity-impl-mock')
+//    implementation project(':stroom-cache:stroom-cache-api')
+//    implementation project(':stroom-cache:stroom-cache-impl')
+//    implementation project(':stroom-cluster-lock:stroom-cluster-lock-impl-mock')
+//    implementation project(':stroom-core-server')
+//    implementation project(':stroom-core-shared')
+//    implementation project(':stroom-data:stroom-data-store-api')
+////    implementation project(':stroom-data:stroom-data-store-impl-fs')
+    implementation project(':stroom-meta:stroom-meta-api')
+//    implementation project(':stroom-meta:stroom-meta-statistics-api')
+////    implementation project(':stroom-meta:stroom-meta-impl-db')
+////    implementation project(':stroom-db-util')
+////    implementation project(':stroom-entity-shared')
+////    implementation project(':stroom-event-logging:stroom-event-logging-impl')
+////    implementation project(':stroom-node:stroom-node-impl')
+////    implementation project(':stroom-security:stroom-security-impl-mock')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+//
+//    implementation libs.stroomQueryApi
+    
+//
+//    implementation libs.guice4
+    implementation libs.commons_compress
+    implementation libs.guava
+    implementation libs.slf4j_api
+//
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
+//
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}

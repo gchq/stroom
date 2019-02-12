@@ -19,12 +19,10 @@ package stroom.feed;
 
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
+import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
-import stroom.pipeline.PipelineStore;
-import stroom.pipeline.feed.FeedStore;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
@@ -38,10 +36,10 @@ class TestFeedStoreImpl extends AbstractCoreIntegrationTest {
 
     @Inject
     private FeedStore feedStore;
-    @Inject
-    private PipelineStore pipelineStore;
-    @Inject
-    private CommonTestScenarioCreator commonTestScenarioCreator;
+//    @Inject
+//    private PipelineStore pipelineStore;
+//    @Inject
+//    private CommonTestScenarioCreator commonTestScenarioCreator;
 
     /**
      * Test.

@@ -4,6 +4,13 @@ package stroom.proxy.repo;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.zip.CharsetConstants;
+import stroom.data.zip.StroomZipEntry;
+import stroom.data.zip.StroomZipFile;
+import stroom.data.zip.StroomZipFileType;
+import stroom.data.zip.StroomZipOutputStream;
+import stroom.data.zip.StroomZipOutputStreamImpl;
+import stroom.data.zip.StroomZipOutputStreamUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.util.io.FileUtil;
 

@@ -2,9 +2,15 @@ package stroom.proxy.repo;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.data.zip.StroomZipFile;
+import stroom.data.zip.StroomZipFileType;
+import stroom.data.zip.StroomZipOutputStream;
+import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.shared.AttributeMap;
-import stroom.receive.StroomStatusCode;
-import stroom.receive.StroomStreamException;
+import stroom.receive.common.StroomStatusCode;
+import stroom.receive.common.StroomStreamException;
+import stroom.receive.common.StroomStreamHandler;
+import stroom.receive.common.StroomStreamProcessor;
 import stroom.util.io.StreamUtil;
 
 import java.io.ByteArrayInputStream;
@@ -36,7 +42,7 @@ class TestStroomStreamProcessor {
         final Path zipFile = Files.createTempFile("test", "zip");
 
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
-        final List<StroomStreamHandler> list = new ArrayList<StroomStreamHandler>();
+        final List<StroomStreamHandler> list = new ArrayList<>();
         list.add(StroomStreamHandlerUtil.createStroomStreamHandler(stroomZipOutputStream));
         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, list, buffer, "test");
 
@@ -69,7 +75,7 @@ class TestStroomStreamProcessor {
         final Path zipFile = Files.createTempFile("test", "zip");
 
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
-        final List<StroomStreamHandler> list = new ArrayList<StroomStreamHandler>();
+        final List<StroomStreamHandler> list = new ArrayList<>();
         list.add(StroomStreamHandlerUtil.createStroomStreamHandler(stroomZipOutputStream));
         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, list, buffer, "test");
 
@@ -110,7 +116,7 @@ class TestStroomStreamProcessor {
         final Path zipFile = Files.createTempFile("test", "zip");
 
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
-        final List<StroomStreamHandler> list = new ArrayList<StroomStreamHandler>();
+        final List<StroomStreamHandler> list = new ArrayList<>();
         list.add(StroomStreamHandlerUtil.createStroomStreamHandler(stroomZipOutputStream));
         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, list, buffer, "test");
 
@@ -131,7 +137,7 @@ class TestStroomStreamProcessor {
     @Test
     void testZIPNoEntries() throws IOException {
         final InputStream inputStream = getClass().getClassLoader().getResourceAsStream("stroom/proxy/repo/BlankZip.zip");
-        final byte[] fullData = StreamUtil.streamToBuffer(inputStream).toByteArray();
+        final byte[] fullData = StreamUtil.streamToBytes(inputStream);
 
         final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(fullData, 0, fullData.length / 2);
 

@@ -18,11 +18,11 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.store.ScanVolumePathResult;
-import stroom.data.store.StreamMaintenanceService;
+import stroom.data.store.impl.ScanVolumePathResult;
+import stroom.data.store.impl.DataStoreMaintenanceService;
 import stroom.security.Security;
-import stroom.task.TaskCallbackAdaptor;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskContext;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
@@ -36,12 +36,12 @@ import javax.inject.Inject;
 class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSystemCleanSubTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemCleanSubTaskHandler.class);
 
-    private final StreamMaintenanceService streamMaintenanceService;
+    private final DataStoreMaintenanceService streamMaintenanceService;
     private final TaskContext taskContext;
     private final Security security;
 
     @Inject
-    FileSystemCleanSubTaskHandler(final StreamMaintenanceService streamMaintenanceService,
+    FileSystemCleanSubTaskHandler(final DataStoreMaintenanceService streamMaintenanceService,
                                   final TaskContext taskContext,
                                   final Security security) {
         this.streamMaintenanceService = streamMaintenanceService;

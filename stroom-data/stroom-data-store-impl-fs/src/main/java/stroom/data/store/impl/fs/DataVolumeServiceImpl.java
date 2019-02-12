@@ -4,23 +4,21 @@ import org.jooq.Condition;
 import org.jooq.TableField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.impl.fs.shared.FileSystemVolume;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.PageRequest;
-import stroom.node.shared.VolumeEntity;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.util.concurrent.AtomicSequence;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static stroom.data.store.impl.fs.db.stroom.tables.DataVolume.DATA_VOLUME;
 import static stroom.data.store.impl.fs.db.stroom.tables.Vol.VOL;
@@ -78,7 +76,19 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 //        });
 //    }
 
-    private Optional<Condition> criteriaSetToCondition(final TableField<?, ?> field, final CriteriaSet<Long> criteriaSet) {
+    private Optional<Condition> longCriteriaSetToCondition(final TableField<?, ?> field, final CriteriaSet<Long> criteriaSet) {
+        if (criteriaSet == null || Boolean.TRUE.equals(criteriaSet.getMatchAll())) {
+            return Optional.empty();
+        }
+
+        if (criteriaSet.getMatchNull() != null && criteriaSet.getMatchNull()) {
+            return Optional.of(field.isNull());
+        }
+
+        return Optional.of(field.in(criteriaSet.getSet()));
+    }
+
+    private Optional<Condition> integerCriteriaSetToCondition(final TableField<?, ?> field, final CriteriaSet<Integer> criteriaSet) {
         if (criteriaSet == null || Boolean.TRUE.equals(criteriaSet.getMatchAll())) {
             return Optional.empty();
         }
@@ -108,8 +118,8 @@ public class DataVolumeServiceImpl implements DataVolumeService {
     @Override
     // @Transactional
     public BaseResultList<DataVolume> find(final FindDataVolumeCriteria criteria) {
-        final Optional<Condition> volumeIdCondition = criteriaSetToCondition(DATA_VOLUME.VOLUME_ID, criteria.getVolumeIdSet());
-        final Optional<Condition> streamIdCondition = criteriaSetToCondition(DATA_VOLUME.DATA_ID, criteria.getStreamIdSet());
+        final Optional<Condition> volumeIdCondition = integerCriteriaSetToCondition(DATA_VOLUME.VOLUME_ID, criteria.getVolumeIdSet());
+        final Optional<Condition> streamIdCondition = longCriteriaSetToCondition(DATA_VOLUME.DATA_ID, criteria.getStreamIdSet());
 
         final List<Condition> conditions = new ArrayList<>();
         volumeIdCondition.ifPresent(conditions::add);
@@ -354,7 +364,7 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 //    }
 //
 //    @Override
-    public DataVolume createStreamVolume(final long dataId, final VolumeEntity volume) {
+    public DataVolume createStreamVolume(final long dataId, final FileSystemVolume volume) {
 //        final List<StrmVolRecord> batch = new ArrayList<>();
 //        for (final VolumeEntity volume : volumes) {
 //            batch.add(new StrmVolRecord(null, null, dataId, (int) volume.getId()));
@@ -363,7 +373,7 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 
         return JooqUtil.contextResult(connectionProvider, context -> {
                 context.insertInto(DATA_VOLUME, DATA_VOLUME.DATA_ID, DATA_VOLUME.VOLUME_ID)
-                        .values(dataId, (int) volume.getId())
+                        .values(dataId, volume.getId())
                         .execute();
                 return new DataVolumeImpl(dataId, volume.getPath());
         });

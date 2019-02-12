@@ -28,6 +28,7 @@ import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.security.Security;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.TaskCallback;
+import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskHandler;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
