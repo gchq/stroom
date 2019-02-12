@@ -68,11 +68,10 @@ public class GenericDao<RecordType extends UpdatableRecord, EntityType, IdType>
         return JooqUtil.contextWithOptimisticLocking(connectionProvider, (context) -> {
             LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
                     "Fetching {} with id {}", table.getName(), id));
-            EntityType record = context
+            return context
                     .selectFrom(table)
                     .where(idField.eq(id))
-                    .fetchOneInto(entityTypeClass);
-            return Optional.ofNullable(record);
+                    .fetchOptionalInto(entityTypeClass);
         });
     }
 }
