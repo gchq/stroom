@@ -18,7 +18,7 @@
 package stroom.receive.rules.impl;
 
 import stroom.meta.shared.AttributeMap;
-import stroom.receive.AttributeMapFilter;
+import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.StroomStatusCode;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.rules.shared.RuleAction;

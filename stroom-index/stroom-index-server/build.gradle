@@ -49,7 +49,6 @@ dependencies {
     implementation libs.ws_rs_api
     implementation libs.xml_apis
 
-//    testImplementation project(path: ':stroom-core-server', configuration: 'testArtifacts')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core

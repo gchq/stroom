@@ -8,46 +8,13 @@ dependencies {
     implementation project(':stroom-feed:stroom-feed-api')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-meta:stroom-meta-statistics-api')
-    
-
-//    implementation project(':stroom-dictionary:stroom-dictionary-api')
-//    implementation project(':stroom-docstore:stroom-docstore-shared')
-//    implementation project(':stroom-explorer:stroom-explorer-api')
-//    implementation project(':stroom-importexport:stroom-importexport-api')
-//    implementation project(':stroom-receive:stroom-receive-rules-shared')
-//
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
-//    implementation project(':stroom-core-server')
-////    
-//    implementation project(':stroom-docstore:stroom-docstore-api')
-//    //implementation project(':stroom-docstore:stroom-docstore-impl') // TODO to be removed
-//
+    
     implementation libs.commons_compress
     implementation libs.javax_servlet_api
     implementation libs.stroomDocRef
-//    implementation libs.stroomQueryApi
+
+    implementation libs.javax_inject
     implementation libs.slf4j_api
-//    implementation libs.javax_inject
-//
-//    implementation libs.guice4
-//
-//    implementation libs.dropwizard_metrics_healthchecks
-//    implementation libs.dropwizard_metrics_annotation
-//    implementation libs.swagger_annotations
-//    implementation libs.ws_rs_api
-//    
-//    testImplementation libs.assertj_core
-//    
-//    testImplementation libs.junit_jupiter_api
-//
-//    // The following logging libs are needed when running junits outside dropwizard
-//    testRuntimeOnly libs.javax_activation
-//    testRuntimeOnly libs.jaxb_runtime
-//    testRuntimeOnly libs.jcl_over_slf4j
-//    testRuntimeOnly libs.jul_to_slf4j
-//    testRuntimeOnly libs.junit_jupiter_engine
-//    testRuntimeOnly libs.log4j_over_slf4j
-//    testRuntimeOnly libs.logback_classic
-//    testRuntimeOnly libs.logback_core
 }

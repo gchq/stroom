@@ -147,8 +147,9 @@ include 'stroom-lifecycle:stroom-lifecycle-impl'
 // Pipeline
 include 'stroom-pipeline'
 
-// Proxy project
-include 'stroom-proxy'
+// Proxy
+include 'stroom-proxy:stroom-proxy-app'
+include 'stroom-proxy:stroom-proxy-repo'
 
 // Resource store
 include 'stroom-resourcestore:stroom-resourcestore-api'

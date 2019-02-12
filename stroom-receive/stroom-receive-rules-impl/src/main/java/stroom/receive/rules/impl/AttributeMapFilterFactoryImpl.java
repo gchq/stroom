@@ -17,8 +17,8 @@
 
 package stroom.receive.rules.impl;
 
-import stroom.receive.AttributeMapFilter;
-import stroom.receive.AttributeMapFilterFactory;
+import stroom.receive.common.AttributeMapFilter;
+import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 

@@ -1,0 +1,73 @@
+ext.moduleName = 'stroom.proxy.app'
+
+def jarName = 'stroom-proxy-app.jar'
+def fatJarName = 'stroom-proxy-app-all.jar'
+
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+mainClassName = 'stroom.proxy.app.App'
+
+dependencies {
+    implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-data:stroom-data-zip')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
+    implementation project(':stroom-dictionary:stroom-dictionary-impl')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-docstore:stroom-docstore-impl-fs')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-proxy:stroom-proxy-repo')
+    implementation project(':stroom-receive:stroom-receive-common')
+    implementation project(':stroom-receive:stroom-receive-rules-impl')
+    implementation project(':stroom-receive:stroom-receive-rules-shared')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.stroomDocRef
+
+    implementation(libs.dropwizard_assets) {
+        exclude(group: "org.glassfish.web", module: "javax.el")
+    }
+    implementation(libs.dropwizard_core) {
+        exclude(group: "org.glassfish.web", module: "javax.el")
+    }
+    implementation libs.dropwizard_jersey
+    implementation libs.dropwizard_jetty
+    implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.dropwizard_servlets
+    implementation libs.dropwizard_metrics_core
+    implementation libs.dropwizard_metrics_annotation
+    implementation libs.dropwizard_configuration
+    implementation libs.guava
+    implementation libs.guice4
+    implementation libs.jackson_annotations
+    implementation libs.jackson_core
+    implementation libs.jackson_databind
+    implementation libs.javax_inject
+    implementation libs.javax_servlet_api
+    implementation libs.jersey_client
+    implementation libs.slf4j_api
+    
+    testImplementation project(':stroom-test-common')
+    testImplementation libs.assertj_core
+    
+    testImplementation libs.junit_jupiter_api
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}
+//
+//war {
+//    exclude 'WEB-INF/lib/**'
+//    exclude 'WEB-INF/classes/**'
+//}

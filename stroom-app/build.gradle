@@ -64,6 +64,7 @@ dependencies {
     implementation project(':stroom-proxy')
     implementation project(':stroom-resourcestore:stroom-resourcestore-api')
     implementation project(':stroom-resourcestore:stroom-resourcestore-impl')
+    implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-receive:stroom-receive-rules-impl')
     implementation project(':stroom-receive:stroom-receive-rules-shared')
     implementation project(':stroom-security:stroom-security-api')
@@ -159,13 +160,6 @@ dependencies {
     testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-util')
     testImplementation project(':stroom-util-shared')
-
-//    testImplementation project(path: ':stroom-core-server', configuration: 'testArtifacts')
-//    testImplementation project(path: ':stroom-dashboard:stroom-dashboard-server', configuration: 'testArtifacts')
-//    testImplementation project(path: ':stroom-index:stroom-index-server', configuration: 'testArtifacts')
-//    testImplementation project(path: ':stroom-pipeline', configuration: 'testArtifacts')
-//    testImplementation project(path: ':stroom-security:stroom-security-server', configuration: 'testArtifacts')
-    testImplementation project(':stroom-test-common')
 
     testImplementation libs.commons_io
     testImplementation libs.guice4

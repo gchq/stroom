@@ -27,6 +27,7 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-impl')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')
+    implementation project(':stroom-proxy:stroom-proxy-repo')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-impl-mock')
     implementation project(':stroom-statistics:stroom-statistics-api')

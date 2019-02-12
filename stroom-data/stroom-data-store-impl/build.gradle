@@ -1,14 +1,10 @@
 ext.moduleName = 'stroom.data.store.impl'
 
 dependencies {
-//    implementation project(':stroom-config:stroom-config-common')
-////    implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
-//    implementation project(':stroom-db-util')
     implementation project(':stroom-cluster-lock:stroom-cluster-lock-api')
     implementation project(':stroom-data:stroom-data-retention-shared')
     implementation project(':stroom-data:stroom-data-store-api')
-//    implementation project(':stroom-data:stroom-data-store-impl-fs-db-gen')
     implementation project(':stroom-data:stroom-data-zip')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docstore:stroom-docstore-api')
@@ -17,48 +13,20 @@ dependencies {
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-meta:stroom-meta-statistics-api')
-//    implementation project(':stroom-entity-shared')
-
-//    implementation project(':stroom-node:stroom-node-api')
+    implementation project(':stroom-pipeline')
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-resourcestore:stroom-resourcestore-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-shared')
-//    
-
-    implementation project(':stroom-pipeline')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
-//
+
     implementation libs.stroomDocRef
     implementation libs.stroomQueryApi
     implementation libs.eventLogging
 
     implementation libs.commons_fileupload
     implementation libs.javax_validation
-//    implementation libs.flyway_core
-//    implementation libs.guava
     implementation libs.guice4
-//    implementation libs.hibernate_jpa_api
-//    implementation libs.hikari
-//    implementation libs.jackson_annotations
-//    implementation libs.javax_inject
-//    implementation libs.jooq
-//    implementation libs.slf4j_api
-//    
-//    testImplementation libs.assertj_core
-//    testImplementation libs.junit_jupiter_api
-//    testImplementation libs.mockito_core
-//    testImplementation project(':stroom-test-common')
-//
-//    // The following logging libs are needed when running junits outside dropwizard
-//    testRuntimeOnly libs.javax_activation
-//    testRuntimeOnly libs.jaxb_runtime
-//    testRuntimeOnly libs.jcl_over_slf4j
-//    testRuntimeOnly libs.jul_to_slf4j
-//    testRuntimeOnly libs.junit_jupiter_engine
-//    testRuntimeOnly libs.log4j_over_slf4j
-//    testRuntimeOnly libs.logback_classic
-//    testRuntimeOnly libs.logback_core
 }
