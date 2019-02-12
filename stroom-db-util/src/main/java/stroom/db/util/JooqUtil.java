@@ -134,7 +134,7 @@ public final class JooqUtil {
 
     /**
      * Fetch a single row using the passed id value. If the id matches zero rows or more than one row then
-     * an exception will be thrown.
+     * an exception will be thrown. Assumes the table's id field is named 'id'.
      *
      * @param type The type of record to return
      * @param id   The id to match on
@@ -146,10 +146,11 @@ public final class JooqUtil {
                                                               final int id) {
 
         final Field<Integer> idField = getIdField(table);
-        return Optional.ofNullable(JooqUtil.contextResult(connectionProvider, context ->
+        return JooqUtil.contextResult(connectionProvider, context ->
                 context
-                        .fetchOne(table, idField.eq(id))
-                        .into(type)));
+                        .fetchOptional(table, idField.eq(id))
+                        .map(record ->
+                                record.into(type)));
     }
 
     private static Field<Integer> getIdField(Table<?> table) {
