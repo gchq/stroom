@@ -40,10 +40,6 @@ import {
   StoreState as AppSearchStoreState
 } from "../components/AppSearchBar/redux";
 import {
-  reducer as appChrome,
-  StoreState as AppChromeStoreState
-} from "../sections/AppChrome/redux";
-import {
   reducer as userPermissions,
   StoreState as UserStoreState
 } from "../sections/UserPermissions/redux";
@@ -115,7 +111,6 @@ export interface GlobalStoreState {
   expressionBuilder: ExpressionBuilderStoreState;
   pipelineEditor: PipelineEditorStoreState;
   recentItems: RecentItemsStoreState;
-  appChrome: AppChromeStoreState;
   debuggers: DebuggersStoreState;
   processing: ProcessingStoreState;
   dataViewers: DataViewersStoreState;
@@ -141,7 +136,6 @@ export default combineReducers({
   expressionBuilder,
   pipelineEditor,
   recentItems,
-  appChrome,
   debuggers,
   processing,
   dataViewers,

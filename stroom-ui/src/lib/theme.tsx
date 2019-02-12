@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import useLocalStorage from "./useLocalStorage";
+import useLocalStorage, { storeString } from "./useLocalStorage";
 
 export const themeOptions = [
   {
@@ -27,7 +27,11 @@ let ThemeContext: React.Context<ThemeContextValue> = React.createContext({
 });
 
 const ThemeContextProvider: React.StatelessComponent<{}> = ({ children }) => {
-  const { value, setValue } = useLocalStorage("theme", themeOptions[0].value);
+  const { value, setValue } = useLocalStorage(
+    "theme",
+    themeOptions[0].value,
+    storeString
+  );
 
   return (
     <ThemeContext.Provider value={{ theme: value, setTheme: setValue }}>

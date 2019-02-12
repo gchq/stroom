@@ -43,7 +43,7 @@ import DataList from "./DataList/DataList";
 import { actionCreators } from "./redux";
 import { GlobalStoreState } from "../../startup/reducers";
 import { Direction } from "../../types";
-import useLocalStorage from "../../lib/useLocalStorage";
+import useLocalStorage, { storeNumber } from "../../lib/useLocalStorage";
 
 export interface Props {
   dataViewerId: string;
@@ -239,11 +239,13 @@ EnhancedProps) => {
   const table = <DataList dataViewerId={dataViewerId} />;
   const { value: listHeight, setValue: setListHeight } = useLocalStorage(
     "listHeight",
-    500
+    500,
+    storeNumber
   );
   const { value: detailsHeight, setValue: setDetailsHeight } = useLocalStorage(
     "detailsHeight",
-    500
+    500,
+    storeNumber
   );
 
   const details = (

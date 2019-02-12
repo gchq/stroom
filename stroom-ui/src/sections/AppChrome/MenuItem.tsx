@@ -1,6 +1,5 @@
 import * as React from "react";
-import { connect } from "react-redux";
-import { compose, withHandlers, withProps } from "recompose";
+import { compose } from "recompose";
 import {
   DropTarget,
   DropTargetSpec,
@@ -18,14 +17,15 @@ import {
   DragCollectedProps,
   DropCollectedProps
 } from "../../components/FolderExplorer/dragDropTypes";
-import { actionCreators as appChromeActionCreators } from "./redux";
-import { StoreState as MenuItemsOpenStoreState } from "./redux/menuItemsOpenReducer";
-import { GlobalStoreState } from "../../startup/reducers";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { DocRefType, StyledComponentProps } from "../../types";
 import { KeyDownState } from "../../lib/useKeyIsDown/useKeyIsDown";
 
-const { menuItemOpened } = appChromeActionCreators;
+export type MenuItemOpened = (name: string, isOpen: boolean) => void;
+
+export type MenuItemsOpenState = {
+  [s: string]: boolean;
+};
 
 export interface MenuItemType {
   key: string;
@@ -47,45 +47,15 @@ interface Props extends StyledComponentProps {
   selectedItems: Array<MenuItemType>;
   focussedItem?: MenuItemType;
   keyIsDown: KeyDownState;
+  areMenuItemsOpen: MenuItemsOpenState;
+  menuItemOpened: MenuItemOpened;
   showCopyDialog: (docRefUuids: Array<string>, destinationUuid: string) => void;
   showMoveDialog: (docRefUuids: Array<string>, destinationUuid: string) => void;
 }
 
-interface ConnectState {
-  isSelected: boolean;
-  inFocus: boolean;
-  areMenuItemsOpen: MenuItemsOpenStoreState;
-}
-interface ConnectDispatch {
-  menuItemOpened: typeof menuItemOpened;
-}
+export interface DndProps extends Props {}
 
-interface WithHandlers {
-  onExpand: React.MouseEventHandler<HTMLDivElement>;
-  onTitleClick: React.MouseEventHandler<HTMLDivElement>;
-}
-
-interface WithProps {
-  style: React.CSSProperties;
-  hasChildren: boolean;
-  hasChildrenIcon: IconProp;
-  isHeader: boolean;
-}
-
-export interface DndProps
-  extends Props,
-    ConnectDispatch,
-    ConnectState,
-    WithHandlers {}
-
-interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    WithHandlers,
-    DragCollectedProps,
-    DropCollectedProps,
-    WithProps {}
+interface EnhancedProps extends Props, DragCollectedProps, DropCollectedProps {}
 
 const dropTarget: DropTargetSpec<DndProps> = {
   canDrop({ menuItem: { docRef } }, monitor) {
@@ -145,117 +115,87 @@ const dragCollect: DragSourceCollector<
 };
 
 const enhance = compose<EnhancedProps, Props>(
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    (
-      { appChrome: { areMenuItemsOpen } },
-      { selectedItems, focussedItem, menuItem: { key } }
-    ) => {
-      const isSelected: boolean = selectedItems
-        .map((d: MenuItemType) => d.key)
-        .includes(key);
-      const inFocus: boolean = !!focussedItem && focussedItem.key === key;
-
-      return {
-        isSelected,
-        inFocus,
-        areMenuItemsOpen
-      };
-    },
-    {
-      menuItemOpened
-    }
-  ),
-  withHandlers({
-    onExpand: ({ menuItem, menuItemOpened, areMenuItemsOpen }) => (
-      e: MouseEvent
-    ) => {
-      menuItemOpened(menuItem.key, !areMenuItemsOpen[menuItem.key]);
-      e.preventDefault();
-    },
-    onTitleClick: ({ menuItem, menuItemOpened, areMenuItemsOpen }) => (
-      e: MouseEvent
-    ) => {
-      menuItem.onClick();
-      e.preventDefault();
-    }
-  }),
   DropTarget([DragDropTypes.DOC_REF_UUIDS], dropTarget, dropCollect),
-  DragSource(DragDropTypes.DOC_REF_UUIDS, dragSource, dragCollect),
-  withProps(
-    ({
-      menuItem,
-      isOver,
-      canDrop,
-      inFocus,
-      isSelected,
-      depth,
-      className,
-      areMenuItemsOpen,
-      isCollapsed
-    }) => {
-      const classNames = [];
-
-      if (className) {
-        classNames.push(className);
-      }
-
-      classNames.push("sidebar__menu-item");
-      classNames.push(menuItem.style);
-
-      if (isOver) {
-        classNames.push("dnd-over");
-      }
-      if (isOver) {
-        if (canDrop) {
-          classNames.push("can-drop");
-        } else {
-          classNames.push("cannot-drop");
-        }
-      }
-      if (inFocus) {
-        classNames.push("inFocus");
-      }
-      if (isSelected) {
-        classNames.push("selected");
-      }
-
-      const hasChildren = menuItem.children && menuItem.children.length > 0;
-      const isShowingChildren = areMenuItemsOpen[menuItem.key];
-      if (hasChildren && isShowingChildren) {
-        classNames.push("has-children--open");
-      }
-
-      if (menuItem.isActive) {
-        classNames.push("is-active");
-      }
-
-      return {
-        style: { paddingLeft: `${depth * 0.7}rem` },
-        className: classNames.join(" "),
-        hasChildren,
-        hasChildrenIcon: `folder${
-          isShowingChildren ? "-open" : "-plus"
-        }` as IconProp,
-        isHeader: menuItem.key !== "stroom"
-      };
-    }
-  )
+  DragSource(DragDropTypes.DOC_REF_UUIDS, dragSource, dragCollect)
 );
 
 let MenuItem = ({
   menuItem,
-  hasChildren,
-  hasChildrenIcon,
-  isHeader,
+  isOver,
+  canDrop,
+  className: rawClassName,
+  areMenuItemsOpen,
+  depth,
   connectDropTarget,
   connectDragSource,
-  onTitleClick,
-  onExpand,
-  className,
-  style,
-  isCollapsed
-}: EnhancedProps) =>
-  connectDragSource(
+  isCollapsed,
+  selectedItems,
+  menuItemOpened,
+  focussedItem
+}: EnhancedProps) => {
+  const isSelected: boolean = selectedItems
+    .map((d: MenuItemType) => d.key)
+    .includes(menuItem.key);
+  const inFocus: boolean = !!focussedItem && focussedItem.key === menuItem.key;
+
+  const onExpand: React.MouseEventHandler<HTMLDivElement> = (
+    e: React.MouseEvent
+  ) => {
+    menuItemOpened(menuItem.key, !areMenuItemsOpen[menuItem.key]);
+    e.preventDefault();
+  };
+  const onTitleClick: React.MouseEventHandler<HTMLDivElement> = (
+    e: React.MouseEvent
+  ) => {
+    menuItem.onClick();
+    e.preventDefault();
+  };
+
+  const classNames = [];
+
+  if (rawClassName) {
+    classNames.push(rawClassName);
+  }
+
+  classNames.push("sidebar__menu-item");
+  classNames.push(menuItem.style);
+
+  if (isOver) {
+    classNames.push("dnd-over");
+  }
+  if (isOver) {
+    if (canDrop) {
+      classNames.push("can-drop");
+    } else {
+      classNames.push("cannot-drop");
+    }
+  }
+  if (inFocus) {
+    classNames.push("inFocus");
+  }
+  if (isSelected) {
+    classNames.push("selected");
+  }
+
+  const hasChildren = menuItem.children && menuItem.children.length > 0;
+  const isShowingChildren = areMenuItemsOpen[menuItem.key];
+  if (hasChildren && isShowingChildren) {
+    classNames.push("has-children--open");
+  }
+
+  if (menuItem.isActive) {
+    classNames.push("is-active");
+  }
+
+  const style = { paddingLeft: `${depth * 0.7}rem` };
+  const className = classNames.join(" ");
+
+  const hasChildrenIcon = `folder${
+    isShowingChildren ? "-open" : "-plus"
+  }` as IconProp;
+  //const isHeader = menuItem.key !== "stroom";
+
+  return connectDragSource(
     connectDropTarget(
       <div className={className} style={style}>
         {hasChildren ? (
@@ -277,5 +217,6 @@ let MenuItem = ({
       </div>
     )
   );
+};
 
 export default enhance(MenuItem);

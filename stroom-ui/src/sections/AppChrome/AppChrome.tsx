@@ -17,15 +17,17 @@ import * as React from "react";
 import { useEffect } from "react";
 
 import { connect } from "react-redux";
-import { compose, withProps, withHandlers } from "recompose";
+import { compose } from "recompose";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 
 import "simplebar";
 import "simplebar/dist/simplebar.css";
 
-import { actionCreators as appChromeActionCreators } from "./redux";
-import { StoreState as MenuItemsOpenStoreState } from "./redux/menuItemsOpenReducer";
-import MenuItem, { MenuItemType } from "./MenuItem";
+import MenuItem, {
+  MenuItemType,
+  MenuItemsOpenState,
+  MenuItemOpened
+} from "./MenuItem";
 
 import {
   copyDocuments,
@@ -40,11 +42,12 @@ import CopyMoveDocRefDialog, {
   useCopyMoveDocRefDialog,
   ShowCopyDocRefDialog
 } from "../../components/FolderExplorer/CopyMoveDocRefDialog";
-import useLocalStorage from "../../lib/useLocalStorage";
+import useLocalStorage, {
+  storeBoolean,
+  storeObjectFactory
+} from "../../lib/useLocalStorage";
 import { useTheme } from "../../lib/theme";
 import { fetchDocTree } from "../../components/FolderExplorer/explorerClient";
-
-const { menuItemOpened } = appChromeActionCreators;
 
 const pathPrefix = "/s";
 
@@ -77,7 +80,7 @@ const getOpenMenuItems = function<
   }
 >(
   menuItems: Array<T>,
-  areMenuItemsOpen: MenuItemsOpenStoreState,
+  areMenuItemsOpen: MenuItemsOpenState,
   openMenuItems: Array<T> = []
 ): Array<T> {
   menuItems.forEach(menuItem => {
@@ -98,11 +101,9 @@ interface WithHandlers {
   openDocRef: DocRefConsumer;
 }
 interface ConnectState {
-  areMenuItemsOpen: MenuItemsOpenStoreState;
   documentTree: DocRefTree;
 }
 interface ConnectDispatch {
-  menuItemOpened: typeof menuItemOpened;
   copyDocuments: typeof copyDocuments;
   moveDocuments: typeof moveDocuments;
   fetchDocTree: typeof fetchDocTree;
@@ -111,10 +112,6 @@ interface WithIsExpanded {
   isExpanded: boolean;
   setIsExpanded: (value: boolean) => any;
 }
-interface WithProps {
-  menuItems: Array<MenuItemType>;
-  openMenuItems: Array<MenuItemType>;
-}
 
 interface EnhancedProps
   extends Props,
@@ -122,37 +119,26 @@ interface EnhancedProps
     WithHandlers,
     ConnectState,
     ConnectDispatch,
-    WithIsExpanded,
-    WithProps {}
+    WithIsExpanded {}
 
 const enhance = compose<EnhancedProps, Props>(
   withRouter,
-  withHandlers({
-    openDocRef: ({ history }) => (d: DocRefType) =>
-      history.push(`/s/doc/${d.type}/${d.uuid}`)
-  }),
   connect<
     ConnectState,
     ConnectDispatch,
     Props & RouteComponentProps<any> & WithHandlers,
     GlobalStoreState
   >(
-    ({
-      folderExplorer: { documentTree },
-      routing: { location },
-      appChrome: { areMenuItemsOpen }
-    }) => ({
-      areMenuItemsOpen,
+    ({ folderExplorer: { documentTree }, routing: { location } }) => ({
       location,
       documentTree
     }),
     {
-      menuItemOpened,
       copyDocuments,
       moveDocuments,
       fetchDocTree
     }
-  ),
+  )
   // We need to work out how to do these global shortcuts from scratch, now that we don't have dedicated pages
   // lifecycle({
   //   componentDidMount() {
@@ -160,140 +146,13 @@ const enhance = compose<EnhancedProps, Props>(
   //     Mousetrap.bind('ctrl+shift+f', () => this.props.history.push('/s/search'));
   //   },
   // }),
-  withProps(
-    ({
-      history,
-      openDocRef,
-      documentTree,
-      areMenuItemsOpen,
-      menuItemOpened,
-      location
-    }) => {
-      const menuItems: Array<MenuItemType> = [
-        {
-          key: "welcome",
-          title: "Welcome",
-          onClick: () => history.push(`${pathPrefix}/welcome/`),
-          icon: "home",
-          style: "nav",
-          isActive:
-            location && location.pathname.includes(`${pathPrefix}/welcome/`)
-        },
-        getDocumentTreeMenuItems(openDocRef, undefined, documentTree),
-        {
-          key: "data",
-          title: "Data",
-          onClick: () => history.push(`${pathPrefix}/data`),
-          icon: "database",
-          style: "nav",
-          isActive: location && location.pathname.includes(`${pathPrefix}/data`)
-        },
-        {
-          key: "processing",
-          title: "Processing",
-          onClick: () => history.push(`${pathPrefix}/processing`),
-          icon: "play",
-          style: "nav",
-          isActive:
-            location && location.pathname.includes(`${pathPrefix}/processing`)
-        },
-        {
-          key: "indexing",
-          title: "Indexing",
-          onClick: () => menuItemOpened("indexing", !areMenuItemsOpen.indexing),
-          icon: "database",
-          style: "nav",
-          skipInContractedMenu: true,
-          isActive:
-            location &&
-            (location.pathname.includes(`${pathPrefix}/indexing/volumes`) ||
-              location.pathname.includes(`${pathPrefix}/indexing/groups`)),
-          children: [
-            {
-              key: "indexing-volumes",
-              title: "Index Volumes",
-              onClick: () => history.push(`${pathPrefix}/indexing/volumes`),
-              icon: "database",
-              style: "nav",
-              isActive:
-                location &&
-                location.pathname.includes(`${pathPrefix}/indexing/volumes`)
-            },
-            {
-              key: "indexing-groups",
-              title: "Index Groups",
-              onClick: () => history.push(`${pathPrefix}/indexing/groups`),
-              icon: "database",
-              style: "nav",
-              isActive:
-                location &&
-                location.pathname.includes(`${pathPrefix}/indexing/groups`)
-            }
-          ]
-        },
-        {
-          key: "admin",
-          title: "Admin",
-          onClick: () => menuItemOpened("admin", !areMenuItemsOpen.admin),
-          icon: "cogs",
-          style: "nav",
-          skipInContractedMenu: true,
-          isActive:
-            location &&
-            (location.pathname.includes("/s/me") ||
-              location.pathname.includes("/s/users") ||
-              location.pathname.includes("/s/apikeys")),
-          children: [
-            {
-              key: "admin-me",
-              title: "Me",
-              onClick: () => history.push(`${pathPrefix}/me`),
-              icon: "user",
-              style: "nav",
-              isActive: location && location.pathname.includes("/s/me")
-            },
-            {
-              key: "admin-user-permissions",
-              title: "User Permissions",
-              onClick: () => history.push(`${pathPrefix}/userPermissions`),
-              icon: "users",
-              style: "nav",
-              isActive:
-                location && location.pathname.includes("/s/userPermissions")
-            },
-            {
-              key: "admin-users",
-              title: "Users",
-              onClick: () => history.push(`${pathPrefix}/users`),
-              icon: "users",
-              style: "nav",
-              isActive: location && location.pathname.includes("/s/users")
-            },
-            {
-              key: "admin-apikeys",
-              title: "API Keys",
-              onClick: () => history.push(`${pathPrefix}/apikeys`),
-              icon: "key",
-              style: "nav",
-              isActive: location && location.pathname.includes("/s/apikeys")
-            }
-          ]
-        }
-      ];
-      const openMenuItems = getOpenMenuItems(menuItems, areMenuItemsOpen);
-
-      return {
-        menuItems,
-        openMenuItems
-      };
-    }
-  )
 );
 
 const getMenuItems = (
   isCollapsed: boolean = false,
   menuItems: Array<MenuItemType>,
-  areMenuItemsOpen: MenuItemsOpenStoreState,
+  areMenuItemsOpen: MenuItemsOpenState,
+  menuItemOpened: MenuItemOpened,
   keyIsDown: KeyDownState,
   showCopyDialog: ShowCopyDocRefDialog,
   showMoveDialog: ShowCopyDocRefDialog,
@@ -316,6 +175,8 @@ const getMenuItems = (
         isCollapsed={isCollapsed}
         showCopyDialog={showCopyDialog}
         showMoveDialog={showMoveDialog}
+        menuItemOpened={menuItemOpened}
+        areMenuItemsOpen={areMenuItemsOpen}
       />
       {/* TODO: we only want the 'children' class on the first set of children. We're using it to pad the bottom. Any better ideas? */}
       {menuItem.children && areMenuItemsOpen[menuItem.key] ? (
@@ -324,6 +185,7 @@ const getMenuItems = (
             isCollapsed,
             menuItem.children,
             areMenuItemsOpen,
+            menuItemOpened,
             keyIsDown,
             showCopyDialog,
             showMoveDialog,
@@ -340,13 +202,11 @@ const getMenuItems = (
 
 const AppChrome = ({
   content,
-  menuItems,
-  areMenuItemsOpen,
-  openMenuItems,
-  menuItemOpened,
   copyDocuments,
   moveDocuments,
-  fetchDocTree
+  fetchDocTree,
+  history,
+  documentTree
 }: EnhancedProps) => {
   const { theme } = useTheme();
 
@@ -354,10 +214,140 @@ const AppChrome = ({
     fetchDocTree();
   });
 
+  const {
+    value: areMenuItemsOpen,
+    setValue: setOpenMenuItems
+  } = useLocalStorage<MenuItemsOpenState>(
+    "app-chrome-menu-items-open",
+    {},
+    storeObjectFactory<MenuItemsOpenState>()
+  );
+  const menuItemOpened: MenuItemOpened = (name: string, isOpen: boolean) => {
+    setOpenMenuItems({
+      ...areMenuItemsOpen,
+      [name]: isOpen
+    });
+  };
+
   const { value: isExpanded, setValue: setIsExpanded } = useLocalStorage(
     "isExpanded",
-    true
+    true,
+    storeBoolean
   );
+
+  const openDocRef = (d: DocRefType) =>
+    history.push(`/s/doc/${d.type}/${d.uuid}`);
+
+  const menuItems: Array<MenuItemType> = [
+    {
+      key: "welcome",
+      title: "Welcome",
+      onClick: () => history.push(`${pathPrefix}/welcome/`),
+      icon: "home",
+      style: "nav",
+      isActive: location && location.pathname.includes(`${pathPrefix}/welcome/`)
+    },
+    getDocumentTreeMenuItems(openDocRef, undefined, documentTree),
+    {
+      key: "data",
+      title: "Data",
+      onClick: () => history.push(`${pathPrefix}/data`),
+      icon: "database",
+      style: "nav",
+      isActive: location && location.pathname.includes(`${pathPrefix}/data`)
+    },
+    {
+      key: "processing",
+      title: "Processing",
+      onClick: () => history.push(`${pathPrefix}/processing`),
+      icon: "play",
+      style: "nav",
+      isActive:
+        location && location.pathname.includes(`${pathPrefix}/processing`)
+    },
+    {
+      key: "indexing",
+      title: "Indexing",
+      onClick: () => menuItemOpened("indexing", !areMenuItemsOpen.indexing),
+      icon: "database",
+      style: "nav",
+      skipInContractedMenu: true,
+      isActive:
+        location &&
+        (location.pathname.includes(`${pathPrefix}/indexing/volumes`) ||
+          location.pathname.includes(`${pathPrefix}/indexing/groups`)),
+      children: [
+        {
+          key: "indexing-volumes",
+          title: "Index Volumes",
+          onClick: () => history.push(`${pathPrefix}/indexing/volumes`),
+          icon: "database",
+          style: "nav",
+          isActive:
+            location &&
+            location.pathname.includes(`${pathPrefix}/indexing/volumes`)
+        },
+        {
+          key: "indexing-groups",
+          title: "Index Groups",
+          onClick: () => history.push(`${pathPrefix}/indexing/groups`),
+          icon: "database",
+          style: "nav",
+          isActive:
+            location &&
+            location.pathname.includes(`${pathPrefix}/indexing/groups`)
+        }
+      ]
+    },
+    {
+      key: "admin",
+      title: "Admin",
+      onClick: () => menuItemOpened("admin", !areMenuItemsOpen.admin),
+      icon: "cogs",
+      style: "nav",
+      skipInContractedMenu: true,
+      isActive:
+        location &&
+        (location.pathname.includes("/s/me") ||
+          location.pathname.includes("/s/users") ||
+          location.pathname.includes("/s/apikeys")),
+      children: [
+        {
+          key: "admin-me",
+          title: "Me",
+          onClick: () => history.push(`${pathPrefix}/me`),
+          icon: "user",
+          style: "nav",
+          isActive: location && location.pathname.includes("/s/me")
+        },
+        {
+          key: "admin-user-permissions",
+          title: "User Permissions",
+          onClick: () => history.push(`${pathPrefix}/userPermissions`),
+          icon: "users",
+          style: "nav",
+          isActive: location && location.pathname.includes("/s/userPermissions")
+        },
+        {
+          key: "admin-users",
+          title: "Users",
+          onClick: () => history.push(`${pathPrefix}/users`),
+          icon: "users",
+          style: "nav",
+          isActive: location && location.pathname.includes("/s/users")
+        },
+        {
+          key: "admin-apikeys",
+          title: "API Keys",
+          onClick: () => history.push(`${pathPrefix}/apikeys`),
+          icon: "key",
+          style: "nav",
+          isActive: location && location.pathname.includes("/s/apikeys")
+        }
+      ]
+    }
+  ];
+  const openMenuItems = getOpenMenuItems(menuItems, areMenuItemsOpen);
 
   const {
     onKeyDownWithShortcuts,
@@ -438,6 +428,7 @@ const AppChrome = ({
                   !isExpanded,
                   menuItems,
                   areMenuItemsOpen,
+                  menuItemOpened,
                   keyIsDown,
                   showCopyDialog,
                   showMoveDialog,
