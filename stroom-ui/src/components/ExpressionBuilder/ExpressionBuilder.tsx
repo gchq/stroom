@@ -14,14 +14,8 @@
  * limitations under the License.
  */
 import * as React from "react";
-import {
-  compose,
-  withState,
-  branch,
-  renderComponent,
-  withProps,
-  lifecycle
-} from "recompose";
+import { useEffect, useState } from "react";
+import { compose } from "recompose";
 import { connect } from "react-redux";
 
 import Loader from "../Loader";
@@ -31,12 +25,6 @@ import { GlobalStoreState } from "../../startup/reducers";
 import { DataSourceType, StyledComponentProps } from "../../types";
 import { StoreStateById } from "./redux";
 import ROExpressionBuilder from "./ROExpressionBuilder";
-
-const withSetEditableByUser = withState(
-  "inEditMode",
-  "setEditableByUser",
-  false
-);
 
 export interface Props extends StyledComponentProps {
   dataSource: DataSourceType;
@@ -49,84 +37,68 @@ interface ConnectState {
   expressionState: StoreStateById;
 }
 interface ConnectDispatch {}
-interface WithState {
-  inEditMode: boolean;
-}
-interface WithStateHandlers {
-  setEditableByUser: (v: boolean) => void;
-}
 
-export interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    WithState,
-    WithStateHandlers {}
+export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ expressionBuilder }, { expressionId }) => ({
       expressionState: expressionBuilder[expressionId]
-    }),
-    {
-      // actions
-    }
-  ),
-  withSetEditableByUser,
-  lifecycle({
-    componentDidMount() {
-      const { setEditableByUser, editMode } = this.props as Props &
-        WithStateHandlers;
-
-      setEditableByUser(editMode || false);
-    }
-  }),
-  branch(
-    ({ expressionState }) => !expressionState,
-    renderComponent(() => <Loader message="Loading expression state..." />)
-  ),
-  withProps(({ showModeToggle, dataSource }) => ({
-    showModeToggle: showModeToggle && !!dataSource
-  }))
+    })
+  )
 );
 
 const ExpressionBuilder = ({
   expressionId,
   dataSource,
-  expressionState: { expression },
-  showModeToggle,
-  inEditMode,
-  setEditableByUser
-}: EnhancedProps) => (
-  <div>
-    <DeleteExpressionItem expressionId={expressionId} />
-    {showModeToggle ? (
-      <React.Fragment>
-        <label>Edit Mode</label>
-        <input
-          type="checkbox"
-          checked={inEditMode}
-          onChange={() => setEditableByUser(!inEditMode)}
+  expressionState,
+  showModeToggle: smtRaw,
+  editMode
+}: EnhancedProps) => {
+  const [inEditMode, setEditableByUser] = useState<boolean>(false);
+
+  useEffect(() => {
+    setEditableByUser(editMode || false);
+  }, []);
+
+  if (!expressionState) {
+    return <Loader message="Loading expression state..." />;
+  }
+  const showModeToggle = smtRaw && !!dataSource;
+
+  const { expression } = expressionState;
+
+  return (
+    <div>
+      <DeleteExpressionItem expressionId={expressionId} />
+      {showModeToggle ? (
+        <React.Fragment>
+          <label>Edit Mode</label>
+          <input
+            type="checkbox"
+            checked={inEditMode}
+            onChange={() => setEditableByUser(!inEditMode)}
+          />
+        </React.Fragment>
+      ) : (
+        undefined
+      )}
+      {inEditMode ? (
+        <ExpressionOperator
+          dataSource={dataSource}
+          expressionId={expressionId}
+          isRoot
+          isEnabled
+          operator={expression}
         />
-      </React.Fragment>
-    ) : (
-      undefined
-    )}
-    {inEditMode ? (
-      <ExpressionOperator
-        dataSource={dataSource}
-        expressionId={expressionId}
-        isRoot
-        isEnabled
-        operator={expression}
-      />
-    ) : (
-      <ROExpressionBuilder
-        expressionId={expressionId}
-        expression={expression}
-      />
-    )}
-  </div>
-);
+      ) : (
+        <ROExpressionBuilder
+          expressionId={expressionId}
+          expression={expression}
+        />
+      )}
+    </div>
+  );
+};
 
 export default enhance(ExpressionBuilder);

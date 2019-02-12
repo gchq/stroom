@@ -15,13 +15,8 @@
  */
 
 import * as React from "react";
-import {
-  compose,
-  lifecycle,
-  branch,
-  renderComponent,
-  withProps
-} from "recompose";
+import { useEffect } from "react";
+import { compose } from "recompose";
 import { connect } from "react-redux";
 
 import Loader from "../Loader";
@@ -54,15 +49,7 @@ interface ConnectDispatch {
   fetchElementProperties: typeof fetchElementProperties;
 }
 
-interface WithProps {
-  layoutGrid: PipelineLayoutGrid;
-}
-
-export interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    WithProps {}
+export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
@@ -75,64 +62,65 @@ const enhance = compose<EnhancedProps, Props>(
       fetchElements,
       fetchElementProperties
     }
-  ),
-  lifecycle<Props & ConnectState & ConnectDispatch, {}>({
-    componentDidMount() {
-      const {
-        fetchElements,
-        fetchElementProperties,
-        fetchPipeline,
-        pipelineId
-      } = this.props;
-
-      fetchElements();
-      fetchElementProperties();
-      fetchPipeline(pipelineId);
-    }
-  }),
-  branch(
-    ({ pipelineState, elements: { elements } }) =>
-      !(pipelineState && pipelineState.pipeline && elements),
-    renderComponent(() => <Loader message="Loading pipeline..." />)
-  ),
-  withProps(({ pipelineState: { asTree } }) => ({
-    layoutGrid: getPipelineLayoutGrid(asTree)
-  }))
+  )
 );
 
 const Pipeline = ({
   pipelineId,
-  layoutGrid,
-  pipelineState: { pipeline }
-}: EnhancedProps) => (
-  <div className="Pipeline-editor__elements">
-    {layoutGrid.rows.map((row, r) => (
-      <div key={r} className="Pipeline-editor__elements-row">
-        {row.columns.map((column, c) => (
-          <div
-            key={c}
-            className={`Pipeline-editor__elements_cell ${
-              CellType[column.cellType]
-            }`}
-          >
-            {column.cellType == CellType.ELEMENT &&
-              pipeline &&
-              pipeline.merged.elements.add &&
-              pipeline.merged.elements.add
-                .filter((e: PipelineElementType) => e.id === column.uuid)
-                .map(e => (
-                  <PipelineElement
-                    key={e.id}
-                    pipelineId={pipelineId}
-                    elementId={e.id}
-                  />
-                ))}
-            {column.cellType == CellType.ELBOW && <ElbowLine north east />}
-          </div>
-        ))}
-      </div>
-    ))}
-  </div>
-);
+  pipelineState,
+  elements: { elements },
+  fetchElements,
+  fetchElementProperties,
+  fetchPipeline
+}: EnhancedProps) => {
+  useEffect(() => {
+    fetchElements();
+    fetchElementProperties();
+    fetchPipeline(pipelineId);
+  }, []);
+
+  if (!(pipelineState && pipelineState.pipeline && elements)) {
+    return <Loader message="Loading pipeline..." />;
+  }
+
+  const { pipeline, asTree } = pipelineState;
+
+  if (!asTree) {
+    return <Loader message="Awaiting pipeline tree model..." />;
+  }
+
+  const layoutGrid: PipelineLayoutGrid = getPipelineLayoutGrid(asTree);
+
+  return (
+    <div className="Pipeline-editor__elements">
+      {layoutGrid.rows.map((row, r) => (
+        <div key={r} className="Pipeline-editor__elements-row">
+          {row.columns.map((column, c) => (
+            <div
+              key={c}
+              className={`Pipeline-editor__elements_cell ${
+                CellType[column.cellType]
+              }`}
+            >
+              {column.cellType == CellType.ELEMENT &&
+                pipeline &&
+                pipeline.merged.elements.add &&
+                pipeline.merged.elements.add
+                  .filter((e: PipelineElementType) => e.id === column.uuid)
+                  .map(e => (
+                    <PipelineElement
+                      key={e.id}
+                      pipelineId={pipelineId}
+                      elementId={e.id}
+                    />
+                  ))}
+              {column.cellType == CellType.ELBOW && <ElbowLine north east />}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export default enhance(Pipeline);

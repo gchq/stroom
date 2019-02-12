@@ -138,7 +138,7 @@ const enhance = compose<EnhancedProps, Props>(
     GlobalStoreState
   >(
     ({
-      documentTree,
+      folderExplorer: { documentTree },
       routing: { location },
       appChrome: { areMenuItemsOpen }
     }) => ({

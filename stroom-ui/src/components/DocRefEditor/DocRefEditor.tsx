@@ -40,7 +40,7 @@ export interface EnhancedProps
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ documentTree }, { docRefUuid }) => ({
+    ({ folderExplorer: { documentTree } }, { docRefUuid }) => ({
       docRefWithLineage: findItem(documentTree, docRefUuid) as DocRefWithLineage
     }),
     { fetchDocTree }

@@ -41,7 +41,7 @@ export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ appSearch, recentItems, documentTree }) => ({
+    ({ appSearch, recentItems, folderExplorer: { documentTree } }) => ({
       appSearch,
       recentItems,
       documentTree
@@ -65,12 +65,16 @@ const AppSearchBar = ({
   recentItems,
   searchApp
 }: EnhancedProps) => {
-  let searchResults = appSearch[pickerId] || [];
+  useEffect(() => {
+    fetchDocTree();
+  }, []);
 
   let [textFocus, setTextFocus] = useState<boolean>(false);
   let [searchTerm, setSearchTerm] = useState<string>("");
   let [searchMode, setSearchMode] = useState<SearchMode>(SearchMode.NAVIGATION);
   let [navFolder, setNavFolder] = useState<DocRefType | undefined>(undefined);
+
+  let searchResults = appSearch[pickerId] || [];
 
   const onSearchFocus = () => setTextFocus(true);
   const onSearchBlur = () => setTextFocus(false);
@@ -96,19 +100,23 @@ const AppSearchBar = ({
   switch (searchMode) {
     case SearchMode.NAVIGATION: {
       const navFolderToUse = navFolder || documentTreeToUse;
-      const navFolderWithLineage: DocRefWithLineage = findItem(
-        documentTreeToUse,
-        navFolderToUse.uuid
-      )!;
-      docRefs = navFolderWithLineage.node.children || [];
-      thisFolder = navFolderWithLineage.node;
+      if (!!navFolderToUse) {
+        const navFolderWithLineage: DocRefWithLineage = findItem(
+          documentTreeToUse,
+          navFolderToUse.uuid
+        )!;
+        docRefs = navFolderWithLineage.node.children || [];
+        thisFolder = navFolderWithLineage.node;
 
-      if (
-        navFolderWithLineage.lineage &&
-        navFolderWithLineage.lineage.length > 0
-      ) {
-        parentFolder =
-          navFolderWithLineage.lineage[navFolderWithLineage.lineage.length - 1];
+        if (
+          navFolderWithLineage.lineage &&
+          navFolderWithLineage.lineage.length > 0
+        ) {
+          parentFolder =
+            navFolderWithLineage.lineage[
+              navFolderWithLineage.lineage.length - 1
+            ];
+        }
       }
       break;
     }
@@ -155,16 +163,16 @@ const AppSearchBar = ({
     items: docRefs,
     openItem: onThisChange,
     getKey: d => d.uuid,
-    enterItem: d => setNavFolder(d),
+    enterItem: d => {
+      if (d.type === "Folder") {
+        setNavFolder(d);
+      }
+    },
     goBack: () => {
       if (!!parentFolder) {
         setNavFolder(parentFolder);
       }
     }
-  });
-
-  useEffect(() => {
-    fetchDocTree();
   });
 
   let headerTitle = "unknown";

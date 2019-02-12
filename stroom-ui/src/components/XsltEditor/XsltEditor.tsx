@@ -15,14 +15,8 @@
  */
 
 import * as React from "react";
-import {
-  compose,
-  lifecycle,
-  renderComponent,
-  branch,
-  withHandlers,
-  withProps
-} from "recompose";
+import { useEffect } from "react";
+import { compose } from "recompose";
 import { connect } from "react-redux";
 
 import DocRefEditor from "../DocRefEditor";
@@ -49,21 +43,7 @@ interface ConnectDispatch {
   saveXslt: typeof saveXslt;
 }
 
-interface WithHandlers {
-  onContentChange: (a: string) => any;
-  onClickSave: React.MouseEventHandler;
-}
-
-interface WithProps {
-  actionBarItems: Array<ButtonProps>;
-}
-
-export interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    WithHandlers,
-    WithProps {}
+export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
@@ -75,55 +55,42 @@ const enhance = compose<EnhancedProps, Props>(
       xsltUpdated,
       saveXslt
     }
-  ),
-  lifecycle<Props & ConnectState & ConnectDispatch, {}>({
-    componentDidMount() {
-      const { fetchXslt, xsltUuid } = this.props;
+  )
+);
 
-      fetchXslt(xsltUuid);
+const XsltEditor = ({ xsltUuid, fetchXslt, xsltState }: EnhancedProps) => {
+  useEffect(() => {
+    fetchXslt(xsltUuid);
+  });
+
+  if (!xsltState) {
+    return <Loader message="Loading XSLT..." />;
+  }
+
+  const { xsltData, isDirty, isSaving } = xsltState;
+
+  const actionBarItems: Array<ButtonProps> = [
+    {
+      icon: "save",
+      disabled: !(isDirty || isSaving),
+      title: isSaving ? "Saving..." : isDirty ? "Save" : "Saved",
+      onClick: () => saveXslt(xsltUuid)
     }
-  }),
-  branch(
-    ({ xsltState }) => !xsltState,
-    renderComponent(() => <Loader message="Loading XSLT..." />)
-  ),
-  withHandlers<Props & ConnectState & ConnectDispatch, WithHandlers>({
-    onContentChange: ({
-      xsltUpdated,
-      xsltUuid,
-      xsltState: { xsltData }
-    }) => newValue => {
-      if (newValue !== xsltData) xsltUpdated(xsltUuid, newValue);
-    },
-    onClickSave: ({ saveXslt, xsltUuid }) => e => saveXslt(xsltUuid)
-  }),
-  withProps(({ xsltState: { isDirty, isSaving }, onClickSave }) => ({
-    actionBarItems: [
-      {
-        icon: "save",
-        disabled: !(isDirty || isSaving),
-        title: isSaving ? "Saving..." : isDirty ? "Save" : "Saved",
-        onClick: onClickSave
-      }
-    ]
-  }))
-);
+  ];
 
-const XsltEditor = ({
-  xsltUuid,
-  xsltState: { xsltData },
-  onContentChange,
-  actionBarItems
-}: EnhancedProps) => (
-  <DocRefEditor docRefUuid={xsltUuid} actionBarItems={actionBarItems}>
-    <ThemedAceEditor
-      style={{ width: "100%", height: "100%", minHeight: "25rem" }}
-      name={`${xsltUuid}-ace-editor`}
-      mode="xml"
-      value={xsltData}
-      onChange={onContentChange}
-    />
-  </DocRefEditor>
-);
+  return (
+    <DocRefEditor docRefUuid={xsltUuid} actionBarItems={actionBarItems}>
+      <ThemedAceEditor
+        style={{ width: "100%", height: "100%", minHeight: "25rem" }}
+        name={`${xsltUuid}-ace-editor`}
+        mode="xml"
+        value={xsltData}
+        onChange={newValue => {
+          if (newValue !== xsltData) xsltUpdated(xsltUuid, newValue);
+        }}
+      />
+    </DocRefEditor>
+  );
+};
 
 export default enhance(XsltEditor);

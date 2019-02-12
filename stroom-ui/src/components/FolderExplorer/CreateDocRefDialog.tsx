@@ -156,7 +156,7 @@ export type UseCreateDocRefDialog = {
  * This is a React custom hook that sets up things required by the owning component.
  */
 export const useCreateDocRefDialog = (): UseCreateDocRefDialog => {
-  const [destination, setDestinatino] = useState<DocRefType | undefined>(
+  const [destination, setDestination] = useState<DocRefType | undefined>(
     undefined
   );
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -167,12 +167,12 @@ export const useCreateDocRefDialog = (): UseCreateDocRefDialog => {
       isOpen,
       onCloseDialog: () => {
         setIsOpen(false);
-        setDestinatino(undefined);
+        setDestination(undefined);
       }
     },
     showCreateDialog: _destination => {
       setIsOpen(true);
-      setDestinatino(_destination);
+      setDestination(_destination);
     }
   };
 };

@@ -28,6 +28,7 @@ export const INDEX_SAVED = "INDEX_SAVED";
 export interface IndexAction extends ActionId {
   indexData: string;
   isDirty: boolean;
+  isSaving: boolean;
 }
 
 export interface IndexReceivedAction
@@ -43,13 +44,15 @@ export const actionCreators = {
     type: INDEX_RECEIVED,
     id,
     indexData,
-    isDirty: false
+    isDirty: false,
+    isSaving: false
   }),
   indexUpdated: (id: string, indexData: string): IndexUpdatedAction => ({
     type: INDEX_UPDATED,
     id,
     indexData,
-    isDirty: true
+    isDirty: true,
+    isSaving: false
   }),
   indexSaved: (id: string): IndexSavedAction => ({ type: INDEX_SAVED, id })
 };
@@ -57,25 +60,29 @@ export const actionCreators = {
 export interface StoreStateById {
   isDirty: boolean;
   indexData?: string;
+  isSaving: boolean;
 }
 
 export type StoreState = StateById<StoreStateById>;
 
 export const defaultStatePerId: StoreStateById = {
   isDirty: false,
-  indexData: undefined
+  indexData: undefined,
+  isSaving: false
 };
 
 export const reducer = prepareReducerById(defaultStatePerId)
   .handleActions<IndexAction>(
     [INDEX_RECEIVED, INDEX_UPDATED],
-    (state, { isDirty, indexData }) => ({
+    (state, { isDirty, isSaving, indexData }) => ({
       isDirty,
-      indexData
+      indexData,
+      isSaving
     })
   )
   .handleAction<IndexSavedAction>(INDEX_SAVED, state => ({
     ...state,
-    isDirty: false
+    isDirty: false,
+    isSaving: false
   }))
   .getReducer();

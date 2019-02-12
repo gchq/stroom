@@ -15,7 +15,7 @@
  */
 
 import * as React from "react";
-import { compose, branch, renderComponent, withProps } from "recompose";
+import { compose } from "recompose";
 import { connect } from "react-redux";
 
 import ElementImage from "../../ElementImage";
@@ -44,17 +44,8 @@ interface ConnectState {
   initialValues?: object;
 }
 interface ConnectDispatch {}
-interface WithProps {
-  icon: string;
-  typeName: string;
-  elementTypeProperties: Array<ElementPropertyType>;
-}
 
-export interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    WithProps {}
+export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
@@ -75,44 +66,6 @@ const enhance = compose<EnhancedProps, Props>(
         form,
         initialValues
       };
-    },
-    {}
-  ),
-  branch(
-    ({ selectedElementId }) => !selectedElementId,
-    renderComponent(() => (
-      <div className="element-details__nothing-selected">
-        <h3>Please select an element</h3>
-      </div>
-    ))
-  ),
-  withProps<WithProps, Props & ConnectState & ConnectDispatch>(
-    ({ pipelineState, elements, selectedElementId }) => {
-      const elementType: string =
-        (pipelineState &&
-          pipelineState.pipeline &&
-          pipelineState.pipeline.merged.elements.add &&
-          pipelineState.pipeline.merged.elements.add.find(
-            (element: PipelineElementType) => element.id === selectedElementId
-          )!.type) ||
-        "";
-      const elementTypeProperties: ElementPropertiesType =
-        elements.elementProperties[elementType];
-      const sortedElementTypeProperties: Array<
-        ElementPropertyType
-      > = Object.values(elementTypeProperties).sort(
-        (a: ElementPropertyType, b: ElementPropertyType) =>
-          a.displayPriority > b.displayPriority ? 1 : -1
-      );
-
-      return {
-        icon: elements.elements.find(
-          (e: ElementDefinition) => e.type === elementType
-        )!.icon,
-        typeName: elementType,
-        elementTypeProperties: sortedElementTypeProperties,
-        selectedElementId
-      };
     }
   )
 );
@@ -120,11 +73,42 @@ const enhance = compose<EnhancedProps, Props>(
 const ElementDetails = ({
   pipelineId,
   onClose,
-  icon,
-  elementTypeProperties,
+  pipelineState,
   selectedElementId,
-  typeName
+  elements
 }: EnhancedProps) => {
+  if (!selectedElementId) {
+    return (
+      <div className="element-details__nothing-selected">
+        <h3>Please select an element</h3>
+      </div>
+    );
+  }
+
+  const elementType: string =
+    (pipelineState &&
+      pipelineState.pipeline &&
+      pipelineState.pipeline.merged.elements.add &&
+      pipelineState.pipeline.merged.elements.add.find(
+        (element: PipelineElementType) => element.id === selectedElementId
+      )!.type) ||
+    "";
+  const allElementTypeProperties: ElementPropertiesType =
+    elements.elementProperties[elementType];
+  const sortedElementTypeProperties: Array<ElementPropertyType> = Object.values(
+    allElementTypeProperties
+  ).sort((a: ElementPropertyType, b: ElementPropertyType) =>
+    a.displayPriority > b.displayPriority ? 1 : -1
+  );
+
+  let icon: string = elements.elements.find(
+    (e: ElementDefinition) => e.type === elementType
+  )!.icon;
+  let typeName: string = elementType;
+  let elementTypeProperties: Array<
+    ElementPropertyType
+  > = sortedElementTypeProperties;
+
   const title = (
     <div className="element-details__title">
       <ElementImage icon={icon} />

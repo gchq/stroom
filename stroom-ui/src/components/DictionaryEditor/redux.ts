@@ -30,13 +30,11 @@ export interface DictionaryReceivedAction
   extends Action<"DICTIONARY_RECEIVED">,
     ActionId {
   dictionary: Dictionary;
-  isDirty: boolean;
 }
 export interface DictionaryUpdatedAction
   extends Action<"DICTIONARY_UPDATED">,
     ActionId {
   updates: DictionaryUpdates;
-  isDirty: boolean;
 }
 export interface DictionarySavedAction
   extends Action<"DICTIONARY_SAVED">,
@@ -49,8 +47,7 @@ export const actionCreators = {
   ): DictionaryReceivedAction => ({
     type: DICTIONARY_RECEIVED,
     id,
-    dictionary,
-    isDirty: false
+    dictionary
   }),
   dictionaryUpdated: (
     id: string,
@@ -58,8 +55,7 @@ export const actionCreators = {
   ): DictionaryUpdatedAction => ({
     type: DICTIONARY_UPDATED,
     id,
-    updates,
-    isDirty: true
+    updates
   }),
   dictionarySaved: (id: string): DictionarySavedAction => ({
     type: DICTIONARY_SAVED,
@@ -69,6 +65,7 @@ export const actionCreators = {
 
 export interface StoreStatePerId {
   isDirty: boolean;
+  isSaving: boolean;
   dictionary?: Dictionary;
 }
 
@@ -76,18 +73,20 @@ export type StoreState = StateById<StoreStatePerId>;
 
 export const defaultStatePerId: StoreStatePerId = {
   isDirty: false,
+  isSaving: false,
   dictionary: undefined
 };
 
 export const reducer = prepareReducerById(defaultStatePerId)
   .handleAction<DictionaryReceivedAction>(
     DICTIONARY_RECEIVED,
-    (_, { isDirty, dictionary }) => ({ isDirty, dictionary })
+    (_, { dictionary }) => ({ isDirty: false, isSaving: false, dictionary })
   )
   .handleAction<DictionaryUpdatedAction>(
     DICTIONARY_UPDATED,
-    (state, { isDirty, updates }) => ({
-      isDirty,
+    (state, { updates }) => ({
+      isDirty: true,
+      isSaving: false,
       dictionary: {
         ...state!.dictionary!,
         ...updates
@@ -96,6 +95,7 @@ export const reducer = prepareReducerById(defaultStatePerId)
   )
   .handleAction<DictionarySavedAction>(DICTIONARY_SAVED, state => ({
     ...state,
-    isDirty: false
+    isDirty: false,
+    isSaving: false
   }))
   .getReducer();

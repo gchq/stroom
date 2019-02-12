@@ -69,7 +69,7 @@ const enhance = compose(
 
 const TestElementDetails = enhance(ElementDetails);
 
-const stories = storiesOf("Pipeline/Element/Details", module);
+const stories = storiesOf("Pipeline/Element Details", module);
 
 Object.entries(testPipelines).map(pipeline => {
   pipeline[1].merged.elements.add!.map(element => {

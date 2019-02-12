@@ -17,7 +17,7 @@ import { Action } from "redux";
 
 import { prepareReducer } from "../../lib/redux-actions-ts";
 import { updateItemInTree } from "../../lib/treeUtils";
-import { DocRefType, DocRefTree } from "../../types";
+import { DocRefType, DocRefTree, DocRefInfoType } from "../../types";
 
 export const DOC_TREE_RECEIVED = "DOC_TREE_RECEIVED";
 export const DOC_REFS_MOVED = "DOC_REFS_MOVED";
@@ -25,9 +25,14 @@ export const DOC_REFS_COPIED = "DOC_REFS_COPIED";
 export const DOC_REFS_DELETED = "DOC_REFS_DELETED";
 export const DOC_REF_CREATED = "DOC_REF_CREATED";
 export const DOC_REF_RENAMED = "DOC_REF_RENAMED";
+export const DOC_REF_INFO_RECEIVED = "DOC_REF_INFO_RECEIVED";
 
-export interface StoreState extends DocRefTree {
+export interface StoreState {
   waitingForTree?: boolean;
+  documentTree: DocRefTree;
+  docRefInfoByUuid: {
+    [s: string]: DocRefInfoType;
+  };
 }
 
 export interface DocTreeReceived extends Action<"DOC_TREE_RECEIVED"> {
@@ -61,6 +66,10 @@ export interface DocRefRenamedAction extends Action<"DOC_REF_RENAMED"> {
   docRef: DocRefType;
   name: string;
   resultDocRef: DocRefType;
+}
+export interface DocRefInfoReceivedAction
+  extends Action<"DOC_REF_INFO_RECEIVED"> {
+  docRefInfo: DocRefInfoType;
 }
 
 export const actionCreators = {
@@ -109,28 +118,57 @@ export const actionCreators = {
     docRef,
     name,
     resultDocRef
+  }),
+  docRefInfoReceived: (
+    docRefInfo: DocRefInfoType
+  ): DocRefInfoReceivedAction => ({
+    type: DOC_REF_INFO_RECEIVED,
+    docRefInfo
   })
 };
 
 const defaultState: StoreState = {
+  docRefInfoByUuid: {},
   waitingForTree: true,
-  uuid: "none",
-  type: "System",
-  name: "None"
+  documentTree: {
+    uuid: "none",
+    type: "System",
+    name: "None"
+  }
 };
 
 export const reducer = prepareReducer(defaultState)
-  .handleAction<DocTreeReceived>(
-    DOC_TREE_RECEIVED,
-    (state, { documentTree }) => documentTree
-  )
+  .handleAction<DocTreeReceived>(DOC_TREE_RECEIVED, (_, { documentTree }) => ({
+    waitingForTree: false,
+    documentTree,
+    docRefInfoByUuid: {}
+  }))
   .handleAction<DocRefRenamedAction>(
     DOC_REF_RENAMED,
-    (state, { docRef, resultDocRef }) =>
-      updateItemInTree(state as DocRefTree, docRef.uuid, resultDocRef)
+    (state = defaultState, { docRef, resultDocRef }) => ({
+      ...state,
+      documentTree: updateItemInTree(
+        state.documentTree,
+        docRef.uuid,
+        resultDocRef
+      )
+    })
   )
   .handleActions<UpdateTreeAction>(
     [DOC_REFS_MOVED, DOC_REFS_COPIED, DOC_REFS_DELETED, DOC_REF_CREATED],
-    (state, { updatedTree }) => updatedTree
+    (state = defaultState, { updatedTree }) => ({
+      ...state,
+      documentTree: updatedTree
+    })
+  )
+  .handleAction<DocRefInfoReceivedAction>(
+    DOC_REF_INFO_RECEIVED,
+    (state = defaultState, { docRefInfo }) => ({
+      ...state,
+      docRefInfoByUuid: {
+        ...state.docRefInfoByUuid,
+        [docRefInfo.docRef.uuid]: docRefInfo
+      }
+    })
   )
   .getReducer();

@@ -15,13 +15,8 @@
  */
 
 import * as React from "react";
-import {
-  compose,
-  lifecycle,
-  branch,
-  renderComponent,
-  withHandlers
-} from "recompose";
+import { useEffect } from "react";
+import { compose } from "recompose";
 import { connect } from "react-redux";
 
 import Button from "../Button";
@@ -59,16 +54,8 @@ interface ConnectDispatch {
   pipelineElementSelected: typeof pipelineElementSelected;
   fetchPipeline: typeof fetchPipeline;
 }
-interface WithHandlers {
-  onNext: () => void;
-  onPrevious: () => void;
-}
 
-export interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    WithHandlers {}
+export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
@@ -80,57 +67,50 @@ const enhance = compose<EnhancedProps, Props>(
       pipelineState: pipelineStates[pipelineId]
     }),
     { startDebugging, pipelineElementSelected, fetchPipeline }
-  ),
-  lifecycle<Props & ConnectState & ConnectDispatch, {}>({
-    componentDidMount() {
-      const {
-        debuggerId,
-        pipelineId,
-        startDebugging,
-        fetchPipeline
-      } = this.props;
-      fetchPipeline(pipelineId);
-      startDebugging(debuggerId, pipelineId);
-    }
-  }),
-  branch(
-    ({ debuggerState }) => !debuggerState,
-    renderComponent(() => <Loader message="Loading pipeline..." />)
-  ),
-  withHandlers<Props & ConnectState & ConnectDispatch, WithHandlers>({
-    onNext: ({ pipelineState, pipelineElementSelected, pipelineId }) => () => {
-      const nextElementId = getNext(pipelineState);
-      if (nextElementId) {
-        pipelineElementSelected(pipelineId, nextElementId, {});
-      }
-    },
-    onPrevious: ({
-      pipelineState,
-      pipelineElementSelected,
-      pipelineId
-    }) => () => {
-      const nextElementId = getPrevious(pipelineState);
-      if (nextElementId) {
-        pipelineElementSelected(pipelineId, nextElementId, {});
-      }
-    }
-  })
+  )
 );
 
 const PipelineDebugger = ({
   pipelineId,
   debuggerId,
-  onNext,
-  onPrevious
-}: EnhancedProps) => (
-  <div className="PipelineDebugger">
-    <div>
-      <Button icon="chevron-left" text="Previous" onClick={onPrevious} />
-      <Button icon="chevron-right" text="Next" onClick={onNext} />
+  debuggerState,
+  pipelineState,
+  pipelineElementSelected,
+  fetchPipeline,
+  startDebugging
+}: EnhancedProps) => {
+  useEffect(() => {
+    fetchPipeline(pipelineId);
+    startDebugging(debuggerId, pipelineId);
+  }, []);
+
+  if (!debuggerState) {
+    return <Loader message="Loading pipeline..." />;
+  }
+
+  const onNext = () => {
+    const nextElementId = getNext(pipelineState);
+    if (nextElementId) {
+      pipelineElementSelected(pipelineId, nextElementId, {});
+    }
+  };
+  const onPrevious = () => {
+    const nextElementId = getPrevious(pipelineState);
+    if (nextElementId) {
+      pipelineElementSelected(pipelineId, nextElementId, {});
+    }
+  };
+
+  return (
+    <div className="PipelineDebugger">
+      <div>
+        <Button icon="chevron-left" text="Previous" onClick={onPrevious} />
+        <Button icon="chevron-right" text="Next" onClick={onNext} />
+      </div>
+      <Pipeline pipelineId={pipelineId} />
+      <DebuggerStep debuggerId={debuggerId} />
     </div>
-    <Pipeline pipelineId={pipelineId} />
-    <DebuggerStep debuggerId={debuggerId} />
-  </div>
-);
+  );
+};
 
 export default enhance(PipelineDebugger);

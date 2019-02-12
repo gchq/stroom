@@ -16,70 +16,26 @@
 import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
-import { connect } from "react-redux";
-import { compose, lifecycle } from "recompose";
 
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 import { DocRefInfoModal } from ".";
-import { actionCreators } from "./redux";
-
-import { DocRefInfoType } from "../../types";
-import { GlobalStoreState } from "../../startup/reducers";
 
 import "../../styles/main.css";
+import { useDocRefInfoDialog } from "./DocRefInfoModal";
+import Button from "../Button";
+import fullTestData from "../../lib/storybook/fullTestData";
 
-const { docRefInfoReceived, docRefInfoOpened } = actionCreators;
-
-const timeCreated = Date.now();
-
-interface Props {
-  testDocRefWithInfo: DocRefInfoType;
-}
-interface ConnectState {}
-interface ConnectDispatch {
-  docRefInfoOpened: typeof docRefInfoOpened;
-  docRefInfoReceived: typeof docRefInfoReceived;
-}
-interface PassedOnProps {}
-
-const enhance = compose<PassedOnProps, Props>(
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    undefined,
-    {
-      docRefInfoOpened,
-      docRefInfoReceived
-    }
-  ),
-  lifecycle<Props & ConnectState & ConnectDispatch, {}>({
-    componentDidMount() {
-      const {
-        docRefInfoOpened,
-        docRefInfoReceived,
-        testDocRefWithInfo
-      } = this.props;
-      docRefInfoReceived(testDocRefWithInfo);
-      docRefInfoOpened(testDocRefWithInfo.docRef);
-    }
-  })
-);
-
-const TestDocRefInfoModal = enhance(DocRefInfoModal);
+const testFolder1 = fullTestData.documentTree.children![0];
 
 storiesOf("Doc Ref/Info Modal", module)
   .addDecorator(StroomDecorator)
-  .add("Doc Ref Info Modal", () => (
-    <TestDocRefInfoModal
-      testDocRefWithInfo={{
-        docRef: {
-          type: "Animal",
-          name: "Tiger",
-          uuid: "1234456789"
-        },
-        createTime: timeCreated,
-        updateTime: Date.now(),
-        createUser: "me",
-        updateUser: "you",
-        otherInfo: "I am test data"
-      }}
-    />
-  ));
+  .add("Doc Ref Info Modal", () => {
+    const { showDialog, componentProps } = useDocRefInfoDialog();
+
+    return (
+      <div>
+        <Button text="show" onClick={() => showDialog(testFolder1)} />
+        <DocRefInfoModal {...componentProps} />
+      </div>
+    );
+  });

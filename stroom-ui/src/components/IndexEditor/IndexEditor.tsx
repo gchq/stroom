@@ -15,14 +15,8 @@
  */
 
 import * as React from "react";
-import {
-  compose,
-  lifecycle,
-  renderComponent,
-  branch,
-  withHandlers,
-  withProps
-} from "recompose";
+import { useEffect } from "react";
+import { compose } from "recompose";
 import { connect } from "react-redux";
 
 import DocRefEditor from "../DocRefEditor";
@@ -49,21 +43,7 @@ interface ConnectDispatch {
   saveIndex: typeof saveIndex;
 }
 
-interface WithHandlers {
-  onContentChange: (a: string) => any;
-  onClickSave: React.MouseEventHandler;
-}
-
-interface WithProps {
-  actionBarItems: Array<ButtonProps>;
-}
-
-export interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    WithHandlers,
-    WithProps {}
+export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
@@ -75,55 +55,42 @@ const enhance = compose<EnhancedProps, Props>(
       indexUpdated,
       saveIndex
     }
-  ),
-  lifecycle<Props & ConnectState & ConnectDispatch, {}>({
-    componentDidMount() {
-      const { fetchIndex, indexUuid } = this.props;
+  )
+);
 
-      fetchIndex(indexUuid);
+const IndexEditor = ({ indexUuid, indexState }: EnhancedProps) => {
+  useEffect(() => {
+    fetchIndex(indexUuid);
+  }, []);
+
+  if (!indexState) {
+    return <Loader message="Loading XSLT..." />;
+  }
+
+  const { indexData, isDirty, isSaving } = indexState;
+
+  const actionBarItems: Array<ButtonProps> = [
+    {
+      icon: "save",
+      disabled: !(isDirty || isSaving),
+      title: isSaving ? "Saving..." : isDirty ? "Save" : "Saved",
+      onClick: () => saveIndex(indexUuid)
     }
-  }),
-  branch(
-    ({ indexState }) => !indexState,
-    renderComponent(() => <Loader message="Loading XSLT..." />)
-  ),
-  withHandlers<Props & ConnectState & ConnectDispatch, WithHandlers>({
-    onContentChange: ({
-      indexUpdated,
-      indexUuid,
-      indexState: { indexData }
-    }) => newValue => {
-      if (newValue !== indexData) indexUpdated(indexUuid, newValue);
-    },
-    onClickSave: ({ saveIndex, indexUuid }) => e => saveIndex(indexUuid)
-  }),
-  withProps(({ indexState: { isDirty, isSaving }, onClickSave }) => ({
-    actionBarItems: [
-      {
-        icon: "save",
-        disabled: !(isDirty || isSaving),
-        title: isSaving ? "Saving..." : isDirty ? "Save" : "Saved",
-        onClick: onClickSave
-      }
-    ]
-  }))
-);
+  ];
 
-const IndexEditor = ({
-  indexUuid,
-  indexState: { indexData },
-  onContentChange,
-  actionBarItems
-}: EnhancedProps) => (
-  <DocRefEditor docRefUuid={indexUuid} actionBarItems={actionBarItems}>
-    <ThemedAceEditor
-      style={{ width: "100%", height: "100%", minHeight: "25rem" }}
-      name={`${indexUuid}-ace-editor`}
-      mode="xml"
-      value={indexData}
-      onChange={onContentChange}
-    />
-  </DocRefEditor>
-);
+  return (
+    <DocRefEditor docRefUuid={indexUuid} actionBarItems={actionBarItems}>
+      <ThemedAceEditor
+        style={{ width: "100%", height: "100%", minHeight: "25rem" }}
+        name={`${indexUuid}-ace-editor`}
+        mode="xml"
+        value={indexData}
+        onChange={v => {
+          if (v !== indexData) indexUpdated(indexUuid, v);
+        }}
+      />
+    </DocRefEditor>
+  );
+};
 
 export default enhance(IndexEditor);

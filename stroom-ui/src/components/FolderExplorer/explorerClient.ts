@@ -2,7 +2,6 @@ import { Dispatch } from "redux";
 
 import { actionCreators as folderExplorerActionCreators } from "./redux";
 import { actionCreators as docRefTypesActionCreators } from "../DocRefTypes/redux";
-import { actionCreators as docRefInfoActionCreators } from "../DocRefInfoModal";
 import { actionCreators as appSearchActionCreators } from "../AppSearchBar/redux";
 import {
   wrappedGet,
@@ -20,12 +19,11 @@ const {
   docRefsCopied,
   docRefsMoved,
   docRefsDeleted,
-  docRefCreated
+  docRefCreated,
+  docRefInfoReceived
 } = folderExplorerActionCreators;
 
 const { searchResultsReturned } = appSearchActionCreators;
-
-const { docRefInfoOpened, docRefInfoReceived } = docRefInfoActionCreators;
 
 const { docRefTypesReceived } = docRefTypesActionCreators;
 
@@ -95,7 +93,6 @@ export const fetchDocInfo = (docRef: DocRefType) => (
   dispatch: Dispatch,
   getState: () => GlobalStoreState
 ) => {
-  dispatch(docRefInfoOpened(docRef));
   const state = getState();
   const url = `${state.config.values.stroomBaseServiceUrl}/explorer/v1/info/${
     docRef.type
@@ -108,6 +105,7 @@ export const fetchDocInfo = (docRef: DocRefType) => (
       )
   );
 };
+console.log("Sup", { fetchDocInfo });
 
 export const createDocument = (
   docRefType: string,
@@ -174,7 +172,7 @@ export const copyDocuments = (
     config: {
       values: { stroomBaseServiceUrl }
     },
-    documentTree
+    folderExplorer: { documentTree }
   } = state;
   const url = `${stroomBaseServiceUrl}/explorer/v1/copy`;
   const docRefs = findByUuids(documentTree, uuids);
@@ -210,7 +208,7 @@ export const moveDocuments = (
     config: {
       values: { stroomBaseServiceUrl }
     },
-    documentTree
+    folderExplorer: { documentTree }
   } = state;
 
   const url = `${stroomBaseServiceUrl}/explorer/v1/move`;
@@ -242,7 +240,7 @@ export const deleteDocuments = (uuids: Array<string>) => (
 ) => {
   const state = getState();
   const url = `${state.config.values.stroomBaseServiceUrl}/explorer/v1/delete`;
-  const docRefs = findByUuids(state.documentTree, uuids);
+  const docRefs = findByUuids(state.folderExplorer.documentTree, uuids);
   wrappedDelete(
     dispatch,
     state,

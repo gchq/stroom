@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import * as React from "react";
-import { compose, withState } from "recompose";
+import { useState } from "react";
 import { Formik, Field, FieldProps } from "formik";
 
 import { storiesOf } from "@storybook/react";
@@ -24,7 +24,7 @@ import { addThemedStories } from "../../lib/themedStoryGenerator";
 import AppSearchBar from "./AppSearchBar";
 
 import "../../styles/main.css";
-import { DocRefType, DocRefConsumer } from "../../types";
+import { DocRefType } from "../../types";
 import FormikDebug from "../../lib/FormikDebug";
 
 interface Props {
@@ -67,24 +67,12 @@ let AppSearchAsForm = ({ pickerId, typeFilters }: Props) => (
   </Formik>
 );
 
-interface WithPickedDocRef {
-  pickedDocRef?: DocRefType | undefined;
-  setPickedDocRef: DocRefConsumer;
-}
+const AppSearchAsPicker = ({ pickerId, typeFilters }: Props) => {
+  const [pickedDocRef, setPickedDocRef] = useState<DocRefType | undefined>(
+    undefined
+  );
 
-interface AsPickerEnhancedProps extends Props, WithPickedDocRef {}
-
-const enhancePicker = compose<AsPickerEnhancedProps, Props>(
-  withState("pickedDocRef", "setPickedDocRef", undefined)
-);
-
-const AppSearchAsPicker = enhancePicker(
-  ({
-    pickerId,
-    typeFilters,
-    pickedDocRef,
-    setPickedDocRef
-  }: AsPickerEnhancedProps) => (
+  return (
     <div>
       <AppSearchBar
         pickerId={pickerId}
@@ -94,8 +82,8 @@ const AppSearchAsPicker = enhancePicker(
       />
       <div>Picked Doc Ref: {pickedDocRef && pickedDocRef.name}</div>
     </div>
-  )
-);
+  );
+};
 
 class AppSearchAsNavigator extends React.Component<
   Props,

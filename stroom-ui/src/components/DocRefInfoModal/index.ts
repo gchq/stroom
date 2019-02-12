@@ -1,6 +1,5 @@
-import DocRefInfoModal from './DocRefInfoModal';
-import { actionCreators, reducer } from './redux';
+import DocRefInfoModal from "./DocRefInfoModal";
 
 export default DocRefInfoModal;
 
-export { actionCreators, reducer, DocRefInfoModal };
+export { DocRefInfoModal };

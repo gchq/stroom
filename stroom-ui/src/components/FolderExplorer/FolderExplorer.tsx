@@ -17,13 +17,13 @@
 import * as React from "react";
 import { useEffect } from "react";
 import { connect } from "react-redux";
-import { compose, branch, renderComponent, withHandlers } from "recompose";
-import { withRouter } from "react-router-dom";
+import { compose } from "recompose";
+import { withRouter, RouteComponentProps } from "react-router-dom";
 
 import DocRefEditor from "../DocRefEditor";
 import Loader from "../Loader";
 import { findItem } from "../../lib/treeUtils";
-import { fetchDocInfo, copyDocuments, moveDocuments } from "./explorerClient";
+import { copyDocuments, moveDocuments } from "./explorerClient";
 import DndDocRefListingEntry from "./DndDocRefListingEntry";
 import CreateDocRefDialog, {
   useCreateDocRefDialog
@@ -40,11 +40,12 @@ import DeleteDocRefDialog, {
 import DocRefInfoModal from "../DocRefInfoModal";
 import { fetchDocTree } from "../FolderExplorer/explorerClient";
 import { Props as ButtonProps } from "../Button";
-import { DocRefConsumer, DocRefType, DocRefWithLineage } from "../../types";
+import { DocRefType, DocRefWithLineage, DocRefConsumer } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
 import useSelectableItemListing, {
   SelectionBehaviour
 } from "../../lib/useSelectableItemListing";
+import { useDocRefInfoDialog } from "../DocRefInfoModal/DocRefInfoModal";
 
 export interface Props {
   folderUuid: string;
@@ -54,12 +55,7 @@ interface ConnectState {
   folder: DocRefWithLineage;
 }
 
-interface WithHandlers {
-  openDocRef: DocRefConsumer;
-}
-
 interface ConnectDispatch {
-  fetchDocInfo: typeof fetchDocInfo;
   copyDocuments: typeof copyDocuments;
   moveDocuments: typeof moveDocuments;
   fetchDocTree: typeof fetchDocTree;
@@ -67,42 +63,35 @@ interface ConnectDispatch {
 
 export interface EnhancedProps
   extends Props,
-    WithHandlers,
+    RouteComponentProps,
     ConnectState,
     ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   withRouter,
-  withHandlers({
-    openDocRef: ({ history }) => (d: DocRefType) =>
-      history.push(`/s/doc/${d.type}/${d.uuid}`)
-  }),
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ documentTree }, { folderUuid }) => ({
+    ({ folderExplorer: { documentTree } }, { folderUuid }) => ({
       folder: findItem(documentTree, folderUuid)!
     }),
     {
       copyDocuments,
       moveDocuments,
-      fetchDocInfo,
       fetchDocTree
     }
-  ),
-  branch(
-    ({ folder }) => !folder,
-    renderComponent(() => <Loader message="Loading folder..." />)
   )
 );
 
 const FolderExplorer = ({
-  folder: { node, lineage },
+  folder,
   folderUuid,
   copyDocuments,
   moveDocuments,
-  fetchDocInfo,
-  openDocRef,
+  history,
   fetchDocTree
 }: EnhancedProps) => {
+  const openDocRef: DocRefConsumer = (d: DocRefType) =>
+    history.push(`/s/doc/${d.type}/${d.uuid}`);
+
   const {
     showDeleteDialog,
     componentProps: deleteDialogComponentProps
@@ -120,6 +109,10 @@ const FolderExplorer = ({
     componentProps: renameDialogComponentProps
   } = useRenameDocRefDialog();
   const {
+    showDialog: showDocRefInfoDialog,
+    componentProps: docRefInfoDialogComponentProps
+  } = useDocRefInfoDialog();
+  const {
     showCreateDialog,
     componentProps: createDialogComponentProps
   } = useCreateDocRefDialog();
@@ -129,7 +122,7 @@ const FolderExplorer = ({
     selectionToggled,
     keyIsDown
   } = useSelectableItemListing({
-    items: node.children || [],
+    items: folder.node.children || [],
     selectionBehaviour: SelectionBehaviour.MULTIPLE,
     getKey: d => d.uuid,
     openItem: openDocRef,
@@ -142,6 +135,12 @@ const FolderExplorer = ({
   useEffect(() => {
     fetchDocTree();
   });
+
+  if (!folder) {
+    return <Loader message="Loading folder..." />;
+  }
+
+  const { node, lineage } = folder;
 
   const actionBarItems: Array<ButtonProps> = [
     {
@@ -161,7 +160,7 @@ const FolderExplorer = ({
       actionBarItems.push({
         icon: "info",
         text: "Info",
-        onClick: () => fetchDocInfo(singleSelectedDocRef),
+        onClick: () => showDocRefInfoDialog(singleSelectedDocRef),
         title: "View Information about this document"
       });
       actionBarItems.push({
@@ -209,7 +208,7 @@ const FolderExplorer = ({
             />
           ))}
       </div>
-      <DocRefInfoModal />
+      <DocRefInfoModal {...docRefInfoDialogComponentProps} />
       <CopyMoveDocRefDialog {...moveDialogComponentProps} />
       <RenameDocRefDialog {...renameDialogComponentProps} />
       <DeleteDocRefDialog {...deleteDialogComponentProps} />

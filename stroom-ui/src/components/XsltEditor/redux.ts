@@ -54,6 +54,7 @@ export const actionCreators = {
 
 export interface StoreStateById {
   isDirty: boolean;
+  isSaving: boolean;
   xsltData?: string;
 }
 
@@ -61,7 +62,8 @@ export type StoreState = StateById<StoreStateById>;
 
 export const defaultStatePerId: StoreStateById = {
   isDirty: false,
-  xsltData: undefined
+  xsltData: undefined,
+  isSaving: false
 };
 
 export const reducer = prepareReducerById(defaultStatePerId)
@@ -69,11 +71,13 @@ export const reducer = prepareReducerById(defaultStatePerId)
     [XSLT_RECEIVED, XSLT_UPDATED],
     (state, { isDirty, xsltData }) => ({
       isDirty,
-      xsltData
+      xsltData,
+      isSaving: false
     })
   )
   .handleAction<XsltSavedAction>(XSLT_SAVED, state => ({
     ...state,
-    isDirty: false
+    isDirty: false,
+    isSaving: false
   }))
   .getReducer();

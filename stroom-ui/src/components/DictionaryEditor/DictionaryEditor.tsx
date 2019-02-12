@@ -1,18 +1,12 @@
 import * as React from "react";
-import {
-  compose,
-  lifecycle,
-  renderComponent,
-  branch,
-  withHandlers,
-  withProps
-} from "recompose";
+import { useEffect } from "react";
+import { compose } from "recompose";
 import { connect } from "react-redux";
 
 import Loader from "../Loader";
-import DocRefEditor from "../DocRefEditor";
 import { Props as ButtonProps } from "../Button";
-import { fetchDictionary, saveDictionary } from "./dictionaryResourceClient";
+import DocRefEditor from "../DocRefEditor";
+import { fetchDictionary, saveDictionary } from "./client";
 import { actionCreators, StoreStatePerId } from "./redux";
 import { GlobalStoreState } from "../../startup/reducers";
 
@@ -31,21 +25,7 @@ interface ConnectDispatch {
   saveDictionary: typeof saveDictionary;
 }
 
-interface WithHandlers {
-  onDataChange: React.ChangeEventHandler<HTMLTextAreaElement>;
-  onClickSave: React.MouseEventHandler;
-}
-
-interface WithProps {
-  actionBarItems: Array<ButtonProps>;
-}
-
-export interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    WithHandlers,
-    WithProps {}
+export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
@@ -57,48 +37,45 @@ const enhance = compose<EnhancedProps, Props>(
       dictionaryUpdated,
       saveDictionary
     }
-  ),
-  lifecycle<Props & ConnectState & ConnectDispatch, {}>({
-    componentDidMount() {
-      const { fetchDictionary, dictionaryUuid } = this.props;
-
-      fetchDictionary(dictionaryUuid);
-    }
-  }),
-  branch(
-    ({ dictionaryState }) => !dictionaryState,
-    renderComponent<Props>(({ dictionaryUuid }) => (
-      <Loader message={`Loading Dictionary ${dictionaryUuid}`} />
-    ))
-  ),
-  withHandlers<Props & ConnectState & ConnectDispatch, WithHandlers>({
-    onDataChange: ({ dictionaryUuid, dictionaryUpdated }) => ({
-      target: { value }
-    }) => dictionaryUpdated(dictionaryUuid, { data: value }),
-    onClickSave: ({ saveDictionary, dictionaryUuid }) => e =>
-      saveDictionary(dictionaryUuid)
-  }),
-  withProps(({ dictionaryState: { isDirty, isSaving }, onClickSave }) => ({
-    actionBarItems: [
-      {
-        icon: "save",
-        disabled: !(isDirty || isSaving),
-        title: isSaving ? "Saving..." : isDirty ? "Save" : "Saved",
-        onClick: onClickSave
-      }
-    ]
-  }))
+  )
 );
 
 const DictionaryEditor = ({
   dictionaryUuid,
-  dictionaryState: { dictionary },
-  onDataChange,
-  actionBarItems
-}: EnhancedProps) => (
-  <DocRefEditor docRefUuid={dictionaryUuid} actionBarItems={actionBarItems}>
-    <textarea value={dictionary && dictionary.data} onChange={onDataChange} />
-  </DocRefEditor>
-);
+  dictionaryState,
+  dictionaryUpdated,
+  fetchDictionary,
+  saveDictionary
+}: EnhancedProps) => {
+  useEffect(() => {
+    fetchDictionary(dictionaryUuid);
+  });
+
+  if (!dictionaryState) {
+    return <Loader message={`Loading Dictionary ${dictionaryUuid}`} />;
+  }
+
+  const { dictionary, isDirty, isSaving } = dictionaryState;
+
+  const actionBarItems: Array<ButtonProps> = [
+    {
+      icon: "save",
+      disabled: !(isDirty || isSaving),
+      title: isSaving ? "Saving..." : isDirty ? "Save" : "Saved",
+      onClick: () => saveDictionary(dictionaryUuid)
+    }
+  ];
+
+  return (
+    <DocRefEditor docRefUuid={dictionaryUuid} actionBarItems={actionBarItems}>
+      <textarea
+        value={dictionary && dictionary.data}
+        onChange={({ target: { value } }) =>
+          dictionaryUpdated(dictionaryUuid, { data: value })
+        }
+      />
+    </DocRefEditor>
+  );
+};
 
 export default enhance(DictionaryEditor);

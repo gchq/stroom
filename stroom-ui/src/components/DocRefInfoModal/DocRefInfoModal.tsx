@@ -14,144 +14,194 @@
  * limitations under the License.
  */
 import * as React from "react";
+import { useState, useEffect } from "react";
 import { connect } from "react-redux";
-import {
-  compose,
-  branch,
-  renderNothing,
-  renderComponent,
-  withProps
-} from "recompose";
+import { compose } from "recompose";
 
 import Loader from "../Loader";
 import ThemedModal from "../ThemedModal";
-import { actionCreators } from "./redux";
 import IconHeader from "../IconHeader";
 import Button from "../Button";
-import { DocRefInfoType } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
+import { fetchDocInfo } from "../FolderExplorer/explorerClient";
+import { DocRefType, DocRefInfoType } from "../../types";
 
-const { docRefInfoClosed } = actionCreators;
-
-export interface Props {}
-interface ConnectState {
+export interface Props {
+  docRef?: DocRefType;
   isOpen: boolean;
-  docRefInfo?: DocRefInfoType;
+  onCloseDialog: () => void;
+}
+interface ConnectState {
+  docRefInfoByUuid: { [s: string]: DocRefInfoType };
 }
 interface ConnectDispatch {
-  docRefInfoClosed: typeof docRefInfoClosed;
+  fetchDocInfo: typeof fetchDocInfo;
 }
-interface WithProps {
-  formattedCreateTime: string;
-  formattedUpdateTime: string;
-}
-export interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    WithProps {
-  docRefInfo: DocRefInfoType;
-}
+
+export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ docRefInfo: { isOpen, docRefInfo } }, props) => ({
-      isOpen,
-      docRefInfo
+    ({ folderExplorer: { docRefInfoByUuid } }) => ({
+      docRefInfoByUuid
     }),
-    { docRefInfoClosed }
-  ),
-  branch(({ isOpen }) => !isOpen, renderNothing),
-  branch(
-    ({ docRefInfo }) => !docRefInfo,
-    renderComponent(() => <Loader message="Awaiting DocRef info..." />)
-  ),
-  withProps(({ docRefInfo: { createTime, updateTime } }) => ({
-    formattedCreateTime: new Date(createTime).toLocaleString("en-GB", {
-      timeZone: "UTC"
-    }),
-    formattedUpdateTime: new Date(updateTime).toLocaleString("en-GB", {
-      timeZone: "UTC"
-    })
-  }))
+    {
+      fetchDocInfo
+    }
+  )
 );
 
 const doNothing = () => {};
 
 const DocRefInfoModal = ({
   isOpen,
-  docRefInfo,
-  docRefInfoClosed,
-  formattedCreateTime,
-  formattedUpdateTime
-}: EnhancedProps) => (
-  <ThemedModal
-    isOpen={isOpen}
-    onRequestClose={docRefInfoClosed}
-    header={<IconHeader icon="info" text="Document Information" />}
-    content={
-      <form className="DocRefInfo">
-        <div className="DocRefInfo__type">
-          <label>Type</label>
-          <input
-            type="text"
-            value={docRefInfo.docRef.type}
-            onChange={doNothing}
-          />
-        </div>
-        <div className="DocRefInfo__uuid">
-          <label>UUID</label>
-          <input
-            type="text"
-            value={docRefInfo.docRef.uuid}
-            onChange={doNothing}
-          />
-        </div>
-        <div className="DocRefInfo__name">
-          <label>Name</label>
-          <input
-            type="text"
-            value={docRefInfo.docRef.name}
-            onChange={doNothing}
-          />
-        </div>
-
-        <div className="DocRefInfo__createdBy">
-          <label>Created by</label>
-          <input
-            type="text"
-            value={docRefInfo.createUser}
-            onChange={doNothing}
-          />
-        </div>
-        <div className="DocRefInfo__createdOn">
-          <label>at</label>
-          <input type="text" value={formattedCreateTime} onChange={doNothing} />
-        </div>
-        <div className="DocRefInfo__updatedBy">
-          <label>Updated by</label>
-          <input
-            type="text"
-            value={docRefInfo.updateUser}
-            onChange={doNothing}
-          />
-        </div>
-        <div className="DocRefInfo__updatedOn">
-          <label>at</label>
-          <input type="text" value={formattedUpdateTime} onChange={doNothing} />
-        </div>
-        <div className="DocRefInfo__otherInfo">
-          <label>Other Info</label>
-          <input
-            type="text"
-            value={docRefInfo.otherInfo}
-            onChange={doNothing}
-          />
-        </div>
-      </form>
+  onCloseDialog,
+  docRef,
+  docRefInfoByUuid,
+  fetchDocInfo
+}: EnhancedProps) => {
+  useEffect(() => {
+    if (!!docRef) {
+      fetchDocInfo(docRef);
     }
-    actions={<Button onClick={docRefInfoClosed} text="Close" />}
-  />
-);
+  });
+
+  if (!isOpen || !docRef) {
+    return null;
+  }
+
+  const docRefInfo = docRefInfoByUuid[docRef.uuid];
+
+  if (!docRefInfo) {
+    return <Loader message="Awaiting DocRef info..." />;
+  }
+
+  const { createTime, updateTime } = docRefInfo;
+
+  const formattedCreateTime = new Date(createTime).toLocaleString("en-GB", {
+    timeZone: "UTC"
+  });
+  const formattedUpdateTime = new Date(updateTime).toLocaleString("en-GB", {
+    timeZone: "UTC"
+  });
+
+  return (
+    <ThemedModal
+      isOpen={isOpen}
+      onRequestClose={onCloseDialog}
+      header={<IconHeader icon="info" text="Document Information" />}
+      content={
+        <form className="DocRefInfo">
+          <div className="DocRefInfo__type">
+            <label>Type</label>
+            <input
+              type="text"
+              value={docRefInfo.docRef.type}
+              onChange={doNothing}
+            />
+          </div>
+          <div className="DocRefInfo__uuid">
+            <label>UUID</label>
+            <input
+              type="text"
+              value={docRefInfo.docRef.uuid}
+              onChange={doNothing}
+            />
+          </div>
+          <div className="DocRefInfo__name">
+            <label>Name</label>
+            <input
+              type="text"
+              value={docRefInfo.docRef.name}
+              onChange={doNothing}
+            />
+          </div>
+
+          <div className="DocRefInfo__createdBy">
+            <label>Created by</label>
+            <input
+              type="text"
+              value={docRefInfo.createUser}
+              onChange={doNothing}
+            />
+          </div>
+          <div className="DocRefInfo__createdOn">
+            <label>at</label>
+            <input
+              type="text"
+              value={formattedCreateTime}
+              onChange={doNothing}
+            />
+          </div>
+          <div className="DocRefInfo__updatedBy">
+            <label>Updated by</label>
+            <input
+              type="text"
+              value={docRefInfo.updateUser}
+              onChange={doNothing}
+            />
+          </div>
+          <div className="DocRefInfo__updatedOn">
+            <label>at</label>
+            <input
+              type="text"
+              value={formattedUpdateTime}
+              onChange={doNothing}
+            />
+          </div>
+          <div className="DocRefInfo__otherInfo">
+            <label>Other Info</label>
+            <input
+              type="text"
+              value={docRefInfo.otherInfo}
+              onChange={doNothing}
+            />
+          </div>
+        </form>
+      }
+      actions={<Button onClick={onCloseDialog} text="Close" />}
+    />
+  );
+};
+
+/**
+ * These are the things returned by the custom hook that allow the owning component to interact
+ * with this dialog.
+ */
+export type UseDocRefInfoDialog = {
+  /**
+   * The owning component is ready to start a deletion process.
+   * Calling this will open the dialog, and setup the UUIDs
+   */
+  showDialog: (docRef: DocRefType) => void;
+  /**
+   * These are the properties that the owning component can just give to the Dialog component
+   * using destructing.
+   */
+  componentProps: Props;
+};
+
+/**
+ * This is a React custom hook that sets up things required by the owning component.
+ */
+export const useDocRefInfoDialog = (): UseDocRefInfoDialog => {
+  const [docRef, setDocRef] = useState<DocRefType | undefined>(undefined);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+
+  return {
+    componentProps: {
+      docRef,
+      isOpen,
+      onCloseDialog: () => {
+        setIsOpen(false);
+        setDocRef(undefined);
+      }
+    },
+    showDialog: (_docRef: DocRefType) => {
+      setIsOpen(true);
+      setDocRef(_docRef);
+    }
+  };
+};
 
 export default enhance(DocRefInfoModal);
