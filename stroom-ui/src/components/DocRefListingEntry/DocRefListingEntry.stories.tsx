@@ -18,7 +18,7 @@ import { useState } from "react";
 import { storiesOf } from "@storybook/react";
 
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
-import { smallTree } from "../FolderExplorer/test";
+import fullTestData from "../../lib/storybook/fullTestData";
 import useSelectableItemListing from "../../lib/useSelectableItemListing";
 import DocRefListingEntry from "./DocRefListingEntry";
 import { DocRefType } from "../../types";
@@ -26,8 +26,8 @@ import { DocRefType } from "../../types";
 import "../../styles/main.css";
 import { DocRefBreadcrumb } from "../DocRefBreadcrumb";
 
-const testFolder = smallTree.children![0];
-const testDocRef = smallTree.children![0].children![0].children![0];
+const testFolder = fullTestData.documentTree;
+const testDocRef = fullTestData.documentTree.children![0].children![0];
 
 interface Props {
   listingId: string;
@@ -100,11 +100,11 @@ let TestDocRefListingEntry = ({
       </div>
       <div>
         <label>Entered Folder</label>
-        <input readOnly value={enteredFolder && enteredFolder.name} />
+        <input readOnly value={!!enteredFolder ? enteredFolder.name : ""} />
       </div>
       <div>
         <label>Opened Doc Ref</label>
-        <input readOnly value={openedDocRef && openedDocRef.name} />
+        <input readOnly value={!!openedDocRef ? openedDocRef.name : ""} />
       </div>
       <div>
         <label>Went Back</label>
