@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.shared.UserRef;
+import stroom.util.RestResource;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -23,7 +24,7 @@ import java.util.Map;
 @Api(value = "authorisation - /v1")
 @Path("/authorisation/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class AuthorisationResource {
+public class AuthorisationResource implements RestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthorisationResource.class);
 
     private final SecurityContext securityContext;

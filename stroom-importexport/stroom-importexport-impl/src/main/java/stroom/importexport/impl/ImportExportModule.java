@@ -17,6 +17,8 @@
 package stroom.importexport.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.util.GuiceUtil;
+import stroom.util.RestResource;
 
 public class ImportExportModule extends AbstractModule {
     @Override
@@ -24,5 +26,8 @@ public class ImportExportModule extends AbstractModule {
         bind(ImportExportService.class).to(ImportExportServiceImpl.class);
         bind(ImportExportSerializer.class).to(ImportExportSerializerImpl.class);
         bind(ImportExportDocumentEventLog.class).to(ImportExportDocumentEventLogImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(ExportConfigResource.class);
     }
 }

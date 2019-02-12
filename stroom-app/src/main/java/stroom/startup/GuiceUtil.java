@@ -14,12 +14,14 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.HasHealthCheck;
+import stroom.util.RestResource;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpSessionListener;
 import java.util.EnumSet;
+import java.util.Set;
 
 public class GuiceUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(GuiceUtil.class);
@@ -152,6 +154,15 @@ public class GuiceUtil {
                                    final Class<?> clazz) {
         final Object resource = injector.getInstance(clazz);
         jersey.register(Preconditions.checkNotNull(resource));
+    }
+
+    public static void addResources(final JerseyEnvironment jersey,
+                                    final Injector injector) {
+
+        final Set<RestResource> restResources = stroom.util.GuiceUtil.getMultibinderInstance(
+                injector, RestResource.class);
+
+        restResources.forEach(jersey::register);
     }
 
     public static void manage(final LifecycleEnvironment lifecycleEnvironment,
