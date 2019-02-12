@@ -27,6 +27,8 @@ import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.receive.ReceiveDataModule;
 import stroom.receive.rules.impl.ReceiveDataRulesetModule;
 import stroom.statistics.sql.SQLStatisticsModule;
+import stroom.task.cluster.impl.ClusterTaskModule;
+import stroom.task.impl.TaskModule;
 
 public class CoreModule extends AbstractModule {
     @Override
@@ -103,8 +105,8 @@ public class CoreModule extends AbstractModule {
         install(new DataStoreHandlerModule());
         install(new stroom.data.store.impl.fs.FileSystemDataStoreModule());
         install(new stroom.streamtask.StreamTaskModule());
-        install(new stroom.task.TaskModule());
-        install(new stroom.task.cluster.ClusterTaskModule());
+        install(new TaskModule());
+        install(new ClusterTaskModule());
         install(new stroom.ui.config.server.UiConfigModule());
         install(new stroom.visualisation.VisualisationModule());
         install(new stroom.volume.VolumeModule());

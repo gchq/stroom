@@ -29,7 +29,7 @@ import stroom.search.taskqueue.AbstractTaskProducer;
 import stroom.search.taskqueue.TaskExecutor;
 import stroom.search.taskqueue.TaskProducer;
 import stroom.task.api.TaskContext;
-import stroom.task.ThreadPoolImpl;
+import stroom.task.impl.ThreadPoolImpl;
 import stroom.util.shared.Severity;
 import stroom.task.shared.ThreadPool;
 

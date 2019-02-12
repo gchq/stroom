@@ -81,8 +81,8 @@ public class CliModule extends AbstractModule {
         install(new DocStoreModule());
         install(new stroom.docstore.impl.fs.FSPersistenceModule());
 //        install(new stroom.streamtask.StreamTaskModule());
-//        install(new stroom.task.TaskModule());
-//        install(new stroom.task.cluster.ClusterTaskModule());
+//        install(new stroom.task.impl.TaskModule());
+//        install(new stroom.task.cluster.impl.ClusterTaskModule());
 //        install(new stroom.volume.VolumeModule());
 
         bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);

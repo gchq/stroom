@@ -18,7 +18,7 @@ package stroom.search.taskqueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.task.StroomThreadGroup;
+import stroom.task.impl.StroomThreadGroup;
 import stroom.util.thread.CustomThreadFactory;
 
 import java.util.concurrent.CompletableFuture;

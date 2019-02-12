@@ -32,7 +32,7 @@ import stroom.security.util.UserTokenUtil;
 import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.servlet.SessionListListener;
 import stroom.task.api.TaskHandler;
-import stroom.task.TaskHandlerBeanRegistry;
+import stroom.task.impl.TaskHandlerBeanRegistry;
 import stroom.task.api.TaskIdFactory;
 import stroom.task.api.TaskManager;
 import stroom.util.shared.ModelStringUtil;

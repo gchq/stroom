@@ -26,7 +26,7 @@ import stroom.node.api.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.security.Security;
-import stroom.task.GenericServerTask;
+import stroom.task.impl.GenericServerTask;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskManager;
 import stroom.util.shared.VoidResult;

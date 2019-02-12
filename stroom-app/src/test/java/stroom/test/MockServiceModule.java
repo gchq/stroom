@@ -16,6 +16,7 @@ import stroom.security.UserRefFactory;
 import stroom.security.UserService;
 import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
+import stroom.task.impl.MockTaskModule;
 
 import java.util.List;
 import java.util.UUID;
@@ -55,7 +56,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.security.impl.mock.MockSecurityContextModule());
         install(new stroom.statistics.internal.MockInternalStatisticsModule());
         install(new stroom.streamtask.MockStreamTaskModule());
-        install(new stroom.task.MockTaskModule());
+        install(new MockTaskModule());
         install(new stroom.test.MockTestControlModule());
         install(new stroom.volume.MockVolumeModule());
         install(new MockXmlSchemaModule());
