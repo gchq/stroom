@@ -4,7 +4,7 @@ dependencies {
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
-    implementation project(':stroom-cluster:stroom-cluster-lock-impl-db-gen')
+    implementation project(':stroom-cluster:stroom-cluster-lock-impl-db-jooq')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-db-util')
     implementation project(':stroom-entity-shared')
