@@ -39,6 +39,8 @@ include 'stroom-cluster:stroom-cluster-lock-api'
 include 'stroom-cluster:stroom-cluster-lock-impl-db'
 include 'stroom-cluster:stroom-cluster-lock-impl-db-gen'
 include 'stroom-cluster:stroom-cluster-lock-impl-mock'
+include 'stroom-cluster:stroom-cluster-task-api'
+include 'stroom-cluster:stroom-cluster-task-impl'
 
 // Config
 include 'stroom-config:stroom-config-app'
@@ -184,10 +186,6 @@ include 'stroom-statistics:stroom-statistics-server'
 include 'stroom-task:stroom-task-api'
 include 'stroom-task:stroom-task-impl'
 include 'stroom-task:stroom-task-shared'
-
-// Cluster task execution
-include 'stroom-task:stroom-task-cluster-api'
-include 'stroom-task:stroom-task-cluster-impl'
 
 // Scheduled jobs
 include 'stroom-job:stroom-job-api'

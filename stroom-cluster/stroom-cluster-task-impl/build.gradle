@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.task.cluster.impl'
+ext.moduleName = 'stroom.cluster.task.impl'
 
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
@@ -9,7 +9,7 @@ dependencies {
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-impl')
-    implementation project(':stroom-task:stroom-task-cluster-api')
+    implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')

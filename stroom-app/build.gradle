@@ -74,7 +74,7 @@ dependencies {
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-impl')
     implementation project(':stroom-task:stroom-task-shared')
-    implementation project(':stroom-task:stroom-task-cluster-impl')
+    implementation project(':stroom-cluster:stroom-cluster-task-impl')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-job:stroom-job-impl')
     implementation project(':stroom-job:stroom-job-shared')

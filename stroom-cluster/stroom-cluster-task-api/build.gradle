@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.task.cluster.api'
+ext.moduleName = 'stroom.cluster.task.api'
 
 dependencies {
     implementation project(':stroom-task:stroom-task-api')
