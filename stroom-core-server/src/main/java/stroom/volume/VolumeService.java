@@ -18,9 +18,9 @@
 package stroom.volume;
 
 import stroom.entity.BaseEntityService;
-import stroom.entity.FindService;
-import stroom.entity.shared.Clearable;
-import stroom.entity.shared.Flushable;
+import stroom.util.entity.FindService;
+import stroom.util.shared.Clearable;
+import stroom.util.shared.Flushable;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;

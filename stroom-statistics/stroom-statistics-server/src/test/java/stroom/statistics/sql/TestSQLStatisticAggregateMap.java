@@ -25,7 +25,7 @@ import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RollUpBitMask;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
 import java.util.List;

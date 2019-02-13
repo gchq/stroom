@@ -17,8 +17,8 @@
 package stroom.data.store.impl.fs.shared;
 
 import stroom.data.store.impl.fs.shared.FileSystemVolume.VolumeUseStatus;
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.CriteriaSet;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaSet;
 
 public class FindFileSystemVolumeCriteria extends BaseCriteria {
     private static final long serialVersionUID = 3581257401217841946L;

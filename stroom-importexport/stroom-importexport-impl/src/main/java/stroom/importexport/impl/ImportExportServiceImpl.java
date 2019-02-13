@@ -16,7 +16,7 @@
 
 package stroom.importexport.impl;
 
-import stroom.entity.shared.DocRefs;
+import stroom.util.shared.DocRefs;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.io.FileUtil;

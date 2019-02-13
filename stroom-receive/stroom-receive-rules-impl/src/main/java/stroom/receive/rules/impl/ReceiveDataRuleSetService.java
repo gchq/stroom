@@ -17,7 +17,7 @@
 
 package stroom.receive.rules.impl;
 
-import stroom.docstore.DocumentStore;
+import stroom.docstore.api.DocumentStore;
 import stroom.receive.rules.shared.ReceiveDataRules;
 
 public interface ReceiveDataRuleSetService extends DocumentStore<ReceiveDataRules> {

@@ -17,7 +17,7 @@
 package stroom.receive;
 
 import com.google.inject.AbstractModule;
-import stroom.io.BufferFactory;
+import stroom.util.io.BufferFactory;
 import stroom.receive.common.RequestHandler;
 
 public class ReceiveDataModule extends AbstractModule {

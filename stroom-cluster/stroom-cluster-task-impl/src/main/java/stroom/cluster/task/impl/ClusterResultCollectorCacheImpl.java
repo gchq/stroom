@@ -18,7 +18,7 @@ package stroom.cluster.task.impl;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.cluster.task.api.ClusterResultCollector;
 import stroom.cluster.task.api.ClusterResultCollectorCache;
 import stroom.cluster.task.api.CollectorId;

@@ -18,7 +18,7 @@ package stroom.pipeline.cache;
 
 import stroom.docstore.shared.Doc;
 import stroom.security.DocumentPermissionCache;
-import stroom.entity.shared.PermissionException;
+import stroom.util.shared.PermissionException;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;

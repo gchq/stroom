@@ -18,8 +18,8 @@ package stroom.entity.testshared;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.entity.shared.CriteriaSet;
-import stroom.util.test.StroomUnitTest;
+import stroom.util.shared.CriteriaSet;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

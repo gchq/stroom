@@ -19,9 +19,9 @@ package stroom.data.store.impl.mock;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.data.store.impl.SteamStoreStreamCloserImpl;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.data.store.api.Store;
-import stroom.io.StreamCloser;
+import stroom.util.io.StreamCloser;
 
 public class MockStreamStoreModule extends AbstractModule {
     @Override

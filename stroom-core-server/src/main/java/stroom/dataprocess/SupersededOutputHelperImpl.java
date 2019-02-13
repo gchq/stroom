@@ -7,7 +7,7 @@ import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.pipeline.scope.PipelineScoped;
+import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.pipeline.task.SupersededOutputHelper;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;

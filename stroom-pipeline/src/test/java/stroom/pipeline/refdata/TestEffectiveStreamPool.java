@@ -28,7 +28,7 @@ import stroom.security.impl.mock.MockSecurityContext;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.cache.api.CacheManager;
 import stroom.util.date.DateUtil;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.time.Instant;
 import java.time.ZoneOffset;

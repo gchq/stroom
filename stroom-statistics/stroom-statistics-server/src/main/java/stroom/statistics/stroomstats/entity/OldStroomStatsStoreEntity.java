@@ -17,7 +17,7 @@
 package stroom.statistics.stroomstats.entity;
 
 import stroom.entity.shared.SQLNameConstants;
-import stroom.importexport.api.ExternalFile;
+import stroom.importexport.shared.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.stats.shared.CustomRollUpMask;

@@ -5,7 +5,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.eclipse.jetty.http.HttpStatus;
 import stroom.docref.DocRef;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.query.audit.client.DocRefResourceHttpClient;
 import stroom.query.security.ServiceUser;

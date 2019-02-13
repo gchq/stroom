@@ -6,9 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.store.impl.fs.shared.FileSystemVolume;
 import stroom.db.util.JooqUtil;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.CriteriaSet;
-import stroom.entity.shared.PageRequest;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.PageRequest;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.util.concurrent.AtomicSequence;
@@ -20,8 +20,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static stroom.data.store.impl.fs.db.stroom.tables.DataVolume.DATA_VOLUME;
-import static stroom.data.store.impl.fs.db.stroom.tables.Vol.VOL;
+import static stroom.data.store.impl.fs.db.jooq.tables.DataVolume.DATA_VOLUME;
+import static stroom.data.store.impl.fs.db.jooq.tables.Vol.VOL;
 
 public class DataVolumeServiceImpl implements DataVolumeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataVolumeServiceImpl.class);

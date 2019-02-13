@@ -2,7 +2,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FileSystemVolume;
 import stroom.docref.SharedObject;
-import stroom.entity.shared.BaseResultList;
+import stroom.util.shared.BaseResultList;
 
 public interface DataVolumeService {
     BaseResultList<DataVolume> find(FindDataVolumeCriteria criteria);

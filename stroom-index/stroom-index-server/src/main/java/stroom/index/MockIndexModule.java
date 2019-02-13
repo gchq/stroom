@@ -18,8 +18,8 @@ package stroom.index;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.EntityTypeBinder;
-import stroom.entity.shared.Clearable;
+import stroom.util.entity.EntityTypeBinder;
+import stroom.util.shared.Clearable;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.shared.IndexDoc;
 

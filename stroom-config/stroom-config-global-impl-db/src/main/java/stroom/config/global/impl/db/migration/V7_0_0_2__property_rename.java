@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.impl.db.ConfigMapper;
-import stroom.config.impl.db.tables.records.ConfigRecord;
+import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 import stroom.util.logging.LambdaLogger;
 
 import java.sql.Connection;
@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static stroom.config.impl.db.tables.Config.CONFIG;
+import static stroom.config.impl.db.jooq.tables.Config.CONFIG;
 
 @SuppressWarnings("unused")
         // used by FlyWay

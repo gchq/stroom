@@ -22,13 +22,16 @@ def sendToStroomScriptVersion = 'send-to-stroom-v2.0'
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
-mainClassName = 'stroom.startup.App'
+mainClassName = 'stroom.app.App'
 
 dependencies {
     implementation project(':stroom-activity:stroom-activity-impl-db')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cache:stroom-cache-impl')
     implementation project(':stroom-cluster:stroom-cluster-impl')
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-cluster:stroom-cluster-lock-impl-db')
+    implementation project(':stroom-cluster:stroom-cluster-task-impl')
     implementation project(':stroom-config:stroom-config-app')
     implementation project(':stroom-config:stroom-config-global-impl-db')
     implementation project(':stroom-core-server')
@@ -46,7 +49,6 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-impl-db')
     implementation project(':stroom-elastic:stroom-elastic-impl')
     implementation project(':stroom-elastic:stroom-elastic-impl-http')
-    implementation project(':stroom-entity-shared')
     implementation project(':stroom-event-logging:stroom-event-logging-impl')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-explorer:stroom-explorer-impl')
@@ -63,24 +65,18 @@ dependencies {
     implementation project(':stroom-node:stroom-node-impl')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-proxy')
-    implementation project(':stroom-resourcestore:stroom-resourcestore-api')
-    implementation project(':stroom-resourcestore:stroom-resourcestore-impl')
+    implementation project(':stroom-resource:stroom-resource-api')
+    implementation project(':stroom-resource:stroom-resource-impl')
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-receive:stroom-receive-rules-impl')
-    implementation project(':stroom-receive:stroom-receive-rules-shared')
     implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-security:stroom-security-server')
+    implementation project(':stroom-security:stroom-security-impl')
     implementation project(':stroom-statistics:stroom-statistics-server')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-impl')
-    implementation project(':stroom-task:stroom-task-shared')
-    implementation project(':stroom-cluster:stroom-cluster-task-impl')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-job:stroom-job-impl')
-    implementation project(':stroom-job:stroom-job-shared')
     implementation project(':stroom-job:stroom-job-impl-db')
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
-    implementation project(':stroom-cluster:stroom-cluster-lock-impl-db')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
@@ -127,7 +123,6 @@ dependencies {
     testImplementation project(':stroom-core-server')
     testImplementation project(':stroom-core-shared')
     testImplementation project(':stroom-dashboard:stroom-dashboard-server')
-    testImplementation project(':stroom-dashboard:stroom-dashboard-shared')
     testImplementation project(':stroom-meta:stroom-meta-api')
     testImplementation project(':stroom-meta:stroom-meta-impl-db')
     testImplementation project(':stroom-meta:stroom-meta-impl-mock')
@@ -137,9 +132,7 @@ dependencies {
     testImplementation project(':stroom-docstore:stroom-docstore-api')
     testImplementation project(':stroom-docstore:stroom-docstore-impl')
     testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
-    testImplementation project(':stroom-docstore:stroom-docstore-shared')
     testImplementation project(':stroom-elastic:stroom-elastic-impl')
-    testImplementation project(':stroom-entity-shared')
     testImplementation project(':stroom-event-logging:stroom-event-logging-api')
     testImplementation project(':stroom-event-logging:stroom-event-logging-impl')
     testImplementation project(':stroom-explorer:stroom-explorer-api')
@@ -148,17 +141,14 @@ dependencies {
     testImplementation project(':stroom-headless')
     testImplementation project(':stroom-importexport:stroom-importexport-api')
     testImplementation project(':stroom-index:stroom-index-server')
-    testImplementation project(':stroom-index:stroom-index-shared')
     testImplementation project(':stroom-node:stroom-node-impl-mock')
     testImplementation project(':stroom-pipeline')
     testImplementation project(':stroom-receive:stroom-receive-rules-impl')
     testImplementation project(':stroom-security:stroom-security-api')
     testImplementation project(':stroom-security:stroom-security-impl-mock')
-    testImplementation project(':stroom-security:stroom-security-server')
-    testImplementation project(':stroom-security:stroom-security-shared')
+    testImplementation project(':stroom-security:stroom-security-impl')
     testImplementation project(':stroom-statistics:stroom-statistics-api')
     testImplementation project(':stroom-statistics:stroom-statistics-server')
-    testImplementation project(':stroom-statistics:stroom-statistics-shared')
     testImplementation project(':stroom-task:stroom-task-api')
     testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-util')
@@ -202,7 +192,7 @@ jar {
         attributes(
                 "Implementation-Title": "Stroom",
                 "Implementation-Version": versions.stroom,
-                "Main-Class": "stroom.startup.App"
+                "Main-Class": "stroom.app.App"
         )
     }
     archiveName jarName

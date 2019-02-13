@@ -18,8 +18,8 @@ package stroom.data.store.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.io.StreamCloser;
-import stroom.pipeline.scope.PipelineScoped;
+import stroom.util.io.StreamCloser;
+import stroom.util.pipeline.scope.PipelineScoped;
 
 import java.io.Closeable;
 import java.io.IOException;

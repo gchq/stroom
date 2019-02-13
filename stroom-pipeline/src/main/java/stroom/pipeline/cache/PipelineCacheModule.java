@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEvent.Handler;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 
 public class PipelineCacheModule extends AbstractModule {
     @Override

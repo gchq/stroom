@@ -9,7 +9,6 @@ dependencies {
     implementation project(':stroom-meta:stroom-meta-impl-mock')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
-    implementation project(':stroom-entity-shared')
 
     implementation libs.stroomDocRef
     

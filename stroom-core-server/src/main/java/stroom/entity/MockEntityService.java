@@ -17,11 +17,12 @@
 
 package stroom.entity;
 
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Clearable;
 import stroom.entity.shared.Entity;
+import stroom.util.entity.FindService;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;

@@ -31,7 +31,7 @@ import stroom.streamstore.client.presenter.ExpressionPresenter.ExpressionView;
 
 import java.util.List;
 
-public class ExpressionPresenter extends MyPresenterWidget<ExpressionView> {
+public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.ExpressionView> {
     private final EditExpressionPresenter editExpressionPresenter;
     private final ClientDispatchAsync dispatcher;
 

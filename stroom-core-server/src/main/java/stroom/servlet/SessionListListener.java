@@ -18,8 +18,8 @@ package stroom.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseResultList;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.BaseResultList;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.TaskManager;

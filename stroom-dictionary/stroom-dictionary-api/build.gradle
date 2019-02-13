@@ -2,7 +2,6 @@ ext.moduleName = 'stroom.dictionary.api'
 
 dependencies {
     implementation project(':stroom-core-shared')
-    implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')

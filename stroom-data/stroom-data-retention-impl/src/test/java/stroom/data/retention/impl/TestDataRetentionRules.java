@@ -25,7 +25,7 @@ import stroom.data.retention.impl.DataRetentionExecutor.Tracker;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.TimeUnit;
-import stroom.entity.shared.Period;
+import stroom.util.shared.Period;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;

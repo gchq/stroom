@@ -16,7 +16,7 @@
 
 package stroom.task.impl;
 
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.ResultList;
 import stroom.cluster.task.api.ClusterTask;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;

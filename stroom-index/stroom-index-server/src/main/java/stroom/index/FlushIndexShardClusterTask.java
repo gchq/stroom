@@ -16,7 +16,7 @@
 
 package stroom.index;
 
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.shared.BaseCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.cluster.task.api.ClusterTask;
 import stroom.util.shared.VoidResult;

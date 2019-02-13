@@ -20,7 +20,7 @@ package stroom.util;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 class TestAbstractCommandLineTool extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAbstractCommandLineTool.class);

@@ -16,7 +16,7 @@
 
 package stroom.pipeline;
 
-import stroom.pipeline.scope.PipelineScoped;
+import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 

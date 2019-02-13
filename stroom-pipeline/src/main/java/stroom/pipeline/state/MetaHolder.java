@@ -18,7 +18,7 @@ package stroom.pipeline.state;
 
 import stroom.data.store.api.InputStreamProvider;
 import stroom.meta.shared.Meta;
-import stroom.pipeline.scope.PipelineScoped;
+import stroom.util.pipeline.scope.PipelineScoped;
 
 @PipelineScoped
 public class MetaHolder implements Holder {

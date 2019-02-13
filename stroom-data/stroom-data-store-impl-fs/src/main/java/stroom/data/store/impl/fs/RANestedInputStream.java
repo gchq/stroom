@@ -17,9 +17,9 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.NestedInputStream;
-import stroom.io.BasicStreamCloser;
-import stroom.io.SeekableInputStream;
-import stroom.io.StreamCloser;
+import stroom.util.io.BasicStreamCloser;
+import stroom.util.io.SeekableInputStream;
+import stroom.util.io.StreamCloser;
 
 import java.io.IOException;
 import java.io.InputStream;

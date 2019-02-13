@@ -20,7 +20,7 @@ package stroom.dashboard;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.DocumentEntityService;
-import stroom.entity.FindService;
+import stroom.util.entity.FindService;
 
 import java.util.List;
 

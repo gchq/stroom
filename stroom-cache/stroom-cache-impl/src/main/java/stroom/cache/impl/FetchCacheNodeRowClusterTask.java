@@ -18,7 +18,7 @@ package stroom.cache.impl;
 
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.FindCacheInfoCriteria;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.ResultList;
 import stroom.cluster.task.api.ClusterTask;
 
 class FetchCacheNodeRowClusterTask extends ClusterTask<ResultList<CacheInfo>> {

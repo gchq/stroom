@@ -26,7 +26,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventHandler;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.security.Security;
 import stroom.security.SecurityContext;

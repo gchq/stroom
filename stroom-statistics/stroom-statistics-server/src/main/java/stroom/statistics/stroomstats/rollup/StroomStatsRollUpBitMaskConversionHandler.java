@@ -16,8 +16,8 @@
 
 package stroom.statistics.stroomstats.rollup;
 
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.stats.shared.CustomRollUpMaskFields;
 import stroom.stats.shared.StroomStatsRollUpBitMaskConversionAction;
 import stroom.task.api.AbstractTaskHandler;

@@ -1,5 +1,0 @@
-ext.moduleName = 'stroom.resourcestore.api'
-
-dependencies {
-    implementation project(':stroom-util-shared')
-}

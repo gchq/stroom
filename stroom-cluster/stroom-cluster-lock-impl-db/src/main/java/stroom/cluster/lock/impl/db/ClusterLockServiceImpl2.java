@@ -23,8 +23,8 @@
 //import stroom.cluster.lock.impl.db.tables.records.ActivityRecord;
 //import stroom.cluster.lock.shared.Activity;
 //import stroom.cluster.lock.shared.FindActivityCriteria;
-//import stroom.entity.shared.BaseResultList;
-//import stroom.entity.shared.EntityServiceException;
+//import stroom.util.shared.BaseResultList;
+//import stroom.util.shared.EntityServiceException;
 //import stroom.security.SecurityContext;
 //import stroom.db.util.AuditUtil;
 //import stroom.db.util.JooqUtil;

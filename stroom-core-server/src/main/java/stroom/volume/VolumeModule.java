@@ -19,12 +19,12 @@ package stroom.volume;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.multibindings.OptionalBinder;
-import stroom.entity.EntityTypeBinder;
-import stroom.entity.FindService;
+import stroom.util.entity.EntityTypeBinder;
+import stroom.util.entity.FindService;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEvent.Handler;
-import stroom.entity.shared.Clearable;
-import stroom.entity.shared.Flushable;
+import stroom.util.shared.Clearable;
+import stroom.util.shared.Flushable;
 import stroom.node.shared.VolumeEntity;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 

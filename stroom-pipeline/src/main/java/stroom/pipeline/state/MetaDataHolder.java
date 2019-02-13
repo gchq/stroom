@@ -18,7 +18,7 @@
 package stroom.pipeline.state;
 
 import stroom.meta.shared.AttributeMap;
-import stroom.pipeline.scope.PipelineScoped;
+import stroom.util.pipeline.scope.PipelineScoped;
 
 @PipelineScoped
 public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Holder {

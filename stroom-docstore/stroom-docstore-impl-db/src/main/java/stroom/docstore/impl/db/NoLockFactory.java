@@ -1,7 +1,7 @@
 package stroom.docstore.impl.db;
 
 
-import stroom.docstore.RWLockFactory;
+import stroom.docstore.api.RWLockFactory;
 
 import java.util.function.Supplier;
 

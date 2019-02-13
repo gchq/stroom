@@ -21,7 +21,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import org.apache.lucene.index.IndexWriter;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.index.IndexShardService;
 import stroom.index.IndexShardWriter;
 import stroom.index.IndexShardWriterCache;

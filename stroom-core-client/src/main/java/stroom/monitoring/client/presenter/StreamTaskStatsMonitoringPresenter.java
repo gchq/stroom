@@ -16,7 +16,7 @@
 
 package stroom.monitoring.client.presenter;
 
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.shared.BaseCriteria;
 
 public abstract class StreamTaskStatsMonitoringPresenter<T extends BaseCriteria> {
     //

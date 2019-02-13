@@ -19,7 +19,7 @@ package stroom.data.store.impl.fs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.store.api.SegmentInputStream;
-import stroom.io.SeekableInputStream;
+import stroom.util.io.SeekableInputStream;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;

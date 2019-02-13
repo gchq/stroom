@@ -18,7 +18,7 @@ package stroom.feed.impl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.EntityTypeBinder;
+import stroom.util.entity.EntityTypeBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.feed.api.FeedProperties;

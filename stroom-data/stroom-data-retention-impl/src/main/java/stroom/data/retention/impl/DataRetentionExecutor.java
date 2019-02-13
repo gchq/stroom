@@ -24,7 +24,7 @@ import stroom.data.retention.api.DataRetentionAgeUtil;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.dictionary.api.DictionaryStore;
-import stroom.entity.shared.Period;
+import stroom.util.shared.Period;
 import stroom.util.xml.XMLMarshallerUtil;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;

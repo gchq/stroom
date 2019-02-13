@@ -3,20 +3,20 @@ ext.moduleName = 'stroom.dictionary.impl'
 dependencies {
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-core-shared')
-    implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
-    implementation project(':stroom-resourcestore:stroom-resourcestore-api')
+    implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    
+    implementation libs.stroomDocRef
+    implementation libs.stroomQueryApi
 
     implementation libs.dropwizard_metrics_annotation
     implementation libs.guice4
-    implementation libs.stroomDocRef
-    implementation libs.stroomQueryApi
+    implementation libs.ws_rs_api
 }

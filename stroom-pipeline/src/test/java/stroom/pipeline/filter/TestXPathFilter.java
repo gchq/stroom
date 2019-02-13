@@ -24,8 +24,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.MatchType;
-import stroom.test.StroomPipelineTestFileUtil;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.StroomPipelineTestFileUtil;
+import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.xml.SAXParserFactoryFactory;
 
 import javax.xml.namespace.NamespaceContext;

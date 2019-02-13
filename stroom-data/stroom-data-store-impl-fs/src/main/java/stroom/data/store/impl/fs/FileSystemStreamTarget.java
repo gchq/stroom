@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Target;
-import stroom.io.SeekableOutputStream;
+import stroom.util.io.SeekableOutputStream;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;

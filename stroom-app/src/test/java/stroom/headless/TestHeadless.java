@@ -22,13 +22,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.test.ComparisonHelper;
+import stroom.test.common.ComparisonHelper;
 import stroom.test.ContentImportService.ContentPack;
 import stroom.test.ContentPackDownloader;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
-import stroom.util.test.TempDir;
-import stroom.util.test.TempDirExtension;
+import stroom.test.common.util.test.TempDir;
+import stroom.test.common.util.test.TempDirExtension;
 import stroom.util.zip.ZipUtil;
 
 import java.io.IOException;

@@ -6,17 +6,17 @@ import org.jooq.SelectConditionStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.db.util.JooqUtil;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.IdSet;
-import stroom.entity.shared.PageRequest;
-import stroom.entity.shared.Sort.Direction;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.IdSet;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort.Direction;
 import stroom.meta.impl.db.ExpressionMapper.TermHandler;
 import stroom.meta.impl.db.MetaExpressionMapper.MetaTermHandler;
 import stroom.meta.impl.db.MetaImpl.Builder;
-import stroom.meta.impl.db.tables.MetaFeed;
-import stroom.meta.impl.db.tables.MetaProcessor;
-import stroom.meta.impl.db.tables.MetaType;
-import stroom.meta.impl.db.tables.MetaVal;
+import stroom.meta.impl.db.jooq.tables.MetaFeed;
+import stroom.meta.impl.db.jooq.tables.MetaProcessor;
+import stroom.meta.impl.db.jooq.tables.MetaType;
+import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.FindMetaCriteria;
@@ -50,11 +50,11 @@ import java.util.Set;
 
 import static org.jooq.impl.DSL.max;
 import static org.jooq.impl.DSL.selectDistinct;
-import static stroom.meta.impl.db.tables.Meta.META;
-import static stroom.meta.impl.db.tables.MetaFeed.META_FEED;
-import static stroom.meta.impl.db.tables.MetaProcessor.META_PROCESSOR;
-import static stroom.meta.impl.db.tables.MetaType.META_TYPE;
-import static stroom.meta.impl.db.tables.MetaVal.META_VAL;
+import static stroom.meta.impl.db.jooq.tables.Meta.META;
+import static stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
+import static stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
+import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
+import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
 class MetaServiceImpl implements MetaService {
@@ -69,7 +69,7 @@ class MetaServiceImpl implements MetaService {
     private final MetaSecurityFilter dataSecurityFilter;
     private final Security security;
 
-    private final stroom.meta.impl.db.tables.Meta meta = META.as("d");
+    private final stroom.meta.impl.db.jooq.tables.Meta meta = META.as("d");
     private final MetaFeed dataFeed = META_FEED.as("f");
     private final MetaType dataType = META_TYPE.as("dt");
     private final MetaProcessor dataProcessor = META_PROCESSOR.as("dp");

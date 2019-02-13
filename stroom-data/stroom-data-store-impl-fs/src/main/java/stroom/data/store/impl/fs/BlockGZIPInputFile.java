@@ -16,8 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.io.BasicStreamCloser;
-import stroom.io.StreamCloser;
+import stroom.util.io.BasicStreamCloser;
+import stroom.util.io.StreamCloser;
 
 import java.io.IOException;
 import java.io.InputStream;

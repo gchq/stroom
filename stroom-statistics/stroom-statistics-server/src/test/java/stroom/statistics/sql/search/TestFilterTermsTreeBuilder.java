@@ -24,7 +24,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.sql.search.FilterTermsTree.OperatorNode;
 import stroom.statistics.sql.search.FilterTermsTree.TermNode;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.util.Set;
 

@@ -1,6 +1,6 @@
 package stroom.docstore.impl.memory;
 
-import stroom.docstore.RWLockFactory;
+import stroom.docstore.api.RWLockFactory;
 
 import java.util.function.Supplier;
 

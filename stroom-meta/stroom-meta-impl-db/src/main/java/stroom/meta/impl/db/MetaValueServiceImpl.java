@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.db.util.JooqUtil;
-import stroom.meta.impl.db.tables.records.MetaValRecord;
+import stroom.meta.impl.db.jooq.tables.records.MetaValRecord;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
@@ -38,7 +38,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
-import static stroom.meta.impl.db.tables.MetaVal.META_VAL;
+import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
 class MetaValueServiceImpl implements MetaValueService {

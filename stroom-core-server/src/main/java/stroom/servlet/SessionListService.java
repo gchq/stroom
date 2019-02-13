@@ -17,8 +17,8 @@
 
 package stroom.servlet;
 
-import stroom.entity.FindService;
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.entity.FindService;
+import stroom.util.shared.BaseCriteria;
 
 interface SessionListService extends FindService<SessionDetails, BaseCriteria> {
 }

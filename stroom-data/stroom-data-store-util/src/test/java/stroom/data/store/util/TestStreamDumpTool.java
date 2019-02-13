@@ -27,9 +27,9 @@ import stroom.meta.shared.MetaProperties;
 import stroom.persist.ConnectionProvider;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.io.FileUtil;
-import stroom.util.test.FileSystemTestUtil;
-import stroom.util.test.TempDir;
-import stroom.util.test.TempDirExtension;
+import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.test.common.util.test.TempDir;
+import stroom.test.common.util.test.TempDirExtension;
 
 import javax.inject.Inject;
 import java.io.IOException;

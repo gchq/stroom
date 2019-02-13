@@ -19,7 +19,7 @@ package stroom.security.client.gin;
 import com.google.inject.Singleton;
 import stroom.changepassword.client.ChangePasswordPlugin;
 import stroom.core.client.gin.PluginModule;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.CurrentUser;
 import stroom.security.client.LoginManager;
 import stroom.security.client.LogoutPlugin;

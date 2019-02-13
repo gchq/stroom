@@ -18,8 +18,8 @@ package stroom.streamtask.shared;
 
 import stroom.util.shared.TreeAction;
 import stroom.task.shared.Action;
-import stroom.entity.shared.HasIsConstrained;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.HasIsConstrained;
+import stroom.util.shared.ResultList;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
 

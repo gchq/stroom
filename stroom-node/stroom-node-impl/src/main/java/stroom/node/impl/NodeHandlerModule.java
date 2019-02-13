@@ -19,7 +19,7 @@ package stroom.node.impl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.EntityEvent;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.node.shared.ClusterNodeInfoAction;
 import stroom.node.shared.FetchNodeInfoAction;
 import stroom.node.shared.FindSystemTableStatusAction;

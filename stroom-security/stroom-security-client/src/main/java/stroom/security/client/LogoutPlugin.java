@@ -22,7 +22,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.security.client.event.RequestLogoutEvent;
+import stroom.security.client.api.event.RequestLogoutEvent;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;

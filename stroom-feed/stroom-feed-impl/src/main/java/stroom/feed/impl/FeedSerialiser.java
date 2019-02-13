@@ -1,8 +1,8 @@
 package stroom.feed.impl;
 
-import stroom.docstore.DocumentSerialiser2;
-import stroom.docstore.Serialiser2;
-import stroom.docstore.Serialiser2Factory;
+import stroom.docstore.api.DocumentSerialiser2;
+import stroom.docstore.api.Serialiser2;
+import stroom.docstore.api.Serialiser2Factory;
 import stroom.feed.shared.FeedDoc;
 
 import javax.inject.Inject;

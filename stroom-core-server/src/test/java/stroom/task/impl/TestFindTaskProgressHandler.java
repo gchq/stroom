@@ -18,7 +18,7 @@ package stroom.task.impl;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.entity.shared.Sort.Direction;
+import stroom.util.shared.Sort.Direction;
 import stroom.node.shared.Node;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;

@@ -20,13 +20,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.data.store.impl.fs.shared.FileSystemVolume;
 import stroom.meta.shared.Meta;
-import stroom.node.shared.Node;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.test.FileSystemTestUtil;
-import stroom.util.test.TempDir;
-import stroom.util.test.TempDirExtension;
+import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.test.common.util.test.TempDir;
+import stroom.test.common.util.test.TempDirExtension;
 
 import java.io.IOException;
 import java.nio.file.Files;

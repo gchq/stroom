@@ -34,7 +34,7 @@ import stroom.statistics.sql.search.FilterTermsTree;
 import stroom.statistics.sql.search.FindEventCriteria;
 import stroom.statistics.sql.search.StatStoreCriteriaBuilder;
 import stroom.util.date.DateUtil;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
 import java.util.Arrays;

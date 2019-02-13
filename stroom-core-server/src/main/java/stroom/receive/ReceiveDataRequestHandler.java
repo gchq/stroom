@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
-import stroom.io.BufferFactory;
+import stroom.util.io.BufferFactory;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.StandardHeaderArguments;

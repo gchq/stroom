@@ -1,16 +1,18 @@
 ext.moduleName = 'stroom.task.impl'
 
 dependencies {
+    implementation project(':stroom-cluster:stroom-cluster-task-api')
+    implementation project(':stroom-core-shared')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-cluster:stroom-cluster-task-api')
-    implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
-
+    
+    implementation libs.stroomDocRef
+    
     implementation libs.guice4
     implementation libs.javax_inject
 }

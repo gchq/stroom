@@ -16,7 +16,7 @@
 
 package stroom.receive;
 
-import stroom.io.BufferFactory;
+import stroom.util.io.BufferFactory;
 
 import javax.inject.Inject;
 

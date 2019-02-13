@@ -7,7 +7,7 @@ import stroom.data.zip.StroomZipOutputStream;
 import stroom.data.zip.StroomZipOutputStreamUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.scheduler.Scheduler;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.io.IOException;
 

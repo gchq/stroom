@@ -16,8 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.CriteriaSet;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaSet;
 import stroom.meta.shared.Meta;
 
 public class FindDataVolumeCriteria extends BaseCriteria {

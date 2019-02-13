@@ -1,6 +1,6 @@
 package stroom.feed.impl;
 
-import stroom.entity.shared.EntityServiceException;
+import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

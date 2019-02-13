@@ -16,7 +16,7 @@
 
 package stroom.search;
 
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;

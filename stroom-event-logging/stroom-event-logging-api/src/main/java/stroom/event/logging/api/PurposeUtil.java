@@ -19,8 +19,8 @@ package stroom.event.logging.api;
 import event.logging.Data;
 import event.logging.Purpose;
 import event.logging.util.EventLoggingUtil;
-import stroom.activity.api.Activity;
-import stroom.activity.api.Activity.ActivityDetails;
+import stroom.activity.shared.Activity;
+import stroom.activity.shared.Activity.ActivityDetails;
 
 import java.util.List;
 

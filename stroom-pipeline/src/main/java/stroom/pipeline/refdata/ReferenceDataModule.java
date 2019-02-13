@@ -17,7 +17,7 @@
 package stroom.pipeline.refdata;
 
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.pipeline.factory.PipelineElementModule;
 import stroom.pipeline.refdata.store.RefDataStoreModule;
 import stroom.task.api.TaskHandlerBinder;

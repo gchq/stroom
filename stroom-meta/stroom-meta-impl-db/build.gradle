@@ -4,7 +4,8 @@ dependencies {
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-cluster:stroom-cluster-lock-impl-mock')
     implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-meta:stroom-meta-impl-db-gen')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-meta:stroom-meta-impl-db-jooq')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-db-util')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
@@ -12,9 +13,7 @@ dependencies {
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
     implementation project(':stroom-util-shared')
-    implementation project(':stroom-entity-shared')
     implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-job:stroom-job-api')
 
     implementation libs.stroomQueryApi

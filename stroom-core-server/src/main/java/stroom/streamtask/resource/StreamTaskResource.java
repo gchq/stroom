@@ -23,8 +23,8 @@ import com.codahale.metrics.health.HealthCheck;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
 import org.apache.commons.lang3.NotImplementedException;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Sort;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Sort;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.SecurityContext;
 import stroom.streamtask.StreamProcessorFilterService;
@@ -49,7 +49,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Comparator.comparingInt;
-import static stroom.entity.shared.Sort.Direction.ASCENDING;
+import static stroom.util.shared.Sort.Direction.ASCENDING;
 import static stroom.streamtask.resource.SearchKeywords.SORT_NEXT;
 import static stroom.streamtask.resource.SearchKeywords.addFiltering;
 

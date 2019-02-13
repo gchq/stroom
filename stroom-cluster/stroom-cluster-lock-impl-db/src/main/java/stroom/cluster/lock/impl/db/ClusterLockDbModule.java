@@ -12,7 +12,7 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.task.api.TaskHandlerBinder;
 
 import javax.inject.Provider;

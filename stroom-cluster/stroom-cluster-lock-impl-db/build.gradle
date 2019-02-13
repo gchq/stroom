@@ -5,19 +5,18 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-cluster:stroom-cluster-lock-impl-db-jooq')
+    implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-db-util')
-    implementation project(':stroom-entity-shared')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-cluster:stroom-cluster-task-api')
-    implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-job:stroom-job-api')
-    implementation project(':stroom-job:stroom-job-shared')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.stroomDocRef
+    
     implementation libs.hibernate_core
     implementation libs.flyway_core
     implementation libs.guice4

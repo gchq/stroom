@@ -23,10 +23,9 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static stroom.meta.impl.db.tables.MetaFeed.META_FEED;
+import static stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
 
 @Singleton
 class MetaFeedServiceImpl implements MetaFeedService {

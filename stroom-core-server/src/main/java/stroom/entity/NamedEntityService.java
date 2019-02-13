@@ -19,7 +19,7 @@ package stroom.entity;
 
 import stroom.entity.shared.HasLoadByName;
 import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.ProvidesNamePattern;
+import stroom.util.shared.ProvidesNamePattern;
 
 public interface NamedEntityService<E extends NamedEntity> extends BaseEntityService<E>, HasLoadByName<E>, ProvidesNamePattern {
     E create(String name);

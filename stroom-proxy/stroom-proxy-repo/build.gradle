@@ -1,18 +1,18 @@
 ext.moduleName = 'stroom.proxy.repo'
 
 dependencies {
-    implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-receive:stroom-receive-rules-impl')
-    implementation project(':stroom-util-shared')
-    implementation project(':stroom-util')
-    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-core-shared')
     implementation project(':stroom-data:stroom-data-zip')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-impl-fs')
+    implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-receive:stroom-receive-common')
+//    implementation project(':stroom-receive:stroom-receive-rules-impl')
+    implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-task:stroom-task-shared')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
 
     implementation libs.stroomDocRef
 

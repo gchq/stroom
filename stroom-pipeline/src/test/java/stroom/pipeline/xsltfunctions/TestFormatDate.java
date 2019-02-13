@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.date.DateUtil;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.time.Instant;
 import java.time.Month;

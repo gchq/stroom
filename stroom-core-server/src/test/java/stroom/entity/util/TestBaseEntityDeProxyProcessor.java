@@ -17,7 +17,7 @@
 package stroom.entity.util;
 
 import org.junit.jupiter.api.Disabled;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 @Disabled
 class TestBaseEntityDeProxyProcessor extends StroomUnitTest {

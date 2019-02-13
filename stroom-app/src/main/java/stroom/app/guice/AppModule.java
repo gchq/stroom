@@ -8,6 +8,7 @@ import stroom.lifecycle.impl.LifecycleServiceModule;
 import stroom.meta.statistics.impl.MetaStatisticsModule;
 import stroom.resource.impl.SessionResourceModule;
 import stroom.app.Config;
+import stroom.security.impl.SecurityContextModule;
 
 public class AppModule extends AbstractModule {
     private final Config configuration;
@@ -32,7 +33,7 @@ public class AppModule extends AbstractModule {
 
         install(new ClusterModule());
 //        install(new stroom.node.NodeTestConfigModule());
-        install(new stroom.security.SecurityContextModule());
+        install(new SecurityContextModule());
         install(new stroom.statistics.internal.InternalStatisticsModule());
         install(new MetaStatisticsModule());
 

@@ -16,7 +16,7 @@
 
 package stroom.task.impl;
 
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.ResultList;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;

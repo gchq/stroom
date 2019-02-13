@@ -18,7 +18,7 @@
 package stroom.entity;
 
 import event.logging.BaseObject;
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.shared.BaseCriteria;
 import stroom.event.logging.api.ObjectInfoProvider;
 
 class BaseCriteriaObjectInfoProvider implements ObjectInfoProvider {

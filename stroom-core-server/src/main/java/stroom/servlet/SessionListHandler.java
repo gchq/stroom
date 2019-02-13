@@ -16,8 +16,8 @@
 
 package stroom.servlet;
 
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.security.Security;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.AbstractTaskHandler;

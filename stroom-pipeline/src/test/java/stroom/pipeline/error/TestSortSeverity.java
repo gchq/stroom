@@ -19,7 +19,7 @@ package stroom.pipeline.error;
 
 import org.junit.jupiter.api.Test;
 import stroom.util.shared.Severity;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
 import java.util.Collections;

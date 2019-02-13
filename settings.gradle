@@ -22,7 +22,6 @@ include 'stroom-activity:stroom-activity-api'
 include 'stroom-activity:stroom-activity-impl-db'
 include 'stroom-activity:stroom-activity-impl-db-jooq'
 include 'stroom-activity:stroom-activity-impl-mock'
-include 'stroom-activity:stroom-activity-shared'
 
 // App.
 include 'stroom-app'
@@ -45,9 +44,8 @@ include 'stroom-cluster:stroom-cluster-task-impl'
 // Config
 include 'stroom-config:stroom-config-app'
 include 'stroom-config:stroom-config-common'
-include 'stroom-config:stroom-config-global-api'
 include 'stroom-config:stroom-config-global-impl-db'
-include 'stroom-config:stroom-config-global-impl-db-gen'
+include 'stroom-config:stroom-config-global-impl-db-jooq'
 
 // Core
 include 'stroom-core-client'
@@ -59,15 +57,14 @@ include 'stroom-core-shared'
 include 'stroom-dashboard-gwt'
 include 'stroom-dashboard:stroom-dashboard-client'
 include 'stroom-dashboard:stroom-dashboard-server'
-include 'stroom-dashboard:stroom-dashboard-shared'
 
 // Data projects
+include 'stroom-data:stroom-data-retention-api'
 include 'stroom-data:stroom-data-retention-impl'
-include 'stroom-data:stroom-data-retention-shared'
 include 'stroom-data:stroom-data-store-api'
 include 'stroom-data:stroom-data-store-impl'
 include 'stroom-data:stroom-data-store-impl-fs'
-include 'stroom-data:stroom-data-store-impl-fs-db-gen'
+include 'stroom-data:stroom-data-store-impl-fs-db-jooq'
 include 'stroom-data:stroom-data-store-impl-mock'
 include 'stroom-data:stroom-data-store-util'
 include 'stroom-data:stroom-data-zip'
@@ -85,12 +82,11 @@ include 'stroom-docstore:stroom-docstore-impl'
 include 'stroom-docstore:stroom-docstore-impl-db'
 include 'stroom-docstore:stroom-docstore-impl-fs'
 include 'stroom-docstore:stroom-docstore-impl-memory'
-include 'stroom-docstore:stroom-docstore-shared'
 
 // Data Meta projects
 include 'stroom-meta:stroom-meta-api'
 include 'stroom-meta:stroom-meta-impl-db'
-include 'stroom-meta:stroom-meta-impl-db-gen'
+include 'stroom-meta:stroom-meta-impl-db-jooq'
 include 'stroom-meta:stroom-meta-impl-mock'
 include 'stroom-meta:stroom-meta-statistics-api'
 include 'stroom-meta:stroom-meta-statistics-impl'
@@ -100,9 +96,6 @@ include 'stroom-elastic:stroom-elastic-api'
 include 'stroom-elastic:stroom-elastic-impl'
 include 'stroom-elastic:stroom-elastic-impl-http'
 
-// Entity // TODO : @66 Remove
-include 'stroom-entity-shared'
-
 // Event logging
 include 'stroom-event-logging:stroom-event-logging-api'
 include 'stroom-event-logging:stroom-event-logging-impl'
@@ -111,7 +104,7 @@ include 'stroom-event-logging:stroom-event-logging-impl'
 include 'stroom-explorer:stroom-explorer-api'
 include 'stroom-explorer:stroom-explorer-impl'
 include 'stroom-explorer:stroom-explorer-impl-db'
-include 'stroom-explorer:stroom-explorer-impl-db-gen'
+include 'stroom-explorer:stroom-explorer-impl-db-jooq'
 
 // Feed
 include 'stroom-feed:stroom-feed-api'
@@ -126,15 +119,13 @@ include 'stroom-importexport:stroom-importexport-impl'
 include 'stroom-importexport:stroom-importexport-migration'
 
 // Index
-include 'stroom-index:stroom-index-shared'
 include 'stroom-index:stroom-index-server'
 include 'stroom-index:stroom-index-client'
 include 'stroom-index:stroom-index-api'
 include 'stroom-index:stroom-index-impl-db'
-include 'stroom-index:stroom-index-impl-db-gen'
+include 'stroom-index:stroom-index-impl-db-jooq'
 
 // Kafka
-include 'stroom-kafka:stroom-kafka-shared'
 include 'stroom-kafka:stroom-kafka-impl'
 include 'stroom-kafka:stroom-kafka-pipeline'
 
@@ -142,7 +133,8 @@ include 'stroom-kafka:stroom-kafka-pipeline'
 include 'stroom-node:stroom-node-api'
 include 'stroom-node:stroom-node-impl'
 include 'stroom-node:stroom-node-impl-mock'
-//include 'stroom-node:stroom-node-impl-db-gen'
+include 'stroom-node:stroom-node-impl-db'
+include 'stroom-node:stroom-node-impl-db-jooq'
 
 // Lifecycle
 include 'stroom-lifecycle:stroom-lifecycle-api'
@@ -156,43 +148,38 @@ include 'stroom-proxy:stroom-proxy-app'
 include 'stroom-proxy:stroom-proxy-repo'
 
 // Resource store
-include 'stroom-resourcestore:stroom-resourcestore-api'
-include 'stroom-resourcestore:stroom-resourcestore-impl'
+include 'stroom-resource:stroom-resource-api'
+include 'stroom-resource:stroom-resource-impl'
 
 // Data Receipt
 include 'stroom-receive:stroom-receive-common'
 
 // Ruleset
-include 'stroom-receive:stroom-receive-rules-shared'
 include 'stroom-receive:stroom-receive-rules-impl'
 
 // Security
 include 'stroom-security:stroom-security-api'
-include 'stroom-security:stroom-security-shared'
-include 'stroom-security:stroom-security-server'
+include 'stroom-security:stroom-security-impl'
 include 'stroom-security:stroom-security-impl-mock'
 include 'stroom-security:stroom-security-client-api'
 include 'stroom-security:stroom-security-client'
 include 'stroom-security:stroom-security-impl-db'
-include 'stroom-security:stroom-security-impl-db-gen'
+include 'stroom-security:stroom-security-impl-db-jooq'
 
 // Statistics
 include 'stroom-statistics:stroom-statistics-api'
-include 'stroom-statistics:stroom-statistics-shared'
 include 'stroom-statistics:stroom-statistics-client'
 include 'stroom-statistics:stroom-statistics-server'
 
 // Task execution
 include 'stroom-task:stroom-task-api'
 include 'stroom-task:stroom-task-impl'
-include 'stroom-task:stroom-task-shared'
 
 // Scheduled jobs
 include 'stroom-job:stroom-job-api'
 include 'stroom-job:stroom-job-impl'
 include 'stroom-job:stroom-job-impl-db'
-include 'stroom-job:stroom-job-impl-db-gen'
-include 'stroom-job:stroom-job-shared'
+include 'stroom-job:stroom-job-impl-db-jooq'
 
 // Test project
 include 'stroom-test-common'

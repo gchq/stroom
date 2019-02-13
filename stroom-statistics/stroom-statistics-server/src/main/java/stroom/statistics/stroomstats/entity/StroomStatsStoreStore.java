@@ -17,7 +17,7 @@
 
 package stroom.statistics.stroomstats.entity;
 
-import stroom.docstore.DocumentStore;
+import stroom.docstore.api.DocumentStore;
 import stroom.docref.DocRef;
 import stroom.stats.shared.StroomStatsStoreDoc;
 

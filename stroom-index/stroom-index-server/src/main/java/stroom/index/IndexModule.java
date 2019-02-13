@@ -18,10 +18,10 @@ package stroom.index;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.EntityTypeBinder;
-import stroom.entity.FindService;
+import stroom.util.entity.EntityTypeBinder;
+import stroom.util.entity.FindService;
 import stroom.entity.shared.EntityEvent;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.impl.db.IndexDbModule;

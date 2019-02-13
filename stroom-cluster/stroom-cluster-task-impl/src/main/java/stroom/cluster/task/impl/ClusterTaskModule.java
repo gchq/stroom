@@ -19,7 +19,7 @@ package stroom.cluster.task.impl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.cluster.api.ClusterServiceBinder;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.cluster.task.api.ClusterDispatchAsync;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;

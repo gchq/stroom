@@ -1,9 +1,9 @@
 ext.moduleName = 'stroom.docstore.api'
 
 dependencies {
+    api project(':stroom-core-shared')
     api project(':stroom-explorer:stroom-explorer-api')
     api project(':stroom-importexport:stroom-importexport-api')
-    api project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-util-shared')
 //
     implementation libs.stroomDocRef

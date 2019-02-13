@@ -20,9 +20,7 @@ dependencies {
     implementation project(':stroom-proxy:stroom-proxy-repo')
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-receive:stroom-receive-rules-impl')
-    implementation project(':stroom-receive:stroom-receive-rules-shared')
     implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
@@ -49,6 +47,7 @@ dependencies {
     implementation libs.javax_inject
     implementation libs.javax_servlet_api
     implementation libs.jersey_client
+    implementation libs.jetty_server
     implementation libs.slf4j_api
     
     testImplementation project(':stroom-test-common')
@@ -66,6 +65,34 @@ dependencies {
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
 }
+
+jar {
+    //we need to first generate the swagger spec files so they can be added in to the jar
+//    mustRunAfter generateSwaggerDocumentation
+    manifest {
+        attributes(
+                "Implementation-Title": "Stroom Proxy",
+                "Implementation-Version": versions.stroom,
+                "Main-Class": "stroom.proxy.app.App"
+        )
+    }
+    archiveName jarName
+}
+
+shadowJar {
+    // We want to run the tests before we build the fat jar. 
+    dependsOn test
+
+    // Allows us to build fat jars with lots of files
+    zip64 true
+
+    // A transformer to merges files in META-INF/services
+    mergeServiceFiles()
+
+    archiveName fatJarName
+}
+
+
 //
 //war {
 //    exclude 'WEB-INF/lib/**'

@@ -18,7 +18,7 @@ package stroom.volume;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 
 public class MockVolumeModule extends AbstractModule {
     @Override

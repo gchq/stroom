@@ -7,7 +7,7 @@ import stroom.meta.shared.AttributeMap;
 import stroom.proxy.repo.StreamHandler;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
-import stroom.io.BufferFactory;
+import stroom.util.io.BufferFactory;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStatusCode;
 import stroom.receive.common.StroomStreamException;

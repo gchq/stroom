@@ -9,7 +9,7 @@ import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
 
-import static stroom.data.store.impl.fs.db.stroom.tables.FileTypePath.FILE_TYPE_PATH;
+import static stroom.data.store.impl.fs.db.jooq.tables.FileTypePath.FILE_TYPE_PATH;
 
 /**
  * This class exists to map feed id's to file paths using old data from the DB.

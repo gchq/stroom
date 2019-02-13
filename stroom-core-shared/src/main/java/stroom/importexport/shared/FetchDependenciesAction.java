@@ -17,7 +17,7 @@
 package stroom.importexport.shared;
 
 import stroom.task.shared.Action;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.ResultList;
 
 public class FetchDependenciesAction extends Action<ResultList<Dependency>> {
     private static final long serialVersionUID = -3560107233301674555L;

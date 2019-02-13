@@ -17,33 +17,8 @@
 package stroom.data.retention.impl;
 
 
-import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.retention.impl.DataRetentionExecutor.Progress;
-import stroom.data.retention.impl.DataRetentionExecutor.Tracker;
-import stroom.data.retention.shared.TimeUnit;
-import stroom.docref.DocRef;
-import stroom.entity.shared.BaseResultList;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
-import stroom.entity.shared.Period;
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.Status;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.data.retention.shared.DataRetentionRules;
-import stroom.data.retention.shared.DataRetentionRule;
-import stroom.util.date.DateUtil;
-
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

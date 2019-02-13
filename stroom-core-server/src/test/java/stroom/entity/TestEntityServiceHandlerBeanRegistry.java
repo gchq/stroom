@@ -18,7 +18,7 @@ package stroom.entity;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 class TestEntityServiceHandlerBeanRegistry extends StroomUnitTest {
     @Test

@@ -2,15 +2,13 @@ ext.moduleName = 'stroom.elastic.impl'
 
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-docstore:stroom-docstore-shared')
-    implementation project(':stroom-elastic:stroom-elastic-api')
-    implementation project(':stroom-entity-shared')
     implementation project(':stroom-core-shared')
-    implementation project(':stroom-util-shared')
+    implementation project(':stroom-elastic:stroom-elastic-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
     implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-security:stroom-security-server')
+    implementation project(':stroom-security:stroom-security-impl')
 
     implementation libs.guava
     implementation libs.guice4

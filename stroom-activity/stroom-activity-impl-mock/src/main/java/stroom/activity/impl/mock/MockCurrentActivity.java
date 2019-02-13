@@ -1,6 +1,6 @@
 package stroom.activity.impl.mock;
 
-import stroom.activity.api.Activity;
+import stroom.activity.shared.Activity;
 import stroom.activity.api.CurrentActivity;
 
 public class MockCurrentActivity implements CurrentActivity {

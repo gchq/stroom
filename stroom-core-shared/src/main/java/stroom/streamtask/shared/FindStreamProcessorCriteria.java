@@ -16,9 +16,8 @@
 
 package stroom.streamtask.shared;
 
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.CriteriaSet;
-import stroom.pipeline.shared.PipelineDoc;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaSet;
 import stroom.docref.DocRef;
 
 /**

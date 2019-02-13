@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.entity.cluster.ClearServiceClusterTask;
-import stroom.entity.shared.Period;
+import stroom.util.shared.Period;
 import stroom.job.shared.JobManager;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;

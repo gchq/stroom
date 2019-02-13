@@ -16,11 +16,11 @@
 
 package stroom.streamtask.shared;
 
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.CriteriaSet;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.Period;
-import stroom.entity.shared.Range;
+import stroom.util.shared.Period;
+import stroom.util.shared.Range;
 import stroom.docref.DocRef;
 
 public class FindStreamProcessorFilterCriteria extends BaseCriteria {

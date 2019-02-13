@@ -1,6 +1,6 @@
 package stroom.app;
 
-import stroom.entity.shared.PermissionException;
+import stroom.util.shared.PermissionException;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;

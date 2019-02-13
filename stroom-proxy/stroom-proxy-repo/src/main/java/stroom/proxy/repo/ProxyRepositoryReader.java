@@ -2,7 +2,7 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.io.BufferFactory;
+import stroom.util.io.BufferFactory;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.Scheduler;

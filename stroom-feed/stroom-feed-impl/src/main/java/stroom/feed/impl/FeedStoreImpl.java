@@ -18,10 +18,10 @@
 package stroom.feed.impl;
 
 import stroom.docref.DocRef;
-import stroom.docstore.Persistence;
-import stroom.docstore.Store;
-import stroom.docstore.StoreFactory;
-import stroom.entity.shared.EntityServiceException;
+import stroom.docstore.api.Persistence;
+import stroom.docstore.api.Store;
+import stroom.docstore.api.StoreFactory;
+import stroom.util.shared.EntityServiceException;
 import stroom.explorer.shared.DocumentType;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;

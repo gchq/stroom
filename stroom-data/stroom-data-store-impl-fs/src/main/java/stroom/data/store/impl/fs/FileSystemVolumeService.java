@@ -19,9 +19,9 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FileSystemVolume;
 import stroom.data.store.impl.fs.shared.FindFileSystemVolumeCriteria;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Clearable;
-import stroom.entity.shared.Flushable;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Clearable;
+import stroom.util.shared.Flushable;
 
 /**
  * API for handling volumes.

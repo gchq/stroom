@@ -19,7 +19,7 @@ package stroom.receive.rules.impl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.receive.common.AttributeMapFilterFactory;
-import stroom.entity.EntityTypeBinder;
+import stroom.util.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.receive.rules.shared.ReceiveDataRules;

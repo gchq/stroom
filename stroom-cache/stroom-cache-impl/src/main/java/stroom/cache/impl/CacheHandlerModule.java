@@ -21,7 +21,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.cache.shared.CacheClearAction;
 import stroom.cache.shared.FetchCacheNodeRowAction;
 import stroom.cache.shared.FetchCacheRowAction;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.task.api.TaskHandlerBinder;
 
 public class CacheHandlerModule extends AbstractModule {

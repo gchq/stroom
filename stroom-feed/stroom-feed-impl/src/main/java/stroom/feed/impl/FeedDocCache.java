@@ -22,7 +22,7 @@ import com.google.common.cache.LoadingCache;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
 import stroom.docref.DocRef;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.Security;

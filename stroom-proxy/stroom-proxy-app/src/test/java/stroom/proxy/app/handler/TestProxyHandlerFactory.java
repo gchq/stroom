@@ -2,19 +2,13 @@ package stroom.proxy.app.handler;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.proxy.app.handler.ForwardStreamConfig;
-import stroom.proxy.app.handler.ForwardStreamHandler;
-import stroom.proxy.app.handler.ForwardStreamHandlerFactory;
-import stroom.proxy.app.handler.LogStream;
-import stroom.proxy.app.handler.LogStreamConfig;
-import stroom.proxy.app.handler.MasterStreamHandlerFactory;
 import stroom.proxy.repo.ProxyRepositoryConfigImpl;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlerFactory;
 import stroom.proxy.repo.StreamHandler;
 import stroom.util.io.FileUtil;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import javax.inject.Provider;
 import java.util.ArrayList;

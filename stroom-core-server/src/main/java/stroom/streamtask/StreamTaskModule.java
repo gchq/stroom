@@ -18,7 +18,7 @@ package stroom.streamtask;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.FindService;
+import stroom.util.entity.FindService;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.streamtask.shared.FetchProcessorAction;

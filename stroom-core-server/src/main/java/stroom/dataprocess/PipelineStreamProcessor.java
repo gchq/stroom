@@ -29,7 +29,7 @@ import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.api.FeedProperties;
-import stroom.io.StreamCloser;
+import stroom.util.io.StreamCloser;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;

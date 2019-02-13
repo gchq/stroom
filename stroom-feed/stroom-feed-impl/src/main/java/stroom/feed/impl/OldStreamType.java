@@ -16,8 +16,8 @@
 
 package stroom.feed.impl;
 
-import stroom.entity.shared.HasPrimitiveValue;
-import stroom.entity.shared.PrimitiveValueConverter;
+import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.PrimitiveValueConverter;
 import stroom.importexport.migration.NamedEntity;
 
 /**

@@ -17,9 +17,9 @@
 package stroom.task.impl;
 
 import stroom.docref.SharedObject;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.PageRequest;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultList;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.cluster.task.api.ClusterCallEntry;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;

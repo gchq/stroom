@@ -1,6 +1,6 @@
 package stroom.meta.impl.db;
 
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 

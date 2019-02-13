@@ -16,7 +16,7 @@
 
 package stroom.statistics.sql.search;
 
-import stroom.entity.shared.Period;
+import stroom.util.shared.Period;
 import stroom.docref.SharedObject;
 
 import java.util.Collections;

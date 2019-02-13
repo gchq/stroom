@@ -18,9 +18,9 @@ package stroom.entity;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.EntityServiceFindDeleteAction;

@@ -17,7 +17,7 @@
 
 package stroom.search.shard;
 
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 
 public interface IndexShardSearcherCache extends Clearable {
     IndexShardSearcher get(Long indexShardId);

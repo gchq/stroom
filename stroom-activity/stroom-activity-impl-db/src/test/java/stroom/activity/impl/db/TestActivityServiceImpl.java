@@ -24,11 +24,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import stroom.activity.api.Activity;
-import stroom.activity.api.Activity.Prop;
+import stroom.activity.shared.Activity;
+import stroom.activity.shared.Activity.Prop;
 import stroom.activity.api.ActivityService;
-import stroom.activity.api.FindActivityCriteria;
-import stroom.entity.shared.BaseResultList;
+import stroom.activity.shared.FindActivityCriteria;
+import stroom.util.shared.BaseResultList;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 

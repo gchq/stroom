@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.TempDir;
-import stroom.util.test.TempDirExtension;
+import stroom.test.common.util.test.TempDir;
+import stroom.test.common.util.test.TempDirExtension;
 
 import java.io.IOException;
 import java.nio.file.Files;

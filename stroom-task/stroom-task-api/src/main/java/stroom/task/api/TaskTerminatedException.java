@@ -16,7 +16,7 @@
 
 package stroom.task.api;
 
-import stroom.entity.shared.EntityServiceException;
+import stroom.util.shared.EntityServiceException;
 
 public class TaskTerminatedException extends EntityServiceException {
     private static final long serialVersionUID = -6310262786770706152L;

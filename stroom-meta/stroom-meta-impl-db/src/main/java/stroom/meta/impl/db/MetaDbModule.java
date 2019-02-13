@@ -14,7 +14,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.MetaSecurityFilter;
 import stroom.db.util.HikariUtil;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 
 import javax.inject.Provider;

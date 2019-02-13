@@ -12,7 +12,7 @@ import stroom.data.store.impl.DataRetentionJobModule;
 import stroom.meta.impl.db.MetaDbJobsModule;
 import stroom.data.store.impl.fs.FileSystemDataStoreJobsModule;
 import stroom.index.IndexJobsModule;
-import stroom.job.JobSystemJobsModule;
+import stroom.job.impl.JobSystemJobsModule;
 import stroom.node.impl.NodeJobsModule;
 import stroom.pipeline.PipelineJobsModule;
 import stroom.pipeline.refdata.store.RefDataStoreJobsModule;

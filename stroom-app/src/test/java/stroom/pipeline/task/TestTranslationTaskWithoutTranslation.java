@@ -30,9 +30,9 @@ import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.ComparisonHelper;
+import stroom.test.common.ComparisonHelper;
 import stroom.test.StoreCreationTool;
-import stroom.test.StroomPipelineTestFileUtil;
+import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;

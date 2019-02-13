@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.util.Map;
 
-import static stroom.config.impl.db.tables.Config.CONFIG;
+import static stroom.config.impl.db.jooq.tables.Config.CONFIG;
 
 @SuppressWarnings("unused") // used by FlyWay
 public class V7_0_0_3__docref_serialisation implements JdbcMigration {

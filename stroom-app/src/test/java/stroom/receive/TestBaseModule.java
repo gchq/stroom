@@ -9,7 +9,7 @@ import stroom.docstore.impl.memory.MemoryPersistenceModule;
 import stroom.feed.impl.FeedModule;
 import stroom.meta.impl.mock.MockMetaModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
-import stroom.pipeline.scope.PipelineScopeModule;
+import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.receive.rules.impl.ReceiveDataRulesetModule;
 import stroom.security.impl.mock.MockSecurityContextModule;
 

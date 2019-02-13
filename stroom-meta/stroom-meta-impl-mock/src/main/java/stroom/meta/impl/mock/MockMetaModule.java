@@ -18,7 +18,7 @@ package stroom.meta.impl.mock;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.meta.shared.MetaService;
 
 public class MockMetaModule extends AbstractModule {

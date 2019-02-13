@@ -18,7 +18,7 @@
 package stroom.pipeline;
 
 import stroom.docref.DocRef;
-import stroom.docstore.DocumentStore;
+import stroom.docstore.api.DocumentStore;
 import stroom.pipeline.shared.PipelineDoc;
 
 import java.util.List;

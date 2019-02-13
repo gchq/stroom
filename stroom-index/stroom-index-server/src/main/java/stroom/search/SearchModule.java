@@ -18,7 +18,7 @@ package stroom.search;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.task.api.TaskHandlerBinder;
 
 public class SearchModule extends AbstractModule {

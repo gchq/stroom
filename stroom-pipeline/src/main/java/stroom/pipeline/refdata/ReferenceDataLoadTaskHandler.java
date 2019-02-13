@@ -23,7 +23,7 @@ import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.feed.api.FeedProperties;
-import stroom.io.StreamCloser;
+import stroom.util.io.StreamCloser;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineStore;

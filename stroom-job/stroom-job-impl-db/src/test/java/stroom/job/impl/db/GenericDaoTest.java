@@ -11,13 +11,13 @@ import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
-import stroom.job.impl.db.stroom.tables.records.JobRecord;
+import stroom.job.impl.db.jooq.tables.records.JobRecord;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static stroom.job.impl.db.stroom.Tables.JOB;
+import static stroom.job.impl.db.jooq.Tables.JOB;
 
 public class GenericDaoTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(GenericDaoTest.class);

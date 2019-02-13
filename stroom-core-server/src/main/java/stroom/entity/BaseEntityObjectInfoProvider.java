@@ -20,7 +20,7 @@ package stroom.entity;
 import event.logging.BaseObject;
 import event.logging.Object;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.Document;
+import stroom.util.shared.Document;
 import stroom.entity.shared.NamedEntity;
 import stroom.event.logging.api.ObjectInfoProvider;
 

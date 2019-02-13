@@ -1,6 +1,6 @@
 apply plugin: 'nu.studer.jooq'
 
-ext.moduleName = 'stroom.activity.impl.db.gen'
+ext.moduleName = 'stroom.activity.impl.db.jooq'
 
 dependencies {
     implementation libs.javax_annotation

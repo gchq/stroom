@@ -18,7 +18,7 @@ package stroom.util;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 class TestBackupConfig extends StroomUnitTest {
     @Test

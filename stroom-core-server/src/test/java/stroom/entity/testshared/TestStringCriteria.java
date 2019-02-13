@@ -18,9 +18,9 @@ package stroom.entity.testshared;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.entity.shared.StringCriteria;
-import stroom.entity.shared.StringCriteria.MatchStyle;
-import stroom.util.test.StroomUnitTest;
+import stroom.util.shared.StringCriteria;
+import stroom.util.shared.StringCriteria.MatchStyle;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

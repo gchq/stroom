@@ -1,7 +1,7 @@
 package stroom.meta.impl.mock;
 
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Clearable;
 import stroom.meta.api.ExpressionMatcher;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.EffectiveMetaDataCriteria;

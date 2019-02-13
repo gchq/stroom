@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.data.store.api.Store;
 import stroom.data.zip.StreamProgressMonitor;
 import stroom.feed.api.FeedProperties;
-import stroom.io.BufferFactory;
+import stroom.util.io.BufferFactory;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.meta.statistics.api.MetaStatistics;

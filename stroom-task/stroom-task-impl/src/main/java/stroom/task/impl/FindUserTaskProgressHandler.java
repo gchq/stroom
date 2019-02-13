@@ -16,8 +16,8 @@
 
 package stroom.task.impl;
 
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Sort.Direction;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Sort.Direction;
 import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.security.Security;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;

@@ -27,7 +27,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.process.client.presenter.ProcessorPresenter;
 import stroom.security.shared.PermissionNames;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.streamstore.client.presenter.ClassificationWrappedMetaPresenter;
 import stroom.streamstore.client.presenter.ProcessorTaskPresenter;
 import stroom.svg.client.Icon;

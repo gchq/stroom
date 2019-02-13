@@ -1,11 +1,11 @@
 package stroom.job.impl.db;
 
-import stroom.job.impl.db.stroom.tables.records.JobNodeRecord;
+import stroom.job.impl.db.jooq.tables.records.JobNodeRecord;
 
 import javax.inject.Inject;
 import java.util.Optional;
 
-import static stroom.job.impl.db.stroom.Tables.JOB_NODE;
+import static stroom.job.impl.db.jooq.Tables.JOB_NODE;
 
 public class JobNodeDaoImpl implements JobNodeDao {
 

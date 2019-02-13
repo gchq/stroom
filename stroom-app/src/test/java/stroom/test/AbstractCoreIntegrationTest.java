@@ -23,7 +23,7 @@ import org.junit.jupiter.api.TestInfo;
 import stroom.db.util.HikariUtil;
 import stroom.persist.PersistService;
 import stroom.task.api.TaskManager;
-import stroom.util.test.TempDir;
+import stroom.test.common.util.test.TempDir;
 
 import java.nio.file.Path;
 

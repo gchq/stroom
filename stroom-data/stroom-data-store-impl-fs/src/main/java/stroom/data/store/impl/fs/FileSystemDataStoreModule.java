@@ -29,7 +29,7 @@ import stroom.data.store.api.Store;
 import stroom.data.store.impl.SteamStoreStreamCloserImpl;
 import stroom.data.store.impl.DataStoreMaintenanceService;
 import stroom.db.util.HikariUtil;
-import stroom.io.StreamCloser;
+import stroom.util.io.StreamCloser;
 import stroom.task.api.TaskHandlerBinder;
 
 import javax.inject.Provider;

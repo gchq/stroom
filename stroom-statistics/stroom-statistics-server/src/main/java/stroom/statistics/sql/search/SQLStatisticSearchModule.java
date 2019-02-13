@@ -18,7 +18,7 @@ package stroom.statistics.sql.search;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.statistics.sql.StatisticsQueryService;
 
 public class SQLStatisticSearchModule extends AbstractModule {

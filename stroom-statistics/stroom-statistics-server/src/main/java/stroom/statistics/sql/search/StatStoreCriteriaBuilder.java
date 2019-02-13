@@ -2,8 +2,8 @@ package stroom.statistics.sql.search;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.Period;
-import stroom.entity.shared.Range;
+import stroom.util.shared.Period;
+import stroom.util.shared.Range;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;

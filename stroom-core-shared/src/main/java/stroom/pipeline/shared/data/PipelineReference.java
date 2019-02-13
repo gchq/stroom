@@ -17,7 +17,7 @@
 package stroom.pipeline.shared.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import stroom.entity.shared.Copyable;
+import stroom.util.shared.Copyable;
 import stroom.docref.DocRef;
 import stroom.util.shared.CompareBuilder;
 import stroom.docref.SharedObject;

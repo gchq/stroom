@@ -27,7 +27,7 @@ import stroom.config.global.api.ConfigProperty;
 import stroom.config.global.api.FetchGlobalConfigAction;
 import stroom.config.global.api.UpdateGlobalConfigAction;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;

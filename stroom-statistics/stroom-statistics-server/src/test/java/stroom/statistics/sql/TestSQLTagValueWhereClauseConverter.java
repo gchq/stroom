@@ -23,7 +23,7 @@ import stroom.entity.util.SqlBuilder;
 import stroom.statistics.sql.search.FilterOperationMode;
 import stroom.statistics.sql.search.FilterTermsTree;
 import stroom.statistics.sql.search.PrintableNode;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.util.Arrays;
 import java.util.regex.Matcher;

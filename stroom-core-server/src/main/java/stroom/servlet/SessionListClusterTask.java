@@ -16,7 +16,7 @@
 
 package stroom.servlet;
 
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.ResultList;
 import stroom.cluster.task.api.ClusterTask;
 
 public class SessionListClusterTask extends ClusterTask<ResultList<SessionDetails>> {

@@ -17,7 +17,7 @@
 
 package stroom.entity;
 
-import stroom.entity.shared.EntityServiceException;
+import stroom.util.shared.EntityServiceException;
 
 public class NameValidationUtil {
 //    public static void validate(final ProvidesNamePattern providesNamePattern, final BaseEntity entity) {

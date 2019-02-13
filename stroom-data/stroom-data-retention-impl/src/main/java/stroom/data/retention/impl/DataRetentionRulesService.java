@@ -18,7 +18,7 @@
 package stroom.data.retention.impl;
 
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.docstore.DocumentStore;
+import stroom.docstore.api.DocumentStore;
 
 interface DataRetentionRulesService extends DocumentStore<DataRetentionRules> {
 }

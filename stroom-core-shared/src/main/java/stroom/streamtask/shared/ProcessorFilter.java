@@ -17,8 +17,8 @@
 package stroom.streamtask.shared;
 
 import stroom.entity.shared.AuditedEntity;
-import stroom.importexport.api.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.importexport.shared.ExternalFile;
 import stroom.streamstore.shared.QueryData;
 
 import javax.persistence.Column;

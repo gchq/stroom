@@ -16,22 +16,6 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.cluster.lock.api.ClusterLockService;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.Status;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaFieldNames;
-import stroom.entity.shared.BaseResultList;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.task.api.TaskContext;
-import stroom.util.date.DateUtil;
-
-import javax.inject.Inject;
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class StreamDeleteExecutor {//extends AbstractBatchDeleteExecutor {
     private static final String TASK_NAME = "Stream Delete Executor";
     private static final String LOCK_NAME = "StreamDeleteExecutor";
