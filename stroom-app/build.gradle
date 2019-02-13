@@ -171,6 +171,7 @@ dependencies {
     testImplementation libs.hibernate_jpa_api
     testImplementation libs.hikari
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.lmdbjava
     testImplementation libs.lucene_core
     testImplementation libs.saxon_he
     testImplementation libs.slf4j_api
@@ -194,6 +195,7 @@ dependencies {
     testImplementation libs.dropwizard_client
     testImplementation libs.dropwizard_testing
     testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
 }
 
 jar {

@@ -17,14 +17,13 @@
 
 package stroom.pipeline.refdata;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.lmdbjava.Env;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,41 +31,33 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
-import stroom.cache.impl.CacheModule;
 import stroom.docref.DocRef;
-import stroom.docstore.Persistence;
-import stroom.docstore.impl.DocStoreModule;
-import stroom.docstore.impl.memory.MemoryPersistenceModule;
 import stroom.entity.shared.Range;
 import stroom.feed.shared.FeedDoc;
-import stroom.pipeline.PipelineModule;
-import stroom.pipeline.PipelineSerialiser;
 import stroom.pipeline.PipelineStore;
-import stroom.pipeline.feed.FeedModule;
-import stroom.pipeline.feed.FeedSerialiser;
 import stroom.pipeline.feed.FeedStore;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreConfig;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
-import stroom.pipeline.refdata.store.RefDataStoreModule;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
-import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.security.DocumentPermissionCache;
-import stroom.security.SecurityContext;
 import stroom.security.impl.mock.AllowAllMockSecurity;
-import stroom.security.impl.mock.MockSecurityContextModule;
 import stroom.streamstore.shared.StreamTypeNames;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.ByteSizeUnit;
 import stroom.util.date.DateUtil;
+import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -79,7 +70,7 @@ import java.util.TreeSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
-class TestReferenceData extends AbstractLmdbDbTest {
+class TestReferenceData extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceData.class);
 
     private static final long DB_MAX_SIZE = ByteSizeUnit.MEBIBYTE.longBytes(5);
@@ -95,81 +86,70 @@ class TestReferenceData extends AbstractLmdbDbTest {
     private static final String SID_TO_PF_4 = "SID_TO_PF_4";
     private static final String IP_TO_LOC_MAP_NAME = "IP_TO_LOC_MAP_NAME";
 
-//    private final SecurityContext securityContextMock = new MockSecurityContext();
-//    private final Persistence inMemoryPersistence = new MemoryPersistence();
-//    private final FeedNameValidator feedNameValidator = new FeedNameValidator(new DataFeedConfig());
-
-    @Inject
-    private SecurityContext securityContextMock;
-    @Inject
-    private Persistence inMemoryPersistence;
+    private Env<ByteBuffer> lmdbEnv = null;
+    private Path dbDir = null;
 
     @Mock
     private DocumentPermissionCache mockDocumentPermissionCache;
     @Mock
     private ReferenceDataLoader mockReferenceDataLoader;
 
+    @SuppressWarnings("unused")
     @Inject
     private RefDataStoreFactory refDataStoreFactory;
+
+    @SuppressWarnings("unused")
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
-    @Inject
-    private FeedSerialiser feedSerialiser;
-    @Inject
-    private PipelineSerialiser pipelineSerialiser;
 
     private RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
     private RefDataStore refDataStore;
-    private Injector injector;
 
+    @SuppressWarnings("unused")
     @Inject
     private FeedStore feedStore;
+
+    @SuppressWarnings("unused")
     @Inject
     private PipelineStore pipelineStore;
 
     @BeforeEach
-    public void setup() throws IOException {
-        super.setup();
+    void setup() throws IOException {
+
+        dbDir = Files.createTempDirectory("stroom");
+        LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}",
+                getMaxSizeBytes(), dbDir.toAbsolutePath().toString());
+
+        lmdbEnv = Env.create()
+                .setMapSize(getMaxSizeBytes())
+                .setMaxDbs(10)
+                .open(dbDir.toFile());
 
         LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
 
         refDataStoreConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
 
         setDbMaxSizeProperty(DB_MAX_SIZE);
-
-        injector = Guice.createInjector(
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-//                        bind(Persistence.class).toInstance(inMemoryPersistence);
-//                        bind(SecurityContext.class).toInstance(securityContextMock);
-                        bind(RefDataStoreConfig.class).toInstance(refDataStoreConfig);
-                        install(new CacheModule());
-                        install(new FeedModule());
-                        install(new PipelineModule());
-                        install(new RefDataStoreModule());
-                        install(new MemoryPersistenceModule());
-                        install(new MockSecurityContextModule());
-                        install(new PipelineScopeModule());
-                        install(new DocStoreModule());
-                    }
-                });
-
-        injector.injectMembers(this);
         refDataStore = refDataStoreFactory.getOffHeapStore();
-
-//        feedStore = new FeedStoreImpl(new StoreImpl<>(inMemoryPersistence, securityContextMock),
-//                securityContextMock, inMemoryPersistence, feedNameValidator, feedSerialiser);
-//        pipelineStore = new PipelineStoreImpl(new StoreImpl<>(inMemoryPersistence, securityContextMock),
-//                securityContextMock, inMemoryPersistence, pipelineSerialiser);
 
         Mockito.when(mockDocumentPermissionCache.hasDocumentPermission(
                 Mockito.anyString(), Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(true);
     }
 
+    @AfterEach
+    void teardown() {
+        if (lmdbEnv != null) {
+            lmdbEnv.close();
+        }
+        lmdbEnv = null;
+        if (Files.isDirectory(dbDir)) {
+            FileUtil.deleteDir(dbDir);
+        }
+    }
+
     private RefDataStoreHolder getRefDataStoreHolder() {
-        return injector.getInstance(RefDataStoreHolder.class);
+        return getInjector().getInstance(RefDataStoreHolder.class);
     }
 
     @Test
@@ -576,7 +556,15 @@ class TestReferenceData extends AbstractLmdbDbTest {
         }
     }
 
-    protected void setDbMaxSizeProperty(final long sizeInBytes) {
+    private void setDbMaxSizeProperty(final long sizeInBytes) {
         refDataStoreConfig.setMaxStoreSize(Long.toString(sizeInBytes));
+    }
+
+    private Path getDbDir() {
+        return dbDir;
+    }
+
+    private long getMaxSizeBytes() {
+        return DB_MAX_SIZE;
     }
 }

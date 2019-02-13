@@ -20,13 +20,12 @@ import com.google.inject.AbstractModule;
 import stroom.util.GuiceUtil;
 import stroom.util.RestResource;
 
-public class ExportResourceModule extends AbstractModule {
+public class ExportConfigResourceModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(ImportExportService.class).to(ImportExportServiceImpl.class);
-        bind(ImportExportSerializer.class).to(ImportExportSerializerImpl.class);
-        bind(ImportExportDocumentEventLog.class).to(ImportExportDocumentEventLogImpl.class);
 
+        // This module is separate to ImportExportModule so that headless can import
+        // ImportExportModule without dragging in the ExportConfigResource
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(ExportConfigResource.class);
     }
