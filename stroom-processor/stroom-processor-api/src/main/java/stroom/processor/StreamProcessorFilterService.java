@@ -19,23 +19,31 @@ package stroom.processor;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.HasIntCrud;
 import stroom.processor.shared.FindStreamProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 
-public interface StreamProcessorFilterService extends HasIntCrud<ProcessorFilter> {
+import java.util.Optional;
+
+public interface StreamProcessorFilterService {
 //        extends BaseEntityService<ProcessorFilter>, FindService<ProcessorFilter, FindStreamProcessorFilterCriteria> {
+
+    ProcessorFilter update(final ProcessorFilter processorFilter);
+//
+//    boolean delete(final int id);
+//
+    Optional<ProcessorFilter> fetch(final int id);
 
     BaseResultList<ProcessorFilter> find(FindStreamProcessorFilterCriteria criteria);
 
-    void addFindStreamCriteria(Processor streamProcessor,
-                               int priority,
-                               QueryData queryData);
+    ProcessorFilter createFilter(final Processor streamProcessor,
+                                 final QueryData queryData,
+                                 final boolean enabled,
+                                 final int priority);
 
-    ProcessorFilter createNewFilter(DocRef pipelineRef,
-                                    QueryData queryData,
-                                    boolean enabled,
-                                    int priority);
+    ProcessorFilter createFilter(final DocRef pipelineRef,
+                                 final QueryData queryData,
+                                 final boolean enabled,
+                                 final int priority);
 }

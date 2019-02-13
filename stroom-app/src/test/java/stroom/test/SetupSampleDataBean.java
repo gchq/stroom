@@ -228,7 +228,7 @@ public final class SetupSampleDataBean {
                                         .build())
                                 .build())
                         .build();
-                streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
+                streamProcessorFilterService.createFilter(pipeline, criteria, true, 10);
             }
         }
 
@@ -269,7 +269,7 @@ public final class SetupSampleDataBean {
                     .expression(expressionBuilder.build())
                     .build();
 
-            streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
+            streamProcessorFilterService.createFilter(pipeline, criteria, true, 10);
         }
     }
 

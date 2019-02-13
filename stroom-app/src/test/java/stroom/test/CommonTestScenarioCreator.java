@@ -97,7 +97,7 @@ public class CommonTestScenarioCreator {
         streamProcessor.setEnabled(true);
         streamProcessor = streamProcessorService.save(streamProcessor);
 
-        streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, queryData);
+        streamProcessorFilterService.createFilter(streamProcessor, 1, queryData);
     }
 
     public DocRef createIndex(final String name) {

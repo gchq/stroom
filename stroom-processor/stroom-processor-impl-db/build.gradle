@@ -29,10 +29,13 @@ dependencies {
     implementation libs.stroomQueryApi
 
     // 3rd party libs
+    implementation libs.dropwizard_metrics_healthchecks
     implementation libs.flyway_core
     implementation libs.guice4
     implementation libs.hikari
+    implementation libs.jackson_databind
     implementation libs.javax_inject
+    implementation libs.javax_validation
     implementation libs.jooq
     implementation libs.slf4j_api
 

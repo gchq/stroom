@@ -20,7 +20,7 @@ import stroom.entity.AbstractEntityMarshaller;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 
-class StreamProcessorFilterMarshaller extends AbstractEntityMarshaller<ProcessorFilter, QueryData> {
+public class StreamProcessorFilterMarshaller extends AbstractEntityMarshaller<ProcessorFilter, QueryData> {
     StreamProcessorFilterMarshaller() {
     }
 

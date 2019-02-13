@@ -218,7 +218,7 @@ public final class StoreCreationTool {
                             .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                             .build())
                     .build();
-            streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 2, findStreamQueryData);
+            streamProcessorFilterService.createFilter(streamProcessor, 2, findStreamQueryData);
         }
 
         return docRef;
@@ -385,7 +385,7 @@ public final class StoreCreationTool {
                             .build())
                     .build();
 
-            streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);
+            streamProcessorFilterService.createFilter(streamProcessor, 1, findStreamQueryData);
         }
 
         return docRef;
@@ -621,7 +621,7 @@ public final class StoreCreationTool {
                             .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                             .build())
                     .build();
-            streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);
+            streamProcessorFilterService.createFilter(streamProcessor, 1, findStreamQueryData);
         }
 
         return indexRef;

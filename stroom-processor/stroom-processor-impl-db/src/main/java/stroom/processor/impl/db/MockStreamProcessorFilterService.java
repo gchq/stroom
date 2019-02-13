@@ -37,9 +37,9 @@ public class MockStreamProcessorFilterService
         extends MockEntityService<ProcessorFilter, FindStreamProcessorFilterCriteria>
         implements CachedStreamProcessorFilterService {
     @Override
-    public void addFindStreamCriteria(final Processor streamProcessor,
-                                      final int priority,
-                                      final QueryData queryData) {
+    public void createFilter(final Processor streamProcessor,
+                             final int priority,
+                             final QueryData queryData) {
         final ProcessorFilter filter = new ProcessorFilter();
         filter.setStreamProcessorFilterTracker(new ProcessorFilterTracker());
         filter.setPriority(priority);
@@ -50,10 +50,10 @@ public class MockStreamProcessorFilterService
     }
 
     @Override
-    public ProcessorFilter createNewFilter(final DocRef pipelineRef,
-                                           final QueryData findStreamCriteria,
-                                           final boolean enabled,
-                                           final int priority) {
+    public ProcessorFilter createFilter(final DocRef pipelineRef,
+                                        final QueryData findStreamCriteria,
+                                        final boolean enabled,
+                                        final int priority) {
         return null;
     }
 

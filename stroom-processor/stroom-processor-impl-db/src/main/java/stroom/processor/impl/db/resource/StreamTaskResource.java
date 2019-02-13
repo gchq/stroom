@@ -19,20 +19,16 @@
 
 package stroom.processor.impl.db.resource;
 
-import com.codahale.metrics.health.HealthCheck;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
-import org.apache.commons.lang3.NotImplementedException;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.SecurityContext;
 import stroom.processor.StreamProcessorFilterService;
-import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
-import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.util.HasHealthCheck;
+import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -56,7 +52,7 @@ import static stroom.processor.impl.db.resource.SearchKeywords.addFiltering;
 @Api(value = "stream task - /v1")
 @Path("/streamtasks/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class StreamTaskResource implements HasHealthCheck {
+public class StreamTaskResource {
     private static final String FIELD_PROGRESS = "progress";
 
     private final StreamProcessorFilterService streamProcessorFilterService;
@@ -77,23 +73,34 @@ public class StreamTaskResource implements HasHealthCheck {
     public Response enable(
             @PathParam("filterId") int filterId,
             StreamTaskPatch patch) {
-        ProcessorFilter streamProcessorFilter = streamProcessorFilterService.loadById(filterId);
-        //TODO what if it doesn't exist?
 
-        boolean patchApplied = false;
-        if (patch.getOp().equalsIgnoreCase("replace")) {
-            if (patch.getPath().equalsIgnoreCase("enabled")) {
-                streamProcessorFilter.setEnabled(Boolean.parseBoolean(patch.getValue()));
-                patchApplied = true;
-            }
-        }
+        return streamProcessorFilterService.fetch(filterId)
+                .map(processorFilter -> {
+                    boolean patchApplied = false;
+                    if (patch.getOp().equalsIgnoreCase("replace")) {
+                        if (patch.getPath().equalsIgnoreCase("enabled")) {
+                            processorFilter.setEnabled(Boolean.parseBoolean(patch.getValue()));
+                            patchApplied = true;
+                        }
+                    }
 
-        if (patchApplied) {
-            streamProcessorFilterService.save(streamProcessorFilter);
-            return Response.ok().build();
-        } else {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Unable to apply the requested patch. See server logs for details.").build();
-        }
+                    if (patchApplied) {
+                        streamProcessorFilterService.update(processorFilter);
+                        return Response
+                                .ok()
+                                .build();
+                    } else {
+                        return Response
+                                .status(Response.Status.BAD_REQUEST)
+                                .entity("Unable to apply the requested patch. See server logs for details.")
+                                .build();
+                    }
+                })
+                .orElseGet(() ->
+                        Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(LambdaLogger.buildMessage("Filter with ID {} could not be found", filterId))
+                                .build());
     }
 
     @GET
@@ -172,16 +179,6 @@ public class StreamTaskResource implements HasHealthCheck {
         final StreamTasks response = new StreamTasks(pageToReturn, values.size());
 
         return Response.ok(response).build();
-    }
-
-    @Override
-    public HealthCheck.Result getHealth() {
-        throw new NotImplementedException("public HealthCheck.Result getHealth()");
-    }
-
-    @Override
-    public HealthCheck getHealthCheck() {
-        throw new NotImplementedException("public HealthCheck getHealthCheck()");
     }
 
     private List<StreamTask> find(final FindStreamProcessorFilterCriteria criteria) {

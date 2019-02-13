@@ -81,10 +81,10 @@ class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
 
         final FindStreamProcessorFilterCriteria findStreamProcessorFilterCriteria = new FindStreamProcessorFilterCriteria();
 
-        streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, new QueryData());
+        streamProcessorFilterService.createFilter(streamProcessor, 1, new QueryData());
         assertThat(streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size()).isEqualTo(1);
 
-        streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 10, new QueryData());
+        streamProcessorFilterService.createFilter(streamProcessor, 10, new QueryData());
         assertThat(streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size()).isEqualTo(2);
 
         findStreamProcessorFilterCriteria.setPriorityRange(new Range<>(10, null));
@@ -119,7 +119,7 @@ class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
 
         final FindStreamProcessorFilterCriteria findStreamProcessorFilterCriteria = new FindStreamProcessorFilterCriteria();
 
-        streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);
+        streamProcessorFilterService.createFilter(streamProcessor, 1, findStreamQueryData);
         final BaseResultList<ProcessorFilter> filters = streamProcessorFilterService
                 .find(findStreamProcessorFilterCriteria);
         ProcessorFilter filter = filters.getFirst();

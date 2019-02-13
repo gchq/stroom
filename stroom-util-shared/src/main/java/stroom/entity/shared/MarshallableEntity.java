@@ -1,7 +1,6 @@
 package stroom.entity.shared;
 
-import stroom.util.shared.HasId;
+public interface MarshallableEntity extends HasData{
 
-public interface MarshallableEntity extends HasData, HasId {
-
+    Number getId();
 }

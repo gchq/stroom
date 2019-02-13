@@ -132,7 +132,7 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                             submittedListSB.append(streamIdSet.size());
                             submittedListSB.append(" streams\n");
 
-                            streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 10, queryData);
+                            streamProcessorFilterService.createFilter(streamProcessor, queryData, true, 10);
                         }
                     }
 

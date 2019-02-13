@@ -41,7 +41,7 @@ public class CreateProcessorHandler extends AbstractTaskHandler<CreateProcessorA
     @Override
     public ProcessorFilter exec(final CreateProcessorAction action) {
         return security.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () ->
-                streamProcessorFilterService.createNewFilter(action.getPipeline(), action.getQueryData(),
+                streamProcessorFilterService.createFilter(action.getPipeline(), action.getQueryData(),
                         action.isEnabled(), action.getPriority()));
     }
 }
