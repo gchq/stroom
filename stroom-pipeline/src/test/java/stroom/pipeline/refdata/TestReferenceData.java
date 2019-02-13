@@ -30,24 +30,21 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
 import stroom.cache.impl.CacheModule;
 import stroom.docref.DocRef;
-import stroom.docstore.impl.DocStoreModule;
 import stroom.docstore.Persistence;
+import stroom.docstore.impl.DocStoreModule;
 import stroom.docstore.impl.memory.MemoryPersistenceModule;
 import stroom.entity.shared.Range;
-import stroom.pipeline.feed.FeedModule;
-import stroom.pipeline.feed.FeedSerialiser;
-import stroom.pipeline.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineModule;
 import stroom.pipeline.PipelineSerialiser;
 import stroom.pipeline.PipelineStore;
-import stroom.pipeline.scope.PipelineScopeModule;
-import stroom.pipeline.scope.PipelineScopeRunnable;
-import stroom.pipeline.shared.data.PipelineReference;
-import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.feed.FeedModule;
+import stroom.pipeline.feed.FeedSerialiser;
+import stroom.pipeline.feed.FeedStore;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreConfig;
@@ -56,14 +53,16 @@ import stroom.pipeline.refdata.store.RefDataStoreModule;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
+import stroom.pipeline.scope.PipelineScopeModule;
+import stroom.pipeline.scope.PipelineScopeRunnable;
+import stroom.pipeline.shared.data.PipelineReference;
+import stroom.pipeline.state.FeedHolder;
 import stroom.security.DocumentPermissionCache;
 import stroom.security.SecurityContext;
-import stroom.security.impl.SecurityImpl;
-import stroom.security.impl.mock.MockSecurityContext;
+import stroom.security.impl.mock.AllowAllMockSecurity;
 import stroom.security.impl.mock.MockSecurityContextModule;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.ByteSizeUnit;
-import stroom.cache.api.CacheManager;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
@@ -210,7 +209,7 @@ class TestReferenceData extends AbstractLmdbDbTest {
                         getRefDataStoreHolder(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
-                        new SecurityImpl(new MockSecurityContext()));
+                        new AllowAllMockSecurity());
 
                 Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
 
@@ -423,7 +422,7 @@ class TestReferenceData extends AbstractLmdbDbTest {
                         getRefDataStoreHolder(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
-                        new SecurityImpl(new MockSecurityContext()));
+                        new AllowAllMockSecurity());
 
                 Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
 
@@ -496,7 +495,7 @@ class TestReferenceData extends AbstractLmdbDbTest {
                         getRefDataStoreHolder(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
-                        new SecurityImpl(new MockSecurityContext()));
+                        new AllowAllMockSecurity());
 
                 Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
 

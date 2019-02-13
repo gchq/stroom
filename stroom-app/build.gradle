@@ -28,12 +28,13 @@ dependencies {
     implementation project(':stroom-activity:stroom-activity-impl-db')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cache:stroom-cache-impl')
+    implementation project(':stroom-cluster-lock:stroom-cluster-lock-api')
+    implementation project(':stroom-cluster-lock:stroom-cluster-lock-impl-db')
     implementation project(':stroom-config:stroom-config-app')
     implementation project(':stroom-config:stroom-config-global-impl-db')
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-server')
-    implementation project(':stroom-meta:stroom-meta-impl-db')
     implementation project(':stroom-data-store:stroom-data-store-impl-fs')
     implementation project(':stroom-db-util')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
@@ -50,10 +51,15 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-importexport:stroom-importexport-impl')
     implementation project(':stroom-index:stroom-index-server')
+    implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-job:stroom-job-impl')
+    implementation project(':stroom-job:stroom-job-impl-db')
+    implementation project(':stroom-job:stroom-job-shared')
     implementation project(':stroom-kafka:stroom-kafka-impl')
     implementation project(':stroom-kafka:stroom-kafka-pipeline')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-impl')
+    implementation project(':stroom-meta:stroom-meta-impl-db')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-node:stroom-node-impl')
     implementation project(':stroom-pipeline')
@@ -64,16 +70,11 @@ dependencies {
     implementation project(':stroom-ruleset:stroom-ruleset-server')
     implementation project(':stroom-ruleset:stroom-ruleset-shared')
     implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-impl')
     implementation project(':stroom-security:stroom-security-server')
     implementation project(':stroom-statistics:stroom-statistics-server')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-shared')
-    implementation project(':stroom-job:stroom-job-api')
-    implementation project(':stroom-job:stroom-job-impl')
-    implementation project(':stroom-job:stroom-job-shared')
-    implementation project(':stroom-job:stroom-job-impl-db')
-    implementation project(':stroom-cluster-lock:stroom-cluster-lock-api')
-    implementation project(':stroom-cluster-lock:stroom-cluster-lock-impl-db')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
@@ -84,7 +85,6 @@ dependencies {
     implementation libs.guice4
     implementation libs.javax_inject
     implementation libs.jcommander
-    implementation libs.jetty_servlet
 
     implementation(libs.dropwizard_assets) {
         exclude(group: "org.glassfish.web", module: "javax.el")
@@ -92,6 +92,7 @@ dependencies {
     implementation(libs.dropwizard_core) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
+    implementation libs.jetty_servlet
     implementation libs.dropwizard_jersey
     implementation libs.dropwizard_jetty
     implementation libs.dropwizard_metrics_healthchecks

@@ -83,6 +83,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.search.shard.ShardModule());
         install(new stroom.search.SearchElementModule());
         install(new stroom.security.SecurityModule());
+        install(new stroom.security.impl.SecurityModule());
         install(new stroom.servicediscovery.ServiceDiscoveryModule());
         install(new stroom.servlet.ServletModule());
         install(new SQLStatisticsModule());
@@ -106,5 +107,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.volume.VolumeHandlerModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
         install(new stroom.job.impl.db.JobDbModule());
+        install(new stroom.streamstore.StreamAttributeMapResourceModule());
     }
 }

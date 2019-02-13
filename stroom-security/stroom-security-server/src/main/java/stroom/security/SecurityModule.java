@@ -46,7 +46,6 @@ public class SecurityModule extends AbstractModule {
         bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
 
-        // Provide object info to the logging service.
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(DocumentPermissionsCache.class)
                 .addBinding(UserAppPermissionsCache.class)
@@ -73,6 +72,7 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(JWTService.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(AuthorisationResource.class);
+                .addBinding(AuthorisationResource.class)
+                .addBinding(SessionResource.class);
     }
 }

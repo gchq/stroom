@@ -23,6 +23,8 @@ import stroom.streamstore.shared.DownloadDataAction;
 import stroom.streamstore.shared.UpdateStatusAction;
 import stroom.streamstore.shared.UploadDataAction;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.GuiceUtil;
+import stroom.util.RestResource;
 
 public class DataStoreHandlerModule extends AbstractModule {
     @Override
@@ -35,5 +37,9 @@ public class DataStoreHandlerModule extends AbstractModule {
                 .bind(StreamDownloadTask.class, StreamDownloadTaskHandler.class)
                 .bind(StreamUploadTask.class, StreamUploadTaskHandler.class)
                 .bind(UploadDataAction.class, UploadDataHandler.class);
+
+        // TODO probably not the right place for this binding
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(DataResource.class);
     }
 }
