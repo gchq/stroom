@@ -9,10 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -63,7 +61,7 @@ public class TempDirExtension implements ParameterResolver, TestInstancePostProc
                 });
     }
 
-    private static Stream<Field> getFieldsUpTo(@Nonnull Class<?> startClass,
+    private static Stream<Field> getFieldsUpTo(Class<?> startClass,
                                                @Nullable Class<?> exclusiveParent) {
 
         // get fields for startClass only

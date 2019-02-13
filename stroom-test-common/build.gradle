@@ -6,10 +6,12 @@ dependencies {
 
     implementation libs.assertj_core
     implementation libs.commons_lang
+    implementation libs.google_findbugs
     implementation libs.guava
     implementation libs.guice4
     implementation libs.junit_jupiter_api
     implementation libs.slf4j_api
+
 
     // The following logging libs are needed when running junits outside dropwizard
     runtimeOnly libs.jcl_over_slf4j

@@ -7,7 +7,6 @@ import stroom.entity.shared.HasCrud;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.sql.DataSource;
 import java.util.Optional;
 
@@ -24,17 +23,17 @@ public class GenericDao<RecordType extends UpdatableRecord, EntityType, IdType>
     // Could use the pattern described here to get the table type:
     // https://stackoverflow.com/questions/3403909/get-generic-type-of-class-at-runtime
     // That places an interface requirement on the entity, which I think is best avoided.
-    public GenericDao(@Nonnull final Table<RecordType> table,
-                      @Nonnull final TableField<RecordType, IdType> idField,
-                      @Nonnull final Class<EntityType> entityTypeClass,
-                      @Nonnull final DataSource connectionProvider) {
+    public GenericDao(final Table<RecordType> table,
+                      final TableField<RecordType, IdType> idField,
+                      final Class<EntityType> entityTypeClass,
+                      final DataSource connectionProvider) {
         this.table = table;
         this.idField = idField;
         this.entityTypeClass = entityTypeClass;
         this.connectionProvider = connectionProvider;
     }
 
-    public EntityType create(@Nonnull final EntityType entity) {
+    public EntityType create(final EntityType entity) {
         return JooqUtil.contextResult(connectionProvider, (context) -> {
             LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Creating a {}", table.getName()));
             RecordType record = context.newRecord(table, entity);
@@ -43,7 +42,7 @@ public class GenericDao<RecordType extends UpdatableRecord, EntityType, IdType>
         });
     }
 
-    public EntityType update(@Nonnull final EntityType entity) {
+    public EntityType update(final EntityType entity) {
         return JooqUtil.contextWithOptimisticLocking(connectionProvider, (context) -> {
             RecordType record = context.newRecord(table, entity);
             LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
@@ -53,7 +52,7 @@ public class GenericDao<RecordType extends UpdatableRecord, EntityType, IdType>
         });
     }
 
-    public boolean delete(@Nonnull final IdType id) {
+    public boolean delete(final IdType id) {
         return JooqUtil.contextResult(connectionProvider, context -> {
             LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
                     "Deleting a {} with id {}", table.getName(), id));
@@ -64,7 +63,7 @@ public class GenericDao<RecordType extends UpdatableRecord, EntityType, IdType>
         });
     }
 
-    public Optional<EntityType> fetch(@Nonnull final IdType id) {
+    public Optional<EntityType> fetch(final IdType id) {
         return JooqUtil.contextWithOptimisticLocking(connectionProvider, (context) -> {
             LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
                     "Fetching {} with id {}", table.getName(), id));
