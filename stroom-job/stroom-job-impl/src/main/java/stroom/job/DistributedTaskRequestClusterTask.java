@@ -16,7 +16,7 @@
 
 package stroom.job;
 
-import stroom.task.cluster.api.ClusterTask;
+import stroom.cluster.task.api.ClusterTask;
 import stroom.task.shared.Task;
 
 class DistributedTaskRequestClusterTask extends ClusterTask<DistributedTaskRequestResult> {

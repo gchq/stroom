@@ -27,7 +27,7 @@ import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.receive.ReceiveDataModule;
 import stroom.receive.rules.impl.ReceiveDataRulesetModule;
 import stroom.statistics.sql.SQLStatisticsModule;
-import stroom.task.cluster.impl.ClusterTaskModule;
+import stroom.cluster.task.impl.ClusterTaskModule;
 import stroom.task.impl.TaskModule;
 
 public class CoreModule extends AbstractModule {

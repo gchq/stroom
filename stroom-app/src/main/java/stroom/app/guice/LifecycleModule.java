@@ -18,7 +18,7 @@ import stroom.statistics.internal.InternalStatisticsLifecycleModule;
 import stroom.statistics.sql.SQLStatisticsLifecycleModule;
 import stroom.streamtask.StreamTaskLifecycleModule;
 import stroom.task.impl.TaskManagerLifecycleModule;
-import stroom.task.cluster.impl.ClusterTaskLifecycleModule;
+import stroom.cluster.task.impl.ClusterTaskLifecycleModule;
 
 public class LifecycleModule extends AbstractModule {
     @Override

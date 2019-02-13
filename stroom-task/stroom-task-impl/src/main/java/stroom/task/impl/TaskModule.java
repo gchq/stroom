@@ -22,7 +22,6 @@ import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.task.api.TaskManager;
-import stroom.task.cluster.api.TerminateTaskClusterTask;
 import stroom.task.shared.FindTaskProgressAction;
 import stroom.task.shared.FindUserTaskProgressAction;
 import stroom.task.shared.TerminateTaskProgressAction;

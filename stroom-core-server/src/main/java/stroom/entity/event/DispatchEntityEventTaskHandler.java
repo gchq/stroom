@@ -20,10 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.api.NodeNotFoundException;
-import stroom.task.cluster.api.NullClusterStateException;
-import stroom.task.cluster.api.TargetNodeSetFactory;
+import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.NodeNotFoundException;
+import stroom.cluster.task.api.NullClusterStateException;
+import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;

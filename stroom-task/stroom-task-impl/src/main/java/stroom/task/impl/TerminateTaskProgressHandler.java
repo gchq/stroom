@@ -20,9 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.api.TargetType;
-import stroom.task.cluster.api.TerminateTaskClusterTask;
+import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.TargetType;
+import stroom.cluster.task.api.TerminateTaskClusterTask;
 import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.shared.VoidResult;
 

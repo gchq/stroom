@@ -18,7 +18,7 @@ package stroom.index;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.task.cluster.api.ClusterTask;
+import stroom.cluster.task.api.ClusterTask;
 import stroom.util.shared.VoidResult;
 
 public class CloseIndexShardClusterTask<C extends BaseCriteria> extends ClusterTask<VoidResult> {

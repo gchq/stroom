@@ -19,7 +19,7 @@ package stroom.cache.impl;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.entity.shared.ResultList;
-import stroom.task.cluster.api.ClusterTask;
+import stroom.cluster.task.api.ClusterTask;
 
 class FetchCacheNodeRowClusterTask extends ClusterTask<ResultList<CacheInfo>> {
     private static final long serialVersionUID = 3442806159160286110L;

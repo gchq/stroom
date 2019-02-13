@@ -20,7 +20,7 @@ import stroom.index.shared.IndexField;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.task.cluster.api.ClusterTask;
+import stroom.cluster.task.api.ClusterTask;
 import stroom.task.shared.Task;
 
 import java.util.List;

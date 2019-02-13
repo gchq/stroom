@@ -20,7 +20,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort.Direction;
 import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.security.Security;
-import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindUserTaskProgressAction;
 import stroom.task.shared.TaskProgress;

@@ -17,7 +17,7 @@
 package stroom.cache.impl;
 
 import stroom.cache.shared.FindCacheInfoCriteria;
-import stroom.task.cluster.api.ClusterTask;
+import stroom.cluster.task.api.ClusterTask;
 import stroom.util.shared.VoidResult;
 
 class CacheClearClusterTask extends ClusterTask<VoidResult> {

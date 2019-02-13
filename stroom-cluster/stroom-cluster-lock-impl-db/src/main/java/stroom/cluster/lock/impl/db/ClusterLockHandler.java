@@ -20,10 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.cluster.api.ClusterCallEntry;
-import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.api.DefaultClusterResultCollector;
-import stroom.task.cluster.api.TargetType;
+import stroom.cluster.task.api.ClusterCallEntry;
+import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.DefaultClusterResultCollector;
+import stroom.cluster.task.api.TargetType;
 import stroom.util.shared.SharedBoolean;
 
 import javax.inject.Inject;
