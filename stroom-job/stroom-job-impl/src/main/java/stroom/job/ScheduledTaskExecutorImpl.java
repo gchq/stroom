@@ -24,7 +24,7 @@ import stroom.job.api.ScheduledTaskExecutor;
 import stroom.job.api.TaskConsumer;
 import stroom.job.shared.JobNode;
 import stroom.security.Security;
-import stroom.task.impl.StroomThreadGroup;
+import stroom.util.thread.StroomThreadGroup;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.Task;
 import stroom.util.scheduler.FrequencyScheduler;

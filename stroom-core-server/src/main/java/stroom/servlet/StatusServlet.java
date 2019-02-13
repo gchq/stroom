@@ -19,14 +19,16 @@ package stroom.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.volume.VolumeService;
+import stroom.node.api.NodeInfo;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.node.shared.VolumeState;
 import stroom.security.Security;
-import stroom.ui.config.shared.UiConfig;
+import stroom.util.BuildInfoProvider;
+import stroom.util.shared.BuildInfo;
+import stroom.volume.VolumeService;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -59,15 +61,18 @@ public class StatusServlet extends HttpServlet {
     private static final String AREA_VOLUME = "VOLUME";
     private static final String MSG_OK = "OK";
 
-    private final UiConfig clientProperties;
+    private final BuildInfoProvider buildInfoProvider;
+    private final NodeInfo nodeInfo;
     private final VolumeService volumeService;
     private final Security security;
 
     @Inject
-    StatusServlet(final UiConfig clientProperties,
+    StatusServlet(final BuildInfoProvider buildInfoProvider,
+                  final NodeInfo nodeInfo,
                   final VolumeService volumeService,
                   final Security security) {
-        this.clientProperties = clientProperties;
+        this.buildInfoProvider = buildInfoProvider;
+        this.nodeInfo = nodeInfo;
         this.volumeService = volumeService;
         this.security = security;
     }
@@ -136,10 +141,11 @@ public class StatusServlet extends HttpServlet {
      */
     private void reportNodeStatus(final PrintWriter pw) {
         try {
-            writeInfoLine(pw, AREA_BUILD, "Build version " + clientProperties.getBuildVersion());
-            writeInfoLine(pw, AREA_BUILD, "Build date " + clientProperties.getBuildDate());
-            writeInfoLine(pw, AREA_BUILD, "Up date " + clientProperties.getUpDate());
-            writeInfoLine(pw, AREA_BUILD, "Node name " + clientProperties.getNodeName());
+            final BuildInfo buildInfo = buildInfoProvider.get();
+            writeInfoLine(pw, AREA_BUILD, "Build version " + buildInfo.getBuildVersion());
+            writeInfoLine(pw, AREA_BUILD, "Build date " + buildInfo.getBuildDate());
+            writeInfoLine(pw, AREA_BUILD, "Up date " + buildInfo.getUpDate());
+            writeInfoLine(pw, AREA_BUILD, "Node name " + nodeInfo.getThisNodeName());
             writeInfoLine(pw, AREA_DB, MSG_OK);
         } catch (final RuntimeException e) {
             writeErrorLine(pw, AREA_DB, e.getMessage());

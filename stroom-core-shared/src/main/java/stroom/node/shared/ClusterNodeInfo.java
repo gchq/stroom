@@ -17,6 +17,7 @@
 package stroom.node.shared;
 
 import stroom.docref.SharedObject;
+import stroom.util.shared.BuildInfo;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -26,9 +27,7 @@ public class ClusterNodeInfo implements SharedObject {
     private static final long serialVersionUID = -15041191801817241L;
 
     private String discoverTime;
-    private String buildDate;
-    private String buildVersion;
-    private String upDate;
+    private BuildInfo buildInfo;
     private String nodeName;
     private String clusterURL;
     private List<ClusterNodeInfoItem> itemList = new ArrayList<>();
@@ -37,12 +36,9 @@ public class ClusterNodeInfo implements SharedObject {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ClusterNodeInfo(final String discoverTime, final String buildDate, final String buildVersion,
-                           final String upDate, final String nodeName, final String clusterURL) {
+    public ClusterNodeInfo(final String discoverTime, final BuildInfo buildInfo, final String nodeName, final String clusterURL) {
         this.discoverTime = discoverTime;
-        this.buildDate = buildDate;
-        this.buildVersion = buildVersion;
-        this.upDate = upDate;
+        this.buildInfo = buildInfo;
         this.nodeName = nodeName;
         this.clusterURL = clusterURL;
     }
@@ -59,16 +55,8 @@ public class ClusterNodeInfo implements SharedObject {
         return discoverTime;
     }
 
-    public String getBuildDate() {
-        return buildDate;
-    }
-
-    public String getBuildVersion() {
-        return buildVersion;
-    }
-
-    public String getUpDate() {
-        return upDate;
+    public BuildInfo getBuildInfo() {
+        return buildInfo;
     }
 
     public String getNodeName() {

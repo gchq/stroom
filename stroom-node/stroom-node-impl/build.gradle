@@ -1,12 +1,13 @@
 ext.moduleName = 'stroom.node.impl'
 
 dependencies {
-    implementation project(':stroom-node:stroom-node-api')
+    implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-server') // TODO : @66 remove
     implementation project(':stroom-core-shared')
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-statistics:stroom-statistics-api')

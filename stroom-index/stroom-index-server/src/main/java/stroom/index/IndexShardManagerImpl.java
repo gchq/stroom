@@ -25,7 +25,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.task.impl.GenericServerTask;
+import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskManager;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;

@@ -33,7 +33,7 @@ import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.SecurityContext;
-import stroom.util.BuildInfoUtil;
+import stroom.util.BuildInfoProvider;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -57,14 +57,17 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     private final SecurityContext security;
     private final HttpServletRequestHolder httpServletRequestHolder;
     private final CurrentActivity currentActivity;
+    private final BuildInfoProvider buildInfoProvider;
 
     @Inject
     StroomEventLoggingServiceImpl(final SecurityContext security,
                                   final HttpServletRequestHolder httpServletRequestHolder,
-                                  final CurrentActivity currentActivity) {
+                                  final CurrentActivity currentActivity,
+                                  final BuildInfoProvider buildInfoProvider) {
         this.security = security;
         this.httpServletRequestHolder = httpServletRequestHolder;
         this.currentActivity = currentActivity;
+        this.buildInfoProvider = buildInfoProvider;
     }
 
     @Override
@@ -88,7 +91,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         final System system = new System();
         system.setName(SYSTEM);
         system.setEnvironment(ENVIRONMENT);
-        system.setVersion(BuildInfoUtil.getBuildVersion());
+        system.setVersion(buildInfoProvider.get().getBuildVersion());
 
         // Create event source.
         final EventSource eventSource = new EventSource();

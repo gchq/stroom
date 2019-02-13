@@ -19,17 +19,17 @@ package stroom.benchmark;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.Status;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.entity.cluster.ClearServiceClusterTask;
 import stroom.entity.shared.Period;
 import stroom.job.shared.JobManager;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.Status;
 import stroom.node.api.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
@@ -49,10 +49,9 @@ import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilter;
-import stroom.task.api.AsyncTaskHelper;
-import stroom.task.impl.GenericServerTask;
+import stroom.task.api.AsyncExecutorHelper;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskManager;
 import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.api.TargetType;
 import stroom.task.shared.Task;
@@ -88,7 +87,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private final JobManager jobManager;
     private final NodeService nodeService;
     private final TaskContext taskContext;
-    private final TaskManager taskManager;
+    private final ExecutorProvider executorProvider;
     private final Set<String> nodeNameSet = new HashSet<>();
     private final Statistics statistics;
     private final BenchmarkClusterConfig benchmarkClusterConfig;
@@ -109,7 +108,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              final ClusterDispatchAsyncHelper dispatchHelper,
                              final JobManager jobManager,
                              final NodeService nodeService,
-                             final TaskManager taskManager,
+                             final ExecutorProvider executorProvider,
                              final Statistics statistics,
                              final BenchmarkClusterConfig benchmarkClusterConfig) {
         super(streamStore, metaService, taskContext);
@@ -121,7 +120,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         this.jobManager = jobManager;
         this.nodeService = nodeService;
         this.taskContext = taskContext;
-        this.taskManager = taskManager;
+        this.executorProvider = executorProvider;
         this.statistics = statistics;
         this.benchmarkClusterConfig = benchmarkClusterConfig;
     }
@@ -261,12 +260,13 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
             LOGGER.info("Adding {} data streams to the cluster", streamCount);
 
             LOGGER.info("Writing data");
-            final AsyncTaskHelper<VoidResult> asyncTaskHelper = new AsyncTaskHelper<>(
-                    "Writing test streams\n", taskContext, taskManager, benchmarkClusterConfig.getConcurrentWriters());
+            final AsyncExecutorHelper<VoidResult> asyncTaskHelper = new AsyncExecutorHelper<>(
+                    "Writing test streams\n", taskContext, executorProvider, benchmarkClusterConfig.getConcurrentWriters());
             for (int i = 1; i <= streamCount && !isTerminated(); i++) {
                 final int count = i;
-                final GenericServerTask writerTask = GenericServerTask.create("WriteBenchmarkData", "Writing benchmark data");
-                writerTask.setRunnable(() -> {
+                asyncTaskHelper.fork(() -> {
+                    taskContext.setName("WriteBenchmarkData");
+                    taskContext.info("Writing benchmark data");
                     final Meta meta = writeData(feedName, streamTypeName, data);
 
                     rangeLock.lock();
@@ -283,7 +283,6 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
                     infoInterval("Written Stream {}/{}", count, streamCount);
                 });
-                asyncTaskHelper.fork(writerTask);
             }
             asyncTaskHelper.join();
 

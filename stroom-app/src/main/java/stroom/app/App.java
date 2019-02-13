@@ -31,7 +31,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cluster.ClusterCallServiceRPC;
+import stroom.cluster.impl.ClusterCallServiceRPC;
 import stroom.data.store.impl.DataResource;
 import stroom.data.store.impl.ImportFileServlet;
 import stroom.dictionary.impl.DictionaryResource;

@@ -24,9 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestBuildInfoUtil {
     @Test
     void testSimple() {
-        assertThat(BuildInfoUtil.getBuildVersion()).isNotNull();
-        assertThat(BuildInfoUtil.getBuildDate()).isNotNull();
-        assertThat(BuildInfoUtil.getUpDate()).isNotNull();
+        assertThat(new BuildInfoProvider().get()).isNotNull();
     }
-
 }

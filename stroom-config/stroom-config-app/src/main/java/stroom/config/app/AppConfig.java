@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.benchmark.BenchmarkClusterConfig;
-import stroom.cluster.ClusterConfig;
+import stroom.cluster.api.ClusterConfig;
 import stroom.dashboard.QueryHistoryConfig;
 import stroom.receive.ReceiveDataConfig;
 import stroom.datasource.DataSourceUrlConfig;

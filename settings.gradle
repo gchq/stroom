@@ -32,11 +32,13 @@ include 'stroom-app-gwt'
 include 'stroom-cache:stroom-cache-api'
 include 'stroom-cache:stroom-cache-impl'
 
-// Cluster lock
-include 'stroom-cluster-lock:stroom-cluster-lock-api'
-include 'stroom-cluster-lock:stroom-cluster-lock-impl-db'
-include 'stroom-cluster-lock:stroom-cluster-lock-impl-db-gen'
-include 'stroom-cluster-lock:stroom-cluster-lock-impl-mock'
+// Cluster
+include 'stroom-cluster:stroom-cluster-api'
+include 'stroom-cluster:stroom-cluster-impl'
+include 'stroom-cluster:stroom-cluster-lock-api'
+include 'stroom-cluster:stroom-cluster-lock-impl-db'
+include 'stroom-cluster:stroom-cluster-lock-impl-db-gen'
+include 'stroom-cluster:stroom-cluster-lock-impl-mock'
 
 // Config
 include 'stroom-config:stroom-config-app'
@@ -185,6 +187,7 @@ include 'stroom-task:stroom-task-shared'
 
 // Cluster task execution
 include 'stroom-task:stroom-task-cluster-api'
+include 'stroom-task:stroom-task-cluster-impl'
 
 // Scheduled jobs
 include 'stroom-job:stroom-job-api'
