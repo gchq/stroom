@@ -144,7 +144,7 @@ const IndexVolumes = ({
         deleteIndexVolume(selectedIndexVolume!.id);
         closeDeleteDialog();
       }}
-      onCancel={closeDeleteDialog}
+      onCloseDialog={closeDeleteDialog}
     />
 
     <IndexVolumesTable

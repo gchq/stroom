@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useEffect } from "react";
 import { connect } from "react-redux";
-import { compose, withHandlers } from "recompose";
+import { compose } from "recompose";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 
 import { fetchDocTree } from "../FolderExplorer/explorerClient";
@@ -9,9 +9,10 @@ import AppSearchBar from "../AppSearchBar";
 import { DocRefIconHeader } from "../IconHeader";
 import DocRefBreadcrumb from "../DocRefBreadcrumb";
 import Button, { Props as ButtonProps } from "../Button";
-import { DocRefConsumer, DocRefWithLineage } from "../../types";
+import { DocRefWithLineage, DocRefConsumer } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
 import { findItem } from "../../lib/treeUtils";
+import Loader from "../Loader";
 
 export interface Props {
   actionBarItems: Array<ButtonProps>;
@@ -27,16 +28,11 @@ interface ConnectDispatch {
   fetchDocTree: typeof fetchDocTree;
 }
 
-interface WithHandlers {
-  openDocRef: DocRefConsumer;
-}
-
 export interface EnhancedProps
   extends Props,
     ConnectState,
     ConnectDispatch,
-    RouteComponentProps<any>,
-    WithHandlers {}
+    RouteComponentProps<any> {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
@@ -45,22 +41,28 @@ const enhance = compose<EnhancedProps, Props>(
     }),
     { fetchDocTree }
   ),
-  withRouter,
-  withHandlers<Props & RouteComponentProps<any>, WithHandlers>({
-    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
-  })
+  withRouter
 );
 
 const DocRefEditor = ({
-  docRefWithLineage: { node },
-  openDocRef,
+  docRefWithLineage,
   actionBarItems,
   children,
-  fetchDocTree
+  fetchDocTree,
+  history
 }: EnhancedProps) => {
   useEffect(() => {
     fetchDocTree();
   });
+
+  const openDocRef: DocRefConsumer = d =>
+    history.push(`/s/doc/${d.type}/${d.uuid}`);
+
+  if (!docRefWithLineage) {
+    return <Loader message="Loading Doc Ref" />;
+  }
+
+  const { node } = docRefWithLineage;
 
   return (
     <div className="DocRefEditor">

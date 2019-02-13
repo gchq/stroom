@@ -52,7 +52,7 @@ const DeleteDocRefDialog = ({
       deleteDocuments(uuids);
       onCloseDialog();
     }}
-    onCancel={onCloseDialog}
+    onCloseDialog={onCloseDialog}
     isOpen={isOpen}
     question={`Delete these doc refs? ${JSON.stringify(uuids)}?`}
   />

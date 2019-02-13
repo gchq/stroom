@@ -172,7 +172,7 @@ const UserPermissions = ({
           deleteUser(selectedUser!.uuid);
           closeDeleteDialog();
         }}
-        onCancel={closeDeleteDialog}
+        onCloseDialog={closeDeleteDialog}
       />
       <UsersTable {...{ users, onSelection, selectedUser }} />
     </div>

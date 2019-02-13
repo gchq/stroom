@@ -1,5 +1,5 @@
 import * as React from "react";
-import { compose, withHandlers } from "recompose";
+import { compose } from "recompose";
 import { connect } from "react-redux";
 
 import { ThemedConfirm } from "../ThemedConfirm";
@@ -26,16 +26,8 @@ interface ConnectDispatch {
   pipelineElementDeleteCancelled: typeof pipelineElementDeleteCancelled;
   pipelineElementDeleteConfirmed: typeof pipelineElementDeleteConfirmed;
 }
-interface WithHandlers {
-  onCancelDelete: () => void;
-  onConfirmDelete: () => void;
-}
 
-export interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    WithHandlers {}
+export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
@@ -47,26 +39,26 @@ const enhance = compose<EnhancedProps, Props>(
       pipelineElementDeleteCancelled,
       pipelineElementDeleteConfirmed
     }
-  ),
-  withHandlers({
-    onCancelDelete: ({ pipelineElementDeleteCancelled, pipelineId }) => () =>
-      pipelineElementDeleteCancelled(pipelineId),
-    onConfirmDelete: ({ pipelineElementDeleteConfirmed, pipelineId }) => () =>
-      pipelineElementDeleteConfirmed(pipelineId)
-  })
+  )
 );
 
 const DeletePipelineElement = ({
   pipelineState: { pendingElementIdToDelete },
-  onConfirmDelete,
-  onCancelDelete
-}: EnhancedProps) => (
-  <ThemedConfirm
-    isOpen={!!pendingElementIdToDelete}
-    question={`Delete ${pendingElementIdToDelete} from pipeline?`}
-    onCancel={onCancelDelete}
-    onConfirm={onConfirmDelete}
-  />
-);
+  pipelineElementDeleteCancelled,
+  pipelineElementDeleteConfirmed,
+  pipelineId
+}: EnhancedProps) => {
+  const onCancelDelete = () => pipelineElementDeleteCancelled(pipelineId);
+  const onConfirmDelete = () => pipelineElementDeleteConfirmed(pipelineId);
+
+  return (
+    <ThemedConfirm
+      isOpen={!!pendingElementIdToDelete}
+      question={`Delete ${pendingElementIdToDelete} from pipeline?`}
+      onCloseDialog={onCancelDelete}
+      onConfirm={onConfirmDelete}
+    />
+  );
+};
 
 export default enhance(DeletePipelineElement);

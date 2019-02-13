@@ -23,7 +23,9 @@ import PanelGroup from "react-panelgroup";
 import Loader from "../Loader";
 import AddElementModal from "./AddElementModal";
 import { Props as ButtonProps } from "../Button";
-import PipelineSettings from "./PipelineSettings";
+import PipelineSettings, {
+  useDialog as usePipelineSettingsDialog
+} from "./PipelineSettings";
 import ElementPalette from "./ElementPalette";
 import DeletePipelineElement from "./DeletePipelineElement";
 import { ElementDetails } from "./ElementDetails";
@@ -35,9 +37,8 @@ import { StoreStateById as PipelineStatesStoreStateById } from "./redux/pipeline
 import DocRefEditor from "../DocRefEditor";
 
 const {
-  startInheritPipeline,
-  pipelineSettingsOpened,
-  pipelineElementSelectionCleared
+  pipelineElementSelectionCleared,
+  pipelineSettingsUpdated
 } = actionCreators;
 
 export interface Props {
@@ -49,9 +50,8 @@ interface ConnectState {
 interface ConnectDispatch {
   fetchPipeline: typeof fetchPipeline;
   savePipeline: typeof savePipeline;
-  startInheritPipeline: typeof startInheritPipeline;
-  pipelineSettingsOpened: typeof pipelineSettingsOpened;
   pipelineElementSelectionCleared: typeof pipelineElementSelectionCleared;
+  pipelineSettingsUpdated: typeof pipelineSettingsUpdated;
 }
 export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
@@ -64,9 +64,8 @@ const enhance = compose<EnhancedProps, Props>(
       // action, needed by lifecycle hook below
       fetchPipeline,
       savePipeline,
-      startInheritPipeline,
-      pipelineSettingsOpened,
-      pipelineElementSelectionCleared
+      pipelineElementSelectionCleared,
+      pipelineSettingsUpdated
     }
   )
 );
@@ -75,14 +74,20 @@ const PipelineEditor = ({
   pipelineId,
   pipelineState,
   pipelineElementSelectionCleared,
+  pipelineSettingsUpdated,
   savePipeline,
-  startInheritPipeline,
-  pipelineSettingsOpened,
   fetchPipeline
 }: EnhancedProps) => {
   useEffect(() => {
     fetchPipeline(pipelineId);
   });
+
+  const {
+    showDialog: showSettingsDialog,
+    componentProps: settingsComponentProps
+  } = usePipelineSettingsDialog(description =>
+    pipelineSettingsUpdated(pipelineId, description)
+  );
 
   if (!(pipelineState && pipelineState.pipeline)) {
     return <Loader message="Loading pipeline..." />;
@@ -94,7 +99,8 @@ const PipelineEditor = ({
     {
       icon: "cogs",
       title: "Open Settings",
-      onClick: () => pipelineSettingsOpened(pipelineId)
+      onClick: () =>
+        showSettingsDialog(pipelineState!.pipeline!.description || "something")
     },
     {
       icon: "save",
@@ -105,7 +111,8 @@ const PipelineEditor = ({
     {
       icon: "recycle",
       title: "Create Child Pipeline",
-      onClick: () => startInheritPipeline(pipelineId)
+      onClick: () =>
+        console.log("TODO - Implement Selection of Parent Pipeline")
     }
   ];
 
@@ -114,7 +121,7 @@ const PipelineEditor = ({
       <div className="Pipeline-editor">
         <AddElementModal pipelineId={pipelineId} />
         <DeletePipelineElement pipelineId={pipelineId} />
-        <PipelineSettings pipelineId={pipelineId} />
+        <PipelineSettings {...settingsComponentProps} />
         <div className="Pipeline-editor__element-palette">
           <ElementPalette pipelineId={pipelineId} />
         </div>
