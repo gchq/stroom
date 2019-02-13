@@ -60,4 +60,12 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
 //        // Stop persistance
 //        injector.getInstance(PersistService.class).stop();
 //    }
+
+    /**
+     * For use when you need to get an instance of a custom scoped class, e.g.
+     * {@link stroom.pipeline.scope.PipelineScope}
+     */
+    protected Injector getInjector() {
+        return injector;
+    }
 }

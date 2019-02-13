@@ -9,6 +9,7 @@ import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.explorer.shared.HasNodeState;
+import stroom.util.RestResource;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
 @Path("/explorer/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class ExplorerResource {
+public class ExplorerResource implements RestResource {
     private final ExplorerService explorerService;
     private final ExplorerTreeModel explorerTreeModel;
     private final SecurityContext securityContext;

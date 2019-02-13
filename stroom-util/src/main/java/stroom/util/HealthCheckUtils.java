@@ -1,4 +1,4 @@
-package stroom.tools;
+package stroom.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;

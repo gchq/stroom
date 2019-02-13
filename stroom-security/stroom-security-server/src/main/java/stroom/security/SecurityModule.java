@@ -17,9 +17,8 @@
 package stroom.security;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.Clearable;
+import stroom.entity.shared.EntityEvent;
 import stroom.security.impl.db.SecurityDbModule;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeUserAction;
@@ -32,7 +31,9 @@ import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.FetchUserRefAction;
 import stroom.security.shared.LogoutAction;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.GuiceUtil;
 import stroom.util.HasHealthCheck;
+import stroom.util.RestResource;
 
 public class SecurityModule extends AbstractModule {
     @Override
@@ -45,12 +46,11 @@ public class SecurityModule extends AbstractModule {
         bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
 
-        // Provide object info to the logging service.
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(DocumentPermissionsCache.class);
-        clearableBinder.addBinding().to(UserAppPermissionsCache.class);
-        clearableBinder.addBinding().to(UserGroupsCache.class);
-        clearableBinder.addBinding().to(UserCache.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(DocumentPermissionsCache.class)
+                .addBinding(UserAppPermissionsCache.class)
+                .addBinding(UserGroupsCache.class)
+                .addBinding(UserCache.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(ChangeDocumentPermissionsAction.class, ChangeDocumentPermissionsHandler.class)
@@ -64,11 +64,15 @@ public class SecurityModule extends AbstractModule {
                 .bind(FetchUserRefAction.class, FetchUserRefHandler.class)
                 .bind(LogoutAction.class, LogoutHandler.class);
 
-        final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(DocumentPermissionsCache.class);
-        entityEventHandlerBinder.addBinding().to(UserGroupsCache.class);
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(DocumentPermissionsCache.class)
+                .addBinding(UserGroupsCache.class);
 
-        final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
-        hasHealthCheckBinder.addBinding().to(JWTService.class);
+        GuiceUtil.buildMultiBinder(binder(), HasHealthCheck.class)
+                .addBinding(JWTService.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(AuthorisationResource.class)
+                .addBinding(SessionResource.class);
     }
 }

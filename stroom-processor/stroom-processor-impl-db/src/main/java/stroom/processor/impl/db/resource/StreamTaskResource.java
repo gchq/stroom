@@ -29,6 +29,7 @@ import stroom.processor.StreamProcessorFilterService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.util.logging.LambdaLogger;
+import stroom.util.RestResource;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -52,7 +53,7 @@ import static stroom.processor.impl.db.resource.SearchKeywords.addFiltering;
 @Api(value = "stream task - /v1")
 @Path("/streamtasks/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class StreamTaskResource {
+public class StreamTaskResource implements RestResource {
     private static final String FIELD_PROGRESS = "progress";
 
     private final StreamProcessorFilterService streamProcessorFilterService;

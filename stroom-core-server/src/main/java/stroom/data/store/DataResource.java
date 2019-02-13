@@ -33,6 +33,7 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
+import stroom.util.RestResource;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 
@@ -49,7 +50,7 @@ import javax.ws.rs.core.Response;
 @Api(value = "data - /v1")
 @Path("/data/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class DataResource {
+public class DataResource implements RestResource {
     private final DataFetcher dataFetcher;
     private final Security security;
 

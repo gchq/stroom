@@ -17,7 +17,6 @@
 package stroom.processor.impl.db;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.entity.FindService;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.processor.StreamProcessorFilterService;
@@ -26,6 +25,8 @@ import stroom.processor.shared.task.CreateProcessorAction;
 import stroom.processor.shared.task.FetchProcessorAction;
 import stroom.processor.shared.task.ReprocessDataAction;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.GuiceUtil;
+import stroom.util.RestResource;
 
 public class StreamTaskModule extends AbstractModule {
     @Override
@@ -44,10 +45,13 @@ public class StreamTaskModule extends AbstractModule {
                 .bind(ReprocessDataAction.class, ReprocessDataHandler.class)
                 .bind(StreamProcessorTask.class, stroom.processor.impl.db.task.StreamProcessorTaskHandler.class);
 
-        final Multibinder<DistributedTaskFactory> distributedTaskFactoryBinder = Multibinder.newSetBinder(binder(), DistributedTaskFactory.class);
-        distributedTaskFactoryBinder.addBinding().to(StreamProcessorTaskFactory.class);
+        GuiceUtil.buildMultiBinder(binder(), DistributedTaskFactory.class)
+                .addBinding(StreamProcessorTaskFactory.class);
 
-        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-        findServiceBinder.addBinding().to(StreamTaskServiceImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), FindService.class)
+                .addBinding(StreamTaskServiceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(StreamTaskResource.class);
     }
 }

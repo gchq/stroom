@@ -3,6 +3,7 @@ package stroom.guice;
 import com.google.inject.AbstractModule;
 import stroom.config.global.impl.db.GlobalConfigDbModule;
 import stroom.config.global.impl.db.GlobalConfigModule;
+import stroom.importexport.impl.ExportConfigResourceModule;
 import stroom.meta.impl.db.MetaDbModule;
 import stroom.dataprocess.PipelineStreamTaskModule;
 import stroom.dictionary.impl.DictionaryHandlerModule;
@@ -53,6 +54,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.feed.RemoteFeedModule());
         install(new PipelineScopeModule());
         install(new ImportExportModule());
+        install(new ExportConfigResourceModule());
         install(new ImportExportHandlerModule());
         install(new stroom.index.IndexModule());
         install(new stroom.index.IndexElementModule());
@@ -86,6 +88,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.search.shard.ShardModule());
         install(new stroom.search.SearchElementModule());
         install(new stroom.security.SecurityModule());
+        install(new stroom.security.impl.SecurityModule());
         install(new stroom.servicediscovery.ServiceDiscoveryModule());
         install(new stroom.servlet.ServletModule());
         install(new SQLStatisticsModule());
@@ -109,5 +112,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.volume.VolumeHandlerModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
         install(new stroom.job.impl.db.JobDbModule());
+        install(new stroom.streamstore.StreamAttributeMapResourceModule());
     }
 }

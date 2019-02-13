@@ -70,6 +70,7 @@ dependencies {
     implementation project(':stroom-ruleset:stroom-ruleset-server')
     implementation project(':stroom-ruleset:stroom-ruleset-shared')
     implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-impl')
     implementation project(':stroom-security:stroom-security-server')
     implementation project(':stroom-statistics:stroom-statistics-server')
     implementation project(':stroom-task:stroom-task-api')
@@ -78,6 +79,8 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.stroomDocRef
+
+    implementation libs.dropwizard_lifecycle // if this goes after dropwizard_assets then IJ can't find org.eclipse.jetty.server.session.SessionHandler
     implementation(libs.dropwizard_assets) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
@@ -87,7 +90,6 @@ dependencies {
     implementation libs.dropwizard_configuration
     implementation libs.dropwizard_jersey
     implementation libs.dropwizard_jetty
-    implementation libs.dropwizard_lifecycle
     implementation libs.dropwizard_metrics_annotation
     implementation libs.dropwizard_metrics_core
     implementation libs.dropwizard_metrics_healthchecks
@@ -165,6 +167,7 @@ dependencies {
     testImplementation libs.hibernate_jpa_api
     testImplementation libs.hikari
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.lmdbjava
     testImplementation libs.lucene_core
     testImplementation libs.saxon_he
     testImplementation libs.slf4j_api
@@ -188,6 +191,7 @@ dependencies {
     testImplementation libs.dropwizard_client
     testImplementation libs.dropwizard_testing
     testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
 }
 
 jar {

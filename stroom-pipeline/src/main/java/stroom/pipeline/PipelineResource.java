@@ -4,7 +4,6 @@ import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.pipeline.PipelineStore;
 import stroom.pipeline.factory.PipelineDataValidator;
 import stroom.pipeline.factory.PipelineStackLoader;
 import stroom.pipeline.scope.PipelineScopeRunnable;
@@ -14,6 +13,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.security.Security;
+import stroom.util.RestResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 @Api(value = "pipeline - /v1")
 @Path("/pipelines/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class PipelineResource {
+public class PipelineResource implements RestResource {
     private final PipelineStore pipelineStore;
     private final PipelineStackLoader pipelineStackLoader;
     private final PipelineDataValidator pipelineDataValidator;
