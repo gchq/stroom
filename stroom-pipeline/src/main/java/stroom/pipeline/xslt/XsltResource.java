@@ -2,9 +2,9 @@ package stroom.pipeline.xslt;
 
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
-import stroom.pipeline.xslt.XsltStore;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.security.Security;
+import stroom.util.RestResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -19,7 +19,7 @@ import javax.ws.rs.core.Response;
 @Api(value = "xslt - /v1")
 @Path("/xslt/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class XsltResource {
+public class XsltResource implements RestResource {
     private final XsltStore xsltStore;
     private final Security security;
 

@@ -18,15 +18,14 @@ package stroom.pipeline.refdata;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
 import stroom.meta.impl.mock.MockMetaService;
+import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.EffectiveMetaDataCriteria;
-import stroom.security.impl.SecurityImpl;
-import stroom.security.impl.mock.MockSecurityContext;
+import stroom.security.impl.mock.AllowAllMockSecurity;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.cache.api.CacheManager;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomUnitTest;
 
@@ -80,7 +79,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
             final EffectiveStreamCache effectiveStreamPool = new EffectiveStreamCache(cacheManager,
                     metaService,
                     new EffectiveStreamInternPool(),
-                    new SecurityImpl(new MockSecurityContext()));
+                    new AllowAllMockSecurity());
 
             assertThat(effectiveStreamPool.size()).as("No pooled times yet").isEqualTo(0);
             assertThat(findEffectiveStreamSourceCount).as("No calls to the database yet").isEqualTo(0);
@@ -128,7 +127,12 @@ class TestEffectiveStreamPool extends StroomUnitTest {
 
         try (CacheManager cacheManager = new CacheManagerImpl()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
-                    cacheManager, mockStore, new EffectiveStreamInternPool(), new SecurityImpl(new MockSecurityContext()), 100, TimeUnit.MILLISECONDS);
+                    cacheManager,
+                    mockStore,
+                    new EffectiveStreamInternPool(),
+                    new AllowAllMockSecurity(),
+                    100,
+                    TimeUnit.MILLISECONDS);
 
             assertThat(effectiveStreamCache.size()).as("No pooled times yet").isEqualTo(0);
             assertThat(mockStore.getCallCount()).as("No calls to the database yet").isEqualTo(0);

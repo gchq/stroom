@@ -19,10 +19,8 @@
 
 package stroom.streamtask.resource;
 
-import com.codahale.metrics.health.HealthCheck;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
-import org.apache.commons.lang3.NotImplementedException;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort;
 import stroom.pipeline.shared.PipelineDoc;
@@ -32,7 +30,7 @@ import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilter;
-import stroom.util.HasHealthCheck;
+import stroom.util.RestResource;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -56,7 +54,7 @@ import static stroom.streamtask.resource.SearchKeywords.addFiltering;
 @Api(value = "stream task - /v1")
 @Path("/streamtasks/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class StreamTaskResource implements HasHealthCheck {
+public class StreamTaskResource implements RestResource {
     private static final String FIELD_PROGRESS = "progress";
 
     private final StreamProcessorFilterService streamProcessorFilterService;
@@ -172,16 +170,6 @@ public class StreamTaskResource implements HasHealthCheck {
         final StreamTasks response = new StreamTasks(pageToReturn, values.size());
 
         return Response.ok(response).build();
-    }
-
-    @Override
-    public HealthCheck.Result getHealth() {
-        throw new NotImplementedException("public HealthCheck.Result getHealth()");
-    }
-
-    @Override
-    public HealthCheck getHealthCheck() {
-        throw new NotImplementedException("public HealthCheck getHealthCheck()");
     }
 
     private List<StreamTask> find(final FindStreamProcessorFilterCriteria criteria) {

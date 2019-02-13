@@ -2,9 +2,9 @@ package stroom.pipeline.factory;
 
 import io.swagger.annotations.Api;
 import stroom.pipeline.scope.PipelineScopeRunnable;
-import stroom.pipeline.factory.ElementRegistryFactory;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
+import stroom.util.RestResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -20,7 +20,7 @@ import java.util.Set;
 @Api(value = "elements - /v1")
 @Path("/elements/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class ElementResource {
+public class ElementResource implements RestResource {
 
     private final ElementRegistryFactory pipelineElementRegistryFactory;
     private final PipelineScopeRunnable pipelineScopeRunnable;
