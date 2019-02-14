@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import * as React from "react";
-import { compose, withHandlers, withProps } from "recompose";
+import { compose } from "recompose";
 import { connect } from "react-redux";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -38,8 +38,6 @@ import { actionCreators } from "./redux";
 import Button from "../Button";
 import {
   DataSourceType,
-  ExpressionOperatorType,
-  ExpressionTermType,
   OperatorType,
   ExpressionOperatorWithUuid,
   OperatorTypeValues,
@@ -53,8 +51,7 @@ const {
   expressionTermAdded,
   expressionOperatorAdded,
   expressionItemUpdated,
-  expressionItemMoved,
-  expressionItemDeleteRequested
+  expressionItemMoved
 } = actionCreators;
 
 export interface Props {
@@ -63,6 +60,7 @@ export interface Props {
   operator: ExpressionOperatorWithUuid;
   isRoot?: boolean;
   isEnabled: boolean;
+  showDeleteItemDialog: (itemId: string) => void;
 }
 
 interface ConnectState {}
@@ -71,35 +69,16 @@ interface ConnectDispatch {
   expressionOperatorAdded: typeof expressionOperatorAdded;
   expressionItemUpdated: typeof expressionItemUpdated;
   expressionItemMoved: typeof expressionItemMoved;
-  expressionItemDeleteRequested: typeof expressionItemDeleteRequested;
 }
 
 export interface DndProps extends Props, ConnectState, ConnectDispatch {}
 
-interface WithHandlers {
-  onAddOperator: () => void;
-  onAddTerm: () => void;
-  onOperatorUpdated: (
-    updates: ExpressionTermType | ExpressionOperatorType
-  ) => void;
-  onOpChange: (op: OperatorType) => void;
-  onRequestDeleteOperator: () => void;
-  onEnabledToggled: () => void;
-}
-
-interface WithProps {
-  enabledColour: string;
-  dndBarColour: string;
-  className: string;
-}
 export interface EnhancedProps
   extends Props,
     ConnectState,
     ConnectDispatch,
     DragCollectedProps,
-    DropCollectedProps,
-    WithHandlers,
-    WithProps {}
+    DropCollectedProps {}
 
 const dragSource: DragSourceSpec<DndProps, DragObject> = {
   canDrag(props) {
@@ -145,8 +124,7 @@ const enhance = compose<EnhancedProps, Props>(
       expressionTermAdded,
       expressionOperatorAdded,
       expressionItemUpdated,
-      expressionItemMoved,
-      expressionItemDeleteRequested
+      expressionItemMoved
     }
   ),
   DragSource(DragDropTypes.OPERATOR, dragSource, dragCollect),
@@ -154,88 +132,7 @@ const enhance = compose<EnhancedProps, Props>(
     [DragDropTypes.OPERATOR, DragDropTypes.TERM],
     dropTarget,
     dropCollect
-  ),
-  withHandlers<Props & ConnectState & ConnectDispatch, WithHandlers>({
-    onAddOperator: ({
-      expressionOperatorAdded,
-      expressionId,
-      operator: { uuid }
-    }) => () => {
-      expressionOperatorAdded(expressionId, uuid);
-    },
-
-    onAddTerm: ({
-      expressionTermAdded,
-      expressionId,
-      operator: { uuid }
-    }) => () => {
-      expressionTermAdded(expressionId, uuid);
-    },
-
-    onOperatorUpdated: ({
-      expressionItemUpdated,
-      expressionId,
-      operator: { uuid }
-    }) => updates => {
-      expressionItemUpdated(expressionId, uuid, updates);
-    },
-
-    onOpChange: ({
-      expressionItemUpdated,
-      expressionId,
-      operator: { uuid }
-    }) => op => {
-      expressionItemUpdated(expressionId, uuid, {
-        op
-      });
-    },
-
-    onRequestDeleteOperator: ({
-      expressionItemDeleteRequested,
-      expressionId,
-      operator: { uuid }
-    }) => () => {
-      expressionItemDeleteRequested(expressionId, uuid);
-    },
-
-    onEnabledToggled: ({
-      isRoot,
-      expressionItemUpdated,
-      expressionId,
-      operator: { uuid, enabled }
-    }) => () => {
-      if (!isRoot) {
-        expressionItemUpdated(expressionId, uuid, {
-          enabled: !enabled
-        });
-      }
-    }
-  }),
-  withProps(({ canDrop, isOver, isRoot, isEnabled, operator }) => {
-    let dndBarColour = "grey";
-    if (isOver) {
-      dndBarColour = canDrop ? "blue" : "red";
-    }
-
-    const classNames = ["expression-item"];
-    if (isRoot) {
-      classNames.push("expression-item__root");
-    }
-    if (!isEnabled) {
-      classNames.push("expression-item--disabled");
-    }
-
-    let enabledColour = "grey";
-    if (operator.enabled) {
-      enabledColour = "blue";
-    }
-
-    return {
-      enabledColour,
-      dndBarColour,
-      className: classNames.join(" ")
-    };
-  })
+  )
 );
 
 const ExpressionOperator = ({
@@ -244,124 +141,169 @@ const ExpressionOperator = ({
   isRoot,
   isEnabled,
   dataSource,
+  showDeleteItemDialog,
 
   connectDropTarget,
   isOver,
+  canDrop,
   connectDragSource,
 
-  dndBarColour,
-  className,
+  expressionOperatorAdded,
+  expressionTermAdded,
+  expressionItemUpdated
+}: EnhancedProps) => {
+  const onAddOperator = () => {
+    expressionOperatorAdded(expressionId, operator.uuid);
+  };
 
-  onAddOperator,
-  onAddTerm,
-  onOpChange,
-  onRequestDeleteOperator,
-  onEnabledToggled,
+  const onAddTerm = () => {
+    expressionTermAdded(expressionId, operator.uuid);
+  };
 
-  enabledColour
-}: EnhancedProps) => (
-  <div className={className}>
-    {connectDropTarget(
-      <div>
-        {connectDragSource(
-          <span>
-            <FontAwesomeIcon color={dndBarColour} icon="bars" />
-          </span>
-        )}
+  const onOpChange = (op: OperatorType) => {
+    expressionItemUpdated(expressionId, operator.uuid, {
+      op
+    });
+  };
 
-        {OperatorTypeValues.map((l, i) => (
-          <Button
-            selected={operator.op === l}
-            key={l}
-            groupPosition={
-              i === 0
-                ? "left"
-                : OperatorTypeValues.length - 1 === i
-                ? "right"
-                : "middle"
-            }
-            onClick={() => onOpChange(l)}
-            text={l}
-          />
-        ))}
+  const onRequestDeleteOperator = () => {
+    showDeleteItemDialog(operator.uuid);
+  };
 
-        <div className="ExpressionItem__buttons">
-          <Button
-            icon="plus"
-            text="Term"
-            groupPosition="left"
-            onClick={onAddTerm}
-          />
-          <Button
-            icon="plus"
-            text="Group"
-            groupPosition={isRoot ? "right" : "middle"}
-            onClick={onAddOperator}
-          />
-          {!isRoot && (
-            <React.Fragment>
-              <Button
-                icon="check"
-                groupPosition="middle"
-                color={enabledColour}
-                onClick={onEnabledToggled}
-              />
-              <Button
-                icon="trash"
-                groupPosition="right"
-                onClick={onRequestDeleteOperator}
-              />
-            </React.Fragment>
+  const onEnabledToggled = () => {
+    if (!isRoot) {
+      expressionItemUpdated(expressionId, operator.uuid, {
+        enabled: !operator.enabled
+      });
+    }
+  };
+
+  let dndBarColour = "grey";
+  if (isOver) {
+    dndBarColour = canDrop ? "blue" : "red";
+  }
+
+  const classNames = ["expression-item"];
+  if (isRoot) {
+    classNames.push("expression-item__root");
+  }
+  if (!isEnabled) {
+    classNames.push("expression-item--disabled");
+  }
+
+  let enabledColour = "grey";
+  if (operator.enabled) {
+    enabledColour = "blue";
+  }
+
+  const className = classNames.join(" ");
+
+  return (
+    <div className={className}>
+      {connectDropTarget(
+        <div>
+          {connectDragSource(
+            <span>
+              <FontAwesomeIcon color={dndBarColour} icon="bars" />
+            </span>
           )}
-        </div>
-      </div>
-    )}
 
-    <div className="operator__children">
-      {isOver && dropTarget.canDrop && (
-        <div className="operator__placeholder" />
+          {OperatorTypeValues.map((l, i) => (
+            <Button
+              selected={operator.op === l}
+              key={l}
+              groupPosition={
+                i === 0
+                  ? "left"
+                  : OperatorTypeValues.length - 1 === i
+                  ? "right"
+                  : "middle"
+              }
+              onClick={() => onOpChange(l)}
+              text={l}
+            />
+          ))}
+
+          <div className="ExpressionItem__buttons">
+            <Button
+              icon="plus"
+              text="Term"
+              groupPosition="left"
+              onClick={onAddTerm}
+            />
+            <Button
+              icon="plus"
+              text="Group"
+              groupPosition={isRoot ? "right" : "middle"}
+              onClick={onAddOperator}
+            />
+            {!isRoot && (
+              <React.Fragment>
+                <Button
+                  icon="check"
+                  groupPosition="middle"
+                  color={enabledColour}
+                  onClick={onEnabledToggled}
+                />
+                <Button
+                  icon="trash"
+                  groupPosition="right"
+                  onClick={onRequestDeleteOperator}
+                />
+              </React.Fragment>
+            )}
+          </div>
+        </div>
       )}
-      {operator.children &&
-        operator.children.map((c: ExpressionHasUuid) => {
-          let itemElement;
-          switch (c.type) {
-            case "term":
-              itemElement = (
-                <div key={c.uuid}>
-                  <ExpressionTerm
+
+      <div className="operator__children">
+        {isOver && dropTarget.canDrop && (
+          <div className="operator__placeholder" />
+        )}
+        {operator.children &&
+          operator.children.map((c: ExpressionHasUuid) => {
+            let itemElement;
+            switch (c.type) {
+              case "term":
+                itemElement = (
+                  <div key={c.uuid}>
+                    <ExpressionTerm
+                      showDeleteItemDialog={showDeleteItemDialog}
+                      dataSource={dataSource}
+                      expressionId={expressionId}
+                      isEnabled={isEnabled && c.enabled}
+                      term={c as ExpressionTermWithUuid}
+                    />
+                  </div>
+                );
+                break;
+              case "operator":
+                itemElement = (
+                  <EnhancedExpressionOperator
+                    showDeleteItemDialog={showDeleteItemDialog}
                     dataSource={dataSource}
                     expressionId={expressionId}
                     isEnabled={isEnabled && c.enabled}
-                    term={c as ExpressionTermWithUuid}
+                    operator={c as ExpressionOperatorWithUuid}
                   />
-                </div>
-              );
-              break;
-            case "operator":
-              itemElement = (
-                <EnhancedExpressionOperator
-                  dataSource={dataSource}
-                  expressionId={expressionId}
-                  isEnabled={isEnabled && c.enabled}
-                  operator={c as ExpressionOperatorWithUuid}
-                />
-              );
-              break;
-            default:
-              throw new Error(`Invalid operator type: ${c.type}`);
-          }
+                );
+                break;
+              default:
+                throw new Error(`Invalid operator type: ${c.type}`);
+            }
 
-          // Wrap it with a line to
-          return (
-            <div key={c.uuid} className="operator__child">
-              <ElbowLine />
-              {itemElement}
-            </div>
-          );
-        })}
+            // Wrap it with a line to
+            return (
+              <div key={c.uuid} className="operator__child">
+                <ElbowLine />
+                {itemElement}
+              </div>
+            );
+          })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const EnhancedExpressionOperator = enhance(ExpressionOperator);
 

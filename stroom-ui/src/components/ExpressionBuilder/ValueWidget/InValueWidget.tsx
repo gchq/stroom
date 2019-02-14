@@ -15,114 +15,73 @@
  */
 
 import * as React from "react";
-import { compose, withHandlers, withProps, withStateHandlers } from "recompose";
+import { useState } from "react";
 
 import Button from "../../Button";
 import { ControlledInput } from "../../../types";
 
 export interface Props extends ControlledInput<any> {}
-interface WithProps {
-  valueToShow: string;
-  splitValues: Array<string>;
-}
-interface StateProps {
-  composingValue: string;
-  inputHasFocus: boolean;
-}
-interface StateHandlers {
-  onInputFocus: () => void;
-  onInputBlur: () => void;
-  onInputChange: React.ChangeEventHandler<HTMLInputElement>;
-  onInputSubmit: () => void;
-}
-interface WithHandlers {
-  onInputKeyDown: React.KeyboardEventHandler<HTMLInputElement>;
-  onTermDelete: (term: string) => void;
-}
-export interface EnhancedProps
-  extends Props,
-    WithProps,
-    StateProps,
-    StateHandlers,
-    WithHandlers {}
 
-const enhance = compose<EnhancedProps, Props>(
-  withProps(({ value, composingValue, inputHasFocus }) => {
-    const hasValues = !!value && value.length > 0;
-    const splitValues = hasValues ? value.split(",") : [];
+const InValueWidget = ({ value, onChange }: Props) => {
+  const [inputHasFocus, setInputHasFocus] = useState(false);
+  const [composingValue, setComposingValue] = useState("");
 
-    return {
-      valueToShow: inputHasFocus ? composingValue : value,
-      splitValues
-    };
-  }),
-  withStateHandlers<StateProps, {}, Props & WithProps & StateProps>(
-    ({ composingValue = "", inputHasFocus = false }) => ({
-      composingValue,
-      inputHasFocus
-    }),
-    {
-      onInputFocus: () => () => ({ inputHasFocus: true }),
-      onInputBlur: () => () => ({ inputHasFocus: false }),
-      onInputChange: () => ({
-        target: { value }
-      }: React.ChangeEvent<HTMLInputElement>) => ({
-        composingValue: value
-      }),
-      onInputSubmit: (
-        { composingValue }: StateProps,
-        { splitValues, onChange }: Props & WithProps & StateProps
-      ) => () => {
-        const newValue = splitValues
-          .filter(s => s !== composingValue)
-          .concat([composingValue])
-          .join();
-        onChange(newValue);
+  const hasValues = !!value && value.length > 0;
+  const splitValues: Array<string> = hasValues ? value.split(",") : [];
 
-        return { composingValue: "" };
-      }
+  const valueToShow = inputHasFocus ? composingValue : value;
+
+  const onInputFocus = () => {
+    setInputHasFocus(true);
+  };
+  const onInputBlur = () => {
+    setInputHasFocus(false);
+  };
+  const onInputChange: React.ChangeEventHandler<HTMLInputElement> = ({
+    target: { value }
+  }: React.ChangeEvent<HTMLInputElement>) => {
+    setComposingValue(value);
+  };
+  const onInputSubmit = () => {
+    const newValue = splitValues
+      .filter(s => s !== composingValue)
+      .concat([composingValue])
+      .join();
+    onChange(newValue);
+
+    setComposingValue("");
+  };
+
+  const onInputKeyDown: React.KeyboardEventHandler<HTMLInputElement> = e => {
+    if (e.key === "Enter") {
+      onInputSubmit();
     }
-  ),
-  withHandlers<Props & StateProps & StateHandlers & WithProps, WithHandlers>({
-    onInputKeyDown: ({ onInputSubmit }) => e => {
-      if (e.key === "Enter") {
-        onInputSubmit();
-      }
-    },
-    onTermDelete: ({ splitValues, onChange }) => term => {
-      const newValue = splitValues.filter(s => s !== term).join();
-      onChange(newValue);
-    }
-  })
-);
+  };
 
-const InValueWidget = ({
-  onInputFocus,
-  onInputBlur,
-  onInputChange,
-  onInputKeyDown,
-  splitValues,
-  valueToShow,
-  onTermDelete
-}: EnhancedProps) => (
-  <div className="dropdown">
-    <input
-      placeholder="Type and hit 'Enter'"
-      value={valueToShow}
-      onFocus={onInputFocus}
-      onBlur={onInputBlur}
-      onChange={onInputChange}
-      onKeyDown={onInputKeyDown}
-    />
-    <div className="dropdown__content">
-      {splitValues.map(k => (
-        <div key={k}>
-          {k}
-          <Button onClick={e => onTermDelete(k)} text="X" />
-        </div>
-      ))}
+  const onTermDelete = (term: string) => {
+    const newValue = splitValues.filter(s => s !== term).join();
+    onChange(newValue);
+  };
+  return (
+    <div className="dropdown">
+      <input
+        placeholder="Type and hit 'Enter'"
+        value={valueToShow}
+        onFocus={onInputFocus}
+        onBlur={onInputBlur}
+        onChange={onInputChange}
+        onKeyDown={onInputKeyDown}
+      />
+      <div className="dropdown__content">
+        {splitValues.map(k => (
+          <div key={k}>
+            {k}
+            <Button onClick={e => onTermDelete(k)} text="X" />
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
-export default enhance(InValueWidget);
+export default InValueWidget;

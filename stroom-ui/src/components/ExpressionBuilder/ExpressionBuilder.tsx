@@ -20,11 +20,15 @@ import { connect } from "react-redux";
 
 import Loader from "../Loader";
 import ExpressionOperator from "./ExpressionOperator";
-import DeleteExpressionItem from "./DeleteExpressionItem";
+import DeleteExpressionItem, {
+  useDialog as useDeleteItemDialog
+} from "./DeleteExpressionItem";
 import { GlobalStoreState } from "../../startup/reducers";
 import { DataSourceType, StyledComponentProps } from "../../types";
-import { StoreStateById } from "./redux";
+import { StoreStateById, actionCreators } from "./redux";
 import ROExpressionBuilder from "./ROExpressionBuilder";
+
+const { expressionItemDeleted } = actionCreators;
 
 export interface Props extends StyledComponentProps {
   dataSource: DataSourceType;
@@ -36,7 +40,9 @@ export interface Props extends StyledComponentProps {
 interface ConnectState {
   expressionState: StoreStateById;
 }
-interface ConnectDispatch {}
+interface ConnectDispatch {
+  expressionItemDeleted: typeof expressionItemDeleted;
+}
 
 export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
@@ -44,7 +50,8 @@ const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ expressionBuilder }, { expressionId }) => ({
       expressionState: expressionBuilder[expressionId]
-    })
+    }),
+    { expressionItemDeleted }
   )
 );
 
@@ -53,13 +60,21 @@ const ExpressionBuilder = ({
   dataSource,
   expressionState,
   showModeToggle: smtRaw,
-  editMode
+  editMode,
+  expressionItemDeleted
 }: EnhancedProps) => {
   const [inEditMode, setEditableByUser] = useState<boolean>(false);
 
   useEffect(() => {
     setEditableByUser(editMode || false);
   }, []);
+
+  const {
+    showDialog: showDeleteItemDialog,
+    componentProps: deleteDialogComponentProps
+  } = useDeleteItemDialog(itemId =>
+    expressionItemDeleted(expressionId, itemId)
+  );
 
   if (!expressionState) {
     return <Loader message="Loading expression state..." />;
@@ -70,7 +85,7 @@ const ExpressionBuilder = ({
 
   return (
     <div>
-      <DeleteExpressionItem expressionId={expressionId} />
+      <DeleteExpressionItem {...deleteDialogComponentProps} />
       {showModeToggle ? (
         <React.Fragment>
           <label>Edit Mode</label>
@@ -85,6 +100,7 @@ const ExpressionBuilder = ({
       )}
       {inEditMode ? (
         <ExpressionOperator
+          showDeleteItemDialog={showDeleteItemDialog}
           dataSource={dataSource}
           expressionId={expressionId}
           isRoot

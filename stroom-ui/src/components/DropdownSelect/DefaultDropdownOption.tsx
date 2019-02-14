@@ -2,17 +2,17 @@ import * as React from "react";
 
 import { DropdownOptionProps } from "./DropdownSelect";
 
-interface WithProps {
+interface WithClassName {
   className: string;
 }
 
-export interface EnhancedProps extends DropdownOptionProps, WithProps {}
+export interface Props extends DropdownOptionProps, WithClassName {}
 
 export const DefaultDropdownOption = ({
   option,
   className,
   onClick
-}: EnhancedProps) => (
+}: Props) => (
   <div className={className} onClick={onClick}>
     {option.text}
   </div>

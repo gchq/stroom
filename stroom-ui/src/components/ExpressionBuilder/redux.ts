@@ -38,19 +38,14 @@ import {
   ExpressionHasUuid
 } from "../../types";
 
-export const EXPRESSION_EDITOR_CREATED = "EXPRESSION_EDITOR_CREATED";
-export const EXPRESSION_EDITOR_DESTROYED = "EXPRESSION_EDITOR_DESTROYED";
-export const EXPRESSION_CHANGED = "EXPRESSION_CHANGED";
-export const EXPRESSION_TERM_ADDED = "EXPRESSION_TERM_ADDED";
-export const EXPRESSION_OPERATOR_ADDED = "EXPRESSION_OPERATOR_ADDED";
-export const EXPRESSION_ITEM_UPDATED = "EXPRESSION_ITEM_UPDATED";
-export const EXPRESSION_ITEM_DELETE_REQUESTED =
-  "EXPRESSION_ITEM_DELETE_REQUESTED";
-export const EXPRESSION_ITEM_DELETE_CANCELLED =
-  "EXPRESSION_ITEM_DELETE_CANCELLED";
-export const EXPRESSION_ITEM_DELETE_CONFIRMED =
-  "EXPRESSION_ITEM_DELETE_CONFIRMED";
-export const EXPRESSION_ITEM_MOVED = "EXPRESSION_ITEM_MOVED";
+const EXPRESSION_EDITOR_CREATED = "EXPRESSION_EDITOR_CREATED";
+const EXPRESSION_EDITOR_DESTROYED = "EXPRESSION_EDITOR_DESTROYED";
+const EXPRESSION_CHANGED = "EXPRESSION_CHANGED";
+const EXPRESSION_TERM_ADDED = "EXPRESSION_TERM_ADDED";
+const EXPRESSION_OPERATOR_ADDED = "EXPRESSION_OPERATOR_ADDED";
+const EXPRESSION_ITEM_UPDATED = "EXPRESSION_ITEM_UPDATED";
+const EXPRESSION_ITEM_DELETED = "EXPRESSION_ITEM_DELETED";
+const EXPRESSION_ITEM_MOVED = "EXPRESSION_ITEM_MOVED";
 
 export interface ExpressionEditorCreatedAction
   extends Action<"EXPRESSION_EDITOR_CREATED">,
@@ -66,12 +61,12 @@ export interface ExpressionChangedAction
 export interface ExpressionTermAddedAction
   extends Action<"EXPRESSION_TERM_ADDED">,
     ActionId {
-  operatorId: string;
+  itemId: string;
 }
 export interface ExpressionOperatorAddedAction
   extends Action<"EXPRESSION_OPERATOR_ADDED">,
     ActionId {
-  operatorId: string;
+  itemId: string;
 }
 export interface ExpressionItemUpdatedAction
   extends Action<"EXPRESSION_ITEM_UPDATED">,
@@ -79,17 +74,11 @@ export interface ExpressionItemUpdatedAction
   itemId: string;
   updates: object;
 }
-export interface ExpressionItemDeleteRequestedAction
-  extends Action<"EXPRESSION_ITEM_DELETE_REQUESTED">,
+export interface ExpressionItemDeletedAction
+  extends Action<"EXPRESSION_ITEM_DELETED">,
     ActionId {
-  pendingDeletionOperatorId: string;
+  itemId: string;
 }
-export interface ExpressionItemDeleteCancelledAction
-  extends Action<"EXPRESSION_ITEM_DELETE_CANCELLED">,
-    ActionId {}
-export interface ExpressionItemDeleteConfirmedAction
-  extends Action<"EXPRESSION_ITEM_DELETE_CONFIRMED">,
-    ActionId {}
 export interface ExpressionItemMovedAction
   extends Action<"EXPRESSION_ITEM_MOVED">,
     ActionId {
@@ -116,19 +105,19 @@ export const actionCreators = {
   }),
   expressionTermAdded: (
     id: string,
-    operatorId: string
+    itemId: string
   ): ExpressionTermAddedAction => ({
     type: EXPRESSION_TERM_ADDED,
     id,
-    operatorId
+    itemId
   }),
   expressionOperatorAdded: (
     id: string,
-    operatorId: string
+    itemId: string
   ): ExpressionOperatorAddedAction => ({
     type: EXPRESSION_OPERATOR_ADDED,
     id,
-    operatorId
+    itemId
   }),
   expressionItemUpdated: (
     id: string,
@@ -140,25 +129,13 @@ export const actionCreators = {
     itemId,
     updates
   }),
-  expressionItemDeleteRequested: (
+  expressionItemDeleted: (
     id: string,
-    pendingDeletionOperatorId: string
-  ): ExpressionItemDeleteRequestedAction => ({
-    type: EXPRESSION_ITEM_DELETE_REQUESTED,
+    itemId: string
+  ): ExpressionItemDeletedAction => ({
+    type: EXPRESSION_ITEM_DELETED,
     id,
-    pendingDeletionOperatorId
-  }),
-  expressionItemDeleteCancelled: (
-    id: string
-  ): ExpressionItemDeleteCancelledAction => ({
-    type: EXPRESSION_ITEM_DELETE_CANCELLED,
-    id
-  }),
-  expressionItemDeleteConfirmed: (
-    id: string
-  ): ExpressionItemDeleteConfirmedAction => ({
-    type: EXPRESSION_ITEM_DELETE_CONFIRMED,
-    id
+    itemId
   }),
   expressionItemMoved: (
     id: string,
@@ -188,7 +165,6 @@ const getNewOperator = (): ExpressionOperatorWithUuid => ({
 });
 
 export interface StoreStateById {
-  pendingDeletionOperatorId?: string;
   expression: ExpressionOperatorWithUuid;
   expressionAsString?: string;
 }
@@ -196,7 +172,6 @@ export interface StoreStateById {
 export interface StoreState extends StateById<StoreStateById> {}
 
 export const defaultStatePerId: StoreStateById = {
-  pendingDeletionOperatorId: undefined,
   expression: getNewOperator()
 };
 
@@ -211,8 +186,8 @@ export const reducer = prepareReducerById(defaultStatePerId)
   )
   .handleAction<ExpressionTermAddedAction>(
     EXPRESSION_TERM_ADDED,
-    (state = defaultStatePerId, { operatorId }) => ({
-      expression: addItemsToTree(state.expression, operatorId, [
+    (state = defaultStatePerId, { itemId }) => ({
+      expression: addItemsToTree(state.expression, itemId, [
         getNewTerm()
       ]) as ExpressionOperatorWithUuid,
       expressionAsString: toString(state.expression)
@@ -220,8 +195,8 @@ export const reducer = prepareReducerById(defaultStatePerId)
   )
   .handleAction<ExpressionOperatorAddedAction>(
     EXPRESSION_OPERATOR_ADDED,
-    (state = defaultStatePerId, { operatorId }) => ({
-      expression: addItemsToTree(state.expression, operatorId, [
+    (state = defaultStatePerId, { itemId }) => ({
+      expression: addItemsToTree(state.expression, itemId, [
         getNewOperator()
       ]) as ExpressionOperatorWithUuid,
       expressionAsString: toString(state.expression)
@@ -238,29 +213,14 @@ export const reducer = prepareReducerById(defaultStatePerId)
       expressionAsString: toString(state.expression)
     })
   )
-  .handleAction<ExpressionItemDeleteRequestedAction>(
-    EXPRESSION_ITEM_DELETE_REQUESTED,
-    (state = defaultStatePerId, { pendingDeletionOperatorId }) => ({
-      ...state,
-      pendingDeletionOperatorId
-    })
-  )
-  .handleAction<ExpressionItemDeleteCancelledAction>(
-    EXPRESSION_ITEM_DELETE_CANCELLED,
-    (state = defaultStatePerId) => ({
-      ...state,
-      pendingDeletionOperatorId: undefined
-    })
-  )
-  .handleAction<ExpressionItemDeleteConfirmedAction>(
-    EXPRESSION_ITEM_DELETE_CONFIRMED,
-    (state = defaultStatePerId) => ({
+  .handleAction<ExpressionItemDeletedAction>(
+    EXPRESSION_ITEM_DELETED,
+    (state = defaultStatePerId, { itemId }) => ({
       ...state,
       expression: deleteItemFromTree(
         state.expression,
-        state.pendingDeletionOperatorId!
+        itemId
       ) as ExpressionOperatorWithUuid,
-      pendingDeletionOperatorId: undefined,
       expressionAsString: toString(state.expression)
     })
   )

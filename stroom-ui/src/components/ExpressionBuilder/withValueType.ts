@@ -1,22 +1,13 @@
-import { withProps } from "recompose";
 import {
   DataSourceFieldType,
   ExpressionTermWithUuid,
   DataSourceType
 } from "../../types";
 
-export interface Props {
-  term: ExpressionTermWithUuid;
-  dataSource: DataSourceType;
-}
-
-interface WithProps {
-  valueType: string;
-}
-
-export interface EnhancedProps extends Props, WithProps {}
-
-const withValueType = withProps<WithProps, Props>(({ term, dataSource }) => {
+const withValueType = (
+  term: ExpressionTermWithUuid,
+  dataSource: DataSourceType
+): string => {
   let valueType: string = "text";
 
   const thisField = dataSource.fields.find(
@@ -40,9 +31,7 @@ const withValueType = withProps<WithProps, Props>(({ term, dataSource }) => {
     }
   }
 
-  return {
-    valueType
-  };
-});
+  return valueType;
+};
 
 export default withValueType;
