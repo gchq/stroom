@@ -88,10 +88,25 @@ ext.versions = [
         stroomQuery       : 'v4.0-beta.24', // same version for both stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
+        // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
+        // Curator 4 can apparently work with zk 3.4.x as long as you exclude its zk dependency
+        // and explicitly add your own 3.4.x dependency. See https://curator.apache.org/zk-compatibility.html
+        // Also curator has a dependency on guava as it uses a handful of guava classes in its api. Its
+        // implementation relies on a shaded guava so you should be able to use any version of guava
+        // to satisfy the few classes used in the curator api, see https://issues.apache.org/jira/browse/CURATOR-200
+        // It is not clear whether a 3.4.x zk client (where x > 5) and a 3.4.5 zk server are compatible. Given that
+        // CHD6.1 ships with HBase 2.1 which uses a 3.4.10 zk client against a 3.4.5 server, we should be ok.
+        // If the version of curator is changed then this may need to be done in tandem with stroom-stats to ensure
+        // both sides' curator content in zk are compatible.
+
+        // For details of cloudera maven dependencies (i.e. hbase/zookeeper versions) see:
+        // 5.16.x - https://www.cloudera.com/documentation/enterprise/release-notes/topics/cdh_vd_cdh5_maven_repo_516x.html
+        // 6.1.x - https://www.cloudera.com/documentation/enterprise/6/release-notes/topics/rg_cdh_61_maven_artifacts.html
+
         //------------3rd-party------------
-        curator           : '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
-        dropwizard        : '1.3.8', //used to set the dropwizard-bom version, that controls lots of dependency versions
-        guava             : '21.0', //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
+        curator           : '2.12.0', // See NOTE above. You MUST exclude its zk dep
+        zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
+        dropwizard        : '1.3.8', // used to set the dropwizard-bom version, that controls lots of dependency versions
         guice4            : '4.2.0',
         gwt               : '2.8.2',
         hibernate         : '5.2.15.Final', // DW BOM doesn't supply version for hibernate-entitymanager so we have to set it here
@@ -145,8 +160,8 @@ ext.libs = [
         dropwizard_jersey              : "io.dropwizard:dropwizard-jersey", // version controlled by DW BOM
         dropwizard_jetty               : "io.dropwizard:dropwizard-jetty", //was 1.0.6 now 1.1.0
         dropwizard_lifecycle           : "io.dropwizard:dropwizard-lifecycle", // version controlled by DW BOM
-        dropwizard_metrics_core        : "io.dropwizard.metrics:metrics-core", // version controlled by DW BOM
         dropwizard_metrics_annotation  : "io.dropwizard.metrics:metrics-annotation", // version controlled by DW BOM
+        dropwizard_metrics_core        : "io.dropwizard.metrics:metrics-core", // version controlled by DW BOM
         dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks", // version controlled by DW BOM
         dropwizard_servlets            : "io.dropwizard:dropwizard-servlets", // version controlled by DW BOM
         dropwizard_testing             : "io.dropwizard:dropwizard-testing", // version controlled by DW BOM
@@ -154,7 +169,7 @@ ext.libs = [
         flyway_core                    : "org.flywaydb:flyway-core:5.2.4",
         gin                            : "com.google.gwt.inject:gin:2.1.2",
         google_findbugs                : "com.google.code.findbugs:jsr305:3.0.2",
-        guava                          : "com.google.guava:guava:$versions.guava", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
+        guava                          : "com.google.guava:guava", // version controlled by DW BOM
         guice3                         : "com.google.inject:guice:3.0",
         guice4                         : "com.google.inject:guice:$versions.guice4:no_aop",
         guice_assistedinject           : "com.google.inject.extensions:guice-assistedinject:$versions.guice4",
@@ -237,6 +252,7 @@ ext.libs = [
         vavr                           : "io.vavr:vavr:0.9.0",
         ws_rs_api                      : "javax.ws.rs:javax.ws.rs-api:2.1",
         xml_apis                       : "xml-apis:xml-apis:1.0.b2",
+        zookeeper                      : "org.apache.zookeeper:zookeeper:$versions.zookeeper",
         zzDUMMYzz                      : "makes sorting easier"
 ]
 
@@ -336,9 +352,7 @@ subprojects {
 
                 dependencySubstitution {
                     //println "Slf4j version = $dropwizardBomSlf4jVersion"
-                    //substitute module('log4j:log4j') with module("org.slf4j:log4j-over-slf4j:$versions.slf4j")
                     substitute module('log4j:log4j') with module("org.slf4j:log4j-over-slf4j:$dropwizardBomSlf4jVersion")
-                    substitute module('com.google.guava:guava') with module("com.google.guava:guava:$versions.guava")
                 }
 
                 // Stop stroom libs from dragging in a different version of dropwizard
@@ -353,8 +367,11 @@ subprojects {
                 //}
 
                 forcedModules = [
-                        //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
-                        //libs.guava
+                    // This is how to force a dep to a specfic version
+
+                    // Curator will drag in a more recent version of zk but will support older versions so
+                    // substitute it here. See NOTE in versions block above.
+                    libs.zookeeper
                 ]
             }
         }
