@@ -210,7 +210,7 @@ ext.libs = [
         junit_jupiter_api              : "org.junit.jupiter:junit-jupiter-api:$versions.junit_jupiter",
         junit_jupiter_engine           : "org.junit.jupiter:junit-jupiter-engine:$versions.junit_jupiter",
         kryo                           : "com.esotericsoftware:kryo-shaded:4.0.0",
-        lmdbjava                       : "org.lmdbjava:lmdbjava:0.6.1",
+        lmdbjava                       : "org.lmdbjava:lmdbjava:0.6.3",
         log4j_over_slf4j               : "org.slf4j:log4j-over-slf4j", // version controlled by DW BOM
         logback_classic                : "ch.qos.logback:logback-classic",
         logback_core                   : "ch.qos.logback:logback-core",
