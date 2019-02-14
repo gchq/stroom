@@ -1,6 +1,7 @@
 package stroom.security.rest;
 
 import io.swagger.annotations.Api;
+import stroom.util.RestResource;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -18,7 +19,7 @@ import javax.ws.rs.core.Response;
         description = "Stroom Authorisation API")
 @Path("/users/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public interface UserResource {
+public interface UserResource extends RestResource {
     @GET
     Response get(@QueryParam("name") String name,
                  @QueryParam("isGroup") Boolean isGroup,

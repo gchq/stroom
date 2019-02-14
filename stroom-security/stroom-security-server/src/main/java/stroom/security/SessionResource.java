@@ -4,6 +4,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import stroom.security.shared.UserRef;
 import stroom.servlet.SessionListListener;
+import stroom.util.RestResource;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpSession;
@@ -23,7 +24,7 @@ import javax.ws.rs.core.Response;
 @Api(value = "session - /v1")
 @Path("/session/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class SessionResource {
+public class SessionResource implements RestResource {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(SessionResource.class);
 
     private final AuthenticationEventLog eventLog;

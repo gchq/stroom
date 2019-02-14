@@ -17,7 +17,6 @@
 package stroom.pipeline;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.shared.Doc;
 import stroom.entity.EntityTypeBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
@@ -27,6 +26,8 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.textconverter.TextConverterModule;
 import stroom.pipeline.xmlschema.XmlSchemaModule;
 import stroom.pipeline.xslt.XsltModule;
+import stroom.util.GuiceUtil;
+import stroom.util.RestResource;
 
 public class PipelineModule extends AbstractModule {
     @Override
@@ -38,11 +39,14 @@ public class PipelineModule extends AbstractModule {
         bind(PipelineStore.class).to(PipelineStoreImpl.class);
         bind(LocationFactory.class).to(LocationFactoryProxy.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(stroom.pipeline.PipelineStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(PipelineStoreImpl.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(stroom.pipeline.PipelineStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(PipelineStoreImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(PipelineResource.class);
 
         EntityTypeBinder.create(binder())
                 .bind(PipelineDoc.DOCUMENT_TYPE, PipelineStoreImpl.class);

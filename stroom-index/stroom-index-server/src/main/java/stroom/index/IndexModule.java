@@ -17,13 +17,13 @@
 package stroom.index;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.entity.EntityTypeBinder;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityEvent;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.impl.db.IndexDbModule;
+import stroom.index.rest.StroomIndexQueryResourceImpl;
 import stroom.index.service.IndexShardService;
 import stroom.index.service.IndexShardServiceImpl;
 import stroom.index.service.IndexVolumeGroupService;
@@ -36,6 +36,8 @@ import stroom.index.shared.FetchIndexVolumesAction;
 import stroom.index.shared.FlushIndexShardAction;
 import stroom.index.shared.IndexDoc;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.GuiceUtil;
+import stroom.util.RestResource;
 
 public class IndexModule extends AbstractModule {
     @Override
@@ -52,8 +54,8 @@ public class IndexModule extends AbstractModule {
         bind(IndexShardService.class).to(IndexShardServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(IndexStructureCacheImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(IndexStructureCacheImpl.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(CloseIndexShardAction.class, stroom.index.CloseIndexShardActionHandler.class)
@@ -64,22 +66,23 @@ public class IndexModule extends AbstractModule {
                 .bind(FlushIndexShardClusterTask.class, FlushIndexShardClusterHandler.class)
                 .bind(DeleteIndexShardClusterTask.class, DeleteIndexShardClusterHandler.class);
 
-        final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(IndexConfigCacheEntityEventHandler.class);
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(IndexConfigCacheEntityEventHandler.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(stroom.index.IndexStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(IndexStoreImpl.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(stroom.index.IndexStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(IndexStoreImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(StroomIndexQueryResourceImpl.class);
 
         EntityTypeBinder.create(binder())
                 .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
 
         // TODO Shards are no longer Findable Entities
-//
-//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-////        findServiceBinder.addBinding().to(stroom.index.IndexStoreImpl.class);
-//        findServiceBinder.addBinding().to(stroom.index.service.IndexShardServiceImpl.class);
+//        GuiceUtil.buildMultiBinder(binder(), FindService.class)
+//                .addBinding(IndexShardServiceImpl.class);
     }
 }

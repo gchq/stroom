@@ -15,7 +15,10 @@ public class TaskHandlerBinder {
         return new TaskHandlerBinder(binder);
     }
 
-    public <T extends Task<?>, H extends TaskHandler<?, ?>> TaskHandlerBinder bind(final Class<T> task, final Class<H> handler) {
+    public <T extends Task<?>, H extends TaskHandler<?, ?>> TaskHandlerBinder bind(
+            final Class<T> task,
+            final Class<H> handler) {
+
         mapBinder.addBinding(new TaskType(task)).to(handler);
         return this;
     }

@@ -25,6 +25,7 @@ import stroom.importexport.api.DocRefs;
 import stroom.importexport.api.OldDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.util.RestResource;
 import stroom.util.string.EncodingUtil;
 
 import javax.inject.Inject;
@@ -43,7 +44,7 @@ import java.util.stream.Collectors;
 @Api(value = "ruleset - /v1")
 @Path("/ruleset/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class RuleSetResource {
+public class RuleSetResource implements RestResource {
     private final RuleSetService ruleSetService;
 
     @Inject

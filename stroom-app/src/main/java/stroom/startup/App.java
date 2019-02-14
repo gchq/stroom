@@ -36,43 +36,25 @@ import org.slf4j.LoggerFactory;
 import stroom.cluster.ClusterCallServiceRPC;
 import stroom.content.ContentSyncService;
 import stroom.content.ProxySecurityFilter;
-import stroom.data.store.DataResource;
 import stroom.datafeed.DataFeedServlet;
 import stroom.dictionary.api.DictionaryStore;
-import stroom.dictionary.impl.DictionaryResource;
-import stroom.dictionary.impl.DictionaryResource2;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dispatch.shared.DispatchService;
-import stroom.explorer.ExplorerResource;
 import stroom.feed.RemoteFeedServiceRPC;
 import stroom.guice.AppModule;
-import stroom.importexport.impl.ExportConfigResource;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.index.rest.IndexResourceImpl;
-import stroom.index.rest.IndexShardResourceImpl;
-import stroom.index.rest.IndexVolumeResourceImpl;
-import stroom.index.rest.StroomIndexQueryResourceImpl;
-import stroom.index.rest.IndexVolumeGroupResourceImpl;
 import stroom.lifecycle.impl.LifecycleService;
 import stroom.persist.PersistLifecycle;
-import stroom.pipeline.PipelineResource;
-import stroom.pipeline.factory.ElementResource;
-import stroom.pipeline.xslt.XsltResource;
 import stroom.proxy.guice.ProxyModule;
 import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
 import stroom.resource.impl.SessionResourceStoreImpl;
-import stroom.ruleset.RuleSetResource;
-import stroom.ruleset.RuleSetResource2;
 import stroom.ruleset.RuleSetService;
 import stroom.ruleset.shared.RuleSet;
 import stroom.script.ScriptServlet;
-import stroom.security.AuthorisationResource;
 import stroom.security.SecurityFilter;
-import stroom.security.SessionResource;
-import stroom.security.rest.UserResourceImpl;
 import stroom.servicediscovery.ResourcePaths;
 import stroom.servlet.CacheControlFilter;
 import stroom.servlet.DashboardServlet;
@@ -86,9 +68,6 @@ import stroom.servlet.SessionListListener;
 import stroom.servlet.SessionListServlet;
 import stroom.servlet.StatusServlet;
 import stroom.servlet.StroomServlet;
-import stroom.statistics.sql.search.SqlStatisticsQueryResource;
-import stroom.streamstore.StreamAttributeMapResource;
-import stroom.streamtask.resource.StreamTaskResource;
 import stroom.util.HealthCheckUtils;
 import stroom.util.logging.LambdaLogger;
 
@@ -168,16 +147,6 @@ public class App extends Application<Config> {
         final HealthCheckRegistry healthCheckRegistry = environment.healthChecks();
         injector.getInstance(HealthChecks.class).register();
 
-//        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, ByteBufferPool.class);
-//        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource.class);
-//        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource2.class);
-//        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource.class);
-//        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource2.class);
-//        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ForwardStreamHandlerFactory.class);
-//        GuiceUtil.addHealthCheck(
-//                environment.healthChecks(),
-//                injector.getInstance(RefDataStoreFactory.class).getOffHeapStore());
-
         healthCheckRegistry.register(configuration.getProxyConfig().getClass().getName(), new HealthCheck() {
             @Override
             protected Result check() {
@@ -212,11 +181,8 @@ public class App extends Application<Config> {
         GuiceUtil.addServlet(servletContextHandler, injector, ProxyStatusServlet.class, ResourcePaths.ROOT_PATH + "/status", healthCheckRegistry);
         GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, ResourcePaths.ROOT_PATH + "/debug", healthCheckRegistry);
 
-        // Add resources.
-        GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource2.class);
-        GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource2.class);
+        // Add all injectable resources.
+        GuiceUtil.addRestResources(environment.jersey(), injector);
 
         // Listen to the lifecycle of the Dropwizard app.
         GuiceUtil.manage(environment.lifecycle(), injector, ProxyLifecycle.class);
@@ -252,19 +218,6 @@ public class App extends Application<Config> {
         final HealthCheckRegistry healthCheckRegistry = environment.healthChecks();
         injector.getInstance(HealthChecks.class).register();
 
-//        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ServiceDiscoveryRegistrar.class);
-//        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ServiceDiscovererImpl.class);
-//        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, SqlStatisticsQueryResource.class);
-//        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, StroomIndexQueryResourceImpl.class);
-//        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, DictionaryResource.class);
-//        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, DictionaryResource2.class);
-//        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RuleSetResource.class);
-//        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RuleSetResource2.class);
-//        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, JWTService.class);
-//        GuiceUtil.addHealthCheck(
-//                environment.healthChecks(),
-//                injector.getInstance(RefDataStoreFactory.class).getOffHeapStore());
-
         // Add filters
         GuiceUtil.addFilter(servletContextHandler, injector, HttpServletRequestFilter.class, "/*");
         FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter").setInitParameter("rejectUri", "/");
@@ -291,28 +244,8 @@ public class App extends Application<Config> {
         // Add session listeners.
         GuiceUtil.addServletListener(environment.servlets(), injector, SessionListListener.class);
 
-        // Add resources.
-        GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource2.class);
-        GuiceUtil.addResource(environment.jersey(), injector, IndexResourceImpl.class);
-        GuiceUtil.addResource(environment.jersey(), injector, ExportConfigResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource2.class);
-        GuiceUtil.addResource(environment.jersey(), injector, StroomIndexQueryResourceImpl.class);
-        GuiceUtil.addResource(environment.jersey(), injector, IndexVolumeGroupResourceImpl.class);
-        GuiceUtil.addResource(environment.jersey(), injector, IndexVolumeResourceImpl.class);
-        GuiceUtil.addResource(environment.jersey(), injector, IndexShardResourceImpl.class);
-        GuiceUtil.addResource(environment.jersey(), injector, SqlStatisticsQueryResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, AuthorisationResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, UserResourceImpl.class);
-        GuiceUtil.addResource(environment.jersey(), injector, StreamTaskResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, PipelineResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, XsltResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, ExplorerResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, ElementResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, SessionResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, StreamAttributeMapResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, DataResource.class);
+        // Add all injectable rest resources.
+        GuiceUtil.addRestResources(environment.jersey(), injector);
 
         // Map exceptions to helpful HTTP responses
         environment.jersey().register(PermissionExceptionMapper.class);

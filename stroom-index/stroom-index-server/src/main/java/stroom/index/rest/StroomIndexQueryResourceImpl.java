@@ -20,7 +20,6 @@ import com.codahale.metrics.annotation.Timed;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.index.IndexStore;
-import stroom.index.rest.StroomIndexQueryResource;
 import stroom.index.shared.IndexDoc;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
@@ -31,10 +30,11 @@ import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.search.IndexDataSourceFieldUtil;
 import stroom.search.LuceneSearchResponseCreatorManager;
 import stroom.security.Security;
+import stroom.util.RestResource;
 
 import javax.inject.Inject;
 
-public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
+public class StroomIndexQueryResourceImpl implements RestResource, StroomIndexQueryResource {
     private final SearchResponseCreatorManager searchResponseCreatorManager;
     private final IndexStore indexStore;
     private final Security security;

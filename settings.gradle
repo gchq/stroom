@@ -155,6 +155,7 @@ include 'stroom-security:stroom-security-server'
 include 'stroom-security:stroom-security-impl-mock'
 include 'stroom-security:stroom-security-client-api'
 include 'stroom-security:stroom-security-client'
+include 'stroom-security:stroom-security-impl'
 include 'stroom-security:stroom-security-impl-db'
 include 'stroom-security:stroom-security-impl-db-gen'
 
@@ -185,5 +186,3 @@ include 'stroom-test-common'
 // Util
 include 'stroom-util'
 include 'stroom-util-shared'
-include 'stroom-index:stroom-index-impl-mock'
-

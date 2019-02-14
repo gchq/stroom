@@ -29,6 +29,7 @@ import stroom.importexport.api.OldDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.security.Security;
+import stroom.util.RestResource;
 import stroom.util.string.EncodingUtil;
 
 import javax.inject.Inject;
@@ -50,7 +51,7 @@ import java.util.stream.Collectors;
 @Api(value = "dictionary - /v1")
 @Path("/dictionary/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class DictionaryResource {
+public class DictionaryResource implements RestResource {
     private final DictionaryStore dictionaryStore;
     private final Security security;
 

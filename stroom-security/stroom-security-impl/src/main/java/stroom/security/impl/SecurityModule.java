@@ -14,24 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.statistics.sql.search;
+package stroom.security.impl;
+
 
 import com.google.inject.AbstractModule;
-import stroom.entity.shared.Clearable;
-import stroom.statistics.sql.StatisticsQueryService;
+import stroom.security.rest.UserResource;
 import stroom.util.GuiceUtil;
 import stroom.util.RestResource;
 
-public class SQLStatisticSearchModule extends AbstractModule {
+public class SecurityModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(StatisticsQueryService.class).to(StatisticsQueryServiceImpl.class);
-        bind(StatisticsSearchService.class).to(StatisticsSearchServiceImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(SqlStatisticsSearchResponseCreatorManager.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(SqlStatisticsQueryResource.class);
+                .addBinding(UserResourceImpl.class);
     }
 }

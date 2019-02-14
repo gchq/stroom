@@ -17,12 +17,13 @@
 package stroom.ruleset;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.datafeed.AttributeMapFilterFactory;
 import stroom.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.ruleset.shared.RuleSet;
+import stroom.util.GuiceUtil;
+import stroom.util.RestResource;
 
 public class RulesetModule extends AbstractModule {
     @Override
@@ -30,11 +31,15 @@ public class RulesetModule extends AbstractModule {
         bind(RuleSetService.class).to(RuleSetServiceImpl.class);
         bind(AttributeMapFilterFactory.class).to(AttributeMapFilterFactoryImpl.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(stroom.ruleset.RuleSetServiceImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(RuleSetServiceImpl.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(stroom.ruleset.RuleSetServiceImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(RuleSetServiceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(RuleSetResource.class)
+                .addBinding(RuleSetResource2.class);
 
         EntityTypeBinder.create(binder())
                 .bind(RuleSet.DOCUMENT_TYPE, RuleSetServiceImpl.class);
