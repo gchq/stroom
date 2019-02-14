@@ -28,5 +28,10 @@ const pipelineStories = storiesOf("Pipeline/Display", module).addDecorator(
 );
 
 Object.keys(testPipelines).forEach(k => {
-  pipelineStories.add(k, () => <Pipeline pipelineId={k} />);
+  pipelineStories.add(k, () => (
+    <Pipeline
+      pipelineId={k}
+      showAddElementDialog={() => console.log("Add Element")}
+    />
+  ));
 });

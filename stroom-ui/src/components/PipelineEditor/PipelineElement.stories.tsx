@@ -24,19 +24,32 @@ import StroomDecorator from "../../lib/storybook/StroomDecorator";
 
 import "../../styles/main.css";
 import { PipelineElementType } from "src/types";
+import { ShowDialog as ShowAddElementDialog } from "./AddElementModal";
 
 const pipelineStories = storiesOf("Pipeline/Element", module).addDecorator(
   StroomDecorator
 );
 
+const showAddElementDialog: ShowAddElementDialog = () =>
+  console.error("Adding Elements Not Supported in Stories");
+const existingNames: Array<string> = [];
+
 testPipelines.simple.merged.elements.add!.forEach((k: PipelineElementType) => {
   pipelineStories.add(k.id, () => (
     <React.Fragment>
       <div className="Pipeline-editor__elements_cell element">
-        <PipelineElement pipelineId="simple" elementId={k.id} />
+        <PipelineElement
+          pipelineId="simple"
+          elementId={k.id}
+          existingNames={existingNames}
+          showAddElementDialog={showAddElementDialog}
+        />
       </div>
       <div style={{ display: "none" }}>
-        <Pipeline pipelineId="simple" />
+        <Pipeline
+          pipelineId="simple"
+          showAddElementDialog={showAddElementDialog}
+        />
       </div>{" "}
     </React.Fragment>
   ));

@@ -17,6 +17,7 @@ import ModeOptionButtons from "./ModeOptionButtons";
 import { GlobalStoreState } from "../../startup/reducers";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import useSelectableItemListing from "../../lib/useSelectableItemListing";
+import useRecentItems from "../../lib/useRecentItems";
 
 interface Props {
   pickerId: string;
@@ -29,7 +30,6 @@ interface Props {
 interface ConnectState {
   appSearch: AppSearchStoreState;
   documentTree: DocRefTree;
-  recentItems: Array<DocRefType>;
 }
 
 interface ConnectDispatch {
@@ -41,9 +41,8 @@ export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ appSearch, recentItems, folderExplorer: { documentTree } }) => ({
+    ({ appSearch, folderExplorer: { documentTree } }) => ({
       appSearch,
-      recentItems,
       documentTree
     }),
     {
@@ -62,9 +61,10 @@ const AppSearchBar = ({
   appSearch,
   value,
   documentTree,
-  recentItems,
   searchApp
 }: EnhancedProps) => {
+  const { recentItems } = useRecentItems();
+
   useEffect(() => {
     fetchDocTree();
   }, []);

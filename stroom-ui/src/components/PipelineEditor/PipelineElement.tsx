@@ -43,9 +43,9 @@ import {
   PipelinePropertyType
 } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
+import { ShowDialog } from "./AddElementModal";
 
 const {
-  pipelineElementAddRequested,
   pipelineElementSelected,
   pipelineElementMoved,
   pipelineElementReinstated
@@ -55,6 +55,8 @@ export interface Props {
   pipelineId: string;
   elementId: string;
   className?: string;
+  showAddElementDialog: ShowDialog;
+  existingNames: Array<string>;
 }
 
 interface ConnectState {
@@ -66,7 +68,6 @@ interface ConnectState {
 }
 
 interface ConnectDispatch {
-  pipelineElementAddRequested: typeof pipelineElementAddRequested;
   pipelineElementSelected: typeof pipelineElementSelected;
   pipelineElementMoved: typeof pipelineElementMoved;
   pipelineElementReinstated: typeof pipelineElementReinstated;
@@ -156,8 +157,9 @@ const dropTarget: DropTargetSpec<DndProps> = {
       elementId,
       pipelineId,
       pipelineElementMoved,
-      pipelineElementAddRequested,
-      pipelineElementReinstated
+      showAddElementDialog,
+      pipelineElementReinstated,
+      existingNames
     } = props;
 
     switch (monitor.getItemType()) {
@@ -172,7 +174,7 @@ const dropTarget: DropTargetSpec<DndProps> = {
         if (recycleData) {
           pipelineElementReinstated(pipelineId, elementId, recycleData);
         } else {
-          pipelineElementAddRequested(pipelineId, elementId, element);
+          showAddElementDialog(elementId, element, existingNames);
         }
         break;
       }
@@ -230,7 +232,6 @@ const enhance = compose<EnhancedProps, Props>(
     {
       // actions
       pipelineElementSelected,
-      pipelineElementAddRequested,
       pipelineElementMoved,
       pipelineElementReinstated
     }

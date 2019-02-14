@@ -1,70 +1,42 @@
 import * as React from "react";
-import { connect } from "react-redux";
-import { compose, lifecycle } from "recompose";
+import { useEffect } from "react";
 
-import { findItem } from "../../lib/treeUtils";
 import FolderExplorer from "../FolderExplorer";
 import DictionaryEditor from "../DictionaryEditor";
 import PipelineEditor from "../PipelineEditor";
 import XsltEditor from "../XsltEditor";
 import PathNotFound from "../PathNotFound";
-import { actionCreators } from "./redux";
-import { GlobalStoreState } from "../../startup/reducers";
-import { DocRefType, DocRefTree } from "../../types";
-
-const { docRefOpened } = actionCreators;
+import { DocRefType } from "../../types";
+import useRecentItems from "../../lib/useRecentItems";
 
 export interface Props {
   docRef: DocRefType;
 }
-interface ConnectState {
-  documentTree: DocRefTree;
-}
-interface ConnectDispatch {
-  docRefOpened: typeof docRefOpened;
-}
-export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
-const enhance = compose<EnhancedProps, Props>(
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ folderExplorer: { documentTree } }) => ({ documentTree }),
-    { docRefOpened }
-  ),
-  lifecycle<Props & ConnectState & ConnectDispatch, {}>({
-    componentDidMount() {
-      const {
-        documentTree,
-        docRefOpened,
-        docRef: { uuid }
-      } = this.props;
+let SwitchedDocRefEditor = ({ docRef }: Props) => {
+  const { addRecentItem } = useRecentItems();
 
-      const openedDocRefWithLineage = findItem(documentTree, uuid);
+  useEffect(() => {
+    addRecentItem(docRef);
+  });
 
-      if (openedDocRefWithLineage) {
-        docRefOpened(openedDocRefWithLineage.node);
-      }
-    }
-  })
-);
-
-let SwitchedDocRefEditor = ({ docRef: { type, uuid } }: EnhancedProps) => {
-  switch (type) {
+  switch (docRef.type) {
     case "System":
     case "Folder":
-      return <FolderExplorer folderUuid={uuid} />;
+      return <FolderExplorer folderUuid={docRef.uuid} />;
     case "AnnotationsIndex":
       return <div>Annotations Index Editor</div>;
     case "ElasticIndex":
       return <div>Elastic Index Editor</div>;
     case "XSLT":
-      return <XsltEditor xsltUuid={uuid} />;
+      return <XsltEditor xsltUuid={docRef.uuid} />;
     case "Pipeline":
-      return <PipelineEditor pipelineId={uuid} />;
+      return <PipelineEditor pipelineId={docRef.uuid} />;
     case "Dashboard":
       return <div>Dashboard Editor</div>;
     case "Dictionary":
       return (
-        <DictionaryEditor dictionaryUuid={uuid}>
+        <DictionaryEditor dictionaryUuid={docRef.uuid}>
           Dictionary Editor
         </DictionaryEditor>
       );
@@ -91,4 +63,4 @@ let SwitchedDocRefEditor = ({ docRef: { type, uuid } }: EnhancedProps) => {
   }
 };
 
-export default enhance(SwitchedDocRefEditor);
+export default SwitchedDocRefEditor;

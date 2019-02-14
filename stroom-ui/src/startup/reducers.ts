@@ -68,10 +68,6 @@ import {
   StoreState as PipelineEditorStoreState
 } from "../components/PipelineEditor";
 import {
-  reducer as recentItems,
-  StoreState as RecentItemsStoreState
-} from "../components/SwitchedDocRefEditor/redux";
-import {
   reducer as xsltEditor,
   StoreState as XsltEditorStoreState
 } from "../components/XsltEditor";
@@ -110,7 +106,6 @@ export interface GlobalStoreState {
   xsltEditor: XsltEditorStoreState;
   expressionBuilder: ExpressionBuilderStoreState;
   pipelineEditor: PipelineEditorStoreState;
-  recentItems: RecentItemsStoreState;
   debuggers: DebuggersStoreState;
   processing: ProcessingStoreState;
   dataViewers: DataViewersStoreState;
@@ -135,7 +130,6 @@ export default combineReducers({
   indexEditor,
   expressionBuilder,
   pipelineEditor,
-  recentItems,
   debuggers,
   processing,
   dataViewers,

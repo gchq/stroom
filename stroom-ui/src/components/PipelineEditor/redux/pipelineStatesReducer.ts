@@ -24,29 +24,20 @@ import {
   PipelineElementType
 } from "../../../types";
 
-export const PIPELINE_RECEIVED = "PIPELINE_RECEIVED";
-export const PIPELINE_SAVE_REQUESTED = "PIPELINE_SAVE_REQUESTED";
-export const PIPELINE_SAVED = "PIPELINE_SAVED";
-export const PIPELINE_SETTINGS_UPDATED = "PIPELINE_SETTINGS_UPDATED";
-export const PIPELINE_ELEMENT_SELECTED = "PIPELINE_ELEMENT_SELECTED";
-export const PIPELINE_ELEMENT_SELECTION_CLEARED =
-  "PIPELINE_ELEMENT_SELECTION_CLEARED";
-export const PIPELINE_ELEMENT_MOVED = "PIPELINE_ELEMENT_MOVED";
-export const PIPELINE_ELEMENT_ADD_REQUESTED = "PIPELINE_ELEMENT_ADD_REQUESTED";
-export const PIPELINE_ELEMENT_ADD_CANCELLED = "PIPELINE_ELEMENT_ADD_CANCELLED";
-export const PIPELINE_ELEMENT_ADD_CONFIRMED = "PIPELINE_ELEMENT_ADD_CONFIRMED";
-export const PIPELINE_ELEMENT_DELETE_REQUESTED =
-  "PIPELINE_ELEMENT_DELETE_REQUESTED";
-export const PIPELINE_ELEMENT_DELETE_CANCELLED =
-  "PIPELINE_ELEMENT_DELETE_CANCELLED";
-export const PIPELINE_ELEMENT_DELETE_CONFIRMED =
-  "PIPELINE_ELEMENT_DELETE_CONFIRMED";
-export const PIPELINE_ELEMENT_REINSTATED = "PIPELINE_ELEMENT_REINSTATED";
-export const PIPELINE_ELEMENT_PROPERTY_UPDATED =
-  "PIPELINE_ELEMENT_PROPERTY_UPDATED";
-export const PIPELINE_ELEMENT_PROPERTY_REVERT_TO_PARENT =
+const PIPELINE_RECEIVED = "PIPELINE_RECEIVED";
+const PIPELINE_SAVE_REQUESTED = "PIPELINE_SAVE_REQUESTED";
+const PIPELINE_SAVED = "PIPELINE_SAVED";
+const PIPELINE_SETTINGS_UPDATED = "PIPELINE_SETTINGS_UPDATED";
+const PIPELINE_ELEMENT_SELECTED = "PIPELINE_ELEMENT_SELECTED";
+const PIPELINE_ELEMENT_SELECTION_CLEARED = "PIPELINE_ELEMENT_SELECTION_CLEARED";
+const PIPELINE_ELEMENT_MOVED = "PIPELINE_ELEMENT_MOVED";
+const PIPELINE_ELEMENT_ADDED = "PIPELINE_ELEMENT_ADDED";
+const PIPELINE_ELEMENT_DELETED = "PIPELINE_ELEMENT_DELETED";
+const PIPELINE_ELEMENT_REINSTATED = "PIPELINE_ELEMENT_REINSTATED";
+const PIPELINE_ELEMENT_PROPERTY_UPDATED = "PIPELINE_ELEMENT_PROPERTY_UPDATED";
+const PIPELINE_ELEMENT_PROPERTY_REVERT_TO_PARENT =
   "PIPELINE_ELEMENT_PROPERTY_REVERT_TO_PARENT";
-export const PIPELINE_ELEMENT_PROPERTY_REVERT_TO_DEFAULT =
+const PIPELINE_ELEMENT_PROPERTY_REVERT_TO_DEFAULT =
   "PIPELINE_ELEMENT_PROPERTY_REVERT_TO_DEFAULT";
 
 export interface PipelineReceivedAction
@@ -80,31 +71,18 @@ export interface PipelineElementMovedAction
   itemToMove: string;
   destination: string;
 }
-export interface PipelineElementAddRequestedAction
-  extends Action<"PIPELINE_ELEMENT_ADD_REQUESTED">,
+export interface PipelineElementAddedAction
+  extends Action<"PIPELINE_ELEMENT_ADDED">,
     ActionId {
   parentId: string;
   elementDefinition: ElementDefinition;
-}
-export interface PipelineElementAddCancelledAction
-  extends Action<"PIPELINE_ELEMENT_ADD_CANCELLED">,
-    ActionId {}
-export interface PipelineElementAddConfirmedAction
-  extends Action<"PIPELINE_ELEMENT_ADD_CONFIRMED">,
-    ActionId {
   name: string;
 }
-export interface PipelineElementDeleteRequestedAction
-  extends Action<"PIPELINE_ELEMENT_DELETE_REQUESTED">,
+export interface PipelineElementDeletedAction
+  extends Action<"PIPELINE_ELEMENT_DELETED">,
     ActionId {
   elementId: string;
 }
-export interface PipelineElementDeleteCancelledAction
-  extends Action<"PIPELINE_ELEMENT_DELETE_CANCELLED">,
-    ActionId {}
-export interface PipelineElementDeleteConfirmedAction
-  extends Action<"PIPELINE_ELEMENT_DELETE_CONFIRMED">,
-    ActionId {}
 export interface PipelineElementReinstatedAction
   extends Action<"PIPELINE_ELEMENT_REINSTATED">,
     ActionId {
@@ -183,49 +161,25 @@ export const actionCreators = {
     itemToMove,
     destination
   }),
-  pipelineElementAddRequested: (
+  pipelineElementAdded: (
     id: string,
     parentId: string,
-    elementDefinition: ElementDefinition
-  ): PipelineElementAddRequestedAction => ({
-    type: PIPELINE_ELEMENT_ADD_REQUESTED,
+    elementDefinition: ElementDefinition,
+    name: string
+  ): PipelineElementAddedAction => ({
+    type: PIPELINE_ELEMENT_ADDED,
     id,
+    name,
     parentId,
     elementDefinition
   }),
-  pipelineElementAddCancelled: (
-    id: string
-  ): PipelineElementAddCancelledAction => ({
-    type: PIPELINE_ELEMENT_ADD_CANCELLED,
-    id
-  }),
-  pipelineElementAddConfirmed: (
-    id: string,
-    name: string
-  ): PipelineElementAddConfirmedAction => ({
-    type: PIPELINE_ELEMENT_ADD_CONFIRMED,
-    id,
-    name
-  }),
-  pipelineElementDeleteRequested: (
+  pipelineElementDeleted: (
     id: string,
     elementId: string
-  ): PipelineElementDeleteRequestedAction => ({
-    type: PIPELINE_ELEMENT_DELETE_REQUESTED,
+  ): PipelineElementDeletedAction => ({
+    type: PIPELINE_ELEMENT_DELETED,
     id,
     elementId
-  }),
-  pipelineElementDeleteCancelled: (
-    id: string
-  ): PipelineElementDeleteCancelledAction => ({
-    type: PIPELINE_ELEMENT_DELETE_CANCELLED,
-    id
-  }),
-  pipelineElementDeleteConfirmed: (
-    id: string
-  ): PipelineElementDeleteConfirmedAction => ({
-    type: PIPELINE_ELEMENT_DELETE_CONFIRMED,
-    id
   }),
   pipelineElementReinstated: (
     id: string,
@@ -278,17 +232,10 @@ export interface PipelineWithTree {
   asTree?: PipelineAsTreeType;
 }
 
-export interface PendingNewElementType {
-  parentId: string;
-  elementDefinition: ElementDefinition;
-}
-
 // pipelines, keyed on ID, there may be several expressions on a page
 export interface StoreStateById extends PipelineWithTree {
   isDirty: boolean;
   isSaving: boolean;
-  pendingNewElement?: PendingNewElementType;
-  pendingElementIdToDelete?: string;
   selectedElementId?: string;
   selectedElementInitialValues?: object;
 }
@@ -297,9 +244,7 @@ export interface StoreState extends StateById<StoreStateById> {}
 
 export const defaultStatePerId: StoreStateById = {
   isDirty: false,
-  isSaving: false,
-  pendingNewElement: undefined,
-  pendingElementIdToDelete: undefined
+  isSaving: false
 };
 
 const updatePipeline = (pipeline: PipelineModelType): PipelineWithTree => ({
@@ -357,32 +302,12 @@ export const reducer = prepareReducerById(defaultStatePerId)
       selectedElementInitialValues: {}
     })
   )
-  .handleAction<PipelineElementDeleteRequestedAction>(
-    PIPELINE_ELEMENT_DELETE_REQUESTED,
+  .handleAction<PipelineElementDeletedAction>(
+    PIPELINE_ELEMENT_DELETED,
     (state = defaultStatePerId, { elementId }) => ({
       ...state,
-      pendingElementIdToDelete: elementId
-    })
-  )
-  .handleAction<PipelineElementDeleteCancelledAction>(
-    PIPELINE_ELEMENT_DELETE_CANCELLED,
-    (state = defaultStatePerId) => ({
-      ...state,
-      pendingElementIdToDelete: undefined
-    })
-  )
-  .handleAction<PipelineElementDeleteConfirmedAction>(
-    PIPELINE_ELEMENT_DELETE_CONFIRMED,
-    (state = defaultStatePerId) => ({
-      ...state,
-      ...updatePipeline(
-        removeElementFromPipeline(
-          state.pipeline!,
-          state.pendingElementIdToDelete!
-        )
-      ),
-      isDirty: true,
-      pendingElementIdToDelete: undefined
+      ...updatePipeline(removeElementFromPipeline(state.pipeline!, elementId)),
+      isDirty: true
     })
   )
   .handleAction<PipelineElementReinstatedAction>(
@@ -395,36 +320,18 @@ export const reducer = prepareReducerById(defaultStatePerId)
       isDirty: true
     })
   )
-  .handleAction<PipelineElementAddRequestedAction>(
-    PIPELINE_ELEMENT_ADD_REQUESTED,
-    (state = defaultStatePerId, { parentId, elementDefinition }) => ({
-      ...state,
-      pendingNewElement: {
-        parentId,
-        elementDefinition
-      }
-    })
-  )
-  .handleAction<PipelineElementAddCancelledAction>(
-    PIPELINE_ELEMENT_ADD_CANCELLED,
-    (state = defaultStatePerId) => ({
-      ...state,
-      pendingNewElement: undefined
-    })
-  )
-  .handleAction<PipelineElementAddConfirmedAction>(
-    PIPELINE_ELEMENT_ADD_CONFIRMED,
-    (state = defaultStatePerId, { name }) => ({
+  .handleAction<PipelineElementAddedAction>(
+    PIPELINE_ELEMENT_ADDED,
+    (state = defaultStatePerId, { name, parentId, elementDefinition }) => ({
       ...state,
       ...updatePipeline(
         createNewElementInPipeline(
           state.pipeline!,
-          state.pendingNewElement!.parentId,
-          state.pendingNewElement!.elementDefinition,
+          parentId,
+          elementDefinition,
           name
         )
       ),
-      pendingNewElement: undefined,
       isDirty: true
     })
   )

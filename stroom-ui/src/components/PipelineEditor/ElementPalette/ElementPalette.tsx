@@ -8,26 +8,22 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ElementCategory from "./ElementCategory";
 import { getBinItems, RecycleBinItem } from "../pipelineUtils";
 import { DragDropTypes, DropCollectedProps } from "../dragDropTypes";
-import { actionCreators } from "../redux";
 import { GlobalStoreState } from "../../../startup/reducers";
 import {
   ElementDefinitionsByCategory,
   ElementDefinition
 } from "../../../types";
 
-const { pipelineElementDeleteRequested } = actionCreators;
-
 export interface Props {
   pipelineId: string;
+  showDeleteElementDialog: (elementId: string) => void;
 }
 
 interface ConnectState {
   byCategory: ElementDefinitionsByCategory;
   recycleBinItems: Array<RecycleBinItem>;
 }
-interface ConnectDispatch {
-  pipelineElementDeleteRequested: typeof pipelineElementDeleteRequested;
-}
+interface ConnectDispatch {}
 
 export interface DndProps extends Props, ConnectDispatch, ConnectState {}
 
@@ -46,9 +42,9 @@ const dropTarget: DropTargetSpec<DndProps> = {
   canDrop(props, monitor) {
     return true;
   },
-  drop({ pipelineElementDeleteRequested }, monitor) {
-    const { pipelineId, elementId } = monitor.getItem();
-    pipelineElementDeleteRequested(pipelineId, elementId);
+  drop({ showDeleteElementDialog }, monitor) {
+    const { elementId } = monitor.getItem();
+    showDeleteElementDialog(elementId);
   }
 };
 
@@ -82,9 +78,6 @@ const enhance = compose<EnhancedProps, Props>(
             ? getBinItems(pipelineState.pipeline, byType)
             : []
       };
-    },
-    {
-      pipelineElementDeleteRequested
     }
   ),
   DropTarget([DragDropTypes.ELEMENT], dropTarget, dropCollect),

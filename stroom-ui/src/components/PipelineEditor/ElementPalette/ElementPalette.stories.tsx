@@ -21,6 +21,14 @@ import StroomDecorator from "../../../lib/storybook/StroomDecorator";
 
 import "../../../styles/main.css";
 
+const showDeleteElementDialog = () =>
+  console.error("Deleting Elements Not Supported in this Story");
+
 storiesOf("Pipeline/Element Palette", module)
   .addDecorator(StroomDecorator)
-  .add("Element Palette", () => <ElementPalette pipelineId="longPipeline" />);
+  .add("Element Palette", () => (
+    <ElementPalette
+      pipelineId="longPipeline"
+      showDeleteElementDialog={showDeleteElementDialog}
+    />
+  ));

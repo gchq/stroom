@@ -32,10 +32,13 @@ import {
 import { StoreState as ElementStoreState } from "./redux/elementReducer";
 import { StoreStateById as PipelineStatesStoreStateById } from "./redux/pipelineStatesReducer";
 import { GlobalStoreState } from "../../startup/reducers";
-import { PipelineElementType } from "src/types";
+import { PipelineElementType } from "../../types";
+import { getAllElementNames } from "./pipelineUtils";
+import { ShowDialog as ShowAddElementDialog } from "./AddElementModal";
 
 export interface Props {
   pipelineId: string;
+  showAddElementDialog: ShowAddElementDialog;
 }
 
 interface ConnectState {
@@ -71,7 +74,8 @@ const Pipeline = ({
   elements: { elements },
   fetchElements,
   fetchElementProperties,
-  fetchPipeline
+  fetchPipeline,
+  showAddElementDialog
 }: EnhancedProps) => {
   useEffect(() => {
     fetchElements();
@@ -88,6 +92,8 @@ const Pipeline = ({
   if (!asTree) {
     return <Loader message="Awaiting pipeline tree model..." />;
   }
+
+  const existingNames = getAllElementNames(pipeline);
 
   const layoutGrid: PipelineLayoutGrid = getPipelineLayoutGrid(asTree);
 
@@ -112,6 +118,8 @@ const Pipeline = ({
                       key={e.id}
                       pipelineId={pipelineId}
                       elementId={e.id}
+                      showAddElementDialog={showAddElementDialog}
+                      existingNames={existingNames}
                     />
                   ))}
               {column.cellType == CellType.ELBOW && <ElbowLine north east />}

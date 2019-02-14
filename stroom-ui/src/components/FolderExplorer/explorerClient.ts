@@ -105,7 +105,6 @@ export const fetchDocInfo = (docRef: DocRefType) => (
       )
   );
 };
-console.log("Sup", { fetchDocInfo });
 
 export const createDocument = (
   docRefType: string,

@@ -21,13 +21,17 @@ import { connect } from "react-redux";
 import PanelGroup from "react-panelgroup";
 
 import Loader from "../Loader";
-import AddElementModal from "./AddElementModal";
+import AddElementModal, {
+  useDialog as useAddElementDialog
+} from "./AddElementModal";
 import { Props as ButtonProps } from "../Button";
 import PipelineSettings, {
   useDialog as usePipelineSettingsDialog
 } from "./PipelineSettings";
 import ElementPalette from "./ElementPalette";
-import DeletePipelineElement from "./DeletePipelineElement";
+import DeletePipelineElement, {
+  useDialog as useDeleteElementDialog
+} from "./DeletePipelineElement";
 import { ElementDetails } from "./ElementDetails";
 import { fetchPipeline, savePipeline } from "./pipelineResourceClient";
 import { actionCreators } from "./redux";
@@ -38,7 +42,9 @@ import DocRefEditor from "../DocRefEditor";
 
 const {
   pipelineElementSelectionCleared,
-  pipelineSettingsUpdated
+  pipelineSettingsUpdated,
+  pipelineElementAdded,
+  pipelineElementDeleted
 } = actionCreators;
 
 export interface Props {
@@ -52,6 +58,8 @@ interface ConnectDispatch {
   savePipeline: typeof savePipeline;
   pipelineElementSelectionCleared: typeof pipelineElementSelectionCleared;
   pipelineSettingsUpdated: typeof pipelineSettingsUpdated;
+  pipelineElementAdded: typeof pipelineElementAdded;
+  pipelineElementDeleted: typeof pipelineElementDeleted;
 }
 export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
@@ -61,11 +69,12 @@ const enhance = compose<EnhancedProps, Props>(
       pipelineState: pipelineStates[pipelineId]
     }),
     {
-      // action, needed by lifecycle hook below
       fetchPipeline,
       savePipeline,
       pipelineElementSelectionCleared,
-      pipelineSettingsUpdated
+      pipelineSettingsUpdated,
+      pipelineElementAdded,
+      pipelineElementDeleted
     }
   )
 );
@@ -75,6 +84,8 @@ const PipelineEditor = ({
   pipelineState,
   pipelineElementSelectionCleared,
   pipelineSettingsUpdated,
+  pipelineElementAdded,
+  pipelineElementDeleted,
   savePipeline,
   fetchPipeline
 }: EnhancedProps) => {
@@ -88,6 +99,20 @@ const PipelineEditor = ({
   } = usePipelineSettingsDialog(description =>
     pipelineSettingsUpdated(pipelineId, description)
   );
+
+  const {
+    showDialog: showAddElementDialog,
+    componentProps: addElementComponentProps
+  } = useAddElementDialog((parentId, elementDefinition, name) => {
+    pipelineElementAdded(pipelineId, parentId, elementDefinition, name);
+  });
+
+  const {
+    showDialog: showDeleteElementDialog,
+    componentProps: deleteElementComponentProps
+  } = useDeleteElementDialog(elementIdToDelete => {
+    pipelineElementDeleted(pipelineId, elementIdToDelete);
+  });
 
   if (!(pipelineState && pipelineState.pipeline)) {
     return <Loader message="Loading pipeline..." />;
@@ -119,11 +144,14 @@ const PipelineEditor = ({
   return (
     <DocRefEditor docRefUuid={pipelineId} actionBarItems={actionBarItems}>
       <div className="Pipeline-editor">
-        <AddElementModal pipelineId={pipelineId} />
-        <DeletePipelineElement pipelineId={pipelineId} />
+        <AddElementModal {...addElementComponentProps} />
+        <DeletePipelineElement {...deleteElementComponentProps} />
         <PipelineSettings {...settingsComponentProps} />
         <div className="Pipeline-editor__element-palette">
-          <ElementPalette pipelineId={pipelineId} />
+          <ElementPalette
+            pipelineId={pipelineId}
+            showDeleteElementDialog={showDeleteElementDialog}
+          />
         </div>
 
         <PanelGroup
@@ -138,7 +166,10 @@ const PipelineEditor = ({
           ]}
         >
           <div className="Pipeline-editor__topPanel">
-            <Pipeline pipelineId={pipelineId} />
+            <Pipeline
+              pipelineId={pipelineId}
+              showAddElementDialog={showAddElementDialog}
+            />
           </div>
           {selectedElementId !== undefined ? (
             <ElementDetails

@@ -107,7 +107,14 @@ const PipelineDebugger = ({
         <Button icon="chevron-left" text="Previous" onClick={onPrevious} />
         <Button icon="chevron-right" text="Next" onClick={onNext} />
       </div>
-      <Pipeline pipelineId={pipelineId} />
+      <Pipeline
+        pipelineId={pipelineId}
+        showAddElementDialog={() =>
+          console.error(
+            "Adding Elements from Palette not supported in debugger"
+          )
+        }
+      />
       <DebuggerStep debuggerId={debuggerId} />
     </div>
   );

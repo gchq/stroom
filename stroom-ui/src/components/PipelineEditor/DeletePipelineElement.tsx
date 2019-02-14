@@ -1,64 +1,60 @@
 import * as React from "react";
-import { compose } from "recompose";
-import { connect } from "react-redux";
+import { useState } from "react";
 
 import { ThemedConfirm } from "../ThemedConfirm";
-import { actionCreators } from "./redux";
-
-import { StoreState as ElementStoreState } from "./redux/elementReducer";
-import { StoreStateById as PipelineStatesStoreStateById } from "./redux/pipelineStatesReducer";
-import { GlobalStoreState } from "../../startup/reducers";
-
-const {
-  pipelineElementDeleteCancelled,
-  pipelineElementDeleteConfirmed
-} = actionCreators;
 
 export interface Props {
-  pipelineId: string;
+  isOpen: boolean;
+  onCloseDialog: () => void;
+  elementId?: string;
+  onDeleteElement: (elementId: string) => void;
 }
-
-interface ConnectState {
-  elements: ElementStoreState;
-  pipelineState: PipelineStatesStoreStateById;
-}
-interface ConnectDispatch {
-  pipelineElementDeleteCancelled: typeof pipelineElementDeleteCancelled;
-  pipelineElementDeleteConfirmed: typeof pipelineElementDeleteConfirmed;
-}
-
-export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
-
-const enhance = compose<EnhancedProps, Props>(
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ pipelineEditor: { elements, pipelineStates } }, { pipelineId }) => ({
-      pipelineState: pipelineStates[pipelineId],
-      elements
-    }),
-    {
-      pipelineElementDeleteCancelled,
-      pipelineElementDeleteConfirmed
-    }
-  )
-);
 
 const DeletePipelineElement = ({
-  pipelineState: { pendingElementIdToDelete },
-  pipelineElementDeleteCancelled,
-  pipelineElementDeleteConfirmed,
-  pipelineId
-}: EnhancedProps) => {
-  const onCancelDelete = () => pipelineElementDeleteCancelled(pipelineId);
-  const onConfirmDelete = () => pipelineElementDeleteConfirmed(pipelineId);
-
+  isOpen,
+  onCloseDialog,
+  elementId,
+  onDeleteElement
+}: Props) => {
   return (
     <ThemedConfirm
-      isOpen={!!pendingElementIdToDelete}
-      question={`Delete ${pendingElementIdToDelete} from pipeline?`}
-      onCloseDialog={onCancelDelete}
-      onConfirm={onConfirmDelete}
+      isOpen={isOpen}
+      question={`Delete ${elementId} from pipeline?`}
+      onCloseDialog={onCloseDialog}
+      onConfirm={() => {
+        if (!!elementId) {
+          onDeleteElement(elementId);
+        }
+        onCloseDialog();
+      }}
     />
   );
 };
 
-export default enhance(DeletePipelineElement);
+export interface UseDialog {
+  componentProps: Props;
+  showDialog: (_elementId: string) => void;
+}
+
+export const useDialog = (onDeleteElement: (e: string) => void): UseDialog => {
+  const [elementId, setElementId] = useState<string | undefined>(undefined);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+
+  return {
+    componentProps: {
+      onDeleteElement,
+      elementId,
+      isOpen,
+      onCloseDialog: () => {
+        setIsOpen(false);
+        setElementId(undefined);
+      }
+    },
+    showDialog: _elementId => {
+      setIsOpen(true);
+      setElementId(_elementId);
+    }
+  };
+};
+
+export default DeletePipelineElement;
