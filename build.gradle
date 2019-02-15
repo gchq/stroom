@@ -253,7 +253,7 @@ ext.libs = [
         ws_rs_api                      : "javax.ws.rs:javax.ws.rs-api:2.1",
         xml_apis                       : "xml-apis:xml-apis:1.0.b2",
         zookeeper                      : "org.apache.zookeeper:zookeeper:$versions.zookeeper",
-        zzDUMMYzz                      : "makes sorting easier"
+        zzDUMMYzz                      : "makes sorting this array easier"
 ]
 
 def contentPackDownloadDir = "${project.buildDir}/contentPackDownload"
@@ -280,10 +280,10 @@ ext.contentPacks = [
 //defines a list of gradle projects that we will publish with maven/bintray
 def projectsToBePublished = subprojects.findAll { project ->
     project.path in [
-            ':stroom-entity-shared',
-            ':stroom-util',
-            ':stroom-util-shared',
-            'zzDUMMYzz to ease sorting'
+        ':stroom-entity-shared',
+        ':stroom-util',
+        ':stroom-util-shared',
+        'zzDUMMYzz to ease sorting'
     ]
 }
 
