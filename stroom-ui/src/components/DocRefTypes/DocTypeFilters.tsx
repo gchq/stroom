@@ -16,10 +16,8 @@
 import * as React from "react";
 
 import DocRefImage from "../DocRefImage";
-import withDocRefTypes, {
-  EnhancedProps as WithDocRefTypeProps
-} from "./withDocRefTypes";
 import { DocRefTypeList } from "../../types";
+import useDocRefTypes from "./useDocRefTypes";
 
 enum AllSelectState {
   ALL,
@@ -32,9 +30,9 @@ export interface Props {
   onChange: (a: DocRefTypeList) => any;
 }
 
-export interface EnhancedProps extends Props, WithDocRefTypeProps {}
+let DocTypeFilters = ({ onChange, value }: Props) => {
+  const { docRefTypes } = useDocRefTypes();
 
-let DocTypeFilters = ({ docRefTypes, onChange, value }: EnhancedProps) => {
   let allSelectState = AllSelectState.INDETERMINATE;
   if (value.length === 0) {
     allSelectState = AllSelectState.NONE;
@@ -94,4 +92,4 @@ let DocTypeFilters = ({ docRefTypes, onChange, value }: EnhancedProps) => {
   );
 };
 
-export default withDocRefTypes<Props>()(DocTypeFilters);
+export default DocTypeFilters;

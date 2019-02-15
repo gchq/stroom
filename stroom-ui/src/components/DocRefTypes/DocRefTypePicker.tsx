@@ -3,10 +3,7 @@ import * as React from "react";
 import DocRefImage from "../DocRefImage";
 import { OptionType } from "../../types";
 import DropdownSelect, { DropdownOptionProps } from "../DropdownSelect";
-
-import withDocRefTypes, {
-  EnhancedProps as WithDocRefTypeProps
-} from "./withDocRefTypes";
+import useDocRefTypes from "./useDocRefTypes";
 
 const DocRefTypeOption = ({
   inFocus,
@@ -24,9 +21,9 @@ export interface Props {
   value: string;
 }
 
-export interface EnhancedProps extends Props, WithDocRefTypeProps {}
+let DocRefTypePicker = ({ ...rest }: Props) => {
+  const { docRefTypes } = useDocRefTypes();
 
-let DocRefTypePicker = ({ docRefTypes, ...rest }: EnhancedProps) => {
   let options: Array<OptionType> = docRefTypes.map((d: string) => ({
     text: d,
     value: d
@@ -40,4 +37,4 @@ let DocRefTypePicker = ({ docRefTypes, ...rest }: EnhancedProps) => {
   );
 };
 
-export default withDocRefTypes<Props>()(DocRefTypePicker);
+export default DocRefTypePicker;

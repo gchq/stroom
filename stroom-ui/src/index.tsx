@@ -3,6 +3,7 @@ import * as ReactDOM from "react-dom";
 
 import { toClass, compose } from "recompose";
 import { Provider } from "react-redux";
+import { StoreContext } from "redux-react-hook";
 import { ConnectedRouter } from "react-router-redux";
 import { DragDropContext } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
@@ -24,12 +25,14 @@ const DndRoutes = compose(
 const store = createStore();
 
 ReactDOM.render(
-  <Provider store={store}>
-    <ThemeContextProvider>
-      <ConnectedRouter history={history}>
-        <DndRoutes />
-      </ConnectedRouter>
-    </ThemeContextProvider>
-  </Provider>,
+  <StoreContext.Provider value={store}>
+    <Provider store={store}>
+      <ThemeContextProvider>
+        <ConnectedRouter history={history}>
+          <DndRoutes />
+        </ConnectedRouter>
+      </ThemeContextProvider>
+    </Provider>
+  </StoreContext.Provider>,
   document.getElementById("root") as HTMLElement
 );

@@ -2,6 +2,7 @@ import * as React from "react";
 import { compose } from "recompose";
 import { RenderFunction } from "@storybook/react";
 import { Provider } from "react-redux";
+import { StoreContext } from "redux-react-hook";
 import { DragDropContext } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 import StoryRouter from "storybook-react-router";
@@ -33,9 +34,11 @@ const WrappedComponent: React.StatelessComponent<Props> = props => {
 const ThemedComponent = enhanceLocal(WrappedComponent);
 
 export default (storyFn: RenderFunction) => (
-  <Provider store={store}>
-    <ThemeContextProvider>
-      <ThemedComponent>{StoryRouter()(storyFn)}</ThemedComponent>
-    </ThemeContextProvider>
-  </Provider>
+  <StoreContext.Provider value={store}>
+    <Provider store={store}>
+      <ThemeContextProvider>
+        <ThemedComponent>{StoryRouter()(storyFn)}</ThemedComponent>
+      </ThemeContextProvider>
+    </Provider>
+  </StoreContext.Provider>
 );
