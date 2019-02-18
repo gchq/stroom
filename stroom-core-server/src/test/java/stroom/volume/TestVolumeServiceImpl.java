@@ -37,7 +37,7 @@ import stroom.node.shared.VolumeState;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
 import stroom.security.impl.mock.AllowAllMockSecurity;
-import stroom.statistics.internal.InternalStatisticsReceiver;
+import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.util.io.FileUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 

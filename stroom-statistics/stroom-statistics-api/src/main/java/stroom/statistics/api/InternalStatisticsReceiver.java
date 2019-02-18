@@ -1,4 +1,4 @@
-package stroom.statistics.internal;
+package stroom.statistics.api;
 
 import java.util.List;
 

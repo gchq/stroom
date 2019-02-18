@@ -1,7 +1,6 @@
-package stroom.statistics.internal;
+package stroom.statistics.api;
 
 public enum InternalStatisticKey {
-
     BENCHMARK_CLUSTER("Benchmark-Cluster Test"),
     CPU("CPU"),
     EVENTS_PER_SECOND("EPS"),

@@ -2,6 +2,7 @@ package stroom.statistics.internal;
 
 import com.google.common.base.Preconditions;
 import stroom.docref.DocRef;
+import stroom.statistics.api.InternalStatisticKey;
 
 import javax.inject.Inject;
 import java.util.List;

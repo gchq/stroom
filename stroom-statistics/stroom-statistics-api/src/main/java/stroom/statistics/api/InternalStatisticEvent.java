@@ -1,4 +1,4 @@
-package stroom.statistics.internal;
+package stroom.statistics.api;
 
 import com.google.common.base.Preconditions;
 

@@ -19,10 +19,11 @@ package stroom.benchmark;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.TargetType;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.entity.cluster.ClearServiceClusterTask;
-import stroom.util.shared.Period;
 import stroom.job.shared.JobManager;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -37,9 +38,9 @@ import stroom.pipeline.PipelineStore;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.statistics.sql.StatisticEvent;
-import stroom.statistics.sql.StatisticTag;
-import stroom.statistics.sql.Statistics;
+import stroom.statistics.api.InternalStatisticEvent;
+import stroom.statistics.api.InternalStatisticKey;
+import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
@@ -52,18 +53,17 @@ import stroom.streamtask.shared.ProcessorFilter;
 import stroom.task.api.AsyncExecutorHelper;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
-import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
-import stroom.cluster.task.api.TargetType;
 import stroom.task.shared.Task;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.Period;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -89,7 +89,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private final TaskContext taskContext;
     private final ExecutorProvider executorProvider;
     private final Set<String> nodeNameSet = new HashSet<>();
-    private final Statistics statistics;
+    private final InternalStatisticsReceiver statistics;
     private final BenchmarkClusterConfig benchmarkClusterConfig;
 
     private final ReentrantLock rangeLock = new ReentrantLock();
@@ -109,7 +109,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              final JobManager jobManager,
                              final NodeService nodeService,
                              final ExecutorProvider executorProvider,
-                             final Statistics statistics,
+                             final InternalStatisticsReceiver statistics,
                              final BenchmarkClusterConfig benchmarkClusterConfig) {
         super(streamStore, metaService, taskContext);
         this.pipelineStore = pipelineStore;
@@ -462,7 +462,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
         final long nowMs = System.currentTimeMillis();
 
-        final List<StatisticEvent> statisticEventList = new ArrayList<>();
+        final List<InternalStatisticEvent> statisticEventList = new ArrayList<>();
 
         for (final String nodeName : nodeNameSet) {
             long nodeWritten = 0;
@@ -479,15 +479,11 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 //                }
 //            }
 
-            statisticEventList.add(StatisticEvent.createValue(nowMs,
-                    ROOT_TEST_NAME, Arrays.asList(new StatisticTag("Node", nodeName),
-                            new StatisticTag("Feed", feedName), new StatisticTag("Type", EPS)),
-                    (double) toEPS(nodeWritten, nodePeriod)));
+            Map<String, String> tags = Map.of("Node", nodeName, "Feed", feedName, "Type", EPS);
+            statisticEventList.add(InternalStatisticEvent.createValueStat(InternalStatisticKey.BENCHMARK_CLUSTER, nowMs, tags, (double) toEPS(nodeWritten, nodePeriod)));
 
-            statisticEventList.add(StatisticEvent.createValue(nowMs,
-                    ROOT_TEST_NAME, Arrays.asList(new StatisticTag("Node", nodeName),
-                            new StatisticTag("Feed", feedName), new StatisticTag("Type", ERROR)),
-                    (double) toEPS(nodeError, nodePeriod)));
+            tags = Map.of("Node", nodeName, "Feed", feedName, "Type", ERROR);
+            statisticEventList.add(InternalStatisticEvent.createValueStat(InternalStatisticKey.BENCHMARK_CLUSTER, nowMs, tags, (double) toEPS(nodeError, nodePeriod)));
 
         }
         final Period clusterPeriod = new Period();

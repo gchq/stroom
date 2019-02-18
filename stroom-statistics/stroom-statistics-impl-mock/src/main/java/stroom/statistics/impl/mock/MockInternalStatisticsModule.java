@@ -17,7 +17,7 @@
 package stroom.statistics.impl.mock;
 
 import com.google.inject.AbstractModule;
-import stroom.statistics.internal.InternalStatisticsReceiver;
+import stroom.statistics.api.InternalStatisticsReceiver;
 
 public class MockInternalStatisticsModule extends AbstractModule {
     @Override

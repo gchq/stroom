@@ -16,7 +16,7 @@
 
 package stroom.meta.statistics.impl;
 
-import stroom.statistics.internal.InternalStatisticKey;
+import stroom.statistics.api.InternalStatisticKey;
 
 import java.io.Serializable;
 import java.util.List;

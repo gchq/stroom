@@ -26,7 +26,7 @@ import stroom.entity.shared.EntityEvent.Handler;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
 import stroom.node.shared.VolumeEntity;
-import stroom.statistics.internal.InternalStatisticsReceiver;
+import stroom.statistics.api.InternalStatisticsReceiver;
 
 public class VolumeModule extends AbstractModule {
     @Override

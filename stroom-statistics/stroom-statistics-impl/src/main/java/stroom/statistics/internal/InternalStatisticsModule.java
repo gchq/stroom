@@ -18,6 +18,7 @@ package stroom.statistics.internal;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.statistics.api.InternalStatisticsReceiver;
 
 public class InternalStatisticsModule extends AbstractModule {
     @Override

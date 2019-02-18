@@ -1,6 +1,7 @@
 package stroom.statistics.internal;
 
 import stroom.docref.DocRef;
+import stroom.statistics.api.InternalStatisticEvent;
 
 import java.util.List;
 import java.util.Map;

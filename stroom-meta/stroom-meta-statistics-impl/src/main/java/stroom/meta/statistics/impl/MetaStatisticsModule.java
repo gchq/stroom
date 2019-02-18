@@ -19,8 +19,8 @@ package stroom.meta.statistics.impl;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import stroom.meta.statistics.api.MetaStatistics;
-import stroom.statistics.internal.InternalStatisticKey;
-import stroom.statistics.internal.InternalStatisticsReceiver;
+import stroom.statistics.api.InternalStatisticKey;
+import stroom.statistics.api.InternalStatisticsReceiver;
 
 import javax.inject.Provider;
 import java.util.Arrays;

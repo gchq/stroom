@@ -32,7 +32,7 @@ import stroom.node.shared.Node;
 import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.pipeline.scope.PipelineScoped;
-import stroom.statistics.internal.InternalStatisticsReceiver;
+import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;

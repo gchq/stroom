@@ -2,6 +2,8 @@ package stroom.statistics.internal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.statistics.api.InternalStatisticEvent;
+import stroom.statistics.api.InternalStatisticsReceiver;
 
 import java.util.List;
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import stroom.docref.DocRef;
+import stroom.statistics.api.InternalStatisticKey;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
