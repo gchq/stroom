@@ -163,6 +163,7 @@ include 'stroom-security:stroom-security-impl'
 include 'stroom-security:stroom-security-impl-mock'
 include 'stroom-security:stroom-security-client-api'
 include 'stroom-security:stroom-security-client'
+include 'stroom-security:stroom-security-impl'
 include 'stroom-security:stroom-security-impl-db'
 include 'stroom-security:stroom-security-impl-db-jooq'
 

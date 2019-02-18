@@ -16,6 +16,9 @@
 
 package stroom.pipeline.factory;
 
+import stroom.util.GuiceUtil;
+import stroom.util.RestResource;
+
 public class CommonPipelineElementModule extends PipelineElementModule {
     @Override
     protected void configureElements() {
@@ -62,5 +65,8 @@ public class CommonPipelineElementModule extends PipelineElementModule {
         bindElement(stroom.pipeline.writer.HTTPAppender.class);
         bindElement(stroom.pipeline.writer.RollingFileAppender.class);
         bindElement(stroom.pipeline.writer.TestAppender.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(ElementResource.class);
     }
 }

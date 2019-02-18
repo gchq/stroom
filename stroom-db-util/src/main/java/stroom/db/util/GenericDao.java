@@ -1,70 +1,77 @@
 package stroom.db.util;
 
-import org.jooq.Field;
 import org.jooq.Table;
-import org.jooq.impl.UpdatableRecordImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jooq.TableField;
+import org.jooq.UpdatableRecord;
+import stroom.entity.shared.HasCrud;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.sql.DataSource;
 import java.util.Optional;
 
-import static stroom.db.util.JooqUtil.contextWithOptimisticLocking;
+public class GenericDao<RecordType extends UpdatableRecord, EntityType, IdType>
+        implements HasCrud<EntityType, IdType> {
 
-public class GenericDao<RecordType extends UpdatableRecordImpl, EntityType> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(GenericDao.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GenericDao.class);
 
     private Table<RecordType> table;
-    private Field idField;
+    private TableField<RecordType, IdType> idField;
     private Class<EntityType> entityTypeClass;
     private DataSource connectionProvider;
 
     // Could use the pattern described here to get the table type:
     // https://stackoverflow.com/questions/3403909/get-generic-type-of-class-at-runtime
     // That places an interface requirement on the entity, which I think is best avoided.
-    public GenericDao(Table<RecordType> table, Field idField, Class<EntityType> entityTypeClass, DataSource connectionProvider) {
+    public GenericDao(@Nonnull final Table<RecordType> table,
+                      @Nonnull final TableField<RecordType, IdType> idField,
+                      @Nonnull final Class<EntityType> entityTypeClass,
+                      @Nonnull final DataSource connectionProvider) {
         this.table = table;
         this.idField = idField;
         this.entityTypeClass = entityTypeClass;
         this.connectionProvider = connectionProvider;
     }
 
-    public EntityType create(EntityType entity) {
-        return contextWithOptimisticLocking(connectionProvider, (context) -> {
-            LOGGER.debug("Creating a {}", table.getName());
+    public EntityType create(@Nonnull final EntityType entity) {
+        return JooqUtil.contextResult(connectionProvider, (context) -> {
+            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Creating a {}", table.getName()));
             RecordType record = context.newRecord(table, entity);
             record.store();
-            EntityType createdRecord = record.into(entityTypeClass);
-            return createdRecord;
+            return record.into(entityTypeClass);
         });
     }
 
-    public EntityType update(final EntityType entity) {
-        return contextWithOptimisticLocking(connectionProvider, (context) -> {
+    public EntityType update(@Nonnull final EntityType entity) {
+        return JooqUtil.contextWithOptimisticLocking(connectionProvider, (context) -> {
             RecordType record = context.newRecord(table, entity);
-            // This depends on there being a field named 'id' that is what we expect it to be.
-            // I'd rather this was implicit/opinionated than forced into place with an interface.
-            LOGGER.debug("Updating a {} with id {}", table.getName(), record.getValue("id"));
+            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+                    "Updating a {} with id {}", table.getName(), record.get(idField)));
             record.update();
             return record.into(entityTypeClass);
         });
     }
 
-    public int delete(int id) {
-        return contextWithOptimisticLocking(connectionProvider, context -> {
-            LOGGER.debug("Deleting a {} with id {}",table.getName(), id);
+    public boolean delete(@Nonnull final IdType id) {
+        return JooqUtil.contextResult(connectionProvider, context -> {
+            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+                    "Deleting a {} with id {}", table.getName(), id));
             return context
                     .deleteFrom(table)
                     .where(idField.eq(id))
-                    .execute();
+                    .execute() > 0;
         });
     }
 
-    public Optional<EntityType> fetch(int id) {
-        return contextWithOptimisticLocking(connectionProvider, (context) -> {
-            LOGGER.debug("Fetching {} with id {}",table.getName(), id);
-            EntityType record = context.selectFrom(table).where(idField.eq(id)).fetchOneInto(entityTypeClass);
-            return Optional.ofNullable(record);
+    public Optional<EntityType> fetch(@Nonnull final IdType id) {
+        return JooqUtil.contextWithOptimisticLocking(connectionProvider, (context) -> {
+            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+                    "Fetching {} with id {}", table.getName(), id));
+            return context
+                    .selectFrom(table)
+                    .where(idField.eq(id))
+                    .fetchOptionalInto(entityTypeClass);
         });
     }
 }

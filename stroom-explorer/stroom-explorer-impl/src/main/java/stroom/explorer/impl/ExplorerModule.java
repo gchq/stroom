@@ -17,7 +17,6 @@
 package stroom.explorer.impl;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
@@ -33,6 +32,8 @@ import stroom.explorer.shared.FetchDocumentTypesAction;
 import stroom.explorer.shared.FetchExplorerNodeAction;
 import stroom.explorer.shared.FetchExplorerPermissionsAction;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.GuiceUtil;
+import stroom.util.RestResource;
 
 public class ExplorerModule extends AbstractModule {
     @Override
@@ -55,8 +56,11 @@ public class ExplorerModule extends AbstractModule {
                 .bind(FetchExplorerNodeAction.class, FetchExplorerNodeHandler.class)
                 .bind(FetchExplorerPermissionsAction.class, FetchExplorerPermissionsHandler.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(FolderExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(SystemExplorerActionHandler.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(FolderExplorerActionHandler.class)
+                .addBinding(SystemExplorerActionHandler.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(ExplorerResource.class);
     }
 }

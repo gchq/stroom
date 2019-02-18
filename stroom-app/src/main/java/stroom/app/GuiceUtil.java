@@ -14,12 +14,14 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.HasHealthCheck;
+import stroom.util.RestResource;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpSessionListener;
 import java.util.EnumSet;
+import java.util.Set;
 
 public class GuiceUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(GuiceUtil.class);
@@ -78,34 +80,38 @@ public class GuiceUtil {
             throw new IllegalArgumentException("Expected servlet for object " + clazz.getName());
         }
 
+        String healthCheckName = clazz.getName();
         if (object instanceof HasHealthCheck) {
-            healthCheckRegistry.register(clazz.getName(), new HealthCheck() {
-                        @Override
-                        protected Result check() {
-                            HealthCheck.Result result = ((HasHealthCheck) object).getHealth();
+            // object has a getHealth method so build a HealthCheck that wraps it and
+            // adds in the servlet path information
+            healthCheckRegistry.register(healthCheckName, new HealthCheck() {
+                @Override
+                protected Result check() {
+                    HealthCheck.Result result = ((HasHealthCheck) object).getHealth();
 
-                            HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
-                            if (result.getDetails() != null) {
-                                result.getDetails().forEach(resultBuilder::withDetail);
-                                resultBuilder.withDetail("path", url);
-                            }
-                            if (result.getMessage() != null) {
-                                resultBuilder.withMessage(result.getMessage());
-                            }
-                            if (result.getError() != null) {
-                                resultBuilder.unhealthy(result.getError());
-                            } else {
-                                if (result.isHealthy()) {
-                                    resultBuilder.healthy();
-                                } else {
-                                    resultBuilder.unhealthy();
-                                }
-                            }
-                            return resultBuilder.build();
+                    HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
+                    if (result.getDetails() != null) {
+                        result.getDetails().forEach(resultBuilder::withDetail);
+                        resultBuilder.withDetail("path", url);
+                    }
+                    if (result.getMessage() != null) {
+                        resultBuilder.withMessage(result.getMessage());
+                    }
+                    if (result.getError() != null) {
+                        resultBuilder.unhealthy(result.getError());
+                    } else {
+                        if (result.isHealthy()) {
+                            resultBuilder.healthy();
+                        } else {
+                            resultBuilder.unhealthy();
                         }
-                    });
+                    }
+                    return resultBuilder.build();
+                }
+            });
         } else {
-            healthCheckRegistry.register(clazz.getName(), new HealthCheck() {
+            // Servlet doesn't have a health check so create a noddy one that shows the path
+            healthCheckRegistry.register(healthCheckName, new HealthCheck() {
                 @Override
                 protected Result check() {
                     return Result.builder()
@@ -116,6 +122,7 @@ public class GuiceUtil {
             });
         }
 
+        // Now add the servlet
         final ServletHolder servletHolder = new ServletHolder(clazz.getSimpleName(), (Servlet) object);
         servletContextHandler.addServlet(servletHolder, url);
         LOGGER.info("Adding servlet {} on path {}", clazz.getSimpleName(), url);
@@ -152,6 +159,15 @@ public class GuiceUtil {
                                    final Class<?> clazz) {
         final Object resource = injector.getInstance(clazz);
         jersey.register(Preconditions.checkNotNull(resource));
+    }
+
+    public static void addRestResources(final JerseyEnvironment jersey,
+                                        final Injector injector) {
+
+        final Set<RestResource> restResources = stroom.util.GuiceUtil.getMultibinderInstance(
+                injector, RestResource.class);
+
+        restResources.forEach(jersey::register);
     }
 
     public static void manage(final LifecycleEnvironment lifecycleEnvironment,

@@ -24,6 +24,8 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.jetty_server
+    
     implementation libs.stroomDocRef
 
     implementation(libs.dropwizard_assets) {
@@ -47,7 +49,6 @@ dependencies {
     implementation libs.javax_inject
     implementation libs.javax_servlet_api
     implementation libs.jersey_client
-    implementation libs.jetty_server
     implementation libs.slf4j_api
     
     testImplementation project(':stroom-test-common')

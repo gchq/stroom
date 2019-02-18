@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.security.server'
+ext.moduleName = 'stroom.security.impl'
 
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')

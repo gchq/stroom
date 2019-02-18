@@ -17,12 +17,13 @@
 package stroom.receive.rules.impl;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.receive.common.AttributeMapFilterFactory;
-import stroom.util.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.rules.shared.ReceiveDataRules;
+import stroom.util.GuiceUtil;
+import stroom.util.RestResource;
+import stroom.util.entity.EntityTypeBinder;
 
 public class ReceiveDataRulesetModule extends AbstractModule {
     @Override
@@ -30,11 +31,15 @@ public class ReceiveDataRulesetModule extends AbstractModule {
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
         bind(AttributeMapFilterFactory.class).to(AttributeMapFilterFactoryImpl.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(ReceiveDataRuleSetServiceImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(ReceiveDataRuleSetServiceImpl.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(ReceiveDataRuleSetServiceImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(ReceiveDataRuleSetServiceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(ReceiveDataRuleSetResource.class)
+                .addBinding(ReceiveDataRuleSetResource2.class);
 
         EntityTypeBinder.create(binder())
                 .bind(ReceiveDataRules.DOCUMENT_TYPE, ReceiveDataRuleSetServiceImpl.class);

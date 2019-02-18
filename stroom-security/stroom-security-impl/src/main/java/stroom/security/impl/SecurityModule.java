@@ -19,6 +19,8 @@ package stroom.security.impl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.EntityEvent;
+import stroom.util.GuiceUtil;
+import stroom.util.RestResource;
 import stroom.util.shared.Clearable;
 import stroom.security.impl.db.SecurityDbModule;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
@@ -70,5 +72,8 @@ public class SecurityModule extends AbstractModule {
 
         final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
         hasHealthCheckBinder.addBinding().to(JWTService.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(UserResourceImpl.class);
     }
 }

@@ -56,10 +56,14 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-importexport:stroom-importexport-impl')
     implementation project(':stroom-index:stroom-index-server')
+    implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-job:stroom-job-impl')
+    implementation project(':stroom-job:stroom-job-impl-db')
     implementation project(':stroom-kafka:stroom-kafka-impl')
     implementation project(':stroom-kafka:stroom-kafka-pipeline')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-impl')
+    implementation project(':stroom-meta:stroom-meta-impl-db')
     implementation project(':stroom-meta:stroom-meta-statistics-impl')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-node:stroom-node-impl')
@@ -74,9 +78,6 @@ dependencies {
     implementation project(':stroom-statistics:stroom-statistics-server')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-impl')
-    implementation project(':stroom-job:stroom-job-api')
-    implementation project(':stroom-job:stroom-job-impl')
-    implementation project(':stroom-job:stroom-job-impl-db')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
@@ -87,7 +88,6 @@ dependencies {
     implementation libs.guice4
     implementation libs.javax_inject
     implementation libs.jcommander
-    implementation libs.jetty_servlet
 
     implementation(libs.dropwizard_assets) {
         exclude(group: "org.glassfish.web", module: "javax.el")
@@ -95,6 +95,7 @@ dependencies {
     implementation(libs.dropwizard_core) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
+    implementation libs.jetty_servlet
     implementation libs.dropwizard_jersey
     implementation libs.dropwizard_jetty
     implementation libs.dropwizard_metrics_healthchecks
@@ -160,6 +161,7 @@ dependencies {
     testImplementation libs.hibernate_jpa_api
     testImplementation libs.hikari
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.lmdbjava
     testImplementation libs.lucene_core
     testImplementation libs.saxon_he
     testImplementation libs.slf4j_api
@@ -183,6 +185,7 @@ dependencies {
     testImplementation libs.dropwizard_client
     testImplementation libs.dropwizard_testing
     testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
 }
 
 jar {

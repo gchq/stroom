@@ -59,9 +59,9 @@ public class FindActivityHandler extends AbstractTaskHandler<FindActivityAction,
 
             try {
                 result = activityService.find(criteria);
-                entityEventLog.search(criteria, query, result);
+                entityEventLog.search(criteria, query, result, null);
             } catch (final RuntimeException e) {
-                entityEventLog.search(criteria, query, e);
+                entityEventLog.search(criteria, query, null, e);
                 throw e;
             }
 

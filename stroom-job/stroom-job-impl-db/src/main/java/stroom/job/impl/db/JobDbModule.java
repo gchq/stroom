@@ -23,7 +23,6 @@ public class JobDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(JobDao.class).to(JobDaoImpl.class);
     }
 
     @Provides

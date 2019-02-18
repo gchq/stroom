@@ -17,11 +17,12 @@
 package stroom.pipeline.xslt;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.util.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.util.GuiceUtil;
+import stroom.util.RestResource;
+import stroom.util.entity.EntityTypeBinder;
 
 import javax.xml.transform.URIResolver;
 
@@ -31,13 +32,23 @@ public class XsltModule extends AbstractModule {
         bind(XsltStore.class).to(XsltStoreImpl.class);
         bind(URIResolver.class).to(CustomURIResolver.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(XsltStoreImpl.class);
+//        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
+//        explorerActionHandlerBinder.addBinding().to(XsltStoreImpl.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(XsltStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(XsltStoreImpl.class);
+
+//        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
+//        importExportActionHandlerBinder.addBinding().to(XsltStoreImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(XsltStoreImpl.class);
 
         EntityTypeBinder.create(binder())
                 .bind(XsltDoc.DOCUMENT_TYPE, XsltStoreImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(XsltResource.class);
+
     }
 }

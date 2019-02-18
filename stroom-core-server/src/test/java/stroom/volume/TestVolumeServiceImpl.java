@@ -36,8 +36,7 @@ import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeState;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
-import stroom.security.impl.SecurityImpl;
-import stroom.security.impl.mock.MockSecurityContext;
+import stroom.security.impl.mock.AllowAllMockSecurity;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.io.FileUtil;
 import stroom.test.common.util.test.StroomUnitTest;
@@ -90,7 +89,7 @@ class TestVolumeServiceImpl extends StroomUnitTest {
             FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2B")),
             VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
-    private final Security security = new SecurityImpl(new MockSecurityContext());
+    private final Security security = new AllowAllMockSecurity();
     private VolumeConfig volumeConfig = new VolumeConfig();
     private MockVolumeService volumeServiceImpl = null;
     @Mock

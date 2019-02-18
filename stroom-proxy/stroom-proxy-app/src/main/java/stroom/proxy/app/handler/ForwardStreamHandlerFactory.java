@@ -6,6 +6,7 @@ import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.StreamHandler;
 import stroom.proxy.repo.StreamHandlerFactory;
 import stroom.util.HasHealthCheck;
+import stroom.util.HealthCheckUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

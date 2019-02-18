@@ -140,7 +140,7 @@ public class FileSystemVolumeServiceImpl implements FileSystemVolumeService, Ent
                 }
                 fileVolume.setStatus(FSVolume.VolumeUseStatus.ACTIVE);
 
-                final FSVolumeState fileVolumeState = fileSystemVolumeStateDao.create();
+                final FSVolumeState fileVolumeState = fileSystemVolumeStateDao.create(new FSVolumeState());
                 fileVolume.setVolumeState(fileVolumeState);
 
                 result = contextWithOptimisticLocking(connectionProvider, (context) -> {

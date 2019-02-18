@@ -32,6 +32,7 @@ import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.search.IndexDataSourceFieldUtil;
 import stroom.search.LuceneSearchResponseCreatorManager;
 import stroom.security.Security;
+import stroom.util.RestResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -43,7 +44,7 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "stroom-index query - /v2")
 @Path("/stroom-index/v2")
 @Produces(MediaType.APPLICATION_JSON)
-public class StroomIndexQueryResource {
+public class StroomIndexQueryResource implements RestResource {
     private final SearchResponseCreatorManager searchResponseCreatorManager;
     private final IndexStore indexStore;
     private final Security security;

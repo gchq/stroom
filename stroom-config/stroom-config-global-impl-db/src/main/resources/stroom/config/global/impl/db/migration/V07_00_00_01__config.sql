@@ -17,9 +17,9 @@ CREATE TABLE IF NOT EXISTS config (
 --
 -- Copy data into the config table
 --
-DROP PROCEDURE IF EXISTS copy;
+DROP PROCEDURE IF EXISTS copy_config;
 DELIMITER //
-CREATE PROCEDURE copy ()
+CREATE PROCEDURE copy_config ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'GLOB_PROP' > 0) THEN
     INSERT INTO config (id, version, create_time_ms, create_user, update_time_ms, update_user, name, val)
@@ -38,5 +38,5 @@ BEGIN
   END IF;
 END//
 DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+CALL copy_config();
+DROP PROCEDURE copy_config;

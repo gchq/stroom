@@ -25,6 +25,7 @@ import stroom.util.xml.XMLMarshallerUtil;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
+@Deprecated // Considering using stroom.entity.AbstractEntityMarshaller instead
 public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marshaller<E, O> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityMarshaller.class);
 

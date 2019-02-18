@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS meta_feed (
 --
 -- Copy meta into the meta_feed table
 --
-DROP PROCEDURE IF EXISTS copy;
+DROP PROCEDURE IF EXISTS copy_meta_feed;
 DELIMITER //
-CREATE PROCEDURE copy ()
+CREATE PROCEDURE copy_meta_feed ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'FD' > 0) THEN
     INSERT INTO meta_feed (id, name)
@@ -32,5 +32,5 @@ BEGIN
   END IF;
 END//
 DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+CALL copy_meta_feed();
+DROP PROCEDURE copy_meta_feed;
