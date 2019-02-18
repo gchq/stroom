@@ -4,7 +4,6 @@ dependencies {
     implementation project(':stroom-config:stroom-config-app')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-config:stroom-config-global-impl-db-jooq')
-    implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-db-util')
     implementation project(':stroom-pipeline')

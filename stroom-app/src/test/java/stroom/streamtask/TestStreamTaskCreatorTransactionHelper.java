@@ -26,7 +26,7 @@ import stroom.meta.shared.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.entity.StroomEntityManager;
-import stroom.entity.util.ConnectionUtil;
+import stroom.util.sql.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
 import stroom.persist.ConnectionProvider;
 import stroom.query.api.v2.ExpressionOperator;

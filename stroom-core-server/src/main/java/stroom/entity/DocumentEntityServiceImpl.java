@@ -17,6 +17,7 @@
 package stroom.entity;
 
 import stroom.docref.DocRef;
+import stroom.util.entity.NameValidationUtil;
 import stroom.util.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.util.shared.BaseResultList;

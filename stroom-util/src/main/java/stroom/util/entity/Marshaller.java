@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.entity;
+package stroom.util.entity;
 
 public interface Marshaller<E, O> {
     E marshal(E entity);

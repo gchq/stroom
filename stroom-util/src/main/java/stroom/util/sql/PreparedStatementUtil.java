@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.entity.util;
+package stroom.util.sql;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;

@@ -20,12 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.entity.shared.BaseEntity;
+import stroom.util.entity.Marshaller;
 import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
-@Deprecated // Considering using stroom.entity.AbstractEntityMarshaller instead
+@Deprecated // Considering using stroom.util.entity.AbstractEntityMarshaller instead
 public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marshaller<E, O> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityMarshaller.class);
 
