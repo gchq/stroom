@@ -34,7 +34,7 @@ import javax.sql.DataSource;
 
 public class SQLStatisticsModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticsModule.class);
-    private static final String FLYWAY_LOCATIONS = "stroom/statistics/sql/db/migration/mysql";
+    private static final String FLYWAY_LOCATIONS = "stroom/statistics/impl/sql/db/migration";
     private static final String FLYWAY_TABLE = "statistics_schema_history";
 
     @Override

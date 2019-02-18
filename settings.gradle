@@ -171,7 +171,9 @@ include 'stroom-security:stroom-security-impl-db-jooq'
 include 'stroom-statistics:stroom-statistics-api'
 include 'stroom-statistics:stroom-statistics-client'
 include 'stroom-statistics:stroom-statistics-impl'
+include 'stroom-statistics:stroom-statistics-impl-hbase'
 include 'stroom-statistics:stroom-statistics-impl-mock'
+include 'stroom-statistics:stroom-statistics-impl-sql'
 
 // Task execution
 include 'stroom-task:stroom-task-api'

@@ -23,7 +23,6 @@ import stroom.search.SearchConfig;
 import stroom.security.impl.SecurityConfig;
 import stroom.security.impl.db.SecurityDbConfig;
 import stroom.servicediscovery.ServiceDiscoveryConfig;
-import stroom.statistics.impl.StatisticsConfig;
 import stroom.streamtask.ProcessConfig;
 import stroom.streamtask.ProxyAggregationConfig;
 import stroom.ui.config.shared.UiConfig;

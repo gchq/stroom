@@ -20,6 +20,8 @@ dependencies {
     implementation project(':stroom-job:stroom-job-impl')
     implementation project(':stroom-job:stroom-job-impl-db')
     implementation project(':stroom-statistics:stroom-statistics-impl')
+    implementation project(':stroom-statistics:stroom-statistics-impl-hbase')
+    implementation project(':stroom-statistics:stroom-statistics-impl-sql')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-util')
