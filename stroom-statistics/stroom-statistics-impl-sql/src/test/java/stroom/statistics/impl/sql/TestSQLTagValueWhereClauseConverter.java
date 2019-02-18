@@ -19,7 +19,6 @@ package stroom.statistics.impl.sql;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
-import stroom.entity.util.SqlBuilder;
 import stroom.statistics.impl.sql.search.FilterOperationMode;
 import stroom.statistics.impl.sql.search.FilterTermsTree;
 import stroom.statistics.impl.sql.search.PrintableNode;

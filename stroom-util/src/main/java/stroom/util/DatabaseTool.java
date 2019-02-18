@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.tools;
+package stroom.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.AbstractCommandLineTool;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

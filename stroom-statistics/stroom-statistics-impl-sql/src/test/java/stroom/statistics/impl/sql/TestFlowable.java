@@ -1,4 +1,4 @@
-package stroom.statistics.impl;
+package stroom.statistics.impl.sql;
 
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;

@@ -16,9 +16,9 @@
 
 package stroom.statistics.impl.sql.search;
 
-import stroom.entity.util.SqlBuilder;
 import stroom.statistics.impl.sql.SQLStatisticConstants;
 import stroom.statistics.impl.sql.SQLStatisticNames;
+import stroom.statistics.impl.sql.SqlBuilder;
 import stroom.statistics.impl.sql.search.FilterTermsTree.OperatorNode;
 import stroom.statistics.impl.sql.search.FilterTermsTree.TermNode;
 

@@ -12,13 +12,13 @@ import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.entity.util.PreparedStatementUtil;
-import stroom.entity.util.SqlBuilder;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.statistics.impl.sql.ConnectionProvider;
 import stroom.statistics.impl.sql.SQLStatisticConstants;
 import stroom.statistics.impl.sql.SQLStatisticNames;
+import stroom.statistics.impl.sql.SqlBuilder;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
+import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

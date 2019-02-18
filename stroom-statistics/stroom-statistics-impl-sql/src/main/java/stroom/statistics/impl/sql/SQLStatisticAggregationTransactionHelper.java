@@ -19,7 +19,6 @@ package stroom.statistics.impl.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.util.ConnectionUtil;
-import stroom.entity.util.SqlUtil;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
@@ -261,7 +260,7 @@ public class SQLStatisticAggregationTransactionHelper {
     protected int doAggregateSQL_Update(final Connection connection, final TaskContext taskContext, final String prefix,
                                         final String sql, final List<Object> args) throws SQLException {
         final LogExecutionTime time = new LogExecutionTime();
-        final String trace = SqlUtil.buildSQLTrace(sql, args);
+        final String trace = buildSQLTrace(sql, args);
 
         taskContext.info("{}\n {}", prefix, trace);
 
@@ -274,7 +273,7 @@ public class SQLStatisticAggregationTransactionHelper {
     protected long doLongSelect(final Connection connection, final TaskContext taskContext, final String prefix,
                                 final String sql, final List<Object> args) throws SQLException {
         final LogExecutionTime time = new LogExecutionTime();
-        final String trace = SqlUtil.buildSQLTrace(sql, args);
+        final String trace = buildSQLTrace(sql, args);
 
         taskContext.info("{}\n {}", prefix, trace);
 
@@ -507,6 +506,20 @@ public class SQLStatisticAggregationTransactionHelper {
                 throw sqlException;
             }
         }
+    }
+
+    private static String buildSQLTrace(final String sql, final List<Object> args) {
+        final StringBuilder sqlString = new StringBuilder();
+        int arg = 0;
+        for (int i = 0; i < sql.length(); i++) {
+            final char c = sql.charAt(i);
+            if (c == '?') {
+                sqlString.append(args.get(arg++));
+            } else {
+                sqlString.append(c);
+            }
+        }
+        return sqlString.toString();
     }
 
     public static class AggregateConfig {

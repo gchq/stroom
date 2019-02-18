@@ -16,9 +16,8 @@
 
 package stroom.statistics.impl.hbase.entity;
 
-import stroom.entity.shared.SQLNameConstants;
-import stroom.importexport.shared.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
+import stroom.importexport.shared.ExternalFile;
 import stroom.statistics.impl.hbase.shared.CustomRollUpMask;
 import stroom.statistics.impl.hbase.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.impl.hbase.shared.StatisticField;
@@ -26,8 +25,6 @@ import stroom.statistics.impl.hbase.shared.StatisticRollUpType;
 import stroom.statistics.impl.hbase.shared.StatisticType;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 
-import javax.persistence.Column;
-import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,7 +73,6 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         this.description = description;
     }
 
-    @Transient
     public String getType() {
         return ENTITY_TYPE;
     }
@@ -89,7 +85,6 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         this.pStatisticType = pStatisticType;
     }
 
-    @Transient
     public StatisticType getStatisticType() {
         return StatisticType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pStatisticType);
     }
@@ -106,7 +101,6 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         this.pRollUpType = pRollUpType;
     }
 
-    @Transient
     public StatisticRollUpType getRollUpType() {
         return StatisticRollUpType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pRollUpType);
     }
@@ -119,12 +113,10 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         return precision;
     }
 
-    @Transient
     public void setPrecision(final EventStoreTimeIntervalEnum interval) {
         this.precision = interval.toString();
     }
 
-    @Transient
     public EventStoreTimeIntervalEnum getPrecisionAsInterval() {
         return EventStoreTimeIntervalEnum.valueOf(precision);
     }
@@ -133,7 +125,6 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         this.precision = precision;
     }
 
-    @Column(name = SQLNameConstants.ENABLED, nullable = false)
     public boolean isEnabled() {
         return enabled;
     }
@@ -151,7 +142,6 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         this.data = data;
     }
 
-    @Transient
     @XmlTransient
     public StroomStatsStoreEntityData getDataObject() {
         return stroomStatsStoreDataObject;
@@ -162,7 +152,6 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         this.stroomStatsStoreDataObject = stroomStatsStoreDataObject;
     }
 
-    @Transient
     public boolean isValidField(final String fieldName) {
         if (stroomStatsStoreDataObject == null) {
             return false;
@@ -175,7 +164,6 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         }
     }
 
-    @Transient
     public boolean isRollUpCombinationSupported(final Set<String> rolledUpFieldNames) {
         if (rolledUpFieldNames == null || rolledUpFieldNames.isEmpty()) {
             return true;
@@ -199,12 +187,10 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         return stroomStatsStoreDataObject.isRollUpCombinationSupported(rolledUpFieldNames);
     }
 
-    @Transient
     public Integer getPositionInFieldList(final String fieldName) {
         return stroomStatsStoreDataObject.getFieldPositionInList(fieldName);
     }
 
-    @Transient
     public List<String> getFieldNames() {
         if (stroomStatsStoreDataObject != null) {
             final List<String> fieldNames = new ArrayList<>();
@@ -217,12 +203,10 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         }
     }
 
-    @Transient
     public int getStatisticFieldCount() {
         return stroomStatsStoreDataObject == null ? 0 : stroomStatsStoreDataObject.getStatisticFields().size();
     }
 
-    @Transient
     public List<StatisticField> getStatisticFields() {
         if (stroomStatsStoreDataObject != null) {
             return stroomStatsStoreDataObject.getStatisticFields();
@@ -231,7 +215,6 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         }
     }
 
-    @Transient
     public Set<CustomRollUpMask> getCustomRollUpMasks() {
         if (stroomStatsStoreDataObject != null) {
             return stroomStatsStoreDataObject.getCustomRollUpMasks();

@@ -166,7 +166,7 @@ public class ConnectionUtil {
             PreparedStatementUtil.setArguments(preparedStatement, args);
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
-                    result = SqlUtil.getLong(resultSet, 1);
+                    result = getLong(resultSet, 1);
                 }
             }
 
@@ -177,6 +177,22 @@ public class ConnectionUtil {
             LOGGER.error("executeQueryLongResult() - " + sql + " " + args, sqlException);
             throw sqlException;
         }
+    }
+
+    public static Long getLong(final ResultSet resultSet, final int pos) throws SQLException {
+        final long number = resultSet.getLong(pos);
+        if (resultSet.wasNull()) {
+            return null;
+        }
+        return number;
+    }
+
+    public static Long getLong(final Object[] row, final int pos) {
+        final Number number = (Number) row[pos];
+        if (number == null) {
+            return null;
+        }
+        return number.longValue();
     }
 
 //    public static BaseResultList<SummaryDataRow> executeQuerySummaryDataResult(final Connection connection,
