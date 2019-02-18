@@ -19,10 +19,6 @@ package stroom.security.impl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.EntityEvent;
-import stroom.util.GuiceUtil;
-import stroom.util.RestResource;
-import stroom.util.shared.Clearable;
-import stroom.security.impl.db.SecurityDbModule;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.CheckDocumentPermissionAction;
@@ -34,13 +30,14 @@ import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.FetchUserRefAction;
 import stroom.security.shared.LogoutAction;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.GuiceUtil;
 import stroom.util.HasHealthCheck;
+import stroom.util.RestResource;
+import stroom.util.shared.Clearable;
 
 public class SecurityModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new SecurityDbModule());
-
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
         bind(AuthenticationService.class).to(AuthenticationServiceImpl.class);
         bind(AuthorisationService.class).to(AuthorisationServiceImpl.class);
