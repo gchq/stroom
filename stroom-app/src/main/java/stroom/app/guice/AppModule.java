@@ -34,10 +34,9 @@ public class AppModule extends AbstractModule {
         install(new ClusterModule());
 //        install(new stroom.node.NodeTestConfigModule());
         install(new SecurityContextModule());
-        install(new stroom.statistics.internal.InternalStatisticsModule());
         install(new MetaStatisticsModule());
 
-        install(new stroom.statistics.sql.search.SQLStatisticSearchModule());
+        install(new stroom.statistics.impl.sql.search.SQLStatisticSearchModule());
         install(new stroom.dispatch.DispatchModule());
         install(new SessionResourceModule());
 //        install(new stroom.test.DatabaseTestControlModule());

@@ -20,7 +20,7 @@ import io.vavr.Tuple3;
 import io.vavr.Tuple4;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.statistics.shared.StatisticType;
+import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.util.date.DateUtil;
 
 import java.io.IOException;

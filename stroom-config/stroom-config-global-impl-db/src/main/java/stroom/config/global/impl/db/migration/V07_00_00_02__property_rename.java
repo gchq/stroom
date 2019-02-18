@@ -189,9 +189,9 @@ public class V07_00_00_02__property_rename implements JdbcMigration {
         // ? stroom.services.stroomStats.name ?
         // ? stroom.services.stroomStats.version ?
 
-        FROM_TO_MAP.put("stroom.services.stroomStats.internalStats.eventsPerMessage", "stroom.statistics.hbase.eventsPerMessage");
-        FROM_TO_MAP.put("stroom.services.stroomStats.kafkaTopics.count", "stroom.statistics.hbase.kafkaTopics.count");
-        FROM_TO_MAP.put("stroom.services.stroomStats.kafkaTopics.value", "stroom.statistics.hbase.kafkaTopics.value");
+        FROM_TO_MAP.put("stroom.services.stroomStats.internalStats.eventsPerMessage", "stroom.statistics.impl.hbase.eventsPerMessage");
+        FROM_TO_MAP.put("stroom.services.stroomStats.kafkaTopics.count", "stroom.statistics.impl.hbase.kafkaTopics.count");
+        FROM_TO_MAP.put("stroom.services.stroomStats.kafkaTopics.value", "stroom.statistics.impl.hbase.kafkaTopics.value");
         FROM_TO_MAP.put("stroom.showSql", "stroom.core.hibernate.showSql");
         FROM_TO_MAP.put("stroom.splash.body", "stroom.ui.splash.body");
         FROM_TO_MAP.put("stroom.splash.enabled", "stroom.ui.splash.enabled");
@@ -199,7 +199,7 @@ public class V07_00_00_02__property_rename implements JdbcMigration {
         FROM_TO_MAP.put("stroom.splash.version", "stroom.ui.splash.version");
 
         // No longer used, stat doc entities are totally separate
-        // stroom.statistics.common.statisticEngines
+        // stroom.statistics.impl.common.statisticEngines
 
         // TODO what to do about
         // ? stroom.statistics.sql.db.connectionPool.acquireIncrement
@@ -223,9 +223,9 @@ public class V07_00_00_02__property_rename implements JdbcMigration {
 
         // Same names in 6 & master
         // stroom.statistics.sql.maxProcessingAge
-        // stroom.statistics.sql.search.fetchSize
-        // stroom.statistics.sql.search.maxResults
-        // stroom.statistics.sql.search.resultHandlerBatchSize
+        // stroom.statistics.impl.sql.search.fetchSize
+        // stroom.statistics.impl.sql.search.maxResults
+        // stroom.statistics.impl.sql.search.resultHandlerBatchSize
         // stroom.statistics.sql.statisticAggregationBatchSize
 
         // TODO lots of options for these; stroom.data.store, stroom.policy, stroom.process

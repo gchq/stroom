@@ -1,6 +1,8 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
+import stroom.statistics.impl.internal.InternalStatisticsModule;
+import stroom.statistics.impl.sql.SQLStatisticsModule;
 
 public class CoreModule extends AbstractModule {
     @Override
@@ -65,15 +67,16 @@ public class CoreModule extends AbstractModule {
         install(new stroom.security.impl.db.SecurityDbModule());
         install(new stroom.servicediscovery.ServiceDiscoveryModule());
         install(new stroom.servlet.ServletModule());
-        install(new stroom.statistics.sql.SQLStatisticsModule());
-        install(new stroom.statistics.sql.entity.StatisticStoreModule());
-        install(new stroom.statistics.sql.internal.InternalModule());
-        install(new stroom.statistics.sql.rollup.SQLStatisticRollupModule());
-        install(new stroom.statistics.sql.search.SQLStatisticSearchModule());
-        install(new stroom.statistics.stroomstats.entity.StroomStatsStoreModule());
-        install(new stroom.statistics.stroomstats.internal.InternalStatisticsModule());
-        install(new stroom.statistics.stroomstats.pipeline.StatisticsElementModule());
-        install(new stroom.statistics.stroomstats.rollup.StroomStatsRollupModule());
+        install(new SQLStatisticsModule());
+        install(new stroom.statistics.impl.internal.InternalStatisticsModule());
+        install(new stroom.statistics.impl.hbase.entity.StroomStatsStoreModule());
+        install(new stroom.statistics.impl.hbase.internal.InternalModule());
+        install(new stroom.statistics.impl.hbase.pipeline.StatisticsElementModule());
+        install(new stroom.statistics.impl.hbase.rollup.StroomStatsRollupModule());
+        install(new stroom.statistics.impl.sql.entity.StatisticStoreModule());
+        install(new stroom.statistics.impl.sql.internal.InternalModule());
+        install(new stroom.statistics.impl.sql.rollup.SQLStatisticRollupModule());
+        install(new stroom.statistics.impl.sql.search.SQLStatisticSearchModule());
         install(new stroom.meta.impl.db.MetaDbModule());
         install(new stroom.data.store.impl.DataStoreHandlerModule());
         install(new stroom.data.store.impl.fs.FileSystemDataStoreModule());

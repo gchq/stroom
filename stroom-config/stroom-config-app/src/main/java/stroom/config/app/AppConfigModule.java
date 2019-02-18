@@ -28,10 +28,10 @@ import stroom.search.shard.IndexShardSearchConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.SecurityConfig;
 import stroom.servicediscovery.ServiceDiscoveryConfig;
-import stroom.statistics.StatisticsConfig;
-import stroom.statistics.internal.InternalStatisticsConfig;
-import stroom.statistics.sql.SQLStatisticsConfig;
-import stroom.statistics.stroomstats.internal.HBaseStatisticsConfig;
+import stroom.statistics.impl.StatisticsConfig;
+import stroom.statistics.impl.internal.InternalStatisticsConfig;
+import stroom.statistics.impl.sql.SQLStatisticsConfig;
+import stroom.statistics.impl.hbase.internal.HBaseStatisticsConfig;
 import stroom.streamtask.ProcessConfig;
 import stroom.streamtask.ProxyAggregationConfig;
 import stroom.ui.config.shared.ActivityConfig;
@@ -101,7 +101,7 @@ public class AppConfigModule extends AbstractModule {
         bind(UrlConfig.class).toInstance(appConfig.getUiConfig().getUrlConfig());
         bind(VolumeConfig.class).toInstance(appConfig.getVolumeConfig());
         bind(XsltConfig.class).toInstance(appConfig.getPipelineConfig().getXsltConfig());
-        bind(stroom.statistics.sql.search.SearchConfig.class).toInstance(appConfig.getStatisticsConfig().getSqlStatisticsConfig().getSearchConfig());
+        bind(stroom.statistics.impl.sql.search.SearchConfig.class).toInstance(appConfig.getStatisticsConfig().getSqlStatisticsConfig().getSearchConfig());
         bind(stroom.ui.config.shared.ProcessConfig.class).toInstance(appConfig.getUiConfig().getProcessConfig());
     }
 }

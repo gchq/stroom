@@ -56,7 +56,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.pipeline.refdata.ReferenceDataModule());
         install(new MockResourceModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
-        install(new stroom.statistics.internal.MockInternalStatisticsModule());
+        install(new stroom.statistics.impl.mock.MockInternalStatisticsModule());
         install(new stroom.streamtask.MockStreamTaskModule());
         install(new MockTaskModule());
         install(new stroom.test.MockTestControlModule());

@@ -151,6 +151,7 @@ dependencies {
     testImplementation project(':stroom-security:stroom-security-impl')
     testImplementation project(':stroom-statistics:stroom-statistics-api')
     testImplementation project(':stroom-statistics:stroom-statistics-impl')
+    testImplementation project(':stroom-statistics:stroom-statistics-impl-mock')
     testImplementation project(':stroom-task:stroom-task-api')
     testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-util')
@@ -321,7 +322,7 @@ swagger {
         // TODO need to decide if we want all of our resource classes added to swagger and if so,
         // they need annotating with @Api/@ApiOperation/etc.
         locations = [
-                'stroom.statistics.sql.search.SqlStatisticsQueryResource',
+                'stroom.statistics.impl.sql.search.SqlStatisticsQueryResource',
                 'stroom.index.StroomIndexQueryResource',
                 //'stroom.dictionary.DictionaryResource',
                 //'stroom.dictionary.DictionaryResource2',

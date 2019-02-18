@@ -20,8 +20,8 @@ import stroom.pipeline.refdata.store.RefDataStoreJobsModule;
 import stroom.resource.impl.ResourceJobsModule;
 import stroom.search.SearchJobsModule;
 import stroom.search.shard.ShardJobsModule;
-import stroom.statistics.sql.SQLStatisticsJobsModule;
-import stroom.statistics.sql.search.SQLStatisticSearchJobsModule;
+import stroom.statistics.impl.sql.SQLStatisticsJobsModule;
+import stroom.statistics.impl.sql.search.SQLStatisticSearchJobsModule;
 import stroom.volume.VolumeJobsModule;
 
 public class JobsModule extends AbstractModule {
