@@ -67,9 +67,9 @@ class EntityServiceFindSummaryHandler
                 addCriteria(entityService, action.getCriteria(), and.getAdvancedQueryItems());
 
                 result = (BaseResultList<SummaryDataRow>) beanRegistry.invoke(entityService, "findSummary", action.getCriteria());
-                documentEventLog.searchSummary(action.getCriteria(), query, result);
+                documentEventLog.searchSummary(action.getCriteria(), query, result,  null);
             } catch (final RuntimeException e) {
-                documentEventLog.searchSummary(action.getCriteria(), query, e);
+                documentEventLog.searchSummary(action.getCriteria(), query, null, e);
 
                 throw e;
             }

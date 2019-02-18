@@ -158,7 +158,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         }
 
         final FindDataVolumeCriteria streamVolumeCriteria = new FindDataVolumeCriteria();
-        streamVolumeCriteria.obtainStreamIdSet().add(meta.getId());
+        streamVolumeCriteria.obtainMetaIdSet().add(meta.getId());
 
         assertThat(streamVolumeService.find(streamVolumeCriteria).size() >= 1).as("Must be saved to at least one volume").isTrue();
 

@@ -353,7 +353,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final FindDataVolumeCriteria volumeCriteria = new FindDataVolumeCriteria();
 //        volumeCriteria.obtainStreamStatusSet().add(StreamStatus.UNLOCKED);
-        volumeCriteria.obtainStreamIdSet().add(exactMetaData.getId());
+        volumeCriteria.obtainMetaIdSet().add(exactMetaData.getId());
         assertThat(streamVolumeService.find(volumeCriteria).size() >= 1).as("Expecting to find at least 1 with day old criteria").isTrue();
     }
 
@@ -684,7 +684,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             streamTarget.getAttributes().put(MetaFieldNames.REC_READ, "100");
         }
 
-        final DataVolume streamVolume = streamVolumeService.findStreamVolume(meta.getId());
+        final DataVolume streamVolume = streamVolumeService.findDataVolume(meta.getId());
         final Path rootFile = fileSystemStreamPathHelper.getRootPath(streamVolume.getVolumePath(), meta, StreamTypeNames.RAW_EVENTS);
 
         assertThat(Files.isRegularFile(rootFile)).isTrue();

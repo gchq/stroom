@@ -40,9 +40,11 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         name = 'org.jooq.meta.mysql.MySQLDatabase'
                         inputSchema = 'stroom'
                         // Add anything you want included in generation below
-                        includes = 'file_feed_path|file_type_path|data_volume|VOL|VOL_STATE|RK|ND'
+                        includes = 'file_volume_state|file_volume|file_feed_path|file_type_path|file_meta_volume'
                         // We don't want to include flyway versioning
                         excludes = 'data_store_schema_history'
+                        // Specify 'version' for use in optimistic concurrency control
+                        recordVersionFields = 'version'
                     }
                     target {
                         packageName = 'stroom.data.store.impl.fs.db.jooq'

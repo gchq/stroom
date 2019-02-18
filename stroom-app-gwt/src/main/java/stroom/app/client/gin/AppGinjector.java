@@ -35,6 +35,8 @@ import stroom.dashboard.client.gin.DashboardGinjector;
 import stroom.dashboard.client.gin.DashboardModule;
 import stroom.dashboard.client.vis.gin.VisGinjector;
 import stroom.dashboard.client.vis.gin.VisModule;
+import stroom.data.store.impl.fs.client.gin.FSVolumeGinjector;
+import stroom.data.store.impl.fs.client.gin.FSVolumeModule;
 import stroom.dictionary.client.gin.DictionaryGinjector;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.ClientDispatchModule;
@@ -89,6 +91,7 @@ import stroom.xmlschema.client.gin.XMLSchemaModule;
         DictionaryModule.class,
         EntityModule.class,
         FeedModule.class,
+        FSVolumeModule.class,
         FolderModule.class,
         ImportExportConfigModule.class,
         IndexModule.class,
@@ -116,6 +119,7 @@ public interface AppGinjector extends
         DictionaryGinjector,
         EntityGinjector,
         FeedGinjector,
+        FSVolumeGinjector,
         FolderGinjector,
         Ginjector,
         ImportExportConfigGinjector,

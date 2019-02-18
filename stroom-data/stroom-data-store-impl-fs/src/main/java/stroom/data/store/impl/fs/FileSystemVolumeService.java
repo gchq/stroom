@@ -17,8 +17,8 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.shared.FileSystemVolume;
-import stroom.data.store.impl.fs.shared.FindFileSystemVolumeCriteria;
+import stroom.data.store.impl.fs.shared.FSVolume;
+import stroom.data.store.impl.fs.shared.FindFSVolumeCriteria;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
@@ -27,28 +27,15 @@ import stroom.util.shared.Flushable;
  * API for handling volumes.
  */
 public interface FileSystemVolumeService extends Flushable, Clearable {
-    FileSystemVolume load(FileSystemVolume entity);
+    FSVolume create(final FSVolume fileVolume);
 
+    FSVolume update(FSVolume fileVolume);
 
-    /**
-     * Save the entity.
-     *
-     * @return The persisted entity.
-     * @throws RuntimeException If a DB error occurred during deletion such as an optimistic
-     *                          lock exception or entity constraint.
-     */
-    FileSystemVolume save(FileSystemVolume entity);
+    int delete(int id);
 
-    /**
-     * Delete an entity.
-     *
-     * @return True if the entity was deleted successfully.
-     * @throws RuntimeException If a DB error occurred during deletion such as an optimistic
-     *                          lock exception or entity constraint.
-     */
-    Boolean delete(FileSystemVolume entity);
+    FSVolume fetch(int id);
 
-    BaseResultList<FileSystemVolume> find(FindFileSystemVolumeCriteria criteria);
+    BaseResultList<FSVolume> find(FindFSVolumeCriteria criteria);
 
     /**
      * Given a node return back where we need to write to.
@@ -56,5 +43,5 @@ public interface FileSystemVolumeService extends Flushable, Clearable {
      * @param node The local node required if we prefer to use local volumes.
      * @return set of volumes to write to
      */
-    FileSystemVolume getVolume();
+    FSVolume getVolume();
 }

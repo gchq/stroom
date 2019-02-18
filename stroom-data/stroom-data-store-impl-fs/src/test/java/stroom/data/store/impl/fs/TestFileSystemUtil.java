@@ -18,7 +18,7 @@ package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import stroom.data.store.impl.fs.shared.FileSystemVolume;
+import stroom.data.store.impl.fs.shared.FSVolume;
 import stroom.meta.shared.Meta;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
@@ -51,8 +51,8 @@ class TestFileSystemUtil {
     @TempDir
     private Path tempDir;
 
-    private FileSystemVolume buildTestVolume() {
-        final FileSystemVolume config = new FileSystemVolume();
+    private FSVolume buildTestVolume() {
+        final FSVolume config = new FSVolume();
         config.setPath(FileUtil.getCanonicalPath(tempDir));
         return config;
     }

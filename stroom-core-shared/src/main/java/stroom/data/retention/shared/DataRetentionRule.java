@@ -25,6 +25,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "DataRetentionRule", propOrder = {"ruleNumber", "creationTime", "name", "enabled", "expression", "age", "timeUnit", "forever"})
@@ -123,30 +124,20 @@ public class DataRetentionRule implements SharedObject {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
-        final DataRetentionRule rule = (DataRetentionRule) o;
-
-        if (ruleNumber != rule.ruleNumber) return false;
-        if (creationTime != rule.creationTime) return false;
-        if (enabled != rule.enabled) return false;
-        if (age != rule.age) return false;
-        if (forever != rule.forever) return false;
-        if (name != null ? !name.equals(rule.name) : rule.name != null) return false;
-        if (expression != null ? !expression.equals(rule.expression) : rule.expression != null) return false;
-        return timeUnit == rule.timeUnit;
+        final DataRetentionRule that = (DataRetentionRule) o;
+        return ruleNumber == that.ruleNumber &&
+                creationTime == that.creationTime &&
+                enabled == that.enabled &&
+                age == that.age &&
+                forever == that.forever &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(expression, that.expression) &&
+                timeUnit == that.timeUnit;
     }
 
     @Override
     public int hashCode() {
-        int result = ruleNumber;
-        result = 31 * result + (int) (creationTime ^ (creationTime >>> 32));
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (enabled ? 1 : 0);
-        result = 31 * result + (expression != null ? expression.hashCode() : 0);
-        result = 31 * result + age;
-        result = 31 * result + (timeUnit != null ? timeUnit.hashCode() : 0);
-        result = 31 * result + (forever ? 1 : 0);
-        return result;
+        return Objects.hash(ruleNumber, creationTime, name, enabled, expression, age, timeUnit, forever);
     }
 
     @Override

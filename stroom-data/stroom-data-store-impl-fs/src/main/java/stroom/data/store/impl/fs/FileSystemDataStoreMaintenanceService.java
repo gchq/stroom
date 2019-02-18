@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.data.store.impl.DataStoreMaintenanceService;
 import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
-import stroom.data.store.impl.fs.shared.FileSystemVolume;
+import stroom.data.store.impl.fs.shared.FSVolume;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.CriteriaSet;
 import stroom.util.shared.PageRequest;
@@ -84,7 +84,7 @@ class FileSystemDataStoreMaintenanceService implements DataStoreMaintenanceServi
     }
 
     List<Path> findAllStreamFile(final Meta meta) {
-        final DataVolume streamVolume = streamVolumeService.findStreamVolume(meta.getId());
+        final DataVolume streamVolume = streamVolumeService.findDataVolume(meta.getId());
         final List<Path> results = new ArrayList<>();
         final Path rootFile = fileSystemStreamPathHelper.getRootPath(streamVolume.getVolumePath(),
                 meta, meta.getTypeName());
@@ -98,7 +98,7 @@ class FileSystemDataStoreMaintenanceService implements DataStoreMaintenanceServi
 
     @Override
     // @Transactional
-    public ScanVolumePathResult scanVolumePath(final FileSystemVolume volume,
+    public ScanVolumePathResult scanVolumePath(final FSVolume volume,
                                                final boolean doDelete,
                                                final String repoPath,
                                                final long oldFileAge) {
@@ -161,7 +161,7 @@ class FileSystemDataStoreMaintenanceService implements DataStoreMaintenanceServi
         });
     }
 
-    private void buildStreamsKeyedByBaseName(final FileSystemVolume volume,
+    private void buildStreamsKeyedByBaseName(final FSVolume volume,
                                              final String repoPath,
                                              final Map<String, DataVolume> streamsKeyedByBaseName) {
         try {
@@ -175,7 +175,7 @@ class FileSystemDataStoreMaintenanceService implements DataStoreMaintenanceServi
                 final FindDataVolumeCriteria criteria = new FindDataVolumeCriteria();
 
                 final Map<Long, Meta> streamMap = new HashMap<>();
-                final CriteriaSet<Long> streamIdSet = criteria.obtainStreamIdSet();
+                final CriteriaSet<Long> streamIdSet = criteria.obtainMetaIdSet();
                 matchingStreams.forEach(stream -> {
                     final long id = stream.getId();
                     streamMap.put(id, stream);

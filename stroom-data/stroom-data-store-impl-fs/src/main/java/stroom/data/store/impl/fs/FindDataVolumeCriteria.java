@@ -28,16 +28,16 @@ public class FindDataVolumeCriteria extends BaseCriteria {
 //    private CriteriaSet<StreamStatus> streamStatusSet = null;
 //    private CriteriaSet<Long> nodeIdSet = null;
     private CriteriaSet<Integer> volumeIdSet = null;
-    private CriteriaSet<Long> streamIdSet = null;
+    private CriteriaSet<Long> metaIdSet = null;
 
     public static FindDataVolumeCriteria create(final Meta meta) {
         FindDataVolumeCriteria rtn = new FindDataVolumeCriteria();
-        rtn.obtainStreamIdSet().add(meta.getId());
+        rtn.obtainMetaIdSet().add(meta.getId());
         return rtn;
     }
 
     public boolean isValidCriteria() {
-        if (streamIdSet != null && streamIdSet.isConstrained()) {
+        if (metaIdSet != null && metaIdSet.isConstrained()) {
             return true;
         }
         return false;
@@ -63,15 +63,15 @@ public class FindDataVolumeCriteria extends BaseCriteria {
 //        return nodeIdSet;
 //    }
 
-    public CriteriaSet<Long> getStreamIdSet() {
-        return streamIdSet;
+    public CriteriaSet<Long> getMetaIdSet() {
+        return metaIdSet;
     }
 
-    public CriteriaSet<Long> obtainStreamIdSet() {
-        if (streamIdSet == null) {
-            streamIdSet = new CriteriaSet<>();
+    public CriteriaSet<Long> obtainMetaIdSet() {
+        if (metaIdSet == null) {
+            metaIdSet = new CriteriaSet<>();
         }
-        return streamIdSet;
+        return metaIdSet;
     }
 
     public CriteriaSet<Integer> getVolumeIdSet() {

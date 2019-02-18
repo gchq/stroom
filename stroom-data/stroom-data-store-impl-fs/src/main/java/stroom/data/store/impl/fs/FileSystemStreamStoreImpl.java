@@ -26,7 +26,7 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
-import stroom.data.store.impl.fs.shared.FileSystemVolume;
+import stroom.data.store.impl.fs.shared.FSVolume;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaProperties;
@@ -70,7 +70,7 @@ class FileSystemStreamStoreImpl implements Store {
     public Target openStreamTarget(final MetaProperties metaProperties) {
         LOGGER.debug("openStreamTarget() " + metaProperties);
 
-        final FileSystemVolume volume = volumeService.getVolume();
+        final FSVolume volume = volumeService.getVolume();
         if (volume == null) {
             throw new DataException("Failed to get lock as no writeable volumes");
         }
@@ -97,7 +97,7 @@ class FileSystemStreamStoreImpl implements Store {
         LOGGER.debug("openExistingStreamTarget() " + meta);
 
         // Lock the object
-        final DataVolume dataVolume = streamVolumeService.findStreamVolume(meta.getId());
+        final DataVolume dataVolume = streamVolumeService.findDataVolume(meta.getId());
         if (dataVolume == null) {
             throw new DataException("Not all volumes are unlocked");
         }
@@ -225,7 +225,7 @@ class FileSystemStreamStoreImpl implements Store {
         if (meta != null) {
             LOGGER.debug("openStreamSource() {}", meta.getId());
 
-            final DataVolume dataVolume = streamVolumeService.findStreamVolume(meta.getId());
+            final DataVolume dataVolume = streamVolumeService.findDataVolume(meta.getId());
             if (dataVolume == null) {
                 final String message = "Unable to find any volume for " + meta;
                 LOGGER.warn(message);
@@ -257,7 +257,7 @@ class FileSystemStreamStoreImpl implements Store {
 //
 //    @Override
 //    public AttributeMap getStoredMeta(final Meta meta) {
-//        final Set<DataVolume> volumeSet = streamVolumeService.findStreamVolume(meta.getId());
+//        final Set<DataVolume> volumeSet = streamVolumeService.findDataVolume(meta.getId());
 //        if (volumeSet != null && volumeSet.size() > 0) {
 //            final DataVolume streamVolume = volumeSet.iterator().next();
 //            final Path manifest = fileSystemStreamPathHelper.getChildPath(meta, streamVolume, InternalStreamTypeNames.MANIFEST);

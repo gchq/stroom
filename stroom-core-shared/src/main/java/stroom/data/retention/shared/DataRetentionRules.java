@@ -22,11 +22,18 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.SharedObject;
 import stroom.docstore.shared.Doc;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "rules"})
 @JsonInclude(Include.NON_EMPTY)
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "DataRetentionPolicy", propOrder = {"rules"})
+@XmlRootElement(name = "dataRetentionPolicy")
 public class DataRetentionRules extends Doc implements SharedObject {
     public static final String DOCUMENT_TYPE = "DataRetentionRules";
 

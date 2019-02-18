@@ -38,17 +38,11 @@ public interface DocumentEventLog {
 
     void view(Object entity, Throwable ex);
 
-    void delete(BaseCriteria criteria, Query query, Long size);
-
-    void delete(BaseCriteria criteria, Query query, Throwable ex);
+    void delete(BaseCriteria criteria, Query query, Long size, Throwable ex);
 
     void download(Object entity, Throwable ex);
 
-    void search(BaseCriteria criteria, Query query, BaseResultList<?> results);
+    void search(BaseCriteria criteria, Query query, BaseResultList<?> results, Throwable ex);
 
-    void search(BaseCriteria criteria, Query query, Throwable ex);
-
-    void searchSummary(BaseCriteria criteria, Query query, BaseResultList<?> results);
-
-    void searchSummary(BaseCriteria criteria, Query query, Throwable ex);
+    void searchSummary(BaseCriteria criteria, Query query, BaseResultList<?> results, Throwable ex);
 }

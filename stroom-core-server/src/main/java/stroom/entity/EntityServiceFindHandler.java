@@ -67,9 +67,9 @@ class EntityServiceFindHandler
                 addCriteria(entityService, action.getCriteria(), and.getAdvancedQueryItems());
 
                 result = (BaseResultList<SharedObject>) beanRegistry.invoke(entityService, "find", action.getCriteria());
-                documentEventLog.search(action.getCriteria(), query, result);
+                documentEventLog.search(action.getCriteria(), query, result, null);
             } catch (final RuntimeException e) {
-                documentEventLog.search(action.getCriteria(), query, e);
+                documentEventLog.search(action.getCriteria(), query, null, e);
 
                 throw e;
             }

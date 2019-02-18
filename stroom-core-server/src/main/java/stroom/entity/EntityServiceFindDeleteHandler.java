@@ -66,9 +66,9 @@ class EntityServiceFindDeleteHandler
                 addCriteria(entityService, action.getCriteria(), and.getAdvancedQueryItems());
 
                 result = (Long) beanRegistry.invoke(entityService, "updateStatus", action.getCriteria());
-                documentEventLog.delete(action.getCriteria(), query, result);
+                documentEventLog.delete(action.getCriteria(), query, result, null);
             } catch (final RuntimeException e) {
-                documentEventLog.delete(action.getCriteria(), query, e);
+                documentEventLog.delete(action.getCriteria(), query, null, e);
 
                 throw e;
             }

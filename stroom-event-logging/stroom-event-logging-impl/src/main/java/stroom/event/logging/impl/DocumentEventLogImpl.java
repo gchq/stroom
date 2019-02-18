@@ -33,17 +33,17 @@ import event.logging.Search;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.HasUuid;
 import stroom.entity.shared.NamedEntity;
-import stroom.util.shared.PageResponse;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.Security;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.BaseResultList;
 import stroom.util.shared.HasId;
+import stroom.util.shared.HasUuid;
+import stroom.util.shared.PageResponse;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -310,36 +310,29 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     @Override
-    public void delete(final BaseCriteria criteria, final Query query, final Long size) {
-        security.insecure(() -> doDelete(criteria, query, size, null));
-    }
+    public void delete(final BaseCriteria criteria, final Query query, final Long size, final Throwable ex) {
+        security.insecure(() -> {
+            try {
+                final Event event = createAction(criteria.getClass().getSimpleName(), "Finding " + getObjectType(criteria),
+                        null);
 
-    @Override
-    public void delete(final BaseCriteria criteria, final Query query, final Throwable ex) {
-        security.insecure(() -> doDelete(criteria, query, null, ex));
-    }
+                final Criteria crit = new Criteria();
+                crit.setQuery(query);
+                if (size != null) {
+                    crit.setTotalResults(BigInteger.valueOf(size));
+                }
 
-    private void doDelete(final BaseCriteria criteria, final Query query, final Long size, final Throwable ex) {
-        try {
-            final Event event = createAction(criteria.getClass().getSimpleName(), "Finding " + getObjectType(criteria),
-                    null);
+                final ObjectOutcome objectOutcome = new ObjectOutcome();
+                objectOutcome.getObjects().add(crit);
+                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
 
-            final Criteria crit = new Criteria();
-            crit.setQuery(query);
-            if (size != null) {
-                crit.setTotalResults(BigInteger.valueOf(size));
+                event.getEventDetail().setDelete(objectOutcome);
+
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to doDelete!", e);
             }
-
-            final ObjectOutcome objectOutcome = new ObjectOutcome();
-            objectOutcome.getObjects().add(crit);
-            objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
-
-            event.getEventDetail().setDelete(objectOutcome);
-
-            eventLoggingService.log(event);
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to doDelete!", e);
-        }
+        });
     }
 
     @Override
@@ -365,73 +358,59 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     @Override
-    public void search(final BaseCriteria criteria, final Query query, final BaseResultList<?> results) {
-        security.insecure(() -> doSearch(criteria, query, results, null));
-    }
+    public void search(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
+                       final Throwable ex) {
+        security.insecure(() -> {
+            try {
+                final Event event = createAction(criteria.getClass().getSimpleName(), "Finding " + getObjectType(criteria),
+                        null);
+                final Search search = new Search();
+                event.getEventDetail().setSearch(search);
+                search.setQuery(query);
 
-    @Override
-    public void search(final BaseCriteria criteria, final Query query, final Throwable ex) {
-        security.insecure(() -> doSearch(criteria, query, null, ex));
-    }
-
-    private void doSearch(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
-                          final Throwable ex) {
-        try {
-            final Event event = createAction(criteria.getClass().getSimpleName(), "Finding " + getObjectType(criteria),
-                    null);
-            final Search search = new Search();
-            event.getEventDetail().setSearch(search);
-            search.setQuery(query);
-
-            if (results != null && results.getPageResponse() != null) {
-                final PageResponse pageResponse = results.getPageResponse();
-                final ResultPage resultPage = getResultPage(pageResponse);
-                search.setResultPage(resultPage);
-                if (pageResponse.getTotal() != null) {
-                    search.setTotalResults(BigInteger.valueOf(pageResponse.getTotal()));
+                if (results != null && results.getPageResponse() != null) {
+                    final PageResponse pageResponse = results.getPageResponse();
+                    final ResultPage resultPage = getResultPage(pageResponse);
+                    search.setResultPage(resultPage);
+                    if (pageResponse.getTotal() != null) {
+                        search.setTotalResults(BigInteger.valueOf(pageResponse.getTotal()));
+                    }
                 }
+
+                search.setOutcome(EventLoggingUtil.createOutcome(ex));
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to doSearch!", e);
             }
-
-            search.setOutcome(EventLoggingUtil.createOutcome(ex));
-            eventLoggingService.log(event);
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to doSearch!", e);
-        }
+        });
     }
 
     @Override
-    public void searchSummary(final BaseCriteria criteria, final Query query, final BaseResultList<?> results) {
-        security.insecure(() -> doSearchSummary(criteria, query, results, null));
-    }
+    public void searchSummary(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
+                              final Throwable ex) {
+        security.insecure(() -> {
+            try {
+                final Event event = createAction(criteria.getClass().getSimpleName(),
+                        "Finding Summary " + getObjectType(criteria), null);
+                final Search search = new Search();
+                event.getEventDetail().setSearch(search);
+                search.setQuery(query);
 
-    @Override
-    public void searchSummary(final BaseCriteria criteria, final Query query, final Throwable ex) {
-        security.insecure(() -> doSearchSummary(criteria, query, null, ex));
-    }
-
-    private void doSearchSummary(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
-                                 final Throwable ex) {
-        try {
-            final Event event = createAction(criteria.getClass().getSimpleName(),
-                    "Finding Summary " + getObjectType(criteria), null);
-            final Search search = new Search();
-            event.getEventDetail().setSearch(search);
-            search.setQuery(query);
-
-            if (results != null && results.getPageResponse() != null) {
-                final PageResponse pageResponse = results.getPageResponse();
-                final ResultPage resultPage = getResultPage(pageResponse);
-                search.setResultPage(resultPage);
-                if (pageResponse.getTotal() != null) {
-                    search.setTotalResults(BigInteger.valueOf(pageResponse.getTotal()));
+                if (results != null && results.getPageResponse() != null) {
+                    final PageResponse pageResponse = results.getPageResponse();
+                    final ResultPage resultPage = getResultPage(pageResponse);
+                    search.setResultPage(resultPage);
+                    if (pageResponse.getTotal() != null) {
+                        search.setTotalResults(BigInteger.valueOf(pageResponse.getTotal()));
+                    }
                 }
-            }
 
-            search.setOutcome(EventLoggingUtil.createOutcome(ex));
-            eventLoggingService.log(event);
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to doSearchSummary", e);
-        }
+                search.setOutcome(EventLoggingUtil.createOutcome(ex));
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to doSearchSummary", e);
+            }
+        });
     }
 
     private ResultPage getResultPage(final PageResponse pageResponse) {

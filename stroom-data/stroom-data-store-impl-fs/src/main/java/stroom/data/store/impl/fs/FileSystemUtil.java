@@ -19,7 +19,7 @@ package stroom.data.store.impl.fs;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.store.impl.fs.shared.FileSystemVolume;
+import stroom.data.store.impl.fs.shared.FSVolume;
 import stroom.util.io.FileUtil;
 import stroom.util.io.FileUtilException;
 
@@ -77,7 +77,7 @@ final class FileSystemUtil {
     /**
      * Create a root path.
      */
-    static Path createFileTypeRoot(final FileSystemVolume volume) {
+    static Path createFileTypeRoot(final FSVolume volume) {
         //        if (streamType != null) {
 //            builder.append(SEPERATOR_CHAR);
 //            builder.append(streamType.toString());

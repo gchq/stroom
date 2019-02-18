@@ -1,6 +1,6 @@
 package stroom.util.shared;
 
-public class BuildInfo {
+public class BuildInfo implements IsConfig {
     private String upDate;
     private String buildDate = "TBD";
     private String buildVersion = "TBD";

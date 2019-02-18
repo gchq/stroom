@@ -9,8 +9,10 @@ dependencies {
     implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-data:stroom-data-store-impl')
     implementation project(':stroom-data:stroom-data-store-impl-fs-db-jooq')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
@@ -29,11 +31,16 @@ dependencies {
     implementation libs.javax_inject
     implementation libs.jooq
     implementation libs.slf4j_api
+
+    runtimeOnly libs.mysql_connector_java
+
+    testImplementation project(':stroom-security:stroom-security-impl-mock')
+    testImplementation project(':stroom-test-common')
     
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
     testImplementation libs.mockito_core
-    testImplementation project(':stroom-test-common')
+    testImplementation libs.mockito_junit_jupiter
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

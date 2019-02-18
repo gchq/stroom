@@ -4,24 +4,22 @@ import org.jooq.Condition;
 import org.jooq.TableField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.store.impl.fs.shared.FileSystemVolume;
+import stroom.data.store.impl.fs.shared.FSVolume;
 import stroom.db.util.JooqUtil;
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.CriteriaSet;
-import stroom.util.shared.PageRequest;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.util.concurrent.AtomicSequence;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.PageRequest;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import static stroom.data.store.impl.fs.db.jooq.tables.DataVolume.DATA_VOLUME;
-import static stroom.data.store.impl.fs.db.jooq.tables.Vol.VOL;
+import static stroom.data.store.impl.fs.db.jooq.tables.FileMetaVolume.FILE_META_VOLUME;
+import static stroom.data.store.impl.fs.db.jooq.tables.FileVolume.FILE_VOLUME;
 
 public class DataVolumeServiceImpl implements DataVolumeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataVolumeServiceImpl.class);
@@ -58,7 +56,7 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 //
 //            sql.appendEntityIdSetQuery("sv.volume.node", criteria.getNodeIdSet());
 //            sql.appendEntityIdSetQuery("sv.volume", criteria.getVolumeIdSet());
-//            sql.appendCriteriaSet("sv.stream.id", criteria.getStreamIdSet());
+//            sql.appendCriteriaSet("sv.stream.id", criteria.getMetaIdSet());
 //            sql.appendPrimitiveValueSetQuery("sv.stream.pstatus", StreamStatusId.convertStatusSet(criteria.getStreamStatusSet()));
 //
 //            if (criteria.getStreamRange() != null && criteria.getStreamRange().getStreamTypePath() != null) {
@@ -118,8 +116,8 @@ public class DataVolumeServiceImpl implements DataVolumeService {
     @Override
     // @Transactional
     public BaseResultList<DataVolume> find(final FindDataVolumeCriteria criteria) {
-        final Optional<Condition> volumeIdCondition = integerCriteriaSetToCondition(DATA_VOLUME.VOLUME_ID, criteria.getVolumeIdSet());
-        final Optional<Condition> streamIdCondition = longCriteriaSetToCondition(DATA_VOLUME.DATA_ID, criteria.getStreamIdSet());
+        final Optional<Condition> volumeIdCondition = integerCriteriaSetToCondition(FILE_META_VOLUME.FILE_VOLUME_ID, criteria.getVolumeIdSet());
+        final Optional<Condition> streamIdCondition = longCriteriaSetToCondition(FILE_META_VOLUME.META_ID, criteria.getMetaIdSet());
 
         final List<Condition> conditions = new ArrayList<>();
         volumeIdCondition.ifPresent(conditions::add);
@@ -131,9 +129,9 @@ public class DataVolumeServiceImpl implements DataVolumeService {
             }
 
             return JooqUtil.contextResult(connectionProvider, context -> {
-                final List<DataVolume> list = context.select(DATA_VOLUME.DATA_ID, VOL.PATH)
-                        .from(DATA_VOLUME)
-                        .join(VOL).on(VOL.ID.eq(DATA_VOLUME.VOLUME_ID))
+                final List<DataVolume> list = context.select(FILE_META_VOLUME.META_ID, FILE_VOLUME.PATH)
+                        .from(FILE_META_VOLUME)
+                        .join(FILE_VOLUME).on(FILE_VOLUME.ID.eq(FILE_META_VOLUME.FILE_VOLUME_ID))
                         .where(conditions)
                         .limit(getOffset(criteria.getPageRequest()), getNumberOfRows(criteria.getPageRequest()))
                         .fetch()
@@ -164,7 +162,7 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 //
 //            sql.appendCriteriaSetQuery("v.FK_ND_ID", criteria.getNodeIdSet());
 //            sql.appendCriteriaSetQuery("sv.FK_VOL_ID", criteria.getVolumeIdSet());
-//            sql.appendCriteriaSetQuery("sv.FK_STRM_ID", criteria.getStreamIdSet());
+//            sql.appendCriteriaSetQuery("sv.FK_STRM_ID", criteria.getMetaIdSet());
 ////            sql.appendPrimitiveValueSetQuery("s.STAT", StreamStatusId.convertStatusSet(criteria.getStreamStatusSet()));
 ////
 ////            if (streamRange != null) {
@@ -252,7 +250,7 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 //
 //            sql.appendEntityIdSetQuery("v.FK_ND_ID", criteria.getNodeIdSet());
 //            sql.appendEntityIdSetQuery("sv.FK_VOL_ID", criteria.getVolumeIdSet());
-//            sql.appendCriteriaSet("sv.FK_STRM_ID", criteria.getStreamIdSet());
+//            sql.appendCriteriaSet("sv.FK_STRM_ID", criteria.getMetaIdSet());
 //            sql.appendPrimitiveValueSetQuery("s.STAT", StreamStatusId.convertStatusSet(criteria.getStreamStatusSet()));
 //
 //            if (streamRange != null) {
@@ -313,12 +311,12 @@ public class DataVolumeServiceImpl implements DataVolumeService {
      * Return the meta data volumes for a stream id.
      */
     @Override
-    public DataVolume findStreamVolume(final long dataId) {
+    public DataVolume findDataVolume(final long metaId) {
         return JooqUtil.contextResult(connectionProvider, context -> context
-                .select(DATA_VOLUME.DATA_ID, VOL.PATH)
-                .from(DATA_VOLUME)
-                .join(VOL).on(VOL.ID.eq(DATA_VOLUME.VOLUME_ID))
-                .where(DATA_VOLUME.DATA_ID.eq(dataId))
+                .select(FILE_META_VOLUME.META_ID, FILE_VOLUME.PATH)
+                .from(FILE_META_VOLUME)
+                .join(FILE_VOLUME).on(FILE_VOLUME.ID.eq(FILE_META_VOLUME.FILE_VOLUME_ID))
+                .where(FILE_META_VOLUME.META_ID.eq(metaId))
                 .fetchOptional()
                 .map(r -> new DataVolumeImpl(r.value1(), r.value2()))
                 .orElse(null));
@@ -364,7 +362,7 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 //    }
 //
 //    @Override
-    public DataVolume createStreamVolume(final long dataId, final FileSystemVolume volume) {
+    public DataVolume createStreamVolume(final long dataId, final FSVolume volume) {
 //        final List<StrmVolRecord> batch = new ArrayList<>();
 //        for (final VolumeEntity volume : volumes) {
 //            batch.add(new StrmVolRecord(null, null, dataId, (int) volume.getId()));
@@ -372,7 +370,7 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 
 
         return JooqUtil.contextResult(connectionProvider, context -> {
-                context.insertInto(DATA_VOLUME, DATA_VOLUME.DATA_ID, DATA_VOLUME.VOLUME_ID)
+            context.insertInto(FILE_META_VOLUME, FILE_META_VOLUME.META_ID, FILE_META_VOLUME.FILE_VOLUME_ID)
                         .values(dataId, volume.getId())
                         .execute();
                 return new DataVolumeImpl(dataId, volume.getPath());
@@ -401,7 +399,7 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 //            }
 //        }
 //
-//        return findStreamVolume(dataId);
+//        return findDataVolume(dataId);
     }
 
 //    @Override
@@ -410,74 +408,74 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 ////        CriteriaLoggingUtil.appendCriteriaSet(items, "streamStatusSet", criteria.getStreamStatusSet());
 //        CriteriaLoggingUtil.appendCriteriaSet(items, "nodeIdSet", criteria.getNodeIdSet());
 //        CriteriaLoggingUtil.appendCriteriaSet(items, "volumeIdSet", criteria.getVolumeIdSet());
-//        CriteriaLoggingUtil.appendCriteriaSet(items, "streamIdSet", criteria.getStreamIdSet());
+//        CriteriaLoggingUtil.appendCriteriaSet(items, "streamIdSet", criteria.getMetaIdSet());
 //        CriteriaLoggingUtil.appendPageRequest(items, criteria.getPageRequest());
 //    }
-
-    /**
-     * Given a set of volumes pick one that's nearest to us and readable,
-     * otherwise a random one.
-     */
-    public DataVolume pickBestVolume(final Set<DataVolume> streamVolumes, final long nodeId, final long rackId) {
-//        // Try and locate a volume on the same node that is private
-//        for (final DataVolume streamVolume : streamVolumes) {
-//            if (streamVolume.getVolumeType().equals(VolumeType.PRIVATE)
-//                    && streamVolume.getNodeId() == nodeId) {
-//                return streamVolume;
-//            }
-//        }
 //
-//        // Otherwise have a go on one in the same rack that is public
-//        for (final DataVolume streamVolume : streamVolumes) {
-//            if (streamVolume.getVolumeType().equals(VolumeType.PUBLIC)
-//                    && streamVolume.getRackId() == rackId) {
-//                return streamVolume;
-//            }
-//        }
+//    /**
+//     * Given a set of volumes pick one that's nearest to us and readable,
+//     * otherwise a random one.
+//     */
+//    public DataVolume pickBestVolume(final Set<DataVolume> streamVolumes, final long nodeId, final long rackId) {
+////        // Try and locate a volume on the same node that is private
+////        for (final DataVolume streamVolume : streamVolumes) {
+////            if (streamVolume.getVolumeType().equals(VolumeType.PRIVATE)
+////                    && streamVolume.getNodeId() == nodeId) {
+////                return streamVolume;
+////            }
+////        }
+////
+////        // Otherwise have a go on one in the same rack that is public
+////        for (final DataVolume streamVolume : streamVolumes) {
+////            if (streamVolume.getVolumeType().equals(VolumeType.PUBLIC)
+////                    && streamVolume.getRackId() == rackId) {
+////                return streamVolume;
+////            }
+////        }
+////
+////        final Set<DataVolume> publicVolumes = streamVolumes
+////                .stream()
+////                .filter(streamVolume -> streamVolume.getVolumeType().equals(VolumeType.PUBLIC))
+////                .collect(Collectors.toSet());
+////
+////        if (publicVolumes.size() == 0) {
+////            return null;
+////        }
+////
+////        // Otherwise pick a random one
+////        final Iterator<DataVolume> iter = publicVolumes.iterator();
+////        final int pickIndex = pickIndex(publicVolumes.size());
+////        for (int i = 0; i < pickIndex; i++) {
+////            iter.next();
+////        }
+////
+////        return iter.next();
+////
+////
+////
+////
 //
-//        final Set<DataVolume> publicVolumes = streamVolumes
-//                .stream()
-//                .filter(streamVolume -> streamVolume.getVolumeType().equals(VolumeType.PUBLIC))
-//                .collect(Collectors.toSet());
 //
-//        if (publicVolumes.size() == 0) {
+//        if (streamVolumes.size() == 0) {
 //            return null;
 //        }
 //
 //        // Otherwise pick a random one
-//        final Iterator<DataVolume> iter = publicVolumes.iterator();
-//        final int pickIndex = pickIndex(publicVolumes.size());
+//        final Iterator<DataVolume> iter = streamVolumes.iterator();
+//        final int pickIndex = pickIndex(streamVolumes.size());
 //        for (int i = 0; i < pickIndex; i++) {
 //            iter.next();
 //        }
 //
 //        return iter.next();
+//    }
 //
-//
-//
-//
-
-
-        if (streamVolumes.size() == 0) {
-            return null;
-        }
-
-        // Otherwise pick a random one
-        final Iterator<DataVolume> iter = streamVolumes.iterator();
-        final int pickIndex = pickIndex(streamVolumes.size());
-        for (int i = 0; i < pickIndex; i++) {
-            iter.next();
-        }
-
-        return iter.next();
-    }
-
-    /**
-     * Pick a number and try and round robin on the number that is chosen.
-     */
-    private int pickIndex(final int size) {
-        return sequence.next(size);
-    }
+//    /**
+//     * Pick a number and try and round robin on the number that is chosen.
+//     */
+//    private int pickIndex(final int size) {
+//        return sequence.next(size);
+//    }
 
     class DataVolumeImpl implements DataVolume {
         private final long streamId;

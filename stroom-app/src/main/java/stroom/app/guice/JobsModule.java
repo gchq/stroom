@@ -9,6 +9,7 @@ import stroom.config.global.impl.db.GlobalConfigJobsModule;
 import stroom.dashboard.DashboardJobsModule;
 import stroom.data.retention.impl.DataRetentionJobsModule;
 import stroom.data.store.impl.DataRetentionJobModule;
+import stroom.data.store.impl.fs.FileVolumeJobsModule;
 import stroom.meta.impl.db.MetaDbJobsModule;
 import stroom.data.store.impl.fs.FileSystemDataStoreJobsModule;
 import stroom.index.IndexJobsModule;
@@ -21,6 +22,7 @@ import stroom.search.SearchJobsModule;
 import stroom.search.shard.ShardJobsModule;
 import stroom.statistics.sql.SQLStatisticsJobsModule;
 import stroom.statistics.sql.search.SQLStatisticSearchJobsModule;
+import stroom.volume.VolumeJobsModule;
 
 public class JobsModule extends AbstractModule {
     @Override
@@ -32,6 +34,8 @@ public class JobsModule extends AbstractModule {
         install(new DataRetentionJobsModule());
         install(new DataRetentionJobModule());
         install(new StroomCoreServerJobsModule());
+        install(new VolumeJobsModule());
+        install(new FileVolumeJobsModule());
         install(new GlobalConfigJobsModule());
         install(new RefDataStoreJobsModule());
         install(new PipelineJobsModule());
