@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.statistics.impl.common;
+package stroom.statistics.impl.sql;
 
 
 import org.junit.jupiter.api.Test;

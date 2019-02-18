@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.statistics.api.InternalStatisticKey;
-import stroom.statistics.impl.internal.InternalStatisticsConfig;
+import stroom.statistics.impl.InternalStatisticsConfig;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.test.AbstractCoreIntegrationTest;

@@ -1,4 +1,4 @@
-package stroom.statistics.impl.internal;
+package stroom.statistics.impl;
 
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;

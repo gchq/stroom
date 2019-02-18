@@ -1,7 +1,6 @@
 package stroom.statistics.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.statistics.impl.internal.InternalStatisticsConfig;
 import stroom.statistics.impl.sql.SQLStatisticsConfig;
 import stroom.statistics.impl.hbase.internal.HBaseStatisticsConfig;
 import stroom.util.shared.IsConfig;

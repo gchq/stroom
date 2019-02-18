@@ -1,4 +1,4 @@
-package stroom.statistics.impl.internal;
+package stroom.statistics.impl;
 
 import stroom.docref.DocRef;
 import stroom.statistics.api.InternalStatisticEvent;

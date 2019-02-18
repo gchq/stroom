@@ -29,7 +29,7 @@ import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.SecurityConfig;
 import stroom.servicediscovery.ServiceDiscoveryConfig;
 import stroom.statistics.impl.StatisticsConfig;
-import stroom.statistics.impl.internal.InternalStatisticsConfig;
+import stroom.statistics.impl.InternalStatisticsConfig;
 import stroom.statistics.impl.sql.SQLStatisticsConfig;
 import stroom.statistics.impl.hbase.internal.HBaseStatisticsConfig;
 import stroom.streamtask.ProcessConfig;

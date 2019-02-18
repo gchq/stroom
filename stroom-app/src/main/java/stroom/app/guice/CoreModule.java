@@ -1,7 +1,7 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
-import stroom.statistics.impl.internal.InternalStatisticsModule;
+import stroom.statistics.impl.InternalStatisticsModule;
 import stroom.statistics.impl.sql.SQLStatisticsModule;
 
 public class CoreModule extends AbstractModule {
@@ -68,7 +68,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.servicediscovery.ServiceDiscoveryModule());
         install(new stroom.servlet.ServletModule());
         install(new SQLStatisticsModule());
-        install(new stroom.statistics.impl.internal.InternalStatisticsModule());
+        install(new InternalStatisticsModule());
         install(new stroom.statistics.impl.hbase.entity.StroomStatsStoreModule());
         install(new stroom.statistics.impl.hbase.internal.InternalModule());
         install(new stroom.statistics.impl.hbase.pipeline.StatisticsElementModule());

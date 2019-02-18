@@ -14,24 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.statistics.impl.internal;
+package stroom.statistics.impl;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import com.google.inject.AbstractModule;
+import stroom.statistics.api.InternalStatisticsReceiver;
 
-import javax.inject.Inject;
-
-public class InternalStatisticsLifecycleModule extends AbstractLifecycleModule {
+public class InternalStatisticsModule extends AbstractModule {
     @Override
     protected void configure() {
-        super.configure();
-        bindStartup().priority(100).to(InternalStatisticsReceiverInit.class);
-    }
-
-    private static class InternalStatisticsReceiverInit extends RunnableWrapper {
-        @Inject
-        InternalStatisticsReceiverInit(final InternalStatisticsReceiverImpl internalStatisticsReceiver) {
-            super(internalStatisticsReceiver::initStatisticEventStore);
-        }
+        bind(InternalStatisticsReceiver.class).to(InternalStatisticsReceiverImpl.class);
     }
 }

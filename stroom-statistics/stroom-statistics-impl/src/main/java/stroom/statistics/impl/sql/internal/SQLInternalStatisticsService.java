@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.statistics.api.InternalStatisticEvent;
-import stroom.statistics.impl.internal.InternalStatisticsService;
+import stroom.statistics.impl.InternalStatisticsService;
 import stroom.statistics.impl.sql.SQLStatisticsConfig;
 import stroom.statistics.impl.sql.StatisticEvent;
 import stroom.statistics.impl.sql.StatisticTag;

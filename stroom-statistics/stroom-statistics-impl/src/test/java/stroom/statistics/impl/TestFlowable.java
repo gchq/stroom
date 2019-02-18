@@ -1,4 +1,4 @@
-package stroom.statistics.impl.common.search;
+package stroom.statistics.impl;
 
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
