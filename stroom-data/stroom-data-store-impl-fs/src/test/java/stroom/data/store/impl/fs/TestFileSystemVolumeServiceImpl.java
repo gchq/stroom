@@ -28,14 +28,13 @@ import stroom.data.store.impl.fs.shared.FSVolumeState;
 import stroom.data.store.impl.fs.shared.FindFSVolumeCriteria;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.impl.SecurityImpl;
+import stroom.security.impl.mock.AllowAllMockSecurity;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -62,8 +61,8 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
     private final FSVolume public2b = FSVolume.create(
             FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2B")),
             FSVolumeState.create(0, 1000));
-    private final Security security = new SecurityImpl(new MockSecurityContext());
-    private FileSystemVolumeConfig volumeConfig = new FileSystemVolumeConfig();
+    //    private final Security security = new AllowAllMockSecurity();
+//    private FileSystemVolumeConfig volumeConfig = new FileSystemVolumeConfig();
     private FileSystemVolumeService volumeService = null;
 
     @BeforeEach
@@ -77,14 +76,14 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 //        volumeList.add(public2b);
 
         final SecurityContext securityContext = new MockSecurityContext();
-        final Security security = new SecurityImpl(securityContext);
+        final Security security = new AllowAllMockSecurity();
 
         final ConnectionProvider connectionProvider = new FileSystemDataStoreModule().getConnectionProvider(DataStoreServiceConfig::new);
         volumeService = new FileSystemVolumeServiceImpl(connectionProvider,
                 security,
                 securityContext,
                 new FileSystemVolumeConfig(),
-                Optional.empty(),
+                null,
                 new FileSystemVolumeStateDao(connectionProvider),
                 null,
                 null);

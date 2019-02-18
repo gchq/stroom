@@ -33,5 +33,6 @@ public class ToolModule extends AbstractModule {
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.node.impl.NodeServiceModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
+        install(new MockIn)
     }
 }

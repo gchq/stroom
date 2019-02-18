@@ -88,7 +88,7 @@ public class FileSystemVolumeServiceImpl implements FileSystemVolumeService, Ent
     private final Security security;
     private final SecurityContext securityContext;
     private final FileSystemVolumeConfig volumeConfig;
-    private final Optional<InternalStatisticsReceiver> optionalInternalStatisticsReceiver;
+    private final InternalStatisticsReceiver statisticsReceiver;
     private final FileSystemVolumeStateDao fileSystemVolumeStateDao;
     private final ClusterLockService clusterLockService;
     private final Provider<EntityEventBus> entityEventBusProvider;
@@ -103,7 +103,7 @@ public class FileSystemVolumeServiceImpl implements FileSystemVolumeService, Ent
                                 final Security security,
                                 final SecurityContext securityContext,
                                 final FileSystemVolumeConfig volumeConfig,
-                                final Optional<InternalStatisticsReceiver> optionalInternalStatisticsReceiver,
+                                final InternalStatisticsReceiver statisticsReceiver,
                                 final FileSystemVolumeStateDao fileSystemVolumeStateDao,
                                 final ClusterLockService clusterLockService,
                                 final Provider<EntityEventBus> entityEventBusProvider) {
@@ -111,7 +111,7 @@ public class FileSystemVolumeServiceImpl implements FileSystemVolumeService, Ent
         this.security = security;
         this.securityContext = securityContext;
         this.volumeConfig = volumeConfig;
-        this.optionalInternalStatisticsReceiver = optionalInternalStatisticsReceiver;
+        this.statisticsReceiver = statisticsReceiver;
         this.fileSystemVolumeStateDao = fileSystemVolumeStateDao;
         this.clusterLockService = clusterLockService;
         this.entityEventBusProvider = entityEventBusProvider;
@@ -438,8 +438,7 @@ public class FileSystemVolumeServiceImpl implements FileSystemVolumeService, Ent
     }
 
     private void recordStats(final FSVolume volume) {
-        if (optionalInternalStatisticsReceiver != null) {
-            optionalInternalStatisticsReceiver.ifPresent(receiver -> {
+        if (statisticsReceiver != null) {
                 try {
                     final FSVolumeState volumeState = volume.getVolumeState();
 
@@ -449,12 +448,11 @@ public class FileSystemVolumeServiceImpl implements FileSystemVolumeService, Ent
                     addStatisticEvent(events, now, volume, "Used", volumeState.getBytesUsed());
                     addStatisticEvent(events, now, volume, "Free", volumeState.getBytesFree());
                     addStatisticEvent(events, now, volume, "Total", volumeState.getBytesTotal());
-                    receiver.putEvents(events);
+                    statisticsReceiver.putEvents(events);
                 } catch (final RuntimeException e) {
                     LOGGER.warn(e.getMessage());
                     LOGGER.debug(e.getMessage(), e);
                 }
-            });
         }
     }
 

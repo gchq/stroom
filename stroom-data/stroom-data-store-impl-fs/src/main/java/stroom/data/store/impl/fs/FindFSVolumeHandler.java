@@ -11,12 +11,15 @@ import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;
 
-public class FindFSVolumeHandler extends AbstractTaskHandler<FindFSVolumeAction, ResultList<FSVolume>> {
+import javax.inject.Inject;
+
+class FindFSVolumeHandler extends AbstractTaskHandler<FindFSVolumeAction, ResultList<FSVolume>> {
     private final FileSystemVolumeService volumeService;
     private final DocumentEventLog documentEventLog;
     private final Security security;
 
-    public FindFSVolumeHandler(final FileSystemVolumeService volumeService,
+    @Inject
+    FindFSVolumeHandler(final FileSystemVolumeService volumeService,
                                final DocumentEventLog documentEventLog,
                                final Security security) {
         this.volumeService = volumeService;

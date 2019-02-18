@@ -28,7 +28,7 @@ public final class StroomStatisticsServerTestFileUtil {
     private static final Path TEST_RESOURCES_DIR;
 //    private static final Path TEST_OUTPUT_DIR;
 
-    private static final String PROJECT_NAME = "stroom-statistics-server";
+    private static final String PROJECT_NAME = "stroom-statistics-impl";
 
     static {
         Path dir = Paths.get("../" + PROJECT_NAME + "/src/test/resources");

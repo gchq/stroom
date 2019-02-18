@@ -6,12 +6,15 @@ import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 
-public class DeleteFSVolumeHandler extends AbstractTaskHandler<DeleteFSVolumeAction, VoidResult> {
+import javax.inject.Inject;
+
+class DeleteFSVolumeHandler extends AbstractTaskHandler<DeleteFSVolumeAction, VoidResult> {
     private final FileSystemVolumeService volumeService;
     private final DocumentEventLog documentEventLog;
     private final Security security;
 
-    public DeleteFSVolumeHandler(final FileSystemVolumeService volumeService,
+    @Inject
+    DeleteFSVolumeHandler(final FileSystemVolumeService volumeService,
                                  final DocumentEventLog documentEventLog,
                                  final Security security) {
         this.volumeService = volumeService;

@@ -10,21 +10,14 @@ import stroom.entity.shared.EntityEventBus;
 import stroom.explorer.api.ExplorerService;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.impl.DocumentPermissionService;
-import stroom.security.impl.DocumentPermissionServiceImpl;
-import stroom.security.impl.SecurityImpl;
-import stroom.security.impl.UserAppPermissionService;
-import stroom.security.impl.UserAppPermissionServiceImpl;
-import stroom.security.impl.UserService;
-import stroom.security.impl.UserServiceImpl;
 import stroom.security.impl.db.SecurityDbConfig;
 import stroom.security.impl.db.SecurityDbModule;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class TestModule extends AbstractModule {
-    static final String DATABASE_NAME = "stroom";
+public class TestModule extends AbstractModule {
+    public static final String DATABASE_NAME = "stroom";
 
     private final MySQLContainer dbContainer;
 

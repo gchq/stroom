@@ -6,12 +6,15 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 
-public class UpdateFSVolumeHandler extends AbstractTaskHandler<UpdateFSVolumeAction, FSVolume> {
+import javax.inject.Inject;
+
+class UpdateFSVolumeHandler extends AbstractTaskHandler<UpdateFSVolumeAction, FSVolume> {
     private final FileSystemVolumeService volumeService;
     private final DocumentEventLog documentEventLog;
     private final Security security;
 
-    public UpdateFSVolumeHandler(final FileSystemVolumeService volumeService,
+    @Inject
+    UpdateFSVolumeHandler(final FileSystemVolumeService volumeService,
                                  final DocumentEventLog documentEventLog,
                                  final Security security) {
         this.volumeService = volumeService;
