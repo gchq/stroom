@@ -97,7 +97,7 @@ public class SQLStatisticEventStore implements Statistics {
         initPool(getObjectPoolConfig());
     }
 
-    public SQLStatisticEventStore(final int poolSize,
+    SQLStatisticEventStore(final int poolSize,
                                   final long aggregatorSizeThreshold,
                                   final long poolAgeMsThreshold,
                                   final StatisticStoreValidator statisticsDataSourceValidator,

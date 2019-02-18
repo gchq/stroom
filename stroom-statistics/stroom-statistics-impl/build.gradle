@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.statistics.server'
+ext.moduleName = 'stroom.statistics.impl'
 
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')

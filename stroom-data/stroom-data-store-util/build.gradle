@@ -16,7 +16,7 @@ dependencies {
     implementation project(':stroom-event-logging:stroom-event-logging-impl')
     implementation project(':stroom-node:stroom-node-impl')
     implementation project(':stroom-security:stroom-security-impl-mock')
-    implementation project(':stroom-statistics:stroom-statistics-impl')
+    implementation project(':stroom-statistics:stroom-statistics-impl-mock')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 

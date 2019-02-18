@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.statistics.internal;
+package stroom.statistics.impl.mock;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
+import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 
-public class MockInternalStatisticsModule extends AbstractModule {
+import java.util.List;
+
+public class MockInternalStatisticsReceiver implements InternalStatisticsReceiver {
     @Override
-    protected void configure() {
-        bind(InternalStatisticsReceiver.class).to(MockInternalStatisticsReceiver.class);
+    public void putEvent(final InternalStatisticEvent internalStatisticEvent) {
+        // Do nothing.
+    }
+
+    @Override
+    public void putEvents(final List<InternalStatisticEvent> statisticEvents) {
+        // Do nothing.
     }
 }
