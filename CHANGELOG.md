@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.28] - 2019-02-20
+
+* Add guard against race condition
+
 * Add migration script to remove property `stroom.node.status.heapHistogram.jMapExecutable`.
 
 ## [v6.0-beta.27] - 2019-02-07
@@ -1439,7 +1443,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.27...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.28...6.0
+[v6.0-beta.28]: https://github.com/gchq/stroom/compare/v6.0-beta.27...v6.0-beta.28
 [v6.0-beta.27]: https://github.com/gchq/stroom/compare/v6.0-beta.26...v6.0-beta.27
 [v6.0-beta.26]: https://github.com/gchq/stroom/compare/v6.0-beta.25...v6.0-beta.26
 [v6.0-beta.25]: https://github.com/gchq/stroom/compare/v6.0-beta.24...v6.0-beta.25
