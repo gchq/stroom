@@ -1,12 +1,17 @@
 package stroom.security.server;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.concurrent.TimeUnit;
 
 public final class AuthenticationStateSessionUtil {
-    private static final String SESSION_AUTHENTICATION_STATE_MAP = "SESSION_AUTHENTICATION_STATE_MAP";
+
+    private static final String AUTHENTICATION_STATE_SESSION_ATTRIBUTE = "AUTHENTICATION_STATE_SESSION_ATTRIBUTE";
 
     private AuthenticationStateSessionUtil() {
     }
@@ -25,24 +30,28 @@ public final class AuthenticationStateSessionUtil {
         final String nonce = createRandomString(20);
         final AuthenticationState state = new AuthenticationState(stateId, url, nonce);
 
-        // Get the current session if there is one. Create a new session if needed.
-        final HttpSession session = request.getSession(true);
-        session.setAttribute(SESSION_AUTHENTICATION_STATE_MAP, state);
-
+        Cache<String, AuthenticationState> cache = getOrCreateCache(request);
+        cache.put(stateId, state);
         return state;
     }
 
     @SuppressWarnings("unchecked")
-    public static AuthenticationState pop(final HttpServletRequest request) {
-        AuthenticationState state = null;
+    public static AuthenticationState pop(final HttpServletRequest request, final String stateId) {
+        Cache<String, AuthenticationState> cache = getOrCreateCache(request);
+        return cache.getIfPresent(stateId);
+    }
 
-        // Get the current session if there is one without creating a new one.
-        final HttpSession session = request.getSession(false);
-        if (session != null) {
-            state = (AuthenticationState) session.getAttribute(SESSION_AUTHENTICATION_STATE_MAP);
+    private static Cache<String, AuthenticationState> getOrCreateCache(HttpServletRequest request){
+        final HttpSession session = request.getSession(true);
+        Cache cache = (Cache) session.getAttribute(AUTHENTICATION_STATE_SESSION_ATTRIBUTE);
+        if (cache == null) {
+            cache = CacheBuilder.newBuilder()
+                    .maximumSize(100)
+                    .expireAfterWrite(1, TimeUnit.MINUTES)
+                    .build();
+            session.setAttribute(AUTHENTICATION_STATE_SESSION_ATTRIBUTE, cache);
         }
-
-        return state;
+        return cache;
     }
 
     private static String createRandomString(final int length) {

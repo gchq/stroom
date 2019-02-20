@@ -208,7 +208,7 @@ public class SecurityFilter implements Filter {
             LOGGER.debug("We have the following state: {{}}", stateId);
 
             // Check the state is one we requested.
-            final AuthenticationState state = AuthenticationStateSessionUtil.pop(request);
+            final AuthenticationState state = AuthenticationStateSessionUtil.pop(request, stateId);
             if (state == null) {
                 LOGGER.warn("Unexpected state: " + stateId);
 
