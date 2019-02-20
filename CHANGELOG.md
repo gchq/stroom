@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1100** : Fix incorrect sort direction being sent to visualisations.
+
 * Add migration script to remove property `stroom.node.status.heapHistogram.jMapExecutable`.
 
 ## [v6.0-beta.27] - 2019-02-07
