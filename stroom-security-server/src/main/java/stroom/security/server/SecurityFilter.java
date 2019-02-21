@@ -124,6 +124,7 @@ public class SecurityFilter implements Filter {
             final boolean isApiRequest = servletPath.contains("/api");
             final boolean isDatafeedRequest = servletPath.contains("/datafeed");
             final boolean isClusterCallRequest = servletPath.contains("clustercall.rpc");
+            final boolean isDispatchRequest = servletPath.contains("dispatch.rpc");
 
             if (isApiRequest) {
                 if (!config.isAuthenticationRequired()) {
@@ -152,7 +153,13 @@ public class SecurityFilter implements Filter {
                     final boolean loggedIn = loginUI(request, response);
 
                     // If we're not logged in we need to start an AuthenticationRequest flow.
-                    if (!loggedIn) {
+                    // If this is a dispatch request then we won't try and log in. This avoids a race-condition:
+                    //   1. User logs out and a new authentication flow is started
+                    //   2. Before the browser is redirected GWT makes a dispatch.rpc request
+                    //   3. This request, not being logged in, starts a new authentication flow
+                    //   4. This new authentication flow partially over-writes the relying party data in auth.
+                    // This would manifest as a bad redirect_url, one which contains 'dispatch.rpc'.
+                    if (!loggedIn && !isDispatchRequest) {
                         // We were unable to login so we're going to redirect with an AuthenticationRequest.
                         redirectToAuthService(request, response);
                     }

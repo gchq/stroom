@@ -8,17 +8,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1100** : Fix incorrect sort direction being sent to visualisations.
 
+
+## [v6.0-beta.28] - 2019-02-20
+
+* Add guard against race condition
+
 * Add migration script to remove property `stroom.node.status.heapHistogram.jMapExecutable`.
+
 
 ## [v6.0-beta.27] - 2019-02-07
 
 * Uplift base docker image to openjdk:8u191-jdk-alpine3.9, reverting back to JDK for access to diagnostic tools.
+
 
 ## [v6.0-beta.26] - 2019-02-05
 
 * Issue **#1084** : Change heap histogram statistics to java MBean approach rather than jmap binary. Remove stroom.node.status.heapHistogram.jMapExecutable property.
 
 * Improve resource for setting user's status
+
 
 ## [v6.0-beta.25] - 2019-01-30
 
@@ -32,13 +40,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Add transform_user_extract.py, for pre-6.0 to 6.0 user migration
 
+
 ## [v6.0-beta.24] - 2019-01-03
 
 * Issue **#1059** : Fix guice errors on stroom-proxy startup.
 
+
 ## [v6.0-beta.23] - 2019-01-03
 
 * Issue **#1010** : Improve distribution start/stop/etc scripts by adding monochrome switch and background log tailing.
+
 
 ## [v6.0-beta.22] - 2019-01-02
 
@@ -68,11 +79,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1025** : Updated ACE editor to v1.4.2.
 
+
 ## [v6.0-beta.21] - 2018-12-13
 
 * Issue **#1022** : Added `Contains` condition to all search expression fields so that regex terms can be used.
 
 * Issue **#1024** : Superseded output helper no longer expects initialisation in all cases.
+
 
 ## [v6.0-beta.20] - 2018-12-13
 
@@ -83,6 +96,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#986** : Fix direct dashboard links.
 
 * Issue **#1006** : Added Exception Mapper for PermissionExceptions to return HTTP FORBIDDEN.
+
 
 ## [v6.0-beta.19] - 2018-12-11
 
@@ -106,6 +120,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#996** : Updated functions in dashboard function picker.
 
+
 ## [v6.0-beta.18] - 2018-12-07
 
 * Issue **#981** : Fixed dashboard deletion
@@ -128,15 +143,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#973** : Export servlet changed to a Resource API, added permission check, improved error responses.
 
+
 ## [v6.0-beta.17] - 2018-12-04
 
 * Issue **#969** : The code now suppresses errors for index shards being locked for writing as it is expected. We now lock shards using maps rather than the file system as it is more reliable between restarts.
 
 * Issue **#941** : Internal Meta Stats are now being written
 
+
 ## [v6.0-beta.16] - 2018-12-04
 
 * Issue **#970** : Add stream type of `Records` for translated stroom app events.
+
 
 ## [v6.0-beta.15] - 2018-12-03
 
@@ -155,6 +173,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#324** : Changed XML serialisation so that forbidden XML characters U+FFFE and U+FFFF are not written. Note that these characters are not even allowed as character references so they are ignored entirely.
 
 * Issue **#945** : More changes to fix some visualisations only showing 10 data points.
+
 
 ## [v6.0-beta.14] - 2018-11-28
 
@@ -210,6 +229,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#920** : Fix error handling for sql stats queries
 
+
 ## [v6.0-beta.13] - 2018-11-19
 
 * Remove log sending cron process from docker images (now handled by stroom-log-sender).
@@ -229,6 +249,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#922** : The explorer now changes the selection on a right click if the item clicked is not already selected (could be part of a multi select).
 
 * Issue **#903** : Feed names can now contain wildcard characters when filtering in the data browser.
+
 
 ## [v6.0-beta.12] - 2018-11-14
 
@@ -260,15 +281,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Fix invalid requestLog logFormat in proxy configuration
 
+
 ## [v6.0-beta.11] - 2018-11-07
 
 * Stop service discovery health checks being registered if stroom.serviceDiscovery.enabled=false
+
 
 ## [v6.0-beta.10] - 2018-11-06
 
 * Add fixed version of send_to_stroom.sh to release distribution
 
 * Uplift docker base image for stroom & proxy to openjdk:8u181-jdk-alpine3.8
+
 
 ## [v6.0-beta.9] - 2018-11-02
 
@@ -322,6 +346,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#884** : Added extra fonts to stroom docker image to fix bug downloading xls search results.
 
+
 ## [v6.0-beta.8] - 2018-10-17
 
 * Issue **#879** : Fixed bug where reprocess and delete did not work if no stream status was set in the filter.
@@ -352,13 +377,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Improved Stroom instance management scripts
 
+
 ## [v6.0-beta.7] - 2018-10-12
 
 * Add contentPack import
 
+
 ## [v6.0-beta.6] - 2018-10-10
 
 * Fix typo in Dockerfile
+
 
 ## [v6.0-beta.5] - 2018-10-10
 
@@ -371,6 +399,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#853** : The activity chooser will no longer display on startup if activity tracking is not enabled.
 
 * Issue **#855** : Fixed stepping data that contains a BOM.
+
 
 ## [v6.0-beta.4] - 2018-10-04
 
@@ -430,6 +459,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Fix background colour to white on activity pane.
 
+
 ## [v6.0-beta.3] - 2018-09-18
 
 * Changed `splitWhenBiggerThan` property to `rollSize` and added the property to the rolling appenders for consistency.
@@ -476,9 +506,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#805** : Fix for dashboard date time formatting to use local time zone.
 
+
 ## [v6.0-beta.2] - 2018-07-09
 
 * Issue **#803** : Fix for group key conversion to an appropriate value for visualisations.
+
 
 ## [v6.0-beta.1] - 2018-07-04
 
@@ -488,6 +520,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#798** : Add DB migration script 32 to replace references to the `NStatFilter` type in the PIPE table with `StatisticsFilter`.
 
+
 ## [v6.0-alpha.27]
 
 * Fix data receipt policy defect
@@ -495,6 +528,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#791** : Search completion signal is now only sent to the UI once all pending search result merges are completed.
 
 * Issue **#795** : Import and export now works with appropriate application permissions. Read permission is required to export items and Create/Update permissions are required to import items depending on whether the update will create a new item or update an existing one.
+
 
 ## [v6.0-alpha.26]
 
@@ -507,6 +541,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#778** : Fix for text selection on tooltips etc in the latest version of Chrome.
 
 * Issue **#776** : Removal of index shard searcher caching to hopefully fix Lucene directory closing issue.
+
 
 ## [v6.0-alpha.25]
 
@@ -522,9 +557,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#761** : New fix for premature truncation of SQL stats queries due to thread interruption.
 
+
 ## [v6.0-alpha.24]
 
 * Issue **#748** : Fix build issue resulting from a change to SafeXMLFilter.
+
 
 ## [v6.0-alpha.23]
 
@@ -567,21 +604,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#751** : Fix inability to query on a dashboard with only use+read rights.
 
+
 ## [v6.0-alpha.22]
 
 * Issue **#719** : Fix creation of headless Jar to ensure logback is now included.
 
 * Issue **#735** : Change the format-date xslt function to parse dates in a case insensitive way.
 
+
 ## [v6.0-alpha.21]
 
 * Issue **#719** : Fix creation of headless Jar. Exclude gwt-unitCache folder from build JARs.
+
 
 ## [v6.0-alpha.20]
 
 * Issue **#720** : Fix for Hessian serialisation of table coprocessor settings.
 
 * Issue **#405** : Fixed quick filter on permissions dialog, for users and for groups. It will now match anywhere in the user or group name, not just at the start.
+
 
 ## [v6.0-alpha.19]
 
@@ -607,6 +648,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#634** : Remove excessive thread sleeping in index shard searching. Sleeps were causing a significant percentage of inactivity and increasing memory use as data backed up. Add more logging and logging of durations of chunks of code. Add an integration test for testing index searching for large data volumes.
 
+
 ## [v6.0-alpha.18]
 
 * Issue **#698** : Migration of Processing Filters now protects against folders that have since been deleted
@@ -623,15 +665,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#681** : Added dry run to check processor filters will convert to find stream criteria. Throws error to UI if fails.
 
+
 ## [v6.0-alpha.17]
 
 * Issue **#676** : Fixed use of custom stream type values in expression based processing filters.
+
 
 ## [v6.0-alpha.16]
 
 * Issue **#673** : Fixed issue with Stream processing filters that specify Create Time
 
 * Issue **#675** : Fixed issue with datafeed requests authenticating incorrectly
+
 
 ## [v6.0-alpha.15]
 
@@ -642,17 +687,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#669** : Elastic Index Filter now uses stroomServiceUser to retrieve the index config from the Query Elastic service.
 
+
 ## [v6.0-alpha.14]
 
 * Minor fix to migrations
+
 
 ## [v6.0-alpha.13]
 
 * Add logging to migrations
 
+
 ## [v6.0-alpha.12]
 
 * Add logging to migrations
+
 
 ## [v6.0-alpha.11]
 
@@ -672,6 +721,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#376** : Welcome tab details fixed since move to gradle
 
+
 ## [v6.0-alpha.10]
 
 * Issue **#523** : Changed permission behaviours for copy and move to support `None`, `Source`, `Destination` and `Combined` behaviours. Creating new items now allows for `None` and `Destination` permission behaviours. Also imported items now receive permissions from the destination folder. Event logging now indicates the permission behaviour used during copy, move and create operations.
@@ -687,6 +737,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#568** : Fixed filtering streams by pipeline in the pipeline screen.
 
 * Issue **#565** : Fixed authorisation issue on dashboards.
+
 
 ## [v6.0-alpha.9]
 
@@ -718,6 +769,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#599** : DocumentServiceWriteAction was being used in the wrong places where EntityServiceSaveAction should have been used instead to save entities that aren't document entities.
 
+
 ## [v6.0-alpha.8]
 
 * Issue **#593** : Fixed node save RPC call.
@@ -725,6 +777,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#591** : Made the query info popup more configurable with a title, validation regex etc. The popup will now only be displayed when enabled and when a manual user action takes place, e.g. clicking a search button or running a parameterised execution with one or more queries.
 
 * Added 'prompt' option to force the identity provider to ask for a login.
+
 
 ## [v6.0-alpha.7]
 
@@ -785,6 +838,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#590** : Improved data browser performance by using a local cache to remember feeds, stream types, processors, pipelines etc while decorating streams.
 
 * Issue **#150** : Added a property to optionally require specification of search purpose.
+
 
 ## [v6.0-alpha.4]
 
@@ -1441,7 +1495,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.27...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.28...6.0
+[v6.0-beta.28]: https://github.com/gchq/stroom/compare/v6.0-beta.27...v6.0-beta.28
 [v6.0-beta.27]: https://github.com/gchq/stroom/compare/v6.0-beta.26...v6.0-beta.27
 [v6.0-beta.26]: https://github.com/gchq/stroom/compare/v6.0-beta.25...v6.0-beta.26
 [v6.0-beta.25]: https://github.com/gchq/stroom/compare/v6.0-beta.24...v6.0-beta.25
