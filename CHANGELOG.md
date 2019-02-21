@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift the visualisations content pack to v3.2.1
+
 * Issue **#1100** : Fix incorrect sort direction being sent to visualisations.
 
 
