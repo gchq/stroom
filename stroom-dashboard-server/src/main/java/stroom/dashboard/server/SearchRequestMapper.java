@@ -542,18 +542,20 @@ public class SearchRequestMapper {
 
         Boolean enabled = settingResolver.resolveBoolean(sort.getEnabled());
         if (enabled != null && enabled) {
-            SortDirection direction = SortDirection.ASCENDING;
-
             String dir = settingResolver.resolveString(sort.getDirection());
+
             if (dir != null) {
-                if (dir.equalsIgnoreCase(SortDirection.DESCENDING.getDisplayValue())) {
+                final SortDirection direction;
+                if (dir.equalsIgnoreCase(SortDirection.ASCENDING.getDisplayValue())) {
+                     direction = SortDirection.ASCENDING;
+                } else if (dir.equalsIgnoreCase(SortDirection.DESCENDING.getDisplayValue())) {
                     direction = SortDirection.DESCENDING;
+                } else {
+                    return null;
                 }
+                return new stroom.query.api.v2.Sort(settingResolver.resolveInteger(sort.getPriority()), direction);
             }
-
-            return new stroom.query.api.v2.Sort(settingResolver.resolveInteger(sort.getPriority()), direction);
         }
-
         return null;
     }
 
