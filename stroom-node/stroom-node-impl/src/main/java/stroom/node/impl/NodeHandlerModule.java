@@ -19,17 +19,17 @@ package stroom.node.impl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.EntityEvent;
-import stroom.util.shared.Clearable;
 import stroom.node.shared.ClusterNodeInfoAction;
 import stroom.node.shared.FetchNodeInfoAction;
 import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 public class NodeHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(NodeInfoImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(NodeInfoImpl.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(ClusterNodeInfoAction.class, ClusterNodeInfoHandler.class)

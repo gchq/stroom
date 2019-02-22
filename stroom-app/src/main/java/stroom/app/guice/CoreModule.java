@@ -80,6 +80,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.meta.impl.db.MetaDbModule());
         install(new stroom.data.store.impl.DataStoreHandlerModule());
         install(new stroom.data.store.impl.fs.FileSystemDataStoreModule());
+        install(new stroom.data.store.impl.fs.FileSystemDataStoreTaskHandlerModule());
         install(new stroom.streamtask.StreamTaskModule());
         install(new stroom.task.impl.TaskModule());
         install(new stroom.cluster.task.impl.ClusterTaskModule());

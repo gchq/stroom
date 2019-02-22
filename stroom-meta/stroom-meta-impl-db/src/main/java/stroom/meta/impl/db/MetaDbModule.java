@@ -2,7 +2,6 @@ package stroom.meta.impl.db;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.multibindings.Multibinder;
 import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
@@ -10,12 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.MetaSecurityFilter;
 import stroom.db.util.HikariUtil;
-import stroom.util.shared.Clearable;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaSecurityFilter;
+import stroom.meta.shared.MetaService;
+import stroom.util.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -36,8 +36,7 @@ public class MetaDbModule extends AbstractModule {
         bind(MetaService.class).to(MetaServiceImpl.class);
         bind(MetaSecurityFilter.class).to(MetaSecurityFilterImpl.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(Cleanup.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(Cleanup.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

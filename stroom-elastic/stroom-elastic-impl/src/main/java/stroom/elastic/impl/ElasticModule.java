@@ -17,7 +17,7 @@
 package stroom.elastic.impl;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
+import stroom.util.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 public class ElasticModule extends AbstractModule {
@@ -27,7 +27,6 @@ public class ElasticModule extends AbstractModule {
 
         bind(ElasticIndexConfigCache.class).to(ElasticIndexConfigCacheImpl.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(ElasticIndexConfigCacheImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ElasticIndexConfigCacheImpl.class);
     }
 }

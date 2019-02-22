@@ -17,11 +17,11 @@
 package stroom.data.store.impl.mock;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.data.store.impl.SteamStoreStreamCloserImpl;
-import stroom.util.shared.Clearable;
 import stroom.data.store.api.Store;
+import stroom.data.store.impl.SteamStoreStreamCloserImpl;
+import stroom.util.GuiceUtil;
 import stroom.util.io.StreamCloser;
+import stroom.util.shared.Clearable;
 
 public class MockStreamStoreModule extends AbstractModule {
     @Override
@@ -29,7 +29,6 @@ public class MockStreamStoreModule extends AbstractModule {
         bind(Store.class).to(MockStreamStore.class);
         bind(StreamCloser.class).to(SteamStoreStreamCloserImpl.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(MockStreamStore.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(MockStreamStore.class);
     }
 }

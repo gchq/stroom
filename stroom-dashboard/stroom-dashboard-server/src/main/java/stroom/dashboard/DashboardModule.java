@@ -25,11 +25,12 @@ import stroom.dashboard.shared.FetchTimeZonesAction;
 import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.ValidateExpressionAction;
-import stroom.util.entity.EntityTypeBinder;
-import stroom.util.shared.Clearable;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.GuiceUtil;
+import stroom.util.entity.EntityTypeBinder;
+import stroom.util.shared.Clearable;
 
 public class DashboardModule extends AbstractModule {
     @Override
@@ -37,8 +38,7 @@ public class DashboardModule extends AbstractModule {
         bind(QueryService.class).to(QueryServiceImpl.class);
         bind(DashboardStore.class).to(DashboardStoreImpl.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(ActiveQueriesManager.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ActiveQueriesManager.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(DownloadQueryAction.class, DownloadQueryActionHandler.class)

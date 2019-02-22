@@ -17,15 +17,15 @@
 package stroom.cluster.task.impl;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.cluster.api.ClusterServiceBinder;
-import stroom.util.shared.Clearable;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.cluster.task.api.ClusterDispatchAsync;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.ClusterResultCollectorCache;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.cluster.task.api.TerminateTaskClusterTask;
+import stroom.task.api.TaskHandlerBinder;
+import stroom.util.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 public class ClusterTaskModule extends AbstractModule {
     @Override
@@ -42,8 +42,7 @@ public class ClusterTaskModule extends AbstractModule {
         TaskHandlerBinder.create(binder())
                 .bind(TerminateTaskClusterTask.class, TerminateTaskClusterHandler.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(ClusterResultCollectorCacheImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ClusterResultCollectorCacheImpl.class);
     }
 
     @Override

@@ -17,10 +17,10 @@
 package stroom.node.impl.mock;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.util.shared.Clearable;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.util.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 public class MockNodeServiceModule extends AbstractModule {
     @Override
@@ -28,7 +28,6 @@ public class MockNodeServiceModule extends AbstractModule {
         bind(NodeService.class).to(MockNodeService.class);
         bind(NodeInfo.class).to(MockNodeInfo.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(MockNodeService.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(MockNodeService.class);
     }
 }

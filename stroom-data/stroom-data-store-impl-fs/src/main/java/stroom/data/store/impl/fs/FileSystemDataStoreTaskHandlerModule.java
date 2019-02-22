@@ -14,41 +14,30 @@
  * limitations under the License.
  */
 
-package stroom.volume;
+package stroom.data.store.impl.fs;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import com.google.inject.multibindings.OptionalBinder;
+import stroom.data.store.impl.fs.shared.DeleteFSVolumeAction;
+import stroom.data.store.impl.fs.shared.FetchFSVolumeAction;
+import stroom.data.store.impl.fs.shared.FindFSVolumeAction;
+import stroom.data.store.impl.fs.shared.UpdateFSVolumeAction;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEvent.Handler;
-import stroom.node.shared.VolumeEntity;
-import stroom.statistics.api.InternalStatisticsReceiver;
-import stroom.util.GuiceUtil;
-import stroom.util.entity.EntityTypeBinder;
-import stroom.util.entity.FindService;
-import stroom.util.shared.Clearable;
-import stroom.util.shared.Flushable;
+import stroom.task.api.TaskHandlerBinder;
 
-public class VolumeModule extends AbstractModule {
+public class FileSystemDataStoreTaskHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(VolumeService.class).to(VolumeServiceImpl.class);
-
-        OptionalBinder.newOptionalBinder(binder(), InternalStatisticsReceiver.class);
-
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(VolumeServiceImpl.class);
-
-        final Multibinder<Flushable> flushableBinder = Multibinder.newSetBinder(binder(), Flushable.class);
-        flushableBinder.addBinding().to(VolumeServiceImpl.class);
+        TaskHandlerBinder.create(binder())
+                .bind(FileSystemCleanSubTask.class, FileSystemCleanSubTaskHandler.class)
+                .bind(DeleteFSVolumeAction.class, DeleteFSVolumeHandler.class)
+                .bind(FindFSVolumeAction.class, FindFSVolumeHandler.class)
+                .bind(FetchFSVolumeAction.class, FetchFSVolumeHandler.class)
+                .bind(UpdateFSVolumeAction.class, UpdateFSVolumeHandler.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(VolumeServiceImpl.class);
-
-        EntityTypeBinder.create(binder())
-                .bind(VolumeEntity.ENTITY_TYPE, VolumeServiceImpl.class);
-
-        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-        findServiceBinder.addBinding().to(VolumeServiceImpl.class);
+        entityEventHandlerBinder.addBinding().to(FileSystemVolumeServiceImpl.class);
     }
 
     @Override

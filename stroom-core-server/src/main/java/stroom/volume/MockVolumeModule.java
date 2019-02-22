@@ -17,7 +17,7 @@
 package stroom.volume;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
+import stroom.util.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 public class MockVolumeModule extends AbstractModule {
@@ -25,7 +25,6 @@ public class MockVolumeModule extends AbstractModule {
     protected void configure() {
         bind(VolumeService.class).to(MockVolumeService.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(MockVolumeService.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(MockVolumeService.class);
     }
 }

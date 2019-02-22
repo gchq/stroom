@@ -17,7 +17,7 @@
 package stroom.pipeline.factory;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
+import stroom.util.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 public class PipelineFactoryModule extends AbstractModule {
@@ -29,7 +29,6 @@ public class PipelineFactoryModule extends AbstractModule {
         bind(PipelineStackLoader.class).to(PipelineStackLoaderImpl.class);
         bind(ProcessorFactory.class).to(ProcessorFactoryImpl.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(PipelineDataCacheImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(PipelineDataCacheImpl.class);
     }
 }

@@ -17,7 +17,7 @@
 package stroom.search.shard;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
+import stroom.util.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 public class ShardModule extends AbstractModule {
@@ -25,7 +25,6 @@ public class ShardModule extends AbstractModule {
     protected void configure() {
         bind(IndexShardSearcherCache.class).to(IndexShardSearcherCacheImpl.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(IndexShardSearcherCacheImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(IndexShardSearcherCacheImpl.class);
     }
 }

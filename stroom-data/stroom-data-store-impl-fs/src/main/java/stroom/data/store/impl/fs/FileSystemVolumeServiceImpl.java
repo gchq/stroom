@@ -33,6 +33,7 @@ import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -56,6 +57,7 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FileVolume.FILE_VOLUME;
 import static stroom.data.store.impl.fs.db.jooq.tables.FileVolumeState.FILE_VOLUME_STATE;
 import static stroom.db.util.JooqUtil.contextWithOptimisticLocking;
 
+@Singleton
 @EntityEventHandler(type = FileSystemVolumeServiceImpl.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
 public class FileSystemVolumeServiceImpl implements FileSystemVolumeService, EntityEvent.Handler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataVolumeServiceImpl.class);
@@ -372,6 +374,7 @@ public class FileSystemVolumeServiceImpl implements FileSystemVolumeService, Ent
     }
 
     private void fireChange(final EntityAction action) {
+        currentVolumeState.set(null);
         if (entityEventBusProvider != null) {
             try {
                 final EntityEventBus entityEventBus = entityEventBusProvider.get();
@@ -386,7 +389,9 @@ public class FileSystemVolumeServiceImpl implements FileSystemVolumeService, Ent
 
     @Override
     public void clear() {
+        // Clear state between tests.
         currentVolumeState.set(null);
+        createdDefaultVolumes = false;
     }
 
     private List<FSVolume> getCurrentState() {

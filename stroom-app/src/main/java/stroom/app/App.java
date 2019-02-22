@@ -239,30 +239,8 @@ public class App extends Application<Config> {
         // Add session listeners.
         GuiceUtil.addServletListener(environment.servlets(), injector, SessionListListener.class);
 
-//        // Add resources.
-//        GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource2.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, ExportConfigResource.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, ReceiveDataRuleSetResource.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, ReceiveDataRuleSetResource2.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, StroomIndexQueryResource.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, SqlStatisticsQueryResource.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, AuthorisationResource.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, UserResourceImpl.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, StreamTaskResource.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, PipelineResource.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, XsltResource.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, ExplorerResource.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, ElementResource.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, SessionResource.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, StreamAttributeMapResource.class);
-//        GuiceUtil.addResource(environment.jersey(), injector, DataResource.class);
-
         // Add all injectable rest resources.
-        GuiceUtil.addRestResources(environment.jersey(), injector);
-
-        // Map exceptions to helpful HTTP responses
-        environment.jersey().register(PermissionExceptionMapper.class);
+        injector.getInstance(RestResources.class).register(environment.jersey());
 
         // Map exceptions to helpful HTTP responses
         environment.jersey().register(PermissionExceptionMapper.class);

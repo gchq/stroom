@@ -18,7 +18,6 @@ package stroom.data.store.impl.fs;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.multibindings.Multibinder;
 import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
@@ -29,15 +28,10 @@ import stroom.config.common.ConnectionPoolConfig;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.DataStoreMaintenanceService;
 import stroom.data.store.impl.SteamStoreStreamCloserImpl;
-import stroom.data.store.impl.fs.shared.DeleteFSVolumeAction;
-import stroom.data.store.impl.fs.shared.FindFSVolumeAction;
-import stroom.data.store.impl.fs.shared.FetchFSVolumeAction;
-import stroom.data.store.impl.fs.shared.UpdateFSVolumeAction;
 import stroom.db.util.HikariUtil;
-import stroom.entity.shared.EntityEvent;
-import stroom.entity.shared.EntityEvent.Handler;
-import stroom.task.api.TaskHandlerBinder;
+import stroom.util.GuiceUtil;
 import stroom.util.io.StreamCloser;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -57,15 +51,7 @@ public class FileSystemDataStoreModule extends AbstractModule {
         bind(DataVolumeService.class).to(DataVolumeServiceImpl.class);
         bind(FileSystemVolumeService.class).to(FileSystemVolumeServiceImpl.class);
 
-        TaskHandlerBinder.create(binder())
-                .bind(FileSystemCleanSubTask.class, FileSystemCleanSubTaskHandler.class)
-                .bind(DeleteFSVolumeAction.class, DeleteFSVolumeHandler.class)
-                .bind(FindFSVolumeAction.class, FindFSVolumeHandler.class)
-                .bind(FetchFSVolumeAction.class, FetchFSVolumeHandler.class)
-                .bind(UpdateFSVolumeAction.class, UpdateFSVolumeHandler.class);
-
-        final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(FileSystemVolumeServiceImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(FileSystemVolumeServiceImpl.class);
     }
 
     @Provides

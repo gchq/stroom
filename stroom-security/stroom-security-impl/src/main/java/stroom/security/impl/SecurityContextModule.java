@@ -18,11 +18,11 @@ package stroom.security.impl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.multibindings.Multibinder;
-import stroom.util.shared.Clearable;
 import stroom.security.DocumentPermissionCache;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
+import stroom.util.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
 
@@ -32,8 +32,7 @@ public class SecurityContextModule extends AbstractModule {
         bind(SecurityContext.class).to(SecurityContextImpl.class);
         bind(DocumentPermissionCache.class).to(DocumentPermissionCacheImpl.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(DocumentPermissionCacheImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(DocumentPermissionCacheImpl.class);
     }
 
     @Provides

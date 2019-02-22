@@ -147,30 +147,30 @@ public class GuiceUtil {
 //        servletContextHandler.addServlet(servletHolder, url);
 //    }
 
-    public static void addServletListener(final ServletEnvironment servletEnvironment,
+    static void addServletListener(final ServletEnvironment servletEnvironment,
                                           final Injector injector,
                                           final Class<? extends HttpSessionListener> clazz) {
         final HttpSessionListener httpSessionListener = injector.getInstance(clazz);
         servletEnvironment.addServletListeners(httpSessionListener);
     }
 
-    public static void addResource(final JerseyEnvironment jersey,
-                                   final Injector injector,
-                                   final Class<?> clazz) {
-        final Object resource = injector.getInstance(clazz);
-        jersey.register(Preconditions.checkNotNull(resource));
-    }
+//    public static void addResource(final JerseyEnvironment jersey,
+//                                   final Injector injector,
+//                                   final Class<?> clazz) {
+//        final Object resource = injector.getInstance(clazz);
+//        jersey.register(Preconditions.checkNotNull(resource));
+//    }
+//
+//    public static void addRestResources(final JerseyEnvironment jersey,
+//                                        final Injector injector) {
+//
+//        final Set<RestResource> restResources = stroom.util.GuiceUtil.getMultibinderInstance(
+//                injector, RestResource.class);
+//
+//        restResources.forEach(jersey::register);
+//    }
 
-    public static void addRestResources(final JerseyEnvironment jersey,
-                                        final Injector injector) {
-
-        final Set<RestResource> restResources = stroom.util.GuiceUtil.getMultibinderInstance(
-                injector, RestResource.class);
-
-        restResources.forEach(jersey::register);
-    }
-
-    public static void manage(final LifecycleEnvironment lifecycleEnvironment,
+    static void manage(final LifecycleEnvironment lifecycleEnvironment,
                               final Injector injector,
                               final Class<? extends Managed> clazz) {
         final Managed managed = injector.getInstance(clazz);

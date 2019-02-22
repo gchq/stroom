@@ -45,11 +45,11 @@ public class SecurityModule extends AbstractModule {
         bind(UserService.class).to(UserServiceImpl.class);
 
         // Provide object info to the logging service.
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(DocumentPermissionsCache.class);
-        clearableBinder.addBinding().to(UserAppPermissionsCache.class);
-        clearableBinder.addBinding().to(UserGroupsCache.class);
-        clearableBinder.addBinding().to(UserCache.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(DocumentPermissionsCache.class)
+                .addBinding(UserAppPermissionsCache.class)
+                .addBinding(UserGroupsCache.class)
+                .addBinding(UserCache.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(ChangeDocumentPermissionsAction.class, ChangeDocumentPermissionsHandler.class)

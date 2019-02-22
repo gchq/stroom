@@ -17,7 +17,7 @@
 package stroom.test;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
+import stroom.util.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 public class DatabaseTestControlModule extends AbstractModule {
@@ -25,6 +25,6 @@ public class DatabaseTestControlModule extends AbstractModule {
     protected void configure() {
         bind(CommonTestControl.class).to(DatabaseCommonTestControl.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class);
     }
 }

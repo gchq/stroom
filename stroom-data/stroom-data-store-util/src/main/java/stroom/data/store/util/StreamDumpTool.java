@@ -24,7 +24,6 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaService;
-import stroom.persist.PersistService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -80,15 +79,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
     @Override
     public void run() {
         // Boot up Guice
-        final Injector injector = toolInjector.getInjector();
-        // Start persistance.
-        injector.getInstance(PersistService.class).start();
-        try {
-            process(injector);
-        } finally {
-            // Stop persistance.
-            injector.getInstance(PersistService.class).stop();
-        }
+        process(toolInjector.getInjector());
     }
 
     private void process(final Injector injector) {

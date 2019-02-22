@@ -17,19 +17,36 @@
 package stroom.data.store.util;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import stroom.entity.shared.EntityAction;
+import stroom.entity.shared.EntityEvent;
+import stroom.entity.shared.EntityEvent.Handler;
+import stroom.entity.shared.EntityEventBus;
 
 public class ToolModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new stroom.cache.impl.CacheModule());
+        install(new stroom.persist.DataSourceModule());
         install(new stroom.activity.impl.mock.MockActivityModule());
         install(new stroom.cluster.lock.impl.mock.MockClusterLockModule());
         install(new stroom.meta.impl.db.MetaDbModule());
         install(new stroom.data.store.impl.fs.FileSystemDataStoreModule());
-        install(new stroom.persist.EntityManagerModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
-        install(new stroom.node.impl.NodeServiceModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
         install(new stroom.statistics.impl.mock.MockInternalStatisticsModule());
+    }
+
+    @Provides
+    EntityEventBus entityEventBus() {
+        return new EntityEventBus() {
+            @Override
+            public void addHandler(final Handler handler, final String type, final EntityAction... action) {
+            }
+
+            @Override
+            public void fire(final EntityEvent event) {
+            }
+        };
     }
 }

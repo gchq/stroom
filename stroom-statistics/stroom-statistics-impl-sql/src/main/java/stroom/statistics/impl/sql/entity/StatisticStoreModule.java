@@ -18,13 +18,14 @@ package stroom.statistics.impl.sql.entity;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.util.entity.EntityTypeBinder;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEvent.Handler;
-import stroom.util.shared.Clearable;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.util.GuiceUtil;
+import stroom.util.entity.EntityTypeBinder;
+import stroom.util.shared.Clearable;
 
 public class StatisticStoreModule extends AbstractModule {
     @Override
@@ -34,8 +35,7 @@ public class StatisticStoreModule extends AbstractModule {
         bind(StatisticsDataSourceProvider.class).to(StatisticsDataSourceProviderImpl.class);
         bind(StatisticStoreValidator.class).to(StatisticsDataSourceValidatorImpl.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(StatisticsDataSourceCacheImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(StatisticsDataSourceCacheImpl.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(StatisticsDataSourceCacheImpl.class);

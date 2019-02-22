@@ -17,9 +17,9 @@
 package stroom.streamtask;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.util.shared.Clearable;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 public class MockStreamTaskModule extends AbstractModule {
     @Override
@@ -32,10 +32,10 @@ public class MockStreamTaskModule extends AbstractModule {
         bind(CachedStreamProcessorService.class).to(MockStreamProcessorService.class);
         bind(CachedStreamProcessorFilterService.class).to(MockStreamProcessorFilterService.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(MockStreamProcessorService.class);
-        clearableBinder.addBinding().to(MockStreamProcessorFilterService.class);
-        clearableBinder.addBinding().to(MockStreamTaskService.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(MockStreamProcessorService.class)
+                .addBinding(MockStreamProcessorFilterService.class)
+                .addBinding(MockStreamTaskService.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(StreamProcessorTask.class, StreamProcessorTaskHandler.class);
