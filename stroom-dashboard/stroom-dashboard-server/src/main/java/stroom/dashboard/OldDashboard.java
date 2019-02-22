@@ -17,7 +17,7 @@
 package stroom.dashboard;
 
 import stroom.dashboard.shared.DashboardConfig;
-import stroom.importexport.api.ExternalFile;
+import stroom.importexport.shared.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 
 import javax.persistence.Transient;

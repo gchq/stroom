@@ -4,13 +4,9 @@ dependencies {
     implementation project(':stroom-core-client')
     implementation project(':stroom-core-client-widget')
     implementation project(':stroom-core-shared')
-    implementation project(':stroom-entity-shared')
-    implementation project(':stroom-docstore:stroom-docstore-shared')
-    implementation project(':stroom-index:stroom-index-shared')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-client-api')
     implementation project(':stroom-util-shared')
-    implementation project(':stroom-task:stroom-task-shared')
 
     implementation libs.stroomDocRef
     implementation libs.gin

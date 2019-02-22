@@ -17,36 +17,34 @@
 
 package stroom.feed;
 
-import stroom.feed.shared.FeedDoc;
+import stroom.feed.api.FeedProperties;
 import stroom.feed.shared.FeedDoc.FeedStatus;
-import stroom.pipeline.feed.FeedDocCache;
 import stroom.security.Security;
 
 import javax.inject.Inject;
-import java.util.Optional;
 
 class RemoteFeedServiceImpl implements RemoteFeedService {
     private final Security security;
-    private final FeedDocCache feedDocCache;
+    private final FeedProperties feedProperties;
 
     @Inject
-    RemoteFeedServiceImpl(final Security security, final FeedDocCache feedDocCache) {
+    RemoteFeedServiceImpl(final Security security, final FeedProperties feedProperties) {
         this.security = security;
-        this.feedDocCache = feedDocCache;
+        this.feedProperties = feedProperties;
     }
 
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
         return security.asProcessingUserResult(() -> {
-            final Optional<FeedDoc> optional = feedDocCache.get(request.getFeedName());
+            final FeedStatus feedStatus = feedProperties.getStatus(request.getFeedName());
 
-            if (!optional.isPresent()) {
+            if (feedStatus == null) {
                 return GetFeedStatusResponse.createFeedIsNotDefinedResponse();
             } else {
-                if (FeedStatus.REJECT.equals(optional.get().getStatus())) {
+                if (FeedStatus.REJECT.equals(feedStatus)) {
                     return GetFeedStatusResponse.createFeedNotSetToReceiveDataResponse();
                 }
-                if (FeedStatus.DROP.equals(optional.get().getStatus())) {
+                if (FeedStatus.DROP.equals(feedStatus)) {
                     return GetFeedStatusResponse.createOKDropResponse();
                 }
             }

@@ -4,9 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
-import stroom.docstore.DocumentSerialiser2;
-import stroom.docstore.Serialiser2;
-import stroom.docstore.Serialiser2Factory;
+import stroom.docstore.api.DocumentSerialiser2;
+import stroom.docstore.api.Serialiser2;
+import stroom.docstore.api.Serialiser2Factory;
 import stroom.util.xml.XMLMarshallerUtil;
 import stroom.util.string.EncodingUtil;
 

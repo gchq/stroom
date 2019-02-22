@@ -28,7 +28,7 @@ import java.util.Set;
 @Singleton
 public class MockVolumeService extends MockEntityService<VolumeEntity, FindVolumeCriteria> implements VolumeService {
     @Override
-    public Set<VolumeEntity> getStreamVolumeSet(final Node node) {
+    public VolumeEntity getStreamVolume(final Node node) {
         return null;
     }
 

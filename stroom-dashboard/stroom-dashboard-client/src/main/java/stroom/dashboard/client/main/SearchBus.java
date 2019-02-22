@@ -27,7 +27,7 @@ import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.RestService;
-import stroom.security.client.event.LogoutEvent;
+import stroom.security.client.api.event.LogoutEvent;
 
 import java.util.HashMap;
 import java.util.Map;

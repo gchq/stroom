@@ -17,7 +17,7 @@
 package stroom.servlet;
 
 import stroom.task.shared.Action;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.ResultList;
 
 public class SessionListAction extends Action<ResultList<SessionDetails>> {
     private static final long serialVersionUID = 7441063582135677305L;

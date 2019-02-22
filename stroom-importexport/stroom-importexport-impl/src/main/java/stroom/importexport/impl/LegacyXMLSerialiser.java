@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.Entity;
-import stroom.entity.shared.EntityServiceException;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.string.EncodingUtil;
 
 import java.io.IOException;

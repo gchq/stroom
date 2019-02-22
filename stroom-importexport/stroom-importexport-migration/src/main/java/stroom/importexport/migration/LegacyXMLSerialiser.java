@@ -19,7 +19,7 @@ package stroom.importexport.migration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.EntityServiceException;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.string.EncodingUtil;
 
 import java.io.IOException;

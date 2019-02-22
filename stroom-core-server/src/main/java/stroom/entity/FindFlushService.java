@@ -17,7 +17,7 @@
 
 package stroom.entity;
 
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.shared.BaseCriteria;
 
 public interface FindFlushService<C extends BaseCriteria> {
     Long findFlush(C criteria);

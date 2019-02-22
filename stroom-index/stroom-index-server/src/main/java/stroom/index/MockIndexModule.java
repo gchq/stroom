@@ -18,10 +18,11 @@ package stroom.index;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.EntityTypeBinder;
-import stroom.entity.shared.Clearable;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.shared.IndexDoc;
+import stroom.util.GuiceUtil;
+import stroom.util.entity.EntityTypeBinder;
+import stroom.util.shared.Clearable;
 
 public class MockIndexModule extends AbstractModule {
     @Override
@@ -45,9 +46,7 @@ public class MockIndexModule extends AbstractModule {
 //        entityEventHandlerBinder.addBinding().to(IndexConfigCacheEntityEventHandler.class);
 //
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-//        clearableBinder.addBinding().to(IndexStoreImpl.class);
-        clearableBinder.addBinding().to(MockIndexShardService.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(MockIndexShardService.class);
 
 //
 //        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);

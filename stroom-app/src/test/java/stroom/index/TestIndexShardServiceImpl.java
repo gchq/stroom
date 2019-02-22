@@ -20,9 +20,9 @@ package stroom.index;
 
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Range;
-import stroom.entity.shared.Sort.Direction;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Range;
+import stroom.util.shared.Sort.Direction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexDoc.PartitionBy;

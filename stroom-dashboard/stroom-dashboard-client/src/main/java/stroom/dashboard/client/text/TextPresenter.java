@@ -38,7 +38,7 @@ import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Highlight;

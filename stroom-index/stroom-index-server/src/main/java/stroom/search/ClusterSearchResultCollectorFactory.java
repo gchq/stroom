@@ -21,8 +21,8 @@ import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Sizes;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
-import stroom.task.cluster.ClusterResultCollectorCache;
-import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.ClusterResultCollectorCache;
 
 import javax.inject.Inject;
 import java.util.Set;

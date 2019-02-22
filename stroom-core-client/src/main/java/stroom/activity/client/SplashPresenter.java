@@ -24,7 +24,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.activity.shared.AcknowledgeSplashAction;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.security.client.event.LogoutEvent;
+import stroom.security.client.api.event.LogoutEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SplashConfig;
 import stroom.widget.popup.client.event.HidePopupEvent;

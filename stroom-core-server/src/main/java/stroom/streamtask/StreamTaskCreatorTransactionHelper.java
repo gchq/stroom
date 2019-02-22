@@ -27,7 +27,7 @@ import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.CriteriaSet;
+import stroom.util.shared.CriteriaSet;
 import stroom.entity.util.SqlBuilder;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;

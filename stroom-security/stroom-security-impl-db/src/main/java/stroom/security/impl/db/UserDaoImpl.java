@@ -3,16 +3,16 @@ package stroom.security.impl.db;
 import org.jooq.impl.DSL;
 import stroom.db.util.JooqUtil;
 import stroom.security.dao.UserDao;
-import stroom.security.impl.db.tables.records.StroomUserGroupsRecord;
-import stroom.security.impl.db.tables.records.StroomUserRecord;
+import stroom.security.impl.db.jooq.tables.records.StroomUserGroupsRecord;
+import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 import stroom.security.shared.User;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.UUID;
 
-import static stroom.security.impl.db.Tables.STROOM_USER;
-import static stroom.security.impl.db.Tables.STROOM_USER_GROUPS;
+import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
+import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUPS;
 
 public class UserDaoImpl implements UserDao {
 

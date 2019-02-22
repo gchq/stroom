@@ -1,0 +1,47 @@
+ext.moduleName = 'stroom.statistics.impl.hbase'
+
+dependencies {
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-importexport:stroom-importexport-migration')
+    implementation project(':stroom-kafka:stroom-kafka-pipeline')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-statistics:stroom-statistics-api')
+    implementation project(':stroom-statistics:stroom-statistics-impl')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.stroomDocRef
+    implementation libs.stroomExpression
+    implementation libs.stroomQueryApi
+    implementation libs.stroomQueryCommon
+    implementation libs.stroomStatsSchema
+
+    implementation libs.guice4
+    implementation libs.javax_inject
+    implementation(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
+
+    testImplementation project(':stroom-docstore:stroom-docstore-impl')
+    testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    testImplementation project(':stroom-security:stroom-security-impl-mock')
+    testImplementation project(':stroom-test-common')
+    
+    testImplementation libs.assertj_core
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
+
+    testImplementation libs.junit_jupiter_api
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}

@@ -19,12 +19,12 @@ package stroom.activity.impl.db;
 import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
-import stroom.activity.api.Activity;
+import stroom.activity.shared.Activity;
 import stroom.activity.api.ActivityService;
 import stroom.activity.shared.FindActivityAction;
-import stroom.activity.api.FindActivityCriteria;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.ResultList;
+import stroom.activity.shared.FindActivityCriteria;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
@@ -59,9 +59,9 @@ public class FindActivityHandler extends AbstractTaskHandler<FindActivityAction,
 
             try {
                 result = activityService.find(criteria);
-                entityEventLog.search(criteria, query, result);
+                entityEventLog.search(criteria, query, result, null);
             } catch (final RuntimeException e) {
-                entityEventLog.search(criteria, query, e);
+                entityEventLog.search(criteria, query, null, e);
                 throw e;
             }
 

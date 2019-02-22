@@ -21,6 +21,7 @@ import org.apache.commons.lang3.mutable.MutableInt;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.node.shared.VolumeEntity;
+import stroom.util.DatabaseTool;
 import stroom.util.concurrent.SimpleConcurrentMap;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
@@ -381,7 +382,7 @@ public class StreamRestoreTool extends DatabaseTool {
         if (Files.isRegularFile(manifest)) {
             final AttributeMap attributeMap = new AttributeMap();
             try (final InputStream inputStream = Files.newInputStream(manifest)) {
-                AttributeMapUtil.read(inputStream, true, attributeMap);
+                AttributeMapUtil.read(inputStream, attributeMap);
             } catch (final IOException ioEx) {
             }
             rtnMap.putAll(attributeMap);

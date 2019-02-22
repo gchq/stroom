@@ -17,13 +17,12 @@
 
 package stroom.headless;
 
+import stroom.docref.DocRef;
+import stroom.feed.api.FeedProperties;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
-import stroom.docref.DocRef;
-import stroom.meta.api.AttributeMapUtil;
-import stroom.pipeline.feed.FeedStore;
 import stroom.meta.shared.StandardHeaderArguments;
-import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.ErrorWriter;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.PipelineStore;
@@ -40,8 +39,8 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.MetaDataHolder;
-import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -59,7 +58,7 @@ import java.util.List;
 
 class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, VoidResult> {
     private final PipelineFactory pipelineFactory;
-    private final FeedStore feedStore;
+    private final FeedProperties feedProperties;
     private final PipelineStore pipelineStore;
     private final MetaData metaData;
     private final PipelineHolder pipelineHolder;
@@ -74,7 +73,7 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
 
     @Inject
     CliTranslationTaskHandler(final PipelineFactory pipelineFactory,
-                              final FeedStore feedStore,
+                              final FeedProperties feedProperties,
                               final PipelineStore pipelineStore,
                               final MetaData metaData,
                               final PipelineHolder pipelineHolder,
@@ -87,7 +86,7 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
                               final MetaHolder metaHolder,
                               final Security security) {
         this.pipelineFactory = pipelineFactory;
-        this.feedStore = feedStore;
+        this.feedProperties = feedProperties;
         this.pipelineStore = pipelineStore;
         this.metaData = metaData;
         this.pipelineHolder = pipelineHolder;
@@ -120,11 +119,10 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
 
                 // Load the meta and context data.
                 final AttributeMap metaData = new AttributeMap();
-                AttributeMapUtil.read(metaStream, false, metaData);
+                AttributeMapUtil.read(metaStream, metaData);
 
                 // Get the feed.
                 final String feedName = metaData.get(StandardHeaderArguments.FEED);
-                final FeedDoc feed = getFeed(feedName);
                 feedHolder.setFeedName(feedName);
 
                 // Setup the meta data holder.
@@ -168,23 +166,21 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
                         .build();
 
                 // Add stream providers for lookups etc.
-                final BasicInputStreamProvider streamProvider = new BasicInputStreamProvider(
-                        new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
-                metaHolder.setMeta(meta);
-                metaHolder.addProvider(streamProvider, StreamTypeNames.RAW_EVENTS);
+                final BasicInputStreamProvider inputStreamProvider = new BasicInputStreamProvider();
+                inputStreamProvider.put(null, new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
+                inputStreamProvider.put(StreamTypeNames.RAW_EVENTS, new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
                 if (task.getMetaStream() != null) {
-                    final BasicInputStreamProvider metaStreamProvider = new BasicInputStreamProvider(
-                            new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
-                    metaHolder.addProvider(metaStreamProvider, StreamTypeNames.META);
+                    inputStreamProvider.put(StreamTypeNames.META, new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
                 }
                 if (task.getContextStream() != null) {
-                    final BasicInputStreamProvider contextStreamProvider = new BasicInputStreamProvider(
-                            new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
-                    metaHolder.addProvider(contextStreamProvider, StreamTypeNames.CONTEXT);
+                    inputStreamProvider.put(StreamTypeNames.CONTEXT, new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
                 }
 
+                metaHolder.setMeta(meta);
+                metaHolder.setInputStreamProvider(inputStreamProvider);
+
                 try {
-                    pipeline.process(dataStream, feed.getEncoding());
+                    pipeline.process(dataStream, feedProperties.getEncoding(feedName, feedProperties.getStreamTypeName(feedName)));
                 } catch (final RuntimeException e) {
                     outputError(e);
                 }
@@ -194,19 +190,6 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
 
             return VoidResult.INSTANCE;
         });
-    }
-
-    private FeedDoc getFeed(final String feedName) {
-        if (feedName == null) {
-            throw new RuntimeException("No feed name found in meta data");
-        }
-
-        final List<DocRef> docRefs = feedStore.findByName(feedName);
-        if (docRefs.size() == 0) {
-            throw new RuntimeException("No configuration found for feed \"" + feedName + "\"");
-        }
-
-        return feedStore.readDocument(docRefs.get(0));
     }
 
     /**

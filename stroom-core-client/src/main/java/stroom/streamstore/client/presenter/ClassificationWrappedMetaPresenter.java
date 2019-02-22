@@ -22,7 +22,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.shared.IdSet;
+import stroom.util.shared.IdSet;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
 

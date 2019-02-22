@@ -18,7 +18,7 @@
 package stroom.index;
 
 import stroom.entity.MockEntityService;
-import stroom.entity.shared.BaseResultList;
+import stroom.util.shared.BaseResultList;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;

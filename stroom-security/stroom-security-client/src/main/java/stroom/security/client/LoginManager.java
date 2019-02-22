@@ -25,7 +25,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.security.client.event.LogoutEvent;
+import stroom.security.client.api.event.LogoutEvent;
 import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.LogoutAction;
 import stroom.ui.config.client.UiConfigCache;

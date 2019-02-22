@@ -17,9 +17,9 @@
 
 package stroom.entity;
 
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.FindNamedEntityCriteria;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.NamedEntity;
 
 import java.lang.reflect.InvocationTargetException;

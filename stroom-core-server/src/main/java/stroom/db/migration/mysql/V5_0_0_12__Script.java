@@ -20,7 +20,7 @@ import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.ObjectMarshaller;
-import stroom.entity.shared.DocRefs;
+import stroom.util.shared.DocRefs;
 import stroom.docref.DocRef;
 
 import java.sql.Connection;

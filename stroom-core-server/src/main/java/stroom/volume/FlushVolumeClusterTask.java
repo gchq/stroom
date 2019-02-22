@@ -16,7 +16,7 @@
 
 package stroom.volume;
 
-import stroom.task.cluster.api.ClusterTask;
+import stroom.cluster.task.api.ClusterTask;
 import stroom.util.shared.VoidResult;
 
 class FlushVolumeClusterTask extends ClusterTask<VoidResult> {

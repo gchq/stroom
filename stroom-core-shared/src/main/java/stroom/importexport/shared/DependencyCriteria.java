@@ -1,6 +1,6 @@
 package stroom.importexport.shared;
 
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.shared.BaseCriteria;
 
 public class DependencyCriteria extends BaseCriteria {
     public static final String FIELD_FROM = "From";

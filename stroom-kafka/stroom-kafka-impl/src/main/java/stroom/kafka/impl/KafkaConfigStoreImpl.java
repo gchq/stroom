@@ -18,10 +18,10 @@
 package stroom.kafka.impl;
 
 import stroom.docref.DocRef;
-import stroom.docstore.DocumentSerialiser2;
-import stroom.docstore.Serialiser2Factory;
-import stroom.docstore.Store;
-import stroom.docstore.StoreFactory;
+import stroom.docstore.api.DocumentSerialiser2;
+import stroom.docstore.api.Serialiser2Factory;
+import stroom.docstore.api.Store;
+import stroom.docstore.api.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;

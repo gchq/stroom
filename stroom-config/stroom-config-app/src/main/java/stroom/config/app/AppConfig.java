@@ -4,29 +4,29 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.benchmark.BenchmarkClusterConfig;
-import stroom.cluster.ClusterConfig;
+import stroom.cluster.api.ClusterConfig;
 import stroom.dashboard.QueryHistoryConfig;
-import stroom.datafeed.DataFeedConfig;
+import stroom.data.retention.impl.DataRetentionConfig;
 import stroom.datasource.DataSourceUrlConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
 import stroom.index.IndexConfig;
 import stroom.index.impl.db.IndexDbConfig;
-import stroom.job.JobSystemConfig;
+import stroom.job.impl.JobSystemConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.persist.CoreConfig;
 import stroom.pipeline.PipelineConfig;
-import stroom.policy.PolicyConfig;
+import stroom.receive.ReceiveDataConfig;
 import stroom.search.SearchConfig;
-import stroom.security.SecurityConfig;
+import stroom.security.impl.SecurityConfig;
 import stroom.security.impl.db.SecurityDbConfig;
 import stroom.servicediscovery.ServiceDiscoveryConfig;
-import stroom.statistics.StatisticsConfig;
 import stroom.streamtask.ProcessConfig;
 import stroom.streamtask.ProxyAggregationConfig;
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.io.PathConfig;
 import stroom.util.shared.IsConfig;
 import stroom.volume.VolumeConfig;
 
@@ -41,7 +41,7 @@ public class AppConfig implements IsConfig {
     private ContentPackImportConfig contentPackImportConfig;
     private CoreConfig coreConfig;
     private DataConfig dataConfig;
-    private DataFeedConfig dataFeedConfig;
+    private ReceiveDataConfig dataFeedConfig;
     private DataSourceUrlConfig dataSourceUrlConfig;
     private ExplorerConfig explorerConfig;
     private ExportConfig exportConfig;
@@ -50,8 +50,9 @@ public class AppConfig implements IsConfig {
     private JobSystemConfig jobSystemConfig;
     private LifecycleConfig lifecycleConfig;
     private NodeConfig nodeConfig;
+    private PathConfig pathConfig;
     private PipelineConfig pipelineConfig;
-    private PolicyConfig policyConfig;
+    private DataRetentionConfig policyConfig;
     private ProcessConfig processConfig;
     private PropertyServiceConfig propertyServiceConfig;
     private ProxyAggregationConfig proxyAggregationConfig;
@@ -71,7 +72,7 @@ public class AppConfig implements IsConfig {
         this.contentPackImportConfig = new ContentPackImportConfig();
         this.coreConfig = new CoreConfig();
         this.dataConfig = new DataConfig();
-        this.dataFeedConfig = new DataFeedConfig();
+        this.dataFeedConfig = new ReceiveDataConfig();
         this.dataSourceUrlConfig = new DataSourceUrlConfig();
         this.explorerConfig = new ExplorerConfig();
         this.exportConfig = new ExportConfig();
@@ -81,7 +82,8 @@ public class AppConfig implements IsConfig {
         this.lifecycleConfig = new LifecycleConfig();
         this.pipelineConfig = new PipelineConfig();
         this.nodeConfig = new NodeConfig();
-        this.policyConfig = new PolicyConfig();
+        this.pathConfig = new PathConfig();
+        this.policyConfig = new DataRetentionConfig();
         this.processConfig = new ProcessConfig();
         this.propertyServiceConfig = new PropertyServiceConfig();
         this.proxyAggregationConfig = new ProxyAggregationConfig();
@@ -102,7 +104,7 @@ public class AppConfig implements IsConfig {
               final ContentPackImportConfig contentPackImportConfig,
               final CoreConfig coreConfig,
               final DataConfig dataConfig,
-              final DataFeedConfig dataFeedConfig,
+              final ReceiveDataConfig dataFeedConfig,
               final DataSourceUrlConfig dataSourceUrlConfig,
               final ExplorerConfig explorerConfig,
               final ExportConfig exportConfig,
@@ -112,7 +114,8 @@ public class AppConfig implements IsConfig {
               final LifecycleConfig lifecycleConfig,
               final PipelineConfig pipelineConfig,
               final NodeConfig nodeConfig,
-              final PolicyConfig policyConfig,
+              final PathConfig pathConfig,
+              final DataRetentionConfig policyConfig,
               final ProcessConfig processConfig,
               final PropertyServiceConfig propertyServiceConfig,
               final ProxyAggregationConfig proxyAggregationConfig,
@@ -140,6 +143,7 @@ public class AppConfig implements IsConfig {
         this.lifecycleConfig = lifecycleConfig;
         this.pipelineConfig = pipelineConfig;
         this.nodeConfig = nodeConfig;
+        this.pathConfig = pathConfig;
         this.policyConfig = policyConfig;
         this.processConfig = processConfig;
         this.propertyServiceConfig = propertyServiceConfig;
@@ -211,11 +215,11 @@ public class AppConfig implements IsConfig {
     }
 
     @JsonProperty("feed")
-    public DataFeedConfig getDataFeedConfig() {
+    public ReceiveDataConfig getDataFeedConfig() {
         return dataFeedConfig;
     }
 
-    public void setDataFeedConfig(final DataFeedConfig dataFeedConfig) {
+    public void setDataFeedConfig(final ReceiveDataConfig dataFeedConfig) {
         this.dataFeedConfig = dataFeedConfig;
     }
 
@@ -291,6 +295,15 @@ public class AppConfig implements IsConfig {
         this.nodeConfig = nodeConfig;
     }
 
+    @JsonProperty("path")
+    public PathConfig getPathConfig() {
+        return pathConfig;
+    }
+
+    public void setPathConfig(final PathConfig pathConfig) {
+        this.pathConfig = pathConfig;
+    }
+
     @JsonProperty("pipeline")
     public PipelineConfig getPipelineConfig() {
         return pipelineConfig;
@@ -301,11 +314,11 @@ public class AppConfig implements IsConfig {
     }
 
     @JsonProperty("policy")
-    public PolicyConfig getPolicyConfig() {
+    public DataRetentionConfig getPolicyConfig() {
         return policyConfig;
     }
 
-    public void setPolicyConfig(final PolicyConfig policyConfig) {
+    public void setPolicyConfig(final DataRetentionConfig policyConfig) {
         this.policyConfig = policyConfig;
     }
 

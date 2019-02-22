@@ -1,6 +1,6 @@
 package stroom.docstore.impl.fs;
 
-import stroom.docstore.RWLockFactory;
+import stroom.docstore.api.RWLockFactory;
 
 import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;

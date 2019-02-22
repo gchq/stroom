@@ -24,10 +24,10 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ClientDispatchAsyncImpl;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.task.shared.Action;
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.HasCriteria;
-import stroom.entity.shared.HasIsConstrained;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.HasCriteria;
+import stroom.util.shared.HasIsConstrained;
+import stroom.util.shared.ResultList;
 import stroom.docref.SharedObject;
 
 import java.util.ArrayList;

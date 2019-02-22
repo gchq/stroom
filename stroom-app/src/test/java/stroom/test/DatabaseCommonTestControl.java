@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.impl.CacheManagerService;
 import stroom.entity.StroomEntityManager;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
 import stroom.node.impl.NodeCreator;

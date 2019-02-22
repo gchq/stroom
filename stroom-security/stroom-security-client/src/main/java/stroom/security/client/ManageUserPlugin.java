@@ -25,6 +25,7 @@ import stroom.core.client.MenuKeys;
 import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsPlugin;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.DocumentPermissionsPresenter;
 import stroom.security.client.presenter.UsersAndGroupsPresenter;
 import stroom.security.shared.PermissionNames;

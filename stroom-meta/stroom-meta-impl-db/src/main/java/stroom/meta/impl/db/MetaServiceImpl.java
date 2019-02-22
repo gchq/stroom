@@ -6,17 +6,17 @@ import org.jooq.SelectConditionStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.db.util.JooqUtil;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.IdSet;
-import stroom.entity.shared.PageRequest;
-import stroom.entity.shared.Sort.Direction;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.IdSet;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort.Direction;
 import stroom.meta.impl.db.ExpressionMapper.TermHandler;
 import stroom.meta.impl.db.MetaExpressionMapper.MetaTermHandler;
 import stroom.meta.impl.db.MetaImpl.Builder;
-import stroom.meta.impl.db.tables.MetaFeed;
-import stroom.meta.impl.db.tables.MetaProcessor;
-import stroom.meta.impl.db.tables.MetaType;
-import stroom.meta.impl.db.tables.MetaVal;
+import stroom.meta.impl.db.jooq.tables.MetaFeed;
+import stroom.meta.impl.db.jooq.tables.MetaProcessor;
+import stroom.meta.impl.db.jooq.tables.MetaType;
+import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.FindMetaCriteria;
@@ -50,11 +50,11 @@ import java.util.Set;
 
 import static org.jooq.impl.DSL.max;
 import static org.jooq.impl.DSL.selectDistinct;
-import static stroom.meta.impl.db.tables.Meta.META;
-import static stroom.meta.impl.db.tables.MetaFeed.META_FEED;
-import static stroom.meta.impl.db.tables.MetaProcessor.META_PROCESSOR;
-import static stroom.meta.impl.db.tables.MetaType.META_TYPE;
-import static stroom.meta.impl.db.tables.MetaVal.META_VAL;
+import static stroom.meta.impl.db.jooq.tables.Meta.META;
+import static stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
+import static stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
+import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
+import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
 class MetaServiceImpl implements MetaService {
@@ -69,7 +69,7 @@ class MetaServiceImpl implements MetaService {
     private final MetaSecurityFilter dataSecurityFilter;
     private final Security security;
 
-    private final stroom.meta.impl.db.tables.Meta meta = META.as("d");
+    private final stroom.meta.impl.db.jooq.tables.Meta meta = META.as("d");
     private final MetaFeed dataFeed = META_FEED.as("f");
     private final MetaType dataType = META_TYPE.as("dt");
     private final MetaProcessor dataProcessor = META_PROCESSOR.as("dp");
@@ -212,26 +212,46 @@ class MetaServiceImpl implements MetaService {
     }
 
     @Override
-    public Meta updateStatus(final Meta meta, final Status status) {
+    public Meta updateStatus(final Meta meta, final Status currentStatus, final Status newStatus) {
         Objects.requireNonNull(meta, "Null data");
 
         final long now = System.currentTimeMillis();
-        final int result = updateStatus(meta.getId(), status, now, DocumentPermissionNames.UPDATE);
+        final int result = updateStatus(meta.getId(), newStatus, currentStatus, now, DocumentPermissionNames.UPDATE);
         if (result > 0) {
-            return new Builder(meta).status(status).statusMs(now).build();
+            return new Builder(meta).status(newStatus).statusMs(now).build();
         } else {
+            final Meta existingMeta = getMeta(meta.getId());
+            if (existingMeta == null) {
+                throw new RuntimeException("Meta with id=" + meta.getId() + " does not exist");
+            }
+
+            if (currentStatus != existingMeta.getStatus()) {
+                throw new RuntimeException("Unexpected status " +
+                        existingMeta.getStatus() +
+                        " (expected " +
+                        currentStatus +
+                        ")");
+            }
+
             return null;
         }
     }
 
-    private int updateStatus(final long id, final Status status, final long statusTime, final String permission) {
-        final Condition condition = getIdCondition(id, true, permission);
+    private int updateStatus(final long id, final Status newStatus, final Status currentStatus, final long statusTime, final String permission) {
+        Condition condition = getIdCondition(id, true, permission);
+
+        // Add a condition if we should check current status.
+        if (currentStatus != null) {
+            condition = condition.and(meta.STATUS.eq(MetaStatusId.getPrimitiveValue(currentStatus)));
+        }
+
+        final Condition c = condition;
 
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .update(meta)
-                .set(meta.STATUS, MetaStatusId.getPrimitiveValue(status))
+                .set(meta.STATUS, MetaStatusId.getPrimitiveValue(newStatus))
                 .set(meta.STATUS_TIME, statusTime)
-                .where(condition)
+                .where(c)
                 .execute());
 //                    .returning(data.ID,
 //                            dataFeed.NAME,
@@ -311,7 +331,7 @@ class MetaServiceImpl implements MetaService {
 
         // Ensure the user has permission to delete this data.
         final long now = System.currentTimeMillis();
-        return updateStatus(id, Status.DELETED, now, DocumentPermissionNames.DELETE);
+        return updateStatus(id, Status.DELETED, null, now, DocumentPermissionNames.DELETE);
     }
 
     private SelectConditionStep<Record1<Long>> getMetaCondition(final ExpressionOperator expression) {

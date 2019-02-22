@@ -26,12 +26,12 @@ import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.dictionary.api.DictionaryStore;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Period;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Period;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
-import stroom.util.test.FileSystemTestUtil;
+import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -80,8 +80,8 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
                             .build());
 
             // Streams are locked initially so unlock.
-            metaService.updateStatus(metaInsideRetention, Status.UNLOCKED);
-            metaService.updateStatus(metaOutsideRetention, Status.UNLOCKED);
+            metaService.updateStatus(metaInsideRetention, Status.LOCKED, Status.UNLOCKED);
+            metaService.updateStatus(metaOutsideRetention, Status.LOCKED, Status.UNLOCKED);
 
             dumpStreams();
 

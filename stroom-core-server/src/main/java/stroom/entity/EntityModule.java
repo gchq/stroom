@@ -17,10 +17,7 @@
 package stroom.entity;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
@@ -30,14 +27,16 @@ import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.GuiceUtil;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.Clearable;
 
 public class EntityModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(GenericEntityService.class).to(GenericEntityServiceImpl.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(CachingEntityManager.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(CachingEntityManager.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(EntityServiceDeleteAction.class, stroom.entity.EntityServiceDeleteHandler.class)

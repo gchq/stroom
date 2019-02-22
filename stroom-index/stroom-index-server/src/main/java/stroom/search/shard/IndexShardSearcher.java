@@ -16,7 +16,6 @@
 
 package stroom.search.shard;
 
-import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.SearcherManager;
 import stroom.index.shared.IndexShard;
 

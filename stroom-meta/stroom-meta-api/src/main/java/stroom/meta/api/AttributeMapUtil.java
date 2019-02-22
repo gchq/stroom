@@ -91,7 +91,7 @@ public class AttributeMapUtil {
         return attributeMap;
     }
 
-    public static void read(final InputStream inputStream, final boolean close, final AttributeMap attributeMap) throws IOException {
+    public static void read(final InputStream inputStream, final AttributeMap attributeMap) throws IOException {
         final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, DEFAULT_CHARSET));
         String line;
         while ((line = reader.readLine()) != null) {
@@ -104,14 +104,10 @@ public class AttributeMapUtil {
                 attributeMap.put(line.trim(), null);
             }
         }
-
-        if (close) {
-            inputStream.close();
-        }
     }
 
     public static void read(final byte[] data, final AttributeMap attributeMap) throws IOException {
-        read(new ByteArrayInputStream(data), true, attributeMap);
+        read(new ByteArrayInputStream(data), attributeMap);
     }
 
     public static void write(final AttributeMap attributeMap, final OutputStream outputStream) throws IOException {

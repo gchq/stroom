@@ -2,26 +2,22 @@ ext.moduleName = 'stroom.index.server'
 
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-data-store:stroom-data-store-api')
+    implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-docstore:stroom-docstore-shared')
-    implementation project(':stroom-entity-shared')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-importexport:stroom-importexport-migration')
-    implementation project(':stroom-index:stroom-index-shared')
     implementation project(':stroom-index:stroom-index-impl-db')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-task:stroom-task-shared')
-    implementation project(':stroom-task:stroom-task-cluster-api')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
@@ -49,7 +45,6 @@ dependencies {
     implementation libs.ws_rs_api
     implementation libs.xml_apis
 
-//    testImplementation project(path: ':stroom-core-server', configuration: 'testArtifacts')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core

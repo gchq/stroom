@@ -18,7 +18,7 @@
 package stroom.entity;
 
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.BaseResultList;
+import stroom.util.shared.BaseResultList;
 import stroom.explorer.shared.SharedDocRef;
 
 public interface EntityReferenceService<E extends BaseEntity> {

@@ -17,7 +17,7 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
-import stroom.entity.shared.Range;
+import stroom.util.shared.Range;
 import stroom.util.logging.LambdaLogger;
 
 import java.util.Objects;

@@ -19,7 +19,7 @@ package stroom.pipeline.refdata;
 
 import stroom.docref.DocRef;
 import stroom.pipeline.PipelineStore;
-import stroom.pipeline.scope.PipelineScoped;
+import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefDataLoader;

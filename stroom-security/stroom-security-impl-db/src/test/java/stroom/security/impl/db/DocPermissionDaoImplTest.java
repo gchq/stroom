@@ -11,6 +11,8 @@ import org.testcontainers.containers.MySQLContainer;
 import stroom.docref.DocRef;
 import stroom.security.dao.DocumentPermissionDao;
 import stroom.security.dao.UserDao;
+import stroom.security.impl.TestModule;
+import stroom.security.impl.db.jooq.Stroom;
 import stroom.security.shared.DocumentPermissionJooq;
 import stroom.security.shared.User;
 

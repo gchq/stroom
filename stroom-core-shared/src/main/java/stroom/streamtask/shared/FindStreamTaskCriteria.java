@@ -18,10 +18,10 @@ package stroom.streamtask.shared;
 
 import stroom.meta.shared.MetaFieldNames;
 import stroom.docref.DocRef;
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.CriteriaSet;
-import stroom.entity.shared.HasIsConstrained;
-import stroom.entity.shared.Period;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.HasIsConstrained;
+import stroom.util.shared.Period;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 

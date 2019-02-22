@@ -21,7 +21,7 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
-import stroom.pipeline.feed.FeedProperties;
+import stroom.feed.api.FeedProperties;
 import stroom.pipeline.state.FeedHolder;
 import stroom.util.shared.Severity;
 

@@ -26,7 +26,7 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.Sort.Direction;
+import stroom.util.shared.Sort.Direction;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.importexport.shared.FetchDependenciesAction;

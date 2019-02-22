@@ -1,0 +1,8 @@
+ext.moduleName = 'stroom.statistics.mock'
+
+dependencies {
+    implementation project(':stroom-statistics:stroom-statistics-api')
+    
+    implementation libs.guice4
+    implementation libs.javax_inject
+}

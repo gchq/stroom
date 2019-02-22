@@ -19,9 +19,10 @@ package stroom.search.extraction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.pipeline.PipelineStore;
@@ -39,8 +40,8 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
-import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.search.SearchException;
 import stroom.security.Security;
@@ -62,7 +63,7 @@ public class ExtractionTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskHandler.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ExtractionTaskHandler.class);
 
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final FeedHolder feedHolder;
     private final MetaDataHolder metaDataHolder;
     private final CurrentUserHolder currentUserHolder;
@@ -79,7 +80,7 @@ public class ExtractionTaskHandler {
     private ExtractionTask task;
 
     @Inject
-    ExtractionTaskHandler(final StreamStore streamStore,
+    ExtractionTaskHandler(final Store streamStore,
                           final FeedHolder feedHolder,
                           final MetaDataHolder metaDataHolder,
                           final CurrentUserHolder currentUserHolder,
@@ -199,14 +200,13 @@ public class ExtractionTaskHandler {
         errorReceiverProxy.setErrorReceiver(errorReceiver);
         long count = 0;
 
-        try {
-            // Open the stream source.
-            final StreamSource streamSource = streamStore.openStreamSource(streamId);
-            if (streamSource != null) {
-                try {
+        // Open the stream source.
+        try (final Source source = streamStore.openStreamSource(streamId)) {
+            if (source != null) {
+                try (final InputStreamProvider inputStreamProvider = source.get(0)) {
                     // This is a valid stream so try and extract as many
                     // segments as we are allowed.
-                    try (final SegmentInputStream segmentInputStream = streamSource.getSegmentInputStream()) {
+                    try (final SegmentInputStream segmentInputStream = inputStreamProvider.get()) {
                         // Include the XML Header and footer.
                         segmentInputStream.include(0);
                         segmentInputStream.include(segmentInputStream.count() - 1);
@@ -218,7 +218,7 @@ public class ExtractionTaskHandler {
                         }
 
                         // Now try and extract the data.
-                        extract(pipelineRef, pipeline, streamSource, segmentInputStream, count);
+                        extract(pipelineRef, pipeline, source, segmentInputStream, count);
 
                     } catch (final RuntimeException e) {
                         // Something went wrong extracting data from this
@@ -229,11 +229,9 @@ public class ExtractionTaskHandler {
                 } catch (final IOException | RuntimeException e) {
                     // Something went wrong extracting data from this stream.
                     error("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(), e);
-                } finally {
-                    streamStore.closeStreamSource(streamSource);
                 }
             }
-        } catch (final RuntimeException e) {
+        } catch (final IOException | RuntimeException e) {
             // Something went wrong extracting data from this stream.
             error("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(), e);
         }
@@ -244,7 +242,7 @@ public class ExtractionTaskHandler {
     /**
      * We do this one by one
      */
-    private void extract(final DocRef pipelineRef, final Pipeline pipeline, final StreamSource source,
+    private void extract(final DocRef pipelineRef, final Pipeline pipeline, final Source source,
                          final SegmentInputStream segmentInputStream, final long count) {
         if (source != null && segmentInputStream != null) {
             if (LOGGER.isDebugEnabled()) {

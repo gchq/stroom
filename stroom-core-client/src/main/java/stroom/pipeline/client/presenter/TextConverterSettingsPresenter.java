@@ -30,7 +30,6 @@ import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConve
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.docref.DocRef;
-import stroom.security.client.ClientSecurityContext;
 
 public class TextConverterSettingsPresenter
         extends DocumentSettingsPresenter<TextConverterSettingsView, TextConverterDoc> {

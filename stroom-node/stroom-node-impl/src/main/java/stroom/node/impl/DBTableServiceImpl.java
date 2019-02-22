@@ -18,8 +18,8 @@ package stroom.node.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.Sort;
-import stroom.entity.shared.Sort.Direction;
+import stroom.util.shared.Sort;
+import stroom.util.shared.Sort.Direction;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;

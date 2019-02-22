@@ -17,7 +17,7 @@
 package stroom.visualisation;
 
 import stroom.docref.DocRef;
-import stroom.importexport.api.ExternalFile;
+import stroom.importexport.shared.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 
 import javax.persistence.Transient;

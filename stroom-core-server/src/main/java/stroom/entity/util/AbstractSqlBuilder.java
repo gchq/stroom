@@ -16,16 +16,16 @@
 
 package stroom.entity.util;
 
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.CriteriaSet;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.HasPrimitiveValue;
+import stroom.util.shared.HasPrimitiveValue;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
-import stroom.entity.shared.PageRequest;
-import stroom.entity.shared.Range;
-import stroom.entity.shared.Sort;
-import stroom.entity.shared.Sort.Direction;
-import stroom.entity.shared.StringCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Range;
+import stroom.util.shared.Sort;
+import stroom.util.shared.Sort.Direction;
+import stroom.util.shared.StringCriteria;
 import stroom.docref.DocRef;
 
 import javax.persistence.Query;

@@ -24,7 +24,7 @@ import stroom.content.client.ContentPlugin;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 
 public abstract class MonitoringPlugin<P extends MyPresenterWidget<?>> extends ContentPlugin<P> {

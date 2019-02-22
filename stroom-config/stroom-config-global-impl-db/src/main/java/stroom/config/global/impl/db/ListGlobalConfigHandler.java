@@ -2,8 +2,8 @@ package stroom.config.global.impl.db;
 
 import stroom.config.global.api.ConfigProperty;
 import stroom.config.global.api.ListGlobalConfigAction;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

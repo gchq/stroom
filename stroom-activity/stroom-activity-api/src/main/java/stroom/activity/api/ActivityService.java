@@ -16,7 +16,9 @@
 
 package stroom.activity.api;
 
-import stroom.entity.shared.BaseResultList;
+import stroom.activity.shared.Activity;
+import stroom.activity.shared.FindActivityCriteria;
+import stroom.util.shared.BaseResultList;
 
 public interface ActivityService {
     Activity create();

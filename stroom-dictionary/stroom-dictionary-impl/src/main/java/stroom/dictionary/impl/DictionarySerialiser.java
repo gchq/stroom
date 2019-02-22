@@ -1,9 +1,9 @@
 package stroom.dictionary.impl;
 
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.docstore.DocumentSerialiser2;
-import stroom.docstore.Serialiser2;
-import stroom.docstore.Serialiser2Factory;
+import stroom.docstore.api.DocumentSerialiser2;
+import stroom.docstore.api.Serialiser2;
+import stroom.docstore.api.Serialiser2Factory;
 import stroom.util.string.EncodingUtil;
 
 import javax.inject.Inject;

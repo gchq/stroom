@@ -26,7 +26,7 @@ import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
-import stroom.entity.shared.PermissionException;
+import stroom.util.shared.PermissionException;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.index.shared.FindIndexShardCriteria;

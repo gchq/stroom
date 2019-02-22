@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.entity.StroomEntityManager;
-import stroom.entity.shared.Period;
+import stroom.util.shared.Period;
 import stroom.entity.util.SqlBuilder;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.ProcessorFilter;

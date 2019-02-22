@@ -17,9 +17,6 @@
 package stroom.index;
 
 import com.google.inject.AbstractModule;
-import stroom.entity.EntityTypeBinder;
-import stroom.entity.FindService;
-import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityEvent;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
@@ -32,6 +29,9 @@ import stroom.index.shared.IndexDoc;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.GuiceUtil;
 import stroom.util.RestResource;
+import stroom.util.entity.EntityTypeBinder;
+import stroom.util.entity.FindService;
+import stroom.util.shared.Clearable;
 
 public class IndexModule extends AbstractModule {
     @Override

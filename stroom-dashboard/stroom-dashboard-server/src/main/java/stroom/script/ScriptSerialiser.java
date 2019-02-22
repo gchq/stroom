@@ -2,10 +2,10 @@ package stroom.script;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docstore.DocumentSerialiser2;
-import stroom.docstore.Serialiser2;
-import stroom.docstore.Serialiser2Factory;
-import stroom.entity.shared.DocRefs;
+import stroom.docstore.api.DocumentSerialiser2;
+import stroom.docstore.api.Serialiser2;
+import stroom.docstore.api.Serialiser2Factory;
+import stroom.util.shared.DocRefs;
 import stroom.util.xml.XMLMarshallerUtil;
 import stroom.script.shared.ScriptDoc;
 import stroom.util.string.EncodingUtil;

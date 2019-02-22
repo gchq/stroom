@@ -18,14 +18,14 @@
 package stroom.meta.impl.db;
 
 import stroom.db.util.JooqUtil;
-import stroom.meta.impl.db.tables.records.MetaProcessorRecord;
+import stroom.meta.impl.db.jooq.tables.records.MetaProcessorRecord;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static stroom.meta.impl.db.tables.MetaProcessor.META_PROCESSOR;
+import static stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
 
 @Singleton
 class MetaProcessorServiceImpl implements MetaProcessorService {

@@ -21,7 +21,7 @@ package stroom.config.global.impl.db;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.global.api.ConfigProperty;
-import stroom.config.impl.db.tables.records.ConfigRecord;
+import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 import stroom.db.util.AuditUtil;
 import stroom.db.util.JooqUtil;
 import stroom.security.Security;
@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import static stroom.config.impl.db.tables.Config.CONFIG;
+import static stroom.config.impl.db.jooq.tables.Config.CONFIG;
 
 @Singleton
 class GlobalConfigServiceImpl implements GlobalConfigService {

@@ -17,7 +17,7 @@
 package stroom.activity.impl.db;
 
 import com.google.inject.Inject;
-import stroom.activity.api.Activity;
+import stroom.activity.shared.Activity;
 import stroom.activity.api.CurrentActivity;
 import stroom.event.logging.api.HttpServletRequestHolder;
 

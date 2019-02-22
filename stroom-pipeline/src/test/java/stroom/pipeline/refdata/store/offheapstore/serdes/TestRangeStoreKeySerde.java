@@ -19,7 +19,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.entity.shared.Range;
+import stroom.util.shared.Range;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 

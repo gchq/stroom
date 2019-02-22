@@ -16,8 +16,8 @@
 
 package stroom.script;
 
-import stroom.entity.shared.DocRefs;
-import stroom.importexport.api.ExternalFile;
+import stroom.util.shared.DocRefs;
+import stroom.importexport.shared.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 
 import javax.persistence.Transient;

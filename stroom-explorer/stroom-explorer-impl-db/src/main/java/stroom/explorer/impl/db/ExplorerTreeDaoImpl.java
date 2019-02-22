@@ -12,8 +12,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static stroom.explorer.impl.db.stroom.tables.ExplorerNode.EXPLORER_NODE;
-import static stroom.explorer.impl.db.stroom.tables.ExplorerPath.EXPLORER_PATH;
+import static stroom.explorer.impl.db.jooq.tables.ExplorerNode.EXPLORER_NODE;
+import static stroom.explorer.impl.db.jooq.tables.ExplorerPath.EXPLORER_PATH;
 
 class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerTreeDaoImpl.class);
@@ -22,10 +22,10 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     private boolean removeReferencedNodes;
     private final ConnectionProvider connectionProvider;
 
-    private final stroom.explorer.impl.db.stroom.tables.ExplorerPath p = EXPLORER_PATH.as("p");
-    private final stroom.explorer.impl.db.stroom.tables.ExplorerPath p1 = EXPLORER_PATH.as("p1");
-    private final stroom.explorer.impl.db.stroom.tables.ExplorerPath p2 = EXPLORER_PATH.as("p2");
-    private final stroom.explorer.impl.db.stroom.tables.ExplorerNode n = EXPLORER_NODE.as("n");
+    private final stroom.explorer.impl.db.jooq.tables.ExplorerPath p = EXPLORER_PATH.as("p");
+    private final stroom.explorer.impl.db.jooq.tables.ExplorerPath p1 = EXPLORER_PATH.as("p1");
+    private final stroom.explorer.impl.db.jooq.tables.ExplorerPath p2 = EXPLORER_PATH.as("p2");
+    private final stroom.explorer.impl.db.jooq.tables.ExplorerNode n = EXPLORER_NODE.as("n");
 
     @Inject
     ExplorerTreeDaoImpl(final ConnectionProvider connectionProvider) {

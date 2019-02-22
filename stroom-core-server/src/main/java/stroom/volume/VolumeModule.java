@@ -19,14 +19,15 @@ package stroom.volume;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.multibindings.OptionalBinder;
-import stroom.entity.EntityTypeBinder;
-import stroom.entity.FindService;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEvent.Handler;
-import stroom.entity.shared.Clearable;
-import stroom.entity.shared.Flushable;
 import stroom.node.shared.VolumeEntity;
-import stroom.statistics.internal.InternalStatisticsReceiver;
+import stroom.statistics.api.InternalStatisticsReceiver;
+import stroom.util.GuiceUtil;
+import stroom.util.entity.EntityTypeBinder;
+import stroom.util.entity.FindService;
+import stroom.util.shared.Clearable;
+import stroom.util.shared.Flushable;
 
 public class VolumeModule extends AbstractModule {
     @Override
@@ -35,8 +36,7 @@ public class VolumeModule extends AbstractModule {
 
         OptionalBinder.newOptionalBinder(binder(), InternalStatisticsReceiver.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(VolumeServiceImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(VolumeServiceImpl.class);
 
         final Multibinder<Flushable> flushableBinder = Multibinder.newSetBinder(binder(), Flushable.class);
         flushableBinder.addBinding().to(VolumeServiceImpl.class);

@@ -19,8 +19,8 @@ package stroom.node.impl;
 import com.google.common.collect.ImmutableMap;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.state.RecordCountService;
-import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatisticKey;
+import stroom.statistics.api.InternalStatisticEvent;
+import stroom.statistics.api.InternalStatisticKey;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;

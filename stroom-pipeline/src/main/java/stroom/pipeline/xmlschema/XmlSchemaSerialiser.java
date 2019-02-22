@@ -1,8 +1,8 @@
 package stroom.pipeline.xmlschema;
 
-import stroom.docstore.DocumentSerialiser2;
-import stroom.docstore.Serialiser2;
-import stroom.docstore.Serialiser2Factory;
+import stroom.docstore.api.DocumentSerialiser2;
+import stroom.docstore.api.Serialiser2;
+import stroom.docstore.api.Serialiser2Factory;
 import stroom.util.string.EncodingUtil;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 

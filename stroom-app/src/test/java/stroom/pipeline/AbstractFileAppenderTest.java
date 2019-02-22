@@ -19,9 +19,9 @@ package stroom.pipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.pipeline.scope.PipelineScopeRunnable;
-import stroom.test.ComparisonHelper;
-import stroom.test.StroomPipelineTestFileUtil;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.test.common.ComparisonHelper;
+import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;

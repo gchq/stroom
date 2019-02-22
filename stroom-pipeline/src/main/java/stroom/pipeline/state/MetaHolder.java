@@ -16,29 +16,16 @@
 
 package stroom.pipeline.state;
 
+import stroom.data.store.api.InputStreamProvider;
 import stroom.meta.shared.Meta;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamSourceInputStreamProvider;
-import stroom.pipeline.scope.PipelineScoped;
-import stroom.io.StreamCloser;
-
-import javax.inject.Inject;
-import java.util.HashMap;
-import java.util.Map;
+import stroom.util.pipeline.scope.PipelineScoped;
 
 @PipelineScoped
 public class MetaHolder implements Holder {
-    private final Map<String, StreamSourceInputStreamProvider> streamProviders = new HashMap<>();
-
-    private final StreamCloser streamCloser;
+    private InputStreamProvider inputStreamProvider;
 
     private Meta meta;
     private long streamNo;
-
-    @Inject
-    public MetaHolder(final StreamCloser streamCloser) {
-        this.streamCloser = streamCloser;
-    }
 
     public Meta getMeta() {
         return meta;
@@ -48,22 +35,12 @@ public class MetaHolder implements Holder {
         this.meta = meta;
     }
 
-    public void addProvider(final StreamSource source, final String streamType) {
-        if (source != null) {
-            streamCloser.add(source);
-            addProvider(source.getInputStreamProvider(), streamType);
-        }
+    public void setInputStreamProvider(final InputStreamProvider inputStreamProvider) {
+        this.inputStreamProvider = inputStreamProvider;
     }
 
-    public void addProvider(final StreamSourceInputStreamProvider provider, final String streamType) {
-        if (provider != null) {
-            streamCloser.add(provider);
-            streamProviders.put(streamType, provider);
-        }
-    }
-
-    public StreamSourceInputStreamProvider getProvider(final String streamType) {
-        return streamProviders.get(streamType);
+    public InputStreamProvider getInputStreamProvider() {
+        return inputStreamProvider;
     }
 
     public long getStreamNo() {
