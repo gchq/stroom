@@ -336,7 +336,8 @@ swagger {
                 //'stroom.dictionary.DictionaryResource2',
                 //'stroom.ruleset.RuleSetResource',
                 //'stroom.ruleset.RuleSetResource2',
-                'stroom.security.AuthorisationResource'
+                'stroom.security.AuthorisationResource',
+                'stroom.util.RestResource'
         ]
         schemes = ['http', 'https']
         host = 'localhost:8080'
