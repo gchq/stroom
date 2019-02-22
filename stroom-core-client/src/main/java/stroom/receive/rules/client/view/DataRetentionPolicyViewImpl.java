@@ -15,32 +15,27 @@
  *
  */
 
-package stroom.receive.rules.impl.client.view;
+package stroom.receive.rules.client.view;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.ProvidesResize;
-import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.receive.rules.impl.client.presenter.EditExpressionPresenter.EditExpressionView;
-import stroom.svg.client.SvgPreset;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
+import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
 
-public class EditExpressionViewImpl extends ViewImpl implements EditExpressionView, RequiresResize, ProvidesResize {
+public class DataRetentionPolicyViewImpl extends ViewImpl implements DataRetentionPolicyView {
     private final Widget widget;
 
     @UiField
-    ResizeSimplePanel expressionTree;
+    SimplePanel table;
     @UiField
-    ButtonPanel buttonPanel;
+    SimplePanel expression;
 
     @Inject
-    public EditExpressionViewImpl(final Binder binder) {
+    public DataRetentionPolicyViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -50,20 +45,15 @@ public class EditExpressionViewImpl extends ViewImpl implements EditExpressionVi
     }
 
     @Override
-    public void onResize() {
-        ((RequiresResize) widget).onResize();
-    }
-
-    @Override
-    public ButtonView addButton(final SvgPreset preset) {
-        return buttonPanel.add(preset);
+    public void setTableView(final View view) {
+        this.table.setWidget(view.asWidget());
     }
 
     @Override
     public void setExpressionView(final View view) {
-        expressionTree.setWidget(view.asWidget());
+        this.expression.setWidget(view.asWidget());
     }
 
-    public interface Binder extends UiBinder<Widget, EditExpressionViewImpl> {
+    public interface Binder extends UiBinder<Widget, DataRetentionPolicyViewImpl> {
     }
 }

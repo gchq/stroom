@@ -59,7 +59,7 @@ import stroom.monitoring.client.gin.MonitoringModule;
 import stroom.pipeline.client.gin.PipelineGinjector;
 import stroom.pipeline.client.gin.PipelineModule;
 import stroom.query.client.QueryModule;
-import stroom.receive.rules.impl.client.gin.PolicyModule;
+import stroom.receive.rules.client.gin.PolicyModule;
 import stroom.script.client.gin.ScriptGinjector;
 import stroom.script.client.gin.ScriptModule;
 import stroom.security.client.gin.SecurityGinjector;

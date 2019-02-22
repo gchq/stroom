@@ -15,27 +15,32 @@
  *
  */
 
-package stroom.receive.rules.impl.client.view;
+package stroom.receive.rules.client.view;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.ProvidesResize;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.receive.rules.impl.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
+import stroom.receive.rules.client.presenter.EditExpressionPresenter.EditExpressionView;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
 
-public class RuleSetSettingsViewImpl extends ViewImpl implements RuleSetSettingsView {
+public class EditExpressionViewImpl extends ViewImpl implements EditExpressionView, RequiresResize, ProvidesResize {
     private final Widget widget;
 
     @UiField
-    SimplePanel table;
+    ResizeSimplePanel expressionTree;
     @UiField
-    SimplePanel expression;
+    ButtonPanel buttonPanel;
 
     @Inject
-    public RuleSetSettingsViewImpl(final Binder binder) {
+    public EditExpressionViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -45,15 +50,20 @@ public class RuleSetSettingsViewImpl extends ViewImpl implements RuleSetSettings
     }
 
     @Override
-    public void setTableView(final View view) {
-        this.table.setWidget(view.asWidget());
+    public void onResize() {
+        ((RequiresResize) widget).onResize();
+    }
+
+    @Override
+    public ButtonView addButton(final SvgPreset preset) {
+        return buttonPanel.add(preset);
     }
 
     @Override
     public void setExpressionView(final View view) {
-        this.expression.setWidget(view.asWidget());
+        expressionTree.setWidget(view.asWidget());
     }
 
-    public interface Binder extends UiBinder<Widget, RuleSetSettingsViewImpl> {
+    public interface Binder extends UiBinder<Widget, EditExpressionViewImpl> {
     }
 }

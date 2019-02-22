@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.receive.rules.impl.client.gin;
+package stroom.receive.rules.client.gin;
 
 public interface PolicyGinjector {
 }

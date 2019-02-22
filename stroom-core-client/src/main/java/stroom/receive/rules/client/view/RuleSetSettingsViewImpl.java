@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.receive.rules.impl.client.view;
+package stroom.receive.rules.client.view;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -24,9 +24,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.receive.rules.impl.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
+import stroom.receive.rules.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
 
-public class DataRetentionPolicyViewImpl extends ViewImpl implements DataRetentionPolicyView {
+public class RuleSetSettingsViewImpl extends ViewImpl implements RuleSetSettingsView {
     private final Widget widget;
 
     @UiField
@@ -35,7 +35,7 @@ public class DataRetentionPolicyViewImpl extends ViewImpl implements DataRetenti
     SimplePanel expression;
 
     @Inject
-    public DataRetentionPolicyViewImpl(final Binder binder) {
+    public RuleSetSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -54,6 +54,6 @@ public class DataRetentionPolicyViewImpl extends ViewImpl implements DataRetenti
         this.expression.setWidget(view.asWidget());
     }
 
-    public interface Binder extends UiBinder<Widget, DataRetentionPolicyViewImpl> {
+    public interface Binder extends UiBinder<Widget, RuleSetSettingsViewImpl> {
     }
 }

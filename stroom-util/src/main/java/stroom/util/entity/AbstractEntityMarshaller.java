@@ -19,7 +19,7 @@ package stroom.util.entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.entity.shared.MarshallableEntity;
+import stroom.util.shared.MarshallableEntity;
 import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;

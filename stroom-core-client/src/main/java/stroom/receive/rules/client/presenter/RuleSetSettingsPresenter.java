@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.receive.rules.impl.client.presenter;
+package stroom.receive.rules.client.presenter;
 
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.inject.Inject;
@@ -36,7 +36,7 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.receive.rules.impl.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
+import stroom.receive.rules.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
 import stroom.receive.rules.shared.RuleAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;

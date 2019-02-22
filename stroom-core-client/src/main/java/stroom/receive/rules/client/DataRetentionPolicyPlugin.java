@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.receive.rules.impl.client;
+package stroom.receive.rules.client;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -24,7 +24,7 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.monitoring.client.MonitoringPlugin;
-import stroom.receive.rules.impl.client.presenter.DataRetentionPolicyPresenter;
+import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;

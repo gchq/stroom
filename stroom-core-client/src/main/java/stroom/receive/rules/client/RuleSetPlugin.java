@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.receive.rules.impl.client;
+package stroom.receive.rules.client;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -26,7 +26,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.docref.DocRef;
-import stroom.receive.rules.impl.client.presenter.RuleSetPresenter;
+import stroom.receive.rules.client.presenter.RuleSetPresenter;
 import stroom.receive.rules.shared.ReceiveDataRules;
 
 public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {

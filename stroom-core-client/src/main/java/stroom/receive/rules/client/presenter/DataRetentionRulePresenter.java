@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.receive.rules.impl.client.presenter;
+package stroom.receive.rules.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -25,7 +25,7 @@ import stroom.data.retention.shared.TimeUnit;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.receive.rules.impl.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
+import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.datasource.shared.FetchFieldsAction;

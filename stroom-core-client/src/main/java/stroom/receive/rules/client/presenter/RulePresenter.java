@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.receive.rules.impl.client.presenter;
+package stroom.receive.rules.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -24,7 +24,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.receive.rules.impl.client.presenter.RulePresenter.RuleView;
+import stroom.receive.rules.client.presenter.RulePresenter.RuleView;
 import stroom.receive.rules.shared.RuleAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
 

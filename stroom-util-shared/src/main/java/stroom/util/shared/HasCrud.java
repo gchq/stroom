@@ -1,4 +1,4 @@
-package stroom.entity.shared;
+package stroom.util.shared;
 
 import java.util.Optional;
 

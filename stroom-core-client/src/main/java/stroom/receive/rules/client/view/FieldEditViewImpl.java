@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.receive.rules.impl.client.view;
+package stroom.receive.rules.client.view;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -25,7 +25,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.item.client.ItemListBox;
-import stroom.receive.rules.impl.client.presenter.FieldEditPresenter.FieldEditView;
+import stroom.receive.rules.client.presenter.FieldEditPresenter.FieldEditView;
 
 public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
     private final Widget widget;

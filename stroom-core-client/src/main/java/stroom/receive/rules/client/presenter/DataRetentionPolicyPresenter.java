@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.receive.rules.impl.client.presenter;
+package stroom.receive.rules.client.presenter;
 
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.inject.Inject;

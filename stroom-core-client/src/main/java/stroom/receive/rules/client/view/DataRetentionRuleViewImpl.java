@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.receive.rules.impl.client.view;
+package stroom.receive.rules.client.view;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -31,7 +31,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.item.client.ItemListBox;
-import stroom.receive.rules.impl.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
+import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

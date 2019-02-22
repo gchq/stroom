@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.receive.rules.impl.client.view;
+package stroom.receive.rules.client.view;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -26,7 +26,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.item.client.ItemListBox;
-import stroom.receive.rules.impl.client.presenter.RulePresenter.RuleView;
+import stroom.receive.rules.client.presenter.RulePresenter.RuleView;
 import stroom.receive.rules.shared.RuleAction;
 
 public class RuleViewImpl extends ViewImpl implements RuleView {

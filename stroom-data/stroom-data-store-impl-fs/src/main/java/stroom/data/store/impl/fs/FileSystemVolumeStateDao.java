@@ -3,7 +3,7 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FileVolumeStateRecord;
 import stroom.data.store.impl.fs.shared.FSVolumeState;
 import stroom.db.util.GenericDao;
-import stroom.entity.shared.HasIntCrud;
+import stroom.util.shared.HasIntCrud;
 
 import javax.inject.Inject;
 import java.util.Optional;
