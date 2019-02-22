@@ -179,7 +179,7 @@ if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
     fi
 else
     #Normal commit/PR/tag build
-    local extraBuildArgs=()
+    extraBuildArgs=()
 
     if [ -n "$TRAVIS_TAG" ]; then
         doDockerBuild=true
