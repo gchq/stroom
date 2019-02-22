@@ -14,34 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.job;
+package stroom.cluster.lock.impl.db;
 
-import stroom.cluster.lock.api.ClusterLockService;
-import stroom.persist.EntityManagerSupport;
-
-import javax.inject.Inject;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-public class ClusterLockServiceInnerTransactions {
-    private final ClusterLockService clusterLockService;
-    private final EntityManagerSupport entityManagerSupport;
+class DbClusterLockThreads {
+    private final DbClusterLock dbClusterLock;
     private final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-    @Inject
-    ClusterLockServiceInnerTransactions(final ClusterLockService clusterLockService,
-                                        final EntityManagerSupport entityManagerSupport) {
-        this.clusterLockService = clusterLockService;
-        this.entityManagerSupport = entityManagerSupport;
+    DbClusterLockThreads(final DbClusterLock dbClusterLock) {
+        this.dbClusterLock = dbClusterLock;
     }
 
-    public void thread1(final String lock, final List<Integer> sequence) {
-        entityManagerSupport.transaction(entityManager -> {
-            // This thread should acquire the lock first stopping the second
-            // thread from adding to the sequence until after this thread
-            // completes.
-            sequence.add(1);
-            clusterLockService.lock(lock);
+    void thread1(final String lock, final List<Integer> sequence) {
+        // This thread should acquire the lock first stopping the second
+        // thread from adding to the sequence until after this thread
+        // completes.
+        sequence.add(1);
+        dbClusterLock.lock(lock, () -> {
             try {
                 countDownLatch.countDown();
                 Thread.sleep(100);
@@ -55,8 +46,7 @@ public class ClusterLockServiceInnerTransactions {
         });
     }
 
-    public void thread2(final String lock, final List<Integer> sequence) {
-        entityManagerSupport.transaction(entityManager -> {
+    void thread2(final String lock, final List<Integer> sequence) {
             try {
                 countDownLatch.await();
             } catch (final InterruptedException e) {
@@ -66,7 +56,7 @@ public class ClusterLockServiceInnerTransactions {
                 throw new RuntimeException(e.getMessage(), e);
             }
 
-            clusterLockService.lock(lock);
+        dbClusterLock.lock(lock, () -> {
             sequence.add(3);
         });
     }

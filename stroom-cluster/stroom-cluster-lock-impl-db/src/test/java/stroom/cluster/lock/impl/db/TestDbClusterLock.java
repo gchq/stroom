@@ -14,37 +14,35 @@
  * limitations under the License.
  */
 
-package stroom.job;
+package stroom.cluster.lock.impl.db;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestClusterLockService extends AbstractCoreIntegrationTest {
-    @Inject
-    private ClusterLockServiceInnerTransactions testClusterLockServiceTransaction;
-
+class TestDbClusterLock {
     @Test
     void test() throws InterruptedException {
+        final DbClusterLock dbClusterLock = new DbClusterLock(new ClusterLockDbModule().getConnectionProvider(ClusterLockConfig::new));
+        final DbClusterLockThreads dbClusterLockThreads = new DbClusterLockThreads(dbClusterLock);
+
         final CountDownLatch countDownLatch = new CountDownLatch(2);
         final List<Integer> sequence = new ArrayList<>(3);
 
         // This thread should acquire the lock first stopping the second thread
         // from adding to the sequence until after this thread completes.
         final Thread thread1 = new Thread(() -> {
-            testClusterLockServiceTransaction.thread1("TEST", sequence);
+            dbClusterLockThreads.thread1("TEST", sequence);
             countDownLatch.countDown();
         });
 
         final Thread thread2 = new Thread(() -> {
-            testClusterLockServiceTransaction.thread2("TEST", sequence);
+            dbClusterLockThreads.thread2("TEST", sequence);
             countDownLatch.countDown();
         });
 

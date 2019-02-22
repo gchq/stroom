@@ -13,6 +13,7 @@ public class MockClusterLockService implements ClusterLockService {
     }
 
     @Override
-    public void lock(final String lockName) {
+    public void lock(final String lockName, final Runnable runnable) {
+        runnable.run();
     }
 }

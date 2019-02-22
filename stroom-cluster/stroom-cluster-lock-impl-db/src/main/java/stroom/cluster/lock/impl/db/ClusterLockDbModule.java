@@ -27,9 +27,8 @@ public class ClusterLockDbModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ClusterLockService.class).to(ClusterLockServiceImpl.class);
-        bind(ClusterLockServiceTransactionHelper.class).to(ClusterLockServiceTransactionHelperImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ClusterLockServiceTransactionHelperImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(DbClusterLock.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(ClusterLockClusterTask.class, ClusterLockClusterHandler.class)
