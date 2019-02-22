@@ -43,11 +43,11 @@ create_file_hash() {
 }
 
 generate_file_hashes() {
-   for zip_file in "${TRAVIS_BUILD_DIR}/${DISTRIBUTIONS_DIR}"/stroom-app-*.zip; do
-       create_file_hash "${zip_file}"
+   for file in "${TRAVIS_BUILD_DIR}/${DISTRIBUTIONS_DIR}"/*.zip; do
+       create_file_hash "${file}"
    done
-   for jar_file in "${TRAVIS_BUILD_DIR}/${JARS_DIR}"/*.jar; do
-       create_file_hash "${jar_file}"
+   for file in "${TRAVIS_BUILD_DIR}/${JARS_DIR}"/*.jar; do
+       create_file_hash "${file}"
    done
 }
 
