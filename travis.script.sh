@@ -9,6 +9,8 @@ GITHUB_REPO="gchq/stroom"
 GITHUB_API_URL="https://api.github.com/repos/gchq/stroom/releases"
 STROOM_DOCKER_CONTEXT_ROOT="stroom-app/docker/."
 STROOM_PROXY_DOCKER_CONTEXT_ROOT="stroom-app/proxy-docker/."
+DISTRIBUTIONS_DIR="stroom-app/build/distributions"
+JARS_DIR="stroom-app/build/libs"
 VERSION_FIXED_TAG=""
 SNAPSHOT_FLOATING_TAG=""
 MAJOR_VER_FLOATING_TAG=""
@@ -24,19 +26,29 @@ doDockerBuild=false
 #e.g.  echo -e "My message ${GREEN}with just this text in green${NC}"
 # shellcheck disable=SC2034
 {
-  RED='\033[1;31m'
-  GREEN='\033[1;32m'
-  YELLOW='\033[1;33m'
-  BLUE='\033[1;34m'
-  NC='\033[0m' # No Colour 
+    RED='\033[1;31m'
+    GREEN='\033[1;32m'
+    YELLOW='\033[1;33m'
+    BLUE='\033[1;34m'
+    NC='\033[0m' # No Colour 
 }
 
 create_file_hash() {
     local -r file="$1"
-    local -r hash_file="${file}.md5"
+    local -r hash_file="${file}.sha256"
 
-    echo -e "Creating MD5 hash file ${GREEN}${hash_file}${NC}"
-    md5sum "${file}" > "${hash_file}"
+    echo -e "Creating a SHA-256 hash for file ${GREEN}${file}${NC}"
+    sha256sum "${file}" > "${hash_file}"
+    echo -e "Created hash file ${GREEN}${hash_file}${NC}"
+}
+
+generate_file_hashes() {
+   for zip_file in "${TRAVIS_BUILD_DIR}/${DISTRIBUTIONS_DIR}"/stroom-app-*.zip; do
+       create_file_hash "${zip_file}"
+   done
+   for jar_file in "${TRAVIS_BUILD_DIR}/${JARS_DIR}"/*.jar; do
+       create_file_hash "${jar_file}"
+   done
 }
 
 createGitTag() {
@@ -216,6 +228,8 @@ else
       build \
       buildDistribution \
       "${extraBuildArgs[@]}"
+
+    generate_file_hashes
 
     #Don't do a docker build for pull requests
     if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then

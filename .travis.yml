@@ -43,10 +43,11 @@ deploy:
     file_glob: true # this needs to be turned on for wildcards to work
     file:
       - stroom-app/build/distributions/stroom-app-*.zip
-      - stroom-app/build/libs/stroom-app-all.jar
+      - stroom-app/build/distributions/stroom-app-*.zip.sha256
       - stroom-app/src/main/resources/ui/swagger/swagger.json
       - stroom-app/src/main/resources/ui/swagger/swagger.yaml
       - stroom-headless/build/libs/stroom-headless-all.jar
+      - stroom-headless/build/libs/stroom-headless-all.jar.sha256
     skip_cleanup: true
     on:
       tags: true
