@@ -21,12 +21,8 @@ package stroom.index;
 import org.junit.jupiter.api.Test;
 import stroom.index.service.IndexShardService;
 import stroom.index.service.IndexVolumeService;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexShardKey;
+
 import stroom.node.api.NodeInfo;
-import stroom.node.shared.Node;
-import stroom.util.date.DateUtil;
-import stroom.volume.VolumeService;
 
 import javax.inject.Inject;
 
@@ -37,8 +33,6 @@ class TestIndexShardServiceImpl {
     private IndexShardService indexShardService;
     @Inject
     private NodeInfo nodeInfo;
-    @Inject
-    private VolumeService volumeService;
     @Inject
     private IndexVolumeService indexVolumeService;
 
@@ -140,10 +134,10 @@ class TestIndexShardServiceImpl {
 //            lastShard = indexShard;
 //        }
     }
-
-    private void createShard(final IndexDoc index, final Node node, final String dateTime, final int shardNo) {
-        final long timeMs = DateUtil.parseNormalDateTimeString(dateTime);
-        final IndexShardKey key = IndexShardKeyUtil.createTimeBasedKey(index, timeMs, shardNo);
-        indexShardService.createIndexShard(key, node.getName());
-    }
+//
+//    private void createShard(final IndexDoc index, final Node node, final String dateTime, final int shardNo) {
+//        final long timeMs = DateUtil.parseNormalDateTimeString(dateTime);
+//        final IndexShardKey key = IndexShardKeyUtil.createTimeBasedKey(index, timeMs, shardNo);
+//        indexShardService.createIndexShard(key, node.getName());
+//    }
 }

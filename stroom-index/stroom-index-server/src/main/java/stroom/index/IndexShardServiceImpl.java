@@ -17,25 +17,18 @@
 
 package stroom.index;
 
-import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
-import stroom.entity.CriteriaLoggingUtil;
-import stroom.entity.QueryAppender;
-import stroom.entity.StroomEntityManager;
-import stroom.entity.SystemEntityServiceImpl;
+import stroom.index.dao.IndexShardDao;
+import stroom.index.service.IndexShardService;
+import stroom.index.service.IndexVolumeService;
+
+import stroom.index.shared.IndexShardKey;
 import stroom.util.shared.PermissionException;
-import stroom.entity.util.FieldMap;
-import stroom.entity.util.HqlBuilder;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
-import stroom.volume.VolumeService;
-import stroom.node.shared.Node;
-import stroom.node.shared.VolumeEntity;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -44,92 +37,54 @@ import stroom.security.shared.PermissionNames;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
-import java.util.Set;
 
 @Singleton
-public class IndexShardServiceImpl
-        extends SystemEntityServiceImpl<IndexShard, FindIndexShardCriteria> implements IndexShardService {
+public class IndexShardServiceImpl implements IndexShardService {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardServiceImpl.class);
 
     private static final String VOLUME_ERROR = "One or more volumes must been assigned to an index for a shard to be created";
 
     private final Security security;
-    private final VolumeService volumeService;
+    private final IndexShardDao indexShardDao;
     private final IndexVolumeService indexVolumeService;
     private final IndexStructureCache indexStructureCache;
     private final SecurityContext securityContext;
 
     @Inject
-    IndexShardServiceImpl(final StroomEntityManager entityManager,
-                          final Security security,
-                          final VolumeService volumeService,
+    IndexShardServiceImpl(final Security security,
+                          final IndexShardDao indexShardDao,
                           final IndexVolumeService indexVolumeService,
                           final IndexStructureCache indexStructureCache,
                           final SecurityContext securityContext) {
-        super(entityManager, security);
         this.security = security;
-        this.volumeService = volumeService;
+        this.indexShardDao = indexShardDao;
         this.indexVolumeService = indexVolumeService;
         this.indexStructureCache = indexStructureCache;
         this.securityContext = securityContext;
     }
 
     @Override
-    public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
-        final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
-        final IndexDoc index = indexStructure.getIndex();
-        final Set<VolumeEntity> allowedVolumes = indexVolumeService.getVolumesForIndex(DocRefUtil.create(index));
-        if (allowedVolumes == null || allowedVolumes.size() == 0) {
-            LOGGER.debug(VOLUME_ERROR);
-            throw new IndexException(VOLUME_ERROR);
-        }
-
-        final Set<VolumeEntity> volumes = volumeService.getIndexVolumeSet(ownerNode, allowedVolumes);
-
-        // The first set should be a set of cache volumes unless no caches have
-        // been defined or they are full.
-        VolumeEntity volume = null;
-
-        if (volumes != null && volumes.size() > 0) {
-            volume = volumes.iterator().next();
-        }
-        if (volume == null) {
-            throw new IndexException("No shard can be created as no volumes are available for index: " + index.getName()
-                    + " (" + index.getUuid() + ")");
-        }
-
-        final IndexShard indexShard = new IndexShard();
-        indexShard.setIndexUuid(index.getUuid());
-        indexShard.setNode(ownerNode);
-        indexShard.setPartition(indexShardKey.getPartition());
-        indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
-        indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
-        indexShard.setVolume(volume);
-        indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
-
-        return save(indexShard);
+    public IndexShard loadById(final Long id) {
+        return security.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION,
+                () -> indexShardDao.loadById(id));
     }
 
     @Override
-    public Class<IndexShard> getEntityClass() {
-        return IndexShard.class;
+    public List<IndexShard> find(final FindIndexShardCriteria criteria) {
+        return null;
     }
 
     @Override
-    public FindIndexShardCriteria createCriteria() {
-        return new FindIndexShardCriteria();
-    }
+    public IndexShard createIndexShard(final IndexShardKey indexShardKey,
+                                       final String ownerNodeName) {
 
-    @Override
-    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindIndexShardCriteria criteria) {
-        CriteriaLoggingUtil.appendRangeTerm(items, "documentCountRange", criteria.getDocumentCountRange());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "nodeIdSet", criteria.getNodeIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "volumeIdSet", criteria.getVolumeIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "indexIdSet", criteria.getIndexShardSet());
-        CriteriaLoggingUtil.appendCriteriaSet(items, "indexShardStatusSet", criteria.getIndexShardStatusSet());
-        CriteriaLoggingUtil.appendStringTerm(items, "partition", criteria.getPartition().getString());
+        return security.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION,
+            () -> {
+                final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+                final IndexDoc index = indexStructure.getIndex();
 
-        super.appendCriteria(items, criteria);
+                return indexShardDao.create(indexShardKey, index.getVolumeGroupName(), ownerNodeName, LuceneVersionUtil.getCurrentVersion());
+            });
     }
 
     @Override
@@ -139,56 +94,19 @@ public class IndexShardServiceImpl
                 throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete index shard");
             }
 
-            return super.delete(entity);
+            indexShardDao.delete(entity.getId());
+
+            return Boolean.TRUE;
         });
     }
 
     @Override
-    protected QueryAppender<IndexShard, FindIndexShardCriteria> createQueryAppender(StroomEntityManager entityManager) {
-        return new IndexShardQueryAppender(entityManager);
-    }
-
-    @Override
-    protected FieldMap createFieldMap() {
-        return super.createFieldMap()
-                .add(FindIndexShardCriteria.FIELD_PARTITION, IndexShard.PARTITION, "partition");
-    }
-
-    @Override
-    protected String permission() {
+    public Boolean setStatus(Long id, IndexShard.IndexShardStatus status) {
         return null;
     }
 
-    private static class IndexShardQueryAppender extends QueryAppender<IndexShard, FindIndexShardCriteria> {
-        IndexShardQueryAppender(final StroomEntityManager entityManager) {
-            super(entityManager);
-        }
+    @Override
+    public void update(long indexShardId, Integer documentCount, Long commitDurationMs, Long commitMs, Long fileSize) {
 
-        @Override
-        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
-            super.appendBasicJoin(sql, alias, fetchSet);
-            if (fetchSet != null) {
-                if (fetchSet.contains(Node.ENTITY_TYPE)) {
-                    sql.append(" INNER JOIN FETCH " + alias + ".node");
-                }
-                if (fetchSet.contains(VolumeEntity.ENTITY_TYPE)) {
-                    sql.append(" INNER JOIN FETCH " + alias + ".volume");
-                }
-            }
-        }
-
-        @Override
-        protected void appendBasicCriteria(final HqlBuilder sql, final String alias,
-                                           final FindIndexShardCriteria criteria) {
-            super.appendBasicCriteria(sql, alias, criteria);
-
-            sql.appendDocRefSetQuery(alias + ".indexUuid", criteria.getIndexSet());
-            sql.appendEntityIdSetQuery(alias, criteria.getIndexShardSet());
-            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
-            sql.appendEntityIdSetQuery(alias + ".volume", criteria.getVolumeIdSet());
-            sql.appendPrimitiveValueSetQuery(alias + ".pstatus", criteria.getIndexShardStatusSet());
-            sql.appendRangeQuery(alias + ".documentCount", criteria.getDocumentCountRange());
-            sql.appendValueQuery(alias + ".partition", criteria.getPartition());
-        }
     }
 }

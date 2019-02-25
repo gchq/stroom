@@ -17,14 +17,17 @@
 
 package stroom.index;
 
-import stroom.entity.MockEntityService;
+
+import stroom.docref.DocRef;
+import stroom.index.service.IndexShardService;
+import stroom.index.shared.IndexShardKey;
 import stroom.util.shared.BaseResultList;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
 import java.nio.file.Files;
@@ -35,7 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
 public class MockIndexShardService
-        implements IndexShardService {
+        implements IndexShardService, Clearable {
 
     protected final Map<Object, IndexShard> map = new ConcurrentHashMap<>();
     private final AtomicLong currentId = new AtomicLong();
@@ -112,7 +115,16 @@ public class MockIndexShardService
     }
 
     @Override
-    public void update(long indexShardId, Integer documentCount, Long commitDurationMs, Long commitMs, Long fileSize) {
+    public void update(final long indexShardId,
+                       final Integer documentCount,
+                       final Long commitDurationMs,
+                       final Long commitMs,
+                       final Long fileSize) {
+
+    }
+
+    @Override
+    public void clear() {
 
     }
 }

@@ -4,9 +4,9 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
-import stroom.entity.shared.DocRefs;
 import stroom.importexport.api.OldDocumentData;
 import stroom.index.shared.IndexDoc;
+import stroom.util.shared.DocRefs;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;

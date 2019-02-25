@@ -19,6 +19,7 @@ package stroom.index;
 import org.apache.lucene.document.Document;
 import stroom.index.shared.IndexShardKey;
 
+
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;

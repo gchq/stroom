@@ -18,6 +18,7 @@ package stroom.index;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.store.AlreadyClosedException;
+
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;

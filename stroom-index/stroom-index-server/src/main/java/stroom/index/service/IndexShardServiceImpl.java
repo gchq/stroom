@@ -23,6 +23,7 @@ import stroom.index.IndexStructure;
 import stroom.index.IndexStructureCache;
 import stroom.index.LuceneVersionUtil;
 import stroom.index.dao.IndexShardDao;
+
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;

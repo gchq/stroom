@@ -2,12 +2,12 @@ package stroom.index.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import stroom.docref.DocRef;
-import stroom.entity.shared.DocRefs;
 import stroom.importexport.api.OldDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.IndexStore;
 import stroom.index.shared.IndexDoc;
+import stroom.util.shared.DocRefs;
 import stroom.util.string.EncodingUtil;
 
 import javax.inject.Inject;

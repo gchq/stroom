@@ -20,9 +20,12 @@ package stroom.index;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
+import stroom.docref.DocRef;
+import stroom.index.shared.IndexField;
 import stroom.util.shared.Clearable;
 import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 
 import javax.inject.Inject;

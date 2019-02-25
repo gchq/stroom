@@ -1,10 +1,12 @@
 package stroom.index.service;
 
 import stroom.index.shared.IndexVolume;
+import stroom.util.shared.Clearable;
+import stroom.util.shared.Flushable;
 
 import java.util.List;
 
-public interface IndexVolumeService {
+public interface IndexVolumeService extends Clearable, Flushable {
 
     /**
      * Given an owning node and path, create a new index volume.

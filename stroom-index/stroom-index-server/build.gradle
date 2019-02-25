@@ -12,6 +12,7 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-importexport:stroom-importexport-migration')
+    implementation project(':stroom-index:stroom-index-api')
     implementation project(':stroom-index:stroom-index-impl-db')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-node:stroom-node-api')
@@ -44,7 +45,6 @@ dependencies {
     implementation libs.xml_apis
 
     testImplementation project(':stroom-test-common')
-    implementation project(':stroom-index:stroom-index-impl-mock')
 
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api

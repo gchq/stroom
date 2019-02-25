@@ -62,4 +62,14 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
         security.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeDao.delete(id));
     }
+
+    @Override
+    public void clear() {
+
+    }
+
+    @Override
+    public void flush() {
+
+    }
 }

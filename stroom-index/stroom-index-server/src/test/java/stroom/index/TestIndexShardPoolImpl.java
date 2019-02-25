@@ -21,14 +21,16 @@ import org.apache.lucene.document.Field;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import stroom.index.service.IndexShardService;
+import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexVolume;
 import stroom.node.shared.Node;
-import stroom.node.shared.VolumeEntity;
-import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.io.FileUtil;
 
@@ -104,14 +106,27 @@ class TestIndexShardPoolImpl {
         final Node defaultNode = new Node();
         defaultNode.setName("TEST");
 
-        final MockIndexShardService mockIndexShardService = new MockIndexShardService() {
+        final IndexShardService mockIndexShardService = new IndexShardService() {
             @Override
-            public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node node) {
+            public IndexShard loadById(Long id) {
+                return null;
+            }
+
+            @Override
+            public List<IndexShard> find(FindIndexShardCriteria criteria) {
+                return null;
+            }
+
+            @Override
+            public IndexShard createIndexShard(IndexShardKey indexShardKey, String ownerNodeName) {
                 indexShardsCreated.incrementAndGet();
 
-                VolumeEntity volumeEntity;
+                IndexVolume volumeEntity;
                 try {
-                    volumeEntity = VolumeEntity.create(defaultNode, FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")), VolumeType.PUBLIC);
+                    volumeEntity = new IndexVolume.Builder()
+                            .nodeName(defaultNode.getName())
+                            .path(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")))
+                            .build();
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -122,18 +137,74 @@ class TestIndexShardPoolImpl {
                 indexShard.setPartition(indexShardKey.getPartition());
                 indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
                 indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
-                indexShard.setNodeName(node.getName());
+                indexShard.setNodeName(ownerNodeName);
                 indexShard.setId(indexShardId.incrementAndGet());
                 indexShard.setVolume(volumeEntity);
                 indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
                 FileUtil.deleteContents(IndexShardUtil.getIndexPath(indexShard));
                 return indexShard;
             }
+
+            @Override
+            public Boolean delete(IndexShard entity) {
+                return null;
+            }
+
+            @Override
+            public Boolean setStatus(Long id, IndexShard.IndexShardStatus status) {
+                return null;
+            }
+
+            @Override
+            public void update(long indexShardId, Integer documentCount, Long commitDurationMs, Long commitMs, Long fileSize) {
+
+            }
         };
 
 //        Mockito.when(nodeInfo.getThisNode()).thenReturn(defaultNode);
 
-        final IndexShardWriterCache indexShardWriterCache = new MockIndexShardWriterCache(mockIndexShardService, maxDocumentsPerIndexShard);
+        //new MockIndexShardWriterCache(mockIndexShardService, maxDocumentsPerIndexShard)
+        final IndexShardWriterCache indexShardWriterCache = new IndexShardWriterCache() {
+            @Override
+            public IndexShardWriter getWriterByShardId(long indexShardId) {
+                return null;
+            }
+
+            @Override
+            public IndexShardWriter getWriterByShardKey(IndexShardKey indexShardKey) {
+                return null;
+            }
+
+            @Override
+            public void sweep() {
+
+            }
+
+            @Override
+            public void flush(long indexShardId) {
+
+            }
+
+            @Override
+            public void flushAll() {
+
+            }
+
+            @Override
+            public void close(IndexShardWriter indexShardWriter) {
+
+            }
+
+            @Override
+            public void delete(long indexShardId) {
+
+            }
+
+            @Override
+            public void shutdown() {
+
+            }
+        };
         final Indexer indexer = new IndexerImpl(indexShardWriterCache, null);
 
         indexShardsCreated.set(0);

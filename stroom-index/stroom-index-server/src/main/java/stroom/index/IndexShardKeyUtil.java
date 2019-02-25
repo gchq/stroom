@@ -16,6 +16,7 @@
 
 package stroom.index;
 
+
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.index.shared.IndexShardKey;

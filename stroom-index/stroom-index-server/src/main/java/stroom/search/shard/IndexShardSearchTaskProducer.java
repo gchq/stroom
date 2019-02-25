@@ -23,6 +23,7 @@ import stroom.search.shard.IndexShardSearchTask.ResultReceiver;
 import stroom.search.taskqueue.AbstractTaskProducer;
 import stroom.search.taskqueue.TaskExecutor;
 import stroom.search.taskqueue.TaskProducer;
+import stroom.task.shared.ThreadPool;
 import stroom.task.shared.ThreadPoolImpl;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

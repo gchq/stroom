@@ -17,6 +17,7 @@
 package stroom.index;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.EntityEvent;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
@@ -28,17 +29,13 @@ import stroom.index.service.IndexVolumeGroupService;
 import stroom.index.service.IndexVolumeGroupServiceImpl;
 import stroom.index.service.IndexVolumeService;
 import stroom.index.service.IndexVolumeServiceImpl;
-import stroom.index.shared.CloseIndexShardAction;
-import stroom.index.shared.DeleteIndexShardAction;
-import stroom.index.shared.FetchIndexVolumesAction;
-import stroom.index.shared.FlushIndexShardAction;
 import stroom.index.shared.IndexDoc;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.GuiceUtil;
 import stroom.util.RestResource;
 import stroom.util.entity.EntityTypeBinder;
-import stroom.util.entity.FindService;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.Flushable;
 
 public class IndexModule extends AbstractModule {
     @Override
@@ -58,14 +55,8 @@ public class IndexModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(IndexStructureCacheImpl.class);
 
-        TaskHandlerBinder.create(binder())
-                .bind(CloseIndexShardAction.class, stroom.index.CloseIndexShardActionHandler.class)
-                .bind(DeleteIndexShardAction.class, stroom.index.DeleteIndexShardActionHandler.class)
-                .bind(FlushIndexShardAction.class, stroom.index.FlushIndexShardActionHandler.class)
-                .bind(FetchIndexVolumesAction.class, stroom.index.FetchIndexVolumesActionHandler.class)
-                .bind(CloseIndexShardClusterTask.class, CloseIndexShardClusterHandler.class)
-                .bind(FlushIndexShardClusterTask.class, FlushIndexShardClusterHandler.class)
-                .bind(DeleteIndexShardClusterTask.class, DeleteIndexShardClusterHandler.class);
+        final Multibinder<Flushable> flushableBinder = Multibinder.newSetBinder(binder(), Flushable.class);
+        flushableBinder.addBinding().to(IndexVolumeServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexConfigCacheEntityEventHandler.class);

@@ -19,7 +19,8 @@ package stroom.test;
 
 
 import stroom.index.service.IndexVolumeGroupService;
-import stroom.index.shared.IndexVolumeGroup;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFields;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaFieldNames;
@@ -31,13 +32,7 @@ import stroom.meta.shared.StandardHeaderArguments;
 import stroom.index.IndexStore;
 import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFields;
 import stroom.node.api.NodeInfo;
-import stroom.volume.VolumeService;
-import stroom.node.shared.FindVolumeCriteria;
-import stroom.node.shared.VolumeEntity;
-import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;
@@ -49,9 +44,7 @@ import stroom.streamtask.shared.Processor;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -125,10 +118,10 @@ public class CommonTestScenarioCreator {
         index.setVolumeGroupName(volumeGroupName);
         indexStore.writeDocument(index);
         assertThat(index).isNotNull();
-
-        final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
-        findVolumeCriteria.getIndexStatusSet().add(VolumeUseStatus.ACTIVE);
-        findVolumeCriteria.getNodeIdSet().add(nodeInfo.getThisNode());
+//
+//        final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
+//        findVolumeCriteria.getIndexStatusSet().add(VolumeUseStatus.ACTIVE);
+//        findVolumeCriteria.getNodeIdSet().add(nodeInfo.getThisNode());
         // TODO replace this with new index volumes
 
         return indexRef;

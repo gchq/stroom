@@ -5,10 +5,10 @@ import org.slf4j.LoggerFactory;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
-import stroom.util.xml.XMLMarshallerUtil;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexFields;
 import stroom.util.xml.XMLMarshallerUtil;
+import stroom.index.shared.IndexDoc;
 
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;

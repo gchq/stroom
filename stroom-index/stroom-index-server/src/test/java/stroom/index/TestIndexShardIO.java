@@ -20,13 +20,14 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.SearcherManager;
 import org.junit.jupiter.api.Test;
+
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.node.shared.VolumeEntity;
+import stroom.index.shared.IndexVolume;
 import stroom.search.shard.IndexShardSearcher;
 import stroom.search.shard.IndexShardSearcherImpl;
 import stroom.util.io.FileUtil;
@@ -74,7 +75,7 @@ class TestIndexShardIO {
 
     @Test
     void testOpenCloseManyWrite() throws IOException {
-        final VolumeEntity volume = new VolumeEntity();
+        final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
@@ -107,7 +108,7 @@ class TestIndexShardIO {
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
-        final VolumeEntity volume = new VolumeEntity();
+        final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
         final IndexShard idx1 = new IndexShard();
         idx1.setIndexUuid(index.getUuid());
@@ -284,7 +285,7 @@ class TestIndexShardIO {
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
-        final VolumeEntity volume = new VolumeEntity();
+        final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
         final IndexShard idx1 = new IndexShard();
         idx1.setIndexUuid(index.getUuid());
@@ -315,7 +316,7 @@ class TestIndexShardIO {
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
-        final VolumeEntity volume = new VolumeEntity();
+        final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
         final IndexShard idx1 = new IndexShard();
         idx1.setIndexUuid(index.getUuid());
@@ -346,7 +347,7 @@ class TestIndexShardIO {
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
-        final VolumeEntity volume = new VolumeEntity();
+        final IndexVolume volume = new IndexVolume();
         final Path testDir = Files.createTempDirectory("stroom");
         volume.setPath(FileUtil.getCanonicalPath(testDir));
         FileUtil.deleteDir(testDir);

@@ -25,6 +25,26 @@ import java.util.List;
 
 public class MockIndexVolumeService implements IndexVolumeService {
     @Override
+    public IndexVolume create(String nodeName, String path) {
+        return null;
+    }
+
+    @Override
+    public IndexVolume getById(Long id) {
+        return null;
+    }
+
+    @Override
+    public void delete(Long id) {
+
+    }
+
+    @Override
+    public List<IndexVolume> getAll() {
+        return null;
+    }
+
+    @Override
     public void addVolumeToGroup(Long volumeId, String name) {
 
     }
@@ -37,5 +57,15 @@ public class MockIndexVolumeService implements IndexVolumeService {
     @Override
     public List<IndexVolume> getVolumesInGroup(String groupName) {
         return Collections.emptyList();
+    }
+
+    @Override
+    public void clear() {
+
+    }
+
+    @Override
+    public void flush() {
+
     }
 }

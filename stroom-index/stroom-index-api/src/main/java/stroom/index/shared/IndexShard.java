@@ -18,9 +18,9 @@ package stroom.index.shared;
 
 import stroom.docref.HasDisplayValue;
 import stroom.docref.SharedObject;
-import stroom.entity.shared.HasPrimitiveValue;
-import stroom.entity.shared.PrimitiveValueConverter;
+import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.PrimitiveValueConverter;
 
 import java.util.Arrays;
 import java.util.Collections;

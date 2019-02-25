@@ -18,6 +18,7 @@ package stroom.index;
 
 
 import org.junit.jupiter.api.Test;
+
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.index.shared.IndexShardKey;

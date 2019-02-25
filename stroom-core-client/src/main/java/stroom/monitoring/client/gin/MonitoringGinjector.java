@@ -28,10 +28,8 @@ import stroom.node.client.ManageNodeToolsPlugin;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter;
 import stroom.config.global.client.presenter.ManageGlobalPropertyListPresenter;
 import stroom.config.global.client.presenter.ManageGlobalPropertyPresenter;
-import stroom.node.client.presenter.ManageVolumesPresenter;
 import stroom.node.client.presenter.NodeEditPresenter;
 import stroom.node.client.presenter.NodeMonitoringPresenter;
-import stroom.node.client.presenter.VolumeEditPresenter;
 
 public interface MonitoringGinjector {
     AsyncProvider<DatabaseTablesMonitoringPlugin> getDatabaseTablesMonitoringPlugin();
@@ -48,11 +46,7 @@ public interface MonitoringGinjector {
 
     AsyncProvider<ManageNodeToolsPlugin> getManageNodeToolsPlugin();
 
-    AsyncProvider<ManageVolumesPresenter> getManageVolumesPresenter();
-
     AsyncProvider<NodeEditPresenter> getNodeEditPresenter();
-
-    AsyncProvider<VolumeEditPresenter> getVolumeEditPresenter();
 
     // Global properties.
     AsyncProvider<ManageGlobalPropertyPresenter> getManageGlobalPropertyPresenter();

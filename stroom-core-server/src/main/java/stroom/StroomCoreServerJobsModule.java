@@ -2,7 +2,6 @@ package stroom;
 
 import com.google.inject.AbstractModule;
 import stroom.streamtask.StreamTaskJobsModule;
-import stroom.volume.VolumeJobsModule;
 
 public class StroomCoreServerJobsModule extends AbstractModule {
     @Override

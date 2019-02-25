@@ -19,7 +19,6 @@ import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventBus;
 import stroom.entity.shared.EntityEventHandler;
-import stroom.node.shared.FindVolumeCriteria;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -427,7 +426,7 @@ public class FileSystemVolumeServiceImpl implements FileSystemVolumeService, Ent
         final List<FSVolume> newState = new ArrayList<>();
 
         final FindFSVolumeCriteria findVolumeCriteria = new FindFSVolumeCriteria();
-        findVolumeCriteria.addSort(FindVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
+        findVolumeCriteria.addSort(FindFSVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
         final List<FSVolume> volumeList = find(findVolumeCriteria);
         for (final FSVolume volume : volumeList) {
             FSVolumeState volumeState = updateVolumeState(volume);

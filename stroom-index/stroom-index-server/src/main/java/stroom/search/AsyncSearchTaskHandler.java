@@ -19,13 +19,12 @@ package stroom.search;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.index.shared.IndexField;
 import stroom.util.shared.Sort.Direction;
-import stroom.index.IndexShardService;
 import stroom.index.IndexStore;
 import stroom.index.service.IndexShardService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.query.api.v2.Query;

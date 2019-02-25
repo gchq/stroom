@@ -33,10 +33,11 @@ import stroom.index.service.IndexShardService;
 import stroom.index.IndexShardWriterCache;
 import stroom.index.IndexStore;
 import stroom.index.Indexer;
+
+import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;

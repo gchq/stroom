@@ -86,8 +86,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.cluster.task.impl.ClusterTaskModule());
         install(new stroom.ui.config.server.UiConfigModule());
         install(new stroom.visualisation.VisualisationModule());
-        install(new stroom.volume.VolumeModule());
-        install(new stroom.volume.VolumeHandlerModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
         install(new stroom.job.impl.db.JobDbModule());
         install(new stroom.streamstore.StreamAttributeMapResourceModule());

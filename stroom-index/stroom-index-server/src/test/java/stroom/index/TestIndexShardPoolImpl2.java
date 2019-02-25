@@ -20,6 +20,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
@@ -47,7 +49,13 @@ class TestIndexShardPoolImpl2 extends StroomUnitTest {
         defaultNode.setName("TEST");
 
         try {
-            final Indexer indexer = new MockIndexer();
+            final Indexer indexer = new Indexer() {
+                @Override
+                public void addDocument(final IndexShardKey key,
+                                        final Document document) {
+
+                }
+            };
 
             final IndexDoc index = new IndexDoc();
             index.setUuid("1");

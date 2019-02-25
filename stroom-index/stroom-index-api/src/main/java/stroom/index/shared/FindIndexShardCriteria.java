@@ -17,11 +17,11 @@
 package stroom.index.shared;
 
 import stroom.docref.DocRef;
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.CriteriaSet;
-import stroom.entity.shared.Range;
-import stroom.entity.shared.StringCriteria;
 import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.Range;
+import stroom.util.shared.StringCriteria;
 
 public class FindIndexShardCriteria extends BaseCriteria {
     public static final String FIELD_PARTITION = "Partition";

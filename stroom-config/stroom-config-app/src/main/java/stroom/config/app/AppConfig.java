@@ -28,7 +28,7 @@ import stroom.streamtask.ProxyAggregationConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.shared.IsConfig;
-import stroom.volume.VolumeConfig;
+import stroom.index.selection.VolumeConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

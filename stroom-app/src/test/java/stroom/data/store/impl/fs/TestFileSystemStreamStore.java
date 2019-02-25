@@ -47,7 +47,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.test.common.util.test.FileSystemTestUtil;
-import stroom.volume.VolumeConfig;
+import stroom.index.selection.VolumeConfig;
 
 import javax.inject.Inject;
 import java.io.IOException;

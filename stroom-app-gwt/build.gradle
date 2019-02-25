@@ -15,7 +15,6 @@ dependencies {
     implementation project(':stroom-core-client')
     implementation project(':stroom-core-client-widget')
     implementation project(':stroom-dashboard:stroom-dashboard-client')
-    implementation project(':stroom-index:stroom-index-client')
     implementation project(':stroom-security:stroom-security-client')
     implementation project(':stroom-statistics:stroom-statistics-client')
 
