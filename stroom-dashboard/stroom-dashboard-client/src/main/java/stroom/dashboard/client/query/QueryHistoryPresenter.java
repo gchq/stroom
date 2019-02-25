@@ -21,8 +21,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.dashboard.shared.FindQueryCriteria;
-import stroom.dashboard.shared.QueryEntity;
+import stroom.dashboard.shared.FindStoredQueryCriteria;
+import stroom.dashboard.shared.StoredQuery;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.util.shared.PageRequest;
@@ -42,7 +42,7 @@ import java.util.List;
 public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresenter.QueryHistoryView> {
     private final ClientDispatchAsync dispatcher;
     private final ExpressionTreePresenter expressionPresenter;
-    private final MySingleSelectionModel<QueryEntity> selectionModel;
+    private final MySingleSelectionModel<StoredQuery> selectionModel;
     private QueryPresenter queryPresenter;
     private String currentDashboardUuid;
 
@@ -65,7 +65,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
     @Override
     protected void onBind() {
         registerHandler(selectionModel.addSelectionChangeHandler(event -> {
-            final QueryEntity query = selectionModel.getSelectedObject();
+            final StoredQuery query = selectionModel.getSelectedObject();
 
             if (query == null || query.getQuery() == null) {
                 expressionPresenter.read(null);
@@ -84,20 +84,20 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
     }
 
     private void refresh(final boolean showAfterRefresh) {
-        final FindQueryCriteria criteria = new FindQueryCriteria();
+        final FindStoredQueryCriteria criteria = new FindStoredQueryCriteria();
         criteria.setDashboardUuid(currentDashboardUuid);
-        criteria.setQueryId(queryPresenter.getId());
-        criteria.setSort(FindQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
+        criteria.setComponentId(queryPresenter.getId());
+        criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
         criteria.setFavourite(false);
         criteria.setPageRequest(new PageRequest(0L, 100));
 
-        final EntityServiceFindAction<FindQueryCriteria, QueryEntity> action = new EntityServiceFindAction<>(criteria);
+        final EntityServiceFindAction<FindStoredQueryCriteria, StoredQuery> action = new EntityServiceFindAction<>(criteria);
         dispatcher.exec(action).onSuccess(result -> {
             selectionModel.clear();
 
             ExpressionOperator lastExpression = null;
-            final List<QueryEntity> dedupedList = new ArrayList<>(result.getSize());
-            for (final QueryEntity queryEntity : result) {
+            final List<StoredQuery> dedupedList = new ArrayList<>(result.getSize());
+            for (final StoredQuery queryEntity : result) {
                 if (queryEntity != null && queryEntity.getQuery() != null && queryEntity.getQuery().getExpression() != null) {
                     final ExpressionOperator expression = queryEntity.getQuery().getExpression();
                     if (lastExpression == null || !lastExpression.equals(expression)) {
@@ -132,7 +132,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
 
     private void close(final boolean ok) {
         if (ok) {
-            final QueryEntity query = selectionModel.getSelectedObject();
+            final StoredQuery query = selectionModel.getSelectedObject();
             if (query != null && query.getQuery() != null && query.getQuery().getExpression() != null) {
                 queryPresenter.setExpression(query.getQuery().getExpression());
             }
@@ -142,7 +142,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
     }
 
     public interface QueryHistoryView extends View {
-        CellList<QueryEntity> getCellList();
+        CellList<StoredQuery> getCellList();
 
         void setExpressionView(View view);
     }

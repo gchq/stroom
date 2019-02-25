@@ -25,21 +25,21 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dashboard.shared.FindQueryCriteria;
-import stroom.dashboard.shared.QueryEntity;
+import stroom.dashboard.shared.CreateStoredQueryAction;
+import stroom.dashboard.shared.DeleteStoredQueryAction;
+import stroom.dashboard.shared.FindStoredQueryCriteria;
+import stroom.dashboard.shared.StoredQuery;
+import stroom.dashboard.shared.UpdateStoredQueryAction;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocumentServiceWriteAction;
-import stroom.entity.shared.EntityServiceDeleteAction;
-import stroom.entity.shared.EntityServiceFindAction;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort.Direction;
 import stroom.docref.DocRef;
+import stroom.entity.shared.EntityServiceFindAction;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort.Direction;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -51,7 +51,7 @@ import stroom.widget.util.client.MySingleSelectionModel;
 public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesPresenter.QueryFavouritesView> {
     private final ClientDispatchAsync dispatcher;
     private final ExpressionTreePresenter expressionPresenter;
-    private final MySingleSelectionModel<QueryEntity> selectionModel;
+    private final MySingleSelectionModel<StoredQuery> selectionModel;
     private final NamePresenter namePresenter;
     private final ButtonView createButton;
     private final ButtonView editButton;
@@ -62,9 +62,10 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
     private DocRef currentDataSource;
 
     @Inject
-    public QueryFavouritesPresenter(final EventBus eventBus, final QueryFavouritesView view,
-                                    final ExpressionTreePresenter expressionPresenter, final NamePresenter namePresenter,
-                                    final ClientSecurityContext securityContext,
+    public QueryFavouritesPresenter(final EventBus eventBus,
+                                    final QueryFavouritesView view,
+                                    final ExpressionTreePresenter expressionPresenter,
+                                    final NamePresenter namePresenter,
                                     final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.dispatcher = dispatcher;
@@ -90,7 +91,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
     @Override
     protected void onBind() {
         registerHandler(selectionModel.addSelectionChangeHandler(event -> {
-            final QueryEntity query = selectionModel.getSelectedObject();
+            final StoredQuery query = selectionModel.getSelectedObject();
 
             if (query == null || query.getQuery() == null) {
                 expressionPresenter.read(null);
@@ -119,14 +120,14 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
                             } else {
                                 final Query query = new Query(currentDataSource, currentExpression);
-                                final QueryEntity queryEntity = new QueryEntity();
+                                final StoredQuery queryEntity = new StoredQuery();
                                 queryEntity.setQuery(query);
                                 queryEntity.setDashboardUuid(currentDashboardUuid);
-                                queryEntity.setQueryId(queryPresenter.getId());
+                                queryEntity.setComponentId(queryPresenter.getId());
                                 queryEntity.setName(entityName);
                                 queryEntity.setFavourite(true);
 
-                                save(queryEntity, autoClose, ok);
+                                create(queryEntity, autoClose, ok);
                             }
                         } else {
                             HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
@@ -148,7 +149,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         }));
         registerHandler(editButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                final QueryEntity query = selectionModel.getSelectedObject();
+                final StoredQuery query = selectionModel.getSelectedObject();
                 if (query != null) {
                     final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                         @Override
@@ -166,7 +167,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                 } else {
                                     query.setName(entityName);
                                     query.setFavourite(true);
-                                    save(query, autoClose, ok);
+                                    update(query, autoClose, ok);
                                 }
                             } else {
                                 HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
@@ -188,7 +189,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         }));
         registerHandler(deleteButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                final QueryEntity query = selectionModel.getSelectedObject();
+                final StoredQuery query = selectionModel.getSelectedObject();
                 if (query != null) {
                     ConfirmEvent.fire(QueryFavouritesPresenter.this,
                             "Are you sure you want to delete this favourite?", ok -> {
@@ -212,15 +213,15 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
     }
 
     private void refresh(final boolean showAfterRefresh) {
-        final FindQueryCriteria criteria = new FindQueryCriteria();
+        final FindStoredQueryCriteria criteria = new FindStoredQueryCriteria();
 
         criteria.setDashboardUuid(currentDashboardUuid);
-        criteria.setQueryId(queryPresenter.getId());
-        criteria.setSort(FindQueryCriteria.FIELD_NAME, Direction.ASCENDING, true);
+        criteria.setComponentId(queryPresenter.getId());
+        criteria.setSort(FindStoredQueryCriteria.FIELD_NAME, Direction.ASCENDING, true);
         criteria.setFavourite(true);
         criteria.setPageRequest(new PageRequest(0L, 100));
 
-        final EntityServiceFindAction<FindQueryCriteria, QueryEntity> action = new EntityServiceFindAction<>(criteria);
+        final EntityServiceFindAction<FindStoredQueryCriteria, StoredQuery> action = new EntityServiceFindAction<>(criteria);
         dispatcher.exec(action).onSuccess(result -> {
             selectionModel.clear();
             getView().getCellList().setRowData(result);
@@ -247,7 +248,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
     private void close(final boolean ok) {
         if (ok) {
-            final QueryEntity query = selectionModel.getSelectedObject();
+            final StoredQuery query = selectionModel.getSelectedObject();
             if (query != null && query.getQuery() != null && query.getQuery().getExpression() != null) {
                 queryPresenter.setExpression(query.getQuery().getExpression());
             }
@@ -256,19 +257,26 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         HidePopupEvent.fire(queryPresenter, QueryFavouritesPresenter.this);
     }
 
-    private void save(final QueryEntity query, final boolean autoClose, final boolean ok) {
-        dispatcher.exec(new DocumentServiceWriteAction<>(query)).onSuccess(result -> {
+    private void create(final StoredQuery query, final boolean autoClose, final boolean ok) {
+        dispatcher.exec(new CreateStoredQueryAction(query)).onSuccess(result -> {
             refresh(false);
             HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
         });
     }
 
-    private void delete(final QueryEntity query) {
-        dispatcher.exec(new EntityServiceDeleteAction(query)).onSuccess(result -> refresh(false));
+    private void update(final StoredQuery query, final boolean autoClose, final boolean ok) {
+        dispatcher.exec(new UpdateStoredQueryAction(query)).onSuccess(result -> {
+            refresh(false);
+            HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
+        });
+    }
+
+    private void delete(final StoredQuery query) {
+        dispatcher.exec(new DeleteStoredQueryAction(query)).onSuccess(result -> refresh(false));
     }
 
     public interface QueryFavouritesView extends View {
-        CellList<QueryEntity> getCellList();
+        CellList<StoredQuery> getCellList();
 
         void setExpressionView(View view);
 

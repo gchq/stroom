@@ -6,7 +6,7 @@ import stroom.benchmark.BenchmarkJobsModule;
 import stroom.cache.impl.CacheJobsModule;
 import stroom.cluster.lock.impl.db.ClusterLockJobsModule;
 import stroom.config.global.impl.db.GlobalConfigJobsModule;
-import stroom.dashboard.DashboardJobsModule;
+import stroom.storedquery.impl.db.StoredQueryJobsModule;
 import stroom.data.retention.impl.DataRetentionJobsModule;
 import stroom.data.store.impl.DataRetentionJobModule;
 import stroom.data.store.impl.fs.FileVolumeJobsModule;
@@ -30,7 +30,7 @@ public class JobsModule extends AbstractModule {
         install(new BenchmarkJobsModule());
         install(new CacheJobsModule());
         install(new ClusterLockJobsModule());
-        install(new DashboardJobsModule());
+        install(new StoredQueryJobsModule());
         install(new DataRetentionJobsModule());
         install(new DataRetentionJobModule());
         install(new StroomCoreServerJobsModule());

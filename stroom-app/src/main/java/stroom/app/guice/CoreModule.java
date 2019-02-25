@@ -1,8 +1,10 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
+import stroom.meta.impl.db.StreamAttributeMapResourceModule;
 import stroom.statistics.impl.InternalStatisticsModule;
 import stroom.statistics.impl.sql.SQLStatisticsModule;
+import stroom.storedquery.impl.db.StoredQueryDbModule;
 
 public class CoreModule extends AbstractModule {
     @Override
@@ -57,6 +59,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.config.global.impl.db.GlobalConfigModule());
         install(new stroom.config.global.impl.db.GlobalConfigDbModule());
         install(new stroom.query.QueryModule());
+        install(new StoredQueryDbModule());
         install(new stroom.pipeline.refdata.ReferenceDataModule());
         install(new stroom.receive.rules.impl.ReceiveDataRulesetModule());
         install(new stroom.script.ScriptModule());
@@ -90,6 +93,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.volume.VolumeHandlerModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
         install(new stroom.job.impl.db.JobDbModule());
-        install(new stroom.streamstore.StreamAttributeMapResourceModule());
+        install(new StreamAttributeMapResourceModule());
     }
 }

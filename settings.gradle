@@ -56,7 +56,10 @@ include 'stroom-core-shared'
 // Dashboard
 include 'stroom-dashboard-gwt'
 include 'stroom-dashboard:stroom-dashboard-client'
-include 'stroom-dashboard:stroom-dashboard-server'
+include 'stroom-dashboard:stroom-dashboard-impl'
+include 'stroom-dashboard:stroom-storedquery-api'
+include 'stroom-dashboard:stroom-storedquery-impl-db'
+include 'stroom-dashboard:stroom-storedquery-impl-db-jooq'
 
 // Data projects
 include 'stroom-data:stroom-data-retention-api'

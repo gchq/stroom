@@ -26,12 +26,12 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.cell.list.client.CustomCellList;
 import stroom.dashboard.client.query.QueryHistoryPresenter.QueryHistoryView;
-import stroom.dashboard.shared.QueryEntity;
+import stroom.dashboard.shared.StoredQuery;
 
 public class QueryHistoryViewImpl extends ViewImpl implements QueryHistoryView {
     private final Widget widget;
     @UiField(provided = true)
-    CustomCellList<QueryEntity> cellList;
+    CustomCellList<StoredQuery> cellList;
     @UiField
     SimplePanel bottom;
 
@@ -42,7 +42,7 @@ public class QueryHistoryViewImpl extends ViewImpl implements QueryHistoryView {
     }
 
     @Override
-    public CellList<QueryEntity> getCellList() {
+    public CellList<StoredQuery> getCellList() {
         return cellList;
     }
 
