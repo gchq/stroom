@@ -414,13 +414,7 @@ public class FileSystemVolumeServiceImpl implements FileSystemVolumeService, Ent
     }
 
     void updateStatus() {
-        if (clusterLockService.tryLock(LOCK_NAME)) {
-            try {
-                refresh();
-            } finally {
-                clusterLockService.releaseLock(LOCK_NAME);
-            }
-        }
+        clusterLockService.tryLock(LOCK_NAME, this::refresh);
     }
 
     public List<FSVolume> refresh() {

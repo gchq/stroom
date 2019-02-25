@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.node.api.NodeInfo;
 import stroom.task.api.TaskManager;
+import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.SharedBoolean;
 
 import javax.inject.Inject;
@@ -52,7 +53,8 @@ class ClusterLockServiceImpl implements ClusterLockService {
     }
 
     @Override
-    public boolean tryLock(final String lockName) {
+    public void tryLock(final String lockName, final Runnable runnable) {
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.debug("tryLock({}) - >>>", lockName);
         boolean success = false;
 
@@ -74,11 +76,19 @@ class ClusterLockServiceImpl implements ClusterLockService {
         }
 
         LOGGER.debug("tryLock({}) - <<< {}", lockName, success);
-        return success;
+
+        if (success) {
+            try {
+                runnable.run();
+            } finally {
+                releaseLock(lockName);
+            }
+        } else {
+            LOGGER.info("Skipped process as did not get lock {} in {}", lockName, logExecutionTime);
+        }
     }
 
-    @Override
-    public void releaseLock(final String lockName) {
+    private void releaseLock(final String lockName) {
         LOGGER.debug("releaseLock({}) - >>>", lockName);
         // Remove the lock name from the lock map.
         final ClusterLockKey clusterLockKey = lockMap.remove(lockName);
