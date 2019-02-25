@@ -17,7 +17,7 @@
 package stroom.docstore.impl.db;
 
 import com.google.inject.AbstractModule;
-import stroom.docstore.Persistence;
+import stroom.docstore.api.Persistence;
 
 public class DBPersistenceModule extends AbstractModule {
     @Override

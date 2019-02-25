@@ -27,7 +27,6 @@ import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.docref.DocRef;
-import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
 import stroom.xmlschema.shared.XmlSchemaDoc;

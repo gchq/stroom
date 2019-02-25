@@ -23,7 +23,7 @@ import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.Range;
+import stroom.util.shared.Range;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;

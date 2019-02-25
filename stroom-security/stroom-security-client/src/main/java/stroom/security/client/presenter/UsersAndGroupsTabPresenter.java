@@ -23,7 +23,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.CreateUserAction;
 import stroom.security.shared.DeleteUserAction;

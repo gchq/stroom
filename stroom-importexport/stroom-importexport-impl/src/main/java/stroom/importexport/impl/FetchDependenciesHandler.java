@@ -16,7 +16,7 @@
 
 package stroom.importexport.impl;
 
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.ResultList;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.FetchDependenciesAction;
 import stroom.security.Security;

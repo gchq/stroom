@@ -19,6 +19,7 @@ package stroom.ui.config.shared;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.docref.SharedObject;
+import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Inject;
@@ -28,10 +29,8 @@ import javax.inject.Singleton;
 public class UiConfig implements SharedObject, IsConfig {
     private String welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
     private String aboutHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
-    private String buildDate = "TBD";
-    private String buildVersion = "TBD";
+    private BuildInfo buildInfo;
     private String nodeName;
-    private String upDate;
     private String maintenanceMessage;
     private String defaultMaxResults = "1000000,100,10,1";
     private ProcessConfig processConfig;
@@ -49,6 +48,7 @@ public class UiConfig implements SharedObject, IsConfig {
 
     public UiConfig() {
         // Default constructor necessary for GWT serialisation.
+        buildInfo = new BuildInfo();
         processConfig = new ProcessConfig();
         themeConfig = new ThemeConfig();
         queryConfig = new QueryConfig();
@@ -58,12 +58,14 @@ public class UiConfig implements SharedObject, IsConfig {
     }
 
     @Inject
-    public UiConfig(final ProcessConfig processConfig,
+    public UiConfig(final BuildInfo buildInfo,
+                    final ProcessConfig processConfig,
                     final ThemeConfig themeConfig,
                     final QueryConfig queryConfig,
                     final SplashConfig splashConfig,
                     final ActivityConfig activityConfig,
                     final UrlConfig urlConfig) {
+        this.buildInfo = buildInfo;
         this.processConfig = processConfig;
         this.themeConfig = themeConfig;
         this.queryConfig = queryConfig;
@@ -99,20 +101,12 @@ public class UiConfig implements SharedObject, IsConfig {
         this.aboutHtml = aboutHtml;
     }
 
-    public String getBuildDate() {
-        return buildDate;
+    public BuildInfo getBuildInfo() {
+        return buildInfo;
     }
 
-    public void setBuildDate(final String buildDate) {
-        this.buildDate = buildDate;
-    }
-
-    public String getBuildVersion() {
-        return buildVersion;
-    }
-
-    public void setBuildVersion(final String buildVersion) {
-        this.buildVersion = buildVersion;
+    public void setBuildInfo(final BuildInfo buildInfo) {
+        this.buildInfo = buildInfo;
     }
 
     public String getNodeName() {
@@ -121,14 +115,6 @@ public class UiConfig implements SharedObject, IsConfig {
 
     public void setNodeName(final String nodeName) {
         this.nodeName = nodeName;
-    }
-
-    public String getUpDate() {
-        return upDate;
-    }
-
-    public void setUpDate(final String upDate) {
-        this.upDate = upDate;
     }
 
     @JsonPropertyDescription("Provide a warning message to users about an outage or other significant event.")
@@ -242,10 +228,7 @@ public class UiConfig implements SharedObject, IsConfig {
         return "UiConfig{" +
                 "welcomeHtml='" + welcomeHtml + '\'' +
                 ", aboutHtml='" + aboutHtml + '\'' +
-                ", buildDate='" + buildDate + '\'' +
-                ", buildVersion='" + buildVersion + '\'' +
                 ", nodeName='" + nodeName + '\'' +
-                ", upDate='" + upDate + '\'' +
                 ", maintenanceMessage='" + maintenanceMessage + '\'' +
                 ", defaultMaxResults='" + defaultMaxResults + '\'' +
                 ", helpUrl='" + helpUrl + '\'' +

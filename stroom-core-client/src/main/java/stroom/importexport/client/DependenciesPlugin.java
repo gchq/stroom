@@ -24,7 +24,7 @@ import stroom.core.client.MenuKeys;
 import stroom.importexport.client.presenter.DependenciesPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.monitoring.client.MonitoringPlugin;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 

@@ -18,8 +18,8 @@
 package stroom.streamtask;
 
 import stroom.entity.MockEntityService;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.SummaryDataRow;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.SummaryDataRow;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.ProcessorFilterTask;
 

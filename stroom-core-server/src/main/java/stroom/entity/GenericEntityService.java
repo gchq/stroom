@@ -17,8 +17,8 @@
 
 package stroom.entity;
 
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseResultList;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.BaseResultList;
 import stroom.entity.shared.Entity;
 
 import java.util.Set;

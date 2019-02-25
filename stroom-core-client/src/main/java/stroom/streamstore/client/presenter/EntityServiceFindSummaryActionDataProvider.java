@@ -22,11 +22,11 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.shared.BaseCriteria;
 import stroom.entity.shared.EntityServiceFindSummaryAction;
-import stroom.entity.shared.ResultList;
-import stroom.entity.shared.Sort.Direction;
-import stroom.entity.shared.SummaryDataRow;
+import stroom.util.shared.ResultList;
+import stroom.util.shared.Sort.Direction;
+import stroom.util.shared.SummaryDataRow;
 
 public abstract class EntityServiceFindSummaryActionDataProvider<C extends BaseCriteria>
         implements Refreshable, Handler {

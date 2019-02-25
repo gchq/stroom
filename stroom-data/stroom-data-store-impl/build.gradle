@@ -1,0 +1,31 @@
+ext.moduleName = 'stroom.data.store.impl'
+
+dependencies {
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-data:stroom-data-store-api')
+    implementation project(':stroom-data:stroom-data-zip')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-feed:stroom-feed-api')
+    implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-meta:stroom-meta-statistics-api')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-receive:stroom-receive-common')
+    implementation project(':stroom-resource:stroom-resource-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.stroomDocRef
+    implementation libs.stroomQueryApi
+    implementation libs.eventLogging
+
+    implementation libs.commons_fileupload
+    implementation libs.javax_validation
+    implementation libs.guice4
+    implementation libs.ws_rs_api
+}

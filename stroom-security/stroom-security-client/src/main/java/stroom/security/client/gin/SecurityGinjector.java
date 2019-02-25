@@ -19,7 +19,7 @@ package stroom.security.client.gin;
 import com.google.gwt.inject.client.AsyncProvider;
 import com.google.gwt.inject.client.Ginjector;
 import com.google.inject.Provider;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.LoginManager;
 import stroom.security.client.LogoutPlugin;
 import stroom.security.client.ManageUserPlugin;

@@ -17,6 +17,8 @@
 
 package stroom.index.service;
 
+import stroom.entity.BaseEntityService;
+import stroom.util.entity.FindService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;

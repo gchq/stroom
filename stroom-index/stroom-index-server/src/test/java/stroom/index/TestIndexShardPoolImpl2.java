@@ -27,7 +27,7 @@ import stroom.index.shared.IndexShardKey;
 import stroom.node.shared.Node;
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.io.FileUtil;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.util.List;
 

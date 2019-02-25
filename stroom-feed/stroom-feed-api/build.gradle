@@ -1,0 +1,10 @@
+ext.moduleName = 'stroom.feed.api'
+
+dependencies {
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-util-shared')
+
+    
+    implementation libs.stroomDocRef
+}

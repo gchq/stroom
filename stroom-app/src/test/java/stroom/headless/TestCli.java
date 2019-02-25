@@ -18,7 +18,7 @@ package stroom.headless;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.test.ComparisonHelper;
+import stroom.test.common.ComparisonHelper;
 import stroom.util.io.FileUtil;
 import stroom.util.zip.ZipUtil;
 

@@ -22,7 +22,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
 

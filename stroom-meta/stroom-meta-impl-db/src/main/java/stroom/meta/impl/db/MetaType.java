@@ -16,7 +16,7 @@
 
 package stroom.meta.impl.db;
 
-import stroom.entity.shared.HasPrimitiveValue;
+import stroom.util.shared.HasPrimitiveValue;
 
 enum MetaType implements HasPrimitiveValue {
     FIELD(1, false),

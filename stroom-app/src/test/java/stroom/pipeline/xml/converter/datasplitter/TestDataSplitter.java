@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.StroomPipelineTestFileUtil;
+import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.pipeline.xml.F2XTestUtil;
 import stroom.pipeline.xml.XMLValidator;
 

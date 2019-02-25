@@ -1,16 +1,17 @@
 package stroom.meta.impl.mock;
 
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Clearable;
+import stroom.meta.api.ExpressionMatcher;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.meta.shared.MetaService;
 import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Clearable;
 
 import javax.inject.Singleton;
 import java.util.ArrayList;
@@ -79,12 +80,20 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public Meta updateStatus(final Meta meta, final Status status) {
+    public Meta updateStatus(final Meta meta, final Status currentStatus, final Status newStatus) {
         Objects.requireNonNull(meta, "Null data");
 
         final MockMeta result = (MockMeta) metaMap.get(meta.getId());
         if (result != null) {
-            result.status = status;
+            if (currentStatus != result.getStatus()) {
+                throw new RuntimeException("Unexpected status " +
+                        result.getStatus() +
+                        " (expected " +
+                        currentStatus +
+                        ")");
+            }
+
+            result.status = newStatus;
             result.statusMs = System.currentTimeMillis();
         }
         return result;
@@ -144,13 +153,13 @@ public class MockMetaService implements MetaService, Clearable {
 
     @Override
     public BaseResultList<Meta> find(final FindMetaCriteria criteria) {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(MetaFieldNames.getExtendedFieldMap());
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(MetaFieldNames.getExtendedFieldMap(), null);
         final List<Meta> list = new ArrayList<>();
         for (final Entry<Long, Meta> entry : metaMap.entrySet()) {
             try {
                 final Meta meta = entry.getValue();
-                final MetaRow row = new MetaRow(meta);
-                final Map<String, Object> attributeMap = AttributeMapUtil.createAttributeMap(row);
+//                final MetaRow row = new MetaRow(meta);
+                final Map<String, Object> attributeMap = createAttributeMap(meta);
                 if (expressionMatcher.match(attributeMap, criteria.getExpression())) {
                     list.add(meta);
                 }
@@ -160,6 +169,61 @@ public class MockMetaService implements MetaService, Clearable {
         }
 
         return BaseResultList.createUnboundedList(list);
+    }
+
+    /**
+     * Turns a data row object into a generic map of attributes for use by an expression filter.
+     */
+    private static Map<String, Object> createAttributeMap(final Meta meta) {
+        final Map<String, Object> attributeMap = new HashMap<>();
+
+        if (meta != null) {
+            attributeMap.put(MetaFieldNames.ID, meta.getId());
+            attributeMap.put(MetaFieldNames.CREATE_TIME, meta.getCreateMs());
+            attributeMap.put(MetaFieldNames.EFFECTIVE_TIME, meta.getEffectiveMs());
+            attributeMap.put(MetaFieldNames.STATUS_TIME, meta.getStatusMs());
+            attributeMap.put(MetaFieldNames.STATUS, meta.getStatus().getDisplayValue());
+            if (meta.getParentMetaId() != null) {
+                attributeMap.put(MetaFieldNames.PARENT_ID, meta.getParentMetaId());
+            }
+            if (meta.getTypeName() != null) {
+                attributeMap.put(MetaFieldNames.TYPE_NAME, meta.getTypeName());
+            }
+            final String feedName = meta.getFeedName();
+            if (feedName != null) {
+                attributeMap.put(MetaFieldNames.FEED_NAME, feedName);
+            }
+            final String pipelineUuid = meta.getPipelineUuid();
+            attributeMap.put(MetaFieldNames.PIPELINE_UUID, pipelineUuid);
+//            if (processor != null) {
+//                final String pipelineUuid = processor.getPipelineUuid();
+//                if (pipelineUuid != null) {
+//                    attributeMap.put(MetaDataSource.PIPELINE, pipelineUuid);
+//                }
+//            }
+        }
+//
+//        MetaFieldNames.getExtendedFields().forEach(field -> {
+//            final String value = row.getAttributeValue(field.getName());
+//            if (value != null) {
+//                try {
+//                    switch (field.getType()) {
+//                        case FIELD:
+//                            attributeMap.put(field.getName(), value);
+//                            break;
+//                        case DATE_FIELD:
+//                            attributeMap.put(field.getName(), DateUtil.parseNormalDateTimeString(value));
+//                            break;
+//                        default:
+//                            attributeMap.put(field.getName(), Long.valueOf(value));
+//                            break;
+//                    }
+//                } catch (final RuntimeException e) {
+//                    LOGGER.error(e.getMessage(), e);
+//                }
+//            }
+//        });
+        return attributeMap;
     }
 
     @Override

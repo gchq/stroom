@@ -16,15 +16,15 @@
 
 package stroom.servlet;
 
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.security.Security;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.cluster.api.ClusterCallEntry;
-import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.api.DefaultClusterResultCollector;
-import stroom.task.cluster.api.TargetType;
+import stroom.cluster.task.api.ClusterCallEntry;
+import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.DefaultClusterResultCollector;
+import stroom.cluster.task.api.TargetType;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

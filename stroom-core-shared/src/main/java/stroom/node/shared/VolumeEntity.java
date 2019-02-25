@@ -17,9 +17,9 @@
 package stroom.node.shared;
 
 import stroom.entity.shared.AuditedEntity;
-import stroom.entity.shared.HasPrimitiveValue;
-import stroom.entity.shared.LengthConstants;
-import stroom.entity.shared.PrimitiveValueConverter;
+import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.LengthConstants;
+import stroom.util.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.docref.HasDisplayValue;
 

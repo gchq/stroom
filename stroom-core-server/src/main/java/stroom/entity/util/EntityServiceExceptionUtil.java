@@ -20,7 +20,7 @@ import com.caucho.hessian.HessianException;
 import org.hibernate.PropertyValueException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.EntityServiceException;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.io.StreamUtil;
 
 import javax.persistence.EntityExistsException;

@@ -32,7 +32,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.entity.shared.DocumentServiceWriteAction;
-import stroom.entity.shared.HasData;
+import stroom.util.shared.HasData;
 import stroom.pipeline.shared.PipelineStepAction;
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.data.PipelineElementType;

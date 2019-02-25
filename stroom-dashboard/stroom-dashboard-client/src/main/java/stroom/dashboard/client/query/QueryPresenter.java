@@ -58,7 +58,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.shared.Limits;

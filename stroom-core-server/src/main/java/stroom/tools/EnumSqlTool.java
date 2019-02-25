@@ -16,7 +16,7 @@
 
 package stroom.tools;
 
-import stroom.entity.shared.HasPrimitiveValue;
+import stroom.util.shared.HasPrimitiveValue;
 import stroom.job.shared.JobNode.JobType;
 import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeEntity.VolumeUseStatus;

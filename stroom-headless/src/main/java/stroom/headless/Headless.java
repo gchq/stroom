@@ -21,19 +21,19 @@ import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
+import stroom.data.zip.StroomZipFile;
+import stroom.data.zip.StroomZipFileType;
+import stroom.data.zip.StroomZipNameSet;
 import stroom.docstore.impl.fs.FSPersistenceConfig;
 import stroom.importexport.impl.ImportExportService;
-import stroom.persist.CoreConfig;
 import stroom.pipeline.filter.SafeXMLFilter;
-import stroom.pipeline.scope.PipelineScopeRunnable;
-import stroom.proxy.repo.StroomZipFile;
-import stroom.proxy.repo.StroomZipFileType;
-import stroom.proxy.repo.StroomZipNameSet;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.proxy.repo.StroomZipRepository;
-import stroom.task.ExternalShutdownController;
+import stroom.task.impl.ExternalShutdownController;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
+import stroom.util.io.PathConfig;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.xml.XMLUtil;
@@ -74,7 +74,7 @@ public class Headless extends AbstractCommandLineTool {
     private Path tmpDir;
 
     @Inject
-    private CoreConfig coreConfig;
+    private PathConfig pathConfig;
     @Inject
     private FSPersistenceConfig fsPersistenceConfig;
     @Inject
@@ -165,7 +165,7 @@ public class Headless extends AbstractCommandLineTool {
 
             // Setup temp dir.
             final Path tempDir = Paths.get(tmp);
-            coreConfig.setTemp(FileUtil.getCanonicalPath(tempDir));
+            pathConfig.setTemp(FileUtil.getCanonicalPath(tempDir));
 
             process();
         } finally {

@@ -18,7 +18,7 @@ package stroom.pipeline.xml.converter.datasplitter;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.pipeline.xml.F2XTestUtil;

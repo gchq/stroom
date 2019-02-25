@@ -17,7 +17,7 @@
 package stroom.docstore.impl.fs;
 
 import com.google.inject.AbstractModule;
-import stroom.docstore.Persistence;
+import stroom.docstore.api.Persistence;
 
 public class FSPersistenceModule extends AbstractModule {
     @Override

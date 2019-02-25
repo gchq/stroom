@@ -25,6 +25,7 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.BuildInfo;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
@@ -35,10 +36,11 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
         super(eventBus, view, proxy);
         clientPropertyCache.get()
                 .onSuccess(result -> {
+                    final BuildInfo buildInfo = result.getBuildInfo();
                     view.setHTML(result.getAboutHtml());
-                    view.getBuildVersion().setText("Build Version: " + result.getBuildVersion());
-                    view.getBuildDate().setText("Build Date: " + result.getBuildDate());
-                    view.getUpDate().setText("Up Date: " + result.getUpDate());
+                    view.getBuildVersion().setText("Build Version: " + buildInfo.getBuildVersion());
+                    view.getBuildDate().setText("Build Date: " + buildInfo.getBuildDate());
+                    view.getUpDate().setText("Up Date: " + buildInfo.getUpDate());
                     view.getNodeName().setText("Node Name: " + result.getNodeName());
                 })
                 .onFailure(caught -> AlertEvent.fireError(AboutPresenter.this, caught.getMessage(), null));

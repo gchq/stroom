@@ -19,7 +19,7 @@ package stroom.dictionary.impl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.entity.EntityTypeBinder;
+import stroom.util.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 

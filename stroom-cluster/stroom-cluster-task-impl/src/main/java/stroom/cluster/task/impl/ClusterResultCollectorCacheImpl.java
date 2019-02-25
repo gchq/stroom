@@ -1,0 +1,83 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.cluster.task.impl;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import stroom.util.shared.Clearable;
+import stroom.cluster.task.api.ClusterResultCollector;
+import stroom.cluster.task.api.ClusterResultCollectorCache;
+import stroom.cluster.task.api.CollectorId;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.concurrent.TimeUnit;
+
+@Singleton
+public class ClusterResultCollectorCacheImpl implements ClusterResultCollectorCache, Clearable {
+    private static final int MAX_CACHE_ENTRIES = 1000000;
+
+    private final Cache<CollectorId, ClusterResultCollector> cache;
+
+    private volatile boolean shutdown;
+
+    @Inject
+    @SuppressWarnings("unchecked")
+    public ClusterResultCollectorCacheImpl(final CacheManager cacheManager) {
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
+                .maximumSize(MAX_CACHE_ENTRIES)
+                .expireAfterAccess(1, TimeUnit.MINUTES);
+        cache = cacheBuilder.build();
+        cacheManager.registerCache("Cluster Result Collector Cache", cacheBuilder, cache);
+    }
+
+    void shutdown() {
+        shutdown = true;
+    }
+
+    @Override
+    public void put(final CollectorId collectorId, final ClusterResultCollector<?> clusterResultCollector) {
+        if (shutdown) {
+            throw new RuntimeException("Stroom is shutting down");
+        }
+
+        final ClusterResultCollector existing = cache.getIfPresent(collectorId);
+        if (existing != null) {
+            throw new RuntimeException(
+                    "Existing item found in cluster result collector cache for key '" + collectorId.toString() + "'");
+        }
+
+        cache.put(collectorId, clusterResultCollector);
+    }
+
+    @Override
+    public ClusterResultCollector<?> get(final CollectorId collectorId) {
+        return cache.getIfPresent(collectorId);
+    }
+
+    @Override
+    public void remove(final CollectorId id) {
+        cache.invalidate(id);
+    }
+
+    @Override
+    public void clear() {
+        CacheUtil.clear(cache);
+    }
+}

@@ -16,7 +16,7 @@
 
 package stroom.pipeline.state;
 
-import stroom.pipeline.scope.PipelineScoped;
+import stroom.util.pipeline.scope.PipelineScoped;
 
 import java.util.concurrent.atomic.AtomicLong;
 

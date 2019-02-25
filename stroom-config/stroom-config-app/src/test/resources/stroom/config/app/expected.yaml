@@ -21,7 +21,6 @@ cluster:
 contentPackImport:
   enabled: false
 core:
-  temp: null
   databaseMultiInsertMaxBatchSize: 500
   connection:
     jdbcDriverClassName: "com.mysql.jdbc.Driver"
@@ -120,6 +119,8 @@ node:
       classNameReplacementRegex: "((?<=\\$Proxy)[0-9]+|(?<=\\$\\$)[0-9a-f]+|(?<=\\\
         $\\$Lambda\\$)[0-9]+\\/[0-9]+)"
       jMapExecutable: "jmap"
+path:
+  temp: null
 pipeline:
   appender:
     maxActiveDestinations: 100
@@ -249,10 +250,11 @@ ui:
     \ systems.</p>"
   aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
     \ systems.</p>"
-  buildDate: "TBD"
-  buildVersion: "TBD"
+  buildInfo:
+    upDate: null
+    buildDate: "TBD"
+    buildVersion: "TBD"
   nodeName: null
-  upDate: null
   maintenanceMessage: null
   defaultMaxResults: "1000000,100,10,1"
   helpUrl: null

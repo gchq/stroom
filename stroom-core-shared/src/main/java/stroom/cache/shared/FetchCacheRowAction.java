@@ -17,7 +17,7 @@
 package stroom.cache.shared;
 
 import stroom.task.shared.Action;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.ResultList;
 
 public class FetchCacheRowAction extends Action<ResultList<CacheRow>> {
     private static final long serialVersionUID = -6808045615241590297L;

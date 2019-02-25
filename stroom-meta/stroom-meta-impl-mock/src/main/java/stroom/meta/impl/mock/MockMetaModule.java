@@ -17,16 +17,15 @@
 package stroom.meta.impl.mock;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.Clearable;
 import stroom.meta.shared.MetaService;
+import stroom.util.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 public class MockMetaModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(MetaService.class).to(MockMetaService.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(MockMetaService.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(MockMetaService.class);
     }
 }

@@ -20,9 +20,9 @@ package stroom.streamtask;
 
 import org.junit.jupiter.api.Test;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Period;
-import stroom.entity.shared.Range;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Period;
+import stroom.util.shared.Range;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;
@@ -32,7 +32,7 @@ import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.test.FileSystemTestUtil;
+import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.util.List;

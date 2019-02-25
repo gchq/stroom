@@ -1,31 +1,12 @@
 ext.moduleName = 'stroom.lifecycle.impl'
 
 dependencies {
-
-////    implementation project(':stroom-entity-shared')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
-////    implementation project(':stroom-docstore:stroom-docstore-shared')
-////    implementation project(':stroom-explorer:stroom-explorer-api')
-////    implementation project(':stroom-importexport:stroom-importexport-api')
-////    implementation project(':stroom-meta:stroom-meta-api')
-////    implementation project(':stroom-task:stroom-task-api')
-////
-//    implementation libs.stroomDocRef
-////    implementation libs.stroomQueryApi
-////
-////    implementation libs.gwt_servlet
-////    implementation libs.hibernate_jpa_api
+    
     implementation libs.dropwizard_lifecycle
     implementation libs.guice4
     implementation libs.jackson_annotations
     implementation libs.slf4j_api
-////
-////    implementation libs.jaxb_api
-////    implementation libs.javax_inject;
-////    implementation libs.validation_api
-////
-////    testRuntimeOnly libs.jaxb_runtime
-////    testRuntimeOnly libs.javax_activation
 }

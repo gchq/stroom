@@ -18,7 +18,7 @@ package stroom.pipeline.xml.converter;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.io.StringReader;

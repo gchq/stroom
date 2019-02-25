@@ -17,13 +17,13 @@
 package stroom.job.impl.db;
 
 import stroom.db.util.GenericDao;
-import stroom.entity.shared.HasIntCrud;
-import stroom.job.impl.db.stroom.tables.records.JobRecord;
+import stroom.job.impl.db.jooq.tables.records.JobRecord;
+import stroom.util.shared.HasIntCrud;
 
 import javax.inject.Inject;
 import java.util.Optional;
 
-import static stroom.job.impl.db.stroom.Tables.JOB;
+import static stroom.job.impl.db.jooq.Tables.JOB;
 
 /**
  * This class is very slim because it uses the GenericDao.

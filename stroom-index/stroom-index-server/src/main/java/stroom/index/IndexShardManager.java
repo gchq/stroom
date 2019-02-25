@@ -17,7 +17,7 @@
 
 package stroom.index;
 
-import stroom.entity.FindDeleteService;
+import stroom.util.entity.FindDeleteService;
 import stroom.entity.FindFlushService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;

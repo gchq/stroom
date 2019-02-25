@@ -22,11 +22,12 @@ import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
 import stroom.docref.SharedObject;
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.shared.BaseCriteria;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.entity.FindService;
 import stroom.util.shared.SharedLong;
 
 import javax.inject.Inject;
@@ -65,9 +66,9 @@ class EntityServiceFindDeleteHandler
                 addCriteria(entityService, action.getCriteria(), and.getAdvancedQueryItems());
 
                 result = (Long) beanRegistry.invoke(entityService, "updateStatus", action.getCriteria());
-                documentEventLog.delete(action.getCriteria(), query, result);
+                documentEventLog.delete(action.getCriteria(), query, result, null);
             } catch (final RuntimeException e) {
-                documentEventLog.delete(action.getCriteria(), query, e);
+                documentEventLog.delete(action.getCriteria(), query, null, e);
 
                 throw e;
             }

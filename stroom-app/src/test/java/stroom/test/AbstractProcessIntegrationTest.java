@@ -20,7 +20,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
-import stroom.util.test.TempDir;
+import stroom.test.common.util.test.TempDir;
 
 import java.nio.file.Path;
 

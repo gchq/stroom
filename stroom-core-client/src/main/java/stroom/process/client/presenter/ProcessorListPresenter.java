@@ -43,7 +43,7 @@ import stroom.entity.client.SaveQueue;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.ResultList;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
 import stroom.streamstore.client.presenter.ActionDataProvider;

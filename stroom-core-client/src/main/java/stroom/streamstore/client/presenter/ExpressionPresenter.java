@@ -26,12 +26,11 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.ruleset.client.presenter.EditExpressionPresenter;
-import stroom.streamstore.client.presenter.ExpressionPresenter.ExpressionView;
+import stroom.receive.rules.client.presenter.EditExpressionPresenter;
 
 import java.util.List;
 
-public class ExpressionPresenter extends MyPresenterWidget<ExpressionView> {
+public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.ExpressionView> {
     private final EditExpressionPresenter editExpressionPresenter;
     private final ClientDispatchAsync dispatcher;
 

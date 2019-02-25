@@ -20,7 +20,7 @@ package stroom.pipeline.task;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.test.StroomPipelineTestFileUtil;
+import stroom.test.common.StroomPipelineTestFileUtil;
 
 import java.io.IOException;
 import java.nio.file.Path;

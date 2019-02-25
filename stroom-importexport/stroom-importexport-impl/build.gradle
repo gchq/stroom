@@ -1,50 +1,26 @@
 ext.moduleName = 'stroom.importexport.impl'
 
 dependencies {
-//    implementation project(':stroom-cache:stroom-cache-api')
-//    implementation project(':stroom-config:stroom-config-common')
-//    implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
-//    implementation project(':stroom-docstore:stroom-docstore-api')
-//    implementation project(':stroom-docstore:stroom-docstore-shared')
-    implementation project(':stroom-entity-shared')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
-//    implementation project(':stroom-kafka:stroom-kafka-pipeline')
-//    implementation project(':stroom-kafka:stroom-kafka-shared')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
-//    implementation project(':stroom-pipeline')
-    implementation project(':stroom-resourcestore:stroom-resourcestore-api')
+    implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
-//    implementation project(':stroom-statistics:stroom-statistics-api')
-//    implementation project(':stroom-statistics:stroom-statistics-shared')
     implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-task:stroom-task-shared')
-//    implementation project(':stroom-job:stroom-job-api')
-//    implementation project(':stroom-cluster-lock:stroom-cluster-lock-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
     
     implementation libs.stroomDocRef
-    //implementation libs.stroomQueryApi
     implementation libs.eventLogging
-//    implementation libs.flyway_core
+    
     implementation libs.guice4
-    //implementation libs.hibernate_jpa_api
     implementation libs.javax_inject
 
     implementation libs.jaxb_api
     implementation libs.slf4j_api
-    
-//    testImplementation libs.junit_jupiter_api
-//
-//    testRuntimeOnly libs.mysql_connector_java
-//    testRuntimeOnly libs.jaxb_runtime
-//    testRuntimeOnly libs.javax_activation
-//    testRuntimeOnly libs.junit_jupiter_engine
-
-
+    implementation libs.ws_rs_api
 
     testImplementation project(':stroom-test-common')
 

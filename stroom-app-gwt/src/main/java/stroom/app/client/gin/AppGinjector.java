@@ -35,6 +35,8 @@ import stroom.dashboard.client.gin.DashboardGinjector;
 import stroom.dashboard.client.gin.DashboardModule;
 import stroom.dashboard.client.vis.gin.VisGinjector;
 import stroom.dashboard.client.vis.gin.VisModule;
+import stroom.data.store.impl.fs.client.gin.FSVolumeGinjector;
+import stroom.data.store.impl.fs.client.gin.FSVolumeModule;
 import stroom.dictionary.client.gin.DictionaryGinjector;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.ClientDispatchModule;
@@ -57,15 +59,15 @@ import stroom.monitoring.client.gin.MonitoringModule;
 import stroom.pipeline.client.gin.PipelineGinjector;
 import stroom.pipeline.client.gin.PipelineModule;
 import stroom.query.client.QueryModule;
-import stroom.ruleset.client.gin.PolicyModule;
+import stroom.receive.rules.client.gin.PolicyModule;
 import stroom.script.client.gin.ScriptGinjector;
 import stroom.script.client.gin.ScriptModule;
 import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
-import stroom.statistics.client.common.gin.StatisticsGinjector;
-import stroom.statistics.client.common.gin.StatisticsModule;
-import stroom.stats.client.gin.StroomStatsStoreGinjector;
-import stroom.stats.client.gin.StroomStatsStoreModule;
+import stroom.statistics.impl.sql.client.gin.StatisticsGinjector;
+import stroom.statistics.impl.sql.client.gin.StatisticsModule;
+import stroom.statistics.impl.hbase.client.gin.StroomStatsStoreGinjector;
+import stroom.statistics.impl.hbase.client.gin.StroomStatsStoreModule;
 import stroom.streamstore.client.gin.StreamStoreGinjector;
 import stroom.streamstore.client.gin.StreamStoreModule;
 import stroom.task.client.gin.TaskGinjector;
@@ -89,6 +91,7 @@ import stroom.xmlschema.client.gin.XMLSchemaModule;
         DictionaryModule.class,
         EntityModule.class,
         FeedModule.class,
+        FSVolumeModule.class,
         FolderModule.class,
         ImportExportConfigModule.class,
         IndexModule.class,
@@ -116,6 +119,7 @@ public interface AppGinjector extends
         DictionaryGinjector,
         EntityGinjector,
         FeedGinjector,
+        FSVolumeGinjector,
         FolderGinjector,
         Ginjector,
         ImportExportConfigGinjector,

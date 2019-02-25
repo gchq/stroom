@@ -18,7 +18,7 @@ package stroom.pipeline.xmlschema;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.EntityTypeBinder;
+import stroom.util.entity.EntityTypeBinder;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEvent.Handler;
 import stroom.explorer.api.ExplorerActionHandler;

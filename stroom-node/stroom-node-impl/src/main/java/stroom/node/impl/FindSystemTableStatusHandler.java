@@ -16,8 +16,8 @@
 
 package stroom.node.impl;
 
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindSystemTableStatusAction;

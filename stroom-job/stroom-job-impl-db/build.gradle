@@ -3,7 +3,7 @@ ext.moduleName = 'stroom.job.impl.db'
 dependencies {
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-db-util')
-    implementation project(':stroom-job:stroom-job-impl-db-gen')
+    implementation project(':stroom-job:stroom-job-impl-db-jooq')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 

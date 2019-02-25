@@ -23,7 +23,7 @@ import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.config.global.client.presenter.ManageGlobalPropertyPresenter;
 import stroom.node.client.presenter.ManageVolumesPresenter;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;

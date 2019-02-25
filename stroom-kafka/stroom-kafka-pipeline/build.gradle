@@ -2,11 +2,9 @@ ext.moduleName = 'stroom.kafka.api'
 
 dependencies {
     implementation project(':stroom-core-shared')
-    implementation project(':stroom-kafka:stroom-kafka-shared')
     
     implementation project(':stroom-pipeline')
     implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 

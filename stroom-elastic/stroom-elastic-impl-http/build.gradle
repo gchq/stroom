@@ -7,7 +7,7 @@ dependencies {
     implementation project(':stroom-elastic:stroom-elastic-impl')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-security:stroom-security-server')
+    implementation project(':stroom-security:stroom-security-impl')
 
     implementation libs.stroomDocRef
     implementation libs.stroomQueryAudit

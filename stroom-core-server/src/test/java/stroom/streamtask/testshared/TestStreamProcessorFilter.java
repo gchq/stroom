@@ -20,7 +20,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Test;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.streamtask.shared.ProcessorFilterTracker;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
 import java.util.Collections;

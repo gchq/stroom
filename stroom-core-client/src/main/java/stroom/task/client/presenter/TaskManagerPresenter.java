@@ -27,7 +27,7 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.BaseResultList;
+import stroom.util.shared.BaseResultList;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.task.client.event.OpenTaskManagerHandler;
 import stroom.task.shared.FindTaskCriteria;

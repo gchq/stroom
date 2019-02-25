@@ -27,7 +27,7 @@ import stroom.meta.shared.MetaProperties;
 import stroom.security.impl.mock.AllowAllMockSecurity;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.time.Instant;
 import java.time.ZoneOffset;

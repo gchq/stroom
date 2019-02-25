@@ -17,7 +17,7 @@
 package stroom.test;
 
 import stroom.docstore.impl.memory.MemoryPersistence;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

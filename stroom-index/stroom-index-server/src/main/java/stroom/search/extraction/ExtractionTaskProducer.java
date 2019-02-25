@@ -28,9 +28,8 @@ import stroom.search.extraction.ExtractionTask.ResultReceiver;
 import stroom.search.taskqueue.AbstractTaskProducer;
 import stroom.search.taskqueue.TaskExecutor;
 import stroom.search.taskqueue.TaskProducer;
-import stroom.task.ThreadPoolImpl;
-import stroom.task.api.TaskContext;
 import stroom.task.shared.ThreadPool;
+import stroom.task.shared.ThreadPoolImpl;
 import stroom.util.shared.Severity;
 
 import javax.inject.Provider;
@@ -68,7 +67,6 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
     private final AtomicInteger tasksCompleted = new AtomicInteger();
     private final CountDownLatch completionLatch = new CountDownLatch(1);
 
-    private final TaskContext taskContext;
     private final FieldIndexMap extractionFieldIndexMap;
     private final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap;
     private final ErrorReceiver errorReceiver;
@@ -81,7 +79,6 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
     private volatile boolean finishedAddingTasks;
 
     public ExtractionTaskProducer(final TaskExecutor taskExecutor,
-                                  final TaskContext taskContext,
                                   final StreamMapCreator streamMapCreator,
                                   final LinkedBlockingQueue<Optional<Val[]>> storedData,
                                   final FieldIndexMap extractionFieldIndexMap,
@@ -91,7 +88,6 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
                                   final Executor executor,
                                   final Provider<ExtractionTaskHandler> handlerProvider) {
         super(taskExecutor, executor);
-        this.taskContext = taskContext;
         this.extractionFieldIndexMap = extractionFieldIndexMap;
         this.extractionCoprocessorsMap = extractionCoprocessorsMap;
         this.errorReceiver = errorReceiver;

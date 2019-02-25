@@ -17,7 +17,7 @@
 package stroom.entity;
 
 import event.logging.BaseAdvancedQueryItem;
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.shared.BaseCriteria;
 
 import java.util.List;
 

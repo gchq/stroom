@@ -26,7 +26,7 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.Sort.Direction;
+import stroom.util.shared.Sort.Direction;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.node.shared.FindSystemTableStatusAction;

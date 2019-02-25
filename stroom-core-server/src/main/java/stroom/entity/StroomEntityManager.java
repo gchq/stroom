@@ -16,15 +16,14 @@
 
 package stroom.entity;
 
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseResultList;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.BaseResultList;
 import stroom.entity.shared.Entity;
-import stroom.entity.shared.Flushable;
-import stroom.entity.shared.SummaryDataRow;
+import stroom.util.shared.Flushable;
+import stroom.util.shared.SummaryDataRow;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 
-import javax.persistence.FlushModeType;
 import java.util.List;
 
 public interface StroomEntityManager extends Flushable {

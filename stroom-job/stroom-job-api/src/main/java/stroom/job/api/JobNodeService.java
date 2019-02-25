@@ -17,7 +17,7 @@
 
 package stroom.job.api;
 
-import stroom.entity.shared.BaseResultList;
+import stroom.util.shared.BaseResultList;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.JobNode;
 

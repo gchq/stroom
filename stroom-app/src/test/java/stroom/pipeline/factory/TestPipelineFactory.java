@@ -27,7 +27,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.StroomPipelineTestFileUtil;
+import stroom.test.common.StroomPipelineTestFileUtil;
 
 import java.util.Map;
 

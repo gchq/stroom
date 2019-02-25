@@ -17,7 +17,7 @@
 package stroom.pipeline.task;
 
 import org.junit.jupiter.api.Test;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Store;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -37,7 +37,7 @@ class TestTranslationStepping extends AbstractCoreIntegrationTest {
     @Inject
     private StoreCreationTool storeCreationTool;
     @Inject
-    private StreamStore streamStore;
+    private Store streamStore;
     @Inject
     private TaskManager taskManager;
 

@@ -19,7 +19,7 @@ package stroom.streamtask.testshared;
 
 import org.junit.jupiter.api.Test;
 import stroom.streamtask.shared.ProcessorFilterTracker;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

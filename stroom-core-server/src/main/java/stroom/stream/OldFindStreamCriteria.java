@@ -16,13 +16,12 @@
 
 package stroom.stream;
 
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.IdRange;
+import stroom.util.shared.IdRange;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
-import stroom.entity.shared.Period;
+import stroom.util.shared.Period;
 import stroom.streamstore.shared.StreamAttributeCondition;
 
 import javax.xml.bind.annotation.XmlRootElement;

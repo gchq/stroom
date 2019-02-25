@@ -18,9 +18,9 @@
 package stroom.volume;
 
 import stroom.entity.BaseEntityService;
-import stroom.entity.FindService;
-import stroom.entity.shared.Clearable;
-import stroom.entity.shared.Flushable;
+import stroom.util.entity.FindService;
+import stroom.util.shared.Clearable;
+import stroom.util.shared.Flushable;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
@@ -37,7 +37,7 @@ public interface VolumeService extends BaseEntityService<VolumeEntity>, FindServ
      * @param node The local node required if we prefer to use local volumes.
      * @return set of volumes to write to
      */
-    Set<VolumeEntity> getStreamVolumeSet(Node node);
+    VolumeEntity getStreamVolume(Node node);
 
     /**
      * Get a list of volumes that can support indexes. The order will always be the same.

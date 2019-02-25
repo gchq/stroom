@@ -15,7 +15,7 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.ruleset.client.presenter.EditExpressionPresenter;
+import stroom.receive.rules.client.presenter.EditExpressionPresenter;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.streamtask.shared.ProcessorFilter;

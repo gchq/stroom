@@ -18,9 +18,9 @@
 package stroom.pipeline;
 
 import stroom.docref.DocRef;
-import stroom.docstore.Persistence;
-import stroom.docstore.Store;
-import stroom.docstore.StoreFactory;
+import stroom.docstore.api.Persistence;
+import stroom.docstore.api.Store;
+import stroom.docstore.api.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;

@@ -28,7 +28,7 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.docref.DocRef;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.tab.client.presenter.TabData;

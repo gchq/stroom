@@ -2,12 +2,9 @@ ext.moduleName = 'stroom.index.api'
 
 dependencies {
     implementation project(':stroom-core-shared')
-    implementation project(':stroom-entity-shared')
-    implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
-    implementation project(':stroom-task:stroom-task-shared')
 
     implementation libs.javax_inject
     implementation libs.stroomDocRef

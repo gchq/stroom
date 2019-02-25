@@ -35,14 +35,14 @@ import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.MetaHolder;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.StroomPipelineTestFileUtil;
+import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;

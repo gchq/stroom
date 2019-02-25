@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.ByteSizeUnit;
 import stroom.util.io.FileUtil;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

@@ -24,7 +24,7 @@ import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.StoreCreationTool;
-import stroom.test.StroomPipelineTestFileUtil;
+import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;

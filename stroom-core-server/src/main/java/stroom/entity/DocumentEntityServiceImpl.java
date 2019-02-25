@@ -17,24 +17,26 @@
 package stroom.entity;
 
 import stroom.docref.DocRef;
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.entity.NameValidationUtil;
+import stroom.util.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.BaseResultList;
+import stroom.util.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.FindDocumentEntityCriteria;
-import stroom.entity.shared.FindNamedEntityCriteria;
+import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.FindDocumentEntityCriteria;
+import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.PageRequest;
-import stroom.entity.shared.PermissionException;
-import stroom.entity.shared.ProvidesNamePattern;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.PermissionException;
+import stroom.util.shared.ProvidesNamePattern;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.entity.FindService;
 
 import javax.persistence.Transient;
 import java.lang.reflect.InvocationTargetException;

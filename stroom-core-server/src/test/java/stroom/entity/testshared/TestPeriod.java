@@ -18,9 +18,9 @@ package stroom.entity.testshared;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.entity.shared.Period;
+import stroom.util.shared.Period;
 import stroom.entity.util.PeriodUtil;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -17,7 +17,7 @@
 package stroom.node.impl;
 
 import stroom.node.shared.NodeInfoResult;
-import stroom.task.cluster.api.ClusterTask;
+import stroom.cluster.task.api.ClusterTask;
 
 class NodeInfoClusterTask extends ClusterTask<NodeInfoResult> {
     private static final long serialVersionUID = -2205811554553456872L;

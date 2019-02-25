@@ -22,10 +22,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.ui.config.client.UiConfigCache;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgIcon;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.BuildInfo;
 
 public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.WelcomeView> {
     public static final String WELCOME = "Welcome";
@@ -37,10 +38,11 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
+                    final BuildInfo buildInfo = result.getBuildInfo();
                     view.setHTML(result.getWelcomeHtml());
-                    view.getBuildVersion().setText("Build Version: " + result.getBuildVersion());
-                    view.getBuildDate().setText("Build Date: " + result.getBuildDate());
-                    view.getUpDate().setText("Up Date: " + result.getUpDate());
+                    view.getBuildVersion().setText("Build Version: " + buildInfo.getBuildVersion());
+                    view.getBuildDate().setText("Build Date: " + buildInfo.getBuildDate());
+                    view.getUpDate().setText("Up Date: " + buildInfo.getUpDate());
                     view.getNodeName().setText("Node Name: " + result.getNodeName());
 
                     // final CurrentUser currentUser = currentUserProvider.get();

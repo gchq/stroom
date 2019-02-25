@@ -19,9 +19,9 @@ package stroom.importexport.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.PermissionException;
+import stroom.util.shared.DocRefs;
+import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.PermissionException;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;

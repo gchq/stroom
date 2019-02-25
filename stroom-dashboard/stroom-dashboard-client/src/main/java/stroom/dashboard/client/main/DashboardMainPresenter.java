@@ -38,9 +38,9 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.DocumentServiceReadAction;
-import stroom.security.client.ClientSecurityContext;
-import stroom.security.client.event.CurrentUserChangedEvent;
-import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.api.event.CurrentUserChangedEvent;
+import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 
 import javax.inject.Inject;
 

@@ -29,7 +29,7 @@ import stroom.dashboard.shared.TableResultRequest;
 import stroom.datasource.DataSourceProvider;
 import stroom.datasource.DataSourceProviderRegistry;
 import stroom.docref.DocRef;
-import stroom.entity.shared.EntityServiceException;
+import stroom.util.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.Row;

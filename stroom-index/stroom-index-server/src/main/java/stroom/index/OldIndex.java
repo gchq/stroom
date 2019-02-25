@@ -16,13 +16,13 @@
 
 package stroom.index;
 
-import stroom.docref.HasDisplayValue;
-import stroom.entity.shared.HasPrimitiveValue;
-import stroom.entity.shared.PrimitiveValueConverter;
-import stroom.importexport.api.ExternalFile;
+import stroom.importexport.shared.ExternalFile;
+import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.PrimitiveValueConverter;
 import stroom.importexport.migration.DocumentEntity;
 import stroom.index.shared.IndexFields;
 
+import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
 /**

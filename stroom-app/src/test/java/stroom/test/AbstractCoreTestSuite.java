@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Disabled;
 //        stroom.security.TestAppPermissionServiceImpl.class,
 //        stroom.security.TestDocumentPermissionsServiceImpl.class,
 //        stroom.security.TestUserServiceImpl.class,
-//        stroom.statistics.common.TestStatisticsDataSourceImportExportSerializer.class,
+//        stroom.statistics.impl.common.TestStatisticsDataSourceImportExportSerializer.class,
 //        stroom.statistics.sql.TestSQLStatisticAggregationManager.class,
 //        stroom.statistics.sql.TestSQLStatisticFlushTaskHandler.class,
 //        stroom.stats.TestStroomStatsStoreImportExportSerializer.class,

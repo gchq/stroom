@@ -6,7 +6,8 @@ import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.YamlUtil;
-import stroom.guice.CoreModule;
+import stroom.app.guice.CoreModule;
+import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.impl.NodeTestConfigModule;
 import stroom.resource.impl.ResourceModule;
 import stroom.util.io.FileUtil;
@@ -57,8 +58,7 @@ public class CoreTestModule extends AbstractModule {
         install(new stroom.cluster.impl.MockClusterModule());
         install(new NodeTestConfigModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
-        install(new stroom.statistics.internal.MockInternalStatisticsModule());
-        install(new stroom.streamtask.statistic.MockMetaDataStatisticModule());
+        install(new MockMetaStatisticsModule());
         install(new stroom.test.DatabaseTestControlModule());
     }
 }

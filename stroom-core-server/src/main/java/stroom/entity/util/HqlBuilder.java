@@ -16,9 +16,9 @@
 
 package stroom.entity.util;
 
-import stroom.entity.shared.CriteriaSet;
+import stroom.util.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.HasPrimitiveValue;
+import stroom.util.shared.HasPrimitiveValue;
 import stroom.docref.DocRef;
 
 public class HqlBuilder extends AbstractSqlBuilder {

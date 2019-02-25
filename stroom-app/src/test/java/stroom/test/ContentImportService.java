@@ -1,6 +1,7 @@
 package stroom.test;
 
 import stroom.importexport.impl.ImportExportService;
+import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
 

@@ -33,7 +33,7 @@ import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.Sort.Direction;
+import stroom.util.shared.Sort.Direction;
 import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineDoc;

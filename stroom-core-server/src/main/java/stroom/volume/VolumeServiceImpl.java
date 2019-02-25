@@ -27,10 +27,10 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventHandler;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Clearable;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Clearable;
 import stroom.entity.shared.EntityAction;
-import stroom.entity.shared.Sort.Direction;
+import stroom.util.shared.Sort.Direction;
 import stroom.entity.util.HqlBuilder;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.FindVolumeCriteria;
@@ -42,9 +42,9 @@ import stroom.node.shared.VolumeState;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatisticKey;
-import stroom.statistics.internal.InternalStatisticsReceiver;
+import stroom.statistics.api.InternalStatisticEvent;
+import stroom.statistics.api.InternalStatisticKey;
+import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
@@ -131,15 +131,19 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
     }
 
     @Override
-    public Set<VolumeEntity> getStreamVolumeSet(final Node node) {
+    public VolumeEntity getStreamVolume(final Node node) {
         return security.insecureResult(() -> {
             LocalVolumeUse localVolumeUse = null;
             if (volumeConfig.isPreferLocalVolumes()) {
                 localVolumeUse = LocalVolumeUse.PREFERRED;
             }
 
-            return getVolumeSet(node, VolumeType.PUBLIC, VolumeUseStatus.ACTIVE, null, localVolumeUse, null,
+            final Set<VolumeEntity> set = getVolumeSet(node, VolumeType.PUBLIC, VolumeUseStatus.ACTIVE, null, localVolumeUse, null,
                     getResilientReplicationCount());
+            if (set.size() > 0) {
+                return set.iterator().next();
+            }
+            return null;
         });
     }
 

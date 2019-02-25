@@ -20,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.Doc;
-import stroom.entity.shared.HasPrimitiveValue;
-import stroom.entity.shared.PrimitiveValueConverter;
+import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.PrimitiveValueConverter;
 import stroom.streamstore.shared.StreamTypeNames;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "classification", "encoding", "contextEncoding", "retentionDayAge", "reference", "streamType", "feedStatus"})

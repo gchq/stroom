@@ -16,7 +16,7 @@
 
 package stroom.entity;
 
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 
 public abstract class MockSystemEntityService<E extends BaseEntity, C extends BaseCriteria>

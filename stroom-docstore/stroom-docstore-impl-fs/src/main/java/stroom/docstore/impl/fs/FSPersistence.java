@@ -1,7 +1,7 @@
 package stroom.docstore.impl.fs;
 
-import stroom.docstore.Persistence;
-import stroom.docstore.RWLockFactory;
+import stroom.docstore.api.Persistence;
+import stroom.docstore.api.RWLockFactory;
 import stroom.docref.DocRef;
 
 import javax.inject.Inject;

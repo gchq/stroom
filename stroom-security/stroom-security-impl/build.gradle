@@ -1,12 +1,49 @@
 ext.moduleName = 'stroom.security.impl'
 
 dependencies {
+    implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-server')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-security:stroom-security-api')
+//    implementation project(':stroom-security:stroom-security-impl-db')
+    implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    implementation libs.guice4
-    implementation libs.javax_inject
-    implementation libs.javax_inject
+    implementation libs.stroomAuthApi
     implementation libs.stroomDocRef
+
+    implementation libs.commons_lang
+    implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.eventLogging
+    implementation libs.guava
+    implementation libs.guice4
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.javax_servlet_api
+    implementation libs.javax_validation
+    implementation libs.jose4j
+    implementation libs.slf4j_api
+    implementation libs.swagger_annotations
     implementation libs.ws_rs_api
+
+//    testImplementation libs.assertj_core
+//
+//    testImplementation libs.junit_jupiter_api
+//    testImplementation libs.test_containers
+//    testImplementation libs.test_containers_mysql
+//    testImplementation libs.mockito_core
+//
+//    // The following logging libs are needed when running junits outside dropwizard
+//    testRuntimeOnly libs.javax_activation
+//    testRuntimeOnly libs.jaxb_runtime
+//    testRuntimeOnly libs.jcl_over_slf4j
+//    testRuntimeOnly libs.jul_to_slf4j
+//    testRuntimeOnly libs.junit_jupiter_engine
+//    testRuntimeOnly libs.log4j_over_slf4j
+//    testRuntimeOnly libs.logback_classic
+//    testRuntimeOnly libs.logback_core
 }

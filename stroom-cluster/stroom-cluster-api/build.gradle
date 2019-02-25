@@ -1,0 +1,12 @@
+ext.moduleName = 'stroom.cluster.api'
+
+dependencies {
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.stroomDocRef
+
+    implementation libs.guice4
+    implementation libs.javax_inject
+}

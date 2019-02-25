@@ -18,7 +18,7 @@ package stroom.pipeline.xml.converter.ds3.ref;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.util.List;
 

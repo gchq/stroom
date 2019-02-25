@@ -25,7 +25,6 @@ import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.client.presenter.PipelineSettingsPresenter.PipelineSettingsView;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
-import stroom.security.client.ClientSecurityContext;
 
 public class PipelineSettingsPresenter
         extends DocumentSettingsPresenter<PipelineSettingsView, PipelineDoc>

@@ -22,7 +22,7 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.date.DateUtil;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

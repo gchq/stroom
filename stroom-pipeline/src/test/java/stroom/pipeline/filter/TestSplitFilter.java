@@ -23,9 +23,9 @@ import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.util.ProcessorUtil;
-import stroom.test.ComparisonHelper;
-import stroom.test.StroomPipelineTestFileUtil;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.ComparisonHelper;
+import stroom.test.common.StroomPipelineTestFileUtil;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

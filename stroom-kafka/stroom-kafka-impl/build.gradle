@@ -3,13 +3,11 @@ apply plugin: "com.github.johnrengelman.shadow"
 ext.moduleName = 'stroom.kafka.client.impl'
 
 dependencies {
-    implementation project(':stroom-docstore:stroom-docstore-shared')
+    implementation project(':stroom-core-shared')
     implementation project(':stroom-docstore:stroom-docstore-api')
-    //implementation project(':stroom-docstore:stroom-docstore-impl') // TODO to be removed
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-kafka:stroom-kafka-pipeline')
-    implementation project(':stroom-kafka:stroom-kafka-shared')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')

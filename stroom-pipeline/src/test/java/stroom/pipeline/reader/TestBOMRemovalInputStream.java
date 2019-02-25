@@ -21,8 +21,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import stroom.util.ZipResource;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.ZipResource;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.io.InputStreamReader;

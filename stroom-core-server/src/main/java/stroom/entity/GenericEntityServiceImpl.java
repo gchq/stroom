@@ -17,15 +17,15 @@
 
 package stroom.entity;
 
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseResultList;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.BaseResultList;
 import stroom.entity.shared.Entity;
-import stroom.entity.shared.EntityServiceException;
+import stroom.util.shared.EntityServiceException;
 import stroom.entity.shared.HasLoadById;
 import stroom.entity.shared.HasLoadByUuid;
+import stroom.util.entity.FindService;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.HashSet;
 import java.util.Set;
 
