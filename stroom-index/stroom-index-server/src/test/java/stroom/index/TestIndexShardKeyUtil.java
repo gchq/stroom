@@ -25,12 +25,15 @@ import stroom.index.shared.IndexShardKey;
 import stroom.util.date.DateUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestIndexShardKeyUtil extends StroomUnitTest {
     @Test
     void testMultishard() {
         final IndexDoc index = new IndexDoc();
+        index.setUuid(UUID.randomUUID().toString());
         index.setShardsPerPartition(5);
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
 
@@ -78,6 +81,7 @@ class TestIndexShardKeyUtil extends StroomUnitTest {
 
     private String getPartition(final PartitionBy partitionBy, final int partitionSize, final long millis) {
         final IndexDoc index = new IndexDoc();
+        index.setUuid(UUID.randomUUID().toString());
         index.setShardsPerPartition(5);
         index.setPartitionBy(partitionBy);
         index.setPartitionSize(partitionSize);
