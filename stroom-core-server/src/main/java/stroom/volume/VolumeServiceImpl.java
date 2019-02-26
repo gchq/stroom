@@ -188,7 +188,6 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
                 set = new HashSet<>();
 
                 final List<VolumeEntity> remaining = new ArrayList<>(filteredVolumeList);
-                List<VolumeEntity> remainingInOtherRacks = new ArrayList<>(filteredVolumeList);
 
                 for (int count = 0; count < requiredNumber && remaining.size() > 0; count++) {
                     if (set.size() == 0 && localVolumeList != null && localVolumeList.size() > 0) {
@@ -197,22 +196,10 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
                         final VolumeEntity volume = volumeSelector.select(localVolumeList);
 
                         remaining.remove(volume);
-                        remainingInOtherRacks = VolumeListUtil.removeMatchingRack(remainingInOtherRacks,
-                                volume.getNode().getRack());
 
                         set.add(volume);
 
-                    } else if (remainingInOtherRacks.size() > 0) {
-                        // Next try and get volumes in other racks.
-                        final VolumeEntity volume = volumeSelector.select(remainingInOtherRacks);
-
-                        remaining.remove(volume);
-                        remainingInOtherRacks = VolumeListUtil.removeMatchingRack(remainingInOtherRacks,
-                                volume.getNode().getRack());
-
-                        set.add(volume);
-
-                    } else if (remaining.size() > 0) {
+                    } else {
                         // Finally add any other volumes to make up the required
                         // replication count.
                         final VolumeEntity volume = volumeSelector.select(remaining);

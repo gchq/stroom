@@ -19,7 +19,6 @@ package stroom.volume;
 
 import org.junit.jupiter.api.Test;
 import stroom.node.shared.Node;
-import stroom.node.shared.Rack;
 import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeState;
@@ -79,11 +78,8 @@ class TestVolumeSelector extends StroomUnitTest {
     }
 
     private List<VolumeEntity> createVolumeList() {
-        final Rack rack1 = Rack.create("rack1");
-        final Rack rack2 = Rack.create("rack2");
-
-        final Node node1 = Node.create(rack1, "node1");
-        final Node node2 = Node.create(rack2, "node2");
+        final Node node1 = Node.create("node1");
+        final Node node2 = Node.create("node2");
 
         final VolumeEntity v1 = VolumeEntity.create(node1, "path1", VolumeType.PUBLIC, VolumeState.create(1000, 10000));
         final VolumeEntity v2 = VolumeEntity.create(node2, "path2", VolumeType.PUBLIC, VolumeState.create(5000, 10000));

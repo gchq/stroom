@@ -26,11 +26,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import stroom.entity.StroomEntityManager;
-import stroom.util.shared.BaseResultList;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
-import stroom.node.shared.Rack;
 import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeState;
@@ -38,8 +36,9 @@ import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
 import stroom.security.impl.mock.AllowAllMockSecurity;
 import stroom.statistics.api.InternalStatisticsReceiver;
-import stroom.util.io.FileUtil;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.io.FileUtil;
+import stroom.util.shared.BaseResultList;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -62,13 +61,11 @@ class TestVolumeServiceImpl extends StroomUnitTest {
         DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_STREAM_VOLUME_SUBDIR);
     }
 
-    private final Rack rack1 = Rack.create("rack1");
-    private final Rack rack2 = Rack.create("rack2");
-    private final Node node1a = Node.create(rack1, "1a");
-    private final Node node1b = Node.create(rack1, "1b");
-    private final Node node1c = Node.create(rack1, "1c");
-    private final Node node2a = Node.create(rack2, "2a");
-    private final Node node2b = Node.create(rack2, "2b");
+    private final Node node1a = Node.create("1a");
+    private final Node node1b = Node.create("1b");
+    private final Node node1c = Node.create("1c");
+    private final Node node2a = Node.create("2a");
+    private final Node node2b = Node.create("2b");
     private final VolumeEntity public1a = VolumeEntity.create(
             node1a,
             FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_1A")),

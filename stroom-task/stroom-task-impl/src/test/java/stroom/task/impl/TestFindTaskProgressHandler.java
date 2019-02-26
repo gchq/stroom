@@ -110,8 +110,8 @@ class TestFindTaskProgressHandler {
     }
 
     private Map<TaskId, TaskProgress> createMap(final FindTaskProgressCriteria criteria) {
-        final Node node1 = Node.create(null, "node1");
-        final Node node2 = Node.create(null, "node2");
+        final Node node1 = Node.create("node1");
+        final Node node2 = Node.create("node2");
 
         final long now = 10000000;
         final long baseSubmitTime = now - 1000000;

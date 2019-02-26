@@ -2,8 +2,8 @@ package stroom.node.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.util.shared.IsConfig;
 import stroom.util.config.annotations.ReadOnly;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -11,7 +11,6 @@ import javax.inject.Singleton;
 @Singleton
 public class NodeConfig implements IsConfig {
     private String nodeName = "tba";
-    private String rackName = "tba";
     private StatusConfig statusConfig;
 
     public NodeConfig() {
@@ -34,17 +33,6 @@ public class NodeConfig implements IsConfig {
         this.nodeName = nodeName;
     }
 
-    @ReadOnly
-    @JsonPropertyDescription("Should only be set per node in application property file")
-    @JsonProperty("rack")
-    public String getRackName() {
-        return rackName;
-    }
-
-    public void setRackName(final String rackName) {
-        this.rackName = rackName;
-    }
-
     @JsonProperty("status")
     public StatusConfig getStatusConfig() {
         return statusConfig;
@@ -58,7 +46,6 @@ public class NodeConfig implements IsConfig {
     public String toString() {
         return "NodeConfig{" +
                 "nodeName='" + nodeName + '\'' +
-                ", rackName='" + rackName + '\'' +
                 '}';
     }
 }

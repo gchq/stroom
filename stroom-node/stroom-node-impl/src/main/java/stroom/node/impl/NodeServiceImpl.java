@@ -20,14 +20,13 @@ package stroom.node.impl;
 
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.StroomEntityManager;
-import stroom.util.shared.BaseResultList;
 import stroom.node.api.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
-import stroom.node.shared.Rack;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -50,10 +49,6 @@ public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriter
         super(entityManager, security, uiConfig);
         this.security = security;
         this.nodeServiceUtil = nodeServiceUtil;
-    }
-
-    Rack getRack(final String name) {
-        return nodeServiceUtil.getRack(name);
     }
 
     @Override

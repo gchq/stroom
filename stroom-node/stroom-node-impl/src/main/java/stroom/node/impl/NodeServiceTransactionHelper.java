@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.HqlBuilder;
 import stroom.node.shared.Node;
-import stroom.node.shared.Rack;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -59,43 +58,19 @@ class NodeServiceTransactionHelper {
         return results.get(0);
     }
 
-    @SuppressWarnings("unchecked")
-    // @Transactional
-    Rack getRack(final String name) {
-        final HqlBuilder sql = new HqlBuilder();
-        sql.append("SELECT r FROM ");
-        sql.append(Rack.class.getName());
-        sql.append(" r where r.name = ");
-        sql.arg(name);
-
-        // This should just bring back 1
-        final List<Rack> results = entityManager.executeQueryResultList(sql);
-
-        if (results == null || results.size() == 0) {
-            return null;
-        }
-        return results.get(0);
-    }
-
     /**
      * Create a new transaction to create the node .... only ever called once at
      * initial deployment time.
      */
     // @Transactional
-    Node buildNode(final String nodeName, final String rackName) {
+    Node buildNode(final String nodeName) {
         Node node = getNode(nodeName);
 
         if (node == null) {
-            Rack rack = getRack(rackName);
-            if (rack == null) {
-                rack = Rack.create(rackName);
-                rack = entityManager.saveEntity(rack);
-            }
-
-            node = Node.create(rack, nodeName);
+            node = Node.create(nodeName);
             node = entityManager.saveEntity(node);
 
-            LOGGER.info("Unable to find default node " + nodeName + ", so I created it in rack " + rackName);
+            LOGGER.info("Unable to find default node " + nodeName + ", so I created it");
         }
 
         return node;

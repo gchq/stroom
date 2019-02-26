@@ -50,27 +50,15 @@ public class Node extends NamedEntity {
      * master
      */
     private int priority = 1;
-    private Rack rack;
     private boolean enabled = true;
 
     /**
      * Utility to create a node.
      */
-    public static Node create(final Rack rack, final String name) {
+    public static Node create(final String name) {
         final Node node = new Node();
-        node.setRack(rack);
         node.setName(name);
         return node;
-    }
-
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = Rack.FOREIGN_KEY)
-    public Rack getRack() {
-        return rack;
-    }
-
-    public void setRack(final Rack rack) {
-        this.rack = rack;
     }
 
     @Column(name = CLUSTER_URL)
@@ -121,7 +109,6 @@ public class Node extends NamedEntity {
         final Node node = new Node();
         node.setName(getName());
         node.priority = priority;
-        node.rack = rack;
         node.enabled = enabled;
         return node;
     }

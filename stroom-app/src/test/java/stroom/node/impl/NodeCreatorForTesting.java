@@ -23,7 +23,6 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.util.BaseEntityUtil;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
-import stroom.node.shared.Rack;
 import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeState;
 import stroom.pipeline.writer.PathCreator;
@@ -39,10 +38,8 @@ import java.util.List;
 public class NodeCreatorForTesting implements NodeCreator {
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeCreatorForTesting.class);
 
-    private final Rack rack1 = createRack("rack1");
-    private final Rack rack2 = createRack("rack2");
-    private final Node node1a = createNode("node1a", rack1);
-    private final Node node2a = createNode("node2a", rack2);
+    private final Node node1a = createNode("node1a");
+    private final Node node2a = createNode("node2a");
 
     private final NodeServiceImpl nodeService;
     private final NodeConfig nodeConfig;
@@ -58,13 +55,6 @@ public class NodeCreatorForTesting implements NodeCreator {
         this.nodeConfig = nodeConfig;
         this.volumeService = volumeService;
         this.stroomEntityManager = stroomEntityManager;
-    }
-
-    private List<Rack> getInitialRackList() {
-        final List<Rack> racks = new ArrayList<>();
-        racks.add(rack1);
-        racks.add(rack2);
-        return racks;
     }
 
     private List<Node> getInitialNodeList() {
@@ -83,16 +73,9 @@ public class NodeCreatorForTesting implements NodeCreator {
         return volumes;
     }
 
-    private Rack createRack(final String name) {
-        final Rack rack = new Rack();
-        rack.setName(name);
-        return rack;
-    }
-
-    private Node createNode(final String name, final Rack rack) {
+    private Node createNode(final String name) {
         final Node node = new Node();
         node.setName(name);
-        node.setRack(rack);
         return node;
     }
 
@@ -107,26 +90,15 @@ public class NodeCreatorForTesting implements NodeCreator {
     @Override
     public void setup() {
         try {
-            final List<Rack> initialRackList = getInitialRackList();
             final List<Node> initialNodeList = getInitialNodeList();
             final List<VolumeEntity> initialVolumeList = getInitialVolumeList();
 
-            final List<Rack> realRackList = new ArrayList<>();
             final List<Node> realNodeList = new ArrayList<>();
 
-            for (final Rack rack : initialRackList) {
-                final Rack realRack = nodeService.getRack(rack.getName());
-                if (realRack != null) {
-                    realRackList.add(realRack);
-                } else {
-                    realRackList.add(stroomEntityManager.saveEntity(rack.copy()));
-                }
-            }
             for (final Node node : initialNodeList) {
                 Node realNode = nodeService.getNode(node.getName());
                 if (realNode == null) {
                     realNode = node.copy();
-                    realNode.setRack(BaseEntityUtil.findByName(realRackList, realNode.getRack().getName()));
                     LOGGER.debug("Persisting node {}", realNode);
                     realNode = stroomEntityManager.saveEntity(realNode);
                 }
@@ -161,7 +133,6 @@ public class NodeCreatorForTesting implements NodeCreator {
             }
 
             nodeConfig.setNodeName(initialNodeList.get(0).getName());
-            nodeConfig.setRackName(initialRackList.get(0).getName());
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }

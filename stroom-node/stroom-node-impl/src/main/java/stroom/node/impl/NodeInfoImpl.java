@@ -55,7 +55,7 @@ public class NodeInfoImpl implements NodeInfo, Clearable, EntityEvent.Handler {
 
                     if (thisNode == null) {
                         // This will start a new mini transaction for the update
-                        thisNode = nodeServiceTransactionHelper.buildNode(nodeConfig.getNodeName(), nodeConfig.getRackName());
+                        thisNode = nodeServiceTransactionHelper.buildNode(nodeConfig.getNodeName());
                     }
                 }
 
