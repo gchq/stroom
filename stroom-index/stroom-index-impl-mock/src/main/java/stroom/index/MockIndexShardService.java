@@ -30,10 +30,13 @@ import stroom.util.io.FileUtil;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
@@ -41,20 +44,38 @@ public class MockIndexShardService
         implements IndexShardService, Clearable {
 
     protected final Map<Object, IndexShard> map = new ConcurrentHashMap<>();
-    private final AtomicLong currentId = new AtomicLong();
+    private final AtomicInteger indexShardsCreated;
+    private final AtomicLong indexShardId;
+
+    public MockIndexShardService() {
+        this.indexShardsCreated = new AtomicInteger(0);
+        this.indexShardId = new AtomicLong(0);
+    }
+
+    public MockIndexShardService( final AtomicInteger indexShardsCreated,
+                                  final AtomicLong indexShardId) {
+        this.indexShardsCreated = indexShardsCreated;
+        this.indexShardId = indexShardId;
+    }
 
     @Override
     public IndexShard createIndexShard(final IndexShardKey indexShardKey, final String ownerNodeName) {
+        indexShardsCreated.incrementAndGet();
+
+        // checkedLimit.increment();
         final IndexShard indexShard = new IndexShard();
-        indexShard.setVolume(
-                new IndexVolume.Builder()
-                        .nodeName(ownerNodeName)
-                        .path(FileUtil.getCanonicalPath(FileUtil.getTempDir()))
-                        .build());
+        indexShard.setVolume(new IndexVolume.Builder()
+                .nodeName(ownerNodeName)
+                .path(FileUtil.getCanonicalPath(FileUtil.getTempDir()))
+                .build());
         indexShard.setIndexUuid(indexShardKey.getIndexUuid());
         indexShard.setPartition(indexShardKey.getPartition());
         indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
         indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
+        indexShard.setNodeName(ownerNodeName);
+        indexShard.setId(indexShardId.incrementAndGet());
+
+        indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
         map.put(indexShard.getId(), indexShard);
         final Path indexPath = IndexShardUtil.getIndexPath(indexShard);
         if (Files.isDirectory(indexPath)) {

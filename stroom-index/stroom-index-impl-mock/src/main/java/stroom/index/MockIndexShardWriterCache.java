@@ -17,6 +17,7 @@
 package stroom.index;
 
 
+import stroom.index.service.IndexShardService;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 
@@ -28,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MockIndexShardWriterCache implements IndexShardWriterCache {
     private final int maxDocumentCount;
 
-    private final MockIndexShardService indexShardService;
+    private final IndexShardService indexShardService;
     private final Map<Long, IndexShardWriter> openWritersByShardId = new ConcurrentHashMap<>();
     private final Map<IndexShardKey, IndexShardWriter> openWritersByShardKey = new ConcurrentHashMap<>();
 
@@ -36,7 +37,7 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
         this(new MockIndexShardService(), Integer.MAX_VALUE);
     }
 
-    MockIndexShardWriterCache(final MockIndexShardService indexShardService, final int maxDocumentCount) {
+    MockIndexShardWriterCache(final IndexShardService indexShardService, final int maxDocumentCount) {
         this.indexShardService = indexShardService;
         this.maxDocumentCount = maxDocumentCount;
     }

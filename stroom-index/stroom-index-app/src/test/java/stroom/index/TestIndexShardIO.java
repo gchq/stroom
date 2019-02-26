@@ -37,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -78,6 +79,7 @@ class TestIndexShardIO {
         final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
         final IndexDoc index = new IndexDoc();
+        index.setUuid(UUID.randomUUID().toString());
         index.setName("Test");
 
         final IndexShard idx1 = new IndexShard();
@@ -106,6 +108,7 @@ class TestIndexShardIO {
     @Test
     void testOpenCloseManyReadWrite() throws IOException {
         final IndexDoc index = new IndexDoc();
+        index.setUuid(UUID.randomUUID().toString());
         index.setName("Test");
 
         final IndexVolume volume = new IndexVolume();
@@ -283,6 +286,7 @@ class TestIndexShardIO {
     @Test
     void testFailToCloseAndReopen() throws IOException {
         final IndexDoc index = new IndexDoc();
+        index.setUuid(UUID.randomUUID().toString());
         index.setName("Test");
 
         final IndexVolume volume = new IndexVolume();
@@ -314,6 +318,7 @@ class TestIndexShardIO {
     @Test
     void testFailToCloseFlushAndReopen() throws IOException {
         final IndexDoc index = new IndexDoc();
+        index.setUuid(UUID.randomUUID().toString());
         index.setName("Test");
 
         final IndexVolume volume = new IndexVolume();
@@ -345,6 +350,7 @@ class TestIndexShardIO {
     @Test
     void testWriteLoadsNoFlush() throws IOException {
         final IndexDoc index = new IndexDoc();
+        index.setUuid(UUID.randomUUID().toString());
         index.setName("Test");
 
         final IndexVolume volume = new IndexVolume();
