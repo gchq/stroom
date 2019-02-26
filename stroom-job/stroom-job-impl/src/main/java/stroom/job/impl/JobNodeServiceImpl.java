@@ -25,7 +25,6 @@ import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
-import stroom.util.shared.BaseResultList;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 import stroom.job.api.JobNodeService;
@@ -43,6 +42,7 @@ import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.util.scheduler.SimpleCron;
+import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
@@ -95,106 +95,106 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     public void startup() {
         security.asProcessingUser(() -> entityManagerSupport.transaction(entityManager -> {
             LOGGER.info("startup()");
-            // Lock the cluster so only 1 node at a time can call the
-            // following code.
+
+            // Lock the cluster so only 1 node at a time can call the following code.
             LOGGER.trace("Locking the cluster");
-            clusterLockService.lock(LOCK_NAME);
+            clusterLockService.lock(LOCK_NAME, () -> {
+                final Node node = nodeInfo.getThisNode();
 
-            final Node node = nodeInfo.getThisNode();
-
-            final List<JobNode> existingJobList = findAllJobs(node);
-            final Map<String, JobNode> existingJobMap = new HashMap<>();
-            for (final JobNode jobNode : existingJobList) {
-                existingJobMap.put(jobNode.getJob().getName(), jobNode);
-            }
-
-            final Set<String> validJobNames = new HashSet<>();
-
-            // TODO: The form below isn't very clear. Split into job mapping and creation.
-            for (ScheduledJob scheduledJob : scheduledJobsMap.keySet()) {
-                validJobNames.add(scheduledJob.getName());
-
-                Job job = new Job();
-                job.setName(scheduledJob.getName());
-                job.setEnabled(scheduledJob.isEnabled());
-                job = getOrCreateJob(job);
-
-                final JobNode newJobNode = new JobNode();
-                newJobNode.setJob(job);
-                newJobNode.setNode(node);
-                newJobNode.setEnabled(scheduledJob.isEnabled());
-
-                switch (scheduledJob.getSchedule().getScheduleType()) {
-                    case CRON:
-                        newJobNode.setJobType(JobType.CRON);
-                        break;
-                    case PERIODIC:
-                        newJobNode.setJobType(JobType.FREQUENCY);
-                        break;
-                    default:
-                        throw new RuntimeException("Unknown ScheduleType!");
+                final List<JobNode> existingJobList = findAllJobs(node);
+                final Map<String, JobNode> existingJobMap = new HashMap<>();
+                for (final JobNode jobNode : existingJobList) {
+                    existingJobMap.put(jobNode.getJob().getName(), jobNode);
                 }
-                newJobNode.setSchedule(scheduledJob.getSchedule().getSchedule());
 
-                // Add the job node to the DB if it isn't there already.
-                JobNode existingJobNode = existingJobMap.get(scheduledJob.getName());
-                if (existingJobNode == null) {
-                    LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
-                            newJobNode.getNode().getName());
-                    save(newJobNode);
-                    existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
+                final Set<String> validJobNames = new HashSet<>();
 
-                } else if (!newJobNode.getJobType().equals(existingJobNode.getJobType())) {
-                    // If the job type has changed then update the job node.
-                    existingJobNode.setJobType(newJobNode.getJobType());
-                    existingJobNode.setSchedule(newJobNode.getSchedule());
-                    existingJobNode = save(existingJobNode);
-                    existingJobMap.put(scheduledJob.getName(), existingJobNode);
-                }
-            }
+                // TODO: The form below isn't very clear. Split into job mapping and creation.
+                for (ScheduledJob scheduledJob : scheduledJobsMap.keySet()) {
+                    validJobNames.add(scheduledJob.getName());
 
-            // Distributed Jobs done a different way
-            distributedTaskFactoryBeanRegistry.getFactoryMap().forEach((jobName, factory) -> {
-                validJobNames.add(jobName);
-
-                // Add the job node to the DB if it isn't there already.
-                final JobNode existingJobNode = existingJobMap.get(jobName);
-                if (existingJobNode == null) {
-                    // Get the actual job.
                     Job job = new Job();
-                    job.setName(jobName);
-                    job.setEnabled(false);
+                    job.setName(scheduledJob.getName());
+                    job.setEnabled(scheduledJob.isEnabled());
                     job = getOrCreateJob(job);
 
                     final JobNode newJobNode = new JobNode();
                     newJobNode.setJob(job);
                     newJobNode.setNode(node);
-                    newJobNode.setEnabled(false);
-                    newJobNode.setJobType(JobType.DISTRIBUTED);
+                    newJobNode.setEnabled(scheduledJob.isEnabled());
 
-                    LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
-                            newJobNode.getNode().getName());
-                    save(newJobNode);
-                    existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
+                    switch (scheduledJob.getSchedule().getScheduleType()) {
+                        case CRON:
+                            newJobNode.setJobType(JobType.CRON);
+                            break;
+                        case PERIODIC:
+                            newJobNode.setJobType(JobType.FREQUENCY);
+                            break;
+                        default:
+                            throw new RuntimeException("Unknown ScheduleType!");
+                    }
+                    newJobNode.setSchedule(scheduledJob.getSchedule().getSchedule());
+
+                    // Add the job node to the DB if it isn't there already.
+                    JobNode existingJobNode = existingJobMap.get(scheduledJob.getName());
+                    if (existingJobNode == null) {
+                        LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
+                                newJobNode.getNode().getName());
+                        save(newJobNode);
+                        existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
+
+                    } else if (!newJobNode.getJobType().equals(existingJobNode.getJobType())) {
+                        // If the job type has changed then update the job node.
+                        existingJobNode.setJobType(newJobNode.getJobType());
+                        existingJobNode.setSchedule(newJobNode.getSchedule());
+                        existingJobNode = save(existingJobNode);
+                        existingJobMap.put(scheduledJob.getName(), existingJobNode);
+                    }
+                }
+
+                // Distributed Jobs done a different way
+                distributedTaskFactoryBeanRegistry.getFactoryMap().forEach((jobName, factory) -> {
+                    validJobNames.add(jobName);
+
+                    // Add the job node to the DB if it isn't there already.
+                    final JobNode existingJobNode = existingJobMap.get(jobName);
+                    if (existingJobNode == null) {
+                        // Get the actual job.
+                        Job job = new Job();
+                        job.setName(jobName);
+                        job.setEnabled(false);
+                        job = getOrCreateJob(job);
+
+                        final JobNode newJobNode = new JobNode();
+                        newJobNode.setJob(job);
+                        newJobNode.setNode(node);
+                        newJobNode.setEnabled(false);
+                        newJobNode.setJobType(JobType.DISTRIBUTED);
+
+                        LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
+                                newJobNode.getNode().getName());
+                        save(newJobNode);
+                        existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
+                    }
+                });
+
+                existingJobList.stream().filter(jobNode -> !validJobNames.contains(jobNode.getJob().getName()))
+                        .forEach(jobNode -> {
+                            LOGGER.info("Removing old job node {} ", jobNode.getJob().getName());
+                            delete(jobNode);
+                        });
+
+                // Force to delete
+                this.entityManager.flush();
+
+                final SqlBuilder sql = new SqlBuilder();
+                sql.append(DELETE_ORPHAN_JOBS_MYSQL);
+
+                final Long deleteCount = this.entityManager.executeNativeUpdate(sql);
+                if (deleteCount != null && deleteCount > 0) {
+                    LOGGER.info("Removed {} orphan jobs", deleteCount);
                 }
             });
-
-            existingJobList.stream().filter(jobNode -> !validJobNames.contains(jobNode.getJob().getName()))
-                    .forEach(jobNode -> {
-                        LOGGER.info("Removing old job node {} ", jobNode.getJob().getName());
-                        delete(jobNode);
-                    });
-
-            // Force to delete
-            this.entityManager.flush();
-
-            final SqlBuilder sql = new SqlBuilder();
-            sql.append(DELETE_ORPHAN_JOBS_MYSQL);
-
-            final Long deleteCount = this.entityManager.executeNativeUpdate(sql);
-            if (deleteCount != null && deleteCount > 0) {
-                LOGGER.info("Removed {} orphan jobs", deleteCount);
-            }
         }));
     }
 

@@ -23,16 +23,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestFileSystemPrefixUtil {
     @Test
     void testPadId() {
-        assertThat(FileSystemPrefixUtil.padId(null)).isEqualTo("000");
-        assertThat(FileSystemPrefixUtil.padId(0L)).isEqualTo("000");
-        assertThat(FileSystemPrefixUtil.padId(1L)).isEqualTo("001");
-        assertThat(FileSystemPrefixUtil.padId(1001L)).isEqualTo("001001");
+        assertThat(FsPrefixUtil.padId(null)).isEqualTo("000");
+        assertThat(FsPrefixUtil.padId(0L)).isEqualTo("000");
+        assertThat(FsPrefixUtil.padId(1L)).isEqualTo("001");
+        assertThat(FsPrefixUtil.padId(1001L)).isEqualTo("001001");
     }
 
     @Test
     void testBuildIdPath() {
-        assertThat(FileSystemPrefixUtil.buildIdPath("000000")).isEqualTo("000");
-        assertThat(FileSystemPrefixUtil.buildIdPath(FileSystemPrefixUtil.padId(1L))).isNull();
-        assertThat(FileSystemPrefixUtil.buildIdPath(FileSystemPrefixUtil.padId(9999L))).isEqualTo("009");
+        assertThat(FsPrefixUtil.buildIdPath("000000")).isEqualTo("000");
+        assertThat(FsPrefixUtil.buildIdPath(FsPrefixUtil.padId(1L))).isNull();
+        assertThat(FsPrefixUtil.buildIdPath(FsPrefixUtil.padId(9999L))).isEqualTo("009");
     }
 }

@@ -36,7 +36,6 @@ import static stroom.job.impl.db.jooq.Tables.JOB;
  * //TODO gh-1072 Maybe the interface could implement the standard methods below? Then this would be even slimmer.
  */
 public class JobDao implements HasIntCrud<Job> {
-
     private GenericDao<JobRecord, Job, Integer> dao;
 
     @Inject

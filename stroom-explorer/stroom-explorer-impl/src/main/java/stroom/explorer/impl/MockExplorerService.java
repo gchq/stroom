@@ -24,7 +24,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.PermissionInheritance;
-import stroom.query.api.v2.DocRefInfo;
+import stroom.docref.DocRefInfo;
 
 import java.util.List;
 

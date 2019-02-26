@@ -27,7 +27,7 @@ import javax.inject.Inject;
 import java.sql.SQLException;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class SQLStatisticAggregationManager {
+class SQLStatisticAggregationManager {
     /**
      * The number of records to add to the aggregate from the aggregate source
      * table on each pass
@@ -55,21 +55,17 @@ public class SQLStatisticAggregationManager {
         this.batchSize = sqlStatisticsConfig.getStatisticAggregationBatchSize();
     }
 
-    public void aggregate() {
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+    void aggregate() {
         LOGGER.info("SQL Statistic Aggregation - start");
-        if (clusterLockService.tryLock(LOCK_NAME)) {
+        clusterLockService.tryLock(LOCK_NAME, () -> {
             try {
+                final LogExecutionTime logExecutionTime = new LogExecutionTime();
                 aggregate(System.currentTimeMillis());
                 LOGGER.info("SQL Statistic Aggregation - finished in {}", logExecutionTime);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
-            } finally {
-                clusterLockService.releaseLock(LOCK_NAME);
             }
-        } else {
-            LOGGER.info("SQL Statistic Aggregation - Skipped as did not get lock in {}", logExecutionTime);
-        }
+        });
     }
 
     /**
@@ -78,7 +74,7 @@ public class SQLStatisticAggregationManager {
      * <br/>
      * Step 3 - Remove duplicates using temporary table<br/>
      */
-    public void aggregate(final long timeNow) {
+    void aggregate(final long timeNow) {
         guard.lock();
         try {
             LOGGER.debug("aggregate() Called for SQL stats - Start timeNow = {}",
@@ -115,8 +111,6 @@ public class SQLStatisticAggregationManager {
                 LOGGER.debug("aggregate() - Finished for SQL stats in {} timeNowOverride = {}", logExecutionTime,
                         DateUtil.createNormalDateTimeString(timeNow));
             }
-        } catch (final RuntimeException e) {
-            throw e;
         } finally {
             guard.unlock();
         }

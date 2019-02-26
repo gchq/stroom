@@ -10,11 +10,11 @@ import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.Internal;
 
-import stroom.data.store.impl.fs.db.jooq.tables.FileFeedPath;
-import stroom.data.store.impl.fs.db.jooq.tables.FileMetaVolume;
-import stroom.data.store.impl.fs.db.jooq.tables.FileTypePath;
-import stroom.data.store.impl.fs.db.jooq.tables.FileVolume;
-import stroom.data.store.impl.fs.db.jooq.tables.FileVolumeState;
+import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
+import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
+import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
+import stroom.data.store.impl.fs.db.jooq.tables.FsVolume;
+import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState;
 
 
 /**
@@ -34,29 +34,29 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
-    public static final Index FILE_FEED_PATH_NAME = Indexes0.FILE_FEED_PATH_NAME;
-    public static final Index FILE_FEED_PATH_PRIMARY = Indexes0.FILE_FEED_PATH_PRIMARY;
-    public static final Index FILE_META_VOLUME_PRIMARY = Indexes0.FILE_META_VOLUME_PRIMARY;
-    public static final Index FILE_TYPE_PATH_NAME = Indexes0.FILE_TYPE_PATH_NAME;
-    public static final Index FILE_TYPE_PATH_PRIMARY = Indexes0.FILE_TYPE_PATH_PRIMARY;
-    public static final Index FILE_VOLUME_FILE_VOLUME_FK_FILE_VOLUME_STATE_ID = Indexes0.FILE_VOLUME_FILE_VOLUME_FK_FILE_VOLUME_STATE_ID;
-    public static final Index FILE_VOLUME_PATH = Indexes0.FILE_VOLUME_PATH;
-    public static final Index FILE_VOLUME_PRIMARY = Indexes0.FILE_VOLUME_PRIMARY;
-    public static final Index FILE_VOLUME_STATE_PRIMARY = Indexes0.FILE_VOLUME_STATE_PRIMARY;
+    public static final Index FS_FEED_PATH_NAME = Indexes0.FS_FEED_PATH_NAME;
+    public static final Index FS_FEED_PATH_PRIMARY = Indexes0.FS_FEED_PATH_PRIMARY;
+    public static final Index FS_META_VOLUME_PRIMARY = Indexes0.FS_META_VOLUME_PRIMARY;
+    public static final Index FS_TYPE_PATH_NAME = Indexes0.FS_TYPE_PATH_NAME;
+    public static final Index FS_TYPE_PATH_PRIMARY = Indexes0.FS_TYPE_PATH_PRIMARY;
+    public static final Index FS_VOLUME_FS_VOLUME_FK_FS_VOLUME_STATE_ID = Indexes0.FS_VOLUME_FS_VOLUME_FK_FS_VOLUME_STATE_ID;
+    public static final Index FS_VOLUME_PATH = Indexes0.FS_VOLUME_PATH;
+    public static final Index FS_VOLUME_PRIMARY = Indexes0.FS_VOLUME_PRIMARY;
+    public static final Index FS_VOLUME_STATE_PRIMARY = Indexes0.FS_VOLUME_STATE_PRIMARY;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
     // -------------------------------------------------------------------------
 
     private static class Indexes0 {
-        public static Index FILE_FEED_PATH_NAME = Internal.createIndex("name", FileFeedPath.FILE_FEED_PATH, new OrderField[] { FileFeedPath.FILE_FEED_PATH.NAME }, true);
-        public static Index FILE_FEED_PATH_PRIMARY = Internal.createIndex("PRIMARY", FileFeedPath.FILE_FEED_PATH, new OrderField[] { FileFeedPath.FILE_FEED_PATH.ID }, true);
-        public static Index FILE_META_VOLUME_PRIMARY = Internal.createIndex("PRIMARY", FileMetaVolume.FILE_META_VOLUME, new OrderField[] { FileMetaVolume.FILE_META_VOLUME.META_ID, FileMetaVolume.FILE_META_VOLUME.FILE_VOLUME_ID }, true);
-        public static Index FILE_TYPE_PATH_NAME = Internal.createIndex("name", FileTypePath.FILE_TYPE_PATH, new OrderField[] { FileTypePath.FILE_TYPE_PATH.NAME }, true);
-        public static Index FILE_TYPE_PATH_PRIMARY = Internal.createIndex("PRIMARY", FileTypePath.FILE_TYPE_PATH, new OrderField[] { FileTypePath.FILE_TYPE_PATH.ID }, true);
-        public static Index FILE_VOLUME_FILE_VOLUME_FK_FILE_VOLUME_STATE_ID = Internal.createIndex("file_volume_fk_file_volume_state_id", FileVolume.FILE_VOLUME, new OrderField[] { FileVolume.FILE_VOLUME.FK_FILE_VOLUME_STATE_ID }, false);
-        public static Index FILE_VOLUME_PATH = Internal.createIndex("path", FileVolume.FILE_VOLUME, new OrderField[] { FileVolume.FILE_VOLUME.PATH }, true);
-        public static Index FILE_VOLUME_PRIMARY = Internal.createIndex("PRIMARY", FileVolume.FILE_VOLUME, new OrderField[] { FileVolume.FILE_VOLUME.ID }, true);
-        public static Index FILE_VOLUME_STATE_PRIMARY = Internal.createIndex("PRIMARY", FileVolumeState.FILE_VOLUME_STATE, new OrderField[] { FileVolumeState.FILE_VOLUME_STATE.ID }, true);
+        public static Index FS_FEED_PATH_NAME = Internal.createIndex("name", FsFeedPath.FS_FEED_PATH, new OrderField[] { FsFeedPath.FS_FEED_PATH.NAME }, true);
+        public static Index FS_FEED_PATH_PRIMARY = Internal.createIndex("PRIMARY", FsFeedPath.FS_FEED_PATH, new OrderField[] { FsFeedPath.FS_FEED_PATH.ID }, true);
+        public static Index FS_META_VOLUME_PRIMARY = Internal.createIndex("PRIMARY", FsMetaVolume.FS_META_VOLUME, new OrderField[] { FsMetaVolume.FS_META_VOLUME.META_ID, FsMetaVolume.FS_META_VOLUME.FS_VOLUME_ID }, true);
+        public static Index FS_TYPE_PATH_NAME = Internal.createIndex("name", FsTypePath.FS_TYPE_PATH, new OrderField[] { FsTypePath.FS_TYPE_PATH.NAME }, true);
+        public static Index FS_TYPE_PATH_PRIMARY = Internal.createIndex("PRIMARY", FsTypePath.FS_TYPE_PATH, new OrderField[] { FsTypePath.FS_TYPE_PATH.ID }, true);
+        public static Index FS_VOLUME_FS_VOLUME_FK_FS_VOLUME_STATE_ID = Internal.createIndex("fs_volume_fk_fs_volume_state_id", FsVolume.FS_VOLUME, new OrderField[] { FsVolume.FS_VOLUME.FK_FS_VOLUME_STATE_ID }, false);
+        public static Index FS_VOLUME_PATH = Internal.createIndex("path", FsVolume.FS_VOLUME, new OrderField[] { FsVolume.FS_VOLUME.PATH }, true);
+        public static Index FS_VOLUME_PRIMARY = Internal.createIndex("PRIMARY", FsVolume.FS_VOLUME, new OrderField[] { FsVolume.FS_VOLUME.ID }, true);
+        public static Index FS_VOLUME_STATE_PRIMARY = Internal.createIndex("PRIMARY", FsVolumeState.FS_VOLUME_STATE, new OrderField[] { FsVolumeState.FS_VOLUME_STATE.ID }, true);
     }
 }

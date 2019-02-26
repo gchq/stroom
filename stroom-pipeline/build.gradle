@@ -49,7 +49,6 @@ dependencies {
     implementation libs.saxon_he
     implementation libs.slf4j_api
     implementation libs.stroomDocRef
-    implementation libs.stroomQueryApi
     implementation libs.swagger_annotations
     implementation libs.vavr
     implementation libs.ws_rs_api

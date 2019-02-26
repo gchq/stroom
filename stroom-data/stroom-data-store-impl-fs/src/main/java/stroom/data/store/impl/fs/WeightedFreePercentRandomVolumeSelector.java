@@ -16,19 +16,19 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.shared.FSVolume;
-import stroom.data.store.impl.fs.shared.FSVolumeState;
+import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeState;
 
 import java.util.List;
 
-public class WeightedFreePercentRandomVolumeSelector implements FileVolumeSelector {
+public class WeightedFreePercentRandomVolumeSelector implements FsVolumeSelector {
     public static final String NAME = "WeightedFreePercentRandom";
 
     private final RandomVolumeSelector randomVolumeSelector = new RandomVolumeSelector();
 
     @Override
-    public FSVolume select(final List<FSVolume> list) {
-        final List<FSVolume> filtered = FileVolumeListUtil.removeVolumesWithoutValidState(list);
+    public FsVolume select(final List<FsVolume> list) {
+        final List<FsVolume> filtered = FsVolumeListUtil.removeVolumesWithoutValidState(list);
         if (filtered.size() == 0) {
             return randomVolumeSelector.select(list);
         }
@@ -50,10 +50,10 @@ public class WeightedFreePercentRandomVolumeSelector implements FileVolumeSelect
         return filtered.get(index);
     }
 
-    private double[] getWeightingThresholds(final List<FSVolume> list) {
+    private double[] getWeightingThresholds(final List<FsVolume> list) {
         double totalFractionFree = 0;
-        for (final FSVolume volume : list) {
-            final FSVolumeState volumeState = volume.getVolumeState();
+        for (final FsVolume volume : list) {
+            final FsVolumeState volumeState = volume.getVolumeState();
             final double total = volumeState.getBytesTotal();
             final double free = volumeState.getBytesFree();
             final double fractionFree = free / total;
@@ -64,8 +64,8 @@ public class WeightedFreePercentRandomVolumeSelector implements FileVolumeSelect
         final double increment = 1D / totalFractionFree;
         final double[] thresholds = new double[list.size()];
         int i = 0;
-        for (final FSVolume volume : list) {
-            final FSVolumeState volumeState = volume.getVolumeState();
+        for (final FsVolume volume : list) {
+            final FsVolumeState volumeState = volume.getVolumeState();
             final double total = volumeState.getBytesTotal();
             final double free = volumeState.getBytesFree();
             final double fractionFree = free / total;

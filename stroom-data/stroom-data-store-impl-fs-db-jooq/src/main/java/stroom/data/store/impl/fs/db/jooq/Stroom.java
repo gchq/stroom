@@ -14,11 +14,11 @@ import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.data.store.impl.fs.db.jooq.tables.FileFeedPath;
-import stroom.data.store.impl.fs.db.jooq.tables.FileMetaVolume;
-import stroom.data.store.impl.fs.db.jooq.tables.FileTypePath;
-import stroom.data.store.impl.fs.db.jooq.tables.FileVolume;
-import stroom.data.store.impl.fs.db.jooq.tables.FileVolumeState;
+import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
+import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
+import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
+import stroom.data.store.impl.fs.db.jooq.tables.FsVolume;
+import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState;
 
 
 /**
@@ -34,7 +34,7 @@ import stroom.data.store.impl.fs.db.jooq.tables.FileVolumeState;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = 1630056657;
+    private static final long serialVersionUID = -817526193;
 
     /**
      * The reference instance of <code>stroom</code>
@@ -42,29 +42,29 @@ public class Stroom extends SchemaImpl {
     public static final Stroom STROOM = new Stroom();
 
     /**
-     * The table <code>stroom.file_feed_path</code>.
+     * The table <code>stroom.fs_feed_path</code>.
      */
-    public final FileFeedPath FILE_FEED_PATH = stroom.data.store.impl.fs.db.jooq.tables.FileFeedPath.FILE_FEED_PATH;
+    public final FsFeedPath FS_FEED_PATH = stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath.FS_FEED_PATH;
 
     /**
-     * The table <code>stroom.file_meta_volume</code>.
+     * The table <code>stroom.fs_meta_volume</code>.
      */
-    public final FileMetaVolume FILE_META_VOLUME = stroom.data.store.impl.fs.db.jooq.tables.FileMetaVolume.FILE_META_VOLUME;
+    public final FsMetaVolume FS_META_VOLUME = stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume.FS_META_VOLUME;
 
     /**
-     * The table <code>stroom.file_type_path</code>.
+     * The table <code>stroom.fs_type_path</code>.
      */
-    public final FileTypePath FILE_TYPE_PATH = stroom.data.store.impl.fs.db.jooq.tables.FileTypePath.FILE_TYPE_PATH;
+    public final FsTypePath FS_TYPE_PATH = stroom.data.store.impl.fs.db.jooq.tables.FsTypePath.FS_TYPE_PATH;
 
     /**
-     * The table <code>stroom.file_volume</code>.
+     * The table <code>stroom.fs_volume</code>.
      */
-    public final FileVolume FILE_VOLUME = stroom.data.store.impl.fs.db.jooq.tables.FileVolume.FILE_VOLUME;
+    public final FsVolume FS_VOLUME = stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;
 
     /**
-     * The table <code>stroom.file_volume_state</code>.
+     * The table <code>stroom.fs_volume_state</code>.
      */
-    public final FileVolumeState FILE_VOLUME_STATE = stroom.data.store.impl.fs.db.jooq.tables.FileVolumeState.FILE_VOLUME_STATE;
+    public final FsVolumeState FS_VOLUME_STATE = stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.FS_VOLUME_STATE;
 
     /**
      * No further instances allowed
@@ -91,10 +91,10 @@ public class Stroom extends SchemaImpl {
 
     private final List<Table<?>> getTables0() {
         return Arrays.<Table<?>>asList(
-            FileFeedPath.FILE_FEED_PATH,
-            FileMetaVolume.FILE_META_VOLUME,
-            FileTypePath.FILE_TYPE_PATH,
-            FileVolume.FILE_VOLUME,
-            FileVolumeState.FILE_VOLUME_STATE);
+            FsFeedPath.FS_FEED_PATH,
+            FsMetaVolume.FS_META_VOLUME,
+            FsTypePath.FS_TYPE_PATH,
+            FsVolume.FS_VOLUME,
+            FsVolumeState.FS_VOLUME_STATE);
     }
 }

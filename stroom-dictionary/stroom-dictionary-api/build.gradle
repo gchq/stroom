@@ -7,4 +7,7 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     
     implementation libs.stroomDocRef
+
+    implementation libs.jackson_annotations
+    implementation libs.jaxb_api
 }

@@ -16,18 +16,18 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.shared.FSVolume;
+import stroom.data.store.impl.fs.shared.FsVolume;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class RoundRobinVolumeSelector implements FileVolumeSelector {
+public class RoundRobinVolumeSelector implements FsVolumeSelector {
     public static final String NAME = "RoundRobin";
 
     private static final AtomicInteger roundRobinPosition = new AtomicInteger();
 
     @Override
-    public FSVolume select(final List<FSVolume> list) {
+    public FsVolume select(final List<FsVolume> list) {
         if (list.size() == 0) {
             return null;
         }

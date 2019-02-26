@@ -28,7 +28,7 @@ import stroom.meta.impl.db.jooq.tables.MetaVal;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaValRecord extends UpdatableRecordImpl<MetaValRecord> implements Record5<Long, Long, Long, Integer, Long> {
 
-    private static final long serialVersionUID = -35927065;
+    private static final long serialVersionUID = -1233450289;
 
     /**
      * Setter for <code>stroom.meta_val.id</code>.

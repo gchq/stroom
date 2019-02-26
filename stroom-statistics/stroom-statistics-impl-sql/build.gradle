@@ -35,8 +35,10 @@ dependencies {
     implementation libs.hikari
     implementation libs.jackson_annotations
     implementation libs.javax_inject
+    implementation libs.jaxb_api
     implementation libs.rxjava
     implementation libs.slf4j_api
+    implementation libs.swagger_annotations
     implementation libs.vavr
     implementation libs.ws_rs_api
     implementation(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps

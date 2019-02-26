@@ -11,6 +11,19 @@ def workDir = "${gwtBuildDir}/work"
 def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
 
+configurations.all {
+    resolutionStrategy {
+        eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'javax.xml.bind') {
+                details.useVersion "2.3.1"
+            }
+            if (details.requested.group == 'com.fasterxml.jackson.core') {
+                details.useVersion "2.9.6"
+            }
+        }
+    }
+}
+
 dependencies {
     implementation project(':stroom-core-client')
     implementation project(':stroom-core-client-widget')
@@ -19,25 +32,21 @@ dependencies {
     implementation project(':stroom-statistics:stroom-statistics-client')
 
     // These source deps are all needed for the GWT transpiling to javascript
+    implementation libs.stroomDocRef
     implementation "${libs.stroomDocRef}:sources"
+    implementation libs.stroomQueryApi
     implementation "${libs.stroomQueryApi}:sources"
     implementation "${libs.stroomQueryCommon}:sources"
     
-    
-
-    implementation libs.hibernate_jpa_api
-    implementation "${libs.hibernate_jpa_api}:sources"
     implementation libs.gin
     implementation libs.guice3
     implementation libs.gwt_dev
-    
     implementation libs.gwt_user
     implementation libs.gwtp_mvp_client
-
-    // needed so gwt can implementation the stroom-query code that contains swagger annotations
-    implementation libs.swagger_annotations
-    
-    implementation "${libs.swagger_annotations}:sources"
+    implementation libs.hibernate_jpa_api
+    implementation libs.jackson_annotations
+    implementation libs.jaxb_api
+    implementation libs.swagger_annotations // needed so gwt can implementation the stroom-query code that contains swagger annotations
 }
 
 def gwtSourceDirs = []
@@ -56,6 +65,8 @@ gwtSourceDirs.addAll(sourceSets.main.compileClasspath)
 //}
 
 task gwtCompile(dependsOn: classes, type: JavaExec) {
+    dependsOn 'gwtClean'
+    
     def module = 'stroom.app.App'
 
     doFirst {

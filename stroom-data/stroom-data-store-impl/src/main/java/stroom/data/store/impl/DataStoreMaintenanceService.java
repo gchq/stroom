@@ -17,7 +17,7 @@
 
 package stroom.data.store.impl;
 
-import stroom.data.store.impl.fs.shared.FSVolume;
+import stroom.data.store.impl.fs.shared.FsVolume;
 
 /**
  * Low level API to manage the stream store.
@@ -27,6 +27,6 @@ public interface DataStoreMaintenanceService {
      * Scan a directory deleting old stuff and building an index of what is
      * there. Return back a list of sub dir's to nest into.
      */
-    ScanVolumePathResult scanVolumePath(FSVolume volume, boolean doDelete, String path, long oldFileAge);
+    ScanVolumePathResult scanVolumePath(FsVolume volume, boolean doDelete, String path, long oldFileAge);
 
 }

@@ -11,16 +11,16 @@ import org.jooq.Identity;
 import org.jooq.UniqueKey;
 import org.jooq.impl.Internal;
 
-import stroom.data.store.impl.fs.db.jooq.tables.FileFeedPath;
-import stroom.data.store.impl.fs.db.jooq.tables.FileMetaVolume;
-import stroom.data.store.impl.fs.db.jooq.tables.FileTypePath;
-import stroom.data.store.impl.fs.db.jooq.tables.FileVolume;
-import stroom.data.store.impl.fs.db.jooq.tables.FileVolumeState;
-import stroom.data.store.impl.fs.db.jooq.tables.records.FileFeedPathRecord;
-import stroom.data.store.impl.fs.db.jooq.tables.records.FileMetaVolumeRecord;
-import stroom.data.store.impl.fs.db.jooq.tables.records.FileTypePathRecord;
-import stroom.data.store.impl.fs.db.jooq.tables.records.FileVolumeRecord;
-import stroom.data.store.impl.fs.db.jooq.tables.records.FileVolumeStateRecord;
+import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
+import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
+import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
+import stroom.data.store.impl.fs.db.jooq.tables.FsVolume;
+import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState;
+import stroom.data.store.impl.fs.db.jooq.tables.records.FsFeedPathRecord;
+import stroom.data.store.impl.fs.db.jooq.tables.records.FsMetaVolumeRecord;
+import stroom.data.store.impl.fs.db.jooq.tables.records.FsTypePathRecord;
+import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeRecord;
+import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeStateRecord;
 
 
 /**
@@ -41,53 +41,53 @@ public class Keys {
     // IDENTITY definitions
     // -------------------------------------------------------------------------
 
-    public static final Identity<FileFeedPathRecord, Integer> IDENTITY_FILE_FEED_PATH = Identities0.IDENTITY_FILE_FEED_PATH;
-    public static final Identity<FileTypePathRecord, Integer> IDENTITY_FILE_TYPE_PATH = Identities0.IDENTITY_FILE_TYPE_PATH;
-    public static final Identity<FileVolumeRecord, Integer> IDENTITY_FILE_VOLUME = Identities0.IDENTITY_FILE_VOLUME;
-    public static final Identity<FileVolumeStateRecord, Integer> IDENTITY_FILE_VOLUME_STATE = Identities0.IDENTITY_FILE_VOLUME_STATE;
+    public static final Identity<FsFeedPathRecord, Integer> IDENTITY_FS_FEED_PATH = Identities0.IDENTITY_FS_FEED_PATH;
+    public static final Identity<FsTypePathRecord, Integer> IDENTITY_FS_TYPE_PATH = Identities0.IDENTITY_FS_TYPE_PATH;
+    public static final Identity<FsVolumeRecord, Integer> IDENTITY_FS_VOLUME = Identities0.IDENTITY_FS_VOLUME;
+    public static final Identity<FsVolumeStateRecord, Integer> IDENTITY_FS_VOLUME_STATE = Identities0.IDENTITY_FS_VOLUME_STATE;
 
     // -------------------------------------------------------------------------
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final UniqueKey<FileFeedPathRecord> KEY_FILE_FEED_PATH_PRIMARY = UniqueKeys0.KEY_FILE_FEED_PATH_PRIMARY;
-    public static final UniqueKey<FileFeedPathRecord> KEY_FILE_FEED_PATH_NAME = UniqueKeys0.KEY_FILE_FEED_PATH_NAME;
-    public static final UniqueKey<FileMetaVolumeRecord> KEY_FILE_META_VOLUME_PRIMARY = UniqueKeys0.KEY_FILE_META_VOLUME_PRIMARY;
-    public static final UniqueKey<FileTypePathRecord> KEY_FILE_TYPE_PATH_PRIMARY = UniqueKeys0.KEY_FILE_TYPE_PATH_PRIMARY;
-    public static final UniqueKey<FileTypePathRecord> KEY_FILE_TYPE_PATH_NAME = UniqueKeys0.KEY_FILE_TYPE_PATH_NAME;
-    public static final UniqueKey<FileVolumeRecord> KEY_FILE_VOLUME_PRIMARY = UniqueKeys0.KEY_FILE_VOLUME_PRIMARY;
-    public static final UniqueKey<FileVolumeRecord> KEY_FILE_VOLUME_PATH = UniqueKeys0.KEY_FILE_VOLUME_PATH;
-    public static final UniqueKey<FileVolumeStateRecord> KEY_FILE_VOLUME_STATE_PRIMARY = UniqueKeys0.KEY_FILE_VOLUME_STATE_PRIMARY;
+    public static final UniqueKey<FsFeedPathRecord> KEY_FS_FEED_PATH_PRIMARY = UniqueKeys0.KEY_FS_FEED_PATH_PRIMARY;
+    public static final UniqueKey<FsFeedPathRecord> KEY_FS_FEED_PATH_NAME = UniqueKeys0.KEY_FS_FEED_PATH_NAME;
+    public static final UniqueKey<FsMetaVolumeRecord> KEY_FS_META_VOLUME_PRIMARY = UniqueKeys0.KEY_FS_META_VOLUME_PRIMARY;
+    public static final UniqueKey<FsTypePathRecord> KEY_FS_TYPE_PATH_PRIMARY = UniqueKeys0.KEY_FS_TYPE_PATH_PRIMARY;
+    public static final UniqueKey<FsTypePathRecord> KEY_FS_TYPE_PATH_NAME = UniqueKeys0.KEY_FS_TYPE_PATH_NAME;
+    public static final UniqueKey<FsVolumeRecord> KEY_FS_VOLUME_PRIMARY = UniqueKeys0.KEY_FS_VOLUME_PRIMARY;
+    public static final UniqueKey<FsVolumeRecord> KEY_FS_VOLUME_PATH = UniqueKeys0.KEY_FS_VOLUME_PATH;
+    public static final UniqueKey<FsVolumeStateRecord> KEY_FS_VOLUME_STATE_PRIMARY = UniqueKeys0.KEY_FS_VOLUME_STATE_PRIMARY;
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<FileVolumeRecord, FileVolumeStateRecord> FILE_VOLUME_FK_FILE_VOLUME_STATE_ID = ForeignKeys0.FILE_VOLUME_FK_FILE_VOLUME_STATE_ID;
+    public static final ForeignKey<FsVolumeRecord, FsVolumeStateRecord> FS_VOLUME_FK_FS_VOLUME_STATE_ID = ForeignKeys0.FS_VOLUME_FK_FS_VOLUME_STATE_ID;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
     // -------------------------------------------------------------------------
 
     private static class Identities0 {
-        public static Identity<FileFeedPathRecord, Integer> IDENTITY_FILE_FEED_PATH = Internal.createIdentity(FileFeedPath.FILE_FEED_PATH, FileFeedPath.FILE_FEED_PATH.ID);
-        public static Identity<FileTypePathRecord, Integer> IDENTITY_FILE_TYPE_PATH = Internal.createIdentity(FileTypePath.FILE_TYPE_PATH, FileTypePath.FILE_TYPE_PATH.ID);
-        public static Identity<FileVolumeRecord, Integer> IDENTITY_FILE_VOLUME = Internal.createIdentity(FileVolume.FILE_VOLUME, FileVolume.FILE_VOLUME.ID);
-        public static Identity<FileVolumeStateRecord, Integer> IDENTITY_FILE_VOLUME_STATE = Internal.createIdentity(FileVolumeState.FILE_VOLUME_STATE, FileVolumeState.FILE_VOLUME_STATE.ID);
+        public static Identity<FsFeedPathRecord, Integer> IDENTITY_FS_FEED_PATH = Internal.createIdentity(FsFeedPath.FS_FEED_PATH, FsFeedPath.FS_FEED_PATH.ID);
+        public static Identity<FsTypePathRecord, Integer> IDENTITY_FS_TYPE_PATH = Internal.createIdentity(FsTypePath.FS_TYPE_PATH, FsTypePath.FS_TYPE_PATH.ID);
+        public static Identity<FsVolumeRecord, Integer> IDENTITY_FS_VOLUME = Internal.createIdentity(FsVolume.FS_VOLUME, FsVolume.FS_VOLUME.ID);
+        public static Identity<FsVolumeStateRecord, Integer> IDENTITY_FS_VOLUME_STATE = Internal.createIdentity(FsVolumeState.FS_VOLUME_STATE, FsVolumeState.FS_VOLUME_STATE.ID);
     }
 
     private static class UniqueKeys0 {
-        public static final UniqueKey<FileFeedPathRecord> KEY_FILE_FEED_PATH_PRIMARY = Internal.createUniqueKey(FileFeedPath.FILE_FEED_PATH, "KEY_file_feed_path_PRIMARY", FileFeedPath.FILE_FEED_PATH.ID);
-        public static final UniqueKey<FileFeedPathRecord> KEY_FILE_FEED_PATH_NAME = Internal.createUniqueKey(FileFeedPath.FILE_FEED_PATH, "KEY_file_feed_path_name", FileFeedPath.FILE_FEED_PATH.NAME);
-        public static final UniqueKey<FileMetaVolumeRecord> KEY_FILE_META_VOLUME_PRIMARY = Internal.createUniqueKey(FileMetaVolume.FILE_META_VOLUME, "KEY_file_meta_volume_PRIMARY", FileMetaVolume.FILE_META_VOLUME.META_ID, FileMetaVolume.FILE_META_VOLUME.FILE_VOLUME_ID);
-        public static final UniqueKey<FileTypePathRecord> KEY_FILE_TYPE_PATH_PRIMARY = Internal.createUniqueKey(FileTypePath.FILE_TYPE_PATH, "KEY_file_type_path_PRIMARY", FileTypePath.FILE_TYPE_PATH.ID);
-        public static final UniqueKey<FileTypePathRecord> KEY_FILE_TYPE_PATH_NAME = Internal.createUniqueKey(FileTypePath.FILE_TYPE_PATH, "KEY_file_type_path_name", FileTypePath.FILE_TYPE_PATH.NAME);
-        public static final UniqueKey<FileVolumeRecord> KEY_FILE_VOLUME_PRIMARY = Internal.createUniqueKey(FileVolume.FILE_VOLUME, "KEY_file_volume_PRIMARY", FileVolume.FILE_VOLUME.ID);
-        public static final UniqueKey<FileVolumeRecord> KEY_FILE_VOLUME_PATH = Internal.createUniqueKey(FileVolume.FILE_VOLUME, "KEY_file_volume_path", FileVolume.FILE_VOLUME.PATH);
-        public static final UniqueKey<FileVolumeStateRecord> KEY_FILE_VOLUME_STATE_PRIMARY = Internal.createUniqueKey(FileVolumeState.FILE_VOLUME_STATE, "KEY_file_volume_state_PRIMARY", FileVolumeState.FILE_VOLUME_STATE.ID);
+        public static final UniqueKey<FsFeedPathRecord> KEY_FS_FEED_PATH_PRIMARY = Internal.createUniqueKey(FsFeedPath.FS_FEED_PATH, "KEY_fs_feed_path_PRIMARY", FsFeedPath.FS_FEED_PATH.ID);
+        public static final UniqueKey<FsFeedPathRecord> KEY_FS_FEED_PATH_NAME = Internal.createUniqueKey(FsFeedPath.FS_FEED_PATH, "KEY_fs_feed_path_name", FsFeedPath.FS_FEED_PATH.NAME);
+        public static final UniqueKey<FsMetaVolumeRecord> KEY_FS_META_VOLUME_PRIMARY = Internal.createUniqueKey(FsMetaVolume.FS_META_VOLUME, "KEY_fs_meta_volume_PRIMARY", FsMetaVolume.FS_META_VOLUME.META_ID, FsMetaVolume.FS_META_VOLUME.FS_VOLUME_ID);
+        public static final UniqueKey<FsTypePathRecord> KEY_FS_TYPE_PATH_PRIMARY = Internal.createUniqueKey(FsTypePath.FS_TYPE_PATH, "KEY_fs_type_path_PRIMARY", FsTypePath.FS_TYPE_PATH.ID);
+        public static final UniqueKey<FsTypePathRecord> KEY_FS_TYPE_PATH_NAME = Internal.createUniqueKey(FsTypePath.FS_TYPE_PATH, "KEY_fs_type_path_name", FsTypePath.FS_TYPE_PATH.NAME);
+        public static final UniqueKey<FsVolumeRecord> KEY_FS_VOLUME_PRIMARY = Internal.createUniqueKey(FsVolume.FS_VOLUME, "KEY_fs_volume_PRIMARY", FsVolume.FS_VOLUME.ID);
+        public static final UniqueKey<FsVolumeRecord> KEY_FS_VOLUME_PATH = Internal.createUniqueKey(FsVolume.FS_VOLUME, "KEY_fs_volume_path", FsVolume.FS_VOLUME.PATH);
+        public static final UniqueKey<FsVolumeStateRecord> KEY_FS_VOLUME_STATE_PRIMARY = Internal.createUniqueKey(FsVolumeState.FS_VOLUME_STATE, "KEY_fs_volume_state_PRIMARY", FsVolumeState.FS_VOLUME_STATE.ID);
     }
 
     private static class ForeignKeys0 {
-        public static final ForeignKey<FileVolumeRecord, FileVolumeStateRecord> FILE_VOLUME_FK_FILE_VOLUME_STATE_ID = Internal.createForeignKey(stroom.data.store.impl.fs.db.jooq.Keys.KEY_FILE_VOLUME_STATE_PRIMARY, FileVolume.FILE_VOLUME, "file_volume_fk_file_volume_state_id", FileVolume.FILE_VOLUME.FK_FILE_VOLUME_STATE_ID);
+        public static final ForeignKey<FsVolumeRecord, FsVolumeStateRecord> FS_VOLUME_FK_FS_VOLUME_STATE_ID = Internal.createForeignKey(stroom.data.store.impl.fs.db.jooq.Keys.KEY_FS_VOLUME_STATE_PRIMARY, FsVolume.FS_VOLUME, "fs_volume_fk_fs_volume_state_id", FsVolume.FS_VOLUME.FK_FS_VOLUME_STATE_ID);
     }
 }

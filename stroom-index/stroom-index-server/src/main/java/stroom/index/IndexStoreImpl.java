@@ -27,7 +27,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFields;
-import stroom.query.api.v2.DocRefInfo;
+import stroom.docref.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;

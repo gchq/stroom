@@ -3,7 +3,7 @@ package stroom.docstore.api;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.importexport.shared.ImportState;
-import stroom.query.api.v2.DocRefInfo;
+import stroom.docref.DocRefInfo;
 import stroom.util.shared.Message;
 
 import java.util.List;

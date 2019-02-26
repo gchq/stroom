@@ -57,7 +57,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     @Inject
     private FeedProperties feedProperties;
     @Inject
-    private FileSystemDataStoreMaintenanceService streamMaintenanceService;
+    private FsDataStoreMaintenanceService streamMaintenanceService;
 
     @Test
     void testSimpleSingleFile() throws IOException {

@@ -16,6 +16,8 @@
 
 package stroom.util.shared;
 
+import stroom.docref.HasDisplayValue;
+
 import java.util.Comparator;
 
 public final class ModelStringUtil {

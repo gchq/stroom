@@ -78,7 +78,7 @@ public class CriteriaSet<T>
         if (Boolean.TRUE.equals(matchAll)) {
             return false;
         }
-        if (isMatchNothing()) {
+        if (Boolean.FALSE.equals(matchAll) && set.isEmpty() && !Boolean.TRUE.equals(matchNull)) {
             return true;
         }
         return !set.isEmpty() || Boolean.TRUE.equals(matchNull);
@@ -95,6 +95,7 @@ public class CriteriaSet<T>
         return set.contains(item);
     }
 
+<<<<<<< HEAD
     public boolean isSingleItemMatch(final T item) {
         if (Boolean.TRUE.equals(matchNull) && item == null) {
             return true;
@@ -110,6 +111,8 @@ public class CriteriaSet<T>
         return converted;
     }
 
+=======
+>>>>>>> e175a306bcf551bb66937a9b2e21045107e90bf0
     @Override
     public void copyFrom(final CriteriaSet<T> other) {
         this.set.clear();

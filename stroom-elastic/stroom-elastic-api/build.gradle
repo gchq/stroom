@@ -3,5 +3,5 @@ ext.moduleName = 'stroom.elastic.api'
 dependencies {
     implementation libs.stroomDocRef
 
-    //implementation libs.slf4j_api
+    implementation libs.jaxb_api
 }

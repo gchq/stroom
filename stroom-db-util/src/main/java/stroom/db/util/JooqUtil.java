@@ -184,7 +184,11 @@ public final class JooqUtil {
      */
     public static <R extends Record, T extends Number>
     Optional<Condition> applyRange(final TableField<R, T> field,
+<<<<<<< HEAD
                          final Range<T> criteria) {
+=======
+                                   final Range<T> criteria) {
+>>>>>>> e175a306bcf551bb66937a9b2e21045107e90bf0
         if (criteria.isConstrained()) {
             Optional<Condition> nullCondition = Optional.empty();
             if (criteria.isMatchNull()) {
@@ -223,7 +227,11 @@ public final class JooqUtil {
      */
     public static <R extends Record, T>
     Optional<Condition> applySet(final TableField<R, T> field,
+<<<<<<< HEAD
                        final CriteriaSet<T> criteria) {
+=======
+                                 final CriteriaSet<T> criteria) {
+>>>>>>> e175a306bcf551bb66937a9b2e21045107e90bf0
         if (criteria.isConstrained()) {
             Optional<Condition> nullCondition = Optional.empty();
 
@@ -258,7 +266,11 @@ public final class JooqUtil {
      */
     public static <R extends Record>
     Optional<Condition> applyString(final TableField<R, String> field,
+<<<<<<< HEAD
                           final StringCriteria criteria) {
+=======
+                                    final StringCriteria criteria) {
+>>>>>>> e175a306bcf551bb66937a9b2e21045107e90bf0
         if (criteria.isConstrained()) {
             Optional<Condition> nullCondition = Optional.empty();
 

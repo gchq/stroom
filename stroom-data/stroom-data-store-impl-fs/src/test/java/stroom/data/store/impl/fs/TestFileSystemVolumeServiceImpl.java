@@ -23,9 +23,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import stroom.data.store.impl.fs.shared.FSVolume;
-import stroom.data.store.impl.fs.shared.FSVolumeState;
-import stroom.data.store.impl.fs.shared.FindFSVolumeCriteria;
+import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeState;
+import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.impl.mock.AllowAllMockSecurity;
@@ -45,25 +45,25 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
     private static final Path DEFAULT_STREAM_VOLUME_PATH;
 
     static {
-        DEFAULT_VOLUMES_PATH = FileUtil.getTempDir().resolve(FileSystemVolumeServiceImpl.DEFAULT_VOLUMES_SUBDIR);
-        DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(FileSystemVolumeServiceImpl.DEFAULT_STREAM_VOLUME_SUBDIR);
+        DEFAULT_VOLUMES_PATH = FileUtil.getTempDir().resolve(FsVolumeServiceImpl.DEFAULT_VOLUMES_SUBDIR);
+        DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(FsVolumeServiceImpl.DEFAULT_STREAM_VOLUME_SUBDIR);
     }
 
-    private final FSVolume public1a = FSVolume.create(
+    private final FsVolume public1a = FsVolume.create(
             FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_1A")),
-            FSVolumeState.create(0, 1000));
-    private final FSVolume public1b = FSVolume.create(
+            FsVolumeState.create(0, 1000));
+    private final FsVolume public1b = FsVolume.create(
             FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_1A")),
-            FSVolumeState.create(0, 1000));
-    private final FSVolume public2a = FSVolume.create(
+            FsVolumeState.create(0, 1000));
+    private final FsVolume public2a = FsVolume.create(
             FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2A")),
-            FSVolumeState.create(0, 1000));
-    private final FSVolume public2b = FSVolume.create(
+            FsVolumeState.create(0, 1000));
+    private final FsVolume public2b = FsVolume.create(
             FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2B")),
-            FSVolumeState.create(0, 1000));
+            FsVolumeState.create(0, 1000));
     //    private final Security security = new AllowAllMockSecurity();
 //    private FileSystemVolumeConfig volumeConfig = new FileSystemVolumeConfig();
-    private FileSystemVolumeService volumeService = null;
+    private FsVolumeService volumeService = null;
 
     @BeforeEach
     void init() {
@@ -78,13 +78,13 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
         final SecurityContext securityContext = new MockSecurityContext();
         final Security security = new AllowAllMockSecurity();
 
-        final ConnectionProvider connectionProvider = new FileSystemDataStoreModule().getConnectionProvider(DataStoreServiceConfig::new);
-        volumeService = new FileSystemVolumeServiceImpl(connectionProvider,
+        final ConnectionProvider connectionProvider = new FsDataStoreModule().getConnectionProvider(DataStoreServiceConfig::new);
+        volumeService = new FsVolumeServiceImpl(connectionProvider,
                 security,
                 securityContext,
-                new FileSystemVolumeConfig(),
+                new FsVolumeConfig(),
                 null,
-                new FileSystemVolumeStateDao(connectionProvider),
+                new FsVolumeStateDao(connectionProvider),
                 null,
                 null);
 
@@ -93,21 +93,21 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 
     @Test
     void test() {
-        List<FSVolume> list = volumeService.find(new FindFSVolumeCriteria());
+        List<FsVolume> list = volumeService.find(new FindFsVolumeCriteria());
         list.forEach(v -> volumeService.delete(v.getId()));
 
-        list = volumeService.find(new FindFSVolumeCriteria());
+        list = volumeService.find(new FindFsVolumeCriteria());
         assertThat(list.size()).isZero();
 
         // Create
-        FSVolume fileVolume = volumeService.create(public1a);
+        FsVolume fileVolume = volumeService.create(public1a);
         fileVolume.setByteLimit(2000000L);
 
         // Update
         fileVolume = volumeService.update(fileVolume);
 
         // Find
-        list = volumeService.find(new FindFSVolumeCriteria());
+        list = volumeService.find(new FindFsVolumeCriteria());
         assertThat(list.size()).isOne();
         assertThat(list.get(0)).isEqualTo(fileVolume);
 
@@ -117,7 +117,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
         // Delete
         final int count = volumeService.delete(fileVolume.getId());
         assertThat(count).isOne();
-        list = volumeService.find(new FindFSVolumeCriteria());
+        list = volumeService.find(new FindFsVolumeCriteria());
         assertThat(list.size()).isZero();
     }
 

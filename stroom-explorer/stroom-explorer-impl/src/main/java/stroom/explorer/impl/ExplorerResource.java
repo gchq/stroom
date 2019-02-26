@@ -5,7 +5,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.*;
-import stroom.query.api.v2.DocRefInfo;
+import stroom.docref.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.explorer.shared.HasNodeState;

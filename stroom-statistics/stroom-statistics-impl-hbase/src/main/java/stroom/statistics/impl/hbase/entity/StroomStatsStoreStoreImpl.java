@@ -25,7 +25,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.query.api.v2.DocRefInfo;
+import stroom.docref.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;

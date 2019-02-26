@@ -35,13 +35,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest {
     @Inject
-    private FileSystemDataStoreMaintenanceService streamMaintenanceService;
+    private FsDataStoreMaintenanceService streamMaintenanceService;
     @Inject
     private DataVolumeService streamVolumeService;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
-    private FileSystemCleanExecutor fileSystemCleanTaskExecutor;
+    private FsCleanExecutor fileSystemCleanTaskExecutor;
 
     @Test
     void testSimple() throws IOException {

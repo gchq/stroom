@@ -28,7 +28,7 @@ import stroom.meta.impl.db.jooq.tables.MetaType;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaTypeRecord extends UpdatableRecordImpl<MetaTypeRecord> implements Record2<Integer, String> {
 
-    private static final long serialVersionUID = -804423589;
+    private static final long serialVersionUID = 539352895;
 
     /**
      * Setter for <code>stroom.meta_type.id</code>.

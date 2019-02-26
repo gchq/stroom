@@ -21,7 +21,9 @@ dependencies {
     implementation libs.gwt_user
     implementation libs.gwtp_mvp_client
     implementation libs.hibernate_jpa_api
+    implementation libs.jackson_annotations
     implementation libs.javax_inject
+    implementation libs.jaxb_api
     implementation libs.jsinterop_annotations
     
     testImplementation libs.assertj_core

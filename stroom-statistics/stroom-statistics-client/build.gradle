@@ -12,5 +12,7 @@ dependencies {
     implementation libs.guice3
     implementation libs.gwt_user
     implementation libs.gwtp_mvp_client
+    implementation libs.jackson_annotations
+    implementation libs.jaxb_api
     implementation libs.stroomDocRef
 }

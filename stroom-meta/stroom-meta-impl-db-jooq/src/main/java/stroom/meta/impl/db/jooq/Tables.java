@@ -30,30 +30,30 @@ public class Tables {
     /**
      * The table <code>stroom.meta</code>.
      */
-    public static final Meta META = Meta.META;
+    public static final Meta META = stroom.meta.impl.db.jooq.tables.Meta.META;
 
     /**
      * The table <code>stroom.meta_feed</code>.
      */
-    public static final MetaFeed META_FEED = MetaFeed.META_FEED;
+    public static final MetaFeed META_FEED = stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
 
     /**
      * The table <code>stroom.meta_key</code>.
      */
-    public static final MetaKey META_KEY = MetaKey.META_KEY;
+    public static final MetaKey META_KEY = stroom.meta.impl.db.jooq.tables.MetaKey.META_KEY;
 
     /**
      * The table <code>stroom.meta_processor</code>.
      */
-    public static final MetaProcessor META_PROCESSOR = MetaProcessor.META_PROCESSOR;
+    public static final MetaProcessor META_PROCESSOR = stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
 
     /**
      * The table <code>stroom.meta_type</code>.
      */
-    public static final MetaType META_TYPE = MetaType.META_TYPE;
+    public static final MetaType META_TYPE = stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
 
     /**
      * The table <code>stroom.meta_val</code>.
      */
-    public static final MetaVal META_VAL = MetaVal.META_VAL;
+    public static final MetaVal META_VAL = stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 }

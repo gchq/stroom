@@ -6,11 +6,11 @@ dependencies {
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
-    implementation libs.stroomQueryApi
     implementation libs.stroomDocRef
 
     implementation libs.guice4
-
+    implementation libs.jackson_annotations
     implementation libs.javax_inject
+    implementation libs.jaxb_api
     implementation libs.slf4j_api
 }

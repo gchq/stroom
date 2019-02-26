@@ -4,7 +4,8 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-util-shared')
-
     
     implementation libs.stroomDocRef
+
+    implementation libs.jaxb_api
 }

@@ -17,31 +17,22 @@ dependencies {
     implementation project(':stroom-dashboard:stroom-dashboard-client')
     implementation project(':stroom-security:stroom-security-client')
 
+    // These source deps are all needed for the GWT transpiling to javascript
+    implementation libs.stroomDocRef
     implementation "${libs.stroomDocRef}:sources"
-    
-    
+    implementation libs.stroomQueryApi
     implementation "${libs.stroomQueryApi}:sources"
-    
-    
     implementation "${libs.stroomQueryCommon}:sources"
-    
-    
 
     implementation libs.gin
     implementation libs.guice3
     implementation libs.gwt_dev
-    
     implementation libs.gwt_user
     implementation libs.gwtp_mvp_client
-
     implementation libs.hibernate_jpa_api
-    implementation "${libs.hibernate_jpa_api}:sources"
-
-    // needed so gwt can implementation the stroom-query code that contains swagger annotations
-    implementation libs.swagger_annotations
-    
-    implementation "${libs.swagger_annotations}:sources"
-    
+    implementation libs.jackson_annotations
+    implementation libs.jaxb_api
+    implementation libs.swagger_annotations // needed so gwt can implementation the stroom-query code that contains swagger annotations
 }
 
 def gwtSourceDirs = []
@@ -60,6 +51,8 @@ gwtSourceDirs.addAll(sourceSets.main.compileClasspath)
 //}
 
 task gwtCompile(dependsOn: classes, type: JavaExec) {
+    dependsOn 'gwtClean'
+    
     def module = 'stroom.dashboard.DashboardApp'
 
     doFirst {

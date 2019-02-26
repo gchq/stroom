@@ -20,9 +20,9 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.stroomQueryApi
-
     implementation libs.guice4
+    implementation libs.jackson_annotations
+    implementation libs.jaxb_api
     implementation libs.slf4j_api
 
     testImplementation libs.junit_jupiter_api

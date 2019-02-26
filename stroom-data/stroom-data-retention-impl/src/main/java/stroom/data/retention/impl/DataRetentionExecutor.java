@@ -21,21 +21,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.retention.api.DataRetentionAgeUtil;
+import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.dictionary.api.DictionaryStore;
-import stroom.util.shared.Period;
-import stroom.util.xml.XMLMarshallerUtil;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.data.retention.shared.DataRetentionRules;
-import stroom.data.retention.shared.DataRetentionRule;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.Period;
+import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -100,20 +100,20 @@ public class DataRetentionExecutor {
     public void exec() {
         if (running.compareAndSet(false, true)) {
             try {
-                final LogExecutionTime logExecutionTime = new LogExecutionTime();
                 info("Starting data retention process");
-                if (clusterLockService.tryLock(LOCK_NAME)) {
+                clusterLockService.tryLock(LOCK_NAME, () -> {
                     try {
+                        final LogExecutionTime logExecutionTime = new LogExecutionTime();
                         process();
                         info("Finished data retention process in " + logExecutionTime);
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
-                    } finally {
-                        clusterLockService.releaseLock(LOCK_NAME);
                     }
-                } else {
-                    info("Stream Retention Executor - Skipped as did not get lock in " + logExecutionTime);
-                }
+                });
+
+//                } else {
+//                    info("Stream Retention Executor - Skipped as did not get lock in " + logExecutionTime);
+//                }
             } finally {
                 running.set(false);
             }

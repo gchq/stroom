@@ -27,9 +27,8 @@ public class ClusterLockDbModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ClusterLockService.class).to(ClusterLockServiceImpl.class);
-        bind(ClusterLockServiceTransactionHelper.class).to(ClusterLockServiceTransactionHelperImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ClusterLockServiceTransactionHelperImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(DbClusterLock.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(ClusterLockClusterTask.class, ClusterLockClusterHandler.class)
@@ -54,14 +53,14 @@ public class ClusterLockDbModule extends AbstractModule {
                 .table(FLYWAY_TABLE)
                 .baselineOnMigrate(true)
                 .load();
-        LOGGER.info("Applying Flyway migrations to stroom-meta in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
+        LOGGER.info("Applying Flyway migrations to cluster-lock in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating stroom-meta database", e);
+            LOGGER.error("Error migrating cluster-lock database", e);
             throw e;
         }
-        LOGGER.info("Completed Flyway migrations for stroom-meta in {}", FLYWAY_TABLE);
+        LOGGER.info("Completed Flyway migrations for cluster-lock in {}", FLYWAY_TABLE);
         return flyway;
     }
 

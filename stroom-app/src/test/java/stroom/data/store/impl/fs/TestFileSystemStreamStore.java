@@ -83,7 +83,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Inject
     private DataVolumeService streamVolumeService;
     @Inject
-    private FileSystemStreamPathHelper fileSystemStreamPathHelper;
+    private FsPathHelper fileSystemStreamPathHelper;
 
     @BeforeEach
     void setProperties() {
@@ -745,7 +745,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             try (final Target streamTarget = streamStore.openStreamTarget(metaProperties)) {
                 TargetUtil.write(streamTarget, testString);
 
-                dir = ((FileSystemStreamTarget) streamTarget).getFile().getParent();
+                dir = ((FsTarget) streamTarget).getFile().getParent();
                 FileUtil.removeFilePermision(dir, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.OTHERS_WRITE);
             }
 

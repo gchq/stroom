@@ -1,8 +1,8 @@
 package stroom.job.impl.db;
 
+import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
-import stroom.util.shared.HasDisplayValue;
 
 public class JobNode {
     private Integer id;

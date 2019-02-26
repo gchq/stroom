@@ -3,7 +3,7 @@ package stroom.explorer.impl;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerServiceInfoAction;
 import stroom.explorer.shared.SharedDocRefInfo;
-import stroom.query.api.v2.DocRefInfo;
+import stroom.docref.DocRefInfo;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 

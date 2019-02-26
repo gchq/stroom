@@ -36,7 +36,9 @@ dependencies {
     implementation project(':stroom-config:stroom-config-global-impl-db')
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
-    implementation project(':stroom-dashboard:stroom-dashboard-server')
+    implementation project(':stroom-dashboard:stroom-dashboard-impl')
+    implementation project(':stroom-dashboard:stroom-storedquery-api')
+    implementation project(':stroom-dashboard:stroom-storedquery-impl-db')
     implementation project(':stroom-data:stroom-data-retention-impl')
     implementation project(':stroom-meta:stroom-meta-impl-db')
     implementation project(':stroom-data:stroom-data-store-impl')
@@ -115,6 +117,7 @@ dependencies {
     implementation libs.guava
     implementation libs.javax_inject
     implementation libs.javax_servlet_api
+    implementation libs.jaxb_api
     implementation libs.jetty_server
     implementation libs.jetty_servlets
     implementation libs.logback_classic
@@ -131,7 +134,7 @@ dependencies {
     testImplementation project(':stroom-config:stroom-config-app')
     testImplementation project(':stroom-core-server')
     testImplementation project(':stroom-core-shared')
-    testImplementation project(':stroom-dashboard:stroom-dashboard-server')
+    testImplementation project(':stroom-dashboard:stroom-dashboard-impl')
     testImplementation project(':stroom-meta:stroom-meta-api')
     testImplementation project(':stroom-meta:stroom-meta-impl-db')
     testImplementation project(':stroom-meta:stroom-meta-impl-mock')
@@ -176,7 +179,6 @@ dependencies {
     testImplementation libs.lucene_core
     testImplementation libs.saxon_he
     testImplementation libs.slf4j_api
-    testImplementation libs.stroomQueryApi
     testImplementation libs.stroomQueryCommon
     testImplementation libs.vavr
 

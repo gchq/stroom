@@ -24,14 +24,14 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.data.store.impl.fs.shared.FSVolume;
+import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.util.client.BorderUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.List;
 
-public class FSVolumeListPresenter extends MyPresenterWidget<DataGridView<FSVolume>> {
+public class FSVolumeListPresenter extends MyPresenterWidget<DataGridView<FsVolume>> {
     @Inject
     public FSVolumeListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
         super(eventBus, new DataGridViewImpl<>(true, true));
@@ -47,9 +47,9 @@ public class FSVolumeListPresenter extends MyPresenterWidget<DataGridView<FSVolu
      */
     private void initTableColumns() {
         // Path.
-        final Column<FSVolume, String> volumeColumn = new Column<FSVolume, String>(new TextCell()) {
+        final Column<FsVolume, String> volumeColumn = new Column<FsVolume, String>(new TextCell()) {
             @Override
-            public String getValue(final FSVolume row) {
+            public String getValue(final FsVolume row) {
                 if (row == null) {
                     return null;
                 }
@@ -59,9 +59,9 @@ public class FSVolumeListPresenter extends MyPresenterWidget<DataGridView<FSVolu
         getView().addResizableColumn(volumeColumn, "Path", 300);
 
         // Status.
-        final Column<FSVolume, String> streamStatusColumn = new Column<FSVolume, String>(new TextCell()) {
+        final Column<FsVolume, String> streamStatusColumn = new Column<FsVolume, String>(new TextCell()) {
             @Override
-            public String getValue(final FSVolume row) {
+            public String getValue(final FsVolume row) {
                 if (row == null) {
                     return null;
                 }
@@ -73,12 +73,12 @@ public class FSVolumeListPresenter extends MyPresenterWidget<DataGridView<FSVolu
         getView().addEndColumn(new EndColumn<>());
     }
 
-    public void setData(final List<FSVolume> volumes) {
+    public void setData(final List<FsVolume> volumes) {
         getView().setRowData(0, volumes);
         getView().setRowCount(volumes.size());
     }
 
-    public MultiSelectionModel<FSVolume> getSelectionModel() {
+    public MultiSelectionModel<FsVolume> getSelectionModel() {
         return getView().getSelectionModel();
     }
 }

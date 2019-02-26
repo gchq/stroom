@@ -16,19 +16,19 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.shared.FSVolume;
-import stroom.data.store.impl.fs.shared.FSVolumeState;
+import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeState;
 
 import java.util.List;
 
-public class RoundRobinIgnoreLeastFreeVolumeSelector implements FileVolumeSelector {
+public class RoundRobinIgnoreLeastFreeVolumeSelector implements FsVolumeSelector {
     public static final String NAME = "RoundRobinIgnoreLeastFree";
 
     private final RoundRobinVolumeSelector roundRobinVolumeSelector = new RoundRobinVolumeSelector();
 
     @Override
-    public FSVolume select(final List<FSVolume> list) {
-        final List<FSVolume> filtered = FileVolumeListUtil.removeVolumesWithoutValidState(list);
+    public FsVolume select(final List<FsVolume> list) {
+        final List<FsVolume> filtered = FsVolumeListUtil.removeVolumesWithoutValidState(list);
         if (filtered.size() == 0) {
             return roundRobinVolumeSelector.select(list);
         }
@@ -38,9 +38,9 @@ public class RoundRobinIgnoreLeastFreeVolumeSelector implements FileVolumeSelect
 
         // Remove the volume with the least amount of free space.
         double smalledFree = Double.MAX_VALUE;
-        FSVolume smallest = null;
-        for (final FSVolume volume : filtered) {
-            final FSVolumeState volumeState = volume.getVolumeState();
+        FsVolume smallest = null;
+        for (final FsVolume volume : filtered) {
+            final FsVolumeState volumeState = volume.getVolumeState();
             final double free = volumeState.getBytesFree();
             if (free < smalledFree) {
                 smalledFree = free;

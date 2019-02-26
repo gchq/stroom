@@ -20,9 +20,9 @@ import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.meta.impl.db.jooq.tables.records.MetaFeedRecord;
 import stroom.meta.impl.db.jooq.tables.records.MetaKeyRecord;
 import stroom.meta.impl.db.jooq.tables.records.MetaProcessorRecord;
+import stroom.meta.impl.db.jooq.tables.records.MetaRecord;
 import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
 import stroom.meta.impl.db.jooq.tables.records.MetaValRecord;
-import stroom.meta.impl.db.jooq.tables.records.MetaRecord;
 
 
 /**
@@ -100,8 +100,8 @@ public class Keys {
     }
 
     private static class ForeignKeys0 {
-        public static final ForeignKey<MetaRecord, MetaFeedRecord> META_FEED_ID = Internal.createForeignKey(Keys.KEY_META_FEED_PRIMARY, Meta.META, "meta_feed_id", Meta.META.FEED_ID);
-        public static final ForeignKey<MetaRecord, MetaTypeRecord> META_TYPE_ID = Internal.createForeignKey(Keys.KEY_META_TYPE_PRIMARY, Meta.META, "meta_type_id", Meta.META.TYPE_ID);
-        public static final ForeignKey<MetaRecord, MetaProcessorRecord> META_PROCESSOR_ID = Internal.createForeignKey(Keys.KEY_META_PROCESSOR_PRIMARY, Meta.META, "meta_processor_id", Meta.META.PROCESSOR_ID);
+        public static final ForeignKey<MetaRecord, MetaFeedRecord> META_FEED_ID = Internal.createForeignKey(stroom.meta.impl.db.jooq.Keys.KEY_META_FEED_PRIMARY, Meta.META, "meta_feed_id", Meta.META.FEED_ID);
+        public static final ForeignKey<MetaRecord, MetaTypeRecord> META_TYPE_ID = Internal.createForeignKey(stroom.meta.impl.db.jooq.Keys.KEY_META_TYPE_PRIMARY, Meta.META, "meta_type_id", Meta.META.TYPE_ID);
+        public static final ForeignKey<MetaRecord, MetaProcessorRecord> META_PROCESSOR_ID = Internal.createForeignKey(stroom.meta.impl.db.jooq.Keys.KEY_META_PROCESSOR_PRIMARY, Meta.META, "meta_processor_id", Meta.META.PROCESSOR_ID);
     }
 }

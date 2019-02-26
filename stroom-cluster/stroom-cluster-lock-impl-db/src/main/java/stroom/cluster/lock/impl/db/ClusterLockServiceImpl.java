@@ -19,19 +19,13 @@ package stroom.cluster.lock.impl.db;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.entity.StroomEntityManager;
-import stroom.entity.shared.SQLNameConstants;
-import stroom.entity.util.SqlBuilder;
-import stroom.job.shared.ClusterLock;
 import stroom.node.api.NodeInfo;
-import stroom.persist.EntityManagerSupport;
 import stroom.task.api.TaskManager;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.SharedBoolean;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,57 +34,27 @@ class ClusterLockServiceImpl implements ClusterLockService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceImpl.class);
     private final ConcurrentHashMap<String, ClusterLockKey> lockMap = new ConcurrentHashMap<>();
 
-    private final ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper;
     private final TaskManager taskManager;
     private final NodeInfo nodeInfo;
-    private StroomEntityManager stroomEntityManager;
-    private EntityManagerSupport entityManagerSupport;
+    private final DbClusterLock dbClusterLock;
 
     @Inject
-    ClusterLockServiceImpl(final StroomEntityManager stroomEntityManager,
-                           final EntityManagerSupport entityManagerSupport,
-                           final ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper,
-                           final TaskManager taskManager,
-                           final NodeInfo nodeInfo) {
-        this.stroomEntityManager = stroomEntityManager;
-        this.entityManagerSupport = entityManagerSupport;
-        this.clusterLockServiceTransactionHelper = clusterLockServiceTransactionHelper;
+    ClusterLockServiceImpl(final TaskManager taskManager,
+                           final NodeInfo nodeInfo,
+                           final DbClusterLock dbClusterLock) {
         this.taskManager = taskManager;
         this.nodeInfo = nodeInfo;
+        this.dbClusterLock = dbClusterLock;
     }
 
     @Override
-    public void lock(final String lockName) {
-        entityManagerSupport.transaction(entityManager -> {
-            LOGGER.debug("lock({}) - >>>", lockName);
-
-            final LogExecutionTime logExecutionTime = new LogExecutionTime();
-
-            // This happens outside this transaction
-            clusterLockServiceTransactionHelper.checkLockCreated(lockName);
-
-            final SqlBuilder sql = new SqlBuilder();
-            sql.append("SELECT * FROM ");
-            sql.append(ClusterLock.TABLE_NAME);
-            sql.append(" WHERE ");
-            sql.append(SQLNameConstants.NAME);
-            sql.append(" = ");
-            sql.arg(lockName);
-
-            // Here we lock the records read until the transaction commits.
-            sql.append(" FOR UPDATE");
-
-            final List<ClusterLock> result = stroomEntityManager.executeNativeQueryResultList(sql, ClusterLock.class);
-            if (result == null || result.size() != 1) {
-                throw new IllegalStateException("No cluster lock has been found or created: " + lockName);
-            }
-
-            LOGGER.debug("lock({}) - <<< {}", lockName, logExecutionTime);
-        });
+    public void lock(final String lockName, final Runnable runnable) {
+        dbClusterLock.lock(lockName, runnable);
     }
 
     @Override
-    public boolean tryLock(final String lockName) {
+    public void tryLock(final String lockName, final Runnable runnable) {
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.debug("tryLock({}) - >>>", lockName);
         boolean success = false;
 
@@ -112,11 +76,19 @@ class ClusterLockServiceImpl implements ClusterLockService {
         }
 
         LOGGER.debug("tryLock({}) - <<< {}", lockName, success);
-        return success;
+
+        if (success) {
+            try {
+                runnable.run();
+            } finally {
+                releaseLock(lockName);
+            }
+        } else {
+            LOGGER.info("Skipped process as did not get lock {} in {}", lockName, logExecutionTime);
+        }
     }
 
-    @Override
-    public void releaseLock(final String lockName) {
+    private void releaseLock(final String lockName) {
         LOGGER.debug("releaseLock({}) - >>>", lockName);
         // Remove the lock name from the lock map.
         final ClusterLockKey clusterLockKey = lockMap.remove(lockName);

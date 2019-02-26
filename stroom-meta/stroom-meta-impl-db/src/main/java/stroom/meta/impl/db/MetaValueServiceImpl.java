@@ -220,18 +220,14 @@ class MetaValueServiceImpl implements MetaValueService {
     @Override
     public void deleteOldValues() {
         // Acquire a cluster lock before performing a batch delete to reduce db contention and to let a single node do the job.
-        if (clusterLockService.tryLock(LOCK_NAME)) {
-            try {
-                final Long age = getAttributeDatabaseAgeMs();
-                final int batchSize = metaValueConfig.getDeleteBatchSize();
-                int count = batchSize;
-                while (count >= batchSize) {
-                    count = deleteBatchOfOldValues(age, batchSize);
-                }
-            } finally {
-                clusterLockService.releaseLock(LOCK_NAME);
+        clusterLockService.tryLock(LOCK_NAME, () -> {
+            final Long age = getAttributeDatabaseAgeMs();
+            final int batchSize = metaValueConfig.getDeleteBatchSize();
+            int count = batchSize;
+            while (count >= batchSize) {
+                count = deleteBatchOfOldValues(age, batchSize);
             }
-        }
+        });
     }
 
     private int deleteBatchOfOldValues(final long age, final int batchSize) {
