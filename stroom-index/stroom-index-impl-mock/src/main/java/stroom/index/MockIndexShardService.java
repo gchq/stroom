@@ -100,7 +100,7 @@ public class MockIndexShardService
 
             } else if (!criteria.getNodeNameSet().isMatch(indexShard.getNodeName())) {
                 include = false;
-            } else if (!criteria.getIndexSet().isMatch(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShard.getIndexUuid()))) {
+            } else if (!criteria.getIndexUuidSet().isMatch(indexShard.getIndexUuid())) {
                 include = false;
 
             } else if (!criteria.getIndexShardStatusSet().isMatch(indexShard.getStatusE())) {

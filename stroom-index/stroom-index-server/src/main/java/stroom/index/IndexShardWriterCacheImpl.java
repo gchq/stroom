@@ -139,7 +139,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
         criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
-        criteria.getIndexSet().add(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+        criteria.getIndexUuidSet().add(indexShardKey.getIndexUuid());
         criteria.getPartition().setString(indexShardKey.getPartition());
         final List<IndexShard> list = indexShardService.find(criteria);
         for (final IndexShard indexShard : list) {

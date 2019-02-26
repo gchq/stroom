@@ -144,10 +144,7 @@ public class NodeCreatorForTesting implements NodeCreator {
 
                 if (!found) {
                     Files.createDirectories(Paths.get(volume.getPath()));
-
-                    final Node node = BaseEntityUtil.findByName(realNodeList, volume.getNodeName());
-                    final IndexVolume realVolume = new IndexVolume.Builder().fromOriginal(volume).build();
-                    realVolume.setNodeName(node.getName());
+                    volumeService.create(volume.getNodeName(), volume.getPath());
                 }
             }
 

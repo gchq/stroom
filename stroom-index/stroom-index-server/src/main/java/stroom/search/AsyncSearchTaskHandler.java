@@ -113,7 +113,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
                     // Get a list of search index shards to look through.
                     final FindIndexShardCriteria findIndexShardCriteria = new FindIndexShardCriteria();
-                    findIndexShardCriteria.getIndexSet().add(query.getDataSource());
+                    findIndexShardCriteria.getIndexUuidSet().add(query.getDataSource().getUuid());
                     // Only non deleted indexes.
                     findIndexShardCriteria.getIndexShardStatusSet().addAll(IndexShard.NON_DELETED_INDEX_SHARD_STATUS);
                     // Order by partition name and key.

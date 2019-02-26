@@ -23,16 +23,35 @@ dependencies {
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
-
+    
+    implementation(libs.dropwizard_assets) {
+        exclude(group: "org.glassfish.web", module: "javax.el")
+    }
+    implementation(libs.dropwizard_core) {
+        exclude(group: "org.glassfish.web", module: "javax.el")
+    }
+    implementation libs.dropwizard_jersey
+    implementation libs.dropwizard_jetty
+    implementation libs.dropwizard_lifecycle
+    implementation libs.dropwizard_servlets
+    implementation libs.dropwizard_metrics_core
+    implementation libs.dropwizard_configuration
     implementation libs.dropwizard_metrics_annotation
     implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.flyway_core
     implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice4
     implementation libs.hessian
     implementation libs.jackson_annotations
     implementation libs.javax_inject
+    implementation libs.javax_servlet_api
+    implementation libs.jcommander
+    implementation libs.jetty_server
+    implementation libs.jetty_servlets
+    implementation libs.jetty_servlet
     implementation libs.jaxb_api
+    implementation libs.logback_classic
     implementation libs.lucene_analyzers_common
     implementation libs.lucene_core
     implementation libs.lucene_queryparser

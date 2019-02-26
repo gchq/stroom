@@ -99,7 +99,7 @@ class TestBasicSearch extends AbstractCoreIntegrationTest {
         indexShardWriterCache.flushAll();
 
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getIndexSet().add(indexRef);
+        criteria.getIndexUuidSet().add(indexRef.getUuid());
         final List<IndexShard> shards = indexShardService.find(criteria);
 
         // Open readers and add reader searcher to the multi searcher.

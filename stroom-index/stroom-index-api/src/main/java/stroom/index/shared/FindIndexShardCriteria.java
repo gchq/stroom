@@ -29,7 +29,7 @@ public class FindIndexShardCriteria extends BaseCriteria {
     private Range<Integer> documentCountRange = new Range<>();
     private CriteriaSet<String> nodeNameSet = new CriteriaSet<>();
     private CriteriaSet<Long> volumeIdSet = new CriteriaSet<>();
-    private CriteriaSet<DocRef> indexSet = new CriteriaSet<>();
+    private CriteriaSet<String> indexUuidSet = new CriteriaSet<>();
     private CriteriaSet<Long> indexShardIdSet = new CriteriaSet<>();
     private CriteriaSet<IndexShardStatus> indexShardStatusSet = new CriteriaSet<>();
     private StringCriteria partition = new StringCriteria();
@@ -43,7 +43,7 @@ public class FindIndexShardCriteria extends BaseCriteria {
         nodeNameSet.copyFrom(criteria.nodeNameSet);
         volumeIdSet.copyFrom(criteria.volumeIdSet);
         documentCountRange = criteria.documentCountRange;
-        indexSet.copyFrom(criteria.indexSet);
+        indexUuidSet.copyFrom(criteria.indexUuidSet);
         indexShardIdSet.copyFrom(criteria.indexShardIdSet);
         indexShardStatusSet.copyFrom(criteria.indexShardStatusSet);
         partition.copyFrom(criteria.partition);
@@ -61,8 +61,8 @@ public class FindIndexShardCriteria extends BaseCriteria {
         this.documentCountRange = documentCountRange;
     }
 
-    public CriteriaSet<DocRef> getIndexSet() {
-        return indexSet;
+    public CriteriaSet<String> getIndexUuidSet() {
+        return indexUuidSet;
     }
 
     public CriteriaSet<Long> getIndexShardIdSet() {
@@ -84,8 +84,8 @@ public class FindIndexShardCriteria extends BaseCriteria {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        sb.append("indexSet=");
-        sb.append(indexSet);
+        sb.append("indexUuidSet=");
+        sb.append(indexUuidSet);
         return sb.toString();
     }
 }

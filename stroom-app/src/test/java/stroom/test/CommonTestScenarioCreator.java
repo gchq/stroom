@@ -21,6 +21,7 @@ package stroom.test;
 import stroom.index.service.IndexVolumeGroupService;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
+import stroom.index.shared.IndexVolume;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaFieldNames;
@@ -118,11 +119,13 @@ public class CommonTestScenarioCreator {
         index.setVolumeGroupName(volumeGroupName);
         indexStore.writeDocument(index);
         assertThat(index).isNotNull();
-//
-//        final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
-//        findVolumeCriteria.getIndexStatusSet().add(VolumeUseStatus.ACTIVE);
-//        findVolumeCriteria.getNodeIdSet().add(nodeInfo.getThisNode());
-        // TODO replace this with new index volumes
+
+        final IndexVolume indexVolume = indexVolumeService.getAll().stream()
+                .filter(v -> v.getNodeName().equals(nodeInfo.getThisNodeName()))
+                .findAny()
+                .orElseThrow(() -> new AssertionError("Could not get Index Volume"));
+
+        indexVolumeService.addVolumeToGroup(indexVolume.getId(), volumeGroupName);
 
         return indexRef;
     }

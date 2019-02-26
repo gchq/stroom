@@ -112,7 +112,7 @@ public class CommonIndexingTestHelper {
 
     public int flushIndex() {
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getIndexSet().setMatchAll(true);
+        criteria.getIndexUuidSet().setMatchAll(true);
         indexShardManager.findFlush(criteria);
 
         return 1;

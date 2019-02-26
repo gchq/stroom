@@ -5,7 +5,7 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 //
-//    implementation libs.stroomDocRef
+    implementation libs.stroomDocRef
 //    
 //    implementation libs.commons_codec
 //    implementation libs.dropwizard_metrics_healthchecks

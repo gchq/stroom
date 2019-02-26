@@ -104,13 +104,13 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
         assertThat(indexShardService.find(criteria).size()).isEqualTo(4);
 
         // Find shards for index 1
-        criteria.getIndexSet().clear();
-        criteria.getIndexSet().add(indexRef1);
+        criteria.getIndexUuidSet().clear();
+        criteria.getIndexUuidSet().add(indexRef1.getUuid());
         assertThat(indexShardService.find(criteria).size()).isEqualTo(3);
 
         // Find shards for index 2
-        criteria.getIndexSet().clear();
-        criteria.getIndexSet().add(indexRef2);
+        criteria.getIndexUuidSet().clear();
+        criteria.getIndexUuidSet().add(indexRef2.getUuid());
         assertThat(indexShardService.find(criteria).size()).isEqualTo(1);
 
         // Set all the filters
@@ -157,6 +157,8 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
         final List<IndexShard> list = indexShardService.find(findIndexShardCriteria);
 
         assertThat(list.size()).isEqualTo(10);
+
+        list.forEach(i -> System.out.println(i.toString()));
 
         IndexShard lastShard = null;
         for (final IndexShard indexShard : list) {

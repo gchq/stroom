@@ -1,5 +1,9 @@
 package stroom.index.impl.db;
 
+import org.jooq.Condition;
+import org.jooq.OrderField;
+import org.jooq.TableField;
+import org.jooq.impl.DSL;
 import stroom.db.util.JooqUtil;
 import stroom.index.dao.IndexShardDao;
 import stroom.index.dao.IndexVolumeDao;
@@ -9,11 +13,16 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.security.SecurityContext;
+import stroom.util.shared.Sort;
 
 import javax.inject.Inject;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static stroom.index.impl.db.Tables.INDEX_SHARD;
 import static stroom.index.impl.db.tables.IndexVolume.INDEX_VOLUME;
@@ -42,9 +51,36 @@ public class IndexShardDaoImpl implements IndexShardDao {
         );
     }
 
+    private static Map<String, TableField> tableFieldMap = new HashMap<>();
+    static {
+        tableFieldMap.put(FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID);
+        tableFieldMap.put(FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION);
+    }
+
     @Override
     public List<IndexShard> find(final FindIndexShardCriteria criteria) {
-        return Collections.emptyList();
+        final List<Condition> conditions = Stream.of(
+                JooqUtil.applyRange(INDEX_SHARD.DOC_COUNT, criteria.getDocumentCountRange()),
+                JooqUtil.applySet(INDEX_SHARD.NODE_NAME, criteria.getNodeNameSet()),
+                JooqUtil.applySet(INDEX_SHARD.FK_VOLUME_ID, criteria.getVolumeIdSet()),
+                JooqUtil.applySet(INDEX_SHARD.ID, criteria.getIndexShardIdSet()),
+                JooqUtil.applySet(INDEX_SHARD.INDEX_UUID, criteria.getIndexUuidSet()),
+                JooqUtil.applySet(INDEX_SHARD.STATUS,
+                        criteria.getIndexShardStatusSet().convertTo(IndexShard.IndexShardStatus::getPrimitiveValue)),
+                JooqUtil.applyString(INDEX_SHARD.PARTITION, criteria.getPartition())
+        )
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+
+        final OrderField[] orderFields = JooqUtil.getOrderFields(tableFieldMap, criteria);
+
+        return JooqUtil.contextResult(connectionProvider, context -> context.select()
+                .from(INDEX_SHARD)
+                .where(DSL.and(conditions))
+                .orderBy(orderFields)
+                .fetchInto(IndexShard.class)
+        );
     }
 
     @Override
@@ -87,10 +123,14 @@ public class IndexShardDaoImpl implements IndexShardDao {
                     .fetchOne()
                     .getId();
 
-            return context.select()
+            final IndexShard result = context.select()
                     .from(INDEX_SHARD)
                     .where(INDEX_SHARD.ID.eq(id))
                     .fetchOneInto(IndexShard.class);
+
+            result.setVolume(indexVolume);
+
+            return result;
         });
     }
 

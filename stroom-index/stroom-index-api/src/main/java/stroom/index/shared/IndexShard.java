@@ -225,6 +225,27 @@ public class IndexShard implements SharedObject {
         return null;
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("IndexShard{");
+        sb.append("id=").append(id);
+        sb.append(", partition='").append(partition).append('\'');
+        sb.append(", partitionFromTime=").append(partitionFromTime);
+        sb.append(", partitionToTime=").append(partitionToTime);
+        sb.append(", documentCount=").append(documentCount);
+        sb.append(", commitMs=").append(commitMs);
+        sb.append(", commitDurationMs=").append(commitDurationMs);
+        sb.append(", commitDocumentCount=").append(commitDocumentCount);
+        sb.append(", pstatus=").append(pstatus);
+        sb.append(", fileSize=").append(fileSize);
+        sb.append(", indexVersion='").append(indexVersion).append('\'');
+        sb.append(", volume=").append(volume);
+        sb.append(", nodeName='").append(nodeName).append('\'');
+        sb.append(", indexUuid='").append(indexUuid).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
+
     /**
      * The status of this indexUuid shard
      */
