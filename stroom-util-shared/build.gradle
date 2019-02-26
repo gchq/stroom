@@ -1,6 +1,8 @@
 ext.moduleName = 'stroom.util.shared'
 
 dependencies {
+    implementation libs.jaxb_api
+
     implementation libs.stroomDocRef
 
     testImplementation libs.assertj_core

@@ -19,7 +19,6 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.stroomDocRef
-    implementation libs.stroomQueryApi
     implementation libs.eventLogging
 
     implementation libs.flyway_core

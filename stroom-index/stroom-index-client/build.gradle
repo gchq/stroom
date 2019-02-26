@@ -15,4 +15,6 @@ dependencies {
     implementation libs.gwtp_mvp_client
     implementation libs.hibernate_core
     implementation libs.hibernate_jpa_api
+    implementation libs.jackson_annotations
+    implementation libs.jaxb_api
 }

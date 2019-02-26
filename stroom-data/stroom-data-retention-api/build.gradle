@@ -4,7 +4,6 @@ dependencies {
     implementation project(':stroom-core-shared')
 
     implementation libs.stroomDocRef
-    implementation libs.stroomQueryApi
     
     implementation libs.jaxb_api
 }

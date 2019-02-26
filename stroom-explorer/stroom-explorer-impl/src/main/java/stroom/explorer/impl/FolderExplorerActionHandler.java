@@ -7,7 +7,7 @@ import stroom.explorer.impl.db.ExplorerTreeDao;
 import stroom.explorer.impl.db.ExplorerTreeNode;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.query.api.v2.DocRefInfo;
+import stroom.docref.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.PermissionException;

@@ -36,7 +36,6 @@ dependencies {
 
     implementation libs.eventLogging
     implementation libs.stroomDocRef
-    implementation libs.stroomQueryApi
 
     implementation libs.commons_compress
 //    implementation libs.commons_exec

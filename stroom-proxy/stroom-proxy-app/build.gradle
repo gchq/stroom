@@ -48,6 +48,7 @@ dependencies {
     implementation libs.jackson_databind
     implementation libs.javax_inject
     implementation libs.javax_servlet_api
+    implementation libs.jaxb_api
     implementation libs.jersey_client
     implementation libs.slf4j_api
     

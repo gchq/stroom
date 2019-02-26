@@ -10,6 +10,8 @@ dependencies {
     api libs.stroomQueryApi
 
     api libs.javax_servlet_api
+    implementation libs.jackson_annotations
+    implementation libs.jaxb_api
     implementation libs.slf4j_api
 
     testImplementation libs.assertj_core

@@ -16,10 +16,11 @@ dependencies {
     implementation libs.eventLogging
     
     implementation libs.guice4
+    implementation libs.jackson_annotations
     implementation libs.javax_inject
-
     implementation libs.jaxb_api
     implementation libs.slf4j_api
+    implementation libs.swagger_annotations
     implementation libs.ws_rs_api
 
     testImplementation project(':stroom-test-common')

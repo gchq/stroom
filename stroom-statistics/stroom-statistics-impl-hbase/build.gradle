@@ -16,12 +16,13 @@ dependencies {
 
     implementation libs.stroomDocRef
     implementation libs.stroomExpression
-    implementation libs.stroomQueryApi
     implementation libs.stroomQueryCommon
     implementation libs.stroomStatsSchema
 
     implementation libs.guice4
+    implementation libs.jackson_annotations
     implementation libs.javax_inject
+    implementation libs.jaxb_api
     implementation(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
 
     testImplementation project(':stroom-docstore:stroom-docstore-impl')

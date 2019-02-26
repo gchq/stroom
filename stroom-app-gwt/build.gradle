@@ -24,8 +24,6 @@ dependencies {
     implementation "${libs.stroomQueryApi}:sources"
     implementation "${libs.stroomQueryCommon}:sources"
     
-    
-
     implementation libs.hibernate_jpa_api
     implementation "${libs.hibernate_jpa_api}:sources"
     implementation libs.gin
@@ -34,8 +32,12 @@ dependencies {
     
     implementation libs.gwt_user
     implementation libs.gwtp_mvp_client
+    implementation libs.jackson_annotations
+    implementation "${libs.jackson_annotations}:sources"
+    implementation libs.jaxb_api
+    implementation "${libs.jaxb_api}:sources"
 
-    // needed so gwt can implementation the stroom-query code that contains swagger annotations
+    // needed so gwt can compile the stroom-query code that contains swagger annotations
     implementation libs.swagger_annotations
     
     implementation "${libs.swagger_annotations}:sources"

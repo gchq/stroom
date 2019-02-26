@@ -15,6 +15,7 @@ dependencies {
     implementation libs.guice4
     implementation libs.jackson_databind
     implementation libs.javax_inject
+    implementation libs.jaxb_api
     implementation libs.slf4j_api
 
     testImplementation libs.junit_jupiter_api

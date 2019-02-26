@@ -116,6 +116,7 @@ dependencies {
     implementation libs.guava
     implementation libs.javax_inject
     implementation libs.javax_servlet_api
+    implementation libs.jaxb_api
     implementation libs.jetty_server
     implementation libs.jetty_servlets
     implementation libs.logback_classic
@@ -177,7 +178,6 @@ dependencies {
     testImplementation libs.lucene_core
     testImplementation libs.saxon_he
     testImplementation libs.slf4j_api
-    testImplementation libs.stroomQueryApi
     testImplementation libs.stroomQueryCommon
     testImplementation libs.vavr
 

@@ -12,7 +12,6 @@ dependencies {
 
     // stroom libs
     implementation libs.stroomDocRef
-    implementation libs.stroomQueryApi
 
     // 3rd party libs
     implementation libs.guice4
@@ -20,6 +19,7 @@ dependencies {
     implementation libs.jackson_annotations
     implementation libs.jackson_databind
     implementation libs.javax_inject
+    implementation libs.jaxb_api
     implementation libs.slf4j_api
     
     testImplementation libs.assertj_core
