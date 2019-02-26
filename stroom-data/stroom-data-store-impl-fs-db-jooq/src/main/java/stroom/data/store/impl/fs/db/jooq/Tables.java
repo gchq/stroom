@@ -6,11 +6,11 @@ package stroom.data.store.impl.fs.db.jooq;
 
 import javax.annotation.Generated;
 
-import stroom.data.store.impl.fs.db.jooq.tables.FileFeedPath;
-import stroom.data.store.impl.fs.db.jooq.tables.FileMetaVolume;
-import stroom.data.store.impl.fs.db.jooq.tables.FileTypePath;
-import stroom.data.store.impl.fs.db.jooq.tables.FileVolume;
-import stroom.data.store.impl.fs.db.jooq.tables.FileVolumeState;
+import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
+import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
+import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
+import stroom.data.store.impl.fs.db.jooq.tables.FsVolume;
+import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState;
 
 
 /**
@@ -27,27 +27,27 @@ import stroom.data.store.impl.fs.db.jooq.tables.FileVolumeState;
 public class Tables {
 
     /**
-     * The table <code>stroom.file_feed_path</code>.
+     * The table <code>stroom.fs_feed_path</code>.
      */
-    public static final FileFeedPath FILE_FEED_PATH = stroom.data.store.impl.fs.db.jooq.tables.FileFeedPath.FILE_FEED_PATH;
+    public static final FsFeedPath FS_FEED_PATH = stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath.FS_FEED_PATH;
 
     /**
-     * The table <code>stroom.file_meta_volume</code>.
+     * The table <code>stroom.fs_meta_volume</code>.
      */
-    public static final FileMetaVolume FILE_META_VOLUME = stroom.data.store.impl.fs.db.jooq.tables.FileMetaVolume.FILE_META_VOLUME;
+    public static final FsMetaVolume FS_META_VOLUME = stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume.FS_META_VOLUME;
 
     /**
-     * The table <code>stroom.file_type_path</code>.
+     * The table <code>stroom.fs_type_path</code>.
      */
-    public static final FileTypePath FILE_TYPE_PATH = stroom.data.store.impl.fs.db.jooq.tables.FileTypePath.FILE_TYPE_PATH;
+    public static final FsTypePath FS_TYPE_PATH = stroom.data.store.impl.fs.db.jooq.tables.FsTypePath.FS_TYPE_PATH;
 
     /**
-     * The table <code>stroom.file_volume</code>.
+     * The table <code>stroom.fs_volume</code>.
      */
-    public static final FileVolume FILE_VOLUME = stroom.data.store.impl.fs.db.jooq.tables.FileVolume.FILE_VOLUME;
+    public static final FsVolume FS_VOLUME = stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;
 
     /**
-     * The table <code>stroom.file_volume_state</code>.
+     * The table <code>stroom.fs_volume_state</code>.
      */
-    public static final FileVolumeState FILE_VOLUME_STATE = stroom.data.store.impl.fs.db.jooq.tables.FileVolumeState.FILE_VOLUME_STATE;
+    public static final FsVolumeState FS_VOLUME_STATE = stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.FS_VOLUME_STATE;
 }

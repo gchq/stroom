@@ -53,11 +53,11 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     @Inject
     private Store streamStore;
     @Inject
-    private FileSystemDataStoreMaintenanceService streamMaintenanceService;
+    private FsDataStoreMaintenanceService streamMaintenanceService;
     @Inject
     private DataVolumeService streamVolumeService;
     @Inject
-    private FileSystemCleanExecutor fileSystemCleanTaskExecutor;
+    private FsCleanExecutor fileSystemCleanTaskExecutor;
     @Inject
     private TaskManager taskManager;
     @Inject

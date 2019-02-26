@@ -22,10 +22,10 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
 
-import stroom.meta.impl.db.jooq.tables.records.MetaProcessorRecord;
 import stroom.meta.impl.db.jooq.Indexes;
 import stroom.meta.impl.db.jooq.Keys;
 import stroom.meta.impl.db.jooq.Stroom;
+import stroom.meta.impl.db.jooq.tables.records.MetaProcessorRecord;
 
 
 /**
@@ -41,7 +41,7 @@ import stroom.meta.impl.db.jooq.Stroom;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaProcessor extends TableImpl<MetaProcessorRecord> {
 
-    private static final long serialVersionUID = 1630399227;
+    private static final long serialVersionUID = -1078907836;
 
     /**
      * The reference instance of <code>stroom.meta_processor</code>

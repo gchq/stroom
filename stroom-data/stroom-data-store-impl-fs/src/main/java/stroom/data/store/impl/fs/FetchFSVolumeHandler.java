@@ -1,20 +1,20 @@
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.shared.FSVolume;
-import stroom.data.store.impl.fs.shared.FetchFSVolumeAction;
+import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FetchFsVolumeAction;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 
-class FetchFSVolumeHandler extends AbstractTaskHandler<FetchFSVolumeAction, FSVolume> {
-    private final FileSystemVolumeService volumeService;
+class FetchFSVolumeHandler extends AbstractTaskHandler<FetchFsVolumeAction, FsVolume> {
+    private final FsVolumeService volumeService;
     private final DocumentEventLog documentEventLog;
     private final Security security;
 
     @Inject
-    FetchFSVolumeHandler(final FileSystemVolumeService volumeService,
+    FetchFSVolumeHandler(final FsVolumeService volumeService,
                                 final DocumentEventLog documentEventLog,
                                 final Security security) {
         this.volumeService = volumeService;
@@ -23,9 +23,9 @@ class FetchFSVolumeHandler extends AbstractTaskHandler<FetchFSVolumeAction, FSVo
     }
 
     @Override
-    public FSVolume exec(final FetchFSVolumeAction action) {
+    public FsVolume exec(final FetchFsVolumeAction action) {
         return security.secureResult(() -> {
-            FSVolume result;
+            FsVolume result;
 
             try {
                 result = volumeService.fetch(action.getVolume().getId());

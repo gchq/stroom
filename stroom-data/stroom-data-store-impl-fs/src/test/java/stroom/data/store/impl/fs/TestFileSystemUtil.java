@@ -18,7 +18,7 @@ package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import stroom.data.store.impl.fs.shared.FSVolume;
+import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.meta.shared.Meta;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
@@ -51,8 +51,8 @@ class TestFileSystemUtil {
     @TempDir
     private Path tempDir;
 
-    private FSVolume buildTestVolume() {
-        final FSVolume config = new FSVolume();
+    private FsVolume buildTestVolume() {
+        final FsVolume config = new FsVolume();
         config.setPath(FileUtil.getCanonicalPath(tempDir));
         return config;
     }
@@ -94,10 +94,10 @@ class TestFileSystemUtil {
         when(meta.getFeedName()).thenReturn("TEST_FEED");
         when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
-        final FileSystemFeedPaths fileSystemFeedPaths = mock(FileSystemFeedPaths.class);
+        final FsFeedPaths fileSystemFeedPaths = mock(FsFeedPaths.class);
         when(fileSystemFeedPaths.getPath(any())).thenReturn("1");
 
-        final FileSystemStreamPathHelper fileSystemStreamPathHelper = new FileSystemStreamPathHelper(fileSystemFeedPaths, new MockFileSystemTypePaths());
+        final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
 
         final Path rootFile = fileSystemStreamPathHelper.getRootPath(buildTestVolume().getPath(), meta, StreamTypeNames.EVENTS);
 
@@ -113,10 +113,10 @@ class TestFileSystemUtil {
         when(meta.getFeedName()).thenReturn("TEST_FEED");
         when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
-        final FileSystemFeedPaths fileSystemFeedPaths = mock(FileSystemFeedPaths.class);
+        final FsFeedPaths fileSystemFeedPaths = mock(FsFeedPaths.class);
         when(fileSystemFeedPaths.getPath(any())).thenReturn("1");
 
-        final FileSystemStreamPathHelper fileSystemStreamPathHelper = new FileSystemStreamPathHelper(fileSystemFeedPaths, new MockFileSystemTypePaths());
+        final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
 
         final Path rootFile = fileSystemStreamPathHelper.getRootPath(buildTestVolume().getPath(), meta,
                 StreamTypeNames.RAW_EVENTS);
@@ -267,10 +267,10 @@ class TestFileSystemUtil {
         when(meta.getFeedName()).thenReturn("TEST_FEED");
         when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
 
-        final FileSystemFeedPaths fileSystemFeedPaths = mock(FileSystemFeedPaths.class);
+        final FsFeedPaths fileSystemFeedPaths = mock(FsFeedPaths.class);
         when(fileSystemFeedPaths.getPath(any())).thenReturn("2");
 
-        final FileSystemStreamPathHelper fileSystemStreamPathHelper = new FileSystemStreamPathHelper(fileSystemFeedPaths, new MockFileSystemTypePaths());
+        final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
 
         assertThat(fileSystemStreamPathHelper.getDirectory(meta, StreamTypeNames.EVENTS)).isEqualTo("EVENTS/2008/11/18/100");
         assertThat(fileSystemStreamPathHelper.getBaseName(meta)).isEqualTo("2=100100");
@@ -284,10 +284,10 @@ class TestFileSystemUtil {
         when(meta.getFeedName()).thenReturn("TEST_FEED");
         when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
 
-        final FileSystemFeedPaths fileSystemFeedPaths = mock(FileSystemFeedPaths.class);
+        final FsFeedPaths fileSystemFeedPaths = mock(FsFeedPaths.class);
         when(fileSystemFeedPaths.getPath(any())).thenReturn("2");
 
-        final FileSystemStreamPathHelper fileSystemStreamPathHelper = new FileSystemStreamPathHelper(fileSystemFeedPaths, new MockFileSystemTypePaths());
+        final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
 
         assertThat(fileSystemStreamPathHelper.getDirectory(meta, StreamTypeNames.EVENTS)).isEqualTo("EVENTS/2008/11/18/001/100");
         assertThat(fileSystemStreamPathHelper.getBaseName(meta)).isEqualTo("2=001100100");

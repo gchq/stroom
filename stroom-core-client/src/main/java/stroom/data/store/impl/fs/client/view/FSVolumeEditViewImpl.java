@@ -24,7 +24,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.data.store.impl.fs.client.presenter.FSVolumeEditPresenter.VolumeEditView;
-import stroom.data.store.impl.fs.shared.FSVolume.VolumeUseStatus;
+import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.item.client.ItemListBox;
 
 public class FSVolumeEditViewImpl extends ViewImpl implements VolumeEditView {

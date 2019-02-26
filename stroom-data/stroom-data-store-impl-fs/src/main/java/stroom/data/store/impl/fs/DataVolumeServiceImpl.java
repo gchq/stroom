@@ -4,7 +4,7 @@ import org.jooq.Condition;
 import org.jooq.TableField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.store.impl.fs.shared.FSVolume;
+import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.db.util.JooqUtil;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static stroom.data.store.impl.fs.db.jooq.tables.FileMetaVolume.FILE_META_VOLUME;
-import static stroom.data.store.impl.fs.db.jooq.tables.FileVolume.FILE_VOLUME;
+import static stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume.FS_META_VOLUME;
+import static stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;
 
 public class DataVolumeServiceImpl implements DataVolumeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataVolumeServiceImpl.class);
@@ -116,8 +116,8 @@ public class DataVolumeServiceImpl implements DataVolumeService {
     @Override
     // @Transactional
     public BaseResultList<DataVolume> find(final FindDataVolumeCriteria criteria) {
-        final Optional<Condition> volumeIdCondition = integerCriteriaSetToCondition(FILE_META_VOLUME.FILE_VOLUME_ID, criteria.getVolumeIdSet());
-        final Optional<Condition> streamIdCondition = longCriteriaSetToCondition(FILE_META_VOLUME.META_ID, criteria.getMetaIdSet());
+        final Optional<Condition> volumeIdCondition = integerCriteriaSetToCondition(FS_META_VOLUME.FS_VOLUME_ID, criteria.getVolumeIdSet());
+        final Optional<Condition> streamIdCondition = longCriteriaSetToCondition(FS_META_VOLUME.META_ID, criteria.getMetaIdSet());
 
         final List<Condition> conditions = new ArrayList<>();
         volumeIdCondition.ifPresent(conditions::add);
@@ -129,9 +129,9 @@ public class DataVolumeServiceImpl implements DataVolumeService {
             }
 
             return JooqUtil.contextResult(connectionProvider, context -> {
-                final List<DataVolume> list = context.select(FILE_META_VOLUME.META_ID, FILE_VOLUME.PATH)
-                        .from(FILE_META_VOLUME)
-                        .join(FILE_VOLUME).on(FILE_VOLUME.ID.eq(FILE_META_VOLUME.FILE_VOLUME_ID))
+                final List<DataVolume> list = context.select(FS_META_VOLUME.META_ID, FS_VOLUME.PATH)
+                        .from(FS_META_VOLUME)
+                        .join(FS_VOLUME).on(FS_VOLUME.ID.eq(FS_META_VOLUME.FS_VOLUME_ID))
                         .where(conditions)
                         .limit(getOffset(criteria.getPageRequest()), getNumberOfRows(criteria.getPageRequest()))
                         .fetch()
@@ -313,10 +313,10 @@ public class DataVolumeServiceImpl implements DataVolumeService {
     @Override
     public DataVolume findDataVolume(final long metaId) {
         return JooqUtil.contextResult(connectionProvider, context -> context
-                .select(FILE_META_VOLUME.META_ID, FILE_VOLUME.PATH)
-                .from(FILE_META_VOLUME)
-                .join(FILE_VOLUME).on(FILE_VOLUME.ID.eq(FILE_META_VOLUME.FILE_VOLUME_ID))
-                .where(FILE_META_VOLUME.META_ID.eq(metaId))
+                .select(FS_META_VOLUME.META_ID, FS_VOLUME.PATH)
+                .from(FS_META_VOLUME)
+                .join(FS_VOLUME).on(FS_VOLUME.ID.eq(FS_META_VOLUME.FS_VOLUME_ID))
+                .where(FS_META_VOLUME.META_ID.eq(metaId))
                 .fetchOptional()
                 .map(r -> new DataVolumeImpl(r.value1(), r.value2()))
                 .orElse(null));
@@ -362,7 +362,7 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 //    }
 //
 //    @Override
-    public DataVolume createStreamVolume(final long dataId, final FSVolume volume) {
+    public DataVolume createStreamVolume(final long dataId, final FsVolume volume) {
 //        final List<StrmVolRecord> batch = new ArrayList<>();
 //        for (final VolumeEntity volume : volumes) {
 //            batch.add(new StrmVolRecord(null, null, dataId, (int) volume.getId()));
@@ -370,7 +370,7 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 
 
         return JooqUtil.contextResult(connectionProvider, context -> {
-            context.insertInto(FILE_META_VOLUME, FILE_META_VOLUME.META_ID, FILE_META_VOLUME.FILE_VOLUME_ID)
+            context.insertInto(FS_META_VOLUME, FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
                         .values(dataId, volume.getId())
                         .execute();
                 return new DataVolumeImpl(dataId, volume.getPath());

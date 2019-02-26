@@ -18,8 +18,8 @@ package stroom.data.store.impl.fs;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.store.impl.fs.shared.FSVolume;
-import stroom.data.store.impl.fs.shared.FSVolumeState;
+import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.test.common.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
@@ -68,18 +68,18 @@ class TestVolumeSelector extends StroomUnitTest {
         test(new RoundRobinIgnoreLeastFreePercentVolumeSelector());
     }
 
-    private void test(final FileVolumeSelector volumeSelector) {
-        final List<FSVolume> volumes = createVolumeList();
+    private void test(final FsVolumeSelector volumeSelector) {
+        final List<FsVolume> volumes = createVolumeList();
         for (int i = 0; i < 100; i++) {
             assertThat(volumeSelector.select(volumes)).isNotNull();
         }
     }
 
-    private List<FSVolume> createVolumeList() {
-        final FSVolume v1 = FSVolume.create("path1", FSVolumeState.create(1000, 10000));
-        final FSVolume v2 = FSVolume.create("path2", FSVolumeState.create(5000, 10000));
+    private List<FsVolume> createVolumeList() {
+        final FsVolume v1 = FsVolume.create("path1", FsVolumeState.create(1000, 10000));
+        final FsVolume v2 = FsVolume.create("path2", FsVolumeState.create(5000, 10000));
 
-        final List<FSVolume> volumes = new ArrayList<>();
+        final List<FsVolume> volumes = new ArrayList<>();
         volumes.add(v1);
         volumes.add(v2);
 

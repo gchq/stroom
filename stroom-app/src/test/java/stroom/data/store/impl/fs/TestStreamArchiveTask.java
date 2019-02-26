@@ -69,7 +69,7 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     @Inject
     private FeedStore feedStore;
     @Inject
-    private FileSystemCleanExecutor fileSystemCleanTaskExecutor;
+    private FsCleanExecutor fileSystemCleanTaskExecutor;
     @Inject
     private NodeInfo nodeInfo;
     @Inject

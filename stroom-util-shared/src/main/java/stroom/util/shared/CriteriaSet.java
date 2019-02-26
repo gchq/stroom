@@ -77,7 +77,7 @@ public class CriteriaSet<T>
         if (Boolean.TRUE.equals(matchAll)) {
             return false;
         }
-        if (isMatchNothing()) {
+        if (Boolean.FALSE.equals(matchAll) && set.isEmpty() && !Boolean.TRUE.equals(matchNull)) {
             return true;
         }
         return !set.isEmpty() || Boolean.TRUE.equals(matchNull);
@@ -92,13 +92,6 @@ public class CriteriaSet<T>
             return Boolean.TRUE.equals(matchNull);
         }
         return set.contains(item);
-    }
-
-    public boolean isSingleItemMatch(final T item) {
-        if (Boolean.TRUE.equals(matchNull) && item == null) {
-            return true;
-        }
-        return set != null && set.size() == 1 && set.contains(item);
     }
 
     @Override

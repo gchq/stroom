@@ -28,7 +28,7 @@ import stroom.meta.impl.db.jooq.tables.MetaFeed;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaFeedRecord extends UpdatableRecordImpl<MetaFeedRecord> implements Record2<Integer, String> {
 
-    private static final long serialVersionUID = 1540498835;
+    private static final long serialVersionUID = -1410691977;
 
     /**
      * Setter for <code>stroom.meta_feed.id</code>.

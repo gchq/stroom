@@ -24,9 +24,9 @@ import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.store.impl.fs.shared.DeleteFSVolumeAction;
-import stroom.data.store.impl.fs.shared.FSVolume;
-import stroom.data.store.impl.fs.shared.FetchFSVolumeAction;
+import stroom.data.store.impl.fs.shared.DeleteFsVolumeAction;
+import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FetchFsVolumeAction;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.node.client.view.WrapperView;
 import stroom.node.shared.FlushVolumeStatusAction;
@@ -85,7 +85,7 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
         }));
         registerHandler(newButton.addClickHandler(event -> {
             final FSVolumeEditPresenter editor = editProvider.get();
-            editor.addVolume(new FSVolume(), popupUiHandlers);
+            editor.addVolume(new FsVolume(), popupUiHandlers);
         }));
         registerHandler(openButton.addClickHandler(event -> open(popupUiHandlers)));
         registerHandler(deleteButton.addClickHandler(event -> delete()));
@@ -93,9 +93,9 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
     }
 
     private void open(final PopupUiHandlers popupUiHandlers) {
-        final FSVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
+        final FsVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            dispatcher.exec(new FetchFSVolumeAction(volume))
+            dispatcher.exec(new FetchFsVolumeAction(volume))
                     .onSuccess(result -> {
                         final FSVolumeEditPresenter editor = editProvider.get();
                         editor.editVolume(result, popupUiHandlers);
@@ -104,7 +104,7 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
     }
 
     private void delete() {
-        final List<FSVolume> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
+        final List<FsVolume> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
         if (list != null && list.size() > 0) {
             String message = "Are you sure you want to delete the selected volume?";
             if (list.size() > 1) {
@@ -114,8 +114,8 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
                     result -> {
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
-                            for (final FSVolume volume : list) {
-                                dispatcher.exec(new DeleteFSVolumeAction(volume)).onSuccess(r -> refresh());
+                            for (final FsVolume volume : list) {
+                                dispatcher.exec(new DeleteFsVolumeAction(volume)).onSuccess(r -> refresh());
                             }
                         }
                     });

@@ -16,19 +16,19 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.shared.FSVolume;
-import stroom.data.store.impl.fs.shared.FSVolumeState;
+import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeState;
 
 import java.util.List;
 
-public class WeightedFreeRandomVolumeSelector implements FileVolumeSelector {
+public class WeightedFreeRandomVolumeSelector implements FsVolumeSelector {
     public static final String NAME = "WeightedFreeRandom";
 
     private final RandomVolumeSelector randomVolumeSelector = new RandomVolumeSelector();
 
     @Override
-    public FSVolume select(final List<FSVolume> list) {
-        final List<FSVolume> filtered = FileVolumeListUtil.removeVolumesWithoutValidState(list);
+    public FsVolume select(final List<FsVolume> list) {
+        final List<FsVolume> filtered = FsVolumeListUtil.removeVolumesWithoutValidState(list);
         if (filtered.size() == 0) {
             return randomVolumeSelector.select(list);
         }
@@ -50,10 +50,10 @@ public class WeightedFreeRandomVolumeSelector implements FileVolumeSelector {
         return filtered.get(index);
     }
 
-    private double[] getWeightingThresholds(final List<FSVolume> list) {
+    private double[] getWeightingThresholds(final List<FsVolume> list) {
         double totalFree = 0;
-        for (final FSVolume volume : list) {
-            final FSVolumeState volumeState = volume.getVolumeState();
+        for (final FsVolume volume : list) {
+            final FsVolumeState volumeState = volume.getVolumeState();
             final double free = volumeState.getBytesFree();
 
             totalFree += free;
@@ -62,8 +62,8 @@ public class WeightedFreeRandomVolumeSelector implements FileVolumeSelector {
         final double increment = 1D / totalFree;
         final double[] thresholds = new double[list.size()];
         int i = 0;
-        for (final FSVolume volume : list) {
-            final FSVolumeState volumeState = volume.getVolumeState();
+        for (final FsVolume volume : list) {
+            final FsVolumeState volumeState = volume.getVolumeState();
             final double free = volumeState.getBytesFree();
 
             thresholds[i] = increment * free;

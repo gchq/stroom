@@ -1,6 +1,8 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
+import stroom.data.store.impl.fs.FsDataStoreModule;
+import stroom.data.store.impl.fs.FsDataStoreTaskHandlerModule;
 import stroom.meta.impl.db.StreamAttributeMapResourceModule;
 import stroom.statistics.impl.InternalStatisticsModule;
 import stroom.statistics.impl.sql.SQLStatisticsModule;
@@ -82,8 +84,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.statistics.impl.sql.search.SQLStatisticSearchModule());
         install(new stroom.meta.impl.db.MetaDbModule());
         install(new stroom.data.store.impl.DataStoreHandlerModule());
-        install(new stroom.data.store.impl.fs.FileSystemDataStoreModule());
-        install(new stroom.data.store.impl.fs.FileSystemDataStoreTaskHandlerModule());
+        install(new FsDataStoreModule());
+        install(new FsDataStoreTaskHandlerModule());
         install(new stroom.streamtask.StreamTaskModule());
         install(new stroom.task.impl.TaskModule());
         install(new stroom.cluster.task.impl.ClusterTaskModule());

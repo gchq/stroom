@@ -35,7 +35,7 @@ import stroom.meta.impl.db.jooq.tables.MetaVal;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = -1610179698;
+    private static final long serialVersionUID = 1217334897;
 
     /**
      * The reference instance of <code>stroom</code>
@@ -45,32 +45,32 @@ public class Stroom extends SchemaImpl {
     /**
      * The table <code>stroom.meta</code>.
      */
-    public final Meta META = Meta.META;
+    public final Meta META = stroom.meta.impl.db.jooq.tables.Meta.META;
 
     /**
      * The table <code>stroom.meta_feed</code>.
      */
-    public final MetaFeed META_FEED = MetaFeed.META_FEED;
+    public final MetaFeed META_FEED = stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
 
     /**
      * The table <code>stroom.meta_key</code>.
      */
-    public final MetaKey META_KEY = MetaKey.META_KEY;
+    public final MetaKey META_KEY = stroom.meta.impl.db.jooq.tables.MetaKey.META_KEY;
 
     /**
      * The table <code>stroom.meta_processor</code>.
      */
-    public final MetaProcessor META_PROCESSOR = MetaProcessor.META_PROCESSOR;
+    public final MetaProcessor META_PROCESSOR = stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
 
     /**
      * The table <code>stroom.meta_type</code>.
      */
-    public final MetaType META_TYPE = MetaType.META_TYPE;
+    public final MetaType META_TYPE = stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
 
     /**
      * The table <code>stroom.meta_val</code>.
      */
-    public final MetaVal META_VAL = MetaVal.META_VAL;
+    public final MetaVal META_VAL = stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
     /**
      * No further instances allowed

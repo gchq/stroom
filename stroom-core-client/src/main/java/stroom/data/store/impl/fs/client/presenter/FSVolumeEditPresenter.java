@@ -23,9 +23,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.store.impl.fs.shared.FSVolume;
-import stroom.data.store.impl.fs.shared.FSVolume.VolumeUseStatus;
-import stroom.data.store.impl.fs.shared.UpdateFSVolumeAction;
+import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
+import stroom.data.store.impl.fs.shared.UpdateFsVolumeAction;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.item.client.ItemListBox;
@@ -43,7 +43,7 @@ import stroom.widget.tab.client.event.CloseEvent;
 public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresenter.VolumeEditView> {
     private final PopupSize popupSize = new PopupSize(400, 197, 400, 197, 1000, 197, true);
     private final ClientDispatchAsync clientDispatchAsync;
-    private FSVolume volume;
+    private FsVolume volume;
     private boolean opening;
 
     @Inject
@@ -53,15 +53,15 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
         this.clientDispatchAsync = clientDispatchAsync;
     }
 
-    public void addVolume(final FSVolume volume, final PopupUiHandlers popupUiHandlers) {
+    public void addVolume(final FsVolume volume, final PopupUiHandlers popupUiHandlers) {
         read(volume, "Add Volume", popupUiHandlers);
     }
 
-    public void editVolume(final FSVolume volume, final PopupUiHandlers popupUiHandlers) {
+    public void editVolume(final FsVolume volume, final PopupUiHandlers popupUiHandlers) {
         read(volume, "Edit Volume", popupUiHandlers);
     }
 
-    private void read(final FSVolume volume, final String title, final PopupUiHandlers popupUiHandlers) {
+    private void read(final FsVolume volume, final String title, final PopupUiHandlers popupUiHandlers) {
         if (!opening) {
             opening = true;
 
@@ -96,7 +96,7 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
             }
             volume.setByteLimit(bytesLimit);
 
-            clientDispatchAsync.exec(new UpdateFSVolumeAction(volume)).onSuccess(result -> {
+            clientDispatchAsync.exec(new UpdateFsVolumeAction(volume)).onSuccess(result -> {
                 volume = result;
                 HidePopupEvent.fire(FSVolumeEditPresenter.this, FSVolumeEditPresenter.this, false, true);
                 // Only fire this event here as the parent only
