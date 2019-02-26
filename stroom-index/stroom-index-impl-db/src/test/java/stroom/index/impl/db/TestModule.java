@@ -36,10 +36,11 @@ class TestModule extends AbstractModule {
                             .build())
                     .build());
         } else {
+            // This should use the stroom-all-dbs setup by stroom resources
             bind(IndexDbConfig.class).toInstance(new IndexDbConfig.Builder()
                     .withConnectionConfig(new ConnectionConfig.Builder()
                             .jdbcDriverClassName("com.mysql.jdbc.Driver")
-                            .jdbcUrl("jdbc:mysql://localhost:14450/stroom?useUnicode=yes&characterEncoding=UTF-8")
+                            .jdbcUrl("jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8")
                             .password("stroompassword1")
                             .username("stroomuser")
                             .build())

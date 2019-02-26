@@ -9,7 +9,7 @@ RED='\033[1;31m'
 GREEN='\033[1;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[1;34m'
-NC='\033[0m' # No Colour 
+NC='\033[0m' # No Colour
 
 sudo bash -c "echo '127.0.0.1 kafka' >> /etc/hosts"
 sudo bash -c "echo '127.0.0.1 hbase' >> /etc/hosts"
@@ -43,9 +43,6 @@ else
     echo -e "${GREEN}Start all the services we need to run the integration tests in stroom${NC}"
     ./bounceIt.sh 'up -d --build' -d -e -y -x kafka stroom-all-dbs zookeeper
     popd
-
-    echo -e "${GREEN}Start the isolated test database used in some lighter tests stroom${NC}"
-    docker-compose -f ./stroomTestDb.yml up -d
 fi
 
 echo -e "${GREEN}Finished running ${BLUE}before_script${NC}"
