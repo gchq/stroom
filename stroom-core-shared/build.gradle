@@ -9,10 +9,8 @@ dependencies {
     implementation libs.gwt_servlet
     implementation libs.hibernate_jpa_api
     implementation libs.jackson_annotations
-
-    api libs.jackson_annotations
     implementation libs.javax_inject;
-    api libs.jaxb_api
+    implementation libs.jaxb_api
     implementation libs.validation_api
 
     testRuntimeOnly libs.jaxb_runtime

@@ -16,10 +16,10 @@ dependencies {
     implementation libs.jackson_annotations
     implementation libs.jooq
     implementation libs.slf4j_api
+    implementation libs.stroomDocRef
 
     runtimeOnly libs.mysql_connector_java
     testImplementation libs.assertj_core
-//    testImplementation libs.commons_io
     testImplementation libs.mockito_core
     testImplementation libs.mockito_junit_jupiter
 
