@@ -35,6 +35,8 @@ plugins {
     id 'org.flywaydb.flyway' version '5.2.4' apply false
 
     id 'java-library'
+
+    id 'nebula.lint' version '10.4.2'
 }
 
 wrapper{
@@ -292,8 +294,13 @@ subprojects {
 
     apply plugin: 'java'
     apply plugin: 'idea'
-    //apply plugin: 'ca.cutterslade.analyze'
+//    apply plugin: 'ca.cutterslade.analyze'
     apply plugin: 'java-library'
+    apply plugin: 'nebula.lint'
+
+    gradleLint {
+        rules +=  'unused-dependency'
+    }
 
     sourceCompatibility = JavaVersion.VERSION_1_10
     targetCompatibility = JavaVersion.VERSION_1_10
@@ -344,12 +351,12 @@ subprojects {
         useJUnitPlatform()
 
         reports.html.destination = file("${reporting.baseDir}/${name}")
-        
+
         afterSuite { descriptor, result ->
             //println "Executed suite ${descriptor.name} ${descriptor.className} with result: ${result.resultType}"
 
-            if (descriptor != null 
-                    && descriptor.className != null 
+            if (descriptor != null
+                    && descriptor.className != null
                     && result.resultType.toString() == "FAILURE") {
 
                 //test class failed so add its project info and test report file to a global list for
@@ -373,9 +380,9 @@ subprojects {
         // clear out the 'out' dirs used by intelliJ
         delete "out"
     }
-    
+
     task allDeps(type: DependencyReportTask) {}
-    
+
 //    // These lines pull the integration test task into our build process.
 //    tasks.check.dependsOn integrationTest
 //    tasks.integrationTest.mustRunAfter test
@@ -436,6 +443,44 @@ subprojects {
 //            version versions.stroomQuery
 //        }
 //    }
+//
+
+    //task analyzeJavaLibraryDependencies(type: ca.cutterslade.gradle.analyze.AnalyzeDependenciesTask) {
+//    classesDirs = sourceSets.main.output.classesDirs
+//    require = [
+//            project.configurations.runtimeClasspath
+//    ]
+//    allowedToDeclare = [
+//            project.configurations.permitUnusedDeclared
+//    ]
+//    justWarn = true
+//}
+//task analyzeJavaLibraryTestDependencies(type: ca.cutterslade.gradle.analyze.AnalyzeDependenciesTask) {
+//    classesDirs = sourceSets.test.output.classesDirs
+//    require = [
+//            project.configurations.testRuntimeClasspath
+//    ]
+//    allowedToDeclare = [
+//            project.configurations.permitTestUnusedDeclared
+//    ]
+//    allowedToUse = [
+//            project.configurations.runtimeClasspath
+//    ]
+//    justWarn = true
+//}
+//tasks.build.dependsOn analyzeJavaLibraryDependencies
+//tasks.build.dependsOn analyzeJavaLibraryTestDependencies
+    
+    analyzeClassesDependencies {
+        justWarn = true
+    }
+
+    analyzeTestClassesDependencies {
+        justWarn = true
+    }
+
+
+
 }
 
 //configures only those projects in publishedProjectsPaths
