@@ -471,14 +471,14 @@ subprojects {
 //}
 //tasks.build.dependsOn analyzeJavaLibraryDependencies
 //tasks.build.dependsOn analyzeJavaLibraryTestDependencies
-    
-    analyzeClassesDependencies {
-        justWarn = true
-    }
-
-    analyzeTestClassesDependencies {
-        justWarn = true
-    }
+//    
+//    analyzeClassesDependencies {
+//        justWarn = true
+//    }
+//
+//    analyzeTestClassesDependencies {
+//        justWarn = true
+//    }
 
 
 
