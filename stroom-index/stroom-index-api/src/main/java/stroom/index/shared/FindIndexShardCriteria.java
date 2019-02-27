@@ -16,7 +16,6 @@
 
 package stroom.index.shared;
 
-import stroom.docref.DocRef;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaSet;
