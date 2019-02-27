@@ -299,7 +299,8 @@ subprojects {
     apply plugin: 'nebula.lint'
 
     gradleLint {
-        rules +=  'unused-dependency'
+//        rules +=  'unused-dependency'
+        rules +=  'all-dependency'
     }
 
     sourceCompatibility = JavaVersion.VERSION_1_10
