@@ -9,7 +9,7 @@ buildscript {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
 
         // A fork of https://github.com/wfhartford/gradle-dependency-analyze that works with Java 10
-//        classpath 'stroom:gradle-dependency-analyze:v2.2.5'
+        classpath 'stroom:gradle-dependency-analyze:v2.2.5'
 
         // The following are required to put JAXB on the Gradle classpath for the purpose of JOOQ code generation in J9+.
         // Later versions of the JOOQ Gradle plugin should make this unnecessary.
@@ -34,9 +34,9 @@ plugins {
 
     id 'org.flywaydb.flyway' version '5.2.4' apply false
 
-    id 'java-library'
+//    id 'java-library'
 
-    id 'nebula.lint' version '10.4.2'
+//    id 'nebula.lint' version '10.4.2'
 }
 
 wrapper{
@@ -45,7 +45,7 @@ wrapper{
 
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'de.undercouch.download'
-//apply plugin: 'ca.cutterslade.analyze'
+apply plugin: 'ca.cutterslade.analyze'
 
 if (!JavaVersion.current().isJava10()) {
     throw new GradleException("This build must be run with Java 10 (current = " + JavaVersion.current() + ")")
@@ -294,14 +294,14 @@ subprojects {
 
     apply plugin: 'java'
     apply plugin: 'idea'
-//    apply plugin: 'ca.cutterslade.analyze'
-    apply plugin: 'java-library'
-    apply plugin: 'nebula.lint'
+    apply plugin: 'ca.cutterslade.analyze'
+//    apply plugin: 'java-library'
+//    apply plugin: 'nebula.lint'
 
-    gradleLint {
-//        rules +=  'unused-dependency'
-        rules +=  'all-dependency'
-    }
+//    gradleLint {
+////        rules +=  'unused-dependency'
+//        rules +=  'all-dependency'
+//    }
 
     sourceCompatibility = JavaVersion.VERSION_1_10
     targetCompatibility = JavaVersion.VERSION_1_10
@@ -472,13 +472,13 @@ subprojects {
 //tasks.build.dependsOn analyzeJavaLibraryDependencies
 //tasks.build.dependsOn analyzeJavaLibraryTestDependencies
 //    
-//    analyzeClassesDependencies {
-//        justWarn = true
-//    }
-//
-//    analyzeTestClassesDependencies {
-//        justWarn = true
-//    }
+    analyzeClassesDependencies {
+        justWarn = true
+    }
+
+    analyzeTestClassesDependencies {
+        justWarn = true
+    }
 
 
 

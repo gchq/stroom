@@ -8,25 +8,25 @@ apply plugin: 'com.github.johnrengelman.shadow'
 mainClassName = 'stroom.proxy.app.App'
 
 dependencies {
-    implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-data:stroom-data-zip')
-    implementation project(':stroom-dictionary:stroom-dictionary-api')
-    implementation project(':stroom-dictionary:stroom-dictionary-impl')
-    implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-docstore:stroom-docstore-impl-fs')
-    implementation project(':stroom-pipeline')
-    implementation project(':stroom-proxy:stroom-proxy-repo')
-    implementation project(':stroom-receive:stroom-receive-common')
-    implementation project(':stroom-receive:stroom-receive-rules-impl')
-    implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-data:stroom-data-zip')
+    compile project(':stroom-dictionary:stroom-dictionary-api')
+    compile project(':stroom-dictionary:stroom-dictionary-impl')
+    compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-docstore:stroom-docstore-impl-fs')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-proxy:stroom-proxy-repo')
+    compile project(':stroom-receive:stroom-receive-common')
+    compile project(':stroom-receive:stroom-receive-rules-impl')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
-    implementation libs.jetty_server
+    compile libs.jetty_server
     
-    implementation libs.stroomDocRef
+    compile libs.stroomDocRef
 
     implementation(libs.dropwizard_assets) {
         exclude(group: "org.glassfish.web", module: "javax.el")
@@ -34,28 +34,28 @@ dependencies {
     implementation(libs.dropwizard_core) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
-    implementation libs.dropwizard_jersey
-    implementation libs.dropwizard_jetty
-    implementation libs.dropwizard_metrics_healthchecks
-    implementation libs.dropwizard_servlets
-    implementation libs.dropwizard_metrics_core
-    implementation libs.dropwizard_metrics_annotation
-    implementation libs.dropwizard_configuration
-    implementation libs.guava
-    implementation libs.guice4
-    api libs.jackson_annotations
-    implementation libs.jackson_core
-    implementation libs.jackson_databind
-    implementation libs.javax_inject
-    implementation libs.javax_servlet_api
-    implementation libs.jaxb_api
-    implementation libs.jersey_client
-    implementation libs.slf4j_api
+    compile libs.dropwizard_jersey
+    compile libs.dropwizard_jetty
+    compile libs.dropwizard_metrics_healthchecks
+    compile libs.dropwizard_servlets
+    compile libs.dropwizard_metrics_core
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_configuration
+    compile libs.guava
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.jackson_core
+    compile libs.jackson_databind
+    compile libs.javax_inject
+    compile libs.javax_servlet_api
+    compile libs.jaxb_api
+    compile libs.jersey_client
+    compile libs.slf4j_api
     
-    testImplementation project(':stroom-test-common')
-    testImplementation libs.assertj_core
+    testCompile project(':stroom-test-common')
+    testCompile libs.assertj_core
     
-    testImplementation libs.junit_jupiter_api
+    testCompile libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

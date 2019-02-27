@@ -1,29 +1,29 @@
 ext.moduleName = 'stroom.resource.impl'
 
 dependencies {
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-event-logging:stroom-event-logging-api')
-    implementation project(':stroom-job:stroom-job-api')
-    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
-    implementation project(':stroom-resource:stroom-resource-api')
-    implementation project(':stroom-task:stroom-task-api')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-job:stroom-job-api')
+    compile project(':stroom-lifecycle:stroom-lifecycle-api')
+    compile project(':stroom-resource:stroom-resource-api')
+    compile project(':stroom-task:stroom-task-api')
 
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
-    implementation libs.stroomDocRef
-    implementation libs.eventLogging
-    implementation libs.guice4
-    implementation libs.javax_inject
-    implementation libs.javax_servlet_api
+    compile libs.stroomDocRef
+    compile libs.eventLogging
+    compile libs.guice4
+    compile libs.javax_inject
+    compile libs.javax_servlet_api
 
-    implementation libs.slf4j_api
+    compile libs.slf4j_api
     
-    testImplementation libs.assertj_core
-    testImplementation libs.mockito_core
-    testImplementation libs.mockito_junit_jupiter
+    testCompile libs.assertj_core
+    testCompile libs.mockito_core
+    testCompile libs.mockito_junit_jupiter
 
-    testImplementation libs.junit_jupiter_api
+    testCompile libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

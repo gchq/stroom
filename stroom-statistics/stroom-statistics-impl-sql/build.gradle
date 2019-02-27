@@ -1,58 +1,58 @@
 ext.moduleName = 'stroom.statistics.impl.sql'
 
 dependencies {
-    implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-db-util')
-    implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-explorer:stroom-explorer-api')
-    implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-importexport:stroom-importexport-migration')
-    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
-    implementation project(':stroom-pipeline')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-statistics:stroom-statistics-api')
-    implementation project(':stroom-statistics:stroom-statistics-impl')
-    implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-job:stroom-job-api')
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-cache:stroom-cache-api')
+    compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-db-util')
+    compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-importexport:stroom-importexport-api')
+    compile project(':stroom-importexport:stroom-importexport-migration')
+    compile project(':stroom-lifecycle:stroom-lifecycle-api')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-statistics:stroom-statistics-api')
+    compile project(':stroom-statistics:stroom-statistics-impl')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-job:stroom-job-api')
+    compile project(':stroom-cluster:stroom-cluster-lock-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
     
-    implementation libs.stroomDocRef
-    implementation libs.stroomExpression
-    implementation libs.stroomQueryApi
-    implementation libs.stroomQueryCommon
-    implementation libs.stroomStatsSchema
+    compile libs.stroomDocRef
+    compile libs.stroomExpression
+    compile libs.stroomQueryApi
+    compile libs.stroomQueryCommon
+    compile libs.stroomStatsSchema
 
-    implementation libs.commons_lang
-    implementation libs.commons_pool2
-    implementation libs.dropwizard_metrics_annotation
-    implementation libs.flyway_core
-    implementation libs.guice4
-    implementation libs.hibernate_jpa_api
-    implementation libs.hikari
-    api libs.jackson_annotations
-    implementation libs.javax_inject
-    implementation libs.jaxb_api
-    implementation libs.rxjava
-    implementation libs.slf4j_api
-    implementation libs.swagger_annotations
-    implementation libs.vavr
-    implementation libs.ws_rs_api
+    compile libs.commons_lang
+    compile libs.commons_pool2
+    compile libs.dropwizard_metrics_annotation
+    compile libs.flyway_core
+    compile libs.guice4
+    compile libs.hibernate_jpa_api
+    compile libs.hikari
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.jaxb_api
+    compile libs.rxjava
+    compile libs.slf4j_api
+    compile libs.swagger_annotations
+    compile libs.vavr
+    compile libs.ws_rs_api
     implementation(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
 
-    testImplementation project(':stroom-docstore:stroom-docstore-impl')
-    testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
-    testImplementation project(':stroom-security:stroom-security-impl-mock')
-    testImplementation project(':stroom-test-common')
+    testCompile project(':stroom-docstore:stroom-docstore-impl')
+    testCompile project(':stroom-docstore:stroom-docstore-impl-memory')
+    testCompile project(':stroom-security:stroom-security-impl-mock')
+    testCompile project(':stroom-test-common')
     
-    testImplementation libs.assertj_core
-    testImplementation libs.mockito_core
-    testImplementation libs.mockito_junit_jupiter
+    testCompile libs.assertj_core
+    testCompile libs.mockito_core
+    testCompile libs.mockito_junit_jupiter
 
-    testImplementation libs.junit_jupiter_api
+    testCompile libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

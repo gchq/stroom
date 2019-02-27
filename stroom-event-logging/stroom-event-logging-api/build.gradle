@@ -1,13 +1,13 @@
 ext.moduleName = 'stroom.event.logging.api'
 
 dependencies {
-    implementation project(':stroom-activity:stroom-activity-api')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-activity:stroom-activity-api')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-util-shared')
 
-    api libs.eventLogging
-    implementation libs.stroomDocRef
+    compile libs.eventLogging
+    compile libs.stroomDocRef
 
-    api libs.javax_servlet_api
-    implementation libs.guice4
+    compile libs.javax_servlet_api
+    compile libs.guice4
 }

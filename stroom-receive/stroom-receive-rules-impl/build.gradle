@@ -1,33 +1,33 @@
 ext.moduleName = 'stroom.receive.rules.impl'
 
 dependencies {
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-core-server')
-    implementation project(':stroom-dictionary:stroom-dictionary-api')
-    implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-explorer:stroom-explorer-api')
-    implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-receive:stroom-receive-common')
-    implementation project(':stroom-util-shared')
-    implementation project(':stroom-util')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-core-server')
+    compile project(':stroom-dictionary:stroom-dictionary-api')
+    compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-importexport:stroom-importexport-api')
+    compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-receive:stroom-receive-common')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
     
-    implementation libs.stroomDocRef
-    implementation libs.slf4j_api
-    implementation libs.javax_inject
+    compile libs.stroomDocRef
+    compile libs.slf4j_api
+    compile libs.javax_inject
 
-    implementation libs.guice4
+    compile libs.guice4
 
-    implementation libs.dropwizard_metrics_healthchecks
-    implementation libs.dropwizard_metrics_annotation
-    api libs.jackson_annotations
-    implementation libs.jaxb_api
-    implementation libs.swagger_annotations
-    implementation libs.ws_rs_api
+    compile libs.dropwizard_metrics_healthchecks
+    compile libs.dropwizard_metrics_annotation
+    compile libs.jackson_annotations
+    compile libs.jaxb_api
+    compile libs.swagger_annotations
+    compile libs.ws_rs_api
     
-    testImplementation libs.assertj_core
+    testCompile libs.assertj_core
     
-    testImplementation libs.junit_jupiter_api
+    testCompile libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

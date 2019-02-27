@@ -1,21 +1,21 @@
 ext.moduleName = 'stroom.meta.api'
 
 dependencies {
-    api project(':stroom-dictionary:stroom-dictionary-api')
-    api project(':stroom-docstore:stroom-docstore-api')
-    api project(':stroom-util')
-    api project(':stroom-util-shared')
+    compile project(':stroom-dictionary:stroom-dictionary-api')
+    compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
     
-    api libs.stroomDocRef
-    api libs.stroomQueryApi
+    compile libs.stroomDocRef
+    compile libs.stroomQueryApi
 
-    api libs.javax_servlet_api
-    api libs.jackson_annotations
-    implementation libs.jaxb_api
-    implementation libs.slf4j_api
+    compile libs.javax_servlet_api
+    compile libs.jackson_annotations
+    compile libs.jaxb_api
+    compile libs.slf4j_api
 
-    testImplementation libs.assertj_core
-    testImplementation libs.junit_jupiter_api
+    testCompile libs.assertj_core
+    testCompile libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jaxb_runtime

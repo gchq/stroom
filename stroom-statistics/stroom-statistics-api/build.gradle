@@ -1,10 +1,10 @@
 ext.moduleName = 'stroom.statistics.api'
 
 dependencies {
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-util-shared')
 
-    implementation libs.stroomDocRef
+    compile libs.stroomDocRef
     
-    implementation libs.guava
+    compile libs.guava
 }

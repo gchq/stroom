@@ -1,31 +1,32 @@
 ext.moduleName = 'stroom.db.util'
 
 dependencies {
-    implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 //
-    implementation libs.stroomDocRef
+//    compile libs.stroomDocRef
 //    
-//    implementation libs.commons_codec
-//    implementation libs.dropwizard_metrics_healthchecks
-    implementation libs.guava
-    implementation libs.hikari
-//    implementation libs.guice4
-//    api libs.jackson_annotations
-//    implementation libs.jackson_core
-//    implementation libs.jackson_databind
-//    implementation libs.javassist
-//    implementation libs.javax_servlet_api
-//    implementation libs.javax_inject
-//    implementation libs.jaxb_api
-    implementation libs.jooq
-//    implementation libs.saxon_he
-    implementation libs.slf4j_api
+//    compile libs.commons_codec
+//    compile libs.dropwizard_metrics_healthchecks
+    compile libs.google_findbugs
+    compile libs.guava
+    compile libs.hikari
+//    compile libs.guice4
+//    compile libs.jackson_annotations
+//    compile libs.jackson_core
+//    compile libs.jackson_databind
+//    compile libs.javassist
+//    compile libs.javax_servlet_api
+//    compile libs.javax_inject
+//    compile libs.jaxb_api
+    compile libs.jooq
+//    compile libs.saxon_he
+    compile libs.slf4j_api
 //
-//    testImplementation libs.assertj_core
-//    testImplementation libs.commons_lang
-//    testImplementation libs.junit_jupiter_api
+//    testCompile libs.assertj_core
+//    testCompile libs.commons_lang
+//    testCompile libs.junit_jupiter_api
 //
 //    // The following logging libs are needed when running junits outside dropwizard
 //    testRuntimeOnly libs.jaxb_runtime
