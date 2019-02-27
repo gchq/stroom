@@ -7,5 +7,4 @@ dependencies {
 
     implementation libs.guice4
     implementation libs.stroomDocRef
-    
 }

@@ -22,7 +22,7 @@ dependencies {
 //    implementation libs.guava
 //    implementation libs.guice4
 //    implementation libs.hibernate_jpa_api
-//    implementation libs.jackson_annotations
+//    api libs.jackson_annotations
 //    implementation libs.jackson_databind
 //    implementation libs.javax_inject
 //    implementation libs.javax_servlet_api

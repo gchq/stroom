@@ -4,5 +4,5 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.jackson_annotations
+    api libs.jackson_annotations
 }

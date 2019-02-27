@@ -26,7 +26,7 @@ dependencies {
     implementation libs.guice4
     implementation libs.hibernate_jpa_api
     implementation libs.hikari
-    implementation libs.jackson_annotations
+    api libs.jackson_annotations
     implementation libs.javax_inject
     implementation libs.jooq
     implementation libs.slf4j_api

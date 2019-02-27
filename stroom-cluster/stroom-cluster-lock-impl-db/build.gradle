@@ -21,7 +21,7 @@ dependencies {
     implementation libs.flyway_core
     implementation libs.guice4
     implementation libs.hikari
-    implementation libs.jackson_annotations
+    api libs.jackson_annotations
     implementation libs.jackson_databind
     implementation libs.javax_inject
     implementation libs.jooq

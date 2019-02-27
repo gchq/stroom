@@ -12,7 +12,7 @@ dependencies {
 
     implementation libs.guava
     implementation libs.guice4
-    implementation libs.jackson_annotations
+    api libs.jackson_annotations
     implementation libs.javax_inject
     implementation libs.jaxb_api
     implementation libs.jetty_http

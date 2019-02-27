@@ -43,7 +43,7 @@ dependencies {
     implementation libs.dropwizard_configuration
     implementation libs.guava
     implementation libs.guice4
-    implementation libs.jackson_annotations
+    api libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.jackson_databind
     implementation libs.javax_inject

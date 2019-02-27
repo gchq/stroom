@@ -21,7 +21,7 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice4
-    implementation libs.jackson_annotations
+    api libs.jackson_annotations
     implementation libs.javax_inject
     implementation libs.javax_servlet_api
     implementation libs.javax_validation

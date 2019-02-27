@@ -30,7 +30,7 @@ dependencies {
     implementation libs.hessian
     implementation libs.hibernate_core
     implementation libs.hibernate_jpa_api
-    implementation libs.jackson_annotations
+    api libs.jackson_annotations
     implementation libs.javax_inject
     implementation libs.jaxb_api
     implementation libs.lucene_analyzers_common

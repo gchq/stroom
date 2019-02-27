@@ -21,7 +21,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.guice4
-    implementation libs.jackson_annotations
+    api libs.jackson_annotations
     implementation libs.jaxb_api
     implementation libs.slf4j_api
 

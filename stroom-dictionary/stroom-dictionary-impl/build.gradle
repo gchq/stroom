@@ -17,7 +17,7 @@ dependencies {
 
     implementation libs.dropwizard_metrics_annotation
     implementation libs.guice4
-    implementation libs.jackson_annotations
+    api libs.jackson_annotations
     implementation libs.swagger_annotations
     implementation libs.ws_rs_api
 }

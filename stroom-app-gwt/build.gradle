@@ -45,7 +45,7 @@ dependencies {
     implementation libs.gwt_user
     implementation libs.gwtp_mvp_client
     implementation libs.hibernate_jpa_api
-    implementation libs.jackson_annotations
+    api libs.jackson_annotations
     implementation libs.jaxb_api
     implementation libs.swagger_annotations // needed so gwt can implementation the stroom-query code that contains swagger annotations
 }

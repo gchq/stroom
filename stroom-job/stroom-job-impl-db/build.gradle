@@ -13,7 +13,7 @@ dependencies {
     implementation libs.javax_inject
     implementation libs.guice4
     implementation libs.flyway_core
-    implementation libs.jackson_annotations
+    api libs.jackson_annotations
     implementation libs.jooq
     implementation libs.slf4j_api
     implementation libs.stroomDocRef

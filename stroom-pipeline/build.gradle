@@ -36,7 +36,7 @@ dependencies {
     implementation libs.hadoopHdfsShaded
     implementation(libs.hbase) { transitive = false } // hbase-common is currently only used for its Bytes class, so exclude all its deps
     implementation libs.hibernate_jpa_api
-    implementation libs.jackson_annotations
+    api libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.javax_inject
     implementation libs.javax_validation

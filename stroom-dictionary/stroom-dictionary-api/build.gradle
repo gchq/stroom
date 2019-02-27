@@ -8,6 +8,6 @@ dependencies {
     
     implementation libs.stroomDocRef
 
-    implementation libs.jackson_annotations
+    api libs.jackson_annotations
     implementation libs.jaxb_api
 }
