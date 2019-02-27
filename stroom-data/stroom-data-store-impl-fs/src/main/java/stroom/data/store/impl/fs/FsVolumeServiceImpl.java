@@ -419,19 +419,11 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
     public List<FsVolume> refresh() {
         final List<FsVolume> newState = new ArrayList<>();
 
-<<<<<<< HEAD:stroom-data/stroom-data-store-impl-fs/src/main/java/stroom/data/store/impl/fs/FileSystemVolumeServiceImpl.java
-        final FindFSVolumeCriteria findVolumeCriteria = new FindFSVolumeCriteria();
-        findVolumeCriteria.addSort(FindFSVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
-        final List<FSVolume> volumeList = find(findVolumeCriteria);
-        for (final FSVolume volume : volumeList) {
-            FSVolumeState volumeState = updateVolumeState(volume);
-=======
         final FindFsVolumeCriteria findVolumeCriteria = new FindFsVolumeCriteria();
-        findVolumeCriteria.addSort(FindVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
+        findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
         final List<FsVolume> volumeList = find(findVolumeCriteria);
         for (final FsVolume volume : volumeList) {
             FsVolumeState volumeState = updateVolumeState(volume);
->>>>>>> e175a306bcf551bb66937a9b2e21045107e90bf0:stroom-data/stroom-data-store-impl-fs/src/main/java/stroom/data/store/impl/fs/FsVolumeServiceImpl.java
             volumeState = saveVolumeState(volumeState);
             volume.setVolumeState(volumeState);
 

@@ -95,14 +95,6 @@ public class CriteriaSet<T>
         return set.contains(item);
     }
 
-<<<<<<< HEAD
-    public boolean isSingleItemMatch(final T item) {
-        if (Boolean.TRUE.equals(matchNull) && item == null) {
-            return true;
-        }
-        return set != null && set.size() == 1 && set.contains(item);
-    }
-
     public <OUT> CriteriaSet<OUT> convertTo(final Function<T, OUT> converter) {
         final CriteriaSet<OUT> converted = new CriteriaSet<>();
         converted.setMatchAll(this.matchAll);
@@ -111,8 +103,6 @@ public class CriteriaSet<T>
         return converted;
     }
 
-=======
->>>>>>> e175a306bcf551bb66937a9b2e21045107e90bf0
     @Override
     public void copyFrom(final CriteriaSet<T> other) {
         this.set.clear();

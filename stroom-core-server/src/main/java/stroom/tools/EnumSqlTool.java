@@ -16,7 +16,7 @@
 
 package stroom.tools;
 
-import stroom.data.store.impl.fs.shared.FSVolume;
+import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.job.shared.JobNode.JobType;
 import stroom.streamtask.shared.TaskStatus;
@@ -51,7 +51,7 @@ public class EnumSqlTool {
 
         process("TaskStatus", TaskStatus.values());
         process("JobType", JobType.values());
-        process("FSVolumeUseStatus", FSVolume.VolumeUseStatus.values());
+        process("FSVolumeUseStatus", FsVolume.VolumeUseStatus.values());
 //        process("StreamStatus", StreamStatus.values());
     }
 }

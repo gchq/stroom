@@ -16,9 +16,9 @@
 
 package stroom.index;
 
+import stroom.docref.HasDisplayValue;
 import stroom.importexport.shared.ExternalFile;
 import stroom.index.shared.IndexFields;
-import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 import stroom.importexport.migration.DocumentEntity;
