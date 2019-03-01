@@ -1,9 +1,9 @@
 ext.moduleName = 'stroom.data.retention.api'
 
 dependencies {
-    implementation project(':stroom-core-shared')
+    compile project(':stroom-core-shared')
 
-    implementation libs.stroomDocRef
+    compile libs.stroomDocRef
     
-    implementation libs.jaxb_api
+    compile libs.jaxb_api
 }

@@ -3,49 +3,49 @@ apply plugin: 'com.github.johnrengelman.shadow'
 ext.moduleName = 'stroom.headless'
 
 dependencies {
-    implementation project(':stroom-activity:stroom-activity-impl-mock')
-    implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-cache:stroom-cache-impl')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-data:stroom-data-zip')
-    implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-meta:stroom-meta-statistics-api')
-    implementation project(':stroom-data:stroom-data-store-api')
-    implementation project(':stroom-dictionary:stroom-dictionary-api')
-    implementation project(':stroom-dictionary:stroom-dictionary-impl')
-    implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-docstore:stroom-docstore-impl')
-    implementation project(':stroom-docstore:stroom-docstore-impl-fs')
-    implementation project(':stroom-event-logging:stroom-event-logging-impl')
-    implementation project(':stroom-explorer:stroom-explorer-api')
-    implementation project(':stroom-explorer:stroom-explorer-impl')
-    implementation project(':stroom-feed:stroom-feed-api')
-    implementation project(':stroom-feed:stroom-feed-impl')
-    implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-importexport:stroom-importexport-impl')
-    implementation project(':stroom-node:stroom-node-api')
-    implementation project(':stroom-pipeline')
-    implementation project(':stroom-proxy:stroom-proxy-repo')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-security:stroom-security-impl-mock')
-    implementation project(':stroom-statistics:stroom-statistics-api')
-    implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-task:stroom-task-impl')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-activity:stroom-activity-impl-mock')
+    compile project(':stroom-cache:stroom-cache-api')
+    compile project(':stroom-cache:stroom-cache-impl')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-data:stroom-data-zip')
+    compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-meta:stroom-meta-statistics-api')
+    compile project(':stroom-data:stroom-data-store-api')
+    compile project(':stroom-dictionary:stroom-dictionary-api')
+    compile project(':stroom-dictionary:stroom-dictionary-impl')
+    compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-docstore:stroom-docstore-impl')
+    compile project(':stroom-docstore:stroom-docstore-impl-fs')
+    compile project(':stroom-event-logging:stroom-event-logging-impl')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-explorer:stroom-explorer-impl')
+    compile project(':stroom-feed:stroom-feed-api')
+    compile project(':stroom-feed:stroom-feed-impl')
+    compile project(':stroom-importexport:stroom-importexport-api')
+    compile project(':stroom-importexport:stroom-importexport-impl')
+    compile project(':stroom-node:stroom-node-api')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-proxy:stroom-proxy-repo')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-security:stroom-security-impl-mock')
+    compile project(':stroom-statistics:stroom-statistics-api')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-task:stroom-task-impl')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
-    implementation libs.stroomDocRef
+    compile libs.stroomDocRef
 
-    implementation libs.guice4
-    implementation libs.hibernate_jpa_api
-    implementation libs.javax_inject
-    implementation libs.jaxb_api
-    implementation libs.slf4j_api
-    implementation libs.xml_apis
+    compile libs.guice4
+    compile libs.hibernate_jpa_api
+    compile libs.javax_inject
+    compile libs.jaxb_api
+    compile libs.slf4j_api
+    compile libs.xml_apis
 
-    implementation libs.javax_el
+    compile libs.javax_el
     
-    implementation libs.javax_el_api
+    compile libs.javax_el_api
     
     runtimeOnly libs.logback_classic
 }

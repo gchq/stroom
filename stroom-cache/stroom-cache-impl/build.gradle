@@ -1,18 +1,18 @@
 ext.moduleName = 'stroom.cache.impl'
 
 dependencies {
-    implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-cluster:stroom-cluster-task-api')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-job:stroom-job-api')
-    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-cache:stroom-cache-api')
+    compile project(':stroom-cluster:stroom-cluster-task-api')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-job:stroom-job-api')
+    compile project(':stroom-lifecycle:stroom-lifecycle-api')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
-    implementation libs.stroomDocRef
-    
-    implementation libs.guice4
-    implementation libs.slf4j_api
+    compile libs.guava
+    compile libs.guice4
+    compile libs.javax_inject
+    compile libs.slf4j_api
 }

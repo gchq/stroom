@@ -1,19 +1,19 @@
 ext.moduleName = 'stroom.index.api'
 
 dependencies {
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-util-shared')
-    implementation project(':stroom-util')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-importexport:stroom-importexport-api')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
 
-    implementation libs.javax_inject
-    implementation libs.stroomDocRef
-    implementation libs.stroomQueryApi
-    implementation libs.jackson_annotations
-    implementation libs.swagger_annotations
-    implementation libs.ws_rs_api
+    compile libs.javax_inject
+    compile libs.stroomDocRef
+    compile libs.stroomQueryApi
+    compile libs.jackson_annotations
+    compile libs.swagger_annotations
+    compile libs.ws_rs_api
 
-    implementation libs.jaxb_api
+    compile libs.jaxb_api
 
     testRuntimeOnly libs.jaxb_runtime
     testRuntimeOnly libs.javax_activation
