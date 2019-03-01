@@ -128,6 +128,7 @@ dependencies {
 
     testCompile project(':stroom-app')
     // Use default DB config.
+
     testCompile project(':stroom-activity:stroom-activity-api')
     testCompile project(':stroom-activity:stroom-activity-impl-mock')
     testCompile project(':stroom-config:stroom-config-app')
@@ -152,6 +153,7 @@ dependencies {
     testCompile project(':stroom-headless')
     testCompile project(':stroom-importexport:stroom-importexport-api')
     testCompile project(':stroom-index:stroom-index-server')
+    testCompile project(':stroom-index:stroom-index-impl-mock')
     testCompile project(':stroom-node:stroom-node-impl-mock')
     testCompile project(':stroom-pipeline')
     testCompile project(':stroom-receive:stroom-receive-rules-impl')

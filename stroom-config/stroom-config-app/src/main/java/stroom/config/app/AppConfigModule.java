@@ -40,7 +40,7 @@ import stroom.ui.config.shared.ThemeConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UrlConfig;
 import stroom.util.io.PathConfig;
-import stroom.volume.VolumeConfig;
+import stroom.index.selection.VolumeConfig;
 
 public class AppConfigModule extends AbstractModule {
     private final AppConfig appConfig;

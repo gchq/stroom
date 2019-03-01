@@ -28,8 +28,11 @@ import org.apache.lucene.store.NIOFSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.index.analyzer.AnalyzerFactory;
+
+import stroom.index.shared.AnalyzerType;
+import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.io.FileUtil;
@@ -98,11 +101,17 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     /**
      * Convenience constructor used in tests.
      */
-    IndexShardWriterImpl(final IndexShardManager indexShardManager, final IndexStructure indexStructure, final IndexShardKey indexShardKey, final IndexShard indexShard) throws IOException {
+    IndexShardWriterImpl(final IndexShardManager indexShardManager,
+                         final IndexStructure indexStructure,
+                         final IndexShardKey indexShardKey, final IndexShard indexShard) throws IOException {
         this(indexShardManager, indexStructure, indexShardKey, indexShard, DEFAULT_RAM_BUFFER_MB_SIZE);
     }
 
-    IndexShardWriterImpl(final IndexShardManager indexShardManager, final IndexStructure indexStructure, final IndexShardKey indexShardKey, final IndexShard indexShard, final int ramBufferSizeMB) throws IOException {
+    IndexShardWriterImpl(final IndexShardManager indexShardManager,
+                         final IndexStructure indexStructure,
+                         final IndexShardKey indexShardKey,
+                         final IndexShard indexShard,
+                         final int ramBufferSizeMB) throws IOException {
         this.indexShardManager = indexShardManager;
         this.indexShardKey = indexShardKey;
         this.indexShardId = indexShard.getId();
@@ -362,7 +371,11 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         return documentCount.get();
     }
 
-    private void update(final long indexShardId, final Integer documentCount, final Long commitDurationMs, final Long commitMs, final Long fileSize) {
+    private void update(final long indexShardId,
+                        final Integer documentCount,
+                        final Long commitDurationMs,
+                        final Long commitMs,
+                        final Long fileSize) {
         if (indexShardManager != null) {
             indexShardManager.update(indexShardId, documentCount, commitDurationMs, commitMs, fileSize);
         }

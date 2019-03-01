@@ -18,6 +18,10 @@
 package stroom.test;
 
 
+import stroom.index.service.IndexVolumeGroupService;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFields;
+import stroom.index.shared.IndexVolume;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaFieldNames;
@@ -27,15 +31,9 @@ import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.index.IndexStore;
-import stroom.index.IndexVolumeService;
+import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFields;
 import stroom.node.api.NodeInfo;
-import stroom.volume.VolumeService;
-import stroom.node.shared.FindVolumeCriteria;
-import stroom.node.shared.VolumeEntity;
-import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;
@@ -47,9 +45,8 @@ import stroom.streamtask.shared.Processor;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -61,8 +58,8 @@ public class CommonTestScenarioCreator {
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final IndexStore indexStore;
-    private final VolumeService volumeService;
     private final IndexVolumeService indexVolumeService;
+    private final IndexVolumeGroupService indexVolumeGroupService;
     private final NodeInfo nodeInfo;
 
     @Inject
@@ -70,15 +67,15 @@ public class CommonTestScenarioCreator {
                               final StreamProcessorService streamProcessorService,
                               final StreamProcessorFilterService streamProcessorFilterService,
                               final IndexStore indexStore,
-                              final VolumeService volumeService,
                               final IndexVolumeService indexVolumeService,
+                              final IndexVolumeGroupService indexVolumeGroupService,
                               final NodeInfo nodeInfo) {
         this.streamStore = streamStore;
         this.streamProcessorService = streamProcessorService;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.indexStore = indexStore;
-        this.volumeService = volumeService;
         this.indexVolumeService = indexVolumeService;
+        this.indexVolumeGroupService = indexVolumeGroupService;
         this.nodeInfo = nodeInfo;
     }
 
@@ -114,16 +111,21 @@ public class CommonTestScenarioCreator {
         // Create a test index.
         final DocRef indexRef = indexStore.createDocument(name);
         final IndexDoc index = indexStore.readDocument(indexRef);
+        final String volumeGroupName = UUID.randomUUID().toString();
+        indexVolumeGroupService.create(volumeGroupName);
+
         index.setMaxDocsPerShard(maxDocsPerShard);
         index.setIndexFields(indexFields);
+        index.setVolumeGroupName(volumeGroupName);
         indexStore.writeDocument(index);
         assertThat(index).isNotNull();
 
-        final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
-        findVolumeCriteria.getIndexStatusSet().add(VolumeUseStatus.ACTIVE);
-        findVolumeCriteria.getNodeIdSet().add(nodeInfo.getThisNode());
-        final Set<VolumeEntity> volumes = new HashSet<>(volumeService.find(findVolumeCriteria));
-        indexVolumeService.setVolumesForIndex(indexRef, volumes);
+        final IndexVolume indexVolume = indexVolumeService.getAll().stream()
+                .filter(v -> v.getNodeName().equals(nodeInfo.getThisNodeName()))
+                .findAny()
+                .orElseThrow(() -> new AssertionError("Could not get Index Volume"));
+
+        indexVolumeService.addVolumeToGroup(indexVolume.getId(), volumeGroupName);
 
         return indexRef;
     }

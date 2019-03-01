@@ -84,7 +84,7 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.streamtask.StreamTaskModule());
 //        install(new stroom.task.impl.TaskModule());
 //        install(new stroom.task.cluster.impl.ClusterTaskModule());
-//        install(new stroom.volume.VolumeModule());
+//        install(new stroom.index.selection.VolumeModule());
 
         bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);
         bind(StreamCloser.class).to(BasicStreamCloser.class).in(PipelineScoped.class);

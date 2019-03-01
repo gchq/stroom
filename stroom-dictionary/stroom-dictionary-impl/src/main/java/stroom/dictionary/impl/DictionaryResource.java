@@ -55,55 +55,55 @@ public class DictionaryResource implements RestResource {
     private final DictionaryStore dictionaryStore;
     private final Security security;
 
-    private static class DictionaryDTO {
-        private DocRef docRef;
-        private String description;
-        private String data;
-        private List<DocRef> imports;
-
-        public DictionaryDTO() {
-
-        }
-
-        public DictionaryDTO(final DictionaryDoc doc) {
-            this.docRef = DocRefUtil.create(doc);
-            this.description = doc.getDescription();
-            this.data = doc.getData();
-            this.imports = doc.getImports();
-        }
-
-        public DocRef getDocRef() {
-            return docRef;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public String getData() {
-            return data;
-        }
-
-        public List<DocRef> getImports() {
-            return imports;
-        }
-
-        public void setDocRef(DocRef docRef) {
-            this.docRef = docRef;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
-        public void setData(String data) {
-            this.data = data;
-        }
-
-        public void setImports(List<DocRef> imports) {
-            this.imports = imports;
-        }
-    }
+//    private static class DictionaryDTO {
+//        private DocRef docRef;
+//        private String description;
+//        private String data;
+//        private List<DocRef> imports;
+//
+//        public DictionaryDTO() {
+//
+//        }
+//
+//        public DictionaryDTO(final DictionaryDoc doc) {
+//            this.docRef = DocRefUtil.create(doc);
+//            this.description = doc.getDescription();
+//            this.data = doc.getData();
+//            this.imports = doc.getImports();
+//        }
+//
+//        public DocRef getDocRef() {
+//            return docRef;
+//        }
+//
+//        public String getDescription() {
+//            return description;
+//        }
+//
+//        public String getData() {
+//            return data;
+//        }
+//
+//        public List<DocRef> getImports() {
+//            return imports;
+//        }
+//
+//        public void setDocRef(DocRef docRef) {
+//            this.docRef = docRef;
+//        }
+//
+//        public void setDescription(String description) {
+//            this.description = description;
+//        }
+//
+//        public void setData(String data) {
+//            this.data = data;
+//        }
+//
+//        public void setImports(List<DocRef> imports) {
+//            this.imports = imports;
+//        }
+//    }
 
     @Inject
     DictionaryResource(final DictionaryStore dictionaryStore,
@@ -159,9 +159,9 @@ public class DictionaryResource implements RestResource {
 
     private Response fetchInScope(final String dictionaryUuid) {
         final DictionaryDoc doc = dictionaryStore.readDocument(getDocRef(dictionaryUuid));
-        final DictionaryDTO dto = new DictionaryDTO(doc);
+        //final DictionaryDTO dto = new DictionaryDTO(doc);
 
-        return Response.ok(dto).build();
+        return Response.ok(doc).build();
     }
 
     @GET
@@ -186,7 +186,7 @@ public class DictionaryResource implements RestResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response save(@PathParam("dictionaryUuid") final String dictionaryUuid,
-                         final DictionaryDTO updates) {
+                         final DictionaryDoc updates) {
 
         // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
         security.useAsRead(() -> {

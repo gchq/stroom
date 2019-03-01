@@ -1,6 +1,5 @@
 package stroom.job.impl.db;
 
-import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
@@ -81,7 +80,7 @@ public class JobNode {
         this.enabled = enabled;
     }
 
-    public enum JobType implements HasDisplayValue, HasPrimitiveValue {
+    public enum JobType implements HasPrimitiveValue {
         UNKNOWN("UNKNOWN", 0), CRON("Cron", 1), FREQUENCY("Fequency", 2), DISTRIBUTED("Distributed", 3);
 
         public static final PrimitiveValueConverter<JobType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
@@ -94,7 +93,6 @@ public class JobNode {
             this.primitiveValue = (byte) primitiveValue;
         }
 
-        @Override
         public String getDisplayValue() {
             return displayValue;
         }

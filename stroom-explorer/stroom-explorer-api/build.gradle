@@ -3,7 +3,7 @@ ext.moduleName = 'stroom.explorer.api'
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-util-shared')
-
+    
     compile libs.stroomDocRef
 
     compile libs.jaxb_api

@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Utility class to match on sets of id's With concepts like match anything,
@@ -92,6 +93,14 @@ public class CriteriaSet<T>
             return Boolean.TRUE.equals(matchNull);
         }
         return set.contains(item);
+    }
+
+    public <OUT> CriteriaSet<OUT> convertTo(final Function<T, OUT> converter) {
+        final CriteriaSet<OUT> converted = new CriteriaSet<>();
+        converted.setMatchAll(this.matchAll);
+        converted.setMatchNull(this.matchNull);
+        this.set.stream().map(converter).forEach(converted::add);
+        return converted;
     }
 
     @Override

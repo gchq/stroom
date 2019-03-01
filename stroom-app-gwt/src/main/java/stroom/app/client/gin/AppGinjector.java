@@ -50,8 +50,6 @@ import stroom.folder.client.gin.FolderGinjector;
 import stroom.folder.client.gin.FolderModule;
 import stroom.importexport.client.gin.ImportExportConfigGinjector;
 import stroom.importexport.client.gin.ImportExportConfigModule;
-import stroom.index.client.gin.IndexGinjector;
-import stroom.index.client.gin.IndexModule;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.menubar.client.presenter.MenubarPresenter;
 import stroom.monitoring.client.gin.MonitoringGinjector;
@@ -94,7 +92,6 @@ import stroom.xmlschema.client.gin.XMLSchemaModule;
         FSVolumeModule.class,
         FolderModule.class,
         ImportExportConfigModule.class,
-        IndexModule.class,
         MonitoringModule.class,
         PipelineModule.class,
         PluginsModule.class,
@@ -123,7 +120,6 @@ public interface AppGinjector extends
         FolderGinjector,
         Ginjector,
         ImportExportConfigGinjector,
-        IndexGinjector,
         MonitoringGinjector,
         PipelineGinjector,
         PluginsGinjector,

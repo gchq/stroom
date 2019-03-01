@@ -20,15 +20,9 @@ package stroom.servlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.api.NodeInfo;
-import stroom.node.shared.FindVolumeCriteria;
-import stroom.node.shared.VolumeEntity;
-import stroom.node.shared.VolumeEntity.VolumeType;
-import stroom.node.shared.VolumeEntity.VolumeUseStatus;
-import stroom.node.shared.VolumeState;
 import stroom.security.Security;
 import stroom.util.BuildInfoProvider;
 import stroom.util.shared.BuildInfo;
-import stroom.volume.VolumeService;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -63,17 +57,14 @@ public class StatusServlet extends HttpServlet {
 
     private final BuildInfoProvider buildInfoProvider;
     private final NodeInfo nodeInfo;
-    private final VolumeService volumeService;
     private final Security security;
 
     @Inject
     StatusServlet(final BuildInfoProvider buildInfoProvider,
                   final NodeInfo nodeInfo,
-                  final VolumeService volumeService,
                   final Security security) {
         this.buildInfoProvider = buildInfoProvider;
         this.nodeInfo = nodeInfo;
-        this.volumeService = volumeService;
         this.security = security;
     }
 
@@ -120,7 +111,6 @@ public class StatusServlet extends HttpServlet {
 
                 reportHTTP(pw);
                 reportNodeStatus(pw);
-                reportVolumeStatus(pw);
 
                 pw.close();
             } catch (final IOException e) {
@@ -152,44 +142,45 @@ public class StatusServlet extends HttpServlet {
         }
     }
 
-    /**
-     * Sub reporting method.
-     */
-    private void reportVolumeStatus(final PrintWriter pw) {
-        try {
-            final FindVolumeCriteria criteria = new FindVolumeCriteria();
-            boolean oneOKVolume = false;
-            final List<VolumeEntity> volumeList = volumeService.find(criteria);
-            for (final VolumeEntity volume : volumeList) {
-                final VolumeState state = volume.getVolumeState();
-                if (state.getPercentUsed() == null) {
-                    writeErrorLine(pw, AREA_VOLUME,
-                            "Unknown Status for volume " + volume.getPath() + " on node " + volume.getNode().getName());
-                } else {
-                    if (volume.isFull()) {
-                        writeWarnLine(pw, AREA_VOLUME,
-                                "Volume " + volume.getPath() + " full on node " + volume.getNode().getName());
-                    } else {
-                        writeInfoLine(pw, AREA_VOLUME, "Volume " + volume.getPath() + " " + state.getPercentUsed()
-                                + "% full on node " + volume.getNode().getName());
-                        if (VolumeUseStatus.ACTIVE.equals(volume.getStreamStatus())
-                                && VolumeType.PUBLIC.equals(volume.getVolumeType())) {
-                            oneOKVolume = true;
-                        }
-                    }
-                }
-            }
-            if (volumeList.size() == 0) {
-                writeErrorLine(pw, AREA_VOLUME, "No volumes listed");
-            }
-            if (!oneOKVolume) {
-                writeErrorLine(pw, AREA_VOLUME, "No OK public volumes listed");
-            }
-
-        } catch (final RuntimeException e) {
-            writeErrorLine(pw, AREA_VOLUME, e.getMessage());
-        }
-    }
+    // TODO - GCHQ11 - report volumes
+//    /**
+//     * Sub reporting method.
+//     */
+//    private void reportVolumeStatus(final PrintWriter pw) {
+//        try {
+//            final FindVolumeCriteria criteria = new FindVolumeCriteria();
+//            boolean oneOKVolume = false;
+//            final List<VolumeEntity> volumeList = volumeService.find(criteria);
+//            for (final VolumeEntity volume : volumeList) {
+//                final VolumeState state = volume.getVolumeState();
+//                if (state.getPercentUsed() == null) {
+//                    writeErrorLine(pw, AREA_VOLUME,
+//                            "Unknown Status for volume " + volume.getPath() + " on node " + volume.getNode().getName());
+//                } else {
+//                    if (volume.isFull()) {
+//                        writeWarnLine(pw, AREA_VOLUME,
+//                                "Volume " + volume.getPath() + " full on node " + volume.getNode().getName());
+//                    } else {
+//                        writeInfoLine(pw, AREA_VOLUME, "Volume " + volume.getPath() + " " + state.getPercentUsed()
+//                                + "% full on node " + volume.getNode().getName());
+//                        if (VolumeUseStatus.ACTIVE.equals(volume.getStreamStatus())
+//                                && VolumeType.PUBLIC.equals(volume.getVolumeType())) {
+//                            oneOKVolume = true;
+//                        }
+//                    }
+//                }
+//            }
+//            if (volumeList.size() == 0) {
+//                writeErrorLine(pw, AREA_VOLUME, "No volumes listed");
+//            }
+//            if (!oneOKVolume) {
+//                writeErrorLine(pw, AREA_VOLUME, "No OK public volumes listed");
+//            }
+//
+//        } catch (final RuntimeException e) {
+//            writeErrorLine(pw, AREA_VOLUME, e.getMessage());
+//        }
+//    }
 
     /**
      * Write a info line.

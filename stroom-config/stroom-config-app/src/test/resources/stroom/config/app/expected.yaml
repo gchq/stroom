@@ -298,6 +298,7 @@ ui:
     authenticationService: "http://auth-service:8099/authentication/v1"
     users: "http://IP_ADDRESS/users"
     apiKeys: "http://IP_ADDRESS/tokens"
+    indexVolumes: "http://IP_ADDRESS/indexVolumes"
     changepassword: "http://IP_ADDRESS/changepassword"
     kibana: null
     trackers: null

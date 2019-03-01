@@ -17,6 +17,7 @@
 package stroom.index;
 
 import stroom.docref.DocRef;
+import stroom.index.service.IndexShardService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
@@ -31,7 +32,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -89,8 +89,9 @@ public class IndexShardManagerImpl implements IndexShardManager {
         this.taskManager = taskManager;
         this.security = security;
 
-        allowedStateTransitions.put(IndexShardStatus.CLOSED, new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
-        allowedStateTransitions.put(IndexShardStatus.OPEN, new HashSet<>(Arrays.asList(IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
+        allowedStateTransitions.put(IndexShardStatus.CLOSED, Set.of(IndexShardStatus.OPEN, IndexShardStatus.OPENING, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
+        allowedStateTransitions.put(IndexShardStatus.OPEN, Set.of(IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
+        allowedStateTransitions.put(IndexShardStatus.OPENING, Set.of(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
         allowedStateTransitions.put(IndexShardStatus.DELETED, Collections.emptySet());
         allowedStateTransitions.put(IndexShardStatus.CORRUPT, Collections.singleton(IndexShardStatus.DELETED));
     }
@@ -106,7 +107,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                     final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
 
                     final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-                    criteria.getNodeIdSet().add(nodeInfo.getThisNode());
+                    criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
                     criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
                     criteria.getFetchSet().add(Node.ENTITY_TYPE);
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
@@ -255,7 +256,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
     public void checkRetention() {
         security.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-            criteria.getNodeIdSet().add(nodeInfo.getThisNode());
+            criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
             criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
             criteria.getFetchSet().add(Node.ENTITY_TYPE);
             final List<IndexShard> shards = indexShardService.find(criteria);
@@ -319,10 +320,15 @@ public class IndexShardManagerImpl implements IndexShardManager {
                 final IndexShard indexShard = indexShardService.loadById(indexShardId);
                 if (indexShard != null) {
                     // Only allow certain state transitions.
-                    final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
+                    final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatusE());
                     if (allowed.contains(status)) {
-                        indexShard.setStatus(status);
-                        indexShardService.save(indexShard);
+                        indexShardService.setStatus(indexShard.getId(), status);
+                    } else {
+                        LOGGER.warn(() -> String.format("Disallowed state transition for shard %d %s -> %s (allowed: %s)",
+                                indexShardId,
+                                indexShard.getStatusE(),
+                                status,
+                                allowed));
                     }
                 }
             } catch (final RuntimeException e) {
@@ -334,36 +340,21 @@ public class IndexShardManagerImpl implements IndexShardManager {
     }
 
     @Override
-    public void update(final long indexShardId, final Integer documentCount, final Long commitDurationMs, final Long commitMs, final Long fileSize) {
+    public void update(final long indexShardId,
+                       final Integer documentCount,
+                       final Long commitDurationMs,
+                       final Long commitMs,
+                       final Long fileSize) {
         // Allow the thing to run without a service (e.g. benchmark mode)
         if (indexShardService != null) {
             final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
             lock.lock();
             try {
-                final IndexShard indexShard = indexShardService.loadById(indexShardId);
-
-                if (documentCount != null) {
-                    indexShard.setDocumentCount(documentCount);
-                    indexShard.setCommitDocumentCount(documentCount - indexShard.getDocumentCount());
-
-                    // Output some debug so we know how long commits are taking.
-                    LOGGER.debug(() -> {
-                        final String durationString = ModelStringUtil.formatDurationString(commitDurationMs);
-                        return "Documents written since last update " + (documentCount - indexShard.getDocumentCount()) + " ("
-                                + durationString + ")";
-                    });
-                }
-                if (commitDurationMs != null) {
-                    indexShard.setCommitDurationMs(commitDurationMs);
-                }
-                if (commitMs != null) {
-                    indexShard.setCommitMs(commitMs);
-                }
-                if (fileSize != null) {
-                    indexShard.setFileSize(fileSize);
-                }
-
-                indexShardService.save(indexShard);
+                indexShardService.update(indexShardId,
+                        documentCount,
+                        commitDurationMs,
+                        commitMs,
+                        fileSize);
             } finally {
                 lock.unlock();
             }

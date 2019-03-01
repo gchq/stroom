@@ -60,7 +60,6 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.streamtask.MockStreamTaskModule());
         install(new MockTaskModule());
         install(new stroom.test.MockTestControlModule());
-        install(new stroom.volume.MockVolumeModule());
         install(new MockXmlSchemaModule());
 //        install(new stroom.document.DocumentModule());
 //        install(new stroom.entity.MockEntityModule());
