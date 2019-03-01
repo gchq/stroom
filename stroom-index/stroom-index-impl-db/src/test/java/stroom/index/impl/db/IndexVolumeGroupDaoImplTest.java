@@ -59,26 +59,32 @@ class IndexVolumeGroupDaoImplTest {
         // When
         namesToDelete.forEach(indexVolumeGroupDao::create);
         names.forEach(indexVolumeGroupDao::create);
-        final List<String> foundNames1 = indexVolumeGroupDao.getNames();
-        final List<IndexVolumeGroup> foundGroups1 = indexVolumeGroupDao.getAll();
+        final List<String> allNames1 = indexVolumeGroupDao.getNames();
+        final List<IndexVolumeGroup> allGroups1 = indexVolumeGroupDao.getAll();
+        final List<IndexVolumeGroup> foundGroups1 = Stream.concat(namesToDelete.stream(), names.stream())
+                .map(indexVolumeGroupDao::get)
+                .collect(Collectors.toList());
 
         namesToDelete.forEach(indexVolumeGroupDao::delete);
-        final List<String> foundNames2 = indexVolumeGroupDao.getNames();
-        final List<IndexVolumeGroup> foundGroups2 = indexVolumeGroupDao.getAll();
+        final List<String> allNames2 = indexVolumeGroupDao.getNames();
+        final List<IndexVolumeGroup> allGroups2 = indexVolumeGroupDao.getAll();
+        final List<IndexVolumeGroup> foundGroups2 = names.stream()
+                .map(indexVolumeGroupDao::get)
+                .collect(Collectors.toList());
 
         // Then
-        assertThat(foundNames1).containsAll(namesToDelete);
-        assertThat(foundNames1).containsAll(names);
+        assertThat(allNames1).containsAll(namesToDelete);
+        assertThat(allNames1).containsAll(names);
         assertThat(foundGroups1.stream().map(IndexVolumeGroup::getName))
                 .containsAll(namesToDelete);
         assertThat(foundGroups1.stream().map(IndexVolumeGroup::getName))
                 .containsAll(names);
 
-        assertThat(foundNames2).doesNotContainAnyElementsOf(namesToDelete);
-        assertThat(foundNames2).containsAll(names);
-        assertThat(foundGroups2.stream().map(IndexVolumeGroup::getName))
+        assertThat(allNames2).doesNotContainAnyElementsOf(namesToDelete);
+        assertThat(allNames2).containsAll(names);
+        assertThat(allGroups2.stream().map(IndexVolumeGroup::getName))
                 .doesNotContainAnyElementsOf(namesToDelete);
-        assertThat(foundGroups2.stream().map(IndexVolumeGroup::getName))
+        assertThat(allGroups2.stream().map(IndexVolumeGroup::getName))
                 .containsAll(names);
 
         final Consumer<IndexVolumeGroup> checkAuditFields = indexVolumeGroup -> {
@@ -110,7 +116,7 @@ class IndexVolumeGroupDaoImplTest {
             assertThat(i).isNotNull();
             assertThat(i.getName()).isEqualTo(groupName);
             assertThat(i.getCreateUser()).isEqualTo(TestModule.TEST_USER);
-            assertThat(i.getCreateTimeMs()).isCloseTo(now, Offset.offset(100L));
+            assertThat(i.getCreateTimeMs()).isCloseTo(now, Offset.offset(1000L));
         });
 
         indexVolumeGroupDao.delete(groupName);
