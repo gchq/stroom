@@ -1,12 +1,13 @@
 ext.moduleName = 'stroom.lifecycle.impl'
 
 dependencies {
-    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
-    implementation project(':stroom-util-shared')
-    implementation project(':stroom-util')
+    compile project(':stroom-lifecycle:stroom-lifecycle-api')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
     
-    implementation libs.dropwizard_lifecycle
-    implementation libs.guice4
-    implementation libs.jackson_annotations
-    implementation libs.slf4j_api
+    compile libs.dropwizard_lifecycle
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.slf4j_api
 }

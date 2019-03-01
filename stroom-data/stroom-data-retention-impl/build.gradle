@@ -1,27 +1,27 @@
 ext.moduleName = 'stroom.data.retention.impl'
 
 dependencies {
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
-    implementation project(':stroom-data:stroom-data-retention-api')
-    implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-dictionary:stroom-dictionary-api')
-    implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-job:stroom-job-api')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-cluster:stroom-cluster-lock-api')
+    compile project(':stroom-data:stroom-data-retention-api')
+    compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-dictionary:stroom-dictionary-api')
+    compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-job:stroom-job-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
-    implementation libs.stroomDocRef
+    compile libs.stroomDocRef
     
-    implementation libs.guice4
-    implementation libs.jackson_annotations
-    implementation libs.jaxb_api
-    implementation libs.slf4j_api
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.jaxb_api
+    compile libs.slf4j_api
 
-    testImplementation libs.assertj_core
-    testImplementation libs.junit_jupiter_api
+    testCompile libs.assertj_core
+    testCompile libs.junit_jupiter_api
     
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

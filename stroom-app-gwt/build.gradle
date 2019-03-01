@@ -25,29 +25,29 @@ configurations.all {
 }
 
 dependencies {
-    implementation project(':stroom-core-client')
-    implementation project(':stroom-core-client-widget')
-    implementation project(':stroom-dashboard:stroom-dashboard-client')
-    implementation project(':stroom-index:stroom-index-client')
-    implementation project(':stroom-security:stroom-security-client')
-    implementation project(':stroom-statistics:stroom-statistics-client')
+    compile project(':stroom-core-client')
+    compile project(':stroom-core-client-widget')
+    compile project(':stroom-dashboard:stroom-dashboard-client')
+    compile project(':stroom-index:stroom-index-client')
+    compile project(':stroom-security:stroom-security-client')
+    compile project(':stroom-statistics:stroom-statistics-client')
 
     // These source deps are all needed for the GWT transpiling to javascript
-    implementation libs.stroomDocRef
-    implementation "${libs.stroomDocRef}:sources"
-    implementation libs.stroomQueryApi
-    implementation "${libs.stroomQueryApi}:sources"
-    implementation "${libs.stroomQueryCommon}:sources"
+    compile libs.stroomDocRef
+    compile "${libs.stroomDocRef}:sources"
+    compile libs.stroomQueryApi
+    compile "${libs.stroomQueryApi}:sources"
+    compile "${libs.stroomQueryCommon}:sources"
     
-    implementation libs.gin
-    implementation libs.guice3
-    implementation libs.gwt_dev
-    implementation libs.gwt_user
-    implementation libs.gwtp_mvp_client
-    implementation libs.hibernate_jpa_api
-    implementation libs.jackson_annotations
-    implementation libs.jaxb_api
-    implementation libs.swagger_annotations // needed so gwt can implementation the stroom-query code that contains swagger annotations
+    compile libs.gin
+    compile libs.guice3
+    compile libs.gwt_dev
+    compile libs.gwt_user
+    compile libs.gwtp_mvp_client
+    compile libs.hibernate_jpa_api
+    compile libs.jackson_annotations
+    compile libs.jaxb_api
+    compile libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
 }
 
 def gwtSourceDirs = []

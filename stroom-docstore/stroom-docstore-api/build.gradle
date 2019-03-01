@@ -1,14 +1,14 @@
 ext.moduleName = 'stroom.docstore.api'
 
 dependencies {
-    api project(':stroom-core-shared')
-    api project(':stroom-explorer:stroom-explorer-api')
-    api project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-importexport:stroom-importexport-api')
+    compile project(':stroom-util-shared')
 //
-    implementation libs.stroomDocRef
+    compile libs.stroomDocRef
 
-    implementation libs.jackson_annotations
-    implementation libs.jaxb_api
+    compile libs.jackson_annotations
+    compile libs.jaxb_api
 }
 

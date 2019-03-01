@@ -1,8 +1,6 @@
 ext.moduleName = 'stroom.activity.api'
 
 dependencies {
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-util-shared')
-    
-    implementation libs.stroomDocRef
+    compile project(':stroom-core-shared')
+    compile project(':stroom-util-shared')
 }

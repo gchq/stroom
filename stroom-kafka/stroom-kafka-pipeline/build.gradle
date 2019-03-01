@@ -1,22 +1,22 @@
 ext.moduleName = 'stroom.kafka.api'
 
 dependencies {
-    implementation project(':stroom-core-shared')
+    compile project(':stroom-core-shared')
     
-    implementation project(':stroom-pipeline')
-    implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
-    implementation libs.stroomDocRef
+    compile libs.stroomDocRef
 
-    implementation libs.guava
-    implementation libs.guice4
-    implementation libs.jackson_annotations
-    implementation libs.javax_inject
-    implementation libs.jaxb_api
-    implementation libs.slf4j_api
-    implementation libs.xml_apis
+    compile libs.guava
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.jaxb_api
+    compile libs.slf4j_api
+    compile libs.xml_apis
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

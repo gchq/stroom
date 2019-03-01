@@ -1,31 +1,28 @@
 ext.moduleName = 'stroom.index.impl.db'
 
 dependencies {
-    implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-index:stroom-index-api')
-    implementation project(':stroom-util')
-    implementation project(':stroom-db-util')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-index:stroom-index-api')
+    compile project(':stroom-db-util')
+    compile project(':stroom-util-shared')
 
-    implementation libs.stroomDocRef
-
-    implementation libs.flyway_core
-    implementation libs.guice4
-    implementation libs.hikari
-    implementation libs.jackson_annotations
-    implementation libs.javax_inject
-    implementation libs.jooq
-    implementation libs.slf4j_api
+    compile libs.flyway_core
+    compile libs.guice4
+    compile libs.hikari
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.jooq
+    compile libs.slf4j_api
 
     runtime libs.mysql_connector_java
 
-    testImplementation libs.test_containers
-    testImplementation libs.test_containers_mysql
+    testCompile libs.test_containers
+    testCompile libs.test_containers_mysql
 
-    testImplementation libs.assertj_core
-    testImplementation libs.junit_jupiter_api
+    testCompile libs.assertj_core
+    testCompile libs.junit_jupiter_api
 
     testRuntimeOnly libs.junit_jupiter_engine
 
-    //testImplementation project(':stroom-security:stroom-security-impl-mock')
+    //testCompile project(':stroom-security:stroom-security-impl-mock')
 }

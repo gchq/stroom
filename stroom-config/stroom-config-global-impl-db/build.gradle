@@ -1,35 +1,35 @@
 ext.moduleName = 'stroom.config.global.impl.db'
 
 dependencies {
-    implementation project(':stroom-config:stroom-config-app')
-    implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-config:stroom-config-global-impl-db-jooq')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-db-util')
-    implementation project(':stroom-pipeline')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-job:stroom-job-api')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-config:stroom-config-app')
+    compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-config:stroom-config-global-impl-db-jooq')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-db-util')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-job:stroom-job-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
-    implementation libs.stroomDocRef
+    compile libs.stroomDocRef
 
-    implementation libs.flyway_core
-    implementation libs.guava
-    implementation libs.guice4
-    implementation libs.hikari
-    implementation libs.jackson_annotations
-    implementation libs.javax_inject
-    implementation libs.jooq
-    implementation libs.slf4j_api
+    compile libs.flyway_core
+    compile libs.guava
+    compile libs.guice4
+    compile libs.hikari
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.jooq
+    compile libs.slf4j_api
 
-    testImplementation libs.assertj_core
-    testImplementation libs.dropwizard_configuration
-    testImplementation libs.dropwizard_core
-    testImplementation libs.dropwizard_jersey
-    testImplementation libs.dropwizard_jackson
-    testImplementation libs.junit_jupiter_api
+    testCompile libs.assertj_core
+    testCompile libs.dropwizard_configuration
+    testCompile libs.dropwizard_core
+    testCompile libs.dropwizard_jersey
+    testCompile libs.dropwizard_jackson
+    testCompile libs.junit_jupiter_api
 
     testRuntimeOnly libs.junit_jupiter_engine
 }

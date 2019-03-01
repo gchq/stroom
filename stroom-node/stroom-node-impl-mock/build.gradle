@@ -1,34 +1,35 @@
 ext.moduleName = 'stroom.node.impl.mock'
 
 dependencies {
-    implementation project(':stroom-cluster:stroom-cluster-task-api')
-    implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-core-server') // TODO : @66 remove
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-job:stroom-job-api')
-    implementation project(':stroom-node:stroom-node-api')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-statistics:stroom-statistics-api')
-    implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-cluster:stroom-cluster-task-api')
+    compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-core-server') // TODO : @66 remove
+    compile project(':stroom-core-shared')
+    compile project(':stroom-job:stroom-job-api')
+    compile project(':stroom-node:stroom-node-api')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-statistics:stroom-statistics-api')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
-    implementation libs.stroomDocRef
+    compile libs.stroomDocRef
     
-    implementation libs.commons_exec
-    implementation libs.guice4
-    implementation libs.hessian
-    implementation libs.jackson_annotations
-    implementation libs.jackson_databind
-    implementation libs.javax_inject
-    implementation libs.javax_servlet_api
-    implementation libs.slf4j_api
+    compile libs.commons_exec
+    compile libs.guice4
+    compile libs.hessian
+    compile libs.hibernate_jpa_api
+    compile libs.jackson_annotations
+    compile libs.jackson_databind
+    compile libs.javax_inject
+    compile libs.javax_servlet_api
+    compile libs.slf4j_api
     
-    testImplementation libs.assertj_core
-    testImplementation libs.mockito_core
-    testImplementation libs.mockito_junit_jupiter
+    testCompile libs.assertj_core
+    testCompile libs.mockito_core
+    testCompile libs.mockito_junit_jupiter
     
-    testImplementation libs.junit_jupiter_api
+    testCompile libs.junit_jupiter_api
     
     // the following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jaxb_runtime
