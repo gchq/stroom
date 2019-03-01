@@ -20,6 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.service.IndexShardService;
+import stroom.index.service.IndexVolumeGroupService;
 import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
 import stroom.util.GuiceUtil;
@@ -36,6 +37,7 @@ public class MockIndexModule extends AbstractModule {
         bind(IndexStructureCache.class).to(IndexStructureCacheImpl.class);
         bind(IndexStore.class).to(IndexStoreImpl.class);
         bind(IndexVolumeService.class).to(MockIndexVolumeService.class);
+        bind(IndexVolumeGroupService.class).to(MockIndexVolumeGroupService.class);
         bind(IndexShardService.class).to(MockIndexShardService.class);
         bind(Indexer.class).to(MockIndexer.class);
 //
