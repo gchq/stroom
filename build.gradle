@@ -36,7 +36,7 @@ plugins {
 
 //    id 'java-library'
 
-    id 'nebula.lint' version '10.4.2'
+//    id 'nebula.lint' version '10.4.2'
 }
 
 wrapper{
@@ -296,12 +296,12 @@ subprojects {
     apply plugin: 'idea'
     apply plugin: 'ca.cutterslade.analyze'
 //    apply plugin: 'java-library'
-    apply plugin: 'nebula.lint'
-
-    gradleLint {
-        rules +=  'unused-dependency'
-//        rules +=  'all-dependency'
-    }
+//    apply plugin: 'nebula.lint'
+//
+//    gradleLint {
+//        rules +=  'unused-dependency'
+////        rules +=  'all-dependency'
+//    }
 
     sourceCompatibility = JavaVersion.VERSION_1_10
     targetCompatibility = JavaVersion.VERSION_1_10
