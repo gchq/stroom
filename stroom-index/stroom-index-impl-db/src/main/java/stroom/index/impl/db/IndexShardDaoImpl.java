@@ -60,7 +60,7 @@ public class IndexShardDaoImpl implements IndexShardDao {
     @Override
     public List<IndexShard> find(final FindIndexShardCriteria criteria) {
         final List<Condition> conditions = Stream.of(
-                JooqUtil.applyRange(INDEX_SHARD.DOC_COUNT, criteria.getDocumentCountRange()),
+                JooqUtil.applyRange(INDEX_SHARD.DOCUMENT_COUNT, criteria.getDocumentCountRange()),
                 JooqUtil.applySet(INDEX_SHARD.NODE_NAME, criteria.getNodeNameSet()),
                 JooqUtil.applySet(INDEX_SHARD.FK_VOLUME_ID, criteria.getVolumeIdSet()),
                 JooqUtil.applySet(INDEX_SHARD.ID, criteria.getIndexShardIdSet()),
@@ -75,12 +75,23 @@ public class IndexShardDaoImpl implements IndexShardDao {
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(tableFieldMap, criteria);
 
-        return JooqUtil.contextResult(connectionProvider, context -> context.select()
-                .from(INDEX_SHARD)
-                .where(DSL.and(conditions))
-                .orderBy(orderFields)
-                .fetchInto(IndexShard.class)
-        );
+        return JooqUtil.contextResult(connectionProvider, context -> {
+            final List<IndexShard> shards = context.select()
+                    .from(INDEX_SHARD)
+                    .where(DSL.and(conditions))
+                    .orderBy(orderFields)
+                    .fetchInto(IndexShard.class);
+
+            shards.forEach(shard -> {
+                final IndexVolume indexVolume = context.select()
+                        .from(INDEX_VOLUME)
+                        .where(INDEX_VOLUME.ID.eq(shard.getFkVolumeId()))
+                        .fetchOneInto(IndexVolume.class);
+                shard.setVolume(indexVolume);
+            });
+
+            return shards;
+        });
     }
 
     @Override
@@ -160,7 +171,8 @@ public class IndexShardDaoImpl implements IndexShardDao {
                        final Long fileSize) {
         JooqUtil.context(connectionProvider, context -> context
                 .update(INDEX_SHARD)
-                .set(INDEX_SHARD.COMMIT_DOC_COUNT, documentCount)
+                .set(INDEX_SHARD.DOCUMENT_COUNT, documentCount)
+                .set(INDEX_SHARD.COMMIT_DOCUMENT_COUNT, 0)
                 .set(INDEX_SHARD.COMMIT_DURATION_MS, commitDurationMs)
                 .set(INDEX_SHARD.COMMIT_MS, commitMs)
                 .set(INDEX_SHARD.FILE_SIZE, fileSize)

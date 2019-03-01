@@ -70,11 +70,12 @@ public class IndexShard implements SharedObject {
     /**
      * Status
      */
-    private volatile byte pstatus = IndexShardStatus.CLOSED.getPrimitiveValue();
+    private volatile byte status = IndexShardStatus.CLOSED.getPrimitiveValue();
     private Long fileSize;
     private String indexVersion;
 
     private IndexVolume volume;
+    private Long fkVolumeId;
 
     private String nodeName;
 
@@ -97,6 +98,10 @@ public class IndexShard implements SharedObject {
 
     public IndexVolume getVolume() {
         return volume;
+    }
+
+    public Long getFkVolumeId() {
+        return fkVolumeId;
     }
 
     public String getNodeName() {
@@ -140,11 +145,11 @@ public class IndexShard implements SharedObject {
     }
 
     public byte getStatus() {
-        return pstatus;
+        return status;
     }
 
-    public void setStatus(final byte pstatus) {
-        this.pstatus = pstatus;
+    public void setStatus(final byte status) {
+        this.status = status;
     }
 
     public IndexShardStatus getStatusE() {
@@ -152,7 +157,7 @@ public class IndexShard implements SharedObject {
     }
 
     public void setStatusE(final IndexShardStatus status) {
-        this.pstatus = status.getPrimitiveValue();
+        this.status = status.getPrimitiveValue();
     }
 
     public Long getFileSize() {
@@ -236,7 +241,7 @@ public class IndexShard implements SharedObject {
         sb.append(", commitMs=").append(commitMs);
         sb.append(", commitDurationMs=").append(commitDurationMs);
         sb.append(", commitDocumentCount=").append(commitDocumentCount);
-        sb.append(", pstatus=").append(pstatus);
+        sb.append(", status=").append(status);
         sb.append(", fileSize=").append(fileSize);
         sb.append(", indexVersion='").append(indexVersion).append('\'');
         sb.append(", volume=").append(volume);

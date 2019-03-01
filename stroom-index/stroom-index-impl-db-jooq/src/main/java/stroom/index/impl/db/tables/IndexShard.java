@@ -41,7 +41,7 @@ import stroom.index.impl.db.tables.records.IndexShardRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexShard extends TableImpl<IndexShardRecord> {
 
-    private static final long serialVersionUID = -341072685;
+    private static final long serialVersionUID = 903439591;
 
     /**
      * The reference instance of <code>stroom.index_shard</code>
@@ -77,9 +77,9 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
     public final TableField<IndexShardRecord, String> INDEX_UUID = createField("index_uuid", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.index_shard.commit_doc_count</code>.
+     * The column <code>stroom.index_shard.commit_document_count</code>.
      */
-    public final TableField<IndexShardRecord, Integer> COMMIT_DOC_COUNT = createField("commit_doc_count", org.jooq.impl.SQLDataType.INTEGER, this, "");
+    public final TableField<IndexShardRecord, Integer> COMMIT_DOCUMENT_COUNT = createField("commit_document_count", org.jooq.impl.SQLDataType.INTEGER, this, "");
 
     /**
      * The column <code>stroom.index_shard.commit_duration_ms</code>.
@@ -92,9 +92,9 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
     public final TableField<IndexShardRecord, Long> COMMIT_MS = createField("commit_ms", org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>stroom.index_shard.doc_count</code>.
+     * The column <code>stroom.index_shard.document_count</code>.
      */
-    public final TableField<IndexShardRecord, Integer> DOC_COUNT = createField("doc_count", org.jooq.impl.SQLDataType.INTEGER.defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.INTEGER)), this, "");
+    public final TableField<IndexShardRecord, Integer> DOCUMENT_COUNT = createField("document_count", org.jooq.impl.SQLDataType.INTEGER.defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.INTEGER)), this, "");
 
     /**
      * The column <code>stroom.index_shard.file_size</code>.

@@ -89,8 +89,9 @@ public class IndexShardManagerImpl implements IndexShardManager {
         this.taskManager = taskManager;
         this.security = security;
 
-        allowedStateTransitions.put(IndexShardStatus.CLOSED, new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
-        allowedStateTransitions.put(IndexShardStatus.OPEN, new HashSet<>(Arrays.asList(IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
+        allowedStateTransitions.put(IndexShardStatus.CLOSED, Set.of(IndexShardStatus.OPEN, IndexShardStatus.OPENING, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
+        allowedStateTransitions.put(IndexShardStatus.OPEN, Set.of(IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
+        allowedStateTransitions.put(IndexShardStatus.OPENING, Set.of(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
         allowedStateTransitions.put(IndexShardStatus.DELETED, Collections.emptySet());
         allowedStateTransitions.put(IndexShardStatus.CORRUPT, Collections.singleton(IndexShardStatus.DELETED));
     }
@@ -321,8 +322,13 @@ public class IndexShardManagerImpl implements IndexShardManager {
                     // Only allow certain state transitions.
                     final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatusE());
                     if (allowed.contains(status)) {
-                        indexShard.setStatusE(status);
                         indexShardService.setStatus(indexShard.getId(), status);
+                    } else {
+                        LOGGER.warn(() -> String.format("Disallowed state transition for shard %d %s -> %s (allowed: %s)",
+                                indexShardId,
+                                indexShard.getStatusE(),
+                                status,
+                                allowed));
                     }
                 }
             } catch (final RuntimeException e) {

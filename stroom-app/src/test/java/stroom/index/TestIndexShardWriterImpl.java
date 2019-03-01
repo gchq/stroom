@@ -61,6 +61,57 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
     }
 
     @Test
+    void testSingle() throws IOException {
+        assertThat(commonTestControl.countEntity("index_shard")).isEqualTo(0);
+
+        // Do some work.
+        final FieldType fieldType = FieldTypeFactory.createBasic();
+        final Field field = new Field("test", "test", fieldType);
+        final Document document = new Document();
+        document.add(field);
+
+        // Create an index
+        final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010a");
+        final IndexDoc index1 = indexStore.readDocument(indexRef1);
+        final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
+
+        // Create a writer in the pool
+        final IndexShardWriter writer1 = indexShardWriterCache.getWriterByShardKey(indexShardKey1);
+
+        // Assert that there is 1 writer in the pool.
+        assertThat(commonTestControl.countEntity("index_shard")).isEqualTo(1);
+
+        final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
+        criteria.getIndexUuidSet().setMatchAll(true);
+
+        checkDocCount(0, writer1);
+        checkDocCount(0, writer1.getIndexShardId());
+        writer1.addDocument(document);
+        checkDocCount(1, writer1);
+        checkDocCount(0, writer1.getIndexShardId());
+        indexShardManager.findFlush(criteria);
+        checkDocCount(1, writer1);
+        checkDocCount(1, writer1.getIndexShardId());
+
+        // Close writer1 by removing the writer from the cache.
+        indexShardWriterCache.close(writer1);
+        // Close indexes again.
+        indexShardWriterCache.shutdown();
+        // Make sure that writer1 was closed.
+        assertThat(compareStatus(IndexShardStatus.OPEN, writer1.getIndexShardId())).isFalse();
+
+        // Make sure that adding to writer1 reopens the index.
+        indexer.addDocument(indexShardKey1, document);
+        assertThat(compareStatus(IndexShardStatus.OPEN, writer1.getIndexShardId())).isTrue();
+
+        // Close indexes again.
+        indexShardWriterCache.shutdown();
+
+        // Make sure that writer1 was closed.
+        assertThat(compareStatus(IndexShardStatus.OPEN, writer1.getIndexShardId())).isFalse();
+    }
+
+    @Test
     void testSimple() throws IOException {
         assertThat(commonTestControl.countEntity("index_shard")).isEqualTo(0);
 
@@ -144,7 +195,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
     private boolean compareStatus(final IndexShardStatus expected, final long indexShardId) {
         final IndexShard loaded = indexShardService.loadById(indexShardId);
-        return expected.equals(loaded.getStatus());
+        return expected.equals(loaded.getStatusE());
     }
 
     @Test

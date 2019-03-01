@@ -28,7 +28,7 @@ import stroom.index.impl.db.tables.IndexShard;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> implements Record14<Long, String, Long, String, Integer, Long, Long, Integer, Long, Byte, String, String, Long, Long> {
 
-    private static final long serialVersionUID = -1029494918;
+    private static final long serialVersionUID = -1788133652;
 
     /**
      * Setter for <code>stroom.index_shard.id</code>.
@@ -87,16 +87,16 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
     }
 
     /**
-     * Setter for <code>stroom.index_shard.commit_doc_count</code>.
+     * Setter for <code>stroom.index_shard.commit_document_count</code>.
      */
-    public void setCommitDocCount(Integer value) {
+    public void setCommitDocumentCount(Integer value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>stroom.index_shard.commit_doc_count</code>.
+     * Getter for <code>stroom.index_shard.commit_document_count</code>.
      */
-    public Integer getCommitDocCount() {
+    public Integer getCommitDocumentCount() {
         return (Integer) get(4);
     }
 
@@ -129,16 +129,16 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
     }
 
     /**
-     * Setter for <code>stroom.index_shard.doc_count</code>.
+     * Setter for <code>stroom.index_shard.document_count</code>.
      */
-    public void setDocCount(Integer value) {
+    public void setDocumentCount(Integer value) {
         set(7, value);
     }
 
     /**
-     * Getter for <code>stroom.index_shard.doc_count</code>.
+     * Getter for <code>stroom.index_shard.document_count</code>.
      */
-    public Integer getDocCount() {
+    public Integer getDocumentCount() {
         return (Integer) get(7);
     }
 
@@ -295,7 +295,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public Field<Integer> field5() {
-        return IndexShard.INDEX_SHARD.COMMIT_DOC_COUNT;
+        return IndexShard.INDEX_SHARD.COMMIT_DOCUMENT_COUNT;
     }
 
     /**
@@ -319,7 +319,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public Field<Integer> field8() {
-        return IndexShard.INDEX_SHARD.DOC_COUNT;
+        return IndexShard.INDEX_SHARD.DOCUMENT_COUNT;
     }
 
     /**
@@ -407,7 +407,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public Integer component5() {
-        return getCommitDocCount();
+        return getCommitDocumentCount();
     }
 
     /**
@@ -431,7 +431,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public Integer component8() {
-        return getDocCount();
+        return getDocumentCount();
     }
 
     /**
@@ -519,7 +519,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public Integer value5() {
-        return getCommitDocCount();
+        return getCommitDocumentCount();
     }
 
     /**
@@ -543,7 +543,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public Integer value8() {
-        return getDocCount();
+        return getDocumentCount();
     }
 
     /**
@@ -635,7 +635,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public IndexShardRecord value5(Integer value) {
-        setCommitDocCount(value);
+        setCommitDocumentCount(value);
         return this;
     }
 
@@ -662,7 +662,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public IndexShardRecord value8(Integer value) {
-        setDocCount(value);
+        setDocumentCount(value);
         return this;
     }
 
@@ -756,17 +756,17 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
     /**
      * Create a detached, initialised IndexShardRecord
      */
-    public IndexShardRecord(Long id, String nodeName, Long fkVolumeId, String indexUuid, Integer commitDocCount, Long commitDurationMs, Long commitMs, Integer docCount, Long fileSize, Byte status, String partition, String indexVersion, Long partitionFromMs, Long partitionToMs) {
+    public IndexShardRecord(Long id, String nodeName, Long fkVolumeId, String indexUuid, Integer commitDocumentCount, Long commitDurationMs, Long commitMs, Integer documentCount, Long fileSize, Byte status, String partition, String indexVersion, Long partitionFromMs, Long partitionToMs) {
         super(IndexShard.INDEX_SHARD);
 
         set(0, id);
         set(1, nodeName);
         set(2, fkVolumeId);
         set(3, indexUuid);
-        set(4, commitDocCount);
+        set(4, commitDocumentCount);
         set(5, commitDurationMs);
         set(6, commitMs);
-        set(7, docCount);
+        set(7, documentCount);
         set(8, fileSize);
         set(9, status);
         set(10, partition);

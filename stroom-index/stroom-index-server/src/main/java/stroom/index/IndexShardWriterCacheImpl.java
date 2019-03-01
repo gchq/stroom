@@ -144,7 +144,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final List<IndexShard> list = indexShardService.find(criteria);
         for (final IndexShard indexShard : list) {
             // Look for non deleted, non full, non corrupt index shards.
-            if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
+            if (IndexShardStatus.CLOSED.equals(indexShard.getStatusE())) {
                 // Get the index fields.
                 final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
                 if (indexStructure != null && indexShard.getDocumentCount() < indexStructure.getIndex().getMaxDocsPerShard()) {
