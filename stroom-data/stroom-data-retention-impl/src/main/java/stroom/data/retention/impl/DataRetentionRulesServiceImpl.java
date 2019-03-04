@@ -19,6 +19,7 @@ package stroom.data.retention.impl;
 
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
@@ -26,7 +27,6 @@ import stroom.docstore.api.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRefInfo;
 import stroom.util.shared.Message;
 
 import javax.inject.Inject;
@@ -41,7 +41,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
 
     @Inject
     DataRetentionRulesServiceImpl(final StoreFactory storeFactory,
-                                         final Serialiser2Factory serialiser2Factory) {
+                                  final Serialiser2Factory serialiser2Factory) {
         DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(DataRetentionRules.class);
         this.store = storeFactory.createStore(serialiser, DataRetentionRules.DOCUMENT_TYPE, DataRetentionRules.class);
     }

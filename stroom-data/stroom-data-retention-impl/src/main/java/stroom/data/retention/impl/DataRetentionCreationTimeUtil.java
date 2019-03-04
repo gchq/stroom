@@ -15,84 +15,87 @@
  *
  */
 
-package stroom.data.retention.api;
+package stroom.data.retention.impl;
 
 import stroom.data.retention.shared.DataRetentionRule;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 /**
  * A utility class to calculate times from supplied retention ages.
  */
-public final class DataRetentionAgeUtil {
-    private DataRetentionAgeUtil() {
+final class DataRetentionCreationTimeUtil {
+    private DataRetentionCreationTimeUtil() {
         // Utility class.
     }
 
-    public static Long minus(final LocalDateTime now, final DataRetentionRule rule) {
+    static long minus(final long ms, final DataRetentionRule rule) {
         if (rule.isForever()) {
-            return null;
+            return 0;
         }
 
         LocalDateTime age = null;
+        final LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ms), ZoneOffset.UTC);
         switch (rule.getTimeUnit()) {
             case MINUTES:
-                age = now.minusMinutes(rule.getAge());
+                age = time.minusMinutes(rule.getAge());
                 break;
             case HOURS:
-                age = now.minusHours(rule.getAge());
+                age = time.minusHours(rule.getAge());
                 break;
             case DAYS:
-                age = now.minusDays(rule.getAge());
+                age = time.minusDays(rule.getAge());
                 break;
             case WEEKS:
-                age = now.minusWeeks(rule.getAge());
+                age = time.minusWeeks(rule.getAge());
                 break;
             case MONTHS:
-                age = now.minusMonths(rule.getAge());
+                age = time.minusMonths(rule.getAge());
                 break;
             case YEARS:
-                age = now.minusYears(rule.getAge());
+                age = time.minusYears(rule.getAge());
                 break;
         }
 
         if (age == null) {
-            return null;
+            return 0;
         }
 
         return age.toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 
-    public static Long plus(final LocalDateTime now, final DataRetentionRule rule) {
+    static long plus(final long ms, final DataRetentionRule rule) {
         if (rule.isForever()) {
-            return null;
+            return 0;
         }
 
         LocalDateTime age = null;
+        final LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ms), ZoneOffset.UTC);
         switch (rule.getTimeUnit()) {
             case MINUTES:
-                age = now.plusMinutes(rule.getAge());
+                age = time.plusMinutes(rule.getAge());
                 break;
             case HOURS:
-                age = now.plusHours(rule.getAge());
+                age = time.plusHours(rule.getAge());
                 break;
             case DAYS:
-                age = now.plusDays(rule.getAge());
+                age = time.plusDays(rule.getAge());
                 break;
             case WEEKS:
-                age = now.plusWeeks(rule.getAge());
+                age = time.plusWeeks(rule.getAge());
                 break;
             case MONTHS:
-                age = now.plusMonths(rule.getAge());
+                age = time.plusMonths(rule.getAge());
                 break;
             case YEARS:
-                age = now.plusYears(rule.getAge());
+                age = time.plusYears(rule.getAge());
                 break;
         }
 
         if (age == null) {
-            return null;
+            return 0;
         }
 
         return age.toInstant(ZoneOffset.UTC).toEpochMilli();
