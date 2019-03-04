@@ -18,6 +18,7 @@ package stroom.index;
 
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.LongField;
+import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexField;
 
 public class FieldFactory {

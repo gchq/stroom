@@ -18,8 +18,11 @@ package stroom.index;
 
 import org.apache.lucene.store.LockObtainFailedException;
 import stroom.docref.DocRef;
+import stroom.index.service.IndexShardService;
+
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
@@ -133,15 +136,15 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private IndexShardWriter openExistingShard(final IndexShardKey indexShardKey) {
         // Get all index shards that are owned by this node.
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getNodeIdSet().add(nodeInfo.getThisNode());
+        criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
         criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
-        criteria.getIndexSet().add(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+        criteria.getIndexUuidSet().add(indexShardKey.getIndexUuid());
         criteria.getPartition().setString(indexShardKey.getPartition());
         final List<IndexShard> list = indexShardService.find(criteria);
         for (final IndexShard indexShard : list) {
             // Look for non deleted, non full, non corrupt index shards.
-            if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
+            if (IndexShardStatus.CLOSED.equals(indexShard.getStatusE())) {
                 // Get the index fields.
                 final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
                 if (indexStructure != null && indexShard.getDocumentCount() < indexStructure.getIndex().getMaxDocsPerShard()) {
@@ -160,7 +163,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
      * Creates a new index shard writer for the specified key and opens a writer for it.
      */
     private IndexShardWriter openNewShard(final IndexShardKey indexShardKey) {
-        final IndexShard indexShard = indexShardService.createIndexShard(indexShardKey, nodeInfo.getThisNode());
+        final IndexShard indexShard = indexShardService.createIndexShard(indexShardKey, nodeInfo.getThisNode().getName());
         return openWriter(indexShardKey, indexShard);
     }
 
@@ -424,7 +427,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         // Make sure all open shards are marked as closed.
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getNodeIdSet().add(nodeInfo.getThisNode());
+        criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
         criteria.getIndexShardStatusSet().add(IndexShardStatus.OPEN);
         criteria.getIndexShardStatusSet().add(IndexShardStatus.OPENING);
         criteria.getIndexShardStatusSet().add(IndexShardStatus.CLOSING);
@@ -476,8 +479,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private void clean(final IndexShard indexShard) {
         try {
             LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
-            indexShard.setStatus(IndexShardStatus.CLOSED);
-            indexShardService.save(indexShard);
+            indexShard.setStatusE(IndexShardStatus.CLOSED);
+            indexShardService.setStatus(indexShard.getId(), IndexShardStatus.CLOSED);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }

@@ -3,8 +3,13 @@ ext.moduleName = 'stroom.index.impl.db'
 dependencies {
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-index:stroom-index-api')
+    compile project(':stroom-index:stroom-index-impl-db-jooq')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-util')
     compile project(':stroom-db-util')
     compile project(':stroom-util-shared')
+
+    compile libs.stroomDocRef
 
     compile libs.flyway_core
     compile libs.guice4
@@ -21,6 +26,7 @@ dependencies {
 
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter_api
+    testCompile libs.mockito_core
 
     testRuntimeOnly libs.junit_jupiter_engine
 

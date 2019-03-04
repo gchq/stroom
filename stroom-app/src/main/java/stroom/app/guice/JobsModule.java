@@ -22,7 +22,7 @@ import stroom.search.SearchJobsModule;
 import stroom.search.shard.ShardJobsModule;
 import stroom.statistics.impl.sql.SQLStatisticsJobsModule;
 import stroom.statistics.impl.sql.search.SQLStatisticSearchJobsModule;
-import stroom.volume.VolumeJobsModule;
+import stroom.index.selection.VolumeJobsModule;
 
 public class JobsModule extends AbstractModule {
     @Override

@@ -20,7 +20,8 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.StopAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import stroom.index.shared.IndexField.AnalyzerType;
+import stroom.index.shared.AnalyzerType;
+import stroom.index.shared.IndexField;
 
 public final class AnalyzerFactory {
     private AnalyzerFactory() {

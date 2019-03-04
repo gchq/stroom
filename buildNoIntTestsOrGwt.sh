@@ -1,3 +1,3 @@
 #!/bin/bash
-./gradlew clean build -x integrationTest -x gwtCompile "$@"
+./gradlew clean build -x test -x gwtCompile "$@"
 

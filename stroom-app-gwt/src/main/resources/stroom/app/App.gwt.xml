@@ -83,7 +83,6 @@
     <inherits name="stroom.folder.Folder" />
     <inherits name="stroom.dictionary.Dictionary" />
 
-    <inherits name="stroom.index.Index" />
     <inherits name="stroom.dashboard.Dashboard" />
 
     <inherits name="stroom.query.Query" />

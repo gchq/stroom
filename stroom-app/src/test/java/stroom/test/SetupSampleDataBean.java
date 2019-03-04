@@ -22,17 +22,15 @@ import org.slf4j.LoggerFactory;
 import stroom.dashboard.DashboardStore;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
-import stroom.util.shared.BaseResultList;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.IndexStore;
-import stroom.index.IndexVolumeService;
+import stroom.index.service.IndexVolumeService;
+import stroom.index.shared.IndexVolume;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
-import stroom.node.shared.VolumeEntity;
 import stroom.pipeline.PipelineStore;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -45,7 +43,6 @@ import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
-import stroom.volume.VolumeService;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -93,7 +90,6 @@ public final class SetupSampleDataBean {
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final PipelineStore pipelineStore;
     private final DashboardStore dashboardStore;
-    private final VolumeService volumeService;
     private final IndexStore indexStore;
     private final IndexVolumeService indexVolumeService;
     private final StatisticStoreStore statisticStoreStore;
@@ -108,7 +104,6 @@ public final class SetupSampleDataBean {
                         final StreamProcessorFilterService streamProcessorFilterService,
                         final PipelineStore pipelineStore,
                         final DashboardStore dashboardStore,
-                        final VolumeService volumeService,
                         final IndexStore indexStore,
                         final IndexVolumeService indexVolumeService,
                         final StatisticStoreStore statisticStoreStore,
@@ -121,7 +116,6 @@ public final class SetupSampleDataBean {
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.pipelineStore = pipelineStore;
         this.dashboardStore = dashboardStore;
-        this.volumeService = volumeService;
         this.indexStore = indexStore;
         this.indexVolumeService = indexVolumeService;
         this.statisticStoreStore = statisticStoreStore;
@@ -169,14 +163,14 @@ public final class SetupSampleDataBean {
 
 
         // Add volumes to all indexes.
-        final BaseResultList<VolumeEntity> volumeList = volumeService.find(new FindVolumeCriteria());
+        final List<IndexVolume> volumeList = indexVolumeService.getAll();
         final List<DocRef> indexList = indexStore.list();
         logDocRefs(indexList, "indexes");
-        final Set<VolumeEntity> volumeSet = new HashSet<>(volumeList);
 
-        for (final DocRef indexRef : indexList) {
-            indexVolumeService.setVolumesForIndex(indexRef, volumeSet);
-        }
+        // TODO replace this with new volumes index
+//        for (final DocRef indexRef : indexList) {
+//            indexVolumeService.setVolumesForIndex(indexRef, volumeSet);
+//        }
 
         // Create index pipeline processor filters
         createIndexingProcessorFilter("Example index", StreamTypeNames.EVENTS, Optional.empty());
@@ -294,7 +288,7 @@ public final class SetupSampleDataBean {
 //            }
 
             LOGGER.info("Node count = " + commonTestControl.countEntity(Node.TABLE_NAME));
-            LOGGER.info("Volume count = " + commonTestControl.countEntity(VolumeEntity.TABLE_NAME));
+//            LOGGER.info("Volume count = " + commonTestControl.countEntity(VolumeEntity.TABLE_NAME));
             LOGGER.info("Feed count = " + feedStore.list().size());
 //            LOGGER.info("StreamAttributeKey count = " + commonTestControl.countEntity(StreamAttributeKey.class));
             LOGGER.info("Dashboard count = " + dashboardStore.list().size());

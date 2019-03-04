@@ -26,6 +26,7 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.index.IndexStore;
+import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;

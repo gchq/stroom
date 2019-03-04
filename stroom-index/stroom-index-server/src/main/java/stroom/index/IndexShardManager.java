@@ -29,7 +29,11 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 public interface IndexShardManager extends FindDeleteService<FindIndexShardCriteria>, FindFlushService<FindIndexShardCriteria> {
     void setStatus(long indexShardId, IndexShardStatus status);
 
-    void update(long indexShardId, Integer documentCount, Long commitDurationMs, Long commitMs, Long fileSize);
+    void update(long indexShardId,
+                Integer documentCount,
+                Long commitDurationMs,
+                Long commitMs,
+                Long fileSize);
 
     IndexShard load(long indexShardId);
 

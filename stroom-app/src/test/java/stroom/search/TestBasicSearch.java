@@ -29,14 +29,15 @@ import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.index.FieldFactory;
 import stroom.index.IndexShardKeyUtil;
-import stroom.index.IndexShardService;
+import stroom.index.service.IndexShardService;
 import stroom.index.IndexShardWriterCache;
 import stroom.index.IndexStore;
 import stroom.index.Indexer;
+
+import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
@@ -98,7 +99,7 @@ class TestBasicSearch extends AbstractCoreIntegrationTest {
         indexShardWriterCache.flushAll();
 
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getIndexSet().add(indexRef);
+        criteria.getIndexUuidSet().add(indexRef.getUuid());
         final List<IndexShard> shards = indexShardService.find(criteria);
 
         // Open readers and add reader searcher to the multi searcher.
