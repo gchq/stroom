@@ -1,24 +1,24 @@
 ext.moduleName = 'stroom.elastic.impl'
 
 dependencies {
-    implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-elastic:stroom-elastic-api')
-    implementation project(':stroom-pipeline')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-security:stroom-security-impl')
+    compile project(':stroom-cache:stroom-cache-api')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-elastic:stroom-elastic-api')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-security:stroom-security-impl')
 
-    implementation libs.guava
-    implementation libs.guice4
-    implementation libs.jackson_annotations
-    implementation libs.javax_inject
-    implementation libs.jaxb_api
-    implementation libs.jetty_http
-    implementation libs.stroomDocRef
-    implementation libs.stroomQueryAudit
-    implementation libs.stroomQueryAuthorisation
-    implementation libs.ws_rs_api
-    implementation libs.xml_apis
+    compile libs.guava
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.jaxb_api
+    compile libs.jetty_http
+    compile libs.stroomDocRef
+    compile libs.stroomQueryAudit
+    compile libs.stroomQueryAuthorisation
+    compile libs.ws_rs_api
+    compile libs.xml_apis
 }

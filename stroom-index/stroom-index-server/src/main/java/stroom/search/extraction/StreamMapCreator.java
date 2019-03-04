@@ -19,6 +19,7 @@ package stroom.search.extraction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.Val;
+import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexField;
 import stroom.pipeline.errorhandler.ErrorReceiver;

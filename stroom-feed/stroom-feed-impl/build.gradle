@@ -1,23 +1,23 @@
 ext.moduleName = 'stroom.feed.impl'
 
 dependencies {
-    implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-event-logging:stroom-event-logging-api')
-    implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-importexport:stroom-importexport-migration')
-    implementation project(':stroom-feed:stroom-feed-api')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-cache:stroom-cache-api')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-importexport:stroom-importexport-api')
+    compile project(':stroom-importexport:stroom-importexport-migration')
+    compile project(':stroom-feed:stroom-feed-api')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
-    implementation libs.stroomDocRef
+    compile libs.stroomDocRef
 
-    implementation libs.guava
-    implementation libs.guice4
-    implementation libs.jackson_annotations
-    implementation libs.javax_inject
-    implementation libs.slf4j_api
+    compile libs.guava
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.slf4j_api
 }

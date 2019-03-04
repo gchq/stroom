@@ -1,26 +1,26 @@
 ext.moduleName = 'stroom.receive.common'
 
 dependencies {
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-data:stroom-data-store-api')
-    implementation project(':stroom-data:stroom-data-zip')
-    implementation project(':stroom-feed:stroom-feed-api')
-    implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-meta:stroom-meta-statistics-api')
-    implementation project(':stroom-util-shared')
-    implementation project(':stroom-util')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-data:stroom-data-store-api')
+    compile project(':stroom-data:stroom-data-zip')
+    compile project(':stroom-feed:stroom-feed-api')
+    compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-meta:stroom-meta-statistics-api')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
     
-    implementation libs.commons_compress
-    implementation libs.javax_servlet_api
-    implementation libs.stroomDocRef
+    compile libs.commons_compress
+    compile libs.javax_servlet_api
+    compile libs.stroomDocRef
 
-    implementation libs.javax_inject
-    implementation libs.jaxb_api
-    implementation libs.slf4j_api
+    compile libs.javax_inject
+    compile libs.jaxb_api
+    compile libs.slf4j_api
 
-    testImplementation libs.assertj_core
-    testImplementation libs.commons_lang
-    testImplementation libs.junit_jupiter_api
+    testCompile libs.assertj_core
+    testCompile libs.commons_lang
+    testCompile libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jaxb_runtime

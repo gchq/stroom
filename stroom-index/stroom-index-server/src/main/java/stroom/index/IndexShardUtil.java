@@ -32,11 +32,7 @@ public class IndexShardUtil {
         builder.append(File.separatorChar);
         builder.append("index");
         builder.append(File.separatorChar);
-        if (indexShard.getOldIndexId() != null) {
-            builder.append(indexShard.getOldIndexId());
-        } else {
-            builder.append(indexShard.getIndexUuid());
-        }
+        builder.append(indexShard.getIndexUuid());
         builder.append(File.separatorChar);
         builder.append(indexShard.getPartition());
         builder.append(File.separatorChar);

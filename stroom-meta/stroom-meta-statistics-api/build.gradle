@@ -1,5 +1,5 @@
 ext.moduleName = 'stroom.meta.statistics.api'
 
 dependencies {
-    implementation project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-meta:stroom-meta-api')
 }

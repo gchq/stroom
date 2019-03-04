@@ -16,6 +16,7 @@
 
 package stroom.search;
 
+import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexField;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;

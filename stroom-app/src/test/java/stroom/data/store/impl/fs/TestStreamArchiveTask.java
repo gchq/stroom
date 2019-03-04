@@ -36,7 +36,7 @@ import stroom.node.api.NodeService;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
-import stroom.volume.VolumeConfig;
+import stroom.index.selection.VolumeConfig;
 
 import javax.inject.Inject;
 import java.io.IOException;
