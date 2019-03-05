@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.job.impl.db'
 
 dependencies {
     compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-core-shared')
     compile project(':stroom-db-util')
     compile project(':stroom-job:stroom-job-impl-db-jooq')
     compile project(':stroom-util')
