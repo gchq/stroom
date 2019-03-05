@@ -43,6 +43,7 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final UniqueKey<JobRecord> KEY_JOB_PRIMARY = UniqueKeys0.KEY_JOB_PRIMARY;
+    public static final UniqueKey<JobRecord> KEY_JOB_NAME = UniqueKeys0.KEY_JOB_NAME;
     public static final UniqueKey<JobNodeRecord> KEY_JOB_NODE_PRIMARY = UniqueKeys0.KEY_JOB_NODE_PRIMARY;
 
     // -------------------------------------------------------------------------
@@ -62,6 +63,7 @@ public class Keys {
 
     private static class UniqueKeys0 {
         public static final UniqueKey<JobRecord> KEY_JOB_PRIMARY = Internal.createUniqueKey(Job.JOB, "KEY_job_PRIMARY", Job.JOB.ID);
+        public static final UniqueKey<JobRecord> KEY_JOB_NAME = Internal.createUniqueKey(Job.JOB, "KEY_job_name", Job.JOB.NAME);
         public static final UniqueKey<JobNodeRecord> KEY_JOB_NODE_PRIMARY = Internal.createUniqueKey(JobNode.JOB_NODE, "KEY_job_node_PRIMARY", JobNode.JOB_NODE.ID);
     }
 

@@ -41,7 +41,7 @@ import stroom.job.impl.db.jooq.tables.records.JobNodeRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class JobNode extends TableImpl<JobNodeRecord> {
 
-    private static final long serialVersionUID = 1808819141;
+    private static final long serialVersionUID = 216749784;
 
     /**
      * The reference instance of <code>stroom.job_node</code>
@@ -62,24 +62,29 @@ public class JobNode extends TableImpl<JobNodeRecord> {
     public final TableField<JobNodeRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
-     * The column <code>stroom.job_node.node_name</code>.
+     * The column <code>stroom.job_node.version</code>.
      */
-    public final TableField<JobNodeRecord, String> NODE_NAME = createField("node_name", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<JobNodeRecord, Integer> VERSION = createField("version", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.job_node.job_type</code>.
+     * The column <code>stroom.job_node.create_time_ms</code>.
      */
-    public final TableField<JobNodeRecord, Byte> JOB_TYPE = createField("job_type", org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
+    public final TableField<JobNodeRecord, Long> CREATE_TIME_MS = createField("create_time_ms", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.job_node.enabled</code>.
+     * The column <code>stroom.job_node.create_user</code>.
      */
-    public final TableField<JobNodeRecord, Boolean> ENABLED = createField("enabled", org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<JobNodeRecord, String> CREATE_USER = createField("create_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.job_node.task_limit</code>.
+     * The column <code>stroom.job_node.update_time_ms</code>.
      */
-    public final TableField<JobNodeRecord, Integer> TASK_LIMIT = createField("task_limit", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<JobNodeRecord, Long> UPDATE_TIME_MS = createField("update_time_ms", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.job_node.update_user</code>.
+     */
+    public final TableField<JobNodeRecord, String> UPDATE_USER = createField("update_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.job_node.job_id</code>.
@@ -87,14 +92,29 @@ public class JobNode extends TableImpl<JobNodeRecord> {
     public final TableField<JobNodeRecord, Integer> JOB_ID = createField("job_id", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
+     * The column <code>stroom.job_node.job_type</code>.
+     */
+    public final TableField<JobNodeRecord, Byte> JOB_TYPE = createField("job_type", org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.job_node.node_name</code>.
+     */
+    public final TableField<JobNodeRecord, String> NODE_NAME = createField("node_name", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.job_node.task_limit</code>.
+     */
+    public final TableField<JobNodeRecord, Integer> TASK_LIMIT = createField("task_limit", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
+
+    /**
      * The column <code>stroom.job_node.schedule</code>.
      */
     public final TableField<JobNodeRecord, String> SCHEDULE = createField("schedule", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.job_node.version</code>.
+     * The column <code>stroom.job_node.enabled</code>.
      */
-    public final TableField<JobNodeRecord, Integer> VERSION = createField("version", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<JobNodeRecord, Boolean> ENABLED = createField("enabled", org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
 
     /**
      * Create a <code>stroom.job_node</code> table reference
