@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.security.impl;
+package stroom.security.service;
 
 import stroom.util.shared.ProvidesNamePattern;
 import stroom.security.shared.FindUserCriteria;
@@ -29,9 +29,9 @@ public interface UserService extends ProvidesNamePattern {
 
     List<User> find(FindUserCriteria criteria);
 
-    List<UserRef> findUsersInGroup(UserRef userGroup);
+    List<UserRef> findUsersInGroup(String groupUuid);
 
-    List<UserRef> findGroupsForUser(UserRef user);
+    List<UserRef> findGroupsForUser(String userUuid);
 
     UserRef createUser(String name);
 
@@ -43,7 +43,7 @@ public interface UserService extends ProvidesNamePattern {
 
     Boolean delete(User user);
 
-    void addUserToGroup(final UserRef user, final UserRef userGroup);
+    void addUserToGroup(final String userUuid, final String groupUuid);
 
-    void removeUserFromGroup(final UserRef user, final UserRef userGroup);
+    void removeUserFromGroup(final String userUuid, final String groupUuid);
 }

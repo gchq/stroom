@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.dao.DocumentPermissionDao;
 import stroom.security.dao.UserDao;
+import stroom.security.service.DocumentPermissionService;
 import stroom.security.shared.DocumentPermissionJooq;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
@@ -51,6 +52,12 @@ class DocumentPermissionServiceImpl implements DocumentPermissionService {
     }
 
     @Override
+    public Set<String> getPermissionsForDocumentForUser(final DocRef document,
+                                                        final String userUuid) {
+        return documentPermissionDao.getPermissionsForDocumentForUser(document, userUuid);
+    }
+
+    @Override
     public DocumentPermissions getPermissionsForDocument(final DocRef document) {
         final Map<UserRef, Set<String>> userPermissions = new HashMap<>();
 
@@ -74,22 +81,17 @@ class DocumentPermissionServiceImpl implements DocumentPermissionService {
     }
 
     @Override
-    public void addPermission(final UserRef userRef, final DocRef document, final String permission) {
-        documentPermissionDao.addPermission(userRef.getUuid(), document, permission);
+    public void addPermission(final String userUuid, final DocRef document, final String permission) {
+        documentPermissionDao.addPermission(userUuid, document, permission);
     }
 
     @Override
-    public void removePermission(final UserRef userRef, final DocRef document, final String permission) {
-        documentPermissionDao.removePermission(userRef.getUuid(), document, permission);
+    public void removePermission(final String userUuid, final DocRef document, final String permission) {
+        documentPermissionDao.removePermission(userUuid, document, permission);
     }
 
     @Override
     public void clearDocumentPermissions(final DocRef document) {
         documentPermissionDao.clearDocumentPermissions(document);
-    }
-
-    @Override
-    public void clearUserPermissions(final UserRef userRef) {
-        documentPermissionDao.clearUserPermissions(userRef.getUuid());
     }
 }

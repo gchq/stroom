@@ -19,6 +19,7 @@ package stroom.security.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.dao.AppPermissionDao;
+import stroom.security.service.UserAppPermissionService;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
@@ -40,20 +41,19 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
     }
 
     @Override
-    public UserAppPermissions getPermissionsForUser(final UserRef userRef) {
-        try {
-            final Set<String> userPermissions = appPermissionDao.getPermissionsForUser(userRef.getUuid());
-            return new UserAppPermissions(userRef, ALL_PERMISSIONS, userPermissions);
-        } catch (final RuntimeException e) {
-            LOGGER.error("getPermissionsForUser()", e);
-            throw e;
-        }
+    public Set<String> getPermissionNamesForUser(final String userUuid) {
+        return appPermissionDao.getPermissionsForUser(userUuid);
     }
 
     @Override
-    public void addPermission(final UserRef userRef, final String permission) {
+    public Set<String> getAllPermissionNames() {
+        return ALL_PERMISSIONS;
+    }
+
+    @Override
+    public void addPermission(final String userUuid, final String permission) {
         try {
-            appPermissionDao.addPermission(userRef.getUuid(), permission);
+            appPermissionDao.addPermission(userUuid, permission);
         } catch (final RuntimeException e) {
             LOGGER.error("addPermission()", e);
             throw e;
@@ -61,9 +61,9 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
     }
 
     @Override
-    public void removePermission(final UserRef userRef, final String permission) {
+    public void removePermission(final String userUuid, final String permission) {
         try {
-            appPermissionDao.removePermission(userRef.getUuid(), permission);
+            appPermissionDao.removePermission(userUuid, permission);
         } catch (final RuntimeException e) {
             LOGGER.error("removePermission()", e);
             throw e;

@@ -17,6 +17,7 @@
 package stroom.security.impl;
 
 import stroom.security.Security;
+import stroom.security.service.UserService;
 import stroom.security.shared.DeleteUserAction;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;

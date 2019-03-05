@@ -14,7 +14,7 @@ import stroom.node.impl.mock.MockNodeServiceModule;
 import stroom.pipeline.xmlschema.MockXmlSchemaModule;
 import stroom.resource.impl.MockResourceModule;
 import stroom.security.impl.UserRefFactory;
-import stroom.security.impl.UserService;
+import stroom.security.service.UserService;
 import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 import stroom.task.impl.MockTaskModule;

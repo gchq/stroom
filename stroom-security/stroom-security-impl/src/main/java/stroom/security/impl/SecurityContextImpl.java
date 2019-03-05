@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.impl.exception.AuthenticationException;
+import stroom.security.service.DocumentPermissionService;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.PermissionNames;
@@ -190,7 +191,7 @@ class SecurityContextImpl implements SecurityContext {
 
         // See if the user belongs to a group that has permission.
         if (!result) {
-            final List<UserRef> userGroups = userGroupsCache.get(userRef);
+            final List<UserRef> userGroups = userGroupsCache.get(userRef.getUuid());
             result = hasUserGroupsAppPermission(userGroups, permission);
         }
 
@@ -251,7 +252,7 @@ class SecurityContextImpl implements SecurityContext {
 
         // See if the user belongs to a group that has permission.
         if (!result) {
-            final List<UserRef> userGroups = userGroupsCache.get(userRef);
+            final List<UserRef> userGroups = userGroupsCache.get(userRef.getUuid());
             result = hasUserGroupsDocumentPermission(userGroups, docRef, permission);
         }
 
@@ -319,7 +320,7 @@ class SecurityContextImpl implements SecurityContext {
                 if (owner) {
                     // Make the current user the owner of the new document.
                     try {
-                        documentPermissionService.addPermission(userRef, docRef, DocumentPermissionNames.OWNER);
+                        documentPermissionService.addPermission(userRef.getUuid(), docRef, DocumentPermissionNames.OWNER);
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
                     }
@@ -353,7 +354,7 @@ class SecurityContextImpl implements SecurityContext {
                         for (final String allowedPermission : allowedPermissions) {
                             if (permissions.contains(allowedPermission)) {
                                 try {
-                                    documentPermissionService.addPermission(userRef, destDocRef, allowedPermission);
+                                    documentPermissionService.addPermission(userRef.getUuid(), destDocRef, allowedPermission);
                                 } catch (final RuntimeException e) {
                                     LOGGER.error(e.getMessage(), e);
                                 }

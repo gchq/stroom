@@ -26,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import stroom.docref.DocRef;
+import stroom.security.service.DocumentPermissionService;
+import stroom.security.service.UserService;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
@@ -94,13 +96,13 @@ class TestDocumentPermissionsServiceImpl {
 
         // Check user permissions.
         final UserRef user = createUser(FileSystemTestUtil.getUniqueTestString());
-        userService.addUserToGroup(user, userGroup1);
-        userService.addUserToGroup(user, userGroup3);
+        userService.addUserToGroup(user.getUuid(), userGroup1.getUuid());
+        userService.addUserToGroup(user.getUuid(), userGroup3.getUuid());
         checkUserPermissions(user, docRef, c1, p1);
 
         addPermissions(userGroup2, docRef, c1, p2);
 
-        userService.addUserToGroup(user, userGroup2);
+        userService.addUserToGroup(user.getUuid(), userGroup2.getUuid());
         checkUserPermissions(user, docRef, c1, p1, p2);
 
         removePermissions(userGroup2, docRef, p2);
@@ -110,7 +112,7 @@ class TestDocumentPermissionsServiceImpl {
     private void addPermissions(final UserRef user, final DocRef docRef, final String... permissions) {
         for (final String permission : permissions) {
             try {
-                documentPermissionService.addPermission(user, docRef, permission);
+                documentPermissionService.addPermission(user.getUuid(), docRef, permission);
             } catch (final Exception e) {
                 LOGGER.info(e.getMessage());
             }
@@ -119,7 +121,7 @@ class TestDocumentPermissionsServiceImpl {
 
     private void removePermissions(final UserRef user, final DocRef docRef, final String... permissions) {
         for (final String permission : permissions) {
-            documentPermissionService.removePermission(user, docRef, permission);
+            documentPermissionService.removePermission(user.getUuid(), docRef, permission);
         }
     }
 
@@ -138,7 +140,7 @@ class TestDocumentPermissionsServiceImpl {
     private void checkUserPermissions(final UserRef user, final DocRef docRef, final String... permissions) {
         final Set<UserRef> allUsers = new HashSet<>();
         allUsers.add(user);
-        allUsers.addAll(userService.findGroupsForUser(user));
+        allUsers.addAll(userService.findGroupsForUser(user.getUuid()));
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final UserRef userRef : allUsers) {
@@ -161,7 +163,7 @@ class TestDocumentPermissionsServiceImpl {
 
         final Set<UserRef> allUsers = new HashSet<>();
         allUsers.add(user);
-        allUsers.addAll(userGroupsCache.get(user));
+        allUsers.addAll(userGroupsCache.get(user.getUuid()));
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final UserRef userRef : allUsers) {

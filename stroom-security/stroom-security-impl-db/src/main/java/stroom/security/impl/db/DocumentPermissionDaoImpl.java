@@ -96,13 +96,4 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                         .execute()
         );
     }
-
-    @Override
-    public void clearUserPermissions(final String userUuid) {
-        JooqUtil.context(connectionProvider, context ->
-                context.deleteFrom(DOC_PERMISSION)
-                        .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
-                        .execute()
-        );
-    }
 }

@@ -24,6 +24,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
+import stroom.security.service.UserAppPermissionService;
+import stroom.security.service.UserService;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
@@ -72,11 +74,6 @@ class TestAppPermissionServiceImpl {
         final String p1 = "P1";
         final String p2 = "P2";
 
-        final Set<String> appPermissionSet = new HashSet<>();
-        appPermissionSet.add(c1);
-        appPermissionSet.add(p1);
-        appPermissionSet.add(p2);
-
         addPermissions(userGroup1, c1, p1);
         addPermissions(userGroup2, c1, p2);
         addPermissions(userGroup3, c1);
@@ -90,13 +87,13 @@ class TestAppPermissionServiceImpl {
 
         // Check user permissions.
         final UserRef user = createUser(FileSystemTestUtil.getUniqueTestString());
-        userService.addUserToGroup(user, userGroup1);
-        userService.addUserToGroup(user, userGroup3);
+        userService.addUserToGroup(user.getUuid(), userGroup1.getUuid());
+        userService.addUserToGroup(user.getUuid(), userGroup3.getUuid());
         checkUserPermissions(user, c1, p1);
 
         addPermissions(userGroup2, c1, p2);
 
-        userService.addUserToGroup(user, userGroup2);
+        userService.addUserToGroup(user.getUuid(), userGroup2.getUuid());
         checkUserPermissions(user, c1, p1, p2);
 
         removePermissions(userGroup2, p2);
@@ -106,7 +103,7 @@ class TestAppPermissionServiceImpl {
     private void addPermissions(final UserRef user, final String... permissions) {
         for (final String permission : permissions) {
             try {
-                userAppPermissionService.addPermission(user, permission);
+                userAppPermissionService.addPermission(user.getUuid(), permission);
             } catch (final Exception e) {
                 LOGGER.info(e.getMessage());
             }
@@ -115,7 +112,7 @@ class TestAppPermissionServiceImpl {
 
     private void removePermissions(final UserRef user, final String... permissions) {
         for (final String permission : permissions) {
-            userAppPermissionService.removePermission(user, permission);
+            userAppPermissionService.removePermission(user.getUuid(), permission);
         }
     }
 
@@ -134,7 +131,7 @@ class TestAppPermissionServiceImpl {
     private void checkUserPermissions(final UserRef user, final String... permissions) {
         final Set<UserRef> allUsers = new HashSet<>();
         allUsers.add(user);
-        allUsers.addAll(userService.findGroupsForUser(user));
+        allUsers.addAll(userService.findGroupsForUser(user.getUuid()));
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final UserRef userRef : allUsers) {
@@ -157,7 +154,7 @@ class TestAppPermissionServiceImpl {
 
         final Set<UserRef> allUsers = new HashSet<>();
         allUsers.add(user);
-        allUsers.addAll(userGroupsCache.get(user));
+        allUsers.addAll(userGroupsCache.get(user.getUuid()));
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final UserRef userRef : allUsers) {

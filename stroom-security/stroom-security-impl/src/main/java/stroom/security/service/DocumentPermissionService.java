@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-package stroom.security.impl;
+package stroom.security.service;
 
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissions;
-import stroom.security.shared.UserRef;
+
+import java.util.Set;
 
 public interface DocumentPermissionService {
+
+    Set<String> getPermissionsForDocumentForUser(DocRef document, String userUuid);
+
     DocumentPermissions getPermissionsForDocument(DocRef document);
 
-    void addPermission(UserRef userRef, DocRef document, String permission);
+    void addPermission(String userUuid, DocRef document, String permission);
 
-    void removePermission(UserRef userRef, DocRef document, String permission);
+    void removePermission(String userUuid, DocRef document, String permission);
 
     void clearDocumentPermissions(DocRef document);
-
-    void clearUserPermissions(UserRef userRef);
 }

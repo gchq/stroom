@@ -23,6 +23,7 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventBus;
 import stroom.entity.shared.EntityEventHandler;
+import stroom.security.service.DocumentPermissionService;
 import stroom.util.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.security.shared.DocumentPermissions;

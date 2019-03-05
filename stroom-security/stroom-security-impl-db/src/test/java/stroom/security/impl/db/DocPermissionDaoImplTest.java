@@ -124,38 +124,6 @@ class DocPermissionDaoImplTest {
     }
 
     @Test
-    void testClearUserPermissions() {
-        // Given
-        final String userName1 = String.format("SomePerson_1_%s", UUID.randomUUID());
-        final String userName2 = String.format("SomePerson_2_%s", UUID.randomUUID());
-        final DocRef docRef1 = createTestDocRef();
-
-        final User user1 = userDao.createUser(userName1);
-        final User user2 = userDao.createUser(userName2);
-
-        // Create permissions for multiple documents to check that document selection is working correctly
-        documentPermissionDao.addPermission(user1.getUuid(), docRef1, PERMISSION_READ);
-        documentPermissionDao.addPermission(user1.getUuid(), docRef1, PERMISSION_USE);
-        documentPermissionDao.addPermission(user2.getUuid(), docRef1, PERMISSION_USE);
-
-        final Set<String> user1Doc1Before = documentPermissionDao.getPermissionsForDocumentForUser(docRef1, user1.getUuid());
-        assertThat(user1Doc1Before).isEqualTo(Set.of(PERMISSION_READ, PERMISSION_USE));
-
-        final Set<String> user2Doc1Before = documentPermissionDao.getPermissionsForDocumentForUser(docRef1, user2.getUuid());
-        assertThat(user2Doc1Before).isEqualTo(Set.of(PERMISSION_USE));
-
-        // When
-        documentPermissionDao.clearUserPermissions(user1.getUuid());
-
-        // Then
-        final Set<String> user1Doc1After = documentPermissionDao.getPermissionsForDocumentForUser(docRef1, user1.getUuid());
-        assertThat(user1Doc1After).isEmpty();
-
-        final Set<String> user2Doc1After = documentPermissionDao.getPermissionsForDocumentForUser(docRef1, user2.getUuid());
-        assertThat(user2Doc1After).isEqualTo(Set.of(PERMISSION_USE));
-    }
-
-    @Test
     void testClearDocumentPermissions() {
         // Given
         final String userName1 = String.format("SomePerson_1_%s", UUID.randomUUID());

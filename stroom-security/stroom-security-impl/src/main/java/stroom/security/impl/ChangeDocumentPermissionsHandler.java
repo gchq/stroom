@@ -20,6 +20,7 @@ package stroom.security.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
+import stroom.security.service.DocumentPermissionService;
 import stroom.util.shared.EntityServiceException;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.DocumentTypes;
@@ -102,7 +103,7 @@ class ChangeDocumentPermissionsHandler
                 final UserRef userRef = entry.getKey();
                 for (final String permission : entry.getValue()) {
                     try {
-                        documentPermissionService.removePermission(userRef, docRef, permission);
+                        documentPermissionService.removePermission(userRef.getUuid(), docRef, permission);
                         // Remember the affected documents and users so we can clear the relevant caches.
                         affectedDocRefs.add(docRef);
                         affectedUserRefs.add(userRef);
@@ -118,7 +119,7 @@ class ChangeDocumentPermissionsHandler
             for (final UserPermission userPermission : changeSet.getRemoveSet()) {
                 final UserRef userRef = userPermission.getUserRef();
                 try {
-                    documentPermissionService.removePermission(userRef, docRef, userPermission.getPermission());
+                    documentPermissionService.removePermission(userRef.getUuid(), docRef, userPermission.getPermission());
                     // Remember the affected documents and users so we can clear the relevant caches.
                     affectedDocRefs.add(docRef);
                     affectedUserRefs.add(userRef);
@@ -135,7 +136,7 @@ class ChangeDocumentPermissionsHandler
             if (DocumentTypes.isFolder(docRef.getType()) || !userPermission.getPermission().startsWith(DocumentPermissionNames.CREATE)) {
                 final UserRef userRef = userPermission.getUserRef();
                 try {
-                    documentPermissionService.addPermission(userRef, docRef, userPermission.getPermission());
+                    documentPermissionService.addPermission(userRef.getUuid(), docRef, userPermission.getPermission());
                     // Remember the affected documents and users so we can clear the relevant caches.
                     affectedDocRefs.add(docRef);
                     affectedUserRefs.add(userRef);
