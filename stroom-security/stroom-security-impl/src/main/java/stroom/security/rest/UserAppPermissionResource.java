@@ -26,12 +26,12 @@ public interface UserAppPermissionResource {
     Response getAllPermissionNames();
 
     @POST
-    @Path("/{userUuid}/{groupUuid}")
+    @Path("/{userUuid}/{permission}")
     Response addPermission(@PathParam("userUuid") String userUuid,
-                           @PathParam("groupUuid") String groupUuid);
+                           @PathParam("permission") String permission);
 
     @DELETE
-    @Path("/{userUuid}/{groupUuid}")
+    @Path("/{userUuid}/{permission}")
     Response removePermission(@PathParam("userUuid") String userUuid,
-                              @PathParam("groupUuid") String groupUuid);
+                              @PathParam("permission") String permission);
 }

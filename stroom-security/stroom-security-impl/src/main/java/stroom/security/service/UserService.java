@@ -41,9 +41,9 @@ public interface UserService extends ProvidesNamePattern {
 
     User save(User user);
 
-    Boolean delete(User user);
+    Boolean delete(String userUuid);
 
-    void addUserToGroup(final String userUuid, final String groupUuid);
+    void addUserToGroup(String userUuid, String groupUuid);
 
-    void removeUserFromGroup(final String userUuid, final String groupUuid);
+    void removeUserFromGroup(String userUuid, String groupUuid);
 }

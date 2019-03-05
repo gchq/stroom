@@ -26,6 +26,10 @@ public interface UserResource extends RestResource {
                  @QueryParam("uuid") String uuid);
 
     @GET
+    @Path("/{userUuid}")
+    Response get(@PathParam("userUuid") String userUuid);
+
+    @GET
     @Path("/usersInGroup/{groupUuid}")
     Response findUsersInGroup(@PathParam("groupUuid") String groupUuid);
 

@@ -11,7 +11,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Set;
 
 @Api(
         value = "document permissions - /v1",
@@ -52,7 +51,7 @@ public interface DocumentPermissionResource {
 
 
     @DELETE
-    @Path("/forDocForUser/{docType}/{docUuid}")
+    @Path("/forDoc/{docType}/{docUuid}")
     Response clearDocumentPermissions(
             @PathParam("docType") String docType,
             @PathParam("docUuid") String docUuid

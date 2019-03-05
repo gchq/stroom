@@ -114,9 +114,9 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Boolean delete(User user) {
+    public Boolean delete(final String userUuid) {
         security.secure(PermissionNames.MANAGE_USERS_PERMISSION,
-                () -> userDao.deleteUser(user.getUuid()));
+                () -> userDao.deleteUser(userUuid));
         return true;
     }
 

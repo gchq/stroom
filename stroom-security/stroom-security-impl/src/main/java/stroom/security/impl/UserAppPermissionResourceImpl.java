@@ -29,15 +29,15 @@ public class UserAppPermissionResourceImpl implements UserAppPermissionResource 
 
     @Override
     public Response addPermission(final String userUuid,
-                                  final String groupUuid) {
-        userAppPermissionService.addPermission(userUuid, groupUuid);
+                                  final String permission) {
+        userAppPermissionService.addPermission(userUuid, permission);
         return Response.noContent().build();
     }
 
     @Override
     public Response removePermission(final String userUuid,
-                                     final String groupUuid) {
-        userAppPermissionService.removePermission(userUuid, groupUuid);
+                                     final String permission) {
+        userAppPermissionService.removePermission(userUuid, permission);
         return Response.noContent().build();
     }
 }
