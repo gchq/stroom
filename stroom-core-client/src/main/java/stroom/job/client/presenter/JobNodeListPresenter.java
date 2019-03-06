@@ -68,7 +68,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         dataProvider = new ActionDataProvider<>(dispatcher, action);
         dataProvider.addDataDisplay(getView().getDataDisplay());
 
-        actionQueue = new ActionQueue<>(dispatcher) {
+        actionQueue = new ActionQueue<JobNode>(dispatcher) {
             @Override
             public void onComplete() {
                 dataProvider.refresh();

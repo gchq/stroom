@@ -110,7 +110,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
 
         getView().addEndColumn(new EndColumn<>());
 
-        this.dataProvider = new FindActionDataProvider<>(dispatcher, getView()) {
+        this.dataProvider = new FindActionDataProvider<FindJobCriteria, Job>(dispatcher, getView()) {
             // Add in extra blank item
             @Override
             protected ResultList<Job> processData(final ResultList<Job> data) {
