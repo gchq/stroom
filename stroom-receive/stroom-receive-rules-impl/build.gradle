@@ -1,0 +1,41 @@
+ext.moduleName = 'stroom.receive.rules.impl'
+
+dependencies {
+    compile project(':stroom-core-shared')
+    compile project(':stroom-core-server')
+    compile project(':stroom-dictionary:stroom-dictionary-api')
+    compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-importexport:stroom-importexport-api')
+    compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-receive:stroom-receive-common')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
+    
+    compile libs.stroomDocRef
+    compile libs.slf4j_api
+    compile libs.javax_inject
+
+    compile libs.guice4
+
+    compile libs.dropwizard_metrics_healthchecks
+    compile libs.dropwizard_metrics_annotation
+    compile libs.jackson_annotations
+    compile libs.jaxb_api
+    compile libs.swagger_annotations
+    compile libs.ws_rs_api
+    
+    testCompile libs.assertj_core
+    
+    testCompile libs.junit_jupiter_api
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}

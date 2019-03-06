@@ -25,7 +25,6 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
-import stroom.meta.shared.Status;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
@@ -33,13 +32,12 @@ import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.Sort.Direction;
 import stroom.feed.shared.FeedDoc;
-import stroom.node.shared.Node;
+import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.Processor;
-import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.processor.shared.FindStreamTaskCriteria;
+import stroom.processor.shared.ProcessorFilterTask;
+import stroom.util.shared.Sort.Direction;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -75,7 +73,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                 TooltipUtil.addRowData(html, "Status Time", toDateString(row.getStatusMs()));
                 TooltipUtil.addRowData(html, "Start Time", toDateString(row.getStartTimeMs()));
                 TooltipUtil.addRowData(html, "End Time", toDateString(row.getEndTimeMs()));
-                TooltipUtil.addRowData(html, "Node", toNameString(row.getNode()));
+                TooltipUtil.addRowData(html, "Node", row.getNodeName());
 
                 // TODO : @66 REINSTATE STREAM DETAILS FOR A TASK
 
@@ -134,8 +132,8 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                 .addColumn(new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_NODE, true) {
                     @Override
                     public String getValue(final ProcessorFilterTask row) {
-                        if (row.getNode() != null) {
-                            return row.getNode().getName();
+                        if (row.getNodeName() != null) {
+                            return row.getNodeName();
                         } else {
                             return "";
                         }
@@ -247,10 +245,10 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME, Direction.DESCENDING, false);
 //        criteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
 //        criteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
-        criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
-        criteria.getFetchSet().add(Processor.ENTITY_TYPE);
-        criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
-        criteria.getFetchSet().add(Node.ENTITY_TYPE);
+//        criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
+//        criteria.getFetchSet().add(Processor.ENTITY_TYPE);
+//        criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
+//        criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.obtainStreamTaskStatusSet().setMatchAll(Boolean.FALSE);
         // Only show unlocked stuff
         criteria.obtainStatusSet().add(Status.UNLOCKED);

@@ -18,8 +18,8 @@ import org.mockito.quality.Strictness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.api.NodeInfo;
-import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatisticsReceiver;
+import stroom.statistics.api.InternalStatisticEvent;
+import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.util.logging.LambdaLogger;
 
 import java.io.ByteArrayOutputStream;

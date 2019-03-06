@@ -32,17 +32,16 @@ import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
 import stroom.docref.DocRef;
-import stroom.entity.shared.Range;
+import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
+import stroom.pipeline.PipelineSerialiser;
 import stroom.pipeline.PipelineStore;
-import stroom.pipeline.feed.FeedStore;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreConfig;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.security.DocumentPermissionCache;
@@ -52,6 +51,8 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.ByteSizeUnit;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.shared.Range;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -101,6 +102,8 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     @SuppressWarnings("unused")
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
+    @Inject
+    private PipelineSerialiser pipelineSerialiser;
 
     private RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
     private RefDataStore refDataStore;

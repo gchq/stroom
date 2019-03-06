@@ -1,0 +1,9 @@
+ext.moduleName = 'stroom.data.store.api'
+
+dependencies {
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-importexport:stroom-importexport-api')
+    compile project(':stroom-meta:stroom-meta-api')
+    
+    compile libs.stroomDocRef
+}

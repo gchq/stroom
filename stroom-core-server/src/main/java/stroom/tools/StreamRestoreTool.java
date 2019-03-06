@@ -20,7 +20,7 @@ import com.google.common.base.Strings;
 import org.apache.commons.lang3.mutable.MutableInt;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.node.shared.VolumeEntity;
+import stroom.util.DatabaseTool;
 import stroom.util.concurrent.SimpleConcurrentMap;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
@@ -137,23 +137,23 @@ public class StreamRestoreTool extends DatabaseTool {
         }
         return pathStreamTypeMap;
     }
-
-    private Map<String, Long> getPathVolumeMap() throws SQLException {
-        if (pathVolumeMap == null) {
-            pathVolumeMap = new HashMap<>();
-            final String sql = "select " + VolumeEntity.PATH + "," + VolumeEntity.ID + " from " + VolumeEntity.TABLE_NAME;
-            try (final Connection connection = getConnection()) {
-                try (final Statement statement = connection.createStatement()) {
-                    try (final ResultSet resultSet = statement.executeQuery(sql)) {
-                        while (resultSet.next()) {
-                            pathVolumeMap.put(resultSet.getString(1), resultSet.getLong(2));
-                        }
-                    }
-                }
-            }
-        }
-        return pathVolumeMap;
-    }
+//
+//    private Map<String, Long> getPathVolumeMap() throws SQLException {
+//        if (pathVolumeMap == null) {
+//            pathVolumeMap = new HashMap<>();
+//            final String sql = "select " + VolumeEntity.PATH + "," + VolumeEntity.ID + " from " + VolumeEntity.TABLE_NAME;
+//            try (final Connection connection = getConnection()) {
+//                try (final Statement statement = connection.createStatement()) {
+//                    try (final ResultSet resultSet = statement.executeQuery(sql)) {
+//                        while (resultSet.next()) {
+//                            pathVolumeMap.put(resultSet.getString(1), resultSet.getLong(2));
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        return pathVolumeMap;
+//    }
 
 //    private Map<Long, String> getFeedIdNameMap() throws SQLException {
 //        if (feedIdNameMap == null) {
@@ -381,7 +381,7 @@ public class StreamRestoreTool extends DatabaseTool {
         if (Files.isRegularFile(manifest)) {
             final AttributeMap attributeMap = new AttributeMap();
             try (final InputStream inputStream = Files.newInputStream(manifest)) {
-                AttributeMapUtil.read(inputStream, true, attributeMap);
+                AttributeMapUtil.read(inputStream, attributeMap);
             } catch (final IOException ioEx) {
             }
             rtnMap.putAll(attributeMap);

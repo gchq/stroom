@@ -10,6 +10,7 @@ public class UrlConfig implements SharedObject, IsConfig {
     private String authenticationService = "http://auth-service:8099/authentication/v1";
     private String users = "http://IP_ADDRESS/users";
     private String apiKeys = "http://IP_ADDRESS/tokens";
+    private String indexVolumes = "http://IP_ADDRESS/indexVolumes";
     private String changepassword = "http://IP_ADDRESS/changepassword";
     private String kibana = null;
     private String trackers = null;
@@ -52,6 +53,14 @@ public class UrlConfig implements SharedObject, IsConfig {
 
     public void setApiKeys(final String apiKeys) {
         this.apiKeys = apiKeys;
+    }
+
+    public String getIndexVolumes() {
+        return indexVolumes;
+    }
+
+    public void setIndexVolumes(String indexVolumes) {
+        this.indexVolumes = indexVolumes;
     }
 
     public String getChangepassword() {
@@ -101,6 +110,7 @@ public class UrlConfig implements SharedObject, IsConfig {
                 ", authenticationService='" + authenticationService + '\'' +
                 ", users='" + users + '\'' +
                 ", apiKeys='" + apiKeys + '\'' +
+                ", indexVolumes='" + indexVolumes + '\'' +
                 ", changepassword='" + changepassword + '\'' +
                 ", kibana='" + kibana + '\'' +
                 ", trackers='" + trackers + '\'' +

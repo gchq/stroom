@@ -18,7 +18,7 @@
 package stroom.explorer.api;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.DocRefInfo;
+import stroom.docref.DocRefInfo;
 
 import java.util.Collections;
 import java.util.Map;

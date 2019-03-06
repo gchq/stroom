@@ -45,6 +45,7 @@ import stroom.node.shared.NodeInfoResult;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -113,10 +114,11 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                             TooltipUtil.addHeading(html, "Node Details");
 
                             if (result != null) {
+                                final BuildInfo buildInfo = result.getBuildInfo();
                                 TooltipUtil.addRowData(html, "Node Name", result.getNodeName(), true);
-                                TooltipUtil.addRowData(html, "Build Version", result.getBuildVersion(), true);
-                                TooltipUtil.addRowData(html, "Build Date", result.getBuildDate(), true);
-                                TooltipUtil.addRowData(html, "Up Date", result.getUpDate(), true);
+                                TooltipUtil.addRowData(html, "Build Version", buildInfo.getBuildVersion(), true);
+                                TooltipUtil.addRowData(html, "Build Date", buildInfo.getBuildDate(), true);
+                                TooltipUtil.addRowData(html, "Up Date", buildInfo.getUpDate(), true);
                                 TooltipUtil.addRowData(html, "Discover Time", result.getDiscoverTime(), true);
                                 TooltipUtil.addRowData(html, "Cluster URL", result.getClusterURL(), true);
                             } else {

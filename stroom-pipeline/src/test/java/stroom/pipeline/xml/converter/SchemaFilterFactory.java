@@ -20,7 +20,7 @@ package stroom.pipeline.xml.converter;
 import stroom.cache.MockSchemaPool;
 import stroom.pipeline.cache.SchemaLoaderImpl;
 import stroom.pipeline.cache.SchemaPool;
-import stroom.docstore.Persistence;
+import stroom.docstore.api.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.memory.MemoryPersistence;

@@ -27,7 +27,7 @@ import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.WriteDocumentEvent;
 import stroom.explorer.shared.DocumentType;
 import stroom.docref.DocRef;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;

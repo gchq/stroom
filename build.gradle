@@ -9,7 +9,7 @@ buildscript {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
 
         // A fork of https://github.com/wfhartford/gradle-dependency-analyze that works with Java 10
-//        classpath 'stroom:gradle-dependency-analyze:v2.2.5'
+        classpath 'stroom:gradle-dependency-analyze:v2.2.5'
 
         // The following are required to put JAXB on the Gradle classpath for the purpose of JOOQ code generation in J9+.
         // Later versions of the JOOQ Gradle plugin should make this unnecessary.
@@ -34,7 +34,9 @@ plugins {
 
     id 'org.flywaydb.flyway' version '5.2.4' apply false
 
-    id 'java-library'
+//    id 'java-library'
+
+//    id 'nebula.lint' version '10.4.2'
 }
 
 wrapper{
@@ -43,7 +45,7 @@ wrapper{
 
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'de.undercouch.download'
-//apply plugin: 'ca.cutterslade.analyze'
+apply plugin: 'ca.cutterslade.analyze'
 
 if (!JavaVersion.current().isJava10()) {
     throw new GradleException("This build must be run with Java 10 (current = " + JavaVersion.current() + ")")
@@ -85,28 +87,28 @@ ext.versions = [
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v1.0-beta.8',
         stroomExpression  : 'v2.0.4',
-        stroomQuery       : 'v4.0-beta.24', // same version for both stroom-query-api and stroom-query-common
+        stroomQuery       : 'v4.0-beta.25', // same version for both stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         //------------3rd-party------------
         curator           : '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
-        dropwizard        : '1.3.5', //if you change this version you should check the versions below that need to move in sync with it
+        dropwizard        : '1.3.8', //if you change this version you should check the versions below that need to move in sync with it
         dropwizard_metrics: '4.0.2', //should be kept in step with dropwizard
         guava             : '26.0-jre',
         guice4            : '4.2.0',
         gwt               : '2.8.2',
-        hibernate         : '5.2.15.Final', //dropwiz 1.3.3 uses -validator 5.4.2.Final and -core 5.2.15.Final
+        hibernate         : '5.2.15.Final', //dropwiz 1.3.8 uses -validator 5.4.2.Final and -core 5.2.15.Final
         hikari            : '3.2.0',
         mockito           : '2.23.4',
-        jackson           : '2.9.5', //in line with dropwizard 1.3.3
+        jackson           : '2.9.6', //in line with dropwizard 1.3.8
         jersey            : '2.25.1',
-        jetty             : '9.4.10.v20180503', //in line with dropwizard 1.3.3
+        jetty             : '9.4.11.v20180605', //in line with dropwizard 1.3.8
         junit_jupiter     : '5.3.2',
         jooq              : '3.11.9',
-        logback           : '1.2.3', //in line with dropwizard 1.3.3
+        logback           : '1.2.3', //in line with dropwizard 1.3.8
         lucene            : '5.5.3',
         rxjava            : '2.1.10',
-        slf4j             : '1.7.25', //in line with dropwizard 1.3.3
+        slf4j             : '1.7.25', //in line with dropwizard 1.3.8
         swagger           : '1.5.21',
         unirest           : '1.4.9',
         zzDUMMYzz         : 'makes sorting easier'
@@ -268,7 +270,6 @@ ext.contentPacks = [
 //defines a list of gradle projects that we will publish with maven/bintray
 def projectsToBePublished = subprojects.findAll { project ->
     project.path in [
-            ':stroom-entity-shared',
             ':stroom-util',
             ':stroom-util-shared',
             'zzDUMMYzz to ease sorting'
@@ -293,8 +294,14 @@ subprojects {
 
     apply plugin: 'java'
     apply plugin: 'idea'
-    //apply plugin: 'ca.cutterslade.analyze'
-    apply plugin: 'java-library'
+    apply plugin: 'ca.cutterslade.analyze'
+//    apply plugin: 'java-library'
+//    apply plugin: 'nebula.lint'
+//
+//    gradleLint {
+//        rules +=  'unused-dependency'
+////        rules +=  'all-dependency'
+//    }
 
     sourceCompatibility = JavaVersion.VERSION_1_10
     targetCompatibility = JavaVersion.VERSION_1_10
@@ -345,12 +352,12 @@ subprojects {
         useJUnitPlatform()
 
         reports.html.destination = file("${reporting.baseDir}/${name}")
-        
+
         afterSuite { descriptor, result ->
             //println "Executed suite ${descriptor.name} ${descriptor.className} with result: ${result.resultType}"
 
-            if (descriptor != null 
-                    && descriptor.className != null 
+            if (descriptor != null
+                    && descriptor.className != null
                     && result.resultType.toString() == "FAILURE") {
 
                 //test class failed so add its project info and test report file to a global list for
@@ -374,6 +381,8 @@ subprojects {
         // clear out the 'out' dirs used by intelliJ
         delete "out"
     }
+
+    task allDeps(type: DependencyReportTask) {}
 
 //    // These lines pull the integration test task into our build process.
 //    tasks.check.dependsOn integrationTest
@@ -435,6 +444,44 @@ subprojects {
 //            version versions.stroomQuery
 //        }
 //    }
+//
+
+    //task analyzeJavaLibraryDependencies(type: ca.cutterslade.gradle.analyze.AnalyzeDependenciesTask) {
+//    classesDirs = sourceSets.main.output.classesDirs
+//    require = [
+//            project.configurations.runtimeClasspath
+//    ]
+//    allowedToDeclare = [
+//            project.configurations.permitUnusedDeclared
+//    ]
+//    justWarn = true
+//}
+//task analyzeJavaLibraryTestDependencies(type: ca.cutterslade.gradle.analyze.AnalyzeDependenciesTask) {
+//    classesDirs = sourceSets.test.output.classesDirs
+//    require = [
+//            project.configurations.testRuntimeClasspath
+//    ]
+//    allowedToDeclare = [
+//            project.configurations.permitTestUnusedDeclared
+//    ]
+//    allowedToUse = [
+//            project.configurations.runtimeClasspath
+//    ]
+//    justWarn = true
+//}
+//tasks.build.dependsOn analyzeJavaLibraryDependencies
+//tasks.build.dependsOn analyzeJavaLibraryTestDependencies
+//    
+    analyzeClassesDependencies {
+        justWarn = true
+    }
+
+    analyzeTestClassesDependencies {
+        justWarn = true
+    }
+
+
+
 }
 
 //configures only those projects in publishedProjectsPaths

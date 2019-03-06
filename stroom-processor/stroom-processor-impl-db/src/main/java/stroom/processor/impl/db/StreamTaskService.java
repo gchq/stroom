@@ -20,6 +20,10 @@ package stroom.processor.impl.db;
 import stroom.entity.shared.BaseResultList;
 import stroom.processor.shared.FindStreamTaskCriteria;
 import stroom.processor.shared.ProcessorFilterTask;
+import stroom.entity.BaseEntityService;
+import stroom.util.entity.FindService;
+import stroom.streamtask.shared.FindStreamProcessorCriteria;
+import stroom.streamtask.shared.Processor;
 
 public interface StreamTaskService {
 //        extends BaseEntityService<ProcessorFilterTask>, FindService<ProcessorFilterTask, FindStreamTaskCriteria>, FindSummaryService<FindStreamTaskCriteria> {

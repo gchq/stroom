@@ -20,21 +20,21 @@ package stroom.importexport;
 
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.entity.shared.DocRefs;
+import stroom.util.shared.DocRefs;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.importexport.impl.ImportExportService;
-import stroom.pipeline.feed.FeedStore;
+import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
+import stroom.importexport.impl.ImportExportService;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.resource.api.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.shared.ResourceKey;
-import stroom.util.test.FileSystemTestUtil;
+import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.util.List;

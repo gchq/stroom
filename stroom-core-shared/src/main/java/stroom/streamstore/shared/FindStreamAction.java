@@ -17,7 +17,7 @@
 package stroom.streamstore.shared;
 
 import stroom.task.shared.Action;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.ResultList;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaRow;
 

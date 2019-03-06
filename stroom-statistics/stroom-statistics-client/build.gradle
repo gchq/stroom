@@ -1,20 +1,18 @@
 ext.moduleName = 'stroom.statistics.client'
 
 dependencies {
-    implementation project(':stroom-core-client')
-    implementation project(':stroom-core-client-widget')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-docstore:stroom-docstore-shared')
-    implementation project(':stroom-entity-shared')
-    implementation project(':stroom-security:stroom-security-client-api')
-    implementation project(':stroom-statistics:stroom-statistics-api')
-    implementation project(':stroom-statistics:stroom-statistics-shared')
-    implementation project(':stroom-task:stroom-task-shared')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-core-client')
+    compile project(':stroom-core-client-widget')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-security:stroom-security-client-api')
+    compile project(':stroom-statistics:stroom-statistics-api')
+    compile project(':stroom-util-shared')
     
-    implementation libs.gin
-    implementation libs.guice3
-    implementation libs.gwt_user
-    implementation libs.gwtp_mvp_client
-    implementation libs.stroomDocRef
+    compile libs.gin
+    compile libs.guice3
+    compile libs.gwt_user
+    compile libs.gwtp_mvp_client
+    compile libs.jackson_annotations
+    compile libs.jaxb_api
+    compile libs.stroomDocRef
 }

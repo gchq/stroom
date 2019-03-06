@@ -17,21 +17,25 @@
 package stroom.index;
 
 import com.google.inject.AbstractModule;
-import stroom.entity.EntityTypeBinder;
-import stroom.entity.FindService;
-import stroom.entity.shared.Clearable;
+import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.EntityEvent;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.impl.db.IndexDbModule;
-import stroom.index.shared.CloseIndexShardAction;
-import stroom.index.shared.DeleteIndexShardAction;
-import stroom.index.shared.FetchIndexVolumesAction;
-import stroom.index.shared.FlushIndexShardAction;
+import stroom.index.rest.StroomIndexQueryResourceImpl;
+import stroom.index.service.IndexShardService;
+import stroom.index.service.IndexShardServiceImpl;
+import stroom.index.service.IndexVolumeGroupService;
+import stroom.index.service.IndexVolumeGroupServiceImpl;
+import stroom.index.service.IndexVolumeService;
+import stroom.index.service.IndexVolumeServiceImpl;
 import stroom.index.shared.IndexDoc;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.GuiceUtil;
 import stroom.util.RestResource;
+import stroom.util.entity.EntityTypeBinder;
+import stroom.util.shared.Clearable;
+import stroom.util.shared.Flushable;
 
 public class IndexModule extends AbstractModule {
     @Override
@@ -44,20 +48,15 @@ public class IndexModule extends AbstractModule {
         bind(IndexStructureCache.class).to(IndexStructureCacheImpl.class);
         bind(IndexStore.class).to(IndexStoreImpl.class);
         bind(IndexVolumeService.class).to(IndexVolumeServiceImpl.class);
+        bind(IndexVolumeGroupService.class).to(IndexVolumeGroupServiceImpl.class);
         bind(IndexShardService.class).to(IndexShardServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(IndexStructureCacheImpl.class);
 
-        TaskHandlerBinder.create(binder())
-                .bind(CloseIndexShardAction.class, stroom.index.CloseIndexShardActionHandler.class)
-                .bind(DeleteIndexShardAction.class, stroom.index.DeleteIndexShardActionHandler.class)
-                .bind(FlushIndexShardAction.class, stroom.index.FlushIndexShardActionHandler.class)
-                .bind(FetchIndexVolumesAction.class, stroom.index.FetchIndexVolumesActionHandler.class)
-                .bind(CloseIndexShardClusterTask.class, CloseIndexShardClusterHandler.class)
-                .bind(FlushIndexShardClusterTask.class, FlushIndexShardClusterHandler.class)
-                .bind(DeleteIndexShardClusterTask.class, DeleteIndexShardClusterHandler.class);
+        final Multibinder<Flushable> flushableBinder = Multibinder.newSetBinder(binder(), Flushable.class);
+        flushableBinder.addBinding().to(IndexVolumeServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexConfigCacheEntityEventHandler.class);
@@ -69,12 +68,13 @@ public class IndexModule extends AbstractModule {
                 .addBinding(IndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(StroomIndexQueryResource.class);
+                .addBinding(StroomIndexQueryResourceImpl.class);
 
         EntityTypeBinder.create(binder())
                 .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), FindService.class)
-                .addBinding(IndexShardServiceImpl.class);
+        // TODO Shards are no longer Findable Entities
+//        GuiceUtil.buildMultiBinder(binder(), FindService.class)
+//                .addBinding(IndexShardServiceImpl.class);
     }
 }

@@ -16,9 +16,13 @@
 
 package stroom.entity.shared;
 
+import stroom.util.shared.Clearable;
+import stroom.util.shared.Copyable;
 import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HasIsConstrained;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.docref.SharedObject;
+import stroom.util.shared.Matcher;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;

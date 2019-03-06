@@ -17,16 +17,16 @@
 package stroom.processor.impl.db;
 
 import com.google.inject.AbstractModule;
-import stroom.entity.FindService;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.processor.StreamProcessorFilterService;
 import stroom.processor.StreamProcessorService;
-import stroom.processor.shared.task.CreateProcessorAction;
-import stroom.processor.shared.task.FetchProcessorAction;
-import stroom.processor.shared.task.ReprocessDataAction;
+import stroom.processor.shared.CreateProcessorFilterAction;
+import stroom.processor.shared.FetchProcessorAction;
+import stroom.processor.shared.ReprocessDataAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.GuiceUtil;
 import stroom.util.RestResource;
+import stroom.util.entity.FindService;
 
 public class StreamTaskModule extends AbstractModule {
     @Override
@@ -39,7 +39,7 @@ public class StreamTaskModule extends AbstractModule {
         bind(CachedStreamProcessorService.class).to(CachedStreamProcessorServiceImpl.class);
 
         TaskHandlerBinder.create(binder())
-                .bind(CreateProcessorAction.class, stroom.processor.impl.db.task.CreateProcessorHandler.class)
+                .bind(CreateProcessorFilterAction.class, stroom.processor.impl.db.task.CreateProcessorHandler.class)
                 .bind(CreateStreamTasksTask.class, stroom.processor.impl.db.task.CreateStreamTasksTaskHandler.class)
                 .bind(FetchProcessorAction.class, stroom.processor.impl.db.task.FetchProcessorHandler.class)
                 .bind(ReprocessDataAction.class, ReprocessDataHandler.class)

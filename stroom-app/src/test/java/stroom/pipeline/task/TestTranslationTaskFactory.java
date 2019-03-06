@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Store;
 import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.docref.DocRef;
 import stroom.node.api.NodeInfo;
@@ -42,7 +42,7 @@ import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.StoreCreationTool;
-import stroom.test.StroomPipelineTestFileUtil;
+import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
@@ -85,7 +85,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     @Inject
     private TaskManager taskManager;
     @Inject
-    private StreamStore streamStore;
+    private Store streamStore;
     @Inject
     private MetaService metaService;
     @Inject

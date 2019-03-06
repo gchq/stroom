@@ -1,0 +1,13 @@
+ext.moduleName = 'stroom.meta.statistics.impl'
+
+dependencies {
+    compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-meta:stroom-meta-statistics-api')
+    compile project(':stroom-statistics:stroom-statistics-api')
+    compile project(':stroom-util')
+    
+    compile libs.guava
+    compile libs.guice4
+    compile libs.javax_inject
+    compile libs.slf4j_api
+}

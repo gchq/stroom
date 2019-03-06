@@ -24,8 +24,8 @@ import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Sort.Direction;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Sort.Direction;
 import stroom.node.api.NodeInfo;
 import stroom.processor.ProcessorConfig;
 import stroom.processor.StreamProcessorFilterService;
@@ -52,6 +52,20 @@ import stroom.processor.shared.ProcessorFilterTask;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.TaskStatus;
 import stroom.task.TaskCallbackAdaptor;
+import stroom.statistics.api.InternalStatisticEvent;
+import stroom.statistics.api.InternalStatisticKey;
+import stroom.statistics.api.InternalStatisticsReceiver;
+import stroom.streamstore.shared.Limits;
+import stroom.streamstore.shared.QueryData;
+import stroom.streamtask.StreamTaskCreatorTransactionHelper.CreatedTasks;
+import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
+import stroom.streamtask.shared.FindStreamTaskCriteria;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.streamtask.shared.ProcessorFilterTracker;
+import stroom.streamtask.shared.TaskStatus;
+import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
@@ -751,6 +765,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                     resultSize = result.size();
                     reachedLimit = result.isReachedLimit();
                 }
+                final boolean exhausted = resultSize == 0 || reachedLimit;
 
                 // Update the tracker status message.
                 ProcessorFilterTracker tracker = updatedTracker;
@@ -759,22 +774,24 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
 
                 // Create a task for each stream reference.
                 final Map<Meta, InclusiveRanges> map = createStreamMap(result);
-                final CreatedTasks createdTasks = streamTaskTransactionHelper.createNewTasks(
+                streamTaskTransactionHelper.createNewTasks(
                         filter,
                         tracker,
                         streamQueryTime,
                         map,
                         nodeName,
                         maxMetaId,
-                        reachedLimit);
-                // Transfer the newly created (and available) tasks to the
-                // queue.
-                createdTasks.getAvailableTaskList().forEach(queue::add);
-                LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}", createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString());
+                        reachedLimit,
+                        createdTasks -> {
+                            // Transfer the newly created (and available) tasks to the
+                            // queue.
+                            createdTasks.getAvailableTaskList().forEach(queue::add);
+                            LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}", createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString());
 
-                exhaustedFilterMap.put(filter.getId(), resultSize == 0 || reachedLimit);
+                            exhaustedFilterMap.put(filter.getId(), exhausted);
 
-                queue.setFilling(false);
+                            queue.setFilling(false);
+                        });
             }
 
             @Override
@@ -808,18 +825,20 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             map.put(meta, null);
         }
 
-        final CreatedTasks createdTasks = streamTaskTransactionHelper.createNewTasks(
+        streamTaskTransactionHelper.createNewTasks(
                 filter,
                 updatedTracker,
                 streamQueryTime,
                 map,
                 nodeName,
                 maxMetaId,
-                false);
-        // Transfer the newly created (and available) tasks to the queue.
-        createdTasks.getAvailableTaskList().forEach(queue::add);
-        LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}", createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString());
-        exhaustedFilterMap.put(filter.getId(), createdTasks.getTotalTasksCreated() == 0);
+                false,
+                createdTasks -> {
+                    // Transfer the newly created (and available) tasks to the queue.
+                    createdTasks.getAvailableTaskList().forEach(queue::add);
+                    LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}", createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString());
+                    exhaustedFilterMap.put(filter.getId(), createdTasks.getTotalTasksCreated() == 0);
+                });
     }
 
     private Map<Meta, InclusiveRanges> createStreamMap(final EventRefs eventRefs) {

@@ -25,7 +25,7 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.FetchUserAppPermissionsAction;

@@ -19,9 +19,9 @@ package stroom.processor.impl.db;
 
 import org.junit.jupiter.api.Test;
 import stroom.meta.shared.AttributeMap;
-import stroom.data.store.StreamFactory;
+import stroom.receive.common.StreamFactory;
 import stroom.util.date.DateUtil;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

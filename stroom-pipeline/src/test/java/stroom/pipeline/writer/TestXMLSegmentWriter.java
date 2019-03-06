@@ -16,7 +16,7 @@
 
 package stroom.pipeline.writer;
 
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 // TODO : Add test data
 

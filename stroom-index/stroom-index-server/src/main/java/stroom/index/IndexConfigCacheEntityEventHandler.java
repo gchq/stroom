@@ -20,6 +20,7 @@ package stroom.index;
 import stroom.docref.DocRef;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventHandler;
+import stroom.index.service.IndexShardService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
@@ -57,10 +58,10 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
 
     private void updateIndex(final DocRef indexRef) {
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getNodeIdSet().add(nodeInfo.getThisNode());
+        criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
         criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
-        criteria.getIndexSet().add(indexRef);
+        criteria.getIndexUuidSet().add(indexRef.getUuid());
 
         final List<IndexShard> shards = indexShardService.find(criteria);
         shards.forEach(shard -> {

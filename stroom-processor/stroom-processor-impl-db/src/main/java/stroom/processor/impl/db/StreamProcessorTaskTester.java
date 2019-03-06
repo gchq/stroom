@@ -23,13 +23,17 @@ import stroom.processor.StreamProcessorTaskExecutor;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTask;
+import stroom.data.store.api.Source;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTask;
 
 public class StreamProcessorTaskTester implements StreamProcessorTaskExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamProcessorTaskTester.class);
 
     @Override
     public void exec(final Processor streamProcessor, final ProcessorFilter streamProcessorFilter,
-                     final ProcessorFilterTask streamTask, final StreamSource streamSource) {
+                     final ProcessorFilterTask streamTask, final Source streamSource) {
         LOGGER.info("exec() - Processing stream {}", streamSource.getMeta());
     }
 }

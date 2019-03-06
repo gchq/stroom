@@ -30,7 +30,7 @@ import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgIcon;

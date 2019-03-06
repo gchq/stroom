@@ -16,8 +16,8 @@
 
 package stroom.headless;
 
-import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatisticsReceiver;
+import stroom.statistics.api.InternalStatisticEvent;
+import stroom.statistics.api.InternalStatisticsReceiver;
 
 import java.util.List;
 

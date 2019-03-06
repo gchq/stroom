@@ -16,7 +16,7 @@
 
 package stroom.xmlschema.shared;
 
-import stroom.entity.shared.FindDocumentEntityCriteria;
+import stroom.util.shared.FindDocumentEntityCriteria;
 
 import java.util.Objects;
 

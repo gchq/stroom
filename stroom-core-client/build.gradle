@@ -1,42 +1,30 @@
 ext.moduleName = 'stroom.core.client'
 
 dependencies {
-    implementation project(':stroom-activity:stroom-activity-api')
-    implementation project(':stroom-activity:stroom-activity-shared')
-    implementation project(':stroom-config:stroom-config-global-api')
-    implementation project(':stroom-core-client-widget')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-docstore:stroom-docstore-shared')
-    implementation project(':stroom-entity-shared')
-    implementation project(':stroom-explorer:stroom-explorer-api')
-    implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-job:stroom-job-shared')
-    implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-processor:stroom-processor-shared')
-    implementation project(':stroom-ruleset:stroom-ruleset-shared')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-security:stroom-security-client-api')
-    implementation project(':stroom-task:stroom-task-shared')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-core-client-widget')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-security:stroom-security-client-api')
+    compile project(':stroom-util-shared')
 
-    implementation libs.stroomDocRef
-    implementation libs.stroomQueryApi
+    compile libs.stroomDocRef
+    compile libs.stroomQueryApi
     
-    implementation libs.gin
-    implementation libs.guice3
-    implementation libs.gwt_user
-    implementation libs.gwtp_mvp_client
-    implementation libs.hibernate_jpa_api
-    implementation libs.javax_inject
+    compile libs.gin
+    compile libs.guice3
+    compile libs.gwt_user
+    compile libs.gwtp_mvp_client
+    compile libs.hibernate_jpa_api
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.jaxb_api
 
     //Needed only for the GwtCompilerWrapper
     compileOnly libs.gwt_dev
     
-    testImplementation project(':stroom-util')
-    testImplementation project(':stroom-test-common')
-
-    testImplementation libs.assertj_core
-    testImplementation libs.junit_jupiter_api
+    testCompile project(':stroom-util')
+    testCompile project(':stroom-test-common')
+    testCompile libs.assertj_core
+    testCompile libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

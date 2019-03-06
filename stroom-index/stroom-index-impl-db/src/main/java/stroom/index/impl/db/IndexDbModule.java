@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.DbUtil;
+import stroom.index.dao.IndexShardDao;
+import stroom.index.dao.IndexVolumeDao;
+import stroom.index.dao.IndexVolumeGroupDao;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -23,7 +26,9 @@ public class IndexDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
-
+        bind(IndexShardDao.class).to(IndexShardDaoImpl.class);
+        bind(IndexVolumeDao.class).to(IndexVolumeDaoImpl.class);
+        bind(IndexVolumeGroupDao.class).to(IndexVolumeGroupDaoImpl.class);
     }
 
     @Provides

@@ -1,7 +1,9 @@
 package stroom.db.util;
 
+import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.SQLDialect;
 import org.jooq.SelectForUpdateStep;
@@ -13,15 +15,25 @@ import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.PageRequest;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.PageRequest;
 import stroom.util.logging.LambdaLogger;
+import stroom.util.shared.Range;
+import stroom.util.shared.Sort;
+import stroom.util.shared.StringCriteria;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class JooqUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(JooqUtil.class);
@@ -159,5 +171,149 @@ public final class JooqUtil {
             throw new RuntimeException(LambdaLogger.buildMessage("Field [id] not found on table [{}]", table.getName()));
         }
         return idField;
+    }
+
+    /**
+     * Used to build JOOQ conditions from our Criteria Range
+     *
+     * @param field The jOOQ field being range queried
+     * @param criteria The criteria to apply
+     * @param <R> The type of the record
+     * @param <T> The type of the range
+     * @return A condition that applies the given range.
+     */
+    public static <R extends Record, T extends Number>
+    Optional<Condition> applyRange(final TableField<R, T> field,
+                                   final Range<T> criteria) {
+        if (criteria.isConstrained()) {
+            Optional<Condition> nullCondition = Optional.empty();
+            if (criteria.isMatchNull()) {
+                nullCondition = Optional.of(field.isNull());
+            }
+            Optional<Condition> fromCondition = Optional.empty();
+            if (criteria.getFrom() != null) {
+                fromCondition = Optional.of(field.greaterOrEqual(criteria.getFrom()));
+            }
+            Optional<Condition> toCondition = Optional.empty();
+            if (criteria.getTo() != null) {
+                toCondition = Optional.of(field.lessThan(criteria.getTo()));
+            }
+
+            return Optional.of(
+                    DSL.or(
+                            Stream.of(nullCondition, fromCondition, toCondition)
+                                    .filter(Optional::isPresent)
+                                    .map(Optional::get)
+                                    .collect(Collectors.toSet()
+                                    )
+                    ));
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Used to build jOOQ conditions from criteria sets
+     *
+     * @param field The jOOQ field being set queried
+     * @param criteria The criteria to apply
+     * @param <R> The type of the record
+     * @param <T> The type of the range
+     * @return A condition that applies the given set.
+     */
+    public static <R extends Record, T>
+    Optional<Condition> applySet(final TableField<R, T> field,
+                                 final CriteriaSet<T> criteria) {
+        if (criteria.isConstrained()) {
+            Optional<Condition> nullCondition = Optional.empty();
+
+            if (criteria.getMatchNull() != null) {
+                nullCondition = Optional.of(criteria.getMatchNull() ? field.isNull() : field.isNotNull());
+            }
+            Optional<Condition> valueCondition = Optional.empty();
+            if (criteria.size() > 0) {
+                valueCondition = Optional.of(field.in(criteria.getSet()));
+            }
+
+            return Optional.of(
+                    DSL.or(
+                            Stream.of(nullCondition, valueCondition)
+                                    .filter(Optional::isPresent)
+                                    .map(Optional::get)
+                                    .collect(Collectors.toSet()
+                                    )
+                    ));
+        }
+
+        return Optional.empty();
+
+    }
+
+    /**
+     * Used to build jOOQ conditions from string criteria
+     * @param field The jOOQ field being queried
+     * @param criteria The criteria to apply
+     * @param <R> The type of the record
+     * @return A condition that applies the given criteria
+     */
+    public static <R extends Record>
+    Optional<Condition> applyString(final TableField<R, String> field,
+                                    final StringCriteria criteria) {
+        if (criteria.isConstrained()) {
+            Optional<Condition> nullCondition = Optional.empty();
+
+            if (criteria.getMatchNull() != null) {
+                nullCondition = Optional.of(criteria.getMatchNull() ? field.isNull() : field.isNotNull());
+            }
+
+            final Optional<Condition> valueCondition;
+            if (criteria.getMatchStyle() == null) {
+                valueCondition = Optional.of(field.eq(criteria.getString()));
+            } else {
+                if (criteria.isCaseInsensitive()) {
+                    valueCondition = Optional.of(field.upper().eq(criteria.getMatchString()));
+                } else {
+                    valueCondition = Optional.of(field.eq(criteria.getMatchString()));
+                }
+            }
+
+            return Optional.of(
+                    DSL.or(
+                            Stream.of(nullCondition, valueCondition)
+                                    .filter(Optional::isPresent)
+                                    .map(Optional::get)
+                                    .collect(Collectors.toSet()
+                                    )
+                    ));
+        }
+
+        return Optional.empty();
+    }
+
+    public static OrderField[] getOrderFields(final Map<String, TableField> tableFieldMap, final BaseCriteria criteria) {
+        if (criteria.getSortList() != null) {
+            return criteria.getSortList().stream()
+                    .map(s -> getOrderField(tableFieldMap, s))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .toArray(OrderField[]::new);
+        }
+
+        return new OrderField[0];
+    }
+
+    private static Optional<OrderField> getOrderField(final Map<String, TableField> tableFieldMap, final Sort sort) {
+        final TableField field = tableFieldMap.get(sort.getField());
+
+        if (null != field) {
+            switch (sort.getDirection()) {
+                case ASCENDING:
+                    return Optional.of(field.asc());
+                case DESCENDING:
+                    return Optional.of(field.desc());
+            }
+        }
+
+        return Optional.empty();
     }
 }

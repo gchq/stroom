@@ -16,7 +16,7 @@
 
 package stroom.node.shared;
 
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.shared.BaseCriteria;
 
 public class FindDBTableCriteria extends BaseCriteria {
 }

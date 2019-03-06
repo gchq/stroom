@@ -16,7 +16,7 @@
 
 package stroom.pipeline.xml;
 
-import stroom.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -27,7 +27,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.docref.DocRef;
-import stroom.test.StroomPipelineTestFileUtil;
+import stroom.test.common.StroomPipelineTestFileUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

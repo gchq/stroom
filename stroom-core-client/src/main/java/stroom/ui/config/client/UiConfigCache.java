@@ -23,7 +23,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.ui.config.shared.FetchUiConfigAction;
 import stroom.ui.config.shared.UiConfig;
 import stroom.widget.util.client.Future;

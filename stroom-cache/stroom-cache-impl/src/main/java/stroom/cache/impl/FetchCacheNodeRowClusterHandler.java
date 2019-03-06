@@ -20,7 +20,7 @@ package stroom.cache.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.shared.CacheInfo;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.ResultList;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 

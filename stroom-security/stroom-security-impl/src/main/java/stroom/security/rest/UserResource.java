@@ -22,8 +22,8 @@ import javax.ws.rs.core.Response;
 public interface UserResource extends RestResource {
     @GET
     Response get(@QueryParam("name") String name,
-                       @QueryParam("isGroup") Boolean isGroup,
-                       @QueryParam("uuid") String uuid);
+                 @QueryParam("isGroup") Boolean isGroup,
+                 @QueryParam("uuid") String uuid);
 
     @GET
     @Path("/usersInGroup/{groupUuid}")

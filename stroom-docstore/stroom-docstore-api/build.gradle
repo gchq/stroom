@@ -1,13 +1,14 @@
 ext.moduleName = 'stroom.docstore.api'
 
 dependencies {
-    implementation project(':stroom-explorer:stroom-explorer-api')
-    implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-docstore:stroom-docstore-shared')
-    implementation project(':stroom-util-shared')
-//    implementation project(':stroom-entity-shared') // TODO : @66 TRY AND BREAK OUT SHARED CLASSES
+    compile project(':stroom-core-shared')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-importexport:stroom-importexport-api')
+    compile project(':stroom-util-shared')
 //
-    implementation libs.stroomDocRef
-    implementation libs.stroomQueryApi
+    compile libs.stroomDocRef
+
+    compile libs.jackson_annotations
+    compile libs.jaxb_api
 }
 

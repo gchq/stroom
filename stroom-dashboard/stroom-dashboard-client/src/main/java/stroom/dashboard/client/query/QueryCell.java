@@ -23,10 +23,10 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import stroom.dashboard.shared.QueryEntity;
+import stroom.dashboard.shared.StoredQuery;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 
-public class QueryCell extends AbstractCell<QueryEntity> {
+public class QueryCell extends AbstractCell<StoredQuery> {
     private static Template template;
     private static Resources resources;
 
@@ -43,14 +43,14 @@ public class QueryCell extends AbstractCell<QueryEntity> {
     }
 
     @Override
-    public void render(final Context context, final QueryEntity value, final SafeHtmlBuilder sb) {
+    public void render(final Context context, final StoredQuery value, final SafeHtmlBuilder sb) {
         if (value != null) {
             if (value.isFavourite()) {
                 sb.append(template.favouritesLayout(resources.style().outer(), resources.style().expression(),
                         value.getName()));
 
             } else {
-                final String time = ClientDateUtil.toISOString(value.getCreateTime());
+                final String time = ClientDateUtil.toISOString(value.getCreateTimeMs());
                 sb.append(template.historyLayout(resources.style().outer(), resources.style().time(), time,
                         resources.style().expression(), value.getQuery().getExpression().toString()));
             }

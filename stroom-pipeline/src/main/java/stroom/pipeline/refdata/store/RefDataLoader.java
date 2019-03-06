@@ -17,7 +17,7 @@
 
 package stroom.pipeline.refdata.store;
 
-import stroom.entity.shared.Range;
+import stroom.util.shared.Range;
 
 public interface RefDataLoader extends AutoCloseable {
 

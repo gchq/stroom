@@ -25,12 +25,11 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.io.FileUtil;
-import stroom.util.test.StroomTest;
-import stroom.util.test.TempDir;
-import stroom.util.test.TempDirExtension;
-import stroom.util.test.TestState;
-import stroom.util.test.TestState.State;
+import stroom.test.common.util.test.StroomTest;
+import stroom.test.common.util.test.TempDir;
+import stroom.test.common.util.test.TempDirExtension;
+import stroom.test.common.util.test.TestState;
+import stroom.test.common.util.test.TestState.State;
 
 import javax.inject.Inject;
 import java.nio.file.Path;

@@ -29,7 +29,7 @@ import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
 import stroom.core.client.presenter.CorePresenter.CoreProxy;
 import stroom.core.client.presenter.CorePresenter.CoreView;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskEndEvent.TaskEndHandler;
 import stroom.task.client.TaskStartEvent;

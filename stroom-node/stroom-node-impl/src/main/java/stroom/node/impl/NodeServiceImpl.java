@@ -20,7 +20,7 @@ package stroom.node.impl;
 
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.StroomEntityManager;
-import stroom.entity.shared.BaseResultList;
+import stroom.util.shared.BaseResultList;
 import stroom.node.api.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;

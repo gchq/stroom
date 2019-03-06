@@ -26,7 +26,7 @@ import stroom.meta.shared.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.entity.StroomEntityManager;
-import stroom.entity.util.ConnectionUtil;
+import stroom.util.sql.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
 import stroom.persist.ConnectionProvider;
 import stroom.processor.impl.db.StreamTaskCreatorImpl;
@@ -39,7 +39,7 @@ import stroom.processor.shared.ProcessorFilterTask;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
-import stroom.util.test.FileSystemTestUtil;
+import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.sql.Connection;

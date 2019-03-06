@@ -19,18 +19,22 @@ package stroom.streamtask;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.meta.shared.AttributeMap;
-import stroom.data.store.impl.fs.MockStreamStore;
+import stroom.data.store.impl.mock.MockStreamStore;
+import stroom.data.zip.StroomZipEntry;
+import stroom.data.zip.StroomZipFileType;
 import stroom.docref.DocRef;
-import stroom.pipeline.feed.FeedDocCache;
-import stroom.pipeline.feed.FeedStore;
-import stroom.meta.shared.StandardHeaderArguments;
+import stroom.feed.api.FeedProperties;
+import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.processor.impl.db.StreamTargetStroomStreamHandler;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.StandardHeaderArguments;
+import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractProcessIntegrationTest;
+import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -41,7 +45,7 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
     @Inject
     private MockStreamStore streamStore;
     @Inject
-    private FeedDocCache feedDocCache;
+    private FeedProperties feedProperties;
     @Inject
     private FeedStore feedStore;
 
@@ -54,18 +58,18 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
     @Test
     void testReferenceNonAggregation() throws IOException {
         streamStore.clear();
-        feedDocCache.clear();
 
-        final DocRef feedRef = feedStore.createDocument("TEST_FEED");
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
+        final DocRef feedRef = feedStore.createDocument(feedName);
         final FeedDoc feedDoc = feedStore.readDocument(feedRef);
         feedDoc.setReference(true);
         feedStore.writeDocument(feedDoc);
 
         final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(StandardHeaderArguments.FEED, "TEST_FEED");
+        attributeMap.put(StandardHeaderArguments.FEED, feedName);
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedDocCache, null, "TEST_FEED", StreamTypeNames.RAW_REFERENCE);
+                feedProperties, null, feedName, StreamTypeNames.RAW_REFERENCE);
         streamTargetStroomStreamHandler.handleHeader(attributeMap);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();
@@ -94,14 +98,16 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
     void testFeedChange() throws IOException {
         streamStore.clear();
 
+        final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final AttributeMap attributeMap1 = new AttributeMap();
-        attributeMap1.put(StandardHeaderArguments.FEED, "TEST_FEED1");
+        attributeMap1.put(StandardHeaderArguments.FEED, feedName1);
 
+        final String feedName2 = FileSystemTestUtil.getUniqueTestString();
         final AttributeMap attributeMap2 = new AttributeMap();
-        attributeMap2.put(StandardHeaderArguments.FEED, "TEST_FEED2");
+        attributeMap2.put(StandardHeaderArguments.FEED, feedName2);
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedDocCache, null, "TEST_FEED1", StreamTypeNames.RAW_EVENTS);
+                feedProperties, null, feedName1, StreamTypeNames.RAW_EVENTS);
         streamTargetStroomStreamHandler.handleHeader(attributeMap1);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();
@@ -131,11 +137,12 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
     void testFeedAggregation() throws IOException {
         streamStore.clear();
 
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
         final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(StandardHeaderArguments.FEED, "TEST_FEED");
+        attributeMap.put(StandardHeaderArguments.FEED, feedName);
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedDocCache, null, "TEST_FEED", StreamTypeNames.RAW_EVENTS);
+                feedProperties, null, feedName, StreamTypeNames.RAW_EVENTS);
         streamTargetStroomStreamHandler.handleHeader(attributeMap);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();

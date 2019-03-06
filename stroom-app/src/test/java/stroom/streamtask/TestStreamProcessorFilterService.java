@@ -25,6 +25,9 @@ import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
 import stroom.processor.StreamProcessorFilterService;
 import stroom.processor.StreamProcessorService;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Period;
+import stroom.util.shared.Range;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.processor.shared.QueryData;
@@ -34,7 +37,7 @@ import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.test.FileSystemTestUtil;
+import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.util.List;

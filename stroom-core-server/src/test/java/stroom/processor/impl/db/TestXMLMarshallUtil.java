@@ -24,6 +24,9 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.util.test.StroomUnitTest;
+import stroom.streamstore.shared.QueryData;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

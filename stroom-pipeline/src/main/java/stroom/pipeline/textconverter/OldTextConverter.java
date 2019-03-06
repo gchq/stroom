@@ -17,10 +17,10 @@
 package stroom.pipeline.textconverter;
 
 import stroom.docref.HasDisplayValue;
-import stroom.entity.shared.HasPrimitiveValue;
-import stroom.entity.shared.PrimitiveValueConverter;
+import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.importexport.api.ExternalFile;
+import stroom.importexport.shared.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 
 import javax.persistence.Transient;

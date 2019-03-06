@@ -21,14 +21,15 @@ import event.logging.BaseAdvancedQueryItem;
 import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseResultList;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceFindSummaryAction;
-import stroom.entity.shared.ResultList;
-import stroom.entity.shared.SummaryDataRow;
+import stroom.util.shared.ResultList;
+import stroom.util.shared.SummaryDataRow;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.entity.FindService;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -66,9 +67,9 @@ class EntityServiceFindSummaryHandler
                 addCriteria(entityService, action.getCriteria(), and.getAdvancedQueryItems());
 
                 result = (BaseResultList<SummaryDataRow>) beanRegistry.invoke(entityService, "findSummary", action.getCriteria());
-                documentEventLog.searchSummary(action.getCriteria(), query, result);
+                documentEventLog.searchSummary(action.getCriteria(), query, result,  null);
             } catch (final RuntimeException e) {
-                documentEventLog.searchSummary(action.getCriteria(), query, e);
+                documentEventLog.searchSummary(action.getCriteria(), query, null, e);
 
                 throw e;
             }

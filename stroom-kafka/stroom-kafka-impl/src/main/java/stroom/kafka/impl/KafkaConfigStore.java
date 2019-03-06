@@ -18,7 +18,7 @@
 package stroom.kafka.impl;
 
 import stroom.docref.DocRef;
-import stroom.docstore.DocumentStore;
+import stroom.docstore.api.DocumentStore;
 import stroom.kafka.shared.KafkaConfigDoc;
 
 import java.util.List;

@@ -28,12 +28,8 @@ import stroom.monitoring.client.presenter.SchedulePresenter;
 import stroom.monitoring.client.presenter.SchedulePresenter.ScheduleView;
 import stroom.monitoring.client.view.ScheduleViewImpl;
 import stroom.node.client.ManageNodeToolsPlugin;
-import stroom.node.client.presenter.ManageVolumesPresenter;
-import stroom.node.client.presenter.ManageVolumesPresenter.ManageVolumesProxy;
 import stroom.node.client.presenter.NodeEditPresenter;
-import stroom.node.client.presenter.VolumeEditPresenter;
 import stroom.node.client.view.NodeEditViewImpl;
-import stroom.node.client.view.VolumeEditViewImpl;
 import stroom.node.client.view.WrapperView;
 import stroom.node.client.view.WrapperViewImpl;
 import stroom.ui.config.client.UiConfigCache;
@@ -60,11 +56,7 @@ public class MonitoringModule extends PluginModule {
         bindPlugin(ManageNodeToolsPlugin.class);
 
         bindSharedView(WrapperView.class, WrapperViewImpl.class);
-        bind(ManageVolumesPresenter.class);
-        bind(ManageVolumesProxy.class).asEagerSingleton();
 
-        bindPresenterWidget(VolumeEditPresenter.class, VolumeEditPresenter.VolumeEditView.class,
-                VolumeEditViewImpl.class);
         bindPresenterWidget(NodeEditPresenter.class, NodeEditPresenter.NodeEditView.class, NodeEditViewImpl.class);
 
         bindPresenterWidget(JobPresenter.class, JobView.class, JobViewImpl.class);

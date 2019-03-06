@@ -18,7 +18,7 @@ package stroom.pipeline.xsltfunctions;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

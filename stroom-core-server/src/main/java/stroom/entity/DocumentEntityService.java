@@ -19,7 +19,7 @@ package stroom.entity;
 
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.HasLoadByUuid;
-import stroom.entity.shared.ProvidesNamePattern;
+import stroom.util.shared.ProvidesNamePattern;
 
 public interface DocumentEntityService<E extends DocumentEntity> extends BaseEntityService<E>, HasLoadByUuid<E>, ProvidesNamePattern {
     E create(String name);

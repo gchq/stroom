@@ -20,8 +20,12 @@ import stroom.data.store.api.StreamSource;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTask;
+import stroom.data.store.api.Source;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTask;
 
 public interface StreamProcessorTaskExecutor {
     void exec(Processor streamProcessor, ProcessorFilter streamProcessorFilter, ProcessorFilterTask streamTask,
-              StreamSource streamSource);
+              Source streamSource);
 }

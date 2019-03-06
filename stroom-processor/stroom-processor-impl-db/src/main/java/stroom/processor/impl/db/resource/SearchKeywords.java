@@ -23,11 +23,15 @@ import stroom.entity.shared.Sort;
 import stroom.processor.shared.FindStreamProcessorFilterCriteria;
 import stroom.processor.shared.FindStreamTaskCriteria;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.util.shared.Sort;
+import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
+import stroom.streamtask.shared.FindStreamTaskCriteria;
+import stroom.streamtask.shared.ProcessorFilterTracker;
 
 import java.util.Arrays;
 
 import static java.util.stream.Collectors.joining;
-import static stroom.entity.shared.Sort.Direction.DESCENDING;
+import static stroom.util.shared.Sort.Direction.DESCENDING;
 
 /**
  * Users can search for stream tasks using key words. This class defines what keywords are

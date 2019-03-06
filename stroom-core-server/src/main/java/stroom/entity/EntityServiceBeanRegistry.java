@@ -19,9 +19,11 @@ package stroom.entity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.EntityServiceException;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
+import stroom.util.entity.EntityType;
+import stroom.util.entity.FindService;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

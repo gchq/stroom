@@ -16,7 +16,7 @@
 
 package stroom.entity.util;
 
-import stroom.entity.shared.Period;
+import stroom.util.shared.Period;
 
 import java.time.Instant;
 import java.time.LocalDate;

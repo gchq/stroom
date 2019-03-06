@@ -18,7 +18,7 @@ package stroom.pipeline;
 
 import com.google.inject.AbstractModule;
 import stroom.docstore.shared.Doc;
-import stroom.entity.EntityTypeBinder;
+import stroom.util.entity.EntityTypeBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;

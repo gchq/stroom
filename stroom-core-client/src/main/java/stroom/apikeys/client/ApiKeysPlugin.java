@@ -11,7 +11,7 @@ import stroom.hyperlink.client.HyperlinkType;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.node.client.NodeToolsPlugin;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;

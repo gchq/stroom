@@ -24,7 +24,7 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.processor.StreamProcessorTaskExecutor;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.StoreCreationTool;
-import stroom.test.StroomPipelineTestFileUtil;
+import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -112,7 +112,7 @@ public class CommonIndexingTestHelper {
 
     public int flushIndex() {
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getIndexSet().setMatchAll(true);
+        criteria.getIndexUuidSet().setMatchAll(true);
         indexShardManager.findFlush(criteria);
 
         return 1;

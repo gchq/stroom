@@ -21,21 +21,18 @@ package stroom.data.store.impl.fs;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
+import stroom.data.store.api.TargetUtil;
+import stroom.job.impl.MockTask;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.store.api.StreamTargetUtil;
-import stroom.job.MockTask;
-import stroom.node.api.NodeService;
-import stroom.node.shared.FindNodeCriteria;
-import stroom.node.shared.Node;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
-import stroom.util.test.FileSystemTestUtil;
+import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -44,7 +41,6 @@ import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collection;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,26 +51,21 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     private static Logger LOGGER = LoggerFactory.getLogger(TestFileSystemCleanTask.class);
 
     @Inject
-    private StreamStore streamStore;
+    private Store streamStore;
     @Inject
-    private FileSystemStreamMaintenanceService streamMaintenanceService;
+    private FsDataStoreMaintenanceService streamMaintenanceService;
     @Inject
     private DataVolumeService streamVolumeService;
     @Inject
-    private FileSystemCleanExecutor fileSystemCleanTaskExecutor;
+    private FsCleanExecutor fileSystemCleanTaskExecutor;
     @Inject
     private TaskManager taskManager;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Inject
-    private NodeService nodeService;
 
     @Test
     void testCheckCleaning() throws IOException {
-        final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
-        for (final Node node : nodeList) {
-            fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
-        }
+        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
         waitForTaskManagerToComplete();
 
@@ -94,8 +85,8 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         // FILE1 LOCKED
         //
         // Write some data
-        final StreamTarget lockstreamTarget1 = streamStore.openStreamTarget(lockfile1);
-        StreamTargetUtil.write(lockstreamTarget1, "MyTest");
+        final Target lockstreamTarget1 = streamStore.openStreamTarget(lockfile1);
+        TargetUtil.write(lockstreamTarget1, "MyTest");
         // Close the file but not the stream (you should use the closeStream
         // API)
         lockstreamTarget1.close();
@@ -111,14 +102,13 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         //
         // FILE2 UNLOCKED
         //
-        final StreamTarget nolockstreamTarget1 = streamStore.openStreamTarget(nolockfile1);
-        StreamTargetUtil.write(nolockstreamTarget1, "MyTest");
-        // Close the file but not the stream (you should use the closeStream
-        // API)
-        streamStore.closeStreamTarget(nolockstreamTarget1);
-
+        Meta meta;
+        try (final Target nolockstreamTarget1 = streamStore.openStreamTarget(nolockfile1)) {
+            meta = nolockstreamTarget1.getMeta();
+            TargetUtil.write(nolockstreamTarget1, "MyTest");
+        }
         final Collection<Path> unlockedFiles = streamMaintenanceService
-                .findAllStreamFile(nolockstreamTarget1.getMeta());
+                .findAllStreamFile(meta);
         final Path directory = unlockedFiles.iterator().next().getParent();
         // Create some other files on the file system
 
@@ -141,9 +131,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         FileUtil.setLastModified(oldfileinnewdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_FOUR).toInstant().toEpochMilli());
 
         // Run the clean
-        for (final Node node : nodeList) {
-            fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
-        }
+        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
         waitForTaskManagerToComplete();
 
@@ -170,14 +158,11 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         }
 
         final FindDataVolumeCriteria streamVolumeCriteria = new FindDataVolumeCriteria();
-        streamVolumeCriteria.obtainStreamIdSet().add(meta.getId());
+        streamVolumeCriteria.obtainMetaIdSet().add(meta.getId());
 
         assertThat(streamVolumeService.find(streamVolumeCriteria).size() >= 1).as("Must be saved to at least one volume").isTrue();
 
-        final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
-        for (final Node node : nodeList) {
-            fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
-        }
+        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
         files = streamMaintenanceService.findAllStreamFile(meta);
 
@@ -185,19 +170,14 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         assertThat(streamVolumeService.find(streamVolumeCriteria).size() >= 1).as("Volumes should still exist as they are new").isTrue();
 
-        for (final Node node : nodeList) {
-            fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
-        }
+        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
         waitForTaskManagerToComplete();
     }
 
     @Test
     void testCheckCleaningLotsOfFiles() throws IOException {
-        final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
-        for (final Node node : nodeList) {
-            fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
-        }
+        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
         waitForTaskManagerToComplete();
 
@@ -212,14 +192,12 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
                     .typeName(StreamTypeNames.RAW_EVENTS)
                     .createMs(time)
                     .build();
-            final StreamTarget t = streamStore.openStreamTarget(metaProperties);
-            StreamTargetUtil.write(t, "TEST");
-            streamStore.closeStreamTarget(t);
+            try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+                TargetUtil.write(target, "TEST");
+            }
         }
 
-        for (final Node node : nodeList) {
-            fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
-        }
+        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
         waitForTaskManagerToComplete();
 

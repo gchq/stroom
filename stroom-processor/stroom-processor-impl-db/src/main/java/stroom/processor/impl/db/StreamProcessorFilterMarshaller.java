@@ -16,9 +16,9 @@
 
 package stroom.processor.impl.db;
 
-import stroom.entity.AbstractEntityMarshaller;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
+import stroom.util.entity.AbstractEntityMarshaller;
 
 public class StreamProcessorFilterMarshaller extends AbstractEntityMarshaller<ProcessorFilter, QueryData> {
     StreamProcessorFilterMarshaller() {

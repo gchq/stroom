@@ -21,7 +21,7 @@ package stroom.streamtask;
 import org.junit.jupiter.api.Test;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
-import stroom.entity.shared.Period;
+import stroom.util.shared.Period;
 import stroom.node.shared.Node;
 import stroom.processor.impl.db.StreamTaskCreator;
 import stroom.processor.impl.db.StreamTaskService;
@@ -33,7 +33,7 @@ import stroom.streamtask.shared.TaskStatus;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
-import stroom.util.test.FileSystemTestUtil;
+import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.time.Instant;

@@ -17,12 +17,12 @@
 package stroom.pipeline.legacy;
 
 import stroom.docref.HasDisplayValue;
-import stroom.entity.shared.Copyable;
+import stroom.util.shared.Copyable;
 import stroom.entity.shared.DocumentEntity;
-import stroom.importexport.api.ExternalFile;
-import stroom.entity.shared.HasData;
-import stroom.entity.shared.HasPrimitiveValue;
-import stroom.entity.shared.PrimitiveValueConverter;
+import stroom.importexport.shared.ExternalFile;
+import stroom.util.shared.HasData;
+import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
 
 import javax.persistence.Column;

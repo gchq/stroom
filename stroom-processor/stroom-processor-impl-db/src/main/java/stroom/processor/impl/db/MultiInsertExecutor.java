@@ -3,7 +3,7 @@ package stroom.processor.impl.db;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.util.PreparedStatementUtil;
+import stroom.util.sql.PreparedStatementUtil;
 import stroom.util.collections.BatchingIterator;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;

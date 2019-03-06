@@ -18,8 +18,8 @@ package stroom.pipeline.destination;
 
 import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.SegmentOutputStream;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.scheduler.SimpleCron;
 
@@ -28,8 +28,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 public class RollingStreamDestination extends RollingDestination {
-    private final StreamStore streamStore;
-    private final StreamTarget streamTarget;
+    private final Store streamStore;
+    private final Target streamTarget;
     private final String nodeName;
     private final AtomicLong recordCount = new AtomicLong();
     private final SegmentOutputStream segmentOutputStream;
@@ -40,8 +40,8 @@ public class RollingStreamDestination extends RollingDestination {
                                     final SimpleCron schedule,
                                     final long rollSize,
                                     final long creationTime,
-                                    final StreamStore streamStore,
-                                    final StreamTarget streamTarget,
+                                    final Store streamStore,
+                                    final Target streamTarget,
                                     final String nodeName) {
         super(key, frequency, schedule, rollSize, creationTime);
 
@@ -50,7 +50,7 @@ public class RollingStreamDestination extends RollingDestination {
         this.nodeName = nodeName;
         this.segmentOutput = key.isSegmentOutput();
 
-        segmentOutputStream = streamTarget.getOutputStreamProvider().next();
+        segmentOutputStream = streamTarget.next().get();
         setOutputStream(new ByteCountOutputStream(segmentOutputStream));
     }
 
@@ -78,14 +78,18 @@ public class RollingStreamDestination extends RollingDestination {
 
     @Override
     protected void afterRoll(final Consumer<Throwable> exceptionConsumer) {
-//        // Write meta data to stream target.
-//        final AttributeMap attributeMap = new AttributeMap();
-//        attributeMap.put(StreamDataSource.REC_WRITE, recordCount.toString());
+        try {
+    //        // Write meta data to stream target.
+    //        final AttributeMap attributeMap = new AttributeMap();
+    //        attributeMap.put(StreamDataSource.REC_WRITE, recordCount.toString());
 
-        // TODO : @66 DO WE REALLY NEED TO KNOW WHAT NODE PROCESSED A STREAM AS THE DATA IS AVAILABLE ON STREAM TASK???
-//        attributeMap.put(StreamAttributeConstants.NODE, nodeName);
-        streamTarget.getAttributes().put(MetaFieldNames.REC_WRITE, recordCount.toString());
-        streamStore.closeStreamTarget(streamTarget);
+            // TODO : @66 DO WE REALLY NEED TO KNOW WHAT NODE PROCESSED A STREAM AS THE DATA IS AVAILABLE ON STREAM TASK???
+    //        attributeMap.put(StreamAttributeConstants.NODE, nodeName);
+            streamTarget.getAttributes().put(MetaFieldNames.REC_WRITE, recordCount.toString());
+            streamTarget.close();
+        } catch (final IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     private void insertSegmentMarker(final Consumer<Throwable> exceptionConsumer) {

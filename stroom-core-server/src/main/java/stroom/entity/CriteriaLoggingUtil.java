@@ -22,11 +22,11 @@ import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.Term;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
-import stroom.entity.shared.CriteriaSet;
+import stroom.util.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
-import stroom.entity.shared.PageRequest;
-import stroom.entity.shared.Range;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Range;
 import stroom.util.date.DateUtil;
 
 import java.util.List;

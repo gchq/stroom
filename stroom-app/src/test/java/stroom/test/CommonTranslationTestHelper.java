@@ -29,6 +29,7 @@ import stroom.processor.impl.db.StreamTaskCreator;
 import stroom.processor.shared.ProcessorFilterTask;
 import stroom.task.api.TaskManager;
 import stroom.task.api.SimpleTaskContext;
+import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;

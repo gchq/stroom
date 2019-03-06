@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import stroom.importexport.impl.ImportExportService;
 import stroom.importexport.shared.ImportState;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.StroomCoreServerTestFileUtil;
+import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.zip.ZipUtil;
 
 import javax.inject.Inject;

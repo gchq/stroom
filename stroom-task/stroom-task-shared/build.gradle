@@ -1,7 +1,0 @@
-ext.moduleName = 'stroom.task.shared'
-
-dependencies {
-    implementation project(':stroom-util-shared')
-    
-    implementation libs.stroomDocRef
-}

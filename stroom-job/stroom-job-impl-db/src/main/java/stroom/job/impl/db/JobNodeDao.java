@@ -1,17 +1,16 @@
 package stroom.job.impl.db;
 
 import stroom.db.util.GenericDao;
-import stroom.entity.shared.HasIntCrud;
-import stroom.job.impl.db.stroom.tables.records.JobNodeRecord;
+import stroom.job.impl.db.jooq.tables.records.JobNodeRecord;
+import stroom.util.shared.HasIntCrud;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.Optional;
 
-import static stroom.job.impl.db.stroom.Tables.JOB_NODE;
+import static stroom.job.impl.db.jooq.Tables.JOB_NODE;
 
 public class JobNodeDao implements HasIntCrud<JobNode> {
-
     private GenericDao<JobNodeRecord, JobNode, Integer> dao;
 
     @Inject
@@ -20,8 +19,8 @@ public class JobNodeDao implements HasIntCrud<JobNode> {
     }
 
     @Override
-    public JobNode create(@Nonnull final JobNode job) {
-        return dao.create(job);
+    public JobNode create(@Nonnull final JobNode jobNode) {
+        return dao.create(jobNode);
     }
 
     @Override

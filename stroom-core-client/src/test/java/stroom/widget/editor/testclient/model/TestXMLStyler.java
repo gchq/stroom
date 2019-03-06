@@ -19,7 +19,7 @@ package stroom.widget.editor.testclient.model;
 
 import org.junit.jupiter.api.Test;
 import stroom.editor.client.model.XMLStyler;
-import stroom.test.ComparisonHelper;
+import stroom.test.common.ComparisonHelper;
 import stroom.test.StroomCoreClientTestFileUtil;
 import stroom.util.io.StreamUtil;
 

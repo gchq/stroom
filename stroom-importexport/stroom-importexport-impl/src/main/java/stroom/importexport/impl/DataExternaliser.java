@@ -17,7 +17,7 @@
 package stroom.importexport.impl;
 
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.EntityDependencyServiceException;
+import stroom.util.shared.EntityDependencyServiceException;
 
 public interface DataExternaliser<E extends BaseEntity> {
     String externalise(E entity, String data);

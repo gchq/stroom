@@ -19,7 +19,7 @@ package stroom.security.client.presenter;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.StringCriteria;
+import stroom.util.shared.StringCriteria;
 import stroom.security.shared.FindUserCriteria;
 import stroom.widget.popup.client.event.HidePopupEvent;
 

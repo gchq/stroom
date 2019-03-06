@@ -1,24 +1,18 @@
 ext.moduleName = 'stroom.core.shared'
 
 dependencies {
-    implementation project(':stroom-docstore:stroom-docstore-shared')
-    implementation project(':stroom-entity-shared')
-    implementation project(':stroom-explorer:stroom-explorer-api')
-    implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-meta:stroom-meta-api')
-    //implementation project(':stroom-processor:stroom-processor-shared')
-    implementation project(':stroom-task:stroom-task-shared')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-util-shared')
 
-    implementation libs.gwt_servlet
-    implementation libs.hibernate_jpa_api
-    implementation libs.jackson_annotations
-    implementation libs.javax_inject;
-    implementation libs.jaxb_api
-    implementation libs.stroomDocRef
-    implementation libs.stroomQueryApi
-    implementation libs.validation_api
+    compile libs.stroomDocRef
+    compile libs.stroomQueryApi
 
+    compile libs.gwt_servlet
+    compile libs.hibernate_jpa_api
+    compile libs.jackson_annotations
+    compile libs.javax_inject;
+    compile libs.jaxb_api
+    compile libs.validation_api
+    
     testRuntimeOnly libs.javax_activation
     testRuntimeOnly libs.jaxb_runtime
 }

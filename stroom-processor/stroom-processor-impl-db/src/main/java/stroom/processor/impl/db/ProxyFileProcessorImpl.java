@@ -18,18 +18,20 @@ package stroom.processor.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.api.Store;
+import stroom.data.zip.StreamProgressMonitor;
+import stroom.feed.api.FeedProperties;
+import stroom.util.io.BufferFactory;
 import stroom.meta.shared.AttributeMap;
-import stroom.data.store.StreamProgressMonitor;
-import stroom.data.store.api.StreamStore;
-import stroom.datafeed.BufferFactory;
-import stroom.pipeline.feed.FeedDocCache;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.processor.ProxyAggregationConfig;
+import stroom.meta.statistics.api.MetaStatistics;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.proxy.repo.ProxyFileProcessor;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.processor.statistic.MetaDataStatistic;
+import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
@@ -37,7 +39,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Class that reads a nested directory tree of stroom zip files.
@@ -55,9 +56,9 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
 
     private final ProxyFileHandler feedFileProcessorHelper;
 
-    private final StreamStore streamStore;
-    private final FeedDocCache feedDocCache;
-    private final MetaDataStatistic metaDataStatistic;
+    private final Store streamStore;
+    private final FeedProperties feedProperties;
+    private final MetaStatistics metaDataStatistic;
     private final int maxAggregation;
     private final long maxStreamSize;
     private final boolean aggregate = true;
@@ -65,14 +66,14 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
     private volatile boolean stop = false;
 
     @Inject
-    ProxyFileProcessorImpl(final StreamStore streamStore,
-                           final FeedDocCache feedDocCache,
-                           final MetaDataStatistic metaDataStatistic,
+    ProxyFileProcessorImpl(final Store streamStore,
+                           final FeedProperties feedProperties,
+                           final MetaStatistics metaDataStatistic,
                            final ProxyAggregationConfig proxyAggregationConfig,
                            final BufferFactory bufferFactory) {
         this(
                 streamStore,
-                feedDocCache,
+                feedProperties,
                 metaDataStatistic,
                 proxyAggregationConfig.getMaxAggregation(),
                 proxyAggregationConfig.getMaxStreamSizeBytes(),
@@ -80,14 +81,14 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
         );
     }
 
-    ProxyFileProcessorImpl(final StreamStore streamStore,
-                           final FeedDocCache feedDocCache,
-                           final MetaDataStatistic metaDataStatistic,
+    ProxyFileProcessorImpl(final Store streamStore,
+                           final FeedProperties feedProperties,
+                           final MetaStatistics metaDataStatistic,
                            final int maxAggregation,
                            final long maxStreamSize,
                            final BufferFactory bufferFactory) {
         this.streamStore = streamStore;
-        this.feedDocCache = feedDocCache;
+        this.feedProperties = feedProperties;
         this.metaDataStatistic = metaDataStatistic;
         this.maxAggregation = maxAggregation;
         this.maxStreamSize = maxStreamSize;
@@ -98,25 +99,19 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
 
     @Override
     public void processFeedFiles(final StroomZipRepository stroomZipRepository, final String feedName, final List<Path> fileList) {
-        final Optional<FeedDoc> optional = feedDocCache.get(feedName);
-
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.info("processFeedFiles() - Started {} ({} Files)", feedName, fileList.size());
-
-        if (!optional.isPresent()) {
-            LOGGER.error("processFeedFiles() - " + feedName + " Failed to find feed");
-            return;
-        }
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("processFeedFiles() - " + feedName + " " + fileList);
         }
 
         // We don't want to aggregate reference feeds.
-        final FeedDoc feed = optional.get();
-        final boolean oneByOne = feed.isReference() || !aggregate;
+        final boolean isReference = feedProperties.isReference(feedName);
+        final String streamType = feedProperties.getStreamTypeName(feedName);
+        final boolean oneByOne = isReference || !aggregate;
 
-        List<StreamTargetStroomStreamHandler> handlers = openStreamHandlers(feed);
+        List<StreamTargetStroomStreamHandler> handlers = openStreamHandlers(feedName, streamType, isReference);
         List<Path> deleteFileList = new ArrayList<>();
 
         long sequence = 1;
@@ -155,7 +150,7 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
 
                     // Start new batch
                     deleteFileList = new ArrayList<>();
-                    handlers = openStreamHandlers(feed);
+                    handlers = openStreamHandlers(feedName, streamType, isReference);
                     sequence = 1;
                 }
                 sequence = feedFileProcessorHelper.processFeedFile(handlers, stroomZipRepository, file, streamProgressMonitor, sequence);
@@ -170,17 +165,17 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
         LOGGER.info("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime);
     }
 
-    private List<StreamTargetStroomStreamHandler> openStreamHandlers(final FeedDoc feed) {
+    private List<StreamTargetStroomStreamHandler> openStreamHandlers(final String feedName, final String streamType, final boolean isReference) {
         // We don't want to aggregate reference feeds.
-        final boolean oneByOne = feed.isReference() || !aggregate;
+        final boolean oneByOne = isReference || !aggregate;
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedDocCache, metaDataStatistic, feed.getName(), feed.getStreamType());
+                feedProperties, metaDataStatistic, feedName, streamType);
 
         streamTargetStroomStreamHandler.setOneByOne(oneByOne);
 
         final AttributeMap globalAttributeMap = new AttributeMap();
-        globalAttributeMap.put(StandardHeaderArguments.FEED, feed.getName());
+        globalAttributeMap.put(StandardHeaderArguments.FEED, feedName);
 
 //        try {
         streamTargetStroomStreamHandler.handleHeader(globalAttributeMap);

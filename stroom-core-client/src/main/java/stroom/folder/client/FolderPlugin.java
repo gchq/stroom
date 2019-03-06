@@ -29,7 +29,7 @@ import stroom.explorer.shared.SharedDocRef;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.docref.DocRef;
 import stroom.security.shared.PermissionNames;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 
 public class FolderPlugin extends DocumentPlugin<SharedDocRef> {
     private final Provider<FolderPresenter> editorProvider;

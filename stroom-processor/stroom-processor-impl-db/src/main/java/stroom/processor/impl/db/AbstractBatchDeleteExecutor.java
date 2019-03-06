@@ -56,12 +56,12 @@ public abstract class AbstractBatchDeleteExecutor {
         this.tempIdTable = tempIdTable;
     }
 
-    protected final void lockAndDelete() {
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+    final void lockAndDelete() {
         LOGGER.info(taskName + " - start");
-        if (clusterLockService.tryLock(clusterLockName)) {
+        clusterLockService.tryLock(clusterLockName, () -> {
             try {
                 if (!Thread.currentThread().isInterrupted()) {
+                    final LogExecutionTime logExecutionTime = new LogExecutionTime();
                     final long age = getDeleteAge(batchDeleteConfig);
                     if (age > 0) {
                         delete(age);
@@ -70,12 +70,8 @@ public abstract class AbstractBatchDeleteExecutor {
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
-            } finally {
-                clusterLockService.releaseLock(clusterLockName);
             }
-        } else {
-            LOGGER.info(taskName + " - Skipped as did not get lock in {}", logExecutionTime);
-        }
+        });
     }
 
     public void delete(final long age) {

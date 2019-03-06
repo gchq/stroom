@@ -20,14 +20,14 @@ package stroom.pipeline.task;
 import org.junit.jupiter.api.Test;
 import stroom.meta.shared.Meta;
 import stroom.meta.impl.mock.MockMetaService;
-import stroom.data.store.impl.fs.MockStreamStore;
+import stroom.data.store.impl.mock.MockStreamStore;
 import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.processor.StreamProcessorTaskExecutor;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
-import stroom.test.ComparisonHelper;
-import stroom.test.StroomPipelineTestFileUtil;
+import stroom.test.common.ComparisonHelper;
+import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;

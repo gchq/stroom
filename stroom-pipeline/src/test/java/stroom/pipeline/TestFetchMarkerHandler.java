@@ -18,12 +18,12 @@ package stroom.pipeline;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.test.StroomCoreServerTestFileUtil;
+import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Marker;
 import stroom.util.shared.Severity;
 import stroom.util.shared.Summary;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.common.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.io.StringReader;

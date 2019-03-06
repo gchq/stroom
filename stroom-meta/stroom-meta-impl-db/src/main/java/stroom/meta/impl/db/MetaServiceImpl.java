@@ -6,17 +6,17 @@ import org.jooq.SelectConditionStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.db.util.JooqUtil;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.IdSet;
-import stroom.entity.shared.PageRequest;
-import stroom.entity.shared.Sort.Direction;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.IdSet;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort.Direction;
 import stroom.meta.impl.db.ExpressionMapper.TermHandler;
 import stroom.meta.impl.db.MetaExpressionMapper.MetaTermHandler;
 import stroom.meta.impl.db.MetaImpl.Builder;
-import stroom.meta.impl.db.tables.MetaFeed;
-import stroom.meta.impl.db.tables.MetaProcessor;
-import stroom.meta.impl.db.tables.MetaType;
-import stroom.meta.impl.db.tables.MetaVal;
+import stroom.meta.impl.db.jooq.tables.MetaFeed;
+import stroom.meta.impl.db.jooq.tables.MetaProcessor;
+import stroom.meta.impl.db.jooq.tables.MetaType;
+import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.FindMetaCriteria;
@@ -50,11 +50,11 @@ import java.util.Set;
 
 import static org.jooq.impl.DSL.max;
 import static org.jooq.impl.DSL.selectDistinct;
-import static stroom.meta.impl.db.tables.Meta.META;
-import static stroom.meta.impl.db.tables.MetaFeed.META_FEED;
-import static stroom.meta.impl.db.tables.MetaProcessor.META_PROCESSOR;
-import static stroom.meta.impl.db.tables.MetaType.META_TYPE;
-import static stroom.meta.impl.db.tables.MetaVal.META_VAL;
+import static stroom.meta.impl.db.jooq.tables.Meta.META;
+import static stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
+import static stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
+import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
+import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
 class MetaServiceImpl implements MetaService {
@@ -69,11 +69,11 @@ class MetaServiceImpl implements MetaService {
     private final MetaSecurityFilter dataSecurityFilter;
     private final Security security;
 
-    private final stroom.meta.impl.db.tables.Meta meta = META.as("d");
-    private final MetaFeed dataFeed = META_FEED.as("f");
-    private final MetaType dataType = META_TYPE.as("dt");
-    private final MetaProcessor dataProcessor = META_PROCESSOR.as("dp");
-    private final MetaVal metaVal = META_VAL.as("mv");
+    private final stroom.meta.impl.db.jooq.tables.Meta meta = META.as("m");
+    private final MetaFeed metaFeed = META_FEED.as("f");
+    private final MetaType metaType = META_TYPE.as("t");
+    private final MetaProcessor metaProcessor = META_PROCESSOR.as("p");
+    private final MetaVal metaVal = META_VAL.as("v");
 
     private final ExpressionMapper expressionMapper;
     private final MetaExpressionMapper metaExpressionMapper;
@@ -102,7 +102,7 @@ class MetaServiceImpl implements MetaService {
         termHandlers.put(MetaFieldNames.FEED_NAME, new TermHandler<>(meta.FEED_ID, feedService::getOrCreate));
         termHandlers.put(MetaFieldNames.FEED_ID, new TermHandler<>(meta.FEED_ID, Integer::valueOf));
         termHandlers.put(MetaFieldNames.TYPE_NAME, new TermHandler<>(meta.TYPE_ID, dataTypeService::getOrCreate));
-        termHandlers.put(MetaFieldNames.PIPELINE_UUID, new TermHandler<>(dataProcessor.PIPELINE_UUID, value -> value));
+        termHandlers.put(MetaFieldNames.PIPELINE_UUID, new TermHandler<>(metaProcessor.PIPELINE_UUID, value -> value));
         termHandlers.put(MetaFieldNames.PARENT_ID, new TermHandler<>(meta.PARENT_ID, Long::valueOf));
         termHandlers.put(MetaFieldNames.TASK_ID, new TermHandler<>(meta.TASK_ID, Long::valueOf));
         termHandlers.put(MetaFieldNames.PROCESSOR_ID, new TermHandler<>(meta.PROCESSOR_ID, Integer::valueOf));
@@ -151,10 +151,10 @@ class MetaServiceImpl implements MetaService {
     }
 
     @Override
-    public Meta create(final MetaProperties dataProperties) {
-        final Integer feedId = feedService.getOrCreate(dataProperties.getFeedName());
-        final Integer typeId = dataTypeService.getOrCreate(dataProperties.getTypeName());
-        final Integer processorId = processorService.getOrCreate(dataProperties.getProcessorUuid(), dataProperties.getProcessorFilterUuid(), dataProperties.getPipelineUuid());
+    public Meta create(final MetaProperties metaProperties) {
+        final Integer feedId = feedService.getOrCreate(metaProperties.getFeedName());
+        final Integer typeId = dataTypeService.getOrCreate(metaProperties.getTypeName());
+        final Integer processorId = processorService.getOrCreate(metaProperties.getProcessorUuid(), metaProperties.getProcessorFilterUuid(), metaProperties.getPipelineUuid());
 
         final long id = JooqUtil.contextResult(connectionProvider, context -> context
                 .insertInto(META,
@@ -168,12 +168,12 @@ class MetaServiceImpl implements MetaService {
                         META.TYPE_ID,
                         META.PROCESSOR_ID)
                 .values(
-                        dataProperties.getCreateMs(),
-                        dataProperties.getEffectiveMs(),
-                        dataProperties.getParentId(),
+                        metaProperties.getCreateMs(),
+                        metaProperties.getEffectiveMs(),
+                        metaProperties.getParentId(),
                         MetaStatusId.LOCKED,
-                        dataProperties.getStatusMs(),
-                        dataProperties.getProcessorTaskId(),
+                        metaProperties.getStatusMs(),
+                        metaProperties.getProcessorTaskId(),
                         feedId,
                         typeId,
                         processorId)
@@ -183,16 +183,16 @@ class MetaServiceImpl implements MetaService {
         );
 
         return new Builder().id(id)
-                .feedName(dataProperties.getFeedName())
-                .typeName(dataProperties.getTypeName())
-                .processorUuid(dataProperties.getProcessorUuid())
-                .pipelineUuid(dataProperties.getPipelineUuid())
-                .parentDataId(dataProperties.getParentId())
-                .processTaskId(dataProperties.getProcessorTaskId())
+                .feedName(metaProperties.getFeedName())
+                .typeName(metaProperties.getTypeName())
+                .processorUuid(metaProperties.getProcessorUuid())
+                .pipelineUuid(metaProperties.getPipelineUuid())
+                .parentDataId(metaProperties.getParentId())
+                .processTaskId(metaProperties.getProcessorTaskId())
                 .status(Status.LOCKED)
-                .statusMs(dataProperties.getStatusMs())
-                .createMs(dataProperties.getCreateMs())
-                .effectiveMs(dataProperties.getEffectiveMs())
+                .statusMs(metaProperties.getStatusMs())
+                .createMs(metaProperties.getCreateMs())
+                .effectiveMs(metaProperties.getEffectiveMs())
                 .build();
     }
 
@@ -212,31 +212,51 @@ class MetaServiceImpl implements MetaService {
     }
 
     @Override
-    public Meta updateStatus(final Meta meta, final Status status) {
+    public Meta updateStatus(final Meta meta, final Status currentStatus, final Status newStatus) {
         Objects.requireNonNull(meta, "Null data");
 
         final long now = System.currentTimeMillis();
-        final int result = updateStatus(meta.getId(), status, now, DocumentPermissionNames.UPDATE);
+        final int result = updateStatus(meta.getId(), newStatus, currentStatus, now, DocumentPermissionNames.UPDATE);
         if (result > 0) {
-            return new Builder(meta).status(status).statusMs(now).build();
+            return new Builder(meta).status(newStatus).statusMs(now).build();
         } else {
+            final Meta existingMeta = getMeta(meta.getId());
+            if (existingMeta == null) {
+                throw new RuntimeException("Meta with id=" + meta.getId() + " does not exist");
+            }
+
+            if (currentStatus != existingMeta.getStatus()) {
+                throw new RuntimeException("Unexpected status " +
+                        existingMeta.getStatus() +
+                        " (expected " +
+                        currentStatus +
+                        ")");
+            }
+
             return null;
         }
     }
 
-    private int updateStatus(final long id, final Status status, final long statusTime, final String permission) {
-        final Condition condition = getIdCondition(id, true, permission);
+    private int updateStatus(final long id, final Status newStatus, final Status currentStatus, final long statusTime, final String permission) {
+        Condition condition = getIdCondition(id, true, permission);
+
+        // Add a condition if we should check current status.
+        if (currentStatus != null) {
+            condition = condition.and(meta.STATUS.eq(MetaStatusId.getPrimitiveValue(currentStatus)));
+        }
+
+        final Condition c = condition;
 
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .update(meta)
-                .set(meta.STATUS, MetaStatusId.getPrimitiveValue(status))
+                .set(meta.STATUS, MetaStatusId.getPrimitiveValue(newStatus))
                 .set(meta.STATUS_TIME, statusTime)
-                .where(condition)
+                .where(c)
                 .execute());
 //                    .returning(data.ID,
-//                            dataFeed.NAME,
-//                            dataType.NAME,
-//                            dataProcessor.PIPELINE_UUID,
+//                            metaFeed.NAME,
+//                            metaType.NAME,
+//                            metaProcessor.PIPELINE_UUID,
 //                            meta.PARNT_STRM_ID,
 //                            meta.STRM_TASK_ID,
 //                            meta.FK_STRM_PROC_ID,
@@ -246,9 +266,9 @@ class MetaServiceImpl implements MetaService {
 //                            meta.EFFECT_MS)
 //                    .fetchOptional()
 //                    .map(r -> new Builder().id(data.ID.get(r))
-//                            .feedName(dataFeed.NAME.get(r))
-//                            .typeName(dataType.NAME.get(r))
-//                            .pipelineUuid(dataProcessor.PIPELINE_UUID.get(r))
+//                            .feedName(metaFeed.NAME.get(r))
+//                            .typeName(metaType.NAME.get(r))
+//                            .pipelineUuid(metaProcessor.PIPELINE_UUID.get(r))
 //                            .parentDataId(meta.PARNT_STRM_ID.get(r))
 //                            .processTaskId(meta.STRM_TASK_ID.get(r))
 //                            .processorId(meta.FK_STRM_PROC_ID.get(r))
@@ -311,7 +331,7 @@ class MetaServiceImpl implements MetaService {
 
         // Ensure the user has permission to delete this data.
         final long now = System.currentTimeMillis();
-        return updateStatus(id, Status.DELETED, now, DocumentPermissionNames.DELETE);
+        return updateStatus(id, Status.DELETED, null, now, DocumentPermissionNames.DELETE);
     }
 
     private SelectConditionStep<Record1<Long>> getMetaCondition(final ExpressionOperator expression) {
@@ -356,11 +376,11 @@ class MetaServiceImpl implements MetaService {
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .select(
                         meta.ID,
-                        dataFeed.NAME,
-                        dataType.NAME,
-                        dataProcessor.PROCESSOR_UUID,
-                        dataProcessor.PROCESSOR_FILTER_UUID,
-                        dataProcessor.PIPELINE_UUID,
+                        metaFeed.NAME,
+                        metaType.NAME,
+                        metaProcessor.PROCESSOR_UUID,
+                        metaProcessor.PROCESSOR_FILTER_UUID,
+                        metaProcessor.PIPELINE_UUID,
                         meta.PARENT_ID,
                         meta.TASK_ID,
                         meta.STATUS,
@@ -369,9 +389,9 @@ class MetaServiceImpl implements MetaService {
                         meta.EFFECTIVE_TIME
                 )
                 .from(meta)
-                .join(dataFeed).on(meta.FEED_ID.eq(dataFeed.ID))
-                .join(dataType).on(meta.TYPE_ID.eq(dataType.ID))
-                .leftOuterJoin(dataProcessor).on(meta.PROCESSOR_ID.eq(dataProcessor.ID))
+                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
                 .where(condition)
                 .orderBy(meta.ID)
                 .limit(offset, numberOfRows)

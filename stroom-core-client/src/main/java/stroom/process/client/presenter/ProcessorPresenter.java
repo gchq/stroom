@@ -29,12 +29,14 @@ import stroom.docref.SharedObject;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.shared.DeleteProcessorAction;
+import stroom.processor.shared.DeleteProcessorFilterAction;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterRow;
+import stroom.processor.shared.ProcessorRow;
+import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.streamstore.shared.QueryData;
-import stroom.streamtask.shared.ProcessorFilter;
-import stroom.streamtask.shared.ProcessorFilterRow;
-import stroom.streamtask.shared.ProcessorRow;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -204,7 +206,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         if (pipelineDoc != null && selectedProcessor != null) {
             if (selectedProcessor instanceof ProcessorFilterRow) {
                 final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) selectedProcessor;
-                final ProcessorFilter filter = streamProcessorFilterRow.getEntity();
+                final ProcessorFilter filter = streamProcessorFilterRow.getProcessorFilter();
                 processorEditPresenterProvider.get().show(docRef, filter, result -> {
                     if (result != null) {
                         refresh(result);
@@ -220,14 +222,14 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 final ProcessorRow streamProcessorRow = (ProcessorRow) selectedProcessor;
                 ConfirmEvent.fire(this, "Are you sure you want to delete this processor?", result -> {
                     if (result) {
-                        dispatcher.exec(new EntityServiceDeleteAction(streamProcessorRow.getEntity())).onSuccess(res -> processorListPresenter.refresh());
+                        dispatcher.exec(new DeleteProcessorAction(streamProcessorRow.getProcessor())).onSuccess(res -> processorListPresenter.refresh());
                     }
                 });
             } else if (selectedProcessor instanceof ProcessorFilterRow) {
                 final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) selectedProcessor;
                 ConfirmEvent.fire(this, "Are you sure you want to delete this filter?", result -> {
                     if (result) {
-                        dispatcher.exec(new EntityServiceDeleteAction(streamProcessorFilterRow.getEntity())).onSuccess(res -> processorListPresenter.refresh());
+                        dispatcher.exec(new DeleteProcessorFilterAction(streamProcessorFilterRow.getProcessorFilter())).onSuccess(res -> processorListPresenter.refresh());
                     }
                 });
             }

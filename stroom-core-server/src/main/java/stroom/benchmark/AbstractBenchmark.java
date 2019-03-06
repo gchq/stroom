@@ -18,6 +18,7 @@ package stroom.benchmark;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.api.SourceUtil;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -25,22 +26,20 @@ import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.Status;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.store.api.StreamTargetUtil;
-import stroom.entity.shared.BaseResultList;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
+import stroom.data.store.api.TargetUtil;
+import stroom.util.shared.BaseResultList;
 import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.TaskContext;
-import stroom.util.io.StreamUtil;
 import stroom.util.xml.XMLUtil;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -50,11 +49,11 @@ public abstract class AbstractBenchmark {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBenchmark.class);
 
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final MetaService metaService;
     private final TaskContext taskContext;
 
-    AbstractBenchmark(final StreamStore streamStore,
+    AbstractBenchmark(final Store streamStore,
                       final MetaService metaService,
                       final TaskContext taskContext) {
         this.streamStore = streamStore;
@@ -92,18 +91,19 @@ public abstract class AbstractBenchmark {
                 .typeName(streamTypeName)
                 .build();
 
-        final StreamTarget dataTarget = streamStore.openStreamTarget(metaProperties);
-        StreamTargetUtil.write(dataTarget, data);
-        streamStore.closeStreamTarget(dataTarget);
-
-        return dataTarget.getMeta();
+        try (final Target dataTarget = streamStore.openStreamTarget(metaProperties)) {
+            TargetUtil.write(dataTarget, data);
+            return dataTarget.getMeta();
+        } catch (final IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     protected String readData(final long streamId) throws IOException {
-        final StreamSource streamSource = streamStore.openStreamSource(streamId);
-        final InputStream dataInputStream = streamSource.getInputStream();
-        final String data = StreamUtil.streamToString(dataInputStream, true);
-        streamStore.closeStreamSource(streamSource);
+        String data = null;
+        try (final Source source = streamStore.openStreamSource(streamId)) {
+            data = SourceUtil.readString(source);
+        }
         return data;
     }
 
@@ -145,18 +145,18 @@ public abstract class AbstractBenchmark {
         final Meta targetMeta = list.getFirst();
 
         // Get back translated result.
-        final StreamSource target = streamStore.openStreamSource(targetMeta.getId());
-        String xml = StreamUtil.streamToString(target.getInputStream(), true);
-        streamStore.closeStreamSource(target);
+        try (final Source source = streamStore.openStreamSource(targetMeta.getId())) {
+            String xml = SourceUtil.readString(source);
 
-        // Pretty print the xml.
-        xml = XMLUtil.prettyPrintXML(xml);
+            // Pretty print the xml.
+            xml = XMLUtil.prettyPrintXML(xml);
 
-        // Get rid of event ids.
-        xml = stripChangingContent(xml);
+            // Get rid of event ids.
+            xml = stripChangingContent(xml);
 
-        if (!verificationString.equals(xml)) {
-            throw new RuntimeException("Data verification failure!");
+            if (!verificationString.equals(xml)) {
+                throw new RuntimeException("Data verification failure!");
+            }
         }
     }
 

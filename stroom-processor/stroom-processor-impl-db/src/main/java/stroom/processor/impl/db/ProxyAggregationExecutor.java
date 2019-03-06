@@ -23,7 +23,7 @@ import stroom.processor.ProxyAggregationConfig;
 import stroom.proxy.repo.RepositoryProcessor;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.ThreadPoolImpl;
+import stroom.task.shared.ThreadPoolImpl;
 import stroom.task.api.TaskContext;
 import stroom.task.shared.ThreadPool;
 import stroom.util.date.DateUtil;

@@ -21,7 +21,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.dashboard.client.vis.HandlerRegistry;
 import stroom.docref.DocRef;
-import stroom.security.client.event.LogoutEvent;
+import stroom.security.client.api.event.LogoutEvent;
 
 import javax.inject.Singleton;
 import java.util.HashMap;

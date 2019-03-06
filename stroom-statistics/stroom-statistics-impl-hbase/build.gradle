@@ -1,0 +1,48 @@
+ext.moduleName = 'stroom.statistics.impl.hbase'
+
+dependencies {
+    compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-importexport:stroom-importexport-api')
+    compile project(':stroom-importexport:stroom-importexport-migration')
+    compile project(':stroom-kafka:stroom-kafka-pipeline')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-statistics:stroom-statistics-api')
+    compile project(':stroom-statistics:stroom-statistics-impl')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+
+    compile libs.stroomDocRef
+    compile libs.stroomExpression
+    compile libs.stroomQueryCommon
+    compile libs.stroomStatsSchema
+
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.jaxb_api
+    compile(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
+
+    testCompile project(':stroom-docstore:stroom-docstore-impl')
+    testCompile project(':stroom-docstore:stroom-docstore-impl-memory')
+    testCompile project(':stroom-security:stroom-security-impl-mock')
+    testCompile project(':stroom-test-common')
+    
+    testCompile libs.assertj_core
+    testCompile libs.mockito_core
+    testCompile libs.mockito_junit_jupiter
+
+    testCompile libs.junit_jupiter_api
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}

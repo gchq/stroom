@@ -1,0 +1,11 @@
+ext.moduleName = 'stroom.feed.api'
+
+dependencies {
+    compile project(':stroom-core-shared')
+    compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-util-shared')
+    
+    compile libs.stroomDocRef
+
+    compile libs.jaxb_api
+}

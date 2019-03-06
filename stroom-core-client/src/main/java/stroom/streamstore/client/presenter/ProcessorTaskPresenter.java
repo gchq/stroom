@@ -21,7 +21,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.shared.SummaryDataRow;
+import stroom.util.shared.SummaryDataRow;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
 import stroom.streamtask.shared.FindStreamTaskCriteria;

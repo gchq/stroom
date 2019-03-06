@@ -1,6 +1,6 @@
 ext.moduleName = 'stroom.cache.api'
 
 dependencies {
-    implementation libs.guava
-    implementation libs.slf4j_api
+    compile libs.guava
+    compile libs.slf4j_api
 }

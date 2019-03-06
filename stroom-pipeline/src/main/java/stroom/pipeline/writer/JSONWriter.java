@@ -21,7 +21,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.io.SerializedString;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import stroom.io.IgnoreCloseWriter;
+import stroom.util.io.IgnoreCloseWriter;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;

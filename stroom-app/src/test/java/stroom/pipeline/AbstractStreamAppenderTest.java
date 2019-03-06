@@ -17,7 +17,7 @@
 package stroom.pipeline;
 
 import stroom.docref.DocRef;
-import stroom.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import javax.inject.Inject;
 

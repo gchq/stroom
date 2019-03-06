@@ -1,6 +1,6 @@
 package stroom.streamtask;
 
-import stroom.proxy.repo.StroomZipFile;
+import stroom.data.zip.StroomZipFile;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;

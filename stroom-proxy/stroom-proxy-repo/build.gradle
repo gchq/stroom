@@ -1,0 +1,50 @@
+ext.moduleName = 'stroom.proxy.repo'
+
+dependencies {
+    compile project(':stroom-core-shared')
+    compile project(':stroom-data:stroom-data-zip')
+    compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-docstore:stroom-docstore-impl-fs')
+    compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-receive:stroom-receive-common')
+//    compile project(':stroom-receive:stroom-receive-rules-impl')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
+
+    compile libs.stroomDocRef
+
+    compile libs.dropwizard_lifecycle
+    compile libs.dropwizard_metrics_healthchecks
+    compile libs.guava
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.jackson_core
+    compile libs.jackson_databind
+    compile libs.javax_inject
+    compile libs.javax_servlet_api
+    compile libs.jersey_client
+    compile libs.slf4j_api
+    
+    testCompile project(':stroom-test-common')
+    testCompile libs.assertj_core
+    
+    testCompile libs.junit_jupiter_api
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}
+//
+//war {
+//    exclude 'WEB-INF/lib/**'
+//    exclude 'WEB-INF/classes/**'
+//}

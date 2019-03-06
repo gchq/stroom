@@ -5,20 +5,22 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.meta.shared.MetaFieldNames;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
-import stroom.entity.shared.EntityServiceSaveAction;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.process.client.presenter.ProcessorEditPresenter.ProcessorEditView;
+import stroom.processor.shared.CreateProcessorFilterAction;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.QueryData;
+import stroom.processor.shared.UpdateProcessorFilterAction;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.ruleset.client.presenter.EditExpressionPresenter;
+import stroom.receive.rules.client.presenter.EditExpressionPresenter;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.CreateProcessorAction;
-import stroom.streamtask.shared.ProcessorFilter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -190,11 +192,11 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
             filter.setQueryData(queryData);
-            dispatcher.exec(new EntityServiceSaveAction<>(filter)).onSuccess(this::hide);
+            dispatcher.exec(new UpdateProcessorFilterAction(filter)).onSuccess(this::hide);
 
         } else {
             // Now create the processor filter using the find stream criteria.
-            dispatcher.exec(new CreateProcessorAction(pipelineRef, queryData, false, 10)).onSuccess(this::hide);
+            dispatcher.exec(new CreateProcessorFilterAction(pipelineRef, queryData, false, 10)).onSuccess(this::hide);
         }
     }
 
