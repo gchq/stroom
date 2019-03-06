@@ -1,44 +1,50 @@
 package stroom.job.impl.db;
 
 import com.google.inject.Guice;
-import com.google.inject.Injector;
+import com.google.inject.Inject;
 import org.jooq.exception.DataAccessException;
 import org.jooq.exception.DataChangedException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
-import stroom.db.util.GenericDao;
-import stroom.job.impl.db.jooq.tables.records.JobRecord;
+import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.Job;
+import stroom.security.impl.mock.MockSecurityContextModule;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static stroom.job.impl.db.jooq.Tables.JOB;
 
-class GenericDaoTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(GenericDaoTest.class);
+class TestJobDaoImpl {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestJobDaoImpl.class);
 
     private static MySQLContainer dbContainer = new MySQLContainer()
             .withDatabaseName("stroom");
 
-    private static Injector injector;
-    private static GenericDao<JobRecord, Job, Integer> dao;
+    @Inject
+    private JobDaoImpl dao;
 
     @BeforeAll
     static void beforeAll() {
         LOGGER.info(() -> "Before All - Start Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
+    }
 
-        injector = Guice.createInjector(new JobDbModule(), new TestModule(dbContainer));
-
-        ConnectionProvider connectionProvider = injector.getInstance(ConnectionProvider.class);
-        dao = new GenericDao<>(JOB, JOB.ID, Job.class, connectionProvider);
+    @BeforeEach
+    void beforeEach() {
+        Guice.createInjector(
+                new JobDbModule(),
+                new MySQLContainerModule(dbContainer),
+                new MockSecurityContextModule())
+                .injectMembers(this);
+        cleanup();
     }
 
     @Test
@@ -49,13 +55,13 @@ class GenericDaoTest {
         // Then
         assertThat(job.getId()).isNotNull();
         assertThat(job.getVersion()).isNotNull();
-        assertThat(job.getDescription()).isEqualTo("Some description");
+        assertThat(job.getName()).isEqualTo("Some name");
         assertThat(job.isEnabled()).isTrue();
 
         Job loadedJob = dao.fetch(job.getId()).get();
         assertThat(loadedJob.getId()).isEqualTo(job.getId());
         assertThat(loadedJob.getVersion()).isNotNull();
-        assertThat(loadedJob.getDescription()).isEqualTo("Some description");
+        assertThat(loadedJob.getName()).isEqualTo("Some name");
         assertThat(loadedJob.isEnabled()).isTrue();
     }
 
@@ -64,7 +70,7 @@ class GenericDaoTest {
         // Given
         Job job = new Job();
         job.setEnabled(true);
-        job.setDescription(RandomStringUtils.randomAlphabetic(256));
+        job.setName(RandomStringUtils.randomAlphabetic(256));
 
         // When/then
         assertThrows(DataAccessException.class, () -> dao.create(job));
@@ -83,7 +89,7 @@ class GenericDaoTest {
         // Given
         Job job = createStandardJob();
         int version = job.getVersion();
-        job.setDescription("Different description");
+        job.setName("Different name");
         job.setEnabled(false);
 
         // When
@@ -92,14 +98,14 @@ class GenericDaoTest {
         // Then
         assertThat(updatedJob.getId()).isEqualTo(job.getId());
         assertThat(updatedJob.getVersion()).isEqualTo(version + 1);
-        assertThat(updatedJob.getDescription()).isEqualTo("Different description");
+        assertThat(updatedJob.getName()).isEqualTo("Different name");
         assertThat(updatedJob.isEnabled()).isFalse();
 
         // Then
         Job fetchedUpdatedJob = dao.fetch(updatedJob.getId()).get();
         assertThat(fetchedUpdatedJob.getId()).isEqualTo(job.getId());
         assertThat(fetchedUpdatedJob.getVersion()).isEqualTo(version + 1);
-        assertThat(fetchedUpdatedJob.getDescription()).isEqualTo("Different description");
+        assertThat(fetchedUpdatedJob.getName()).isEqualTo("Different name");
         assertThat(fetchedUpdatedJob.isEnabled()).isFalse();
     }
 
@@ -132,10 +138,10 @@ class GenericDaoTest {
         Job copy1 = dao.fetch(job.getId()).get();
         Job copy2 = dao.fetch(job.getId()).get();
 
-        copy1.setDescription("change 1");
+        copy1.setName("change 1");
         dao.update(copy1);
 
-        copy2.setDescription("change 2");
+        copy2.setName("change 2");
 
         // When/then
         assertThrows(DataChangedException.class, () -> dao.update(copy2));
@@ -150,8 +156,14 @@ class GenericDaoTest {
     private Job createStandardJob(){
         Job job = new Job();
         job.setEnabled(true);
-        job.setDescription("Some description");
+        job.setName("Some name");
         Job createdJob = dao.create(job);
         return createdJob;
+    }
+
+    private void cleanup() {
+        // Cleanup
+        final List<Job> jobs = dao.find(new FindJobCriteria());
+        jobs.forEach(job -> dao.delete(job.getId()));
     }
 }
