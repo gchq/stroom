@@ -190,7 +190,11 @@ public final class JooqUtil {
             return Optional.empty();
         }
 
-        final Optional<Condition> nullCondition = convertMatchNull(field, criteria.isMatchNull());
+        Boolean matchNull = null;
+        if (criteria.isMatchNull()) {
+            matchNull = Boolean.TRUE;
+        }
+
         final Optional<Condition> fromCondition;
         if (criteria.getFrom() == null) {
             fromCondition = Optional.empty();
@@ -204,9 +208,9 @@ public final class JooqUtil {
             toCondition = Optional.of(field.lessThan(criteria.getTo()));
         }
 
-        return nullCondition
-                .map(c -> fromCondition.map(c::or).orElse(c)).or(() -> fromCondition)
-                .map(c -> toCondition.map(c::or).orElse(c)).or(() -> toCondition);
+        // Combine conditions.
+        final Optional<Condition> condition = fromCondition.map(c1 -> toCondition.map(c1::and).orElse(c1)).or(() -> toCondition);
+        return convertMatchNull(field, matchNull, condition);
     }
 
     /**
@@ -225,15 +229,14 @@ public final class JooqUtil {
             return Optional.empty();
         }
 
-        final Optional<Condition> nullCondition = convertMatchNull(field, criteria.getMatchNull());
+        final Optional<Condition> setCondition;
+        if (criteria.size() > 0) {
+            setCondition = Optional.of(field.in(criteria.getSet()));
+        } else {
+            setCondition = Optional.empty();
+        }
 
-        return nullCondition.map(c1 -> {
-            if (criteria.size() > 0) {
-                return field.in(criteria.getSet()).or(c1);
-            } else {
-                return c1;
-            }
-        }).or(() -> Optional.of(field.in(criteria.getSet())));
+        return convertMatchNull(field, criteria.getMatchNull(), setCondition);
     }
 
     /**
@@ -251,7 +254,6 @@ public final class JooqUtil {
             return Optional.empty();
         }
 
-        final Optional<Condition> nullCondition = convertMatchNull(field, criteria.getMatchNull());
         final Optional<Condition> valueCondition;
         if (criteria.getMatchStyle() == null) {
             if (criteria.isCaseInsensitive()) {
@@ -267,14 +269,17 @@ public final class JooqUtil {
             }
         }
 
-        return nullCondition.map(c1 -> valueCondition.map(c1::or).orElse(c1)).or(() -> valueCondition);
+        return convertMatchNull(field, criteria.getMatchNull(), valueCondition);
     }
 
-    private static Optional<Condition> convertMatchNull(final TableField<?, ?> field, final Boolean matchNull) {
+    private static Optional<Condition> convertMatchNull(final TableField<?, ?> field, final Boolean matchNull, final Optional<Condition> condition) {
         if (matchNull == null) {
-            return Optional.empty();
+            return condition;
         }
-        return Optional.of(matchNull ? field.isNull() : field.isNotNull());
+        if (matchNull) {
+            return condition.map(c -> c.or(field.isNull())).or(() -> Optional.of(field.isNull()));
+        }
+        return condition.or(() -> Optional.of(field.isNotNull()));
     }
 
     public static OrderField[] getOrderFields(final Map<String, TableField> tableFieldMap, final BaseCriteria criteria) {
