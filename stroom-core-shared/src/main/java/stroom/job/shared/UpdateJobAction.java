@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,29 @@
  * limitations under the License.
  */
 
-package stroom.job.api;
+package stroom.job.shared;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import stroom.task.shared.Action;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface DistributedTaskFactoryBean {
-    String jobName();
+public class UpdateJobAction extends Action<Job> {
+    private static final long serialVersionUID = 1451964889275627717L;
 
-    String description();
+    private Job job;
+
+    public UpdateJobAction() {
+        // Default constructor necessary for GWT serialisation.
+    }
+
+    public UpdateJobAction(final Job job) {
+        this.job = job;
+    }
+
+    public Job getJob() {
+        return job;
+    }
+
+    @Override
+    public String getTaskName() {
+        return "Update job";
+    }
 }

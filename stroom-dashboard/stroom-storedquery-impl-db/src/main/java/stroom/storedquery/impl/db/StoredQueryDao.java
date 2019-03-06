@@ -1,10 +1,8 @@
 package stroom.storedquery.impl.db;
 
 import org.jooq.Condition;
-import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.TableField;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
@@ -17,16 +15,12 @@ import stroom.storedquery.api.StoredQueryService;
 import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.HasIntCrud;
-import stroom.util.shared.Sort;
-import stroom.util.shared.Sort.Direction;
-import stroom.util.shared.StringCriteria;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -34,6 +28,11 @@ import static stroom.storedquery.impl.db.jooq.Tables.QUERY;
 
 class StoredQueryDao implements StoredQueryService, HasIntCrud<StoredQuery> {
     private static final Logger LOGGER = LoggerFactory.getLogger(StoredQueryDao.class);
+
+    private static final Map<String, TableField> TABLE_FIELD_MAP = Map.of(
+            FindStoredQueryCriteria.FIELD_ID, QUERY.ID,
+            FindStoredQueryCriteria.FIELD_NAME, QUERY.NAME,
+            FindStoredQueryCriteria.FIELD_TIME, QUERY.CREATE_TIME_MS);
 
     private final GenericDao<QueryRecord, StoredQuery, Integer> dao;
     private final ConnectionProvider connectionProvider;
@@ -83,7 +82,7 @@ class StoredQueryDao implements StoredQueryService, HasIntCrud<StoredQuery> {
             if (userId != null) {
                 conditions.add(QUERY.CREATE_USER.eq(userId));
             }
-            getStringCriteriaCondition(QUERY.NAME, criteria.getName()).ifPresent(conditions::add);
+            JooqUtil.getStringCondition(QUERY.NAME, criteria.getName()).ifPresent(conditions::add);
             if (criteria.getDashboardUuid() != null) {
                 conditions.add(QUERY.DASHBOARD_UUID.eq(criteria.getDashboardUuid()));
             }
@@ -94,78 +93,21 @@ class StoredQueryDao implements StoredQueryService, HasIntCrud<StoredQuery> {
                 conditions.add(QUERY.FAVOURITE.eq(criteria.getFavourite()));
             }
 
-            final Collection<OrderField<?>> orderFields = getOrderFields(criteria);
+            final OrderField[] orderFields = JooqUtil.getOrderFields(TABLE_FIELD_MAP, criteria);
 
-            return JooqUtil.applyLimits(context
+            return context
                     .select()
                     .from(QUERY)
                     .where(conditions)
-                    .orderBy(orderFields), criteria.getPageRequest())
+                    .orderBy(orderFields)
+                    .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                    .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                     .fetch()
                     .into(StoredQuery.class);
         });
 
         list = list.stream().map(StoredQuerySerialiser::deserialise).collect(Collectors.toList());
         return BaseResultList.createUnboundedList(list);
-    }
-
-    private Optional<Condition> getStringCriteriaCondition(final Field<String> field, final StringCriteria criteria) {
-        if (criteria != null) {
-            if (criteria.getMatchNull() != null) {
-                if (Boolean.TRUE.equals(criteria.getMatchNull())) {
-                    return Optional.of(field.isNull());
-                } else if (Boolean.FALSE.equals(criteria.getMatchNull())) {
-                    return Optional.of(field.isNotNull());
-                }
-            } else if (criteria.getString() != null) {
-                if (criteria.getMatchStyle() == null) {
-                    return Optional.of(field.eq(criteria.getString()));
-                } else {
-                    if (criteria.isCaseInsensitive()) {
-                        return Optional.of(DSL.upper(field).like(criteria.getMatchString()));
-                    } else {
-                        return Optional.of(field.like(criteria.getMatchString()));
-                    }
-                }
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    private Collection<OrderField<?>> getOrderFields(final FindStoredQueryCriteria criteria) {
-        List<OrderField<?>> orderFields = Collections.emptyList();
-        if (criteria.getSortList() != null && criteria.getSortList().size() > 0) {
-            orderFields = criteria.getSortList()
-                    .stream()
-                    .map(this::getOrderField)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toList());
-        }
-        return orderFields;
-    }
-
-    private Optional<OrderField<?>> getOrderField(final Sort sort) {
-        Optional<TableField<?, ?>> field = getField(sort.getField());
-        return field.map(f -> {
-            if (Direction.DESCENDING.equals(sort.getDirection())) {
-                return f.desc();
-            }
-            return f;
-        });
-    }
-
-    private Optional<TableField<?, ?>> getField(final String fieldName) {
-        switch (fieldName) {
-            case FindStoredQueryCriteria.FIELD_ID:
-                return Optional.of(QUERY.ID);
-            case FindStoredQueryCriteria.FIELD_NAME:
-                return Optional.of(QUERY.NAME);
-            case FindStoredQueryCriteria.FIELD_TIME:
-                return Optional.of(QUERY.CREATE_TIME_MS);
-        }
-        return Optional.empty();
     }
 
     void clean(final String user, final boolean favourite, final Integer oldestId, final long oldestCrtMs) {

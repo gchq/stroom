@@ -22,11 +22,11 @@ import stroom.activity.api.ActivityService;
 import stroom.activity.impl.db.jooq.tables.records.ActivityRecord;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.FindActivityCriteria;
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.EntityServiceException;
-import stroom.security.SecurityContext;
 import stroom.db.util.AuditUtil;
 import stroom.db.util.JooqUtil;
+import stroom.security.SecurityContext;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -114,13 +114,14 @@ public class ActivityServiceImpl implements ActivityService {
                 condition = condition.and(ACTIVITY.JSON.like(criteria.getName().getMatchString()));
             }
 
-            return JooqUtil.applyLimits(context
+            return context
                     .select()
                     .from(ACTIVITY)
-                    .where(condition), criteria.getPageRequest())
+                    .where(condition)
+                    .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                    .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                     .fetch()
                     .into(Activity.class);
-
         });
 
         list = list.stream().map(ActivitySerialiser::deserialise).collect(Collectors.toList());

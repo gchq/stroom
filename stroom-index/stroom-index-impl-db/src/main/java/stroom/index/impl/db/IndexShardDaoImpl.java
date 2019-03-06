@@ -13,7 +13,6 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.security.SecurityContext;
-import stroom.util.shared.Sort;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -60,14 +59,14 @@ public class IndexShardDaoImpl implements IndexShardDao {
     @Override
     public List<IndexShard> find(final FindIndexShardCriteria criteria) {
         final List<Condition> conditions = Stream.of(
-                JooqUtil.applyRange(INDEX_SHARD.DOCUMENT_COUNT, criteria.getDocumentCountRange()),
-                JooqUtil.applySet(INDEX_SHARD.NODE_NAME, criteria.getNodeNameSet()),
-                JooqUtil.applySet(INDEX_SHARD.FK_VOLUME_ID, criteria.getVolumeIdSet()),
-                JooqUtil.applySet(INDEX_SHARD.ID, criteria.getIndexShardIdSet()),
-                JooqUtil.applySet(INDEX_SHARD.INDEX_UUID, criteria.getIndexUuidSet()),
-                JooqUtil.applySet(INDEX_SHARD.STATUS,
+                JooqUtil.getRangeCondition(INDEX_SHARD.DOCUMENT_COUNT, criteria.getDocumentCountRange()),
+                JooqUtil.getSetCondition(INDEX_SHARD.NODE_NAME, criteria.getNodeNameSet()),
+                JooqUtil.getSetCondition(INDEX_SHARD.FK_VOLUME_ID, criteria.getVolumeIdSet()),
+                JooqUtil.getSetCondition(INDEX_SHARD.ID, criteria.getIndexShardIdSet()),
+                JooqUtil.getSetCondition(INDEX_SHARD.INDEX_UUID, criteria.getIndexUuidSet()),
+                JooqUtil.getSetCondition(INDEX_SHARD.STATUS,
                         criteria.getIndexShardStatusSet().convertTo(IndexShard.IndexShardStatus::getPrimitiveValue)),
-                JooqUtil.applyString(INDEX_SHARD.PARTITION, criteria.getPartition())
+                JooqUtil.getStringCondition(INDEX_SHARD.PARTITION, criteria.getPartition())
         )
                 .filter(Optional::isPresent)
                 .map(Optional::get)

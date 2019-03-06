@@ -13,6 +13,7 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 import stroom.db.util.GenericDao;
 import stroom.job.impl.db.jooq.tables.records.JobRecord;
+import stroom.job.shared.Job;
 
 import java.util.Optional;
 
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static stroom.job.impl.db.jooq.Tables.JOB;
 
-public class GenericDaoTest {
+class GenericDaoTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(GenericDaoTest.class);
 
     private static MySQLContainer dbContainer = new MySQLContainer()
@@ -30,7 +31,7 @@ public class GenericDaoTest {
     private static GenericDao<JobRecord, Job, Integer> dao;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         LOGGER.info(() -> "Before All - Start Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
 
@@ -41,7 +42,7 @@ public class GenericDaoTest {
     }
 
     @Test
-    public void basicCreation() {
+    void basicCreation() {
         // Given/when
         Job job = createStandardJob();
 
@@ -59,7 +60,7 @@ public class GenericDaoTest {
     }
 
     @Test
-    public void descriptionTooLong() {
+    void descriptionTooLong() {
         // Given
         Job job = new Job();
         job.setEnabled(true);
@@ -70,7 +71,7 @@ public class GenericDaoTest {
     }
 
     @Test
-    public void badFetch(){
+    void badFetch(){
         // Given/when
         Optional<Job> job = dao.fetch(11111);
         // Then
@@ -78,7 +79,7 @@ public class GenericDaoTest {
     }
 
     @Test
-    public void update(){
+    void update(){
         // Given
         Job job = createStandardJob();
         int version = job.getVersion();
@@ -103,7 +104,7 @@ public class GenericDaoTest {
     }
 
     @Test
-    public void delete() {
+    void delete() {
         // Given
         Job job = createStandardJob();
 
@@ -117,7 +118,7 @@ public class GenericDaoTest {
     }
 
     @Test
-    public void badDelete(){
+    void badDelete(){
         // Given/when
         boolean didDeleteSucceed = dao.delete(111111);
         // Then
@@ -125,7 +126,7 @@ public class GenericDaoTest {
     }
 
     @Test
-    public void checkOcc(){
+    void checkOcc(){
         // Given
         Job job = createStandardJob();
         Job copy1 = dao.fetch(job.getId()).get();
@@ -141,7 +142,7 @@ public class GenericDaoTest {
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         LOGGER.info(() -> "After All - Stop Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::stop);
     }

@@ -17,7 +17,7 @@
 package stroom.streamtask;
 
 import stroom.job.api.DistributedTaskFactory;
-import stroom.job.api.DistributedTaskFactoryBean;
+import stroom.job.api.DistributedTaskFactoryDescription;
 import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.util.shared.VoidResult;
 
@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@DistributedTaskFactoryBean(jobName = StreamProcessorTask.JOB_NAME, description = "Job to process streams matching stream processor filters with their associated pipelines")
+@DistributedTaskFactoryDescription(jobName = StreamProcessorTask.JOB_NAME, description = "Job to process streams matching stream processor filters with their associated pipelines")
 public class StreamProcessorTaskFactory implements DistributedTaskFactory<StreamProcessorTask, VoidResult> {
     private final StreamTaskCreator streamTaskCreator;
 

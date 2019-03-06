@@ -24,7 +24,7 @@ import stroom.cluster.task.api.TargetType;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.entity.cluster.ClearServiceClusterTask;
-import stroom.job.shared.JobManager;
+import stroom.job.api.JobManager;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;

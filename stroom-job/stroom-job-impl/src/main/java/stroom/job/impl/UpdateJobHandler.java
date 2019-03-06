@@ -15,16 +15,24 @@
  *
  */
 
-package stroom.job.api;
+package stroom.job.impl;
 
-import stroom.util.shared.BaseResultList;
-import stroom.job.shared.FindJobNodeCriteria;
-import stroom.job.shared.JobNode;
+import stroom.job.shared.Job;
+import stroom.job.shared.UpdateJobAction;
+import stroom.task.api.AbstractTaskHandler;
 
-public interface JobNodeService {
-    void startup();
+import javax.inject.Inject;
 
-    JobNode save(JobNode job);
+class UpdateJobHandler extends AbstractTaskHandler<UpdateJobAction, Job> {
+    private final JobService jobService;
 
-    BaseResultList<JobNode> find(FindJobNodeCriteria criteria);
+    @Inject
+    UpdateJobHandler(final JobService jobService) {
+        this.jobService = jobService;
+    }
+
+    @Override
+    public Job exec(final UpdateJobAction action) {
+        return jobService.update(action.getJob());
+    }
 }

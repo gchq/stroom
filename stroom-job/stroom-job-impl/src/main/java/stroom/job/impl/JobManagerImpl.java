@@ -17,14 +17,11 @@
 
 package stroom.job.impl;
 
-import stroom.job.api.JobNodeService;
-import stroom.job.api.JobService;
 import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
-import stroom.job.shared.JobManager;
+import stroom.job.api.JobManager;
 import stroom.job.shared.JobNode;
-import stroom.node.shared.Node;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -35,14 +32,14 @@ import java.util.List;
  * instances across a cluster using values from the database.
  */
 public class JobManagerImpl implements JobManager {
-    private final JobService jobService;
-    private final JobNodeService jobNodeService;
+    private final JobDao jobDao;
+    private final JobNodeDao jobNodeDao;
 
     @Inject
-    public JobManagerImpl(final JobService jobService,
-                          final JobNodeService jobNodeService) {
-        this.jobService = jobService;
-        this.jobNodeService = jobNodeService;
+    public JobManagerImpl(final JobDao jobDao,
+                          final JobNodeDao jobNodeDao) {
+        this.jobDao = jobDao;
+        this.jobNodeDao = jobNodeDao;
     }
 
     /**
@@ -55,7 +52,7 @@ public class JobManagerImpl implements JobManager {
     public Boolean isJobEnabled(final String jobName) {
         final FindJobCriteria criteria = new FindJobCriteria();
         criteria.getName().setString(jobName);
-        final List<Job> jobs = jobService.find(criteria);
+        final List<Job> jobs = jobDao.find(criteria);
         if (jobs.size() > 0) {
             final Job job = jobs.get(0);
             return job.isEnabled();
@@ -86,8 +83,8 @@ public class JobManagerImpl implements JobManager {
      * @return True if successful.
      */
     @Override
-    public Boolean setNodeEnabled(final Node node, final boolean enabled) {
-        modifyNode(node, enabled);
+    public Boolean setNodeEnabled(final String nodeName, final boolean enabled) {
+        modifyNode(nodeName, enabled);
 
         return Boolean.TRUE;
     }
@@ -119,12 +116,12 @@ public class JobManagerImpl implements JobManager {
     private void modifyCluster(final String jobName, final boolean enabled) {
         final FindJobCriteria criteria = new FindJobCriteria();
         criteria.getName().setString(jobName);
-        final List<Job> jobs = jobService.find(criteria);
+        final List<Job> jobs = jobDao.find(criteria);
 
         if (jobs.size() > 0) {
             final Job job = jobs.get(0);
             job.setEnabled(enabled);
-            jobService.save(job);
+            jobDao.update(job);
         }
     }
 
@@ -137,12 +134,12 @@ public class JobManagerImpl implements JobManager {
      */
     private void modifyJob(final String jobName, final boolean enabled) {
         final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
-        criteria.setJobName(jobName);
+        criteria.getJobName().setString(jobName);
 
-        final List<JobNode> jobNodes = jobNodeService.find(criteria);
+        final List<JobNode> jobNodes = jobNodeDao.find(criteria);
         for (final JobNode jobNode : jobNodes) {
             jobNode.setEnabled(enabled);
-            jobNodeService.save(jobNode);
+            jobNodeDao.update(jobNode);
         }
     }
 
@@ -152,14 +149,14 @@ public class JobManagerImpl implements JobManager {
      *
      * @param node The node that the job instances are associated with.
      */
-    private void modifyNode(final Node node, final boolean enabled) {
+    private void modifyNode(final String nodeName, final boolean enabled) {
         final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
-        criteria.getNodeIdSet().add(node);
+        criteria.getNodeName().setString(nodeName);
 
-        final List<JobNode> jobNodes = jobNodeService.find(criteria);
+        final List<JobNode> jobNodes = jobNodeDao.find(criteria);
         for (final JobNode jobNode : jobNodes) {
             jobNode.setEnabled(enabled);
-            jobNodeService.save(jobNode);
+            jobNodeDao.update(jobNode);
         }
     }
 }

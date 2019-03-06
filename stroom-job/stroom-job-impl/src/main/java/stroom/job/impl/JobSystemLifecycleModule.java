@@ -16,10 +16,6 @@
 
 package stroom.job.impl;
 
-import stroom.job.api.DistributedTaskFetcher;
-import stroom.job.api.JobNodeService;
-import stroom.job.api.JobService;
-import stroom.job.api.ScheduledTaskExecutor;
 import stroom.lifecycle.api.AbstractLifecycleModule;
 import stroom.lifecycle.api.RunnableWrapper;
 
@@ -29,8 +25,7 @@ public class JobSystemLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
         super.configure();
-        bindStartup().to(JobServiceStartup.class);
-        bindStartup().to(JobNodeServiceStartup.class);
+        bindStartup().to(JobBootstrapStartup.class);
         bindShutdown().priority(999).to(DistributedTaskFetcherShutdown.class);
 
         // Make sure the last thing to start and the first thing to stop is the scheduled task executor.
@@ -38,17 +33,10 @@ public class JobSystemLifecycleModule extends AbstractLifecycleModule {
         bindShutdown().priority(Integer.MIN_VALUE).to(ScheduledTaskExecutorShutdown.class);
     }
 
-    private static class JobServiceStartup extends RunnableWrapper {
+    private static class JobBootstrapStartup extends RunnableWrapper {
         @Inject
-        JobServiceStartup(final JobService jobService) {
-            super(jobService::startup);
-        }
-    }
-
-    private static class JobNodeServiceStartup extends RunnableWrapper {
-        @Inject
-        JobNodeServiceStartup(final JobNodeService jobNodeService) {
-            super(jobNodeService::startup);
+        JobBootstrapStartup(final JobBootstrap jobBootstrap) {
+            super(jobBootstrap::startup);
         }
     }
 

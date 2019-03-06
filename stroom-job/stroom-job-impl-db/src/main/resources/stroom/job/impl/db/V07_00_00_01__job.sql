@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS job_node (
   job_type              tinyint(4) NOT NULL,
   node_name             varchar(255) NOT NULL,
   task_limit            int(11) NOT NULL,
-  schedule              varchar(255) NOT NULL,
+  schedule              varchar(255) DEFAULT NULL,
   enabled               bit(1) NOT NULL,
   PRIMARY KEY           (id),
   CONSTRAINT job_id FOREIGN KEY (job_id) REFERENCES job (id)
@@ -49,7 +49,7 @@ BEGIN
     SET @insert_sql=''
         ' INSERT INTO job (id, version, create_time_ms, create_user, update_time_ms, update_user, name, enabled)'
         ' SELECT ID, 1, CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, ENBL'
-        ' FROM JOB'
+        ' FROM JB'
         ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM job)'
         ' ORDER BY ID;';
     PREPARE insert_stmt FROM @insert_sql;
@@ -82,11 +82,11 @@ BEGIN
 
     SET @insert_sql=''
         ' INSERT INTO job_node (id, version, create_time_ms, create_user, update_time_ms, update_user, job_id, job_type, node_name, task_limit, schedule, enabled)'
-        ' SELECT j.ID, 1, j.CRT_MS, j.CRT_USER, j.UPD_MS, j.UPD_USER, j.FK_JB_ID, j.JB_TP, n.NODE_NAME, j.TASK_LMT, j.SCHEDULE, j.ENBL'
-        ' FROM JOB_ND j'
+        ' SELECT j.ID, 1, j.CRT_MS, j.CRT_USER, j.UPD_MS, j.UPD_USER, j.FK_JB_ID, j.JB_TP, n.NAME, j.TASK_LMT, j.SCHEDULE, j.ENBL'
+        ' FROM JB_ND j'
         ' JOIN ND n ON (j.FK_ND_ID = n.ID)'
-        ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM job_node)'
-        ' ORDER BY ID;';
+        ' WHERE j.ID > (SELECT COALESCE(MAX(id), 0) FROM job_node)'
+        ' ORDER BY j.ID;';
     PREPARE insert_stmt FROM @insert_sql;
     EXECUTE insert_stmt;
 

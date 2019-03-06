@@ -6,7 +6,6 @@ dependencies {
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-job:stroom-job-api')
-    compile project(':stroom-job:stroom-job-impl-db')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-security:stroom-security-api')

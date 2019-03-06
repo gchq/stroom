@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.job.api.ScheduledJob;
-import stroom.job.api.ScheduledTaskExecutor;
 import stroom.job.api.TaskConsumer;
 import stroom.job.shared.JobNode;
 import stroom.security.Security;
@@ -45,8 +44,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Singleton
-public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskExecutorImpl.class);
+class ScheduledTaskExecutor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskExecutor.class);
 
     private static final String STROOM_JOB_THREAD_POOL = "Stroom Job#";
 
@@ -63,11 +62,11 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
     private final long executionInterval;
 
     @Inject
-    ScheduledTaskExecutorImpl(final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
-                              final JobNodeTrackerCache jobNodeTrackerCache,
-                              final TaskManager taskManager,
-                              final JobSystemConfig jobSystemConfig,
-                              final Security security) {
+    ScheduledTaskExecutor(final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
+                          final JobNodeTrackerCache jobNodeTrackerCache,
+                          final TaskManager taskManager,
+                          final JobSystemConfig jobSystemConfig,
+                          final Security security) {
         this.scheduledJobsMap = scheduledJobsMap;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
         this.taskManager = taskManager;
@@ -76,7 +75,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         this.executionInterval = jobSystemConfig.getExecutionIntervalMs();
     }
 
-    public void startup() {
+    void startup() {
         if (enabled) {
             LOGGER.info("Starting Stroom Job service");
             // Create the runnable object that will perform execution on all
@@ -111,7 +110,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         }
     }
 
-    public void shutdown() {
+    void shutdown() {
         if (enabled) {
             LOGGER.info("Stopping Stroom Job service");
             final ScheduledExecutorService scheduledExecutorService = this.scheduledExecutorService.get();
