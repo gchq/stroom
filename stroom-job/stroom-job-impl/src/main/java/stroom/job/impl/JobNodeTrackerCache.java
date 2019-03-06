@@ -19,13 +19,10 @@ package stroom.job.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.job.api.JobNodeService;
 import stroom.job.shared.FindJobNodeCriteria;
-import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.node.api.NodeInfo;
-import stroom.node.shared.Node;
 import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
@@ -39,7 +36,7 @@ import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Singleton
-public class JobNodeTrackerCache {
+class JobNodeTrackerCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackerCache.class);
     // Default refresh interval is 10 seconds.
     private static final long DEFAULT_REFRESH_INTERVAL = 10000;
@@ -47,20 +44,20 @@ public class JobNodeTrackerCache {
     private final ReentrantLock refreshLock = new ReentrantLock();
 
     private final NodeInfo nodeInfo;
-    private final JobNodeService jobNodeService;
+    private final JobNodeDao jobNodeDao;
 
-    private volatile Node node;
+    private volatile String nodeName;
     private volatile Trackers trackers;
     private volatile long lastRefreshMs;
 
     @Inject
     JobNodeTrackerCache(final NodeInfo nodeInfo,
-                        final JobNodeService jobNodeService) {
+                        final JobNodeDao jobNodeDao) {
         this.nodeInfo = nodeInfo;
-        this.jobNodeService = jobNodeService;
+        this.jobNodeDao = jobNodeDao;
     }
 
-    public Trackers getTrackers() {
+    Trackers getTrackers() {
         if (trackers == null) {
             // If trackers are currently null then we will lock so that all
             // threads requiring trackers are blocked until the first one in
@@ -71,7 +68,7 @@ public class JobNodeTrackerCache {
                 // the lock before then don't bother creating them again.
                 if (trackers == null) {
                     // Create the initial trackers.
-                    trackers = new Trackers(trackers, jobNodeService, getNode());
+                    trackers = new Trackers(trackers, jobNodeDao, getNodeName());
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
@@ -89,7 +86,7 @@ public class JobNodeTrackerCache {
                     if (delta > refreshInterval) {
                         try {
                             // Refresh the trackers.
-                            trackers = new Trackers(trackers, jobNodeService, getNode());
+                            trackers = new Trackers(trackers, jobNodeDao, getNodeName());
                         } catch (final RuntimeException e) {
                             LOGGER.error(e.getMessage(), e);
                         }
@@ -107,29 +104,27 @@ public class JobNodeTrackerCache {
         return trackers;
     }
 
-    public Node getNode() {
-        if (node == null) {
-            node = nodeInfo.getThisNode();
+    String getNodeName() {
+        if (nodeName == null) {
+            nodeName = nodeInfo.getThisNodeName();
         }
-        return node;
+        return nodeName;
     }
 
-    public static class Trackers {
+    static class Trackers {
         private final Map<JobNode, JobNodeTracker> trackersForJobNode = new HashMap<>();
         private final Map<String, JobNodeTracker> trackersForJobName = new HashMap<>();
         private final Map<JobNode, String> scheduleValueMap = new HashMap<>();
         private final Map<JobNode, Scheduler> schedulerMap = new HashMap<>();
 
-        public Trackers(final Trackers previousState, final JobNodeService jobNodeService, final Node node) {
+        Trackers(final Trackers previousState, final JobNodeDao jobNodeDao, final String nodeName) {
             try {
                 // Get the latest job nodes.
                 LOGGER.trace("Refreshing trackers");
                 final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
-                findJobNodeCriteria.getNodeIdSet().add(node);
-                findJobNodeCriteria.getFetchSet().add(Job.ENTITY_TYPE);
-                findJobNodeCriteria.getFetchSet().add(Node.ENTITY_TYPE);
+                findJobNodeCriteria.getNodeName().setString(nodeName);
 
-                final List<JobNode> list = jobNodeService.find(findJobNodeCriteria);
+                final List<JobNode> list = jobNodeDao.find(findJobNodeCriteria);
 
                 for (final JobNode jobNode : list) {
                     // Get the job name.
@@ -186,19 +181,19 @@ public class JobNodeTrackerCache {
             }
         }
 
-        public JobNodeTracker getTrackerForJobNode(final JobNode jobNode) {
+        JobNodeTracker getTrackerForJobNode(final JobNode jobNode) {
             return trackersForJobNode.get(jobNode);
         }
 
-        public JobNodeTracker getTrackerForJobName(final String jobName) {
+        JobNodeTracker getTrackerForJobName(final String jobName) {
             return trackersForJobName.get(jobName);
         }
 
-        public Collection<JobNodeTracker> getTrackerList() {
+        Collection<JobNodeTracker> getTrackerList() {
             return trackersForJobNode.values();
         }
 
-        public Scheduler getScheduler(final JobNode jobNode) {
+        Scheduler getScheduler(final JobNode jobNode) {
             return schedulerMap.get(jobNode);
         }
     }

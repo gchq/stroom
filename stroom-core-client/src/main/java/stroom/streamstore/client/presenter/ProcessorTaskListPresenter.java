@@ -28,7 +28,7 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
-import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
+import stroom.entity.client.presenter.FindActionDataProvider;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.NamedEntity;
@@ -48,7 +48,7 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import java.util.ArrayList;
 
 public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<ProcessorFilterTask>> implements HasDocumentRead<SharedObject> {
-    private final EntityServiceFindActionDataProvider<FindStreamTaskCriteria, ProcessorFilterTask> dataProvider;
+    private final FindActionDataProvider<FindStreamTaskCriteria, ProcessorFilterTask> dataProvider;
 
     private FindStreamTaskCriteria criteria;
 
@@ -181,7 +181,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
 
         getView().addEndColumn(new EndColumn<>());
 
-        this.dataProvider = new EntityServiceFindActionDataProvider<>(dispatcher,
+        this.dataProvider = new FindActionDataProvider<>(dispatcher,
                 getView());
     }
 
@@ -201,7 +201,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         }
     }
 
-    public EntityServiceFindActionDataProvider<FindStreamTaskCriteria, ProcessorFilterTask> getDataProvider() {
+    public FindActionDataProvider<FindStreamTaskCriteria, ProcessorFilterTask> getDataProvider() {
         return dataProvider;
     }
 

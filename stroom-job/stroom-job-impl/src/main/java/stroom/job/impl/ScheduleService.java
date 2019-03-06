@@ -18,8 +18,11 @@ package stroom.job.impl;
 
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.ScheduledTimes;
+import stroom.util.date.DateUtil;
+import stroom.util.scheduler.SimpleCron;
+import stroom.util.shared.ModelStringUtil;
 
-interface ScheduleService {
+class ScheduleService {
     /**
      * Gets a scheduled time object for a given schedule based on the current
      * time. The scheduled time object holds the reference time, last scheduled
@@ -29,6 +32,52 @@ interface ScheduleService {
      * @return The scheduled times based on the supplied cron expression.
      * @throws RuntimeException Could be thrown.
      */
-    ScheduledTimes getScheduledTimes(final JobType jobType, final Long scheduleReferenceTime,
-                                     final Long lastExecutedTime, final String expression);
+    ScheduledTimes getScheduledTimes(final JobType jobType,
+                                            final Long scheduleReferenceTime,
+                                            final Long lastExecutedTime,
+                                            final String expression) {
+        ScheduledTimes scheduledTimes = null;
+
+        if (JobType.CRON.equals(jobType)) {
+            final SimpleCron cron = SimpleCron.compile(expression);
+
+            Long time = scheduleReferenceTime;
+            if (time == null) {
+                time = System.currentTimeMillis();
+            }
+            if (time != null) {
+                time = cron.getNextTime(time);
+            }
+            scheduledTimes = getScheduledTimes(lastExecutedTime, time);
+
+        } else if (JobType.FREQUENCY.equals(jobType)) {
+            if (expression == null || expression.trim().length() == 0) {
+                throw new NumberFormatException("Frequency expression cannot be null");
+            }
+
+            final Long duration = ModelStringUtil.parseDurationString(expression);
+            if (duration == null) {
+                throw new NumberFormatException("Unable to parse frequency expression");
+            }
+
+            Long time = scheduleReferenceTime;
+            if (time != null) {
+                time = time + duration;
+            }
+            scheduledTimes = getScheduledTimes(lastExecutedTime, time);
+        }
+
+        return scheduledTimes;
+    }
+
+    private ScheduledTimes getScheduledTimes(final Long lastExecutedTime, final Long nextScheduledTime) {
+        return new ScheduledTimes(getDateString(lastExecutedTime), getDateString(nextScheduledTime));
+    }
+
+    private String getDateString(final Long ms) {
+        if (ms == null) {
+            return "Never";
+        }
+        return DateUtil.createNormalDateTimeString(ms);
+    }
 }

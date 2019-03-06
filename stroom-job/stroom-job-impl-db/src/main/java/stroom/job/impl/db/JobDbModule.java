@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
+import stroom.job.impl.JobDao;
+import stroom.job.impl.JobNodeDao;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -23,6 +25,8 @@ public class JobDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        bind(JobDao.class).to(JobDaoImpl.class);
+        bind(JobNodeDao.class).to(JobNodeDaoImpl.class);
     }
 
     @Provides

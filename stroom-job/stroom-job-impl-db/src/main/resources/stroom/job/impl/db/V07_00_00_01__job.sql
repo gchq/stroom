@@ -1,50 +1,104 @@
 --
--- Create the job tables
+-- Create the job table
 --
-USE stroom;
-
 CREATE TABLE IF NOT EXISTS job (
   id                    int(11) NOT NULL AUTO_INCREMENT,
-  description           varchar(255) DEFAULT NULL,
-  enabled               bit(1) NOT NULL,
   version               int(11) NOT NULL,
-  PRIMARY KEY           (id)
+  create_time_ms        bigint(20) NOT NULL,
+  create_user           varchar(255) NOT NULL,
+  update_time_ms        bigint(20) NOT NULL,
+  update_user           varchar(255) NOT NULL,
+  name                  varchar(255) NOT NULL,
+  enabled               bit(1) NOT NULL,
+  PRIMARY KEY           (id),
+  UNIQUE KEY name       (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-
+--
+-- Create the job node table
+--
 CREATE TABLE IF NOT EXISTS job_node (
   id                    int(11) NOT NULL AUTO_INCREMENT,
-  node_name             varchar(255) NOT NULL,
-  job_type              tinyint(4) NOT NULL,
-  enabled               bit(1) NOT NULL,
-  task_limit            int(11) NOT NULL,
-  job_id                int(11) NOT NULL,
-  schedule              varchar(255) NOT NULL,
   version               int(11) NOT NULL,
+  create_time_ms        bigint(20) NOT NULL,
+  create_user           varchar(255) NOT NULL,
+  update_time_ms        bigint(20) NOT NULL,
+  update_user           varchar(255) NOT NULL,
+  job_id                int(11) NOT NULL,
+  job_type              tinyint(4) NOT NULL,
+  node_name             varchar(255) NOT NULL,
+  task_limit            int(11) NOT NULL,
+  schedule              varchar(255) DEFAULT NULL,
+  enabled               bit(1) NOT NULL,
   PRIMARY KEY           (id),
   CONSTRAINT job_id FOREIGN KEY (job_id) REFERENCES job (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Copy data into the job tables
+-- Copy data into the job table
 --
 DROP PROCEDURE IF EXISTS copy_job;
 DELIMITER //
 CREATE PROCEDURE copy_job ()
 BEGIN
-  -- TODO update auto-increment, see V7_0_0_1__config.sql as an example
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'JB' > 0) THEN
-        INSERT INTO job (id, description, enabled, version)
-        SELECT ID, NAME, ENBL, 1
-        FROM JB;
-    END IF;
+  IF EXISTS (
+      SELECT TABLE_NAME
+      FROM INFORMATION_SCHEMA.TABLES
+      WHERE TABLE_NAME = 'JB') THEN
 
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'JB_ND' > 0) THEN
-        INSERT INTO job_node (id, node_name, job_type, enabled, task_limit, job_id, schedule, version)
-        SELECT ID, FK_ND_ID, JB_TP, ENBL, TASK_LMT, FK_JB_ID, SCHEDULE, 1
-        FROM JB_ND;
-    END IF;
+    SET @insert_sql=''
+        ' INSERT INTO job (id, version, create_time_ms, create_user, update_time_ms, update_user, name, enabled)'
+        ' SELECT ID, 1, CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, ENBL'
+        ' FROM JB'
+        ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM job)'
+        ' ORDER BY ID;';
+    PREPARE insert_stmt FROM @insert_sql;
+    EXECUTE insert_stmt;
+
+    -- Work out what to set our auto_increment start value to
+    SELECT CONCAT('ALTER TABLE job AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+    INTO @alter_table_sql
+    FROM job;
+
+    PREPARE alter_table_stmt FROM @alter_table_sql;
+    EXECUTE alter_table_stmt;
+  END IF;
 END//
 DELIMITER ;
 CALL copy_job();
 DROP PROCEDURE copy_job;
+
+--
+-- Copy data into the job node table
+--
+DROP PROCEDURE IF EXISTS copy_job_node;
+DELIMITER //
+CREATE PROCEDURE copy_job_node ()
+BEGIN
+  IF EXISTS (
+      SELECT TABLE_NAME
+      FROM INFORMATION_SCHEMA.TABLES
+      WHERE TABLE_NAME = 'JB_ND') THEN
+
+    SET @insert_sql=''
+        ' INSERT INTO job_node (id, version, create_time_ms, create_user, update_time_ms, update_user, job_id, job_type, node_name, task_limit, schedule, enabled)'
+        ' SELECT j.ID, 1, j.CRT_MS, j.CRT_USER, j.UPD_MS, j.UPD_USER, j.FK_JB_ID, j.JB_TP, n.NAME, j.TASK_LMT, j.SCHEDULE, j.ENBL'
+        ' FROM JB_ND j'
+        ' JOIN ND n ON (j.FK_ND_ID = n.ID)'
+        ' WHERE j.ID > (SELECT COALESCE(MAX(id), 0) FROM job_node)'
+        ' ORDER BY j.ID;';
+    PREPARE insert_stmt FROM @insert_sql;
+    EXECUTE insert_stmt;
+
+    -- Work out what to set our auto_increment start value to
+    SELECT CONCAT('ALTER TABLE job_node AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+    INTO @alter_table_sql
+    FROM job_node;
+
+    PREPARE alter_table_stmt FROM @alter_table_sql;
+    EXECUTE alter_table_stmt;
+  END IF;
+END//
+DELIMITER ;
+CALL copy_job_node();
+DROP PROCEDURE copy_job_node;

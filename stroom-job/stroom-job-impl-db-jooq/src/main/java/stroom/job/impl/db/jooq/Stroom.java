@@ -31,7 +31,7 @@ import stroom.job.impl.db.jooq.tables.JobNode;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = -570344923;
+    private static final long serialVersionUID = 1601067703;
 
     /**
      * The reference instance of <code>stroom</code>

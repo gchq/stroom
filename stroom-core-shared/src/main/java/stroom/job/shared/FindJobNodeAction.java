@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,19 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.job.api;
+package stroom.job.shared;
 
-import stroom.util.shared.BaseResultList;
-import stroom.job.shared.FindJobCriteria;
-import stroom.job.shared.Job;
+import stroom.entity.shared.FindAction;
+import stroom.task.shared.Action;
+import stroom.util.shared.ResultList;
 
-public interface JobService {
-    void startup();
+public class FindJobNodeAction extends FindAction<FindJobNodeCriteria, JobNodeRow> {
+    private static final long serialVersionUID = -6808045615241590297L;
 
-    Job save(Job job);
+    public FindJobNodeAction() {
+        // Default constructor necessary for GWT serialisation.
+    }
 
-    BaseResultList<Job> find(FindJobCriteria criteria);
+    public FindJobNodeAction(final FindJobNodeCriteria criteria) {
+        super(criteria);
+    }
 }

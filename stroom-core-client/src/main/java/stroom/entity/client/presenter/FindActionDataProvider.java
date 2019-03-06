@@ -29,7 +29,7 @@ import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.docref.SharedObject;
 import stroom.task.shared.Action;
 
-public class EntityServiceFindActionDataProvider<C extends BaseCriteria, E extends SharedObject>
+public class FindActionDataProvider<C extends BaseCriteria, E extends SharedObject>
         implements Refreshable, ColumnSortEvent.Handler {
     private final ClientDispatchAsync dispatcher;
     private final DataGridView<E> view;
@@ -37,7 +37,7 @@ public class EntityServiceFindActionDataProvider<C extends BaseCriteria, E exten
     private ActionDataProvider<E> dataProvider;
     private Boolean allowNoConstraint = null;
 
-    public EntityServiceFindActionDataProvider(final ClientDispatchAsync dispatcher, final DataGridView<E> view) {
+    public FindActionDataProvider(final ClientDispatchAsync dispatcher, final DataGridView<E> view) {
         this.dispatcher = dispatcher;
         this.view = view;
         view.addColumnSortHandler(this);

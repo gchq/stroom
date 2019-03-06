@@ -16,7 +16,15 @@
 
 package stroom.job.api;
 
-public interface ScheduledTaskExecutor {
-    void startup();
-    void shutdown();
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface DistributedTaskFactoryDescription {
+    String jobName();
+
+    String description();
 }

@@ -5,10 +5,10 @@ import org.testcontainers.containers.MySQLContainer;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 
-class TestModule extends AbstractModule {
+class MySQLContainerModule extends AbstractModule {
     private final MySQLContainer dbContainer;
 
-    public TestModule(final MySQLContainer dbContainer) {
+    MySQLContainerModule(final MySQLContainer dbContainer) {
         this.dbContainer = dbContainer;
     }
 
