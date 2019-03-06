@@ -31,6 +31,7 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
+    public static final Index JOB_NAME = Indexes0.JOB_NAME;
     public static final Index JOB_PRIMARY = Indexes0.JOB_PRIMARY;
     public static final Index JOB_NODE_JOB_ID = Indexes0.JOB_NODE_JOB_ID;
     public static final Index JOB_NODE_PRIMARY = Indexes0.JOB_NODE_PRIMARY;
@@ -40,6 +41,7 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     private static class Indexes0 {
+        public static Index JOB_NAME = Internal.createIndex("name", Job.JOB, new OrderField[] { Job.JOB.NAME }, true);
         public static Index JOB_PRIMARY = Internal.createIndex("PRIMARY", Job.JOB, new OrderField[] { Job.JOB.ID }, true);
         public static Index JOB_NODE_JOB_ID = Internal.createIndex("job_id", JobNode.JOB_NODE, new OrderField[] { JobNode.JOB_NODE.JOB_ID }, false);
         public static Index JOB_NODE_PRIMARY = Internal.createIndex("PRIMARY", JobNode.JOB_NODE, new OrderField[] { JobNode.JOB_NODE.ID }, true);

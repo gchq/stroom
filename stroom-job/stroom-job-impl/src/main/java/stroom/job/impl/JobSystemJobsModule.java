@@ -1,6 +1,5 @@
 package stroom.job.impl;
 
-import stroom.job.api.DistributedTaskFetcher;
 import stroom.job.api.ScheduledJobsModule;
 import stroom.job.api.TaskConsumer;
 

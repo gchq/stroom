@@ -20,15 +20,19 @@ package stroom.data.retention.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.data.retention.api.DataRetentionAgeUtil;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Builder;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
@@ -38,7 +42,6 @@ import stroom.util.shared.Period;
 import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.inject.Inject;
-import javax.sql.DataSource;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -50,20 +53,19 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -77,24 +79,21 @@ public class DataRetentionExecutor {
     private final TaskContext taskContext;
     private final ClusterLockService clusterLockService;
     private final DataRetentionRulesService dataRetentionRulesService;
-    private final DictionaryStore dictionaryStore;
-    private final DataSource dataSource;
     private final DataRetentionConfig policyConfig;
+    private final MetaService metaService;
     private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
     DataRetentionExecutor(final TaskContext taskContext,
                           final ClusterLockService clusterLockService,
                           final DataRetentionRulesService dataRetentionRulesService,
-                          final DictionaryStore dictionaryStore,
-                          final DataSource dataSource,
-                          final DataRetentionConfig policyConfig) {
+                          final DataRetentionConfig policyConfig,
+                          final MetaService metaService) {
         this.taskContext = taskContext;
         this.clusterLockService = clusterLockService;
         this.dataRetentionRulesService = dataRetentionRulesService;
-        this.dictionaryStore = dictionaryStore;
-        this.dataSource = dataSource;
         this.policyConfig = policyConfig;
+        this.metaService = metaService;
     }
 
     public void exec() {
@@ -110,10 +109,6 @@ public class DataRetentionExecutor {
                         LOGGER.error(e.getMessage(), e);
                     }
                 });
-
-//                } else {
-//                    info("Stream Retention Executor - Skipped as did not get lock in " + logExecutionTime);
-//                }
             } finally {
                 running.set(false);
             }
@@ -129,15 +124,27 @@ public class DataRetentionExecutor {
 
         if (dataRetentionPolicy != null) {
             final List<DataRetentionRule> rules = dataRetentionPolicy.getRules();
-            if (rules != null && rules.size() > 0) {
+            final List<DataRetentionRule> activeRules = new ArrayList<>();
+
+            // Also make sure we create a list of rules that are enabled and have at least one enabled term.
+            if (rules != null) {
+                rules.forEach(rule -> {
+                    if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().getEnabled()) {
+                        final Set<String> fields = new HashSet<>();
+                        addToFieldSet(rule, fields);
+                        if (fields.size() > 0) {
+                            activeRules.add(rule);
+                        }
+                    }
+                });
+            }
+
+            if (activeRules.size() > 0) {
                 // Figure out what the batch size will be for deletion.
                 final int batchSize = policyConfig.getDeleteBatchSize();
 
                 // Calculate the data retention ages for all enabled rules.
-                final LocalDateTime now = LocalDateTime.now();
-                final Map<DataRetentionRule, Optional<Long>> ageMap = rules.stream()
-                        .filter(DataRetentionRule::isEnabled)
-                        .collect(Collectors.toMap(Function.identity(), rule -> getAge(now, rule)));
+                final long nowMs = System.currentTimeMillis();
 
                 // Load the last tracker used.
                 Tracker tracker = Tracker.load();
@@ -148,136 +155,135 @@ public class DataRetentionExecutor {
                     tracker = new Tracker(null, dataRetentionPolicy);
                 }
 
-                // Calculate how long it has been since we last ran this process if we have run it before.
-                final long nowMs = now.toInstant(ZoneOffset.UTC).toEpochMilli();
-                Long timeElapsed = null;
+                // Calculate the amount of time that has elapsed since we last ran.
+                long elapsedTime = nowMs;
                 if (tracker.lastRun != null) {
-                    timeElapsed = nowMs - tracker.lastRun;
+                    elapsedTime = nowMs - tracker.lastRun;
                 }
-                final Long timeElapsedSinceLastRun = timeElapsed;
+
+                // Create a new tracker to save at the end of the process.
                 tracker = new Tracker(nowMs, dataRetentionPolicy);
 
-                // Now figure out what unique ages we have.
-                final Set<Long> ages = ageMap.values().stream()
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .collect(Collectors.toSet());
+                // Create a map of unique periods with the set of rules that apply to them.
+                final Map<Period, Set<DataRetentionRule>> rulesByPeriod = getRulesByPeriod(activeRules, nowMs, elapsedTime);
 
-                // Get a database connection.
-                try (final Connection connection = dataSource.getConnection()) {
-                    final AtomicBoolean allSuccessful = new AtomicBoolean(true);
+                final AtomicBoolean allSuccessful = new AtomicBoolean(true);
 
-                    // Process the different data ages separately as they can consider different sets of streams.
-                    ages.forEach(age -> {
-                        // Skip if we have terminated processing.
+                // Process the different data ages separately as they can consider different sets of streams.
+                rulesByPeriod.keySet().stream().sorted(Comparator.comparing(Period::getFromMs)).forEach(period -> {
+                    final List<DataRetentionRule> sortedRules = rulesByPeriod.get(period)
+                            .stream()
+                            .sorted(Comparator.comparing(DataRetentionRule::getRuleNumber))
+                            .collect(Collectors.toList());
+
+                    // Skip if we have terminated processing.
+                    if (!Thread.currentThread().isInterrupted()) {
+                        processPeriod(period, sortedRules, batchSize);
                         if (!Thread.currentThread().isInterrupted()) {
-                            final boolean success = processAge(connection, age, timeElapsedSinceLastRun, rules, batchSize, ageMap);
-                            if (!success) {
-                                allSuccessful.set(false);
-                            }
+                            allSuccessful.set(false);
                         }
-                    });
-
-                    // If we finished running then save the tracker for use next time.
-                    if (!Thread.currentThread().isInterrupted() && allSuccessful.get()) {
-                        tracker.save();
                     }
-                } catch (final SQLException e) {
-                    LOGGER.error(e.getMessage(), e);
+                });
+
+                // If we finished running then save the tracker for use next time.
+                if (!Thread.currentThread().isInterrupted() && allSuccessful.get()) {
+                    tracker.save();
                 }
             }
         }
     }
 
-    private boolean processAge(final Connection connection, final long age, final Long timeElapsedSinceLastRun, final List<DataRetentionRule> rules, final int batchSize, final Map<DataRetentionRule, Optional<Long>> ageMap) {
-        boolean success = true;
-
-        Long minAge = null;
-        Long maxAge = age;
-
-        if (timeElapsedSinceLastRun != null) {
-            minAge = maxAge - timeElapsedSinceLastRun;
-        }
-
-        final Period ageRange = new Period(minAge, maxAge);
-
-        final StringBuilder message = new StringBuilder();
-        message.append("Considering stream retention for streams created ");
-        if (minAge != null) {
-            message.append("between ");
-            message.append(DateUtil.createNormalDateTimeString(minAge));
-            message.append(" and ");
-            message.append(DateUtil.createNormalDateTimeString(maxAge));
-        } else {
-            message.append("before ");
-            message.append(DateUtil.createNormalDateTimeString(maxAge));
-        }
-        info(message.toString());
-
-        // Figure out which rules are active and get all used fields.
-        final ActiveRules activeRules = new ActiveRules(rules);
+    private void processPeriod(final Period period, final List<DataRetentionRule> rules, final int batchSize) {
+        info("" +
+                "Considering stream retention for streams created " +
+                "between " +
+                DateUtil.createNormalDateTimeString(period.getFromMs()) +
+                " and " +
+                DateUtil.createNormalDateTimeString(period.getToMs()));
 
         // Ignore rules if none are active.
-        if (activeRules.getActiveRules().size() > 0) {
-
-
-            // TODO : @66 FIX DATA RETENTION SO THAT EXPRESSIONS ARE PROPERLY EVALUATED AGAINST THE DATA META SERVICE.
-
-
-//            // Create an object that can find streams with prepared statements and see if they match rules.
-//            try (final DataRetentionStreamFinder finder = new DataRetentionStreamFinder(connection, dictionaryStore)) {
-//
-//                // Find out how many rows we are likely to examine.
-//                Range<Long> streamIdRange = new Range<>(0L, Long.MAX_VALUE);
-//                final BaseResultList<Stream> streams = finder.getStreams(ageRange, streamIdRange, batchSize);
-//
-//                // If we aren't likely to be touching any rows then ignore.
-//                if (streams.size() > 0) {
-//
-//                    // Create an object that can delete streams with prepared statements.
-//                    try (final DataRetentionStreamDeleter deleter = new DataRetentionStreamDeleter(connection)) {
-//                        List<Long> streamIdDeleteList = new ArrayList<>();
-//
-//                        boolean more = true;
-//                        final Progress progress = new Progress(ageRange, rowCount);
-//                        Range<Long> streamIdRange = new Range<>(0L, null);
-//                        while (more && !Thread.currentThread().isInterrupted()) {
-//                            if (progress.getMetaId() != null) {
-//                                // Process from the next stream id onwards.
-//                                streamIdRange = new Range<>(progress.getMetaId() + 1, null);
-//                            }
-//
-//                            more = finder.findMatches(ageRange, streamIdRange, batchSize, activeRules, ageMap, taskContext, progress, streamIdDeleteList);
-//
-//                            // Delete a batch of streams.
-//                            while (streamIdDeleteList.size() >= batchSize) {
-//                                final List<Long> batch = new ArrayList<>(streamIdDeleteList.subList(0, batchSize));
-//                                streamIdDeleteList = new ArrayList<>(streamIdDeleteList.subList(batchSize, streamIdDeleteList.size()));
-//                                deleter.deleteStreams(batch);
-//                            }
-//                        }
-//
-//                        // Delete any remaining streams in the list.
-//                        if (streamIdDeleteList.size() > 0) {
-//                            deleter.deleteStreams(streamIdDeleteList);
-//                        }
-//
-//                    } catch (final SQLException e) {
-//                        success = false;
-//                        LOGGER.error(e.getMessage(), e);
-//                    }
-//                }
-//            } catch (final SQLException e) {
-//                success = false;
-//                LOGGER.error(e.getMessage(), e);
-//            }
+        final Builder inner = new ExpressionOperator.Builder(Op.OR);
+        for (final DataRetentionRule rule : rules) {
+            inner.addOperator(rule.getExpression());
         }
 
-        return success;
+        final Builder outer = new ExpressionOperator.Builder(Op.AND)
+                .addOperator(new ExpressionOperator.Builder(Op.NOT).addOperator(inner.build()).build())
+                .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTerm(MetaFieldNames.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(period.getFromMs()))
+                .addTerm(MetaFieldNames.CREATE_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(period.getToMs()));
+
+
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+        findMetaCriteria.setExpression(outer.build());
+        findMetaCriteria.obtainPageRequest().setLength(batchSize);
+
+        int count = -1;
+        while (count != 0 && !Thread.currentThread().isInterrupted()) {
+            count = metaService.updateStatus(findMetaCriteria, Status.DELETED);
+            LOGGER.info("Marked " + count + " items as deleted");
+        }
     }
 
-    private Optional<Long> getAge(final LocalDateTime now, final DataRetentionRule rule) {
-        return Optional.ofNullable(DataRetentionAgeUtil.minus(now, rule));
+
+
+    private Map<Period, Set<DataRetentionRule>> getRulesByPeriod(final List<DataRetentionRule> activeRules, final long nowMs, final long elapsedTime) {
+        // Get effective minimum meta creation times for each rule.
+        final Map<Long, Set<DataRetentionRule>> minCreationTimeMap = getMinCreationTimeMap(activeRules, nowMs);
+
+        // Create a map of unique periods with the set of rules that apply to them.
+        final Map<Period, Set<DataRetentionRule>> rulesByPeriod = new HashMap<>();
+        final List<Long> sortedCreationTimes = minCreationTimeMap.keySet()
+                .stream()
+                .sorted(Comparator.reverseOrder())
+                .collect(Collectors.toList());
+
+        long toMs = nowMs;
+        for (final long creationTime : sortedCreationTimes) {
+            // Calculate a from time for the period that takes account of the time passed since the last execution.
+            final long fromMs = Math.max(creationTime, toMs - elapsedTime);
+
+            final Period period = new Period(fromMs, toMs);
+            minCreationTimeMap.forEach((k, v) -> {
+                final Set<DataRetentionRule> set = rulesByPeriod.computeIfAbsent(period, p -> new HashSet<>());
+                if (k < period.getToMs()) {
+                    set.addAll(v);
+                }
+            });
+
+            toMs = creationTime;
+        }
+        return rulesByPeriod;
+    }
+
+    private Map<Long, Set<DataRetentionRule>> getMinCreationTimeMap(final List<DataRetentionRule> activeRules, final long nowMs) {
+        final Map<Long, Set<DataRetentionRule>> minCreationTimeMap = new HashMap<>();
+        // Ensure we have a key for `forever`, so we know what rules, if any, we should use to retain data forever.
+        minCreationTimeMap.computeIfAbsent(0L, ct -> new HashSet<>());
+        // Add all other rules by minimum creation time.
+        activeRules.forEach(rule -> {
+            final long time = DataRetentionCreationTimeUtil.minus(nowMs, rule);
+            minCreationTimeMap.computeIfAbsent(time, ct -> new HashSet<>()).add(rule);
+        });
+        return minCreationTimeMap;
+    }
+
+    private void addToFieldSet(final DataRetentionRule rule, final Set<String> fieldSet) {
+        if (rule.isEnabled() && rule.getExpression() != null) {
+            addChildren(rule.getExpression(), fieldSet);
+        }
+    }
+
+    private void addChildren(final ExpressionItem item, final Set<String> fieldSet) {
+        if (item.getEnabled()) {
+            if (item instanceof ExpressionOperator) {
+                final ExpressionOperator operator = (ExpressionOperator) item;
+                operator.getChildren().forEach(i -> addChildren(i, fieldSet));
+            } else if (item instanceof ExpressionTerm) {
+                final ExpressionTerm term = (ExpressionTerm) item;
+                fieldSet.add(term.getField());
+            }
+        }
     }
 
     private void info(final String info) {
@@ -376,7 +382,7 @@ public class DataRetentionExecutor {
             rules.forEach(rule -> {
                 if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().getEnabled()) {
                     final Set<String> fields = new HashSet<>();
-                    addToFieldSet(rule, fields);
+//                    addToFieldSet(rule, fields);
                     if (fields.size() > 0) {
                         fieldSet.addAll(fields);
                         activeRules.add(rule);
@@ -388,31 +394,31 @@ public class DataRetentionExecutor {
             this.activeRules = Collections.unmodifiableList(activeRules);
         }
 
-        private void addToFieldSet(final DataRetentionRule rule, final Set<String> fieldSet) {
-            if (rule.isEnabled() && rule.getExpression() != null) {
-                addChildren(rule.getExpression(), fieldSet);
-            }
-        }
-
-        private void addChildren(final ExpressionItem item, final Set<String> fieldSet) {
-            if (item.getEnabled()) {
-                if (item instanceof ExpressionOperator) {
-                    final ExpressionOperator operator = (ExpressionOperator) item;
-                    operator.getChildren().forEach(i -> addChildren(i, fieldSet));
-                } else if (item instanceof ExpressionTerm) {
-                    final ExpressionTerm term = (ExpressionTerm) item;
-                    fieldSet.add(term.getField());
-                }
-            }
-        }
+//        private void addToFieldSet(final DataRetentionRule rule, final Set<String> fieldSet) {
+//            if (rule.isEnabled() && rule.getExpression() != null) {
+//                addChildren(rule.getExpression(), fieldSet);
+//            }
+//        }
+//
+//        private void addChildren(final ExpressionItem item, final Set<String> fieldSet) {
+//            if (item.getEnabled()) {
+//                if (item instanceof ExpressionOperator) {
+//                    final ExpressionOperator operator = (ExpressionOperator) item;
+//                    operator.getChildren().forEach(i -> addChildren(i, fieldSet));
+//                } else if (item instanceof ExpressionTerm) {
+//                    final ExpressionTerm term = (ExpressionTerm) item;
+//                    fieldSet.add(term.getField());
+//                }
+//            }
+//        }
 
         public List<DataRetentionRule> getActiveRules() {
             return activeRules;
         }
-
-        public Set<String> getFieldSet() {
-            return fieldSet;
-        }
+//
+//        public Set<String> getFieldSet() {
+//            return fieldSet;
+//        }
     }
 
     static class Progress {

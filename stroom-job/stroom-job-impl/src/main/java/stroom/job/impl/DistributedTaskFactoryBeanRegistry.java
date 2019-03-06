@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.job.api.DistributedTask;
 import stroom.job.api.DistributedTaskFactory;
-import stroom.job.api.DistributedTaskFactoryBean;
+import stroom.job.api.DistributedTaskFactoryDescription;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -36,7 +36,7 @@ class DistributedTaskFactoryBeanRegistry {
     @Inject
     DistributedTaskFactoryBeanRegistry(final Set<DistributedTaskFactory> distributedTaskFactories) {
         for (final DistributedTaskFactory distributedTaskFactory : distributedTaskFactories) {
-            DistributedTaskFactoryBean annotation = distributedTaskFactory.getClass().getAnnotation(DistributedTaskFactoryBean.class);
+            DistributedTaskFactoryDescription annotation = distributedTaskFactory.getClass().getAnnotation(DistributedTaskFactoryDescription.class);
             final String jobName = annotation.jobName();
 
             final Object previousFactory = factoryMap.put(jobName, distributedTaskFactory);
