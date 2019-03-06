@@ -49,12 +49,6 @@ class JobNodeService {
         this.documentEventLog = documentEventLog;
     }
 
-//    JobNode create(final JobNode jobNode) {
-//        // Stop Job Nodes being saved with invalid crons.
-//        ensureSchedule(jobNode);
-//        return jobNodeDao.create(jobNode);
-//    }
-
     JobNode update(final JobNode jobNode) {
         // Stop Job Nodes being saved with invalid crons.
         ensureSchedule(jobNode);
@@ -64,8 +58,7 @@ class JobNodeService {
             result = security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
                 final Optional<JobNode> before = jobNodeDao.fetch(jobNode.getId());
 
-                // We always want to update a job instance even if we have a stale
-                // version.
+                // We always want to update a job node instance even if we have a stale version.
                 before.ifPresent(j -> jobNode.setVersion(j.getVersion()));
 
                 final JobNode after = jobNodeDao.update(jobNode);
@@ -101,165 +94,15 @@ class JobNodeService {
         // Stop Job Nodes being saved with invalid crons.
         if (JobType.CRON.equals(jobNode.getJobType())) {
             if (jobNode.getSchedule() != null) {
-                // This will throw a runtime exception if the expression is
-                // invalid.
+                // This will throw a runtime exception if the expression is invalid.
                 SimpleCron.compile(jobNode.getSchedule());
             }
         }
         if (JobType.FREQUENCY.equals(jobNode.getJobType())) {
             if (jobNode.getSchedule() != null) {
-                // This will throw a runtime exception if the expression is
-                // invalid.
+                // This will throw a runtime exception if the expression is invalid.
                 ModelStringUtil.parseDurationString(jobNode.getSchedule());
             }
         }
     }
-
-//    public JobNode update(final JobNode jobNode) {
-//        // We always want to update a job instance even if we have a stale
-//        // version.
-//        final Optional<JobNode> existing = jobNodeDao.fetch(jobNode.getId());
-//        existing.ifPresent(j -> jobNode.setVersion(j.getVersion()));
-//
-//        // Stop Job Nodes being saved with invalid crons.
-//        if (JobType.CRON.equals(jobNode.getJobType())) {
-//            if (jobNode.getSchedule() != null) {
-//                // This will throw a runtime exception if the expression is
-//                // invalid.
-//                SimpleCron.compile(jobNode.getSchedule());
-//            }
-//        }
-//        if (JobType.FREQUENCY.equals(jobNode.getJobType())) {
-//            if (jobNode.getSchedule() != null) {
-//                // This will throw a runtime exception if the expression is
-//                // invalid.
-//                ModelStringUtil.parseDurationString(jobNode.getSchedule());
-//            }
-//        }
-//
-//        if (existing.isPresent()) {
-//            return jobNodeDao.update(jobNode);
-//        } else {
-//            return jobNodeDao.create(jobNode);
-//        }
-//    }
-//
-//    //    @Override
-//    public JobNode save(final JobNode jobNode) {
-//        // We always want to update a job instance even if we have a stale
-//        // version.
-//        final Optional<JobNode> existing = jobNodeDao.fetch(jobNode.getId());
-//        existing.ifPresent(j -> jobNode.setVersion(j.getVersion()));
-//
-//        // Stop Job Nodes being saved with invalid crons.
-//        if (JobType.CRON.equals(jobNode.getJobType())) {
-//            if (jobNode.getSchedule() != null) {
-//                // This will throw a runtime exception if the expression is
-//                // invalid.
-//                SimpleCron.compile(jobNode.getSchedule());
-//            }
-//        }
-//        if (JobType.FREQUENCY.equals(jobNode.getJobType())) {
-//            if (jobNode.getSchedule() != null) {
-//                // This will throw a runtime exception if the expression is
-//                // invalid.
-//                ModelStringUtil.parseDurationString(jobNode.getSchedule());
-//            }
-//        }
-//
-//        if (existing.isPresent()) {
-//            return jobNodeDao.update(jobNode);
-//        } else {
-//            return jobNodeDao.create(jobNode);
-//        }
-//    }
-//
-//    private List<JobNode> findAllJobs(final String nodeName) {
-//        // See if the job exists in the database.
-//        final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
-//        criteria.getNodeName().setString(nodeName);
-//        return jobNodeDao.find(criteria);
-//
-//    }
-//
-//    private Job getOrCreateJob(final Job job) {
-//        Job result;
-//
-//        // See if the job exists in the database.
-//        final FindJobCriteria criteria = new FindJobCriteria();
-//        criteria.getName().setString(job.getName());
-//
-//        // Add the job to the DB if it isn't there already.
-//        final BaseResultList<Job> existingJob = jobDao.find(criteria);
-//        if (existingJob != null && existingJob.size() > 0) {
-//            result = existingJob.getFirst();
-//
-//            // Update the job description if we need to.
-//            if (job.getDescription() != null && !job.getDescription().equals(result.getDescription())) {
-//                result.setDescription(job.getDescription());
-//                LOGGER.info("Updating Job     '%s'", job.getName());
-//                result = jobDao.update(result);
-//            }
-//        } else {
-//            LOGGER.info("Adding Job     '{}'", job.getName());
-//            result = jobDao.create(job);
-//        }
-//
-//        return result;
-//    }
-//
-//    @Override
-//    public Class<JobNode> getEntityClass() {
-//        return JobNode.class;
-//    }
-//
-//    @Override
-//    public FindJobNodeCriteria createCriteria() {
-//        return new FindJobNodeCriteria();
-//    }
-//
-//    @Override
-//    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindJobNodeCriteria criteria) {
-//        CriteriaLoggingUtil.appendStringTerm(items, "jobName", criteria.getJobName());
-//        CriteriaLoggingUtil.appendEntityIdSet(items, "jobIdSet", criteria.getJobIdSet());
-//        CriteriaLoggingUtil.appendEntityIdSet(items, "nodeIdSet", criteria.getNodeIdSet());
-//        super.appendCriteria(items, criteria);
-//    }
-//
-//    @Override
-//    protected QueryAppender<JobNode, FindJobNodeCriteria> createQueryAppender(StroomEntityManager entityManager) {
-//        return new JobNodeQueryAppender(entityManager);
-//    }
-//
-//    @Override
-//    protected String permission() {
-//        return PermissionNames.MANAGE_JOBS_PERMISSION;
-//    }
-//
-//    private static class JobNodeQueryAppender extends QueryAppender<JobNode, FindJobNodeCriteria> {
-//        JobNodeQueryAppender(final StroomEntityManager entityManager) {
-//            super(entityManager);
-//        }
-//
-//        @Override
-//        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
-//            super.appendBasicJoin(sql, alias, fetchSet);
-//            if (fetchSet != null) {
-//                if (fetchSet.contains(Node.ENTITY_TYPE)) {
-//                    sql.append(" INNER JOIN FETCH " + alias + ".node");
-//                }
-//                if (fetchSet.contains(Job.ENTITY_TYPE)) {
-//                    sql.append(" INNER JOIN FETCH " + alias + ".job");
-//                }
-//            }
-//        }
-//
-//        @Override
-//        protected void appendBasicCriteria(final HqlBuilder sql, final String alias, final FindJobNodeCriteria criteria) {
-//            super.appendBasicCriteria(sql, alias, criteria);
-//            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
-//            sql.appendEntityIdSetQuery(alias + ".job", criteria.getJobIdSet());
-//            sql.appendValueQuery(alias + ".job.name", criteria.getJobName());
-//        }
-//    }
 }

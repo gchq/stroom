@@ -37,17 +37,14 @@ import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @Singleton
 class JobService {
-//    private static final Logger LOGGER = LoggerFactory.getLogger(JobService.class);
-
     private final JobDao jobDao;
     private final Security security;
     private final DocumentEventLog documentEventLog;
-//    private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
-//    private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
 
     private final Map<String, String> jobDescriptionMap = new HashMap<>();
     private final Set<String> jobAdvancedSet = new HashSet<>();
@@ -61,8 +58,6 @@ class JobService {
         this.jobDao = jobDao;
         this.security = security;
         this.documentEventLog = documentEventLog;
-//        this.scheduledJobsMap = scheduledJobsMap;
-//        this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
 
         scheduledJobsMap.keySet().forEach(scheduledJob -> {
             jobDescriptionMap.put(scheduledJob.getName(), scheduledJob.getDescription());
@@ -78,46 +73,17 @@ class JobService {
         });
     }
 
-//    void startup() {
-//        LOGGER.info("startup()");
-//
-//        scheduledJobsMap.keySet().forEach(scheduledJob -> {
-//            jobDescriptionMap.put(scheduledJob.getName(), scheduledJob.getDescription());
-//            if (scheduledJob.isAdvanced()) {
-//                jobAdvancedSet.add(scheduledJob.getName());
-//            }
-//        });
-//
-//        // Distributed Jobs done a different way
-//        distributedTaskFactoryBeanRegistry.getFactoryMap().forEach((jobName, factory) -> {
-//            final DistributedTaskFactoryBean distributedTaskFactoryBean = factory.getClass().getAnnotation(DistributedTaskFactoryBean.class);
-//            jobDescriptionMap.put(distributedTaskFactoryBean.jobName(), distributedTaskFactoryBean.description());
-//        });
-//    }
-//
-//    Job fetch(final int jobId) {
-//        Job result = null;
-//        try {
-//            result = security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () ->
-//                    jobDao.fetch(jobId)
-//                            .map(this::decorate)
-//                            .orElse(null));
-//        } catch (final RuntimeException e) {
-//            documentEventLog.view(result,e);
-//        }
-//
-//        return result;
-//    }
-
     Job update(final Job job) {
         Job result = null;
         try {
             result = security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
-                final Job before = jobDao.fetch(job.getId())
-                        .map(this::decorate)
-                        .orElse(null);
+                final Optional<Job> before = jobDao.fetch(job.getId()).map(this::decorate);
+
+                // We always want to update a job instance even if we have a stale version.
+                before.ifPresent(j -> job.setVersion(j.getVersion()));
+
                 final Job after = jobDao.update(job);
-                documentEventLog.update(before, after, null);
+                documentEventLog.update(before.orElse(null), after, null);
                 return decorate(after);
             });
         } catch (final RuntimeException e) {
@@ -152,103 +118,4 @@ class JobService {
         job.setAdvanced(jobAdvancedSet.contains(job.getName()));
         return job;
     }
-
-//    @Override
-//    public Job save(final Job entity) {
-//
-//
-//        // We always want to update a job even if we have a stale version.
-//        if (entity.isPersistent()) {
-//            final Job tmp = load(entity);
-//            entity.setVersion(tmp.getVersion());
-//        }
-//        return super.save(entity);
-//    }
-//
-//    @Override
-//    public Class<Job> getEntityClass() {
-//        return Job.class;
-//    }
-//
-//    @Override
-//    public FindJobCriteria createCriteria() {
-//        return new FindJobCriteria();
-//    }
-//
-//    @Override
-//    protected QueryAppender<Job, FindJobCriteria> createQueryAppender(StroomEntityManager entityManager) {
-//        return new JobQueryAppender(entityManager);
-//    }
-//
-//    protected FieldMap createFieldMap() {
-//        return super.createFieldMap()
-//                .add(FindJobCriteria.FIELD_ADVANCED, null, null);
-//    }
-//
-//    @Override
-//    protected String permission() {
-//        return PermissionNames.MANAGE_JOBS_PERMISSION;
-//    }
-//
-//    private static class JobQueryAppender extends QueryAppender<Job, FindJobCriteria> {
-//        private final Map<String, String> jobDescriptionMap = new HashMap<>();
-//        private final Set<String> jobAdvancedSet = new HashSet<>();
-//
-//        JobQueryAppender(final StroomEntityManager entityManager) {
-//            super(entityManager);
-//        }
-//
-//        @Override
-//        protected void postLoad(final Job entity) {
-//            entity.setDescription(jobDescriptionMap.get(entity.getName()));
-//            entity.setAdvanced(jobAdvancedSet.contains(entity.getName()));
-//            super.postLoad(entity);
-//        }
-//
-//        @Override
-//        protected List<Job> postLoad(final FindJobCriteria findJobCriteria, final List<Job> list) {
-//            final List<Job> postLoadList = super.postLoad(findJobCriteria, list);
-//
-//            if (findJobCriteria.getSortList() != null && findJobCriteria.getSortList().size() > 0) {
-//                final ArrayList<Job> rtnList = new ArrayList<>(postLoadList);
-//                rtnList.sort((o1, o2) -> {
-//                    if (findJobCriteria.getSortList() != null) {
-//                        for (final Sort sort : findJobCriteria.getSortList()) {
-//                            final String field = sort.getField();
-//
-//                            int compare = 0;
-//                            if (FindJobCriteria.FIELD_ID.equals(field)) {
-//                                compare = CompareUtil.compareLong(o1.getId(), o2.getId());
-//                            } else if (FindJobCriteria.FIELD_NAME.equals(field)) {
-//                                compare = CompareUtil.compareString(o1.getName(), o2.getName());
-//                            } else if (FindJobCriteria.FIELD_ADVANCED.equals(field)) {
-//                                compare = CompareUtil.compareBoolean(o1.isAdvanced(), o2.isAdvanced());
-//                            }
-//                            if (Direction.DESCENDING.equals(sort.getDirection())) {
-//                                compare = compare * -1;
-//                            }
-//
-//                            if (compare != 0) {
-//                                return compare;
-//                            }
-//                        }
-//                    }
-//
-//                    return 0;
-//                });
-//
-//                return rtnList;
-//            }
-//
-//            return postLoadList;
-//        }
-//
-//        Map<String, String> getJobDescriptionMap() {
-//            return jobDescriptionMap;
-//        }
-//
-//        Set<String> getJobAdvancedSet() {
-//            return jobAdvancedSet;
-//        }
-//    }
 }
