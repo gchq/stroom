@@ -10,10 +10,10 @@ dependencies {
 
     // The following are required to put JAXB on the JOOQ classpath for the purpose of JOOQ code generation in J9+.
     // Later versions of the JOOQ Gradle plugin should make this unnecessary.
-    jooqRuntime 'com.sun.xml.bind:jaxb-core:2.3.0.1'
-    jooqRuntime 'com.sun.xml.bind:jaxb-impl:2.3.0.1'
     jooqRuntime 'javax.activation:activation:1.1.1'
     jooqRuntime 'javax.xml.bind:jaxb-api:2.3.0'
+    jooqRuntime 'com.sun.xml.bind:jaxb-core:2.3.0.1'
+    jooqRuntime 'com.sun.xml.bind:jaxb-impl:2.3.0.1'
 }
 
 def propNameJooqGeneration = 'jooqGeneration'
@@ -38,11 +38,11 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                     database {
                         name = 'org.jooq.meta.mysql.MySQLDatabase'
                         inputSchema = 'stroom'
-                        // Add anything you want included in generation below
+                        // Add anything you want included in generation below, whitespace ignored
+                        // and comments allowed. Each one is a java regex
                         includes = 'job|job_node'
                         // We don't want to include flyway versioning
                         excludes = 'job_schema_version'
-
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
                     }

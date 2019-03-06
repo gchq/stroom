@@ -16,26 +16,16 @@
 
 package stroom.job.shared;
 
-import stroom.entity.shared.EntityRow;
-import stroom.util.shared.Expander;
-import stroom.util.shared.TreeRow;
+import stroom.entity.shared.FindAction;
 
-public class JobRow extends EntityRow<Job> implements TreeRow {
-    private static final long serialVersionUID = -2511849708703770119L;
+public class FindJobAction extends FindAction<FindJobCriteria, Job> {
+    private static final long serialVersionUID = -6808045615241590297L;
 
-    private Expander expander;
-
-    public JobRow() {
+    public FindJobAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public JobRow(final Expander expander, final Job job) {
-        super(job);
-        this.expander = expander;
-    }
-
-    @Override
-    public Expander getExpander() {
-        return expander;
+    public FindJobAction(final FindJobCriteria criteria) {
+        super(criteria);
     }
 }

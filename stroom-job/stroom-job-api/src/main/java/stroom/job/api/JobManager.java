@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.job.shared;
-
-import stroom.node.shared.Node;
+package stroom.job.api;
 
 /**
  * The job manager provides control over jobs by setting properties in the
@@ -51,7 +49,7 @@ public interface JobManager {
      * @return True if successful.
      * @throws RuntimeException Could be thrown.
      */
-    Boolean setNodeEnabled(Node node, boolean enabled);
+    Boolean setNodeEnabled(String nodeName, boolean enabled);
 
     /**
      * Set all jobs to be enabled across the cluster.

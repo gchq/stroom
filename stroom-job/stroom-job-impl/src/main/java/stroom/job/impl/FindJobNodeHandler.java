@@ -19,22 +19,18 @@ package stroom.job.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.ResultList;
-import stroom.job.api.JobNodeService;
-import stroom.job.shared.FetchJobDataAction;
-import stroom.job.shared.FindJobNodeCriteria;
-import stroom.job.shared.Job;
-import stroom.job.shared.JobNode;
-import stroom.job.shared.JobNodeInfo;
-import stroom.job.shared.JobNodeRow;
-import stroom.node.shared.Node;
-import stroom.security.Security;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.cluster.task.api.ClusterCallEntry;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.DefaultClusterResultCollector;
 import stroom.cluster.task.api.TargetType;
+import stroom.job.shared.FindJobNodeAction;
+import stroom.job.shared.JobNode;
+import stroom.job.shared.JobNodeInfo;
+import stroom.job.shared.JobNodeRow;
+import stroom.security.Security;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.SharedMap;
 
 import javax.inject.Inject;
@@ -43,50 +39,45 @@ import java.util.List;
 import java.util.Map;
 
 
-class FetchJobDataHandler extends AbstractTaskHandler<FetchJobDataAction, ResultList<JobNodeRow>> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FetchJobDataHandler.class);
+class FindJobNodeHandler extends AbstractTaskHandler<FindJobNodeAction, ResultList<JobNodeRow>> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FindJobNodeHandler.class);
 
     private final JobNodeService jobNodeService;
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final Security security;
 
     @Inject
-    FetchJobDataHandler(final JobNodeService jobNodeService,
-                        final ClusterDispatchAsyncHelper dispatchHelper,
-                        final Security security) {
+    FindJobNodeHandler(final JobNodeService jobNodeService,
+                       final ClusterDispatchAsyncHelper dispatchHelper,
+                       final Security security) {
         this.jobNodeService = jobNodeService;
         this.dispatchHelper = dispatchHelper;
         this.security = security;
     }
 
     @Override
-    public BaseResultList<JobNodeRow> exec(final FetchJobDataAction action) {
+    public BaseResultList<JobNodeRow> exec(final FindJobNodeAction action) {
         return security.secureResult(() -> {
             // Add the root node.
             final List<JobNodeRow> values = new ArrayList<>();
 
-            if (action.getJob() == null) {
+            if (action.getCriteria() == null) {
                 return BaseResultList.createUnboundedList(values);
             }
 
             DefaultClusterResultCollector<SharedMap<JobNode, JobNodeInfo>> collector;
             collector = dispatchHelper.execAsync(new JobNodeInfoClusterTask(action.getUserToken()), TargetType.ACTIVE);
 
-            final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
-            criteria.getJobIdSet().add(action.getJob());
-            criteria.getFetchSet().add(Node.ENTITY_TYPE);
-            criteria.getFetchSet().add(Job.ENTITY_TYPE);
-
-            final List<JobNode> jobNodes = jobNodeService.find(criteria);
+            final List<JobNode> jobNodes = jobNodeService.find(action.getCriteria());
 
             // Sort job nodes by node name.
-            jobNodes.sort((JobNode o1, JobNode o2) -> o1.getNode().getName().compareToIgnoreCase(o2.getNode().getName()));
+            jobNodes.sort((JobNode o1, JobNode o2) -> o1.getNodeName().compareToIgnoreCase(o2.getNodeName()));
 
             // Create the JobNodeRow value
             for (final JobNode jobNode : jobNodes) {
                 JobNodeInfo jobNodeInfo = null;
 
-                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response = collector.getResponse(jobNode.getNode().getName());
+                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response = collector.getResponse(jobNode.getNodeName());
 
                 if (response == null) {
                     LOGGER.debug("No response for: {}", jobNode);

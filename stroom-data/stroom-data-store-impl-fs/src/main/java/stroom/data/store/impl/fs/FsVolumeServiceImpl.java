@@ -8,10 +8,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeRecord;
+import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
-import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.db.util.AuditUtil;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
@@ -230,17 +230,16 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
             final List<Condition> conditions = new ArrayList<>();
             volumeStatusCondition.ifPresent(conditions::add);
 
-            final List<FsVolume> result = JooqUtil.contextResult(connectionProvider, context ->
-                    JooqUtil.applyLimits(
-                            context
-                                    .select()
-                                    .from(FS_VOLUME)
-                                    .join(FS_VOLUME_STATE)
-                                    .on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
-                                    .where(conditions)
-                            , criteria.getPageRequest())
-                            .fetch()
-                            .map(this::recordToVolume));
+            final List<FsVolume> result = JooqUtil.contextResult(connectionProvider, context -> context
+                    .select()
+                    .from(FS_VOLUME)
+                    .join(FS_VOLUME_STATE)
+                    .on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
+                    .where(conditions)
+                    .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                    .offset(JooqUtil.getOffset(criteria.getPageRequest()))
+                    .fetch()
+                    .map(this::recordToVolume));
             return BaseResultList.createCriterialBasedList(result, criteria);
         });
     }
@@ -437,20 +436,20 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
 
     private void recordStats(final FsVolume volume) {
         if (statisticsReceiver != null) {
-                try {
-                    final FsVolumeState volumeState = volume.getVolumeState();
+            try {
+                final FsVolumeState volumeState = volume.getVolumeState();
 
-                    final long now = System.currentTimeMillis();
-                    final List<InternalStatisticEvent> events = new ArrayList<>();
-                    addStatisticEvent(events, now, volume, "Limit", volume.getByteLimit());
-                    addStatisticEvent(events, now, volume, "Used", volumeState.getBytesUsed());
-                    addStatisticEvent(events, now, volume, "Free", volumeState.getBytesFree());
-                    addStatisticEvent(events, now, volume, "Total", volumeState.getBytesTotal());
-                    statisticsReceiver.putEvents(events);
-                } catch (final RuntimeException e) {
-                    LOGGER.warn(e.getMessage());
-                    LOGGER.debug(e.getMessage(), e);
-                }
+                final long now = System.currentTimeMillis();
+                final List<InternalStatisticEvent> events = new ArrayList<>();
+                addStatisticEvent(events, now, volume, "Limit", volume.getByteLimit());
+                addStatisticEvent(events, now, volume, "Used", volumeState.getBytesUsed());
+                addStatisticEvent(events, now, volume, "Free", volumeState.getBytesFree());
+                addStatisticEvent(events, now, volume, "Total", volumeState.getBytesTotal());
+                statisticsReceiver.putEvents(events);
+            } catch (final RuntimeException e) {
+                LOGGER.warn(e.getMessage());
+                LOGGER.debug(e.getMessage(), e);
+            }
         }
     }
 

@@ -30,12 +30,11 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.EntitySaveTask;
-import stroom.entity.client.SaveQueue;
-import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
+import stroom.entity.client.ActionQueue;
+import stroom.entity.client.presenter.FindActionDataProvider;
+import stroom.job.shared.FindJobAction;
+import stroom.job.shared.UpdateJobAction;
 import stroom.util.shared.BaseResultList;
-import stroom.entity.shared.EntityRow;
-import stroom.entity.shared.EntityServiceFindAction;
 import stroom.util.shared.ResultList;
 import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.Job;
@@ -48,22 +47,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
-    private final SaveQueue<Job> jobSaver;
-    private EntityServiceFindActionDataProvider<FindJobCriteria, Job> dataProvider;
+    private final ActionQueue<Job> actionQueue;
+    private FindActionDataProvider<FindJobCriteria, Job> dataProvider;
 
     @Inject
     public JobListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                             final UiConfigCache clientPropertyCache) {
         super(eventBus, new DataGridViewImpl<>(true));
 
-        jobSaver = new SaveQueue<>(dispatcher);
+        actionQueue = new ActionQueue<>(dispatcher);
 
         getView().addColumn(new InfoHelpLinkColumn<Job>() {
             @Override
             public SvgPreset getValue(final Job row) {
-                if (!row.isPersistent()) {
-                    return null;
-                }
                 return SvgPresets.HELP;
             }
 
@@ -87,9 +83,6 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
         getView().addColumn(new Column<Job, String>(new TextCell()) {
             @Override
             public String getValue(final Job row) {
-                if (!row.isPersistent()) {
-                    return "";
-                }
                 return row.getName();
             }
         }, "Job");
@@ -98,36 +91,26 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
         final Column<Job, TickBoxState> enabledColumn = new Column<Job, TickBoxState>(TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final Job row) {
-                if (!row.isPersistent()) {
-                    return null;
-                }
                 return TickBoxState.fromBoolean(row.isEnabled());
             }
         };
         enabledColumn.setFieldUpdater((index, row, value) -> {
             final boolean newValue = value.toBoolean();
-            jobSaver.save(new EntitySaveTask<Job>(new EntityRow<>(row)) {
-                @Override
-                protected void setValue(final Job entity) {
-                    entity.setEnabled(newValue);
-                }
-            });
+            row.setEnabled(newValue);
+            actionQueue.dispatch(row, new UpdateJobAction(row));
         });
         getView().addColumn(enabledColumn, "Enabled", 80);
 
         getView().addColumn(new Column<Job, String>(new TextCell()) {
             @Override
             public String getValue(final Job row) {
-                if (!row.isPersistent()) {
-                    return "";
-                }
                 return row.getDescription();
             }
         }, "Description", 800);
 
         getView().addEndColumn(new EndColumn<>());
 
-        this.dataProvider = new EntityServiceFindActionDataProvider<FindJobCriteria, Job>(dispatcher, getView()) {
+        this.dataProvider = new FindActionDataProvider<FindJobCriteria, Job>(dispatcher, getView()) {
             // Add in extra blank item
             @Override
             protected ResultList<Job> processData(final ResultList<Job> data) {
@@ -148,7 +131,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
         final FindJobCriteria findJobCriteria = new FindJobCriteria();
         findJobCriteria.setSort(FindJobCriteria.FIELD_ADVANCED);
         findJobCriteria.addSort(FindJobCriteria.FIELD_NAME);
-        final EntityServiceFindAction<FindJobCriteria, Job> action = new EntityServiceFindAction<>(findJobCriteria);
+        final FindJobAction action = new FindJobAction(findJobCriteria);
         this.dataProvider.setAction(action);
     }
 

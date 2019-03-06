@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,26 @@
 package stroom.job.shared;
 
 import stroom.task.shared.Action;
-import stroom.util.shared.ResultList;
 
-public class FetchJobDataAction extends Action<ResultList<JobNodeRow>> {
-    private static final long serialVersionUID = -6808045615241590297L;
+public class UpdateJobNodeAction extends Action<JobNode> {
+    private static final long serialVersionUID = 1451964889275627717L;
 
-    private Job job;
+    private JobNode jobNode;
 
-    public FetchJobDataAction() {
+    public UpdateJobNodeAction() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    public UpdateJobNodeAction(final JobNode jobNode) {
+        this.jobNode = jobNode;
+    }
+
+    public JobNode getJobNode() {
+        return jobNode;
     }
 
     @Override
     public String getTaskName() {
-        return "Fetch job data";
+        return "Update jobNode";
     }
-
-    public Job getJob() {
-        return job;
-    }
-
-    public void setJob(Job job) {
-        this.job = job;
-    }
-
 }

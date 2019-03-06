@@ -2,8 +2,11 @@ ext.moduleName = 'stroom.job.impl.db'
 
 dependencies {
     compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-core-shared')
     compile project(':stroom-db-util')
+    compile project(':stroom-job:stroom-job-impl')
     compile project(':stroom-job:stroom-job-impl-db-jooq')
+    compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
@@ -17,16 +20,16 @@ dependencies {
     compile libs.jooq
     compile libs.slf4j_api
     compile libs.stroomDocRef
-
+    
     runtimeOnly libs.mysql_connector_java
+    
+    testCompile project(':stroom-security:stroom-security-impl-mock')
     testCompile libs.assertj_core
+    testCompile libs.junit_jupiter_api
     testCompile libs.mockito_core
     testCompile libs.mockito_junit_jupiter
-
     testCompile libs.test_containers
     testCompile libs.test_containers_mysql
-
-    testCompile libs.junit_jupiter_api
 
     // the following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jaxb_runtime

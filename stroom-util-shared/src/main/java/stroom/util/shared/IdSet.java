@@ -95,7 +95,7 @@ public class IdSet extends CriteriaSet<Long> {
     /**
      * @param id update so as not to change JAXB
      */
-    public void updateSingleId(final Long id) {
+    public void setSingleId(final Long id) {
         clear();
         if (id != null) {
             add(id);
