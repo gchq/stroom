@@ -26,9 +26,9 @@ public interface DocumentPermissionResource {
     @GET
     @Path("/forDocForUser/{docType}/{docUuid}/{userUuid}")
     Response getPermissionsForDocumentForUser(
-        @PathParam("docType") String docType,
-        @PathParam("docUuid") String docUuid,
-        @PathParam("userUuid") String userUuid
+            @PathParam("docType") String docType,
+            @PathParam("docUuid") String docUuid,
+            @PathParam("userUuid") String userUuid
     );
 
     @POST
@@ -49,6 +49,11 @@ public interface DocumentPermissionResource {
             @PathParam("permissionName") String permissionName
     );
 
+    @GET
+    @Path("/forDoc/{docType}/{docUuid}")
+    Response getPermissionsForDocument(
+            @PathParam("docType") String docType,
+            @PathParam("docUuid") String docUuid);
 
     @DELETE
     @Path("/forDoc/{docType}/{docUuid}")

@@ -3,9 +3,14 @@ package stroom.security.impl;
 import stroom.docref.DocRef;
 import stroom.security.rest.DocumentPermissionResource;
 import stroom.security.service.DocumentPermissionService;
+import stroom.security.shared.DocumentPermissions;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class DocumentPermissionResourceImpl implements DocumentPermissionResource {
@@ -63,6 +68,58 @@ public class DocumentPermissionResourceImpl implements DocumentPermissionResourc
                 .build();
         documentPermissionService.removePermission(userUuid, docRef, permissionName);
         return Response.noContent().build();
+    }
+
+    /**
+     * Convert document permissions into something javascript safe (non object key)
+     */
+    private class DocumentPermissionsDTO {
+        private DocRef document;
+        private Map<String, Set<String>> byUser =new HashMap<>();
+        private Set<String> users = new HashSet<>();
+        private Set<String> groups = new HashSet<>();
+
+        public DocumentPermissionsDTO(final DocumentPermissions permissions) {
+            this.document = permissions.getDocument();
+            permissions.getUserPermissions()
+                    .forEach(
+                    (key, value) -> {
+                        byUser.put(key.getUuid(), value);
+                        if (key.isGroup()) {
+                            groups.add(key.getUuid());
+                        } else {
+                            users.add(key.getUuid());
+                        }
+                    });
+        }
+
+        public DocRef getDocument() {
+            return document;
+        }
+
+        public Map<String, Set<String>> getByUser() {
+            return byUser;
+        }
+
+        public Set<String> getGroups() {
+            return groups;
+        }
+
+        public Set<String> getUsers() {
+            return users;
+        }
+    }
+
+    @Override
+    public Response getPermissionsForDocument(final String docType,
+                                              final String docUuid) {
+        final DocRef docRef = new DocRef.Builder()
+                .type(docType)
+                .uuid(docUuid)
+                .build();
+        final DocumentPermissions permissions = documentPermissionService.getPermissionsForDocument(docRef);
+        final DocumentPermissionsDTO dto = new DocumentPermissionsDTO(permissions);
+        return Response.ok(dto).build();
     }
 
     @Override
