@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change start script to use absolute paths for jar, config and logs to distinguish stroom and proxy instances.
+
 * Change Travis build to generate sha256 hashes for release zip/jars.
 
 * Uplift the visualisations content pack to v3.2.1
