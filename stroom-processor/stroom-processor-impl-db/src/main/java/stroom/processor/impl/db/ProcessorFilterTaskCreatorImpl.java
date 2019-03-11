@@ -170,6 +170,8 @@ class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
      */
     @Override
     public void releaseOwnedTasks() {
+        final Integer nodeId = processorNodeCache.getOrCreate(nodeInfo.getThisNodeName());
+
         final Set<Byte> statusSet = Set.of(
                 TaskStatus.UNPROCESSED.getPrimitiveValue(),
                 TaskStatus.ASSIGNED.getPrimitiveValue(),
@@ -178,7 +180,7 @@ class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
         criteriaSet.setSet(statusSet);
 
         final List<Condition> conditions = new ArrayList<>();
-        conditions.add(PROCESSOR_NODE.NAME.eq(nodeInfo.getThisNodeName()));
+        conditions.add(PROCESSOR_FILTER_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId));
         JooqUtil.getSetCondition(PROCESSOR_FILTER_TASK.STATUS, criteriaSet).ifPresent(conditions::add);
 
         final int results = JooqUtil.contextResult(connectionProvider, context -> context
