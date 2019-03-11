@@ -21,7 +21,7 @@ import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.docref.DocRef;
 import stroom.index.IndexShardManager;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.processor.StreamProcessorTaskExecutor;
+import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.StoreCreationTool;
 import stroom.test.common.StroomPipelineTestFileUtil;
@@ -81,13 +81,13 @@ public class CommonIndexingTestHelper {
 
     private void runProcessing(final int dataFileCount, final OptionalInt maxDocsPerShard) {
         // Translate data.
-        List<StreamProcessorTaskExecutor> results = commonTranslationTestHelper.processAll();
+        List<DataProcessorTaskExecutor> results = commonTranslationTestHelper.processAll();
 
         // 3 ref data streams pluss our data streams
         int expectedTaskCount = 3 + dataFileCount;
 
         assertThat(results.size()).isEqualTo(expectedTaskCount);
-        for (final StreamProcessorTaskExecutor result : results) {
+        for (final DataProcessorTaskExecutor result : results) {
             final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
             assertThat(processor.getWritten() > 0).as(result.toString()).isTrue();
             assertThat(processor.getRead() <= processor.getWritten()).as(result.toString()).isTrue();
@@ -99,7 +99,7 @@ public class CommonIndexingTestHelper {
         // Translate data.
         results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(N1);
-        for (final StreamProcessorTaskExecutor result : results) {
+        for (final DataProcessorTaskExecutor result : results) {
             final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
             assertThat(processor.getWritten() > 0).as(result.toString()).isTrue();
             assertThat(processor.getRead() <= processor.getWritten()).as(result.toString()).isTrue();

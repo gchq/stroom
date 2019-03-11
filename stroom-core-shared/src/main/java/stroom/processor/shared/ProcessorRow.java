@@ -16,12 +16,13 @@
 
 package stroom.processor.shared;
 
+import stroom.docref.SharedObject;
 import stroom.util.shared.Expander;
 import stroom.util.shared.TreeRow;
 
 import java.util.Objects;
 
-public class ProcessorRow implements TreeRow {
+public class ProcessorRow implements SharedObject, TreeRow {
     private static final long serialVersionUID = -2511849708703770119L;
 
     private Processor processor;

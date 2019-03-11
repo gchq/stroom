@@ -18,13 +18,11 @@ package stroom.processor.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.job.api.DistributedTask;
-import stroom.node.shared.Node;
 import stroom.processor.shared.ProcessorFilterTask;
 
 import java.util.List;
 
-public class TaskStatusTraceLog {
+class TaskStatusTraceLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskStatusTraceLog.class);
 
     void createdTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks) {
@@ -38,107 +36,10 @@ public class TaskStatusTraceLog {
         }
     }
 
-    void addUnownedTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks) {
-        if (LOGGER.isTraceEnabled() && streamTasks.size() > 0) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Master adding ");
-            sb.append(streamTasks.size());
-            sb.append(" unowned tasks");
-            appendStreamTaskList(sb, streamTasks);
-            appendClass(sb, clazz);
-            LOGGER.trace(sb.toString());
-        }
-    }
-
-    void assignTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks, final String nodeName) {
-        if (LOGGER.isTraceEnabled() && streamTasks.size() > 0) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Master assigned ");
-            sb.append(streamTasks.size());
-            sb.append(" stream tasks to worker ");
-            sb.append(nodeName);
-            appendStreamTaskList(sb, streamTasks);
-            appendClass(sb, clazz);
-            LOGGER.trace(sb.toString());
-        }
-    }
-
-    void abandonTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks, final String nodeName) {
-        if (LOGGER.isTraceEnabled() && streamTasks.size() > 0) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Master abandoned ");
-            sb.append(streamTasks.size());
-            sb.append(" stream tasks for worker ");
-            sb.append(nodeName);
-            appendStreamTaskList(sb, streamTasks);
-            appendClass(sb, clazz);
-            LOGGER.trace(sb.toString());
-        }
-    }
-
-    public void sendToWorkerNode(final Class<?> clazz, final List<DistributedTask<?>> tasks, final String nodeName,
-                                 final String jobName) {
-        if (LOGGER.isTraceEnabled() && tasks.size() > 0) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Master sending ");
-            sb.append(tasks.size());
-            sb.append(" tasks to worker ");
-            sb.append(nodeName);
-            sb.append(" for job '");
-            sb.append(jobName);
-            sb.append("'");
-            appendDistributedTaskList(sb, tasks);
-            appendClass(sb, clazz);
-            LOGGER.trace(sb.toString());
-        }
-    }
-
-    public void errorSendingToWorkerNode(final Class<?> clazz, final List<DistributedTask<?>> tasks, final String nodeName,
-                                         final String jobName) {
-        if (LOGGER.isTraceEnabled() && tasks.size() > 0) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Master failed to send ");
-            sb.append(tasks.size());
-            sb.append(" tasks to worker ");
-            sb.append(nodeName);
-            sb.append(" for job '");
-            sb.append(jobName);
-            sb.append("'");
-            appendDistributedTaskList(sb, tasks);
-            appendClass(sb, clazz);
-            LOGGER.trace(sb.toString());
-        }
-    }
-
-    public void receiveOnWorkerNode(final Class<?> clazz, final List<DistributedTask<?>> tasks, final String jobName) {
-        if (LOGGER.isTraceEnabled() && tasks.size() > 0) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Worker received ");
-            sb.append(tasks.size());
-            sb.append(" tasks");
-            sb.append(" for job '");
-            sb.append(jobName);
-            sb.append("'");
-            appendDistributedTaskList(sb, tasks);
-            appendClass(sb, clazz);
-            LOGGER.trace(sb.toString());
-        }
-    }
-
     private void appendStreamTaskList(final StringBuilder sb, final List<ProcessorFilterTask> streamTasks) {
         sb.append(" ( ");
         for (final ProcessorFilterTask task : streamTasks) {
             sb.append(task.getId());
-            sb.append(" ");
-        }
-        sb.append(")");
-    }
-
-    private void appendDistributedTaskList(final StringBuilder sb,
-                                           final List<DistributedTask<?>> streamProcessorTasks) {
-        sb.append(" ( ");
-        for (final DistributedTask<?> task : streamProcessorTasks) {
-            sb.append(task.getTraceString());
             sb.append(" ");
         }
         sb.append(")");

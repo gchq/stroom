@@ -137,8 +137,6 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         // Get all index shards that are owned by this node.
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
-        criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
-        criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.getIndexUuidSet().add(indexShardKey.getIndexUuid());
         criteria.getPartition().setString(indexShardKey.getPartition());
         final List<IndexShard> list = indexShardService.find(criteria);

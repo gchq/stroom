@@ -19,16 +19,16 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.MetaService;
 import stroom.docref.DocRef;
+import stroom.meta.shared.MetaService;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.processor.impl.db.StreamProcessorTask;
-import stroom.processor.StreamProcessorTaskExecutor;
-import stroom.processor.impl.db.StreamTaskCreator;
+import stroom.processor.api.DataProcessorTaskExecutor;
+import stroom.processor.impl.DataProcessorTask;
+import stroom.processor.impl.ProcessorFilterTaskCreator;
 import stroom.processor.shared.ProcessorFilterTask;
-import stroom.task.api.TaskManager;
 import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.TaskManager;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 
@@ -74,37 +74,37 @@ public class CommonTranslationTestHelper {
             .getTestResourcesFile(DIR + "EmployeeReference.in");
 
     private final NodeInfo nodeInfo;
-    private final StreamTaskCreator streamTaskCreator;
+    private final ProcessorFilterTaskCreator processorFilterTaskCreator;
     private final StoreCreationTool storeCreationTool;
     private final TaskManager taskManager;
     private final MetaService metaService;
 
     @Inject
     CommonTranslationTestHelper(final NodeInfo nodeInfo,
-                          final StreamTaskCreator streamTaskCreator,
-                          final StoreCreationTool storeCreationTool,
-                          final TaskManager taskManager,
-                          final MetaService metaService) {
+                                final ProcessorFilterTaskCreator processorFilterTaskCreator,
+                                final StoreCreationTool storeCreationTool,
+                                final TaskManager taskManager,
+                                final MetaService metaService) {
         this.nodeInfo = nodeInfo;
-        this.streamTaskCreator = streamTaskCreator;
+        this.processorFilterTaskCreator = processorFilterTaskCreator;
         this.storeCreationTool = storeCreationTool;
         this.taskManager = taskManager;
         this.metaService = metaService;
     }
 
-    public List<StreamProcessorTaskExecutor> processAll() {
+    public List<DataProcessorTaskExecutor> processAll() {
         // Force creation of stream tasks.
-        streamTaskCreator.createTasks(new SimpleTaskContext());
+        processorFilterTaskCreator.createTasks(new SimpleTaskContext());
 
-        final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+        final List<DataProcessorTaskExecutor> results = new ArrayList<>();
+        List<ProcessorFilterTask> streamTasks = processorFilterTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
             for (final ProcessorFilterTask streamTask : streamTasks) {
-                final StreamProcessorTask task = new StreamProcessorTask(streamTask);
+                final DataProcessorTask task = new DataProcessorTask(streamTask);
                 taskManager.exec(task);
-                results.add(task.getStreamProcessorTaskExecutor());
+                results.add(task.getDataProcessorTaskExecutor());
             }
-            streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+            streamTasks = processorFilterTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
 
         return results;

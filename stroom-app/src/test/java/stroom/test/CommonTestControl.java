@@ -26,12 +26,4 @@ public interface CommonTestControl {
     void teardown();
 
     void createRequiredXMLSchemas();
-
-    /**
-     * Return a entity count.
-     *
-     * @param clazz to count
-     * @return the count
-     */
-    int countEntity(String tableName);
 }

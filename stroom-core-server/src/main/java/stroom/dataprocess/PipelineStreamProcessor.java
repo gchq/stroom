@@ -29,7 +29,6 @@ import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.api.FeedProperties;
-import stroom.util.io.StreamCloser;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
@@ -63,19 +62,20 @@ import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.pipeline.task.SupersededOutputHelper;
+import stroom.processor.api.InclusiveRanges;
+import stroom.processor.api.InclusiveRanges.InclusiveRange;
+import stroom.processor.api.DataProcessorTaskExecutor;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterTask;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.streamtask.InclusiveRanges;
-import stroom.streamtask.InclusiveRanges.InclusiveRange;
-import stroom.streamtask.StreamProcessorTaskExecutor;
-import stroom.streamtask.shared.Processor;
-import stroom.streamtask.shared.ProcessorFilter;
-import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.PreviewInputStream;
+import stroom.util.io.StreamCloser;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
@@ -88,7 +88,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
+public class PipelineStreamProcessor implements DataProcessorTaskExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineStreamProcessor.class);
     private static final String PROCESSING = "Processing:";
     private static final String FINISHED = "Finished:";
@@ -120,7 +120,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private final SupersededOutputHelperImpl supersededOutputHelper;
 
     private Processor streamProcessor;
-    private ProcessorFilter streamProcessorFilter;
+    private ProcessorFilter processorFilter;
     private ProcessorFilterTask streamTask;
     private Source streamSource;
 
@@ -179,7 +179,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                      final ProcessorFilterTask processorFilterTask,
                      final Source streamSource) {
         this.streamProcessor = processor;
-        this.streamProcessorFilter = processorFilter;
+        this.processorFilter = processorFilter;
         this.streamTask = processorFilterTask;
         this.streamSource = streamSource;
 
@@ -234,8 +234,8 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
             // Set the search id to be the id of the stream processor filter.
             // Only do this where the task has specific data ranges that need extracting as this is only the case with a batch search.
-            if (streamProcessorFilter != null && streamTask.getData() != null && streamTask.getData().length() > 0) {
-                searchIdHolder.setSearchId(Long.toString(streamProcessorFilter.getId()));
+            if (processorFilter != null && streamTask.getData() != null && streamTask.getData().length() > 0) {
+                searchIdHolder.setSearchId(Long.toString(processorFilter.getId()));
             }
 
             // Load the feed.

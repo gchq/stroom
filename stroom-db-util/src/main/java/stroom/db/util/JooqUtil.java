@@ -6,11 +6,7 @@ import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.SQLDialect;
-import org.jooq.SelectForUpdateStep;
-import org.jooq.SelectLimitAfterOffsetStep;
-import org.jooq.SelectLimitStep;
 import org.jooq.Table;
-import org.jooq.TableField;
 import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
@@ -26,13 +22,10 @@ import stroom.util.shared.StringCriteria;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public final class JooqUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(JooqUtil.class);
@@ -44,8 +37,8 @@ public final class JooqUtil {
         // Utility class.
     }
 
-    public static void context(final DataSource connectionProvider, final Consumer<DSLContext> consumer) {
-        try (final Connection connection = connectionProvider.getConnection()) {
+    public static void context(final DataSource dataSource, final Consumer<DSLContext> consumer) {
+        try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
             consumer.accept(context);
         } catch (final SQLException e) {
@@ -54,9 +47,9 @@ public final class JooqUtil {
         }
     }
 
-    public static <R> R contextResult(final DataSource connectionProvider, final Function<DSLContext, R> function) {
+    public static <R> R contextResult(final DataSource dataSource, final Function<DSLContext, R> function) {
         R result;
-        try (final Connection connection = connectionProvider.getConnection()) {
+        try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
             result = function.apply(context);
         } catch (final SQLException e) {
@@ -66,19 +59,19 @@ public final class JooqUtil {
         return result;
     }
 
-    public static void contextWithOptimisticLocking(final DataSource connectionProvider, final Consumer<DSLContext> consumer) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL, new Settings().withExecuteWithOptimisticLocking(true));
-            consumer.accept(context);
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
+//    public static void contextWithOptimisticLocking(final DataSource dataSource, final Consumer<DSLContext> consumer) {
+//        try (final Connection connection = dataSource.getConnection()) {
+//            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL, new Settings().withExecuteWithOptimisticLocking(true));
+//            consumer.accept(context);
+//        } catch (final SQLException e) {
+//            LOGGER.error(e.getMessage(), e);
+//            throw new RuntimeException(e.getMessage(), e);
+//        }
+//    }
 
-    public static <R> R contextWithOptimisticLocking(final DataSource connectionProvider, final Function<DSLContext, R> function) {
+    public static <R> R contextWithOptimisticLocking(final DataSource dataSource, final Function<DSLContext, R> function) {
         R result;
-        try (final Connection connection = connectionProvider.getConnection()) {
+        try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = DSL.using(connection, SQLDialect.MYSQL, new Settings().withExecuteWithOptimisticLocking(true));
             result = function.apply(context);
         } catch (final SQLException e) {
@@ -95,12 +88,12 @@ public final class JooqUtil {
      * @param id    The id value to match on
      * @return The number of deleted records
      */
-    public static <R extends Record> int deleteById(final DataSource connectionProvider,
+    public static <R extends Record> int deleteById(final DataSource dataSource,
                                                     final Table<R> table,
-                                                    final TableField<R, Integer> field,
+                                                    final Field<Integer> field,
                                                     final int id) {
 
-        return JooqUtil.contextResult(connectionProvider, context ->
+        return JooqUtil.contextResult(dataSource, context ->
                 context
                         .deleteFrom(table)
                         .where(field.eq(id))
@@ -113,12 +106,12 @@ public final class JooqUtil {
      * @param id The id value to match on
      * @return The number of deleted records
      */
-    public static <R extends Record> int deleteById(final DataSource connectionProvider,
+    public static <R extends Record> int deleteById(final DataSource dataSource,
                                                     final Table<R> table,
                                                     final int id) {
 
         final Field<Integer> idField = getIdField(table);
-        return JooqUtil.contextResult(connectionProvider, context ->
+        return JooqUtil.contextResult(dataSource, context ->
                 context
                         .deleteFrom(table)
                         .where(idField.eq(id))
@@ -133,13 +126,13 @@ public final class JooqUtil {
      * @param id   The id to match on
      * @return An optional containing the record if it was found.
      */
-    public static <R extends Record, T> Optional<T> fetchById(final DataSource connectionProvider,
+    public static <R extends Record, T> Optional<T> fetchById(final DataSource dataSource,
                                                               final Table<R> table,
                                                               final Class<T> type,
                                                               final int id) {
 
         final Field<Integer> idField = getIdField(table);
-        return JooqUtil.contextResult(connectionProvider, context ->
+        return JooqUtil.contextResult(dataSource, context ->
                 context
                         .fetchOptional(table, idField.eq(id))
                         .map(record ->
@@ -184,7 +177,7 @@ public final class JooqUtil {
      * @return A condition that applies the given range.
      */
     public static <R extends Record, T extends Number> Optional<Condition> getRangeCondition(
-            final TableField<R, T> field,
+            final Field<T> field,
             final Range<T> criteria) {
         if (!criteria.isConstrained()) {
             return Optional.empty();
@@ -223,7 +216,7 @@ public final class JooqUtil {
      * @return A condition that applies the given set.
      */
     public static <R extends Record, T> Optional<Condition> getSetCondition(
-            final TableField<R, T> field,
+            final Field<T> field,
             final CriteriaSet<T> criteria) {
         if (!criteria.isConstrained()) {
             return Optional.empty();
@@ -248,7 +241,7 @@ public final class JooqUtil {
      * @return A condition that applies the given criteria
      */
     public static <R extends Record> Optional<Condition> getStringCondition(
-            final TableField<R, String> field,
+            final Field<String> field,
             final StringCriteria criteria) {
         if (!criteria.isConstrained()) {
             return Optional.empty();
@@ -272,7 +265,7 @@ public final class JooqUtil {
         return convertMatchNull(field, criteria.getMatchNull(), valueCondition);
     }
 
-    private static Optional<Condition> convertMatchNull(final TableField<?, ?> field, final Boolean matchNull, final Optional<Condition> condition) {
+    private static Optional<Condition> convertMatchNull(final Field<?> field, final Boolean matchNull, final Optional<Condition> condition) {
         if (matchNull == null) {
             return condition;
         }
@@ -282,20 +275,20 @@ public final class JooqUtil {
         return condition.or(() -> Optional.of(field.isNotNull()));
     }
 
-    public static OrderField[] getOrderFields(final Map<String, TableField> tableFieldMap, final BaseCriteria criteria) {
+    public static OrderField[] getOrderFields(final Map<String, Field> fieldMap, final BaseCriteria criteria) {
         if (criteria.getSortList() == null) {
             return EMPTY_ORDER_FIELDS;
         }
 
         return criteria.getSortList().stream()
-                .map(s -> getOrderField(tableFieldMap, s))
+                .map(s -> getOrderField(fieldMap, s))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toArray(OrderField[]::new);
     }
 
-    private static Optional<OrderField> getOrderField(final Map<String, TableField> tableFieldMap, final Sort sort) {
-        final TableField field = tableFieldMap.get(sort.getField());
+    private static Optional<OrderField> getOrderField(final Map<String, Field> fieldMap, final Sort sort) {
+        final Field field = fieldMap.get(sort.getField());
 
         if (null != field) {
             switch (sort.getDirection()) {

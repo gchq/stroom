@@ -75,7 +75,7 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     @Inject
     private NodeService nodeService;
     //    @Inject
-//    private StreamTaskCreatorImpl streamTaskCreator;
+//    private ProcessorFilterTaskCreatorImpl processorFilterTaskCreator;
     @Inject
     private DataRetentionExecutor streamRetentionExecutor;
     @Inject
@@ -137,7 +137,7 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
 //        // deleted if they exist, however currently streams are only deleted if
 //        // their associated task exists which would prevent us from deleting
 //        // streams that have no task associated with them.
-//        streamTaskCreator.createTasks(new SimpleTaskContext());
+//        processorFilterTaskCreator.createTasks(new SimpleTaskContext());
 
         List<DataVolume> oldVolumeList = streamVolumeService
                 .find(FindDataVolumeCriteria.create(oldFileMeta));

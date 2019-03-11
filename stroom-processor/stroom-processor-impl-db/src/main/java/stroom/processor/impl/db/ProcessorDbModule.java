@@ -9,14 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
-import stroom.db.util.DbUtil;
-import stroom.processor.ProcessorConfig;
-import stroom.processor.StreamProcessorFilterService;
-import stroom.processor.StreamProcessorService;
-import stroom.processor.impl.db.dao.ProcessorDao;
-import stroom.processor.impl.db.dao.ProcessorDaoImpl;
-import stroom.processor.impl.db.dao.ProcessorFilterDao;
-import stroom.processor.impl.db.dao.ProcessorFilterDaoImpl;
+import stroom.db.util.HikariUtil;
+import stroom.processor.impl.ProcessorConfig;
+import stroom.processor.impl.ProcessorDao;
+import stroom.processor.impl.ProcessorFilterDao;
+import stroom.processor.impl.ProcessorFilterTaskDao;
+import stroom.processor.impl.ProcessorFilterTaskDeleteExecutor;
+import stroom.processor.impl.ProcessorFilterTrackerDao;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -29,44 +28,19 @@ public class ProcessorDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
-
         bind(ProcessorDao.class).to(ProcessorDaoImpl.class);
         bind(ProcessorFilterDao.class).to(ProcessorFilterDaoImpl.class);
-        bind(StreamProcessorFilterService.class).to(StreamProcessorFilterServiceImpl.class);
-        bind(StreamProcessorService.class).to(StreamProcessorServiceImpl.class);
-
-//        bind(FeedService.class).to(FeedServiceImpl.class);
-
-        // TODO do we need any clean up in process?
-//        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-//        clearableBinder.addBinding().to(Cleanup.class);
-
+        bind(ProcessorFilterTrackerDao.class).to(ProcessorFilterTrackerDaoImpl.class);
+        bind(ProcessorFilterTaskDao.class).to(ProcessorFilterTaskDaoImpl.class);
+        bind(ProcessorFilterTaskDeleteExecutor.class).to(ProcessorFilterTaskDeleteExecutorImpl.class);
     }
 
-    @SuppressWarnings("unused")
     @Provides
     @Singleton
     ConnectionProvider getConnectionProvider(final Provider<ProcessorConfig> configProvider) {
         final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
-
-        // Keep waiting until we can establish a DB connection to allow for the DB to start after the app
-        DbUtil.waitForConnection(
-                connectionConfig.getJdbcDriverClassName(),
-                connectionConfig.getJdbcDriverUrl(),
-                connectionConfig.getJdbcDriverUsername(),
-                connectionConfig.getJdbcDriverPassword());
-
         final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
-
-        connectionConfig.validate();
-
-        final HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
-        config.setUsername(connectionConfig.getJdbcDriverUsername());
-        config.setPassword(connectionConfig.getJdbcDriverPassword());
-        config.addDataSourceProperty("cachePrepStmts", String.valueOf(connectionPoolConfig.isCachePrepStmts()));
-        config.addDataSourceProperty("prepStmtCacheSize", String.valueOf(connectionPoolConfig.getPrepStmtCacheSize()));
-        config.addDataSourceProperty("prepStmtCacheSqlLimit", String.valueOf(connectionPoolConfig.getPrepStmtCacheSqlLimit()));
+        final HikariConfig config = HikariUtil.createConfig(connectionConfig, connectionPoolConfig);
         final ConnectionProvider connectionProvider = new ConnectionProvider(config);
         flyway(connectionProvider);
         return connectionProvider;
@@ -79,15 +53,14 @@ public class ProcessorDbModule extends AbstractModule {
                 .table(FLYWAY_TABLE)
                 .baselineOnMigrate(true)
                 .load();
-
-        LOGGER.info("Applying Flyway migrations to stroom-data-meta in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
+        LOGGER.info("Applying Flyway migrations to processor in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating stroom-data-meta database",e);
+            LOGGER.error("Error migrating processor database", e);
             throw e;
         }
-        LOGGER.info("Completed Flyway migrations for stroom-data-meta in {}", FLYWAY_TABLE);
+        LOGGER.info("Completed Flyway migrations for processor in {}", FLYWAY_TABLE);
         return flyway;
     }
 

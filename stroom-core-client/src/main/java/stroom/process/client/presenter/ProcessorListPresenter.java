@@ -40,8 +40,7 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
-import stroom.entity.client.EntitySaveTask;
-import stroom.entity.client.SaveQueue;
+import stroom.entity.client.ActionQueue;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.entity.shared.NamedEntity;
@@ -49,14 +48,14 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.FetchProcessorAction;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterRow;
+import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorRow;
+import stroom.processor.shared.UpdateProcessorAction;
+import stroom.processor.shared.UpdateProcessorFilterAction;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.streamstore.client.presenter.MetaTooltipPresenterUtil;
-import stroom.streamtask.shared.FetchProcessorAction;
-import stroom.streamtask.shared.Processor;
-import stroom.streamtask.shared.ProcessorFilterRow;
-import stroom.streamtask.shared.ProcessorFilterTracker;
-import stroom.streamtask.shared.ProcessorRow;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
@@ -76,8 +75,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     private final ActionDataProvider<SharedObject> dataProvider;
     private final TooltipPresenter tooltipPresenter;
     private final FetchProcessorAction action;
-    private final SaveQueue<Processor> streamProcessorSaveQueue;
-    private final SaveQueue<ProcessorFilter> streamProcessorFilterSaveQueue;
+    private final ActionQueue<Processor> processorSaveQueue;
+    private final ActionQueue<ProcessorFilter> processorFilterSaveQueue;
     private boolean doneDataDisplay = false;
     private Column<SharedObject, Expander> expanderColumn;
     private ProcessorFilter nextSelection;
@@ -100,8 +99,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             }
         };
 
-        streamProcessorSaveQueue = new SaveQueue<>(dispatcher);
-        streamProcessorFilterSaveQueue = new SaveQueue<>(dispatcher);
+        processorSaveQueue = new ActionQueue<>(dispatcher);
+        processorFilterSaveQueue = new ActionQueue<>(dispatcher);
     }
 
     void setAllowUpdate(final boolean allowUpdate) {
@@ -121,7 +120,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
         if (nextSelection != null) {
             for (final SharedObject row : data) {
                 if (row instanceof ProcessorFilterRow) {
-                    if (nextSelection.equals(((ProcessorFilterRow) row).getEntity())) {
+                    if (nextSelection.equals(((ProcessorFilterRow) row).getProcessorFilter())) {
                         getView().getSelectionModel().setSelected(row);
                         break;
                     }
@@ -159,26 +158,26 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                 final StringBuilder html = new StringBuilder();
 
                 if (row instanceof ProcessorRow) {
-                    final ProcessorRow streamProcessorRow = (ProcessorRow) row;
-                    final Processor processor = streamProcessorRow.getEntity();
+                    final ProcessorRow processorRow = (ProcessorRow) row;
+                    final Processor processor = processorRow.getProcessor();
                     TooltipUtil.addHeading(html, "Stream Processor");
                     TooltipUtil.addRowData(html, "Id", String.valueOf(processor.getId()));
                     TooltipUtil.addRowData(html, "Created By", processor.getCreateUser());
-                    MetaTooltipPresenterUtil.addRowDateString(html, "Created On", processor.getCreateTime());
+                    MetaTooltipPresenterUtil.addRowDateString(html, "Created On", processor.getCreateTimeMs());
                     TooltipUtil.addRowData(html, "Updated By", processor.getUpdateUser());
-                    MetaTooltipPresenterUtil.addRowDateString(html, "Updated On", processor.getUpdateTime());
+                    MetaTooltipPresenterUtil.addRowDateString(html, "Updated On", processor.getUpdateTimeMs());
                     TooltipUtil.addRowData(html, "Pipeline", processor.getPipelineUuid());
 
                 } else if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) row;
-                    final ProcessorFilter filter = streamProcessorFilterRow.getEntity();
-                    final ProcessorFilterTracker tracker = filter.getStreamProcessorFilterTracker();
+                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                    final ProcessorFilter filter = processorFilterRow.getProcessorFilter();
+                    final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
                     TooltipUtil.addHeading(html, "Stream Processor Filter");
                     TooltipUtil.addRowData(html, "Id", filter.getId());
                     TooltipUtil.addRowData(html, "Created By", filter.getCreateUser());
-                    MetaTooltipPresenterUtil.addRowDateString(html, "Created On", filter.getCreateTime());
+                    MetaTooltipPresenterUtil.addRowDateString(html, "Created On", filter.getCreateTimeMs());
                     TooltipUtil.addRowData(html, "Updated By", filter.getUpdateUser());
-                    MetaTooltipPresenterUtil.addRowDateString(html, "Updated On", filter.getUpdateTime());
+                    MetaTooltipPresenterUtil.addRowDateString(html, "Updated On", filter.getUpdateTimeMs());
                     MetaTooltipPresenterUtil.addRowDateString(html, "Min Stream Create Ms", tracker.getMinStreamCreateMs());
                     MetaTooltipPresenterUtil.addRowDateString(html, "Max Stream Create Ms", tracker.getMaxStreamCreateMs());
                     MetaTooltipPresenterUtil.addRowDateString(html, "Stream Create Ms", tracker.getStreamCreateMs());
@@ -243,17 +242,17 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             public String getValue(final SharedObject row) {
                 String name = null;
                 if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) row;
-                    final Processor streamProcessor = streamProcessorFilterRow.getEntity().getStreamProcessor();
-                    if (streamProcessor != null) {
-                        final String pipelineUuid = streamProcessor.getPipelineUuid();
+                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                    final Processor processor = processorFilterRow.getProcessorFilter().getProcessor();
+                    if (processor != null) {
+                        final String pipelineUuid = processor.getPipelineUuid();
                         if (pipelineUuid != null) {
                             name = pipelineUuid;
                         }
                     }
                 } else if (row instanceof ProcessorRow) {
-                    final ProcessorRow streamProcessorRow = (ProcessorRow) row;
-                    final String pipelineUuid = streamProcessorRow.getEntity().getPipelineUuid();
+                    final ProcessorRow processorRow = (ProcessorRow) row;
+                    final String pipelineUuid = processorRow.getProcessor().getPipelineUuid();
                     if (pipelineUuid != null) {
                         name = pipelineUuid;
                     }
@@ -270,9 +269,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             public String getValue(final SharedObject row) {
                 String lastStream = null;
                 if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) row;
+                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
                     lastStream = ClientDateUtil.toISOString(
-                            streamProcessorFilterRow.getEntity().getStreamProcessorFilterTracker().getStreamCreateMs());
+                            processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getStreamCreateMs());
                 }
                 return lastStream;
             }
@@ -282,9 +281,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             public String getValue(final SharedObject row) {
                 final String lastStream = null;
                 if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) row;
-                    return ModelStringUtil.formatCsv(streamProcessorFilterRow.getEntity()
-                            .getStreamProcessorFilterTracker().getTrackerStreamCreatePercentage());
+                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                    return ModelStringUtil.formatCsv(processorFilterRow.getProcessorFilter()
+                            .getProcessorFilterTracker().getTrackerStreamCreatePercentage());
                 }
                 return lastStream;
             }
@@ -297,8 +296,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             public String getValue(final SharedObject row) {
                 String lastPoll = null;
                 if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) row;
-                    lastPoll = streamProcessorFilterRow.getEntity().getStreamProcessorFilterTracker().getLastPollAge();
+                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                    lastPoll = processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getLastPollAge();
                 }
                 return lastPoll;
             }
@@ -308,8 +307,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             public Number getValue(final SharedObject row) {
                 Number currentTasks = null;
                 if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) row;
-                    currentTasks = streamProcessorFilterRow.getEntity().getStreamProcessorFilterTracker()
+                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                    currentTasks = processorFilterRow.getProcessorFilter().getProcessorFilterTracker()
                             .getLastPollTaskCount();
                 }
                 return currentTasks;
@@ -324,11 +323,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             public Number getValue(final SharedObject row) {
                 Number priority = null;
                 if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) row;
+                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
                     if (allowUpdate) {
-                        priority = new EditableInteger(streamProcessorFilterRow.getEntity().getPriority());
+                        priority = new EditableInteger(processorFilterRow.getProcessorFilter().getPriority());
                     } else {
-                        priority = streamProcessorFilterRow.getEntity().getPriority();
+                        priority = processorFilterRow.getProcessorFilter().getPriority();
                     }
                 }
                 return priority;
@@ -339,22 +338,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                 @Override
                 public void update(final int index, final SharedObject row, final Number value) {
                     if (row instanceof ProcessorFilterRow) {
-                        final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) row;
-                        final Processor streamProcessor = streamProcessorFilterRow.getEntity()
-                                .getStreamProcessor();
-                        streamProcessorFilterSaveQueue
-                                .save(new EntitySaveTask<ProcessorFilter>(streamProcessorFilterRow) {
-                                    @Override
-                                    protected void setValue(final ProcessorFilter entity) {
-                                        entity.setPriority(value.intValue());
-                                    }
-
-                                    @Override
-                                    protected void setEntity(final ProcessorFilter entity) {
-                                        entity.setStreamProcessor(streamProcessor);
-                                        super.setEntity(entity);
-                                    }
-                                });
+                        final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                        final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
+                        processorFilter.setPriority(value.intValue());
+//                        final Processor processor = processorFilter.getProcessor();
+                        processorFilterSaveQueue.dispatch(processorFilter, new UpdateProcessorFilterAction(processorFilter));
                     }
                 }
             });
@@ -368,8 +356,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             public Number getValue(final SharedObject row) {
                 Number value = null;
                 if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) row;
-                    value = streamProcessorFilterRow.getEntity().getStreamProcessorFilterTracker().getStreamCount();
+                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                    value = processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getStreamCount();
                 }
                 return value;
             }
@@ -382,8 +370,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             public Number getValue(final SharedObject row) {
                 Number value = null;
                 if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) row;
-                    value = streamProcessorFilterRow.getEntity().getStreamProcessorFilterTracker().getEventCount();
+                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                    value = processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getEventCount();
                 }
                 return value;
             }
@@ -396,8 +384,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             public String getValue(final SharedObject row) {
                 String status = null;
                 if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) row;
-                    status = streamProcessorFilterRow.getEntity().getStreamProcessorFilterTracker().getStatus();
+                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                    status = processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getStatus();
                 }
                 return status;
             }
@@ -413,9 +401,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             @Override
             public TickBoxState getValue(final SharedObject row) {
                 if (row instanceof ProcessorFilterRow) {
-                    return TickBoxState.fromBoolean(((ProcessorFilterRow) row).getEntity().isEnabled());
+                    return TickBoxState.fromBoolean(((ProcessorFilterRow) row).getProcessorFilter().isEnabled());
                 } else if (row instanceof ProcessorRow) {
-                    return TickBoxState.fromBoolean(((ProcessorRow) row).getEntity().isEnabled());
+                    return TickBoxState.fromBoolean(((ProcessorRow) row).getProcessor().isEnabled());
                 }
                 return null;
             }
@@ -426,37 +414,18 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                 @Override
                 public void update(final int index, final SharedObject row, final TickBoxState value) {
                     if (row instanceof ProcessorFilterRow) {
-                        final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) row;
-                        final Processor streamProcessor = streamProcessorFilterRow.getEntity()
-                                .getStreamProcessor();
-                        streamProcessorFilterSaveQueue
-                                .save(new EntitySaveTask<ProcessorFilter>(streamProcessorFilterRow) {
-                                    @Override
-                                    protected void setValue(final ProcessorFilter entity) {
-                                        entity.setEnabled(value.toBoolean());
-                                    }
+                        final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                        final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
+//                        final Processor processor = processorFilter                                .getProcessor();
 
-                                    @Override
-                                    protected void setEntity(final ProcessorFilter entity) {
-                                        entity.setStreamProcessor(streamProcessor);
-                                        super.setEntity(entity);
-                                    }
-                                });
+                        processorFilter.setEnabled(value.toBoolean());
+                        processorFilterSaveQueue.dispatch(processorFilter, new UpdateProcessorFilterAction(processorFilter));
                     } else if (row instanceof ProcessorRow) {
-                        final ProcessorRow streamProcessorRow = (ProcessorRow) row;
-                        final String pipelineUuid = streamProcessorRow.getEntity().getPipelineUuid();
-                        streamProcessorSaveQueue.save(new EntitySaveTask<Processor>(streamProcessorRow) {
-                            @Override
-                            protected void setValue(final Processor entity) {
-                                entity.setEnabled(value.toBoolean());
-                            }
-
-                            @Override
-                            protected void setEntity(final Processor entity) {
-                                entity.setPipelineUuid(pipelineUuid);
-                                super.setEntity(entity);
-                            }
-                        });
+                        final ProcessorRow processorRow = (ProcessorRow) row;
+                        final Processor processor = processorRow.getProcessor();
+                        processor.setEnabled(value.toBoolean());
+//                        final String pipelineUuid = processor.getPipelineUuid();
+                        processorSaveQueue.dispatch(processor, new UpdateProcessorAction(processor));
                     }
                 }
             });

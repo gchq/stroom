@@ -25,7 +25,7 @@ import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceFindSummaryAction;
 import stroom.util.shared.ResultList;
-import stroom.util.shared.SummaryDataRow;
+import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
@@ -36,7 +36,7 @@ import java.util.List;
 
 
 class EntityServiceFindSummaryHandler
-        extends AbstractTaskHandler<EntityServiceFindSummaryAction<BaseCriteria>, ResultList<SummaryDataRow>> {
+        extends AbstractTaskHandler<EntityServiceFindSummaryAction<BaseCriteria>, ResultList<ProcessorFilterTaskSummaryRow>> {
     private final EntityServiceBeanRegistry beanRegistry;
     private final DocumentEventLog documentEventLog;
     private final Security security;
@@ -52,9 +52,9 @@ class EntityServiceFindSummaryHandler
 
     @SuppressWarnings("unchecked")
     @Override
-    public ResultList<SummaryDataRow> exec(final EntityServiceFindSummaryAction<BaseCriteria> action) {
+    public ResultList<ProcessorFilterTaskSummaryRow> exec(final EntityServiceFindSummaryAction<BaseCriteria> action) {
         return security.secureResult(() -> {
-            BaseResultList<SummaryDataRow> result;
+            BaseResultList<ProcessorFilterTaskSummaryRow> result;
 
             final Query query = new Query();
             final Advanced advanced = new Advanced();
@@ -66,7 +66,7 @@ class EntityServiceFindSummaryHandler
                 final FindService entityService = beanRegistry.getEntityServiceByCriteria(action.getCriteria().getClass());
                 addCriteria(entityService, action.getCriteria(), and.getAdvancedQueryItems());
 
-                result = (BaseResultList<SummaryDataRow>) beanRegistry.invoke(entityService, "findSummary", action.getCriteria());
+                result = (BaseResultList<ProcessorFilterTaskSummaryRow>) beanRegistry.invoke(entityService, "findSummary", action.getCriteria());
                 documentEventLog.searchSummary(action.getCriteria(), query, result,  null);
             } catch (final RuntimeException e) {
                 documentEventLog.searchSummary(action.getCriteria(), query, null, e);

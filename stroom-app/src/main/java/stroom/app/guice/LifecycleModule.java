@@ -3,22 +3,22 @@ package stroom.app.guice;
 import com.google.inject.AbstractModule;
 import stroom.cache.impl.CacheManagerLifecycleModule;
 import stroom.cluster.impl.ClusterLifecycleModule;
-import stroom.meta.impl.db.MetaDbLifecycleModule;
+import stroom.cluster.task.impl.ClusterTaskLifecycleModule;
 import stroom.entity.event.EntityEventLifecycleModule;
 import stroom.importexport.impl.ImportExportLifecycleModule;
 import stroom.index.IndexLifecycleModule;
 import stroom.job.impl.JobSystemLifecycleModule;
 import stroom.kafka.impl.KafkaLifecycleModule;
+import stroom.meta.impl.db.MetaDbLifecycleModule;
 import stroom.persist.EntityManagerLifecycleModule;
 import stroom.pipeline.destination.RollingDestinationsLifecycleModule;
+import stroom.processor.impl.StreamTaskLifecycleModule;
 import stroom.resource.impl.ResourceLifecycleModule;
 import stroom.search.SearchLifecycleModule;
 import stroom.servicediscovery.ServiceDiscoveryLifecycleModule;
 import stroom.statistics.impl.InternalStatisticsLifecycleModule;
 import stroom.statistics.impl.sql.SQLStatisticsLifecycleModule;
-import stroom.streamtask.StreamTaskLifecycleModule;
 import stroom.task.impl.TaskManagerLifecycleModule;
-import stroom.cluster.task.impl.ClusterTaskLifecycleModule;
 
 public class LifecycleModule extends AbstractModule {
     @Override

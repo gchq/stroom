@@ -1,8 +1,8 @@
 package stroom.index.impl.db;
 
 import org.jooq.Condition;
+import org.jooq.Field;
 import org.jooq.OrderField;
-import org.jooq.TableField;
 import org.jooq.impl.DSL;
 import stroom.db.util.JooqUtil;
 import stroom.index.dao.IndexShardDao;
@@ -50,10 +50,10 @@ public class IndexShardDaoImpl implements IndexShardDao {
         );
     }
 
-    private static Map<String, TableField> tableFieldMap = new HashMap<>();
+    private static Map<String, Field> FIELD_MAP = new HashMap<>();
     static {
-        tableFieldMap.put(FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID);
-        tableFieldMap.put(FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION);
+        FIELD_MAP.put(FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID);
+        FIELD_MAP.put(FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION);
     }
 
     @Override
@@ -72,7 +72,7 @@ public class IndexShardDaoImpl implements IndexShardDao {
                 .map(Optional::get)
                 .collect(Collectors.toList());
 
-        final OrderField[] orderFields = JooqUtil.getOrderFields(tableFieldMap, criteria);
+        final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         return JooqUtil.contextResult(connectionProvider, context -> {
             final List<IndexShard> shards = context.select()

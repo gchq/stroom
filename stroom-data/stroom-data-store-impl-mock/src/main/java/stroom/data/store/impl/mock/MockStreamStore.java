@@ -90,7 +90,7 @@ public class MockStreamStore implements Store, Clearable {
 //
 //        stream.setFeed(feed);
 //        stream.setType(streamType);
-//        stream.setStreamProcessor(metaProperties.getStreamProcessor());
+//        stream.setProcessor(metaProperties.getProcessor());
 //        if (metaProperties.getStreamTask() != null) {
 //            stream.setStreamTaskId(metaProperties.getStreamTask().getId());
 //        }

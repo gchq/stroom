@@ -30,19 +30,18 @@ import stroom.index.IndexStore;
 import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.node.shared.Node;
+import stroom.node.api.NodeService;
+import stroom.node.shared.FindNodeCriteria;
 import stroom.pipeline.PipelineStore;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.statistics.sql.entity.StatisticStoreStore;
-import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
-import stroom.processor.shared.QueryData;
-import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
-import stroom.streamstore.shared.QueryData;
+import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.processor.StreamProcessorFilterService;
-import stroom.streamtask.StreamProcessorFilterService;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
@@ -58,10 +57,8 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -89,41 +86,44 @@ public final class SetupSampleDataBean {
     private final FeedStore feedStore;
     private final FeedProperties feedProperties;
     private final Store streamStore;
-    private final CommonTestControl commonTestControl;
     private final ImportExportSerializer importExportSerializer;
-    private final StreamProcessorFilterService streamProcessorFilterService;
+    private final ProcessorService processorService;
+    private final ProcessorFilterService processorFilterService;
     private final PipelineStore pipelineStore;
     private final DashboardStore dashboardStore;
     private final IndexStore indexStore;
     private final IndexVolumeService indexVolumeService;
     private final StatisticStoreStore statisticStoreStore;
     private final StroomStatsStoreStore stroomStatsStoreStore;
+    private final NodeService nodeService;
 
     @Inject
     SetupSampleDataBean(final FeedStore feedStore,
                         final FeedProperties feedProperties,
                         final Store streamStore,
-                        final CommonTestControl commonTestControl,
                         final ImportExportSerializer importExportSerializer,
-                        final StreamProcessorFilterService streamProcessorFilterService,
+                        final ProcessorService processorService,
+                        final ProcessorFilterService processorFilterService,
                         final PipelineStore pipelineStore,
                         final DashboardStore dashboardStore,
                         final IndexStore indexStore,
                         final IndexVolumeService indexVolumeService,
                         final StatisticStoreStore statisticStoreStore,
-                        final StroomStatsStoreStore stroomStatsStoreStore) {
+                        final StroomStatsStoreStore stroomStatsStoreStore,
+                        final NodeService nodeService) {
         this.feedStore = feedStore;
         this.feedProperties = feedProperties;
         this.streamStore = streamStore;
-        this.commonTestControl = commonTestControl;
         this.importExportSerializer = importExportSerializer;
-        this.streamProcessorFilterService = streamProcessorFilterService;
+        this.processorService = processorService;
+        this.processorFilterService = processorFilterService;
         this.pipelineStore = pipelineStore;
         this.dashboardStore = dashboardStore;
         this.indexStore = indexStore;
         this.indexVolumeService = indexVolumeService;
         this.statisticStoreStore = statisticStoreStore;
         this.stroomStatsStoreStore = stroomStatsStoreStore;
+        this.nodeService = nodeService;
     }
 
 //    private void createStreamAttributes() {
@@ -218,7 +218,8 @@ public final class SetupSampleDataBean {
                                         .build())
                                 .build())
                         .build();
-                streamProcessorFilterService.createFilter(pipeline, criteria, true, 10);
+                final Processor processor = processorService.create(pipeline, true);
+                processorFilterService.create(processor, criteria, 10, true);
             }
         }
 
@@ -259,7 +260,8 @@ public final class SetupSampleDataBean {
                     .expression(expressionBuilder.build())
                     .build();
 
-            streamProcessorFilterService.createFilter(pipeline, criteria, true, 10);
+            final Processor processor = processorService.create(pipeline, true);
+            processorFilterService.create(processor, criteria, 10, true);
         }
     }
 
@@ -291,7 +293,7 @@ public final class SetupSampleDataBean {
 //                feedService.save(feed);
 //            }
 
-            LOGGER.info("Node count = " + commonTestControl.countEntity(Node.TABLE_NAME));
+            LOGGER.info("Node count = " + nodeService.find(new FindNodeCriteria()).size());
 //            LOGGER.info("Volume count = " + commonTestControl.countEntity(VolumeEntity.TABLE_NAME));
             LOGGER.info("Feed count = " + feedStore.list().size());
 //            LOGGER.info("StreamAttributeKey count = " + commonTestControl.countEntity(StreamAttributeKey.class));
@@ -350,7 +352,7 @@ public final class SetupSampleDataBean {
             LOGGER.info("Directory {} doesn't exist so skipping", exampleDataDir);
         }
 
-        // streamTaskCreator.doCreateTasks();
+        // processorFilterTaskCreator.doCreateTasks();
 
         // // Add an index.
         // final Index index = addIndex();

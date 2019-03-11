@@ -20,6 +20,7 @@ dependencies {
     compile project(':stroom-security:stroom-security-impl-db')
     compile project(':stroom-job:stroom-job-impl')
     compile project(':stroom-job:stroom-job-impl-db')
+    compile project(':stroom-processor:stroom-processor-impl')
     compile project(':stroom-statistics:stroom-statistics-impl')
     compile project(':stroom-statistics:stroom-statistics-impl-hbase')
     compile project(':stroom-statistics:stroom-statistics-impl-sql')

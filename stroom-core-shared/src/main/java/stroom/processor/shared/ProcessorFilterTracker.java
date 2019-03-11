@@ -23,7 +23,7 @@ import java.util.Objects;
 
 
 public class ProcessorFilterTracker implements SharedObject {
-    public static final String ENTITY_TYPE = "StreamProcessorFilterTracker";
+    public static final String ENTITY_TYPE = "ProcessorFilterTracker";
     public static final String COMPLETE = "Complete";
     private static final long serialVersionUID = -2478788451478923825L;
 

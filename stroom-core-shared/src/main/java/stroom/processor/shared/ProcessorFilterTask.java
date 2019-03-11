@@ -28,7 +28,7 @@ public class ProcessorFilterTask implements SharedObject {
     private static final long serialVersionUID = 3926403008832938745L;
 
     // standard id and OCC fields
-    private Integer id;
+    private long id;
     private Integer version;
 
     private Long streamId;
@@ -41,13 +41,13 @@ public class ProcessorFilterTask implements SharedObject {
     private TaskStatus status = TaskStatus.UNPROCESSED;
 
     // parent filter
-    private ProcessorFilter streamProcessorFilter;
+    private ProcessorFilter processorFilter;
 
-    public Integer getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(final Integer id) {
+    public void setId(final long id) {
         this.id = id;
     }
 
@@ -123,12 +123,12 @@ public class ProcessorFilterTask implements SharedObject {
         this.endTimeMs = endTimeMs;
     }
 
-    public ProcessorFilter getStreamProcessorFilter() {
-        return streamProcessorFilter;
+    public ProcessorFilter getProcessorFilter() {
+        return processorFilter;
     }
 
-    public void setStreamProcessorFilter(final ProcessorFilter streamProcessorFilter) {
-        this.streamProcessorFilter = streamProcessorFilter;
+    public void setProcessorFilter(final ProcessorFilter processorFilter) {
+        this.processorFilter = processorFilter;
     }
 
     @Override
@@ -144,7 +144,7 @@ public class ProcessorFilterTask implements SharedObject {
                 ", startTimeMs=" + startTimeMs +
                 ", endTimeMs=" + endTimeMs +
                 ", status=" + status +
-                ", streamProcessorFilter=" + streamProcessorFilter +
+                ", processorFilter=" + processorFilter +
                 '}';
     }
 
@@ -163,11 +163,11 @@ public class ProcessorFilterTask implements SharedObject {
                 Objects.equals(statusMs, that.statusMs) &&
                 Objects.equals(startTimeMs, that.startTimeMs) &&
                 Objects.equals(endTimeMs, that.endTimeMs) &&
-                Objects.equals(streamProcessorFilter, that.streamProcessorFilter);
+                Objects.equals(processorFilter, that.processorFilter);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, streamId, data, nodeName, createMs, statusMs, startTimeMs, endTimeMs, status, streamProcessorFilter);
+        return Objects.hash(id, version, streamId, data, nodeName, createMs, statusMs, startTimeMs, endTimeMs, status, processorFilter);
     }
 }

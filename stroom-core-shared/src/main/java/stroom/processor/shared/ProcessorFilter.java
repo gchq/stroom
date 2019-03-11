@@ -25,31 +25,30 @@ import java.util.Comparator;
 import java.util.Objects;
 
 public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
-//    public static final String ENTITY_TYPE = "StreamProcessorFilter";
+    public static final String ENTITY_TYPE = "ProcessorFilter";
 
     public static final Comparator<ProcessorFilter> HIGHEST_PRIORITY_FIRST_COMPARATOR = Comparator
             .comparingInt(ProcessorFilter::getPriority)
             .thenComparingLong(processorFilter ->
-                    processorFilter.streamProcessorFilterTracker.getMinStreamId())
+                    processorFilter.processorFilterTracker.getMinStreamId())
             .thenComparingLong(processorFilter ->
-                    processorFilter.streamProcessorFilterTracker.getMinEventId());
+                    processorFilter.processorFilterTracker.getMinEventId());
 
     private static final long serialVersionUID = -2478788451478923825L;
 
     // standard id, OCC and audit fields
-    private Integer id;
+    private int id;
     private Integer version;
     private Long createTimeMs;
     private String createUser;
     private Long updateTimeMs;
     private String updateUser;
-
     private String uuid;
     private String data;
     private QueryData queryData;
 
-    private Processor streamProcessor;
-    private ProcessorFilterTracker streamProcessorFilterTracker;
+    private Processor processor;
+    private ProcessorFilterTracker processorFilterTracker;
 
     /**
      * The higher the number the higher the priority. So 1 is LOW, 10 is medium,
@@ -62,11 +61,11 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public Integer getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(final Integer id) {
+    public void setId(final int id) {
         this.id = id;
     }
 
@@ -119,6 +118,10 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
         return uuid;
     }
 
+    public void setUuid(final String uuid) {
+        this.uuid = uuid;
+    }
+
     public String getData() {
         return data;
     }
@@ -139,20 +142,20 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
         return HIGHEST_PRIORITY_FIRST_COMPARATOR.compare(this, other) < 0;
     }
 
-    public Processor getStreamProcessor() {
-        return streamProcessor;
+    public Processor getProcessor() {
+        return processor;
     }
 
-    public void setStreamProcessor(final Processor streamProcessor) {
-        this.streamProcessor = streamProcessor;
+    public void setProcessor(final Processor processor) {
+        this.processor = processor;
     }
 
-    public ProcessorFilterTracker getStreamProcessorFilterTracker() {
-        return streamProcessorFilterTracker;
+    public ProcessorFilterTracker getProcessorFilterTracker() {
+        return processorFilterTracker;
     }
 
-    public void setStreamProcessorFilterTracker(final ProcessorFilterTracker streamProcessorFilterTracker) {
-        this.streamProcessorFilterTracker = streamProcessorFilterTracker;
+    public void setProcessorFilterTracker(final ProcessorFilterTracker processorFilterTracker) {
+        this.processorFilterTracker = processorFilterTracker;
     }
 
     @XmlTransient
@@ -192,12 +195,12 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
                 Objects.equals(updateUser, that.updateUser) &&
                 Objects.equals(data, that.data) &&
                 Objects.equals(queryData, that.queryData) &&
-                Objects.equals(streamProcessor, that.streamProcessor) &&
-                Objects.equals(streamProcessorFilterTracker, that.streamProcessorFilterTracker);
+                Objects.equals(processor, that.processor) &&
+                Objects.equals(processorFilterTracker, that.processorFilterTracker);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, createTimeMs, createUser, updateTimeMs, updateUser, data, queryData, streamProcessor, streamProcessorFilterTracker, priority, enabled);
+        return Objects.hash(id, version, createTimeMs, createUser, updateTimeMs, updateUser, data, queryData, processor, processorFilterTracker, priority, enabled);
     }
 }

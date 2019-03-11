@@ -23,7 +23,7 @@ import stroom.meta.impl.mock.MockMetaService;
 import stroom.data.store.impl.mock.MockStreamStore;
 import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.processor.StreamProcessorTaskExecutor;
+import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.common.ComparisonHelper;
@@ -61,9 +61,9 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
     void testBothValid() throws IOException {
         commonTranslationTestHelper.setup();
 
-        final List<StreamProcessorTaskExecutor> results = commonTranslationTestHelper.processAll();
+        final List<DataProcessorTaskExecutor> results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(N4);
-        for (final StreamProcessorTaskExecutor result : results) {
+        for (final DataProcessorTaskExecutor result : results) {
             final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
             assertThat(processor.getWritten() > 0).as(result.toString()).isTrue();
             assertThat(processor.getRead() <= processor.getWritten()).as(result.toString()).isTrue();
@@ -103,7 +103,7 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
     void testInvalidResource() {
         commonTranslationTestHelper.setup(CommonTranslationTestHelper.FEED_NAME, CommonTranslationTestHelper.INVALID_RESOURCE_NAME);
 
-        final List<StreamProcessorTaskExecutor> results = commonTranslationTestHelper.processAll();
+        final List<DataProcessorTaskExecutor> results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(N4);
 
         // Make sure no records were written.

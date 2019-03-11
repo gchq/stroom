@@ -26,18 +26,18 @@ import stroom.util.shared.BaseCriteria;
 import stroom.entity.shared.EntityServiceFindSummaryAction;
 import stroom.util.shared.ResultList;
 import stroom.util.shared.Sort.Direction;
-import stroom.util.shared.SummaryDataRow;
+import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
 
 public abstract class EntityServiceFindSummaryActionDataProvider<C extends BaseCriteria>
         implements Refreshable, Handler {
     private final ClientDispatchAsync dispatcher;
-    private final DataGridView<SummaryDataRow> view;
+    private final DataGridView<ProcessorFilterTaskSummaryRow> view;
     private EntityServiceFindSummaryAction<C> findAction;
-    private ActionDataProvider<SummaryDataRow> dataProvider;
+    private ActionDataProvider<ProcessorFilterTaskSummaryRow> dataProvider;
     private Boolean allowNoConstraint = null;
 
     public EntityServiceFindSummaryActionDataProvider(final ClientDispatchAsync dispatcher,
-                                                      final DataGridView<SummaryDataRow> view) {
+                                                      final DataGridView<ProcessorFilterTaskSummaryRow> view) {
         this.dispatcher = dispatcher;
         this.view = view;
         view.addColumnSortHandler(this);
@@ -50,9 +50,9 @@ public abstract class EntityServiceFindSummaryActionDataProvider<C extends BaseC
             findAction.setCriteria(criteria);
         }
         if (dataProvider == null) {
-            this.dataProvider = new ActionDataProvider<SummaryDataRow>(dispatcher, findAction) {
+            this.dataProvider = new ActionDataProvider<ProcessorFilterTaskSummaryRow>(dispatcher, findAction) {
                 @Override
-                protected void changeData(final ResultList<SummaryDataRow> data) {
+                protected void changeData(final ResultList<ProcessorFilterTaskSummaryRow> data) {
                     super.changeData(data);
                     afterDataChange(data);
                 }
@@ -67,7 +67,7 @@ public abstract class EntityServiceFindSummaryActionDataProvider<C extends BaseC
         }
     }
 
-    protected abstract void afterDataChange(ResultList<SummaryDataRow> data);
+    protected abstract void afterDataChange(ResultList<ProcessorFilterTaskSummaryRow> data);
 
     public void setAllowNoConstraint(final boolean allowNoConstraint) {
         this.allowNoConstraint = allowNoConstraint;
@@ -76,7 +76,7 @@ public abstract class EntityServiceFindSummaryActionDataProvider<C extends BaseC
         }
     }
 
-    public ActionDataProvider<SummaryDataRow> getDataProvider() {
+    public ActionDataProvider<ProcessorFilterTaskSummaryRow> getDataProvider() {
         return dataProvider;
     }
 

@@ -173,7 +173,7 @@ public class OldFindStreamCriteria extends BaseCriteria {
         throw new RuntimeException("Unexpected call to obtainStreamTypeIdSet");
     }
 //
-//    public EntityIdSet<StreamEntity> getStreamIdSet() {
+//    public EntityIdSet<StreamEntity> getMetaIdSet() {
 //        return streamIdSet;
 //    }
 //
@@ -182,7 +182,7 @@ public class OldFindStreamCriteria extends BaseCriteria {
 //    }
 //
     public EntityIdSet<BaseEntity> obtainStreamIdSet() {
-        throw new RuntimeException("Unexpected call to obtainStreamIdSet");
+        throw new RuntimeException("Unexpected call to obtainMetaIdSet");
     }
 //
 //    public IdRange getStreamIdRange() {

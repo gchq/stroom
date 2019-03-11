@@ -35,7 +35,8 @@ import stroom.entity.shared.NamedEntity;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.FindStreamTaskCriteria;
+import stroom.processor.shared.FindProcessorFilterTaskAction;
+import stroom.processor.shared.FindProcessorFilterTaskCriteria;
 import stroom.processor.shared.ProcessorFilterTask;
 import stroom.util.shared.Sort.Direction;
 import stroom.widget.customdatebox.client.ClientDateUtil;
@@ -48,12 +49,13 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import java.util.ArrayList;
 
 public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<ProcessorFilterTask>> implements HasDocumentRead<SharedObject> {
-    private final FindActionDataProvider<FindStreamTaskCriteria, ProcessorFilterTask> dataProvider;
+    private final FindActionDataProvider<FindProcessorFilterTaskCriteria, ProcessorFilterTask> dataProvider;
 
-    private FindStreamTaskCriteria criteria;
+    private FindProcessorFilterTaskCriteria criteria;
 
     @Inject
-    public ProcessorTaskListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
+    public ProcessorTaskListPresenter(final EventBus eventBus,
+                                      final ClientDispatchAsync dispatcher,
                                       final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(false));
 
@@ -66,8 +68,8 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                 TooltipUtil.addRowData(html, "Stream Task Id", row.getId());
                 TooltipUtil.addRowData(html, "Status", row.getStatus().getDisplayValue());
 
-                if (row.getStreamProcessorFilter() != null) {
-                    TooltipUtil.addRowData(html, "Priority", row.getStreamProcessorFilter().getPriority());
+                if (row.getProcessorFilter() != null) {
+                    TooltipUtil.addRowData(html, "Priority", row.getProcessorFilter().getPriority());
                 }
 
                 TooltipUtil.addRowData(html, "Status Time", toDateString(row.getStatusMs()));
@@ -87,18 +89,18 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
 //                TooltipUtil.addRowData(html, "Stream Type", row.getMeta().getTypeName());
 //                TooltipUtil.addRowData(html, "Feed", row.getMeta().getFeedName());
 
-                if (row.getStreamProcessorFilter() != null) {
-                    if (row.getStreamProcessorFilter().getStreamProcessor() != null) {
-                        if (row.getStreamProcessorFilter().getStreamProcessor().getPipelineUuid() != null) {
+                if (row.getProcessorFilter() != null) {
+                    if (row.getProcessorFilter().getProcessor() != null) {
+                        if (row.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
                             TooltipUtil.addBreak(html);
                             TooltipUtil.addHeading(html, "Stream Processor");
                             TooltipUtil.addRowData(html, "Stream Processor Id",
-                                    row.getStreamProcessorFilter().getStreamProcessor().getId());
+                                    row.getProcessorFilter().getProcessor().getId());
                             TooltipUtil.addRowData(html, "Stream Processor Filter Id",
-                                    row.getStreamProcessorFilter().getId());
-                            if (row.getStreamProcessorFilter().getStreamProcessor().getPipelineUuid() != null) {
+                                    row.getProcessorFilter().getId());
+                            if (row.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
                                 TooltipUtil.addRowData(html, "Stream Processor Pipeline",
-                                        row.getStreamProcessorFilter().getStreamProcessor().getPipelineUuid());
+                                        row.getProcessorFilter().getProcessor().getPipelineUuid());
                             }
                         }
                     }
@@ -113,7 +115,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         }, "<br/>", ColumnSizeConstants.ICON_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_CREATE_TIME, false) {
+                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_CREATE_TIME, false) {
                     @Override
                     public String getValue(final ProcessorFilterTask row) {
                         return ClientDateUtil.toISOString(row.getCreateMs());
@@ -121,7 +123,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                 }, "Create", ColumnSizeConstants.DATE_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_STATUS, false) {
+                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_STATUS, false) {
                     @Override
                     public String getValue(final ProcessorFilterTask row) {
                         return row.getStatus().getDisplayValue();
@@ -129,7 +131,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                 }, "Status", 80);
 
         getView()
-                .addColumn(new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_NODE, true) {
+                .addColumn(new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_NODE, true) {
                     @Override
                     public String getValue(final ProcessorFilterTask row) {
                         if (row.getNodeName() != null) {
@@ -139,24 +141,24 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                         }
                     }
                 }, "Node", 100);
-        getView().addColumn(new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PRIORITY, false) {
+        getView().addColumn(new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_PRIORITY, false) {
             @Override
             public String getValue(final ProcessorFilterTask row) {
-                if (row.getStreamProcessorFilter() != null) {
-                    return String.valueOf(row.getStreamProcessorFilter().getPriority());
+                if (row.getProcessorFilter() != null) {
+                    return String.valueOf(row.getProcessorFilter().getPriority());
                 }
 
                 return "";
             }
         }, "Priority", 100);
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PIPELINE_UUID, true) {
+                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_PIPELINE_UUID, true) {
                     @Override
                     public String getValue(final ProcessorFilterTask row) {
-                        if (row.getStreamProcessorFilter() != null) {
-                            if (row.getStreamProcessorFilter().getStreamProcessor() != null) {
-                                if (row.getStreamProcessorFilter().getStreamProcessor().getPipelineUuid() != null) {
-                                    return row.getStreamProcessorFilter().getStreamProcessor().getPipelineUuid();
+                        if (row.getProcessorFilter() != null) {
+                            if (row.getProcessorFilter().getProcessor() != null) {
+                                if (row.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
+                                    return row.getProcessorFilter().getProcessor().getPipelineUuid();
                                 }
                             }
                         }
@@ -165,14 +167,14 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                     }
                 }, "Pipeline", 200);
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_START_TIME, false) {
+                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_START_TIME, false) {
                     @Override
                     public String getValue(final ProcessorFilterTask row) {
                         return ClientDateUtil.toISOString(row.getStartTimeMs());
                     }
                 }, "Start Time", ColumnSizeConstants.DATE_COL);
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_END_TIME_DATE, false) {
+                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_END_TIME_DATE, false) {
                     @Override
                     public String getValue(final ProcessorFilterTask row) {
                         return ClientDateUtil.toISOString(row.getEndTimeMs());
@@ -201,7 +203,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         }
     }
 
-    public FindActionDataProvider<FindStreamTaskCriteria, ProcessorFilterTask> getDataProvider() {
+    public FindActionDataProvider<FindProcessorFilterTaskCriteria, ProcessorFilterTask> getDataProvider() {
         return dataProvider;
     }
 
@@ -210,18 +212,18 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         dataProvider.setAction(new EntityServiceFindAction<>(criteria));
     }
 
-    public FindStreamTaskCriteria getCriteria() {
+    public FindProcessorFilterTaskCriteria getCriteria() {
         return criteria;
     }
 
     private void setPipelineCriteria(final DocRef pipelineRef) {
         criteria = initCriteria(null, pipelineRef);
-        dataProvider.setAction(new EntityServiceFindAction<>(criteria));
+        dataProvider.setAction(new FindProcessorFilterTaskAction(criteria));
     }
 
     private void setNullCriteria() {
         criteria = initCriteria(null, null);
-        dataProvider.setAction(new EntityServiceFindAction<>(criteria));
+        dataProvider.setAction(new FindProcessorFilterTaskAction(criteria));
     }
 
     public void clear() {
@@ -240,16 +242,10 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         }
     }
 
-    private FindStreamTaskCriteria initCriteria(final String feedName, final DocRef pipelineRef) {
-        final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
-        criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME, Direction.DESCENDING, false);
-//        criteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
-//        criteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
-//        criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
-//        criteria.getFetchSet().add(Processor.ENTITY_TYPE);
-//        criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
-//        criteria.getFetchSet().add(Node.ENTITY_TYPE);
-        criteria.obtainStreamTaskStatusSet().setMatchAll(Boolean.FALSE);
+    private FindProcessorFilterTaskCriteria initCriteria(final String feedName, final DocRef pipelineRef) {
+        final FindProcessorFilterTaskCriteria criteria = new FindProcessorFilterTaskCriteria();
+        criteria.setSort(FindProcessorFilterTaskCriteria.FIELD_CREATE_TIME, Direction.DESCENDING, false);
+        criteria.obtainTaskStatusSet().setMatchAll(Boolean.FALSE);
         // Only show unlocked stuff
         criteria.obtainStatusSet().add(Status.UNLOCKED);
 
@@ -257,7 +253,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
 //            criteria.obtainFeedNameSet().add(feedName);
 //        }
         if (pipelineRef != null) {
-            criteria.obtainPipelineSet().add(pipelineRef);
+            criteria.obtainPipelineUuidCriteria().setString(pipelineRef.getUuid());
         }
 
         return criteria;

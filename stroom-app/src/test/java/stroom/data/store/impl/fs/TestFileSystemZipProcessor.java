@@ -28,10 +28,9 @@ import stroom.meta.shared.StandardHeaderArguments;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.processor.impl.db.StreamTargetStroomStreamHandler;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.io.StreamUtil;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;

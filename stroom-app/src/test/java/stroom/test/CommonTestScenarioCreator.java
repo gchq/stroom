@@ -38,8 +38,8 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.processor.shared.QueryData;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.processor.StreamProcessorFilterService;
-import stroom.processor.StreamProcessorService;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 
 import javax.inject.Inject;
@@ -55,8 +55,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class CommonTestScenarioCreator {
     private final Store streamStore;
-    private final StreamProcessorService streamProcessorService;
-    private final StreamProcessorFilterService streamProcessorFilterService;
+    private final ProcessorService streamProcessorService;
+    private final ProcessorFilterService processorFilterService;
     private final IndexStore indexStore;
     private final IndexVolumeService indexVolumeService;
     private final IndexVolumeGroupService indexVolumeGroupService;
@@ -64,15 +64,15 @@ public class CommonTestScenarioCreator {
 
     @Inject
     CommonTestScenarioCreator(final Store streamStore,
-                              final StreamProcessorService streamProcessorService,
-                              final StreamProcessorFilterService streamProcessorFilterService,
+                              final ProcessorService streamProcessorService,
+                              final ProcessorFilterService processorFilterService,
                               final IndexStore indexStore,
                               final IndexVolumeService indexVolumeService,
                               final IndexVolumeGroupService indexVolumeGroupService,
                               final NodeInfo nodeInfo) {
         this.streamStore = streamStore;
         this.streamProcessorService = streamProcessorService;
-        this.streamProcessorFilterService = streamProcessorFilterService;
+        this.processorFilterService = processorFilterService;
         this.indexStore = indexStore;
         this.indexVolumeService = indexVolumeService;
         this.indexVolumeGroupService = indexVolumeGroupService;
@@ -94,9 +94,9 @@ public class CommonTestScenarioCreator {
     public void createStreamProcessor(final QueryData queryData) {
         Processor streamProcessor = new Processor();
         streamProcessor.setEnabled(true);
-        streamProcessor = streamProcessorService.save(streamProcessor);
+        streamProcessor = streamProcessorService.create(streamProcessor);
 
-        streamProcessorFilterService.createFilter(streamProcessor, 1, queryData);
+        processorFilterService.create(streamProcessor, queryData,  1, true);
     }
 
     public DocRef createIndex(final String name) {

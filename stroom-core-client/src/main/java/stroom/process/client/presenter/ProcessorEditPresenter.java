@@ -19,8 +19,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.receive.rules.client.presenter.EditExpressionPresenter;
-import stroom.streamstore.shared.QueryData;
-import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;

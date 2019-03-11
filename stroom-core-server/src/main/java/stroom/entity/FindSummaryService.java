@@ -19,8 +19,8 @@ package stroom.entity;
 
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.BaseResultList;
-import stroom.util.shared.SummaryDataRow;
+import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
 
 public interface FindSummaryService<C extends BaseCriteria> {
-    BaseResultList<SummaryDataRow> findSummary(C criteria);
+    BaseResultList<ProcessorFilterTaskSummaryRow> findSummary(C criteria);
 }

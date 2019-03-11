@@ -16,10 +16,12 @@
 
 package stroom.processor.impl.db;
 
+import org.jooq.Field;
+import org.jooq.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.processor.BatchDeleteConfig;
+import stroom.processor.impl.BatchDeleteConfig;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
@@ -30,7 +32,7 @@ import java.util.List;
 public abstract class AbstractBatchDeleteExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBatchDeleteExecutor.class);
 
-    private final BatchIdTransactionHelper batchIdTransactionHelper;
+    private BatchIdTransactionHelper batchIdTransactionHelper;
     private final ClusterLockService clusterLockService;
     private final TaskContext taskContext;
 
@@ -39,14 +41,12 @@ public abstract class AbstractBatchDeleteExecutor {
     private final BatchDeleteConfig batchDeleteConfig;
     private final String tempIdTable;
 
-    public AbstractBatchDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
-                                       final ClusterLockService clusterLockService,
+    public AbstractBatchDeleteExecutor(final ClusterLockService clusterLockService,
                                        final TaskContext taskContext,
                                        final String taskName,
                                        final String clusterLockName,
                                        final BatchDeleteConfig batchDeleteConfig,
                                        final String tempIdTable) {
-        this.batchIdTransactionHelper = batchIdTransactionHelper;
         this.clusterLockService = clusterLockService;
         this.taskContext = taskContext;
 
@@ -54,6 +54,10 @@ public abstract class AbstractBatchDeleteExecutor {
         this.clusterLockName = clusterLockName;
         this.batchDeleteConfig = batchDeleteConfig;
         this.tempIdTable = tempIdTable;
+    }
+
+    public void setBatchIdTransactionHelper(final BatchIdTransactionHelper batchIdTransactionHelper) {
+        this.batchIdTransactionHelper = batchIdTransactionHelper;
     }
 
     final void lockAndDelete() {
@@ -139,21 +143,21 @@ public abstract class AbstractBatchDeleteExecutor {
         info("Inserting ids for deletion into temp id table (total={})", total);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final List<Long> idList = getDeleteIdList(age, batchSize);
-        final long count = batchIdTransactionHelper.insertIntoTempIdTable(tempIdTable, idList);
+        final long count = batchIdTransactionHelper.insertIntoTempIdTable(idList);
         LOGGER.debug("Inserted {} ids in {}", count, logExecutionTime);
         return count;
     }
 
     protected abstract List getDeleteIdList(final long age, final int batchSize);
 
-    protected final void deleteWithJoin(final String fromTable, final String fromColumn, final String type,
+    protected final void deleteWithJoin(final Table<?> fromTable, final Field<Long> fromColumn, final String type,
                                         final long total) {
         info("Deleting {} (total={})", type, total);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
         // TODO : @66 REMOVE JOIN TO STREAM TABLE.
 
-        final long count = batchIdTransactionHelper.deleteWithJoin(fromTable, fromColumn, tempIdTable, "FK_STRM_ID");
+        final long count = batchIdTransactionHelper.deleteWithJoin(fromTable, fromColumn);
         LOGGER.debug("Deleted {} {} in {}", new Object[]{count, type, logExecutionTime});
     }
 

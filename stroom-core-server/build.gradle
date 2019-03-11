@@ -18,6 +18,7 @@ dependencies {
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-pipeline')
+    compile project(':stroom-processor:stroom-processor-api')
     compile project(':stroom-proxy:stroom-proxy-repo')
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-resource:stroom-resource-api')

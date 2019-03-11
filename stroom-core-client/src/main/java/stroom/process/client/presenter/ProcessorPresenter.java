@@ -173,8 +173,8 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             enableButtons(true);
 
             final ProcessorFilterRow row = (ProcessorFilterRow) selectedProcessor;
-            final ProcessorFilter streamProcessorFilter = row.getEntity();
-            final QueryData queryData = streamProcessorFilter.getQueryData();
+            final ProcessorFilter processorFilter = row.getProcessorFilter();
+            final QueryData queryData = processorFilter.getQueryData();
             setData(queryData);
         }
     }
@@ -205,8 +205,8 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     private void editProcessor() {
         if (pipelineDoc != null && selectedProcessor != null) {
             if (selectedProcessor instanceof ProcessorFilterRow) {
-                final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) selectedProcessor;
-                final ProcessorFilter filter = streamProcessorFilterRow.getProcessorFilter();
+                final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) selectedProcessor;
+                final ProcessorFilter filter = processorFilterRow.getProcessorFilter();
                 processorEditPresenterProvider.get().show(docRef, filter, result -> {
                     if (result != null) {
                         refresh(result);
@@ -226,22 +226,22 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     }
                 });
             } else if (selectedProcessor instanceof ProcessorFilterRow) {
-                final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) selectedProcessor;
+                final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) selectedProcessor;
                 ConfirmEvent.fire(this, "Are you sure you want to delete this filter?", result -> {
                     if (result) {
-                        dispatcher.exec(new DeleteProcessorFilterAction(streamProcessorFilterRow.getProcessorFilter())).onSuccess(res -> processorListPresenter.refresh());
+                        dispatcher.exec(new DeleteProcessorFilterAction(processorFilterRow.getProcessorFilter())).onSuccess(res -> processorListPresenter.refresh());
                     }
                 });
             }
         }
     }
 
-    public void refresh(final ProcessorFilter streamProcessorFilter) {
-        processorListPresenter.setNextSelection(streamProcessorFilter);
+    public void refresh(final ProcessorFilter processorFilter) {
+        processorListPresenter.setNextSelection(processorFilter);
         processorListPresenter.refresh();
 
         processorListPresenter.getSelectionModel().clear();
-        processorListPresenter.getSelectionModel().setSelected(streamProcessorFilter, true);
+        processorListPresenter.getSelectionModel().setSelected(processorFilter, true);
         updateData();
     }
 

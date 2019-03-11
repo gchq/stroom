@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.shard.IndexShardSearchConfig;
+import stroom.ui.config.shared.ProcessConfig;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Inject;

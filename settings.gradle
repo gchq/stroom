@@ -151,7 +151,7 @@ include 'stroom-pipeline'
 include 'stroom-processor:stroom-processor-api'
 include 'stroom-processor:stroom-processor-impl'
 include 'stroom-processor:stroom-processor-impl-db'
-include 'stroom-processor:stroom-processor-impl-db-gen'
+include 'stroom-processor:stroom-processor-impl-db-jooq'
 
 // Proxy
 include 'stroom-proxy:stroom-proxy-app'

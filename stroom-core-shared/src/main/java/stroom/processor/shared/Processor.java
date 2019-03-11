@@ -36,7 +36,6 @@ public class Processor implements HasAuditInfo, HasUuid, SharedObject {
     private String createUser;
     private Long updateTimeMs;
     private String updateUser;
-
     private String uuid;
 
     // Only One type for the moment
@@ -112,7 +111,7 @@ public class Processor implements HasAuditInfo, HasUuid, SharedObject {
         return uuid;
     }
 
-    void setUuid(final String uuid) {
+    public void setUuid(final String uuid) {
         this.uuid = uuid;
     }
 

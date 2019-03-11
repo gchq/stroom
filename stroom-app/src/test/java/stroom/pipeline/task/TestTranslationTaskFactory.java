@@ -20,23 +20,22 @@ package stroom.pipeline.task;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.FindMetaCriteria;
 import stroom.data.store.api.Store;
 import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.docref.DocRef;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
 import stroom.node.api.NodeInfo;
-import stroom.pipeline.xslt.XsltStore;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.streamstore.shared.StreamTypeNames;
-import stroom.processor.impl.db.StreamProcessorTask;
-import stroom.processor.StreamProcessorTaskExecutor;
-import stroom.processor.impl.db.StreamTaskCreator;
+import stroom.pipeline.xslt.XsltStore;
+import stroom.processor.api.DataProcessorTaskExecutor;
+import stroom.processor.impl.DataProcessorTask;
+import stroom.processor.impl.ProcessorFilterTaskCreator;
 import stroom.processor.shared.ProcessorFilterTask;
-import stroom.task.api.TaskManager;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
@@ -95,7 +94,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     @Inject
     private XsltStore xsltStore;
     @Inject
-    private StreamTaskCreator streamTaskCreator;
+    private ProcessorFilterTaskCreator processorFilterTaskCreator;
     @Inject
     private NodeInfo nodeInfo;
 
@@ -111,7 +110,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         assertThat(metaService.getLockCount()).isEqualTo(0);
 
         // Process the store sequentially.
-        final List<StreamProcessorTaskExecutor> results = processAll();
+        final List<DataProcessorTaskExecutor> results = processAll();
 
         assertThat(results.size()).as("Check that we did the number of jobs expected").isEqualTo(NO_OF_REFERENCE_FILES + NO_OF_EVENT_FILES);
         assertThat(metaService.getLockCount()).isEqualTo(0);
@@ -125,7 +124,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         assertThat(cooked.size()).isEqualTo(NO_OF_EVENT_FILES);
 
         // Check none failed.
-        for (final StreamProcessorTaskExecutor result : results) {
+        for (final DataProcessorTaskExecutor result : results) {
             assertThat(((PipelineStreamProcessor) result).getMarkerCount(Severity.SEVERITIES)).isEqualTo(0);
         }
     }
@@ -135,16 +134,16 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      *
      * @return The next task or null if there are currently no more tasks.
      */
-    private List<StreamProcessorTaskExecutor> processAll() {
-        final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+    private List<DataProcessorTaskExecutor> processAll() {
+        final List<DataProcessorTaskExecutor> results = new ArrayList<>();
+        List<ProcessorFilterTask> streamTasks = processorFilterTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
             for (final ProcessorFilterTask streamTask : streamTasks) {
-                final StreamProcessorTask task = new StreamProcessorTask(streamTask);
+                final DataProcessorTask task = new DataProcessorTask(streamTask);
                 taskManager.exec(task);
-                results.add(task.getStreamProcessorTaskExecutor());
+                results.add(task.getDataProcessorTaskExecutor());
             }
-            streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+            streamTasks = processorFilterTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
         return results;
     }
@@ -195,7 +194,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         createStore(INVALID_DATA, REFERENCE_DATA, SAMPLE_XSLT);
 
         // Process the store sequentially.
-        final List<StreamProcessorTaskExecutor> results = processAll();
+        final List<DataProcessorTaskExecutor> results = processAll();
 
         // Check we have some raw events.
         final List<Meta> raw = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
@@ -210,7 +209,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
 
         // Make sure there were errors.
         int errors = 0;
-        for (final StreamProcessorTaskExecutor result : results) {
+        for (final DataProcessorTaskExecutor result : results) {
             final PipelineStreamProcessor pipelineStreamProcessor = (PipelineStreamProcessor) result;
             errors += pipelineStreamProcessor.getMarkerCount(Severity.ERROR, Severity.FATAL_ERROR);
         }
@@ -227,7 +226,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         createStore(EMPTY_DATA, REFERENCE_DATA, SAMPLE_XSLT);
 
         // Process the store sequentially.
-        final List<StreamProcessorTaskExecutor> results = processAll();
+        final List<DataProcessorTaskExecutor> results = processAll();
 
         // Check we have some raw events.
         final List<Meta> raw = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
@@ -242,7 +241,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
 
         // Make sure there were no errors.
         int errors = 0;
-        for (final StreamProcessorTaskExecutor result : results) {
+        for (final DataProcessorTaskExecutor result : results) {
             errors += ((PipelineStreamProcessor) result).getMarkerCount(Severity.ERROR);
         }
         assertThat(errors).isEqualTo(0);
@@ -261,7 +260,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         createStore(INVALID_DATA, REFERENCE_DATA, INVALID_XSL);
 
         // Process the store sequentially.
-        final List<StreamProcessorTaskExecutor> results = processAll();
+        final List<DataProcessorTaskExecutor> results = processAll();
 
         // Check we have some raw events.
         final List<Meta> raw = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
@@ -274,7 +273,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         assertThat(results.size()).isEqualTo(13);
 
         int errors = 0;
-        for (final StreamProcessorTaskExecutor result : results) {
+        for (final DataProcessorTaskExecutor result : results) {
             final PipelineStreamProcessor pipelineStreamProcessor = (PipelineStreamProcessor) result;
             errors += pipelineStreamProcessor.getMarkerCount(Severity.ERROR, Severity.FATAL_ERROR);
         }
@@ -348,7 +347,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
             }
 
             // Force creation of stream tasks.
-            streamTaskCreator.createTasks(new SimpleTaskContext());
+            processorFilterTaskCreator.createTasks(new SimpleTaskContext());
 
         } catch (final IOException e) {
             e.printStackTrace();

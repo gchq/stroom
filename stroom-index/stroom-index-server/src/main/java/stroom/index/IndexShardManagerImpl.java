@@ -108,8 +108,6 @@ public class IndexShardManagerImpl implements IndexShardManager {
 
                     final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
                     criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
-                    criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
-                    criteria.getFetchSet().add(Node.ENTITY_TYPE);
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
                     final List<IndexShard> shards = indexShardService.find(criteria);
 
@@ -257,8 +255,6 @@ public class IndexShardManagerImpl implements IndexShardManager {
         security.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
             criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
-            criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
-            criteria.getFetchSet().add(Node.ENTITY_TYPE);
             final List<IndexShard> shards = indexShardService.find(criteria);
             for (final IndexShard shard : shards) {
                 checkRetention(shard);

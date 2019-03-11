@@ -53,11 +53,6 @@ public class MockCommonTestControl implements CommonTestControl {
     }
 
     @Override
-    public int countEntity(final String tableName) {
-        return 0;
-    }
-
-    @Override
     public void createRequiredXMLSchemas() {
         // NA
     }

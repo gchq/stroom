@@ -94,7 +94,7 @@ class TestTranslationTaskContextAndFlattening extends AbstractProcessIntegration
     // private List<TranslationTaskResult> doTest() {
     // List<TranslationTaskResult> results = new
     // ArrayList<TranslationTaskResult>();
-    // StreamProcessorTask task = null;
+    // DataProcessorTask task = null;
     //
     // do {
     // task = nextTask();
@@ -113,8 +113,8 @@ class TestTranslationTaskContextAndFlattening extends AbstractProcessIntegration
     // *
     // * @return The next task or null if there are currently no more tasks.
     // */
-    // StreamProcessorTask nextTask() {
-    // StreamProcessorTask task = null;
+    // DataProcessorTask nextTask() {
+    // DataProcessorTask task = null;
     //
     // // First try and look for raw reference streams that need processing.
     // final FindTranslationStreamTaskCriteria criteria = new
@@ -129,7 +129,7 @@ class TestTranslationTaskContextAndFlattening extends AbstractProcessIntegration
     // if (processTasks != null && processTasks.size() > 0) {
     // // If we have some raw reference streams then process them.
     // final TranslationStreamTask processTask = processTasks.loadByName(0);
-    // task = new StreamProcessorTask(processTask.getElementId());
+    // task = new DataProcessorTask(processTask.getElementId());
     // } else {
     // // Otherwise look for some raw event streams that need processing.
     // criteria.setType(StreamType.RAW_EVENTS);
@@ -138,7 +138,7 @@ class TestTranslationTaskContextAndFlattening extends AbstractProcessIntegration
     //
     // if (processTasks != null && processTasks.size() > 0) {
     // final TranslationStreamTask processTask = processTasks.loadByName(0);
-    // task = new StreamProcessorTask(processTask.getElementId());
+    // task = new DataProcessorTask(processTask.getElementId());
     // }
     // }
     //

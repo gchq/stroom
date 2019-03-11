@@ -25,15 +25,14 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
-import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFields;
-import stroom.util.shared.BaseResultList;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.index.IndexStore;
+import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFields;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaProperties;
@@ -49,18 +48,18 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xslt.XsltStore;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.FindProcessorCriteria;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.processor.shared.QueryData;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.processor.StreamProcessorFilterService;
-import stroom.processor.StreamProcessorService;
-import stroom.streamtask.shared.FindStreamProcessorCriteria;
-import stroom.processor.shared.Processor;
-import stroom.streamtask.shared.Processor;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -104,8 +103,8 @@ public final class StoreCreationTool {
     private final PipelineStore pipelineStore;
     private final CommonTestScenarioCreator commonTestScenarioCreator;
     private final CommonTestControl commonTestControl;
-    private final StreamProcessorService streamProcessorService;
-    private final StreamProcessorFilterService streamProcessorFilterService;
+    private final ProcessorService streamProcessorService;
+    private final ProcessorFilterService processorFilterService;
     private final IndexStore indexStore;
 
     @Inject
@@ -116,8 +115,8 @@ public final class StoreCreationTool {
                              final PipelineStore pipelineStore,
                              final CommonTestScenarioCreator commonTestScenarioCreator,
                              final CommonTestControl commonTestControl,
-                             final StreamProcessorService streamProcessorService,
-                             final StreamProcessorFilterService streamProcessorFilterService,
+                             final ProcessorService streamProcessorService,
+                             final ProcessorFilterService processorFilterService,
                              final IndexStore indexStore) {
         this.streamStore = streamStore;
         this.feedStore = feedStore;
@@ -127,7 +126,7 @@ public final class StoreCreationTool {
         this.commonTestScenarioCreator = commonTestScenarioCreator;
         this.commonTestControl = commonTestControl;
         this.streamProcessorService = streamProcessorService;
-        this.streamProcessorFilterService = streamProcessorFilterService;
+        this.processorFilterService = processorFilterService;
         this.indexStore = indexStore;
     }
 
@@ -208,13 +207,13 @@ public final class StoreCreationTool {
 
             // Setup the stream processor.
             final BaseResultList<Processor> processors = streamProcessorService
-                    .find(new FindStreamProcessorCriteria(pipelineRef));
+                    .find(new FindProcessorCriteria(pipelineRef));
             Processor streamProcessor = processors.getFirst();
             if (streamProcessor == null) {
                 streamProcessor = new Processor();
                 streamProcessor.setEnabled(true);
                 streamProcessor.setPipelineUuid(pipelineRef.getUuid());
-                streamProcessor = streamProcessorService.save(streamProcessor);
+                streamProcessor = streamProcessorService.update(streamProcessor);
             }
 
             // Setup the stream processor filter.
@@ -225,7 +224,7 @@ public final class StoreCreationTool {
                             .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                             .build())
                     .build();
-            streamProcessorFilterService.createFilter(streamProcessor, 2, findStreamQueryData);
+            processorFilterService.create(streamProcessor, findStreamQueryData, 2, true);
         }
 
         return docRef;
@@ -377,14 +376,14 @@ public final class StoreCreationTool {
         final DocRef pipelineRef = getEventPipeline(feedName, translationTextConverterType,
                 translationTextConverterLocation, translationXsltLocation, flatteningXsltLocation, pipelineReferences);
 
-        Processor streamProcessor = streamProcessorService.find(new FindStreamProcessorCriteria(pipelineRef))
+        Processor streamProcessor = streamProcessorService.find(new FindProcessorCriteria(pipelineRef))
                 .getFirst();
         if (streamProcessor == null) {
             // Setup the stream processor.
             streamProcessor = new Processor();
             streamProcessor.setEnabled(true);
             streamProcessor.setPipelineUuid(pipelineRef.getUuid());
-            streamProcessor = streamProcessorService.save(streamProcessor);
+            streamProcessor = streamProcessorService.update(streamProcessor);
 
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
@@ -395,7 +394,7 @@ public final class StoreCreationTool {
                             .build())
                     .build();
 
-            streamProcessorFilterService.createFilter(streamProcessor, 1, findStreamQueryData);
+            processorFilterService.create(streamProcessor, findStreamQueryData, 1, true);
         }
 
         return docRef;
@@ -615,14 +614,14 @@ public final class StoreCreationTool {
         // Create the indexing pipeline.
         final DocRef pipelineRef = getIndexingPipeline(indexRef, translationXsltLocation);
 
-        Processor streamProcessor = streamProcessorService.find(new FindStreamProcessorCriteria(pipelineRef))
+        Processor streamProcessor = streamProcessorService.find(new FindProcessorCriteria(pipelineRef))
                 .getFirst();
         if (streamProcessor == null) {
             // Setup the stream processor.
             streamProcessor = new Processor();
             streamProcessor.setEnabled(true);
             streamProcessor.setPipelineUuid(pipelineRef.getUuid());
-            streamProcessor = streamProcessorService.save(streamProcessor);
+            streamProcessor = streamProcessorService.update(streamProcessor);
 
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
@@ -631,7 +630,7 @@ public final class StoreCreationTool {
                             .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                             .build())
                     .build();
-            streamProcessorFilterService.createFilter(streamProcessor, 1, findStreamQueryData);
+            processorFilterService.create(streamProcessor, findStreamQueryData, 1, true);
         }
 
         return indexRef;

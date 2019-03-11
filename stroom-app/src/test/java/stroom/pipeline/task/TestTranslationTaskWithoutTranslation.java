@@ -18,20 +18,20 @@ package stroom.pipeline.task;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.meta.shared.Meta;
-import stroom.meta.impl.mock.MockMetaService;
 import stroom.data.store.impl.mock.MockStreamStore;
 import stroom.dataprocess.PipelineStreamProcessor;
+import stroom.meta.impl.mock.MockMetaService;
+import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
-import stroom.streamstore.shared.StreamTypeNames;
-import stroom.processor.impl.db.StreamProcessorTask;
-import stroom.processor.StreamProcessorTaskExecutor;
-import stroom.processor.impl.db.StreamTaskCreator;
+import stroom.processor.api.DataProcessorTaskExecutor;
+import stroom.processor.impl.DataProcessorTask;
+import stroom.processor.impl.ProcessorFilterTaskCreator;
 import stroom.processor.shared.ProcessorFilterTask;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.common.ComparisonHelper;
 import stroom.test.StoreCreationTool;
+import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
@@ -57,7 +57,7 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
     @Inject
     private NodeInfo nodeInfo;
     @Inject
-    private StreamTaskCreator streamTaskCreator;
+    private ProcessorFilterTaskCreator processorFilterTaskCreator;
     @Inject
     private StoreCreationTool storeCreationTool;
     @Inject
@@ -73,10 +73,10 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
         setup(FEED_NAME, RESOURCE_NAME);
         assertThat(metaService.getLockCount()).isEqualTo(0);
 
-        final List<StreamProcessorTaskExecutor> results = processAll();
+        final List<DataProcessorTaskExecutor> results = processAll();
         assertThat(results.size()).isEqualTo(1);
 
-        for (final StreamProcessorTaskExecutor result : results) {
+        for (final DataProcessorTaskExecutor result : results) {
             final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
             final String message = "Count = " + processor.getRead() + "," + processor.getWritten() + ","
                     + processor.getMarkerCount(Severity.SEVERITIES);
@@ -114,16 +114,16 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
      *
      * @return The next task or null if there are currently no more tasks.
      */
-    private List<StreamProcessorTaskExecutor> processAll() {
-        final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+    private List<DataProcessorTaskExecutor> processAll() {
+        final List<DataProcessorTaskExecutor> results = new ArrayList<>();
+        List<ProcessorFilterTask> streamTasks = processorFilterTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
             for (final ProcessorFilterTask streamTask : streamTasks) {
-                final StreamProcessorTask task = new StreamProcessorTask(streamTask);
+                final DataProcessorTask task = new DataProcessorTask(streamTask);
                 taskManager.exec(task);
-                results.add(task.getStreamProcessorTaskExecutor());
+                results.add(task.getDataProcessorTaskExecutor());
             }
-            streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+            streamTasks = processorFilterTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
         return results;
     }

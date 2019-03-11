@@ -3,13 +3,19 @@ package stroom.util.shared;
 import java.util.Optional;
 
 public interface HasIntCrud<T_Entity> {
-
     /**
      * Creates the passes record object in the persistence implementation
      * @param entity Object to persist.
      * @return The persisted object including any changes such as auto IDs
      */
     T_Entity create(final T_Entity entity);
+
+    /**
+     * Fetch a record from the persistence implementation using its unique id value.
+     * @param id The id to uniquely identify the required record with
+     * @return The record associated with the id in the database, if it exists.
+     */
+    Optional<T_Entity> fetch(final int id);
 
     /**
      * Update the passed record in the persistence implementation
@@ -24,11 +30,4 @@ public interface HasIntCrud<T_Entity> {
      * @return True if the entity was deleted. False if the id doesn't exist.
      */
     boolean delete(final int id);
-
-    /**
-     * Fetch a record from the persistence implementation using its unique id value.
-     * @param id The id to uniquely identify the required record with
-     * @return The record associated with the id in the database, if it exists.
-     */
-    Optional<T_Entity> fetch(final int id);
 }

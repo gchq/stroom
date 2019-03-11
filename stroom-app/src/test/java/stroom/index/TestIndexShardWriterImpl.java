@@ -62,7 +62,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testSingle() throws IOException {
-        assertThat(commonTestControl.countEntity("index_shard")).isEqualTo(0);
+        assertThat(indexShardService.find(new FindIndexShardCriteria()).size()).isZero();
 
         // Do some work.
         final FieldType fieldType = FieldTypeFactory.createBasic();
@@ -79,7 +79,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final IndexShardWriter writer1 = indexShardWriterCache.getWriterByShardKey(indexShardKey1);
 
         // Assert that there is 1 writer in the pool.
-        assertThat(commonTestControl.countEntity("index_shard")).isEqualTo(1);
+        assertThat(indexShardService.find(new FindIndexShardCriteria()).size()).isEqualTo(1);
 
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         criteria.getIndexUuidSet().setMatchAll(true);
@@ -113,7 +113,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testSimple() throws IOException {
-        assertThat(commonTestControl.countEntity("index_shard")).isEqualTo(0);
+        assertThat(indexShardService.find(new FindIndexShardCriteria()).size()).isZero();
 
         // Do some work.
         final FieldType fieldType = FieldTypeFactory.createBasic();
@@ -134,7 +134,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final IndexShardWriter writer2 = indexShardWriterCache.getWriterByShardKey(indexShardKey2);
 
         // Assert that there are 2 writers in the pool.
-        assertThat(commonTestControl.countEntity("index_shard")).isEqualTo(2);
+        assertThat(indexShardService.find(new FindIndexShardCriteria()).size()).isEqualTo(2);
 
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         criteria.getIndexUuidSet().setMatchAll(true);

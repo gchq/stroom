@@ -25,10 +25,11 @@ BEGIN
     -- Copy data into the meta_processor table, use ID predicate to make it re-runnable
     INSERT
     INTO meta_processor (id, processor_uuid, pipeline_uuid)
-    SELECT ID, ID, PIPE_UUID
-    FROM STRM_PROC
-    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM meta_processor)
-    ORDER BY ID;
+    SELECT SP.ID, P.UUID, P.UUID
+    FROM STRM_PROC SP
+    JOIN PIPE P ON (P.ID = SP.FK_PIPE_ID)
+    WHERE SP.ID > (SELECT COALESCE(MAX(id), 0) FROM meta_processor)
+    ORDER BY SP.ID;
 
     -- Work out what to set our auto_increment start value to
     SELECT CONCAT('ALTER TABLE meta_processor AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
