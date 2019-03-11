@@ -352,7 +352,7 @@ public final class SetupSampleDataBean {
             LOGGER.info("Directory {} doesn't exist so skipping", exampleDataDir);
         }
 
-        // processorFilterTaskCreator.doCreateTasks();
+        // processorFilterTaskManager.doCreateTasks();
 
         // // Add an index.
         // final Index index = addIndex();

@@ -35,7 +35,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.processor.shared.ProcessorFilterTask;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
@@ -54,8 +53,8 @@ import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestProcessorFilterTaskCreator2 extends AbstractCoreIntegrationTest {
-    public static final Logger LOGGER = LoggerFactory.getLogger(TestProcessorFilterTaskCreator2.class);
+class TestProcessorFilterTaskManager2 extends AbstractCoreIntegrationTest {
+    public static final Logger LOGGER = LoggerFactory.getLogger(TestProcessorFilterTaskManager2.class);
 
     @Inject
     private ConnectionProvider connectionProvider;
@@ -64,7 +63,7 @@ class TestProcessorFilterTaskCreator2 extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
-    private ProcessorFilterTaskCreatorImpl processorFilterTaskCreator;
+    private ProcessorFilterTaskManagerImpl processorFilterTaskManager;
     @Inject
     private ProcessorFilterTaskService processorFilterTaskService;
     @Inject
@@ -84,16 +83,16 @@ class TestProcessorFilterTaskCreator2 extends AbstractCoreIntegrationTest {
         assertThat(streams.size()).isEqualTo(1);
 
         ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND).build();
-        assertThat(processorFilterTaskCreator.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
+        assertThat(processorFilterTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName).build();
-        assertThat(processorFilterTaskCreator.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
+        assertThat(processorFilterTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, "otherFed").build();
-        assertThat(processorFilterTaskCreator.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
+        assertThat(processorFilterTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFieldNames.PIPELINE_UUID, Condition.EQUALS, "1234").build();
-        assertThat(processorFilterTaskCreator.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
+        assertThat(processorFilterTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
     }
 
     @Test

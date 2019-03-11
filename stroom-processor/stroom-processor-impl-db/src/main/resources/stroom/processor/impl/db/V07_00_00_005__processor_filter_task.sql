@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS processor_filter_task (
-  id bigint(20)             NOT NULL AUTO_INCREMENT,
-  version tinyint(4)        NOT NULL,
+  id                        bigint(20) NOT NULL AUTO_INCREMENT,
+  version                   int(11) NOT NULL,
   fk_processor_filter_id    int(11) NOT NULL,
   fk_processor_node_id      int(11) NOT NULL,
   create_time_ms            bigint(20) DEFAULT NULL,

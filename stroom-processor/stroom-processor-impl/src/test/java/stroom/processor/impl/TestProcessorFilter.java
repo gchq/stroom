@@ -34,17 +34,17 @@ class TestProcessorFilter {
     void testCompare() {
         final ProcessorFilter t1 = new ProcessorFilter();
         t1.setProcessorFilterTracker(new ProcessorFilterTracker());
-        t1.getProcessorFilterTracker().setMinStreamId(1L);
+        t1.getProcessorFilterTracker().setMinMetaId(1L);
         t1.setPriority(1);
 
         final ProcessorFilter t2 = new ProcessorFilter();
         t2.setProcessorFilterTracker(new ProcessorFilterTracker());
-        t2.getProcessorFilterTracker().setMinStreamId(2L);
+        t2.getProcessorFilterTracker().setMinMetaId(2L);
         t2.setPriority(1);
 
         final ProcessorFilter t3 = new ProcessorFilter();
         t3.setProcessorFilterTracker(new ProcessorFilterTracker());
-        t3.getProcessorFilterTracker().setMinStreamId(3L);
+        t3.getProcessorFilterTracker().setMinMetaId(3L);
         t3.setPriority(3);
 
         assertThat(t1.isHigherPriority(t2)).isTrue();
@@ -78,7 +78,7 @@ class TestProcessorFilter {
         final ProcessorFilter filter = new ProcessorFilter();
         filter.setPriority(RandomUtils.nextInt() % 10);
         filter.setProcessorFilterTracker(new ProcessorFilterTracker());
-        filter.getProcessorFilterTracker().setMinStreamId(RandomUtils.nextInt() % 10);
+        filter.getProcessorFilterTracker().setMinMetaId(RandomUtils.nextInt() % 10);
         return filter;
     }
 
@@ -87,9 +87,9 @@ class TestProcessorFilter {
         final long now = System.currentTimeMillis();
 
         final ProcessorFilterTracker filter = new ProcessorFilterTracker();
-        filter.setStreamCreateMs(1414075939113L);
-        filter.setMinStreamCreateMs(1414074711896L);
-        filter.setMaxStreamCreateMs(1414075927731L);
+        filter.setMetaCreateMs(1414075939113L);
+        filter.setMinMetaCreateMs(1414074711896L);
+        filter.setMaxMetaCreateMs(1414075927731L);
 
         assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(100);
     }
@@ -101,9 +101,9 @@ class TestProcessorFilter {
         final long now = System.currentTimeMillis();
 
         final ProcessorFilterTracker filter = new ProcessorFilterTracker();
-        filter.setMinStreamCreateMs(0L);
-        filter.setMaxStreamCreateMs(1000L);
-        filter.setStreamCreateMs(500L);
+        filter.setMinMetaCreateMs(0L);
+        filter.setMaxMetaCreateMs(1000L);
+        filter.setMetaCreateMs(500L);
 
         assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(50);
     }
@@ -118,13 +118,13 @@ class TestProcessorFilter {
 
         assertThat(filter.getTrackerStreamCreatePercentage(now)).isNull();
 
-        filter.setMinStreamCreateMs(0L);
+        filter.setMinMetaCreateMs(0L);
         assertThat(filter.getTrackerStreamCreatePercentage(now)).isNull();
 
-        filter.setStreamCreateMs(100L);
+        filter.setMetaCreateMs(100L);
         assertThat(filter.getTrackerStreamCreatePercentage(now)).isNotNull();
 
-        filter.setMaxStreamCreateMs(100L);
+        filter.setMaxMetaCreateMs(100L);
         assertThat(filter.getTrackerStreamCreatePercentage(now)).isNotNull();
     }
 
@@ -139,13 +139,13 @@ class TestProcessorFilter {
 
         assertThat(filter.getTrackerStreamCreatePercentage(now)).isNull();
 
-        filter.setMinStreamCreateMs(now - (10 * oneDayMs));
-        filter.setStreamCreateMs(now - (5 * oneDayMs));
+        filter.setMinMetaCreateMs(now - (10 * oneDayMs));
+        filter.setMetaCreateMs(now - (5 * oneDayMs));
 
         // Stream Max derived to be today
         assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(50);
 
-        filter.setMaxStreamCreateMs(now);
+        filter.setMaxMetaCreateMs(now);
         assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(50);
     }
 }

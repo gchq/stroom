@@ -26,8 +26,8 @@ public class ProcessorFilterTaskJobsModule extends ScheduledJobsModule {
 
     private static class ProcessorFilterTaskQueueStatistics extends TaskConsumer {
         @Inject
-        ProcessorFilterTaskQueueStatistics(final ProcessorFilterTaskCreator processorFilterTaskCreator) {
-            super(task -> processorFilterTaskCreator.writeQueueStatistics());
+        ProcessorFilterTaskQueueStatistics(final ProcessorFilterTaskManager processorFilterTaskManager) {
+            super(task -> processorFilterTaskManager.writeQueueStatistics());
         }
     }
 

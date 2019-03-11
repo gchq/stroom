@@ -20,38 +20,38 @@ import org.junit.jupiter.api.Disabled;
 
 
 @Disabled
-class TestProcessorFilterTaskCreatorRecentStreamDetails {
+class TestProcessorFilterTaskManagerRecentStreamDetails {
 //    @Test
 //    public void testSimple() {
 //        final ProcessorFilter filter = new ProcessorFilter();
 //        filter.setProcessorFilterTracker(new ProcessorFilterTracker());
-//        filter.getProcessorFilterTracker().setMinStreamId(0L);
+//        filter.getProcessorFilterTracker().setMinMetaId(0L);
 //        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
 //        findStreamCriteria.obtainFeeds().obtainInclude().add(1L);
 //
 //        // No history
-//        ProcessorFilterTaskCreatorRecentStreamDetails details = new ProcessorFilterTaskCreatorRecentStreamDetails(null, 0L);
+//        ProcessorFilterTaskManagerRecentStreamDetails details = new ProcessorFilterTaskManagerRecentStreamDetails(null, 0L);
 //
 //        assertThat(details.hasRecentDetail()).isFalse();
 //        assertThat(details.isApplicable(filter, findStreamCriteria)).isTrue();
-//        filter.getProcessorFilterTracker().setMinStreamId(1L);
+//        filter.getProcessorFilterTracker().setMinMetaId(1L);
 //
 //        // Fake that 10 streams came in for feed 2
-//        details = new ProcessorFilterTaskCreatorRecentStreamDetails(details, 10L);
+//        details = new ProcessorFilterTaskManagerRecentStreamDetails(details, 10L);
 //        details.addRecentFeedId(2L);
 //
 //        assertThat(details.hasRecentDetail()).isTrue();
 //        assertThat(details.isApplicable(filter, findStreamCriteria)).isFalse();
 //
 //        // Now add some more for feed 1
-//        details = new ProcessorFilterTaskCreatorRecentStreamDetails(details, 21L);
+//        details = new ProcessorFilterTaskManagerRecentStreamDetails(details, 21L);
 //        details.addRecentFeedId(1L);
 //
 //        assertThat(details.hasRecentDetail()).isTrue();
 //        assertThat(details.isApplicable(filter, findStreamCriteria)).isTrue();
 //
 //        // Now add some more for feed 2
-//        details = new ProcessorFilterTaskCreatorRecentStreamDetails(details, 23L);
+//        details = new ProcessorFilterTaskManagerRecentStreamDetails(details, 23L);
 //        details.addRecentFeedId(2L);
 //        assertThat(details.isApplicable(filter, findStreamCriteria)).isFalse();
 //    }

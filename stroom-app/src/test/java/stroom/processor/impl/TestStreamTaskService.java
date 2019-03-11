@@ -47,7 +47,7 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
     @Inject
     private MetaService metaService;
     @Inject
-    private ProcessorFilterTaskCreator processorFilterTaskCreator;
+    private ProcessorFilterTaskManager processorFilterTaskManager;
 
     @Test
     void testSaveAndGetAll() {
@@ -137,6 +137,6 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
 
     private void createTasks() {
         // Make sure there are no tasks yet.
-        processorFilterTaskCreator.createTasks(new SimpleTaskContext());
+        processorFilterTaskManager.createTasks(new SimpleTaskContext());
     }
 }

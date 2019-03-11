@@ -33,7 +33,7 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.impl.DataProcessorTask;
-import stroom.processor.impl.ProcessorFilterTaskCreator;
+import stroom.processor.impl.ProcessorFilterTaskManager;
 import stroom.processor.shared.ProcessorFilterTask;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.SimpleTaskContext;
@@ -94,7 +94,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     @Inject
     private XsltStore xsltStore;
     @Inject
-    private ProcessorFilterTaskCreator processorFilterTaskCreator;
+    private ProcessorFilterTaskManager processorFilterTaskManager;
     @Inject
     private NodeInfo nodeInfo;
 
@@ -136,14 +136,14 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      */
     private List<DataProcessorTaskExecutor> processAll() {
         final List<DataProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorFilterTask> streamTasks = processorFilterTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+        List<ProcessorFilterTask> streamTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
             for (final ProcessorFilterTask streamTask : streamTasks) {
                 final DataProcessorTask task = new DataProcessorTask(streamTask);
                 taskManager.exec(task);
                 results.add(task.getDataProcessorTaskExecutor());
             }
-            streamTasks = processorFilterTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+            streamTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
         return results;
     }
@@ -347,7 +347,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
             }
 
             // Force creation of stream tasks.
-            processorFilterTaskCreator.createTasks(new SimpleTaskContext());
+            processorFilterTaskManager.createTasks(new SimpleTaskContext());
 
         } catch (final IOException e) {
             e.printStackTrace();

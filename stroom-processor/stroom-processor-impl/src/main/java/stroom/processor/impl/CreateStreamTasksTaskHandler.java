@@ -25,15 +25,15 @@ import javax.inject.Inject;
 
 
 public class CreateStreamTasksTaskHandler extends AbstractTaskHandler<CreateStreamTasksTask, VoidResult> {
-    private final ProcessorFilterTaskCreator processorFilterTaskCreator;
+    private final ProcessorFilterTaskManager processorFilterTaskManager;
     private final TaskContext taskContext;
     private final Security security;
 
     @Inject
-    CreateStreamTasksTaskHandler(final ProcessorFilterTaskCreator processorFilterTaskCreator,
+    CreateStreamTasksTaskHandler(final ProcessorFilterTaskManager processorFilterTaskManager,
                                  final TaskContext taskContext,
                                  final Security security) {
-        this.processorFilterTaskCreator = processorFilterTaskCreator;
+        this.processorFilterTaskManager = processorFilterTaskManager;
         this.taskContext = taskContext;
         this.security = security;
     }
@@ -41,7 +41,7 @@ public class CreateStreamTasksTaskHandler extends AbstractTaskHandler<CreateStre
     @Override
     public VoidResult exec(final CreateStreamTasksTask task) {
         return security.secureResult(() -> {
-            processorFilterTaskCreator.createTasks(taskContext);
+            processorFilterTaskManager.createTasks(taskContext);
             return new VoidResult();
         });
     }

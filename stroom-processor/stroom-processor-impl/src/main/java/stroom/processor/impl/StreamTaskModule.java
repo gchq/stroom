@@ -31,7 +31,7 @@ import stroom.util.shared.Clearable;
 public class StreamTaskModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(ProcessorFilterTaskCreator.class).to(ProcessorFilterTaskCreatorImpl.class);
+        bind(ProcessorFilterTaskManager.class).to(ProcessorFilterTaskManagerImpl.class);
         bind(ProcessorFilterService.class).to(ProcessorFilterServiceImpl.class);
         bind(ProcessorService.class).to(ProcessorServiceImpl.class);
 //        bind(ProcessorFilterTaskService.class).to(StreamTaskServiceImpl.class);

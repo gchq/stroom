@@ -29,23 +29,23 @@ import java.util.List;
 
 @DistributedTaskFactoryDescription(jobName = JobNames.DATA_PROCESSOR, description = "Job to process data matching processor filters with their associated pipelines")
 public class DataProcessorTaskFactory implements DistributedTaskFactory<DataProcessorTask, VoidResult> {
-    private final ProcessorFilterTaskCreator processorFilterTaskCreator;
+    private final ProcessorFilterTaskManager processorFilterTaskManager;
 
     @Inject
-    DataProcessorTaskFactory(final ProcessorFilterTaskCreator processorFilterTaskCreator) {
-        this.processorFilterTaskCreator = processorFilterTaskCreator;
+    DataProcessorTaskFactory(final ProcessorFilterTaskManager processorFilterTaskManager) {
+        this.processorFilterTaskManager = processorFilterTaskManager;
     }
 
     @Override
     public List<DataProcessorTask> fetch(final String nodeName, final int count) {
-        final List<ProcessorFilterTask> streamTasks = processorFilterTaskCreator.assignStreamTasks(nodeName, count);
+        final List<ProcessorFilterTask> streamTasks = processorFilterTaskManager.assignStreamTasks(nodeName, count);
         return wrap(streamTasks);
     }
 
     @Override
     public void abandon(final String nodeName, final List<DataProcessorTask> tasks) {
         final List<ProcessorFilterTask> streamTasks = unwrap(tasks);
-        processorFilterTaskCreator.abandonStreamTasks(nodeName, streamTasks);
+        processorFilterTaskManager.abandonStreamTasks(nodeName, streamTasks);
     }
 
     /**

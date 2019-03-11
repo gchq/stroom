@@ -25,7 +25,7 @@ import stroom.index.IndexShardWriterCache;
 import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
 import stroom.node.impl.NodeCreator;
-import stroom.processor.impl.ProcessorFilterTaskCreator;
+import stroom.processor.impl.ProcessorFilterTaskManager;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Clearable;
 
@@ -51,7 +51,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final IndexShardWriterCache indexShardWriterCache;
     private final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
     private final NodeCreator nodeConfig;
-    private final ProcessorFilterTaskCreator processorFilterTaskCreator;
+    private final ProcessorFilterTaskManager processorFilterTaskManager;
     private final CacheManagerService stroomCacheManager;
     private final Set<Clearable> clearables;
 
@@ -63,7 +63,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final IndexShardWriterCache indexShardWriterCache,
                               final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
                               final NodeCreator nodeConfig,
-                              final ProcessorFilterTaskCreator processorFilterTaskCreator,
+                              final ProcessorFilterTaskManager processorFilterTaskManager,
                               final CacheManagerService stroomCacheManager,
                               final Set<Clearable> clearables) {
         this.entityManager = entityManager;
@@ -73,7 +73,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.indexShardWriterCache = indexShardWriterCache;
         this.databaseCommonTestControlTransactionHelper = databaseCommonTestControlTransactionHelper;
         this.nodeConfig = nodeConfig;
-        this.processorFilterTaskCreator = processorFilterTaskCreator;
+        this.processorFilterTaskManager = processorFilterTaskManager;
         this.stroomCacheManager = stroomCacheManager;
         this.clearables = clearables;
     }
@@ -84,7 +84,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         nodeConfig.setup();
 
         // Ensure we can create tasks.
-        processorFilterTaskCreator.startup();
+        processorFilterTaskManager.startup();
         LOGGER.info("test environment setup completed in {}", Duration.between(startTime, Instant.now()));
     }
 
@@ -95,7 +95,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     public void teardown() {
         Instant startTime = Instant.now();
         // Make sure we are no longer creating tasks.
-        processorFilterTaskCreator.shutdown();
+        processorFilterTaskManager.shutdown();
 
         // Make sure we don't delete database entries without clearing the pool.
         indexShardWriterCache.shutdown();

@@ -31,7 +31,7 @@ public class ProcessorFilterTask implements SharedObject {
     private long id;
     private Integer version;
 
-    private Long streamId;
+    private Long metaId;
     private String data;
     private String nodeName;
     private Long createMs;
@@ -59,12 +59,12 @@ public class ProcessorFilterTask implements SharedObject {
         this.version = version;
     }
 
-    public Long getStreamId() {
-        return streamId;
+    public Long getMetaId() {
+        return metaId;
     }
 
-    public void setStreamId(final Long streamId) {
-        this.streamId = streamId;
+    public void setMetaId(final Long metaId) {
+        this.metaId = metaId;
     }
 
     public String getData() {
@@ -136,7 +136,7 @@ public class ProcessorFilterTask implements SharedObject {
         return "ProcessorFilterTask{" +
                 "id=" + id +
                 ", version=" + version +
-                ", streamId=" + streamId +
+                ", metaId=" + metaId +
                 ", data='" + data + '\'' +
                 ", nodeName='" + nodeName + '\'' +
                 ", createMs=" + createMs +
@@ -156,7 +156,7 @@ public class ProcessorFilterTask implements SharedObject {
         return Objects.equals(status, that.status) &&
                 Objects.equals(id, that.id) &&
                 Objects.equals(version, that.version) &&
-                Objects.equals(streamId, that.streamId) &&
+                Objects.equals(metaId, that.metaId) &&
                 Objects.equals(data, that.data) &&
                 Objects.equals(nodeName, that.nodeName) &&
                 Objects.equals(createMs, that.createMs) &&
@@ -168,6 +168,6 @@ public class ProcessorFilterTask implements SharedObject {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, streamId, data, nodeName, createMs, statusMs, startTimeMs, endTimeMs, status, processorFilter);
+        return Objects.hash(id, version, metaId, data, nodeName, createMs, statusMs, startTimeMs, endTimeMs, status, processorFilter);
     }
 }

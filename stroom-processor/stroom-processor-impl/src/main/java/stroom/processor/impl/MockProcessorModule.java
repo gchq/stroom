@@ -20,13 +20,11 @@ import com.google.inject.AbstractModule;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.GuiceUtil;
-import stroom.util.shared.Clearable;
 
 public class MockProcessorModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(ProcessorFilterTaskCreator.class).to(MockProcessorFilterTaskCreator.class);
+        bind(ProcessorFilterTaskManager.class).to(MockProcessorFilterTaskManager.class);
         bind(ProcessorService.class).to(MockProcessorService.class);
         bind(ProcessorFilterService.class).to(MockProcessorFilterService.class);
 

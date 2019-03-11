@@ -30,7 +30,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
     public static final Comparator<ProcessorFilter> HIGHEST_PRIORITY_FIRST_COMPARATOR = Comparator
             .comparingInt(ProcessorFilter::getPriority)
             .thenComparingLong(processorFilter ->
-                    processorFilter.processorFilterTracker.getMinStreamId())
+                    processorFilter.processorFilterTracker.getMinMetaId())
             .thenComparingLong(processorFilter ->
                     processorFilter.processorFilterTracker.getMinEventId());
 

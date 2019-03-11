@@ -25,9 +25,9 @@ class TestProcessorFilterTracker {
     @Test
     void testPercent() {
         final ProcessorFilterTracker track = new ProcessorFilterTracker();
-        track.setMinStreamCreateMs(0L);
-        track.setMaxStreamCreateMs(100L);
-        track.setStreamCreateMs(50L);
+        track.setMinMetaCreateMs(0L);
+        track.setMaxMetaCreateMs(100L);
+        track.setMetaCreateMs(50L);
 
         assertThat(track.getTrackerStreamCreatePercentage().intValue()).isEqualTo(50);
     }
@@ -35,9 +35,9 @@ class TestProcessorFilterTracker {
     @Test
     void testPercentReal() {
         final ProcessorFilterTracker track = new ProcessorFilterTracker();
-        track.setMinStreamCreateMs(1413456996578L);
-        track.setMaxStreamCreateMs(1413553741788L);
-        track.setStreamCreateMs(1413553752020L);
+        track.setMinMetaCreateMs(1413456996578L);
+        track.setMaxMetaCreateMs(1413553741788L);
+        track.setMetaCreateMs(1413553752020L);
 
         assertThat(track.getTrackerStreamCreatePercentage().intValue()).isEqualTo(100);
     }

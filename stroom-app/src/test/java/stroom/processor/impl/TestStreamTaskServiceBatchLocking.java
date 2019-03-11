@@ -21,7 +21,6 @@ package stroom.processor.impl;
 import org.junit.jupiter.api.Test;
 import stroom.entity.StroomEntityManager;
 import stroom.node.api.NodeInfo;
-import stroom.processor.impl.ProcessorFilterTaskCreator;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 
@@ -31,7 +30,7 @@ class TestStreamTaskServiceBatchLocking extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
-    private ProcessorFilterTaskCreator processorFilterTaskCreator;
+    private ProcessorFilterTaskManager processorFilterTaskManager;
     @Inject
     private StroomEntityManager entityManager;
     @Inject

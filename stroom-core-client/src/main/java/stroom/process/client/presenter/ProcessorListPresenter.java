@@ -178,16 +178,16 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                     MetaTooltipPresenterUtil.addRowDateString(html, "Created On", filter.getCreateTimeMs());
                     TooltipUtil.addRowData(html, "Updated By", filter.getUpdateUser());
                     MetaTooltipPresenterUtil.addRowDateString(html, "Updated On", filter.getUpdateTimeMs());
-                    MetaTooltipPresenterUtil.addRowDateString(html, "Min Stream Create Ms", tracker.getMinStreamCreateMs());
-                    MetaTooltipPresenterUtil.addRowDateString(html, "Max Stream Create Ms", tracker.getMaxStreamCreateMs());
-                    MetaTooltipPresenterUtil.addRowDateString(html, "Stream Create Ms", tracker.getStreamCreateMs());
+                    MetaTooltipPresenterUtil.addRowDateString(html, "Min Stream Create Ms", tracker.getMinMetaCreateMs());
+                    MetaTooltipPresenterUtil.addRowDateString(html, "Max Stream Create Ms", tracker.getMaxMetaCreateMs());
+                    MetaTooltipPresenterUtil.addRowDateString(html, "Stream Create Ms", tracker.getMetaCreateMs());
                     TooltipUtil.addRowData(html, "Stream Create %", tracker.getTrackerStreamCreatePercentage());
                     MetaTooltipPresenterUtil.addRowDateString(html, "Last Poll", tracker.getLastPollMs());
                     TooltipUtil.addRowData(html, "Last Poll Age", tracker.getLastPollAge());
                     TooltipUtil.addRowData(html, "Last Poll Task Count", tracker.getLastPollTaskCount());
-                    TooltipUtil.addRowData(html, "Min Stream Id", tracker.getMinStreamId());
+                    TooltipUtil.addRowData(html, "Min Stream Id", tracker.getMinMetaId());
                     TooltipUtil.addRowData(html, "Min Event Id", tracker.getMinEventId());
-                    TooltipUtil.addRowData(html, "Streams", tracker.getStreamCount());
+                    TooltipUtil.addRowData(html, "Streams", tracker.getMetaCount());
                     TooltipUtil.addRowData(html, "Events", tracker.getEventCount());
                     TooltipUtil.addRowData(html, "Status", tracker.getStatus());
                 }
@@ -271,7 +271,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
                     lastStream = ClientDateUtil.toISOString(
-                            processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getStreamCreateMs());
+                            processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getMetaCreateMs());
                 }
                 return lastStream;
             }
@@ -357,7 +357,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                 Number value = null;
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                    value = processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getStreamCount();
+                    value = processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getMetaCount();
                 }
                 return value;
             }

@@ -32,7 +32,7 @@ public class ProcessorFilterTracker implements SharedObject {
     private Integer version;
 
     // These numbers are inclusive use getStreamRange to get a nice Stroom style
-    private long minStreamId;
+    private long minMetaId;
     private long minEventId;
 
     // For info only to display in the GUI
@@ -46,16 +46,16 @@ public class ProcessorFilterTracker implements SharedObject {
      * once it completes it would read 100%. If then some more data came in it
      * would show the % complete since the last complete time.
      */
-    private Long minStreamCreateMs;
-    private Long maxStreamCreateMs;
-    private Long streamCreateMs;
+    private Long minMetaCreateMs;
+    private Long maxMetaCreateMs;
+    private Long metaCreateMs;
 
     private Long lastPollMs;
     private Integer lastPollTaskCount;
     private boolean complete;
     private String status;
 
-    private Long streamCount;
+    private Long metaCount;
     private Long eventCount;
 
     public ProcessorFilterTracker() {
@@ -78,12 +78,12 @@ public class ProcessorFilterTracker implements SharedObject {
         this.version = version;
     }
 
-    public long getMinStreamId() {
-        return minStreamId;
+    public long getMinMetaId() {
+        return minMetaId;
     }
 
-    public void setMinStreamId(final long minStreamId) {
-        this.minStreamId = minStreamId;
+    public void setMinMetaId(final long minMetaId) {
+        this.minMetaId = minMetaId;
     }
 
     public long getMinEventId() {
@@ -94,36 +94,36 @@ public class ProcessorFilterTracker implements SharedObject {
         this.minEventId = minEventId;
     }
 
-    public Long getMaxStreamCreateMs() {
-        return maxStreamCreateMs;
+    public Long getMaxMetaCreateMs() {
+        return maxMetaCreateMs;
     }
 
-    public void setMaxStreamCreateMs(final Long maxStreamCreateMs) {
-        this.maxStreamCreateMs = maxStreamCreateMs;
+    public void setMaxMetaCreateMs(final Long maxMetaCreateMs) {
+        this.maxMetaCreateMs = maxMetaCreateMs;
     }
 
-    public Long getMinStreamCreateMs() {
-        return minStreamCreateMs;
+    public Long getMinMetaCreateMs() {
+        return minMetaCreateMs;
     }
 
-    public void setMinStreamCreateMs(final Long minStreamCreateMs) {
-        this.minStreamCreateMs = minStreamCreateMs;
-    }
-
-    /**
-     * For UI use only to see current progress. Not used to influence task
-     * creation.
-     */
-    public Long getStreamCreateMs() {
-        return streamCreateMs;
+    public void setMinMetaCreateMs(final Long minMetaCreateMs) {
+        this.minMetaCreateMs = minMetaCreateMs;
     }
 
     /**
      * For UI use only to see current progress. Not used to influence task
      * creation.
      */
-    public void setStreamCreateMs(final Long streamCreateMs) {
-        this.streamCreateMs = streamCreateMs;
+    public Long getMetaCreateMs() {
+        return metaCreateMs;
+    }
+
+    /**
+     * For UI use only to see current progress. Not used to influence task
+     * creation.
+     */
+    public void setMetaCreateMs(final Long metaCreateMs) {
+        this.metaCreateMs = metaCreateMs;
     }
 
     public Long getLastPollMs() {
@@ -150,12 +150,12 @@ public class ProcessorFilterTracker implements SharedObject {
         this.status = status;
     }
 
-    public Long getStreamCount() {
-        return streamCount;
+    public Long getMetaCount() {
+        return metaCount;
     }
 
-    public void setStreamCount(final Long streamCount) {
-        this.streamCount = streamCount;
+    public void setMetaCount(final Long metaCount) {
+        this.metaCount = metaCount;
     }
 
     public Long getEventCount() {
@@ -179,16 +179,16 @@ public class ProcessorFilterTracker implements SharedObject {
             return 100;
         }
 
-        if (minStreamCreateMs != null && streamCreateMs != null) {
+        if (minMetaCreateMs != null && metaCreateMs != null) {
             long max = now;
             if (lastPollMs != null) {
                 max = lastPollMs;
             }
-            if (maxStreamCreateMs != null) {
-                max = maxStreamCreateMs;
+            if (maxMetaCreateMs != null) {
+                max = maxMetaCreateMs;
             }
 
-            final long windowSize = max - minStreamCreateMs;
+            final long windowSize = max - minMetaCreateMs;
 
             // If the window size is less than or equal to 0 then we are at 100%
             // for now.
@@ -196,7 +196,7 @@ public class ProcessorFilterTracker implements SharedObject {
                 return 100;
             }
 
-            final long trackerPos = Math.min(max, streamCreateMs);
+            final long trackerPos = Math.min(max, metaCreateMs);
             final long windowPos = Math.max(0, max - trackerPos);
             return ((int) ((100.0 * (windowSize - windowPos)) / windowSize));
         }
@@ -225,16 +225,16 @@ public class ProcessorFilterTracker implements SharedObject {
         return "ProcessorFilterTracker{" +
                 "id=" + id +
                 ", version=" + version +
-                ", minStreamId=" + minStreamId +
+                ", minMetaId=" + minMetaId +
                 ", minEventId=" + minEventId +
-                ", minStreamCreateMs=" + minStreamCreateMs +
-                ", maxStreamCreateMs=" + maxStreamCreateMs +
-                ", streamCreateMs=" + streamCreateMs +
+                ", minMetaCreateMs=" + minMetaCreateMs +
+                ", maxMetaCreateMs=" + maxMetaCreateMs +
+                ", metaCreateMs=" + metaCreateMs +
                 ", lastPollMs=" + lastPollMs +
                 ", lastPollTaskCount=" + lastPollTaskCount +
                 ", complete=" + complete +
                 ", status='" + status + '\'' +
-                ", streamCount=" + streamCount +
+                ", metaCount=" + metaCount +
                 ", eventCount=" + eventCount +
                 '}';
     }
@@ -244,23 +244,23 @@ public class ProcessorFilterTracker implements SharedObject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final ProcessorFilterTracker that = (ProcessorFilterTracker) o;
-        return minStreamId == that.minStreamId &&
+        return minMetaId == that.minMetaId &&
                 minEventId == that.minEventId &&
                 complete == that.complete &&
                 Objects.equals(id, that.id) &&
                 Objects.equals(version, that.version) &&
-                Objects.equals(minStreamCreateMs, that.minStreamCreateMs) &&
-                Objects.equals(maxStreamCreateMs, that.maxStreamCreateMs) &&
-                Objects.equals(streamCreateMs, that.streamCreateMs) &&
+                Objects.equals(minMetaCreateMs, that.minMetaCreateMs) &&
+                Objects.equals(maxMetaCreateMs, that.maxMetaCreateMs) &&
+                Objects.equals(metaCreateMs, that.metaCreateMs) &&
                 Objects.equals(lastPollMs, that.lastPollMs) &&
                 Objects.equals(lastPollTaskCount, that.lastPollTaskCount) &&
                 Objects.equals(status, that.status) &&
-                Objects.equals(streamCount, that.streamCount) &&
+                Objects.equals(metaCount, that.metaCount) &&
                 Objects.equals(eventCount, that.eventCount);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, minStreamId, minEventId, minStreamCreateMs, maxStreamCreateMs, streamCreateMs, lastPollMs, lastPollTaskCount, complete, status, streamCount, eventCount);
+        return Objects.hash(id, version, minMetaId, minEventId, minMetaCreateMs, maxMetaCreateMs, metaCreateMs, lastPollMs, lastPollTaskCount, complete, status, metaCount, eventCount);
     }
 }

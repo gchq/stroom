@@ -208,11 +208,11 @@ public class StreamTaskResource implements RestResource {
                 if (trackerPercent == null) {
                     trackerPercent = 0;
                 }
-                builder.withTrackerMs(filter.getProcessorFilterTracker().getStreamCreateMs())
+                builder.withTrackerMs(filter.getProcessorFilterTracker().getMetaCreateMs())
                         .withTrackerPercent(trackerPercent)
                         .withLastPollAge(filter.getProcessorFilterTracker().getLastPollAge())
                         .withTaskCount(filter.getProcessorFilterTracker().getLastPollTaskCount())
-                        .withMinStreamId(filter.getProcessorFilterTracker().getMinStreamId())
+                        .withMinStreamId(filter.getProcessorFilterTracker().getMinMetaId())
                         .withMinEventId(filter.getProcessorFilterTracker().getMinEventId())
                         .withStatus((filter.getProcessorFilterTracker().getStatus()));
             }

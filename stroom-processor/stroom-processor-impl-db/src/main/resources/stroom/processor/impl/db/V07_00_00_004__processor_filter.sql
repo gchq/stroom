@@ -52,8 +52,8 @@ BEGIN
         -- Copy data into the table, use ID predicate to make it re-runnable
         --
         INSERT
-        INTO processor_filter (id, version, create_time_ms, create_user, update_time_ms, update_user, fk_processor_id, fk_processor_filter_tracker_id, data, priority, enabled)
-        SELECT ID, VER, CRT_MS, CRT_USER, UPD_MS, UPD_USER, FK_STRM_PROC_ID, FK_STRM_PROC_FILT_TRAC_ID, DAT, PRIOR, ENBL
+        INTO processor_filter (id, version, create_time_ms, create_user, update_time_ms, update_user, uuid, fk_processor_id, fk_processor_filter_tracker_id, data, priority, enabled)
+        SELECT ID, VER, CRT_MS, CRT_USER, UPD_MS, UPD_USER, md5(UUID()), FK_STRM_PROC_ID, FK_STRM_PROC_FILT_TRAC_ID, DAT, PRIOR, ENBL
         FROM STRM_PROC_FILT
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor)
         ORDER BY ID;

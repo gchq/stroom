@@ -39,12 +39,12 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
-public class MockProcessorFilterTaskCreator implements ProcessorFilterTaskCreator, Clearable {
+public class MockProcessorFilterTaskManager implements ProcessorFilterTaskManager, Clearable {
     private final MetaService metaService;
     private final ProcessorFilterService processorFilterService;
 
     @Inject
-    MockProcessorFilterTaskCreator(final MetaService metaService,
+    MockProcessorFilterTaskManager(final MetaService metaService,
                           final ProcessorFilterService processorFilterService) {
         this.metaService = metaService;
         this.processorFilterService = processorFilterService;
@@ -78,13 +78,13 @@ public class MockProcessorFilterTaskCreator implements ProcessorFilterTaskCreato
 
                 if (streams.size() > 0) {
                     for (final Meta meta : streams) {
-                        if (meta.getId() >= filter.getProcessorFilterTracker().getMinStreamId()) {
+                        if (meta.getId() >= filter.getProcessorFilterTracker().getMinMetaId()) {
                             // Only process streams with an id of 1 or more
                             // greater than this stream in future.
-                            filter.getProcessorFilterTracker().setMinStreamId(meta.getId() + 1);
+                            filter.getProcessorFilterTracker().setMinMetaId(meta.getId() + 1);
 
                             final ProcessorFilterTask streamTask = new ProcessorFilterTask();
-                            streamTask.setStreamId(meta.getId());
+                            streamTask.setMetaId(meta.getId());
                             streamTask.setProcessorFilter(filter);
                             streamTask.setNodeName(nodeName);
                             streamTask.setStatus(TaskStatus.ASSIGNED);

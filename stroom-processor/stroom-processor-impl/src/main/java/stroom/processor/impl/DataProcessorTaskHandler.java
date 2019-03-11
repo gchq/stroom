@@ -47,7 +47,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
     private final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders;
     private final ProcessorCache processorCache;
     private final ProcessorFilterCache processorFilterCache;
-    private final ProcessorFilterTaskDao processorFilterTaskDao;
+    private final ProcessorFilterTaskCreator processorFilterTaskDao;
     private final Store streamStore;
     private final NodeInfo nodeInfo;
     private final TaskContext taskContext;
@@ -57,7 +57,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
     DataProcessorTaskHandler(final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders,
                              final ProcessorCache processorCache,
                              final ProcessorFilterCache processorFilterCache,
-                             final ProcessorFilterTaskDao processorFilterTaskDao,
+                             final ProcessorFilterTaskCreator processorFilterTaskDao,
                              final Store streamStore,
                              final NodeInfo nodeInfo,
                              final TaskContext taskContext,
@@ -81,7 +81,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
             LOGGER.trace("Executing stream task: {}", streamTask.getId());
 
             // Open the stream source.
-            try (Source streamSource = streamStore.openStreamSource(streamTask.getStreamId())) {
+            try (Source streamSource = streamStore.openStreamSource(streamTask.getMetaId())) {
                 if (streamSource != null) {
                     final Meta meta = streamSource.getMeta();
 

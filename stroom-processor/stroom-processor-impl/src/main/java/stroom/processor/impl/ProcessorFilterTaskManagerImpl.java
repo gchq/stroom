@@ -80,15 +80,15 @@ import java.util.concurrent.locks.ReentrantLock;
  * Fill up our pool if we are below our low water mark (FILL_LOW_SIZE).
  */
 @Singleton
-class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
+class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
     private static final int POLL_INTERVAL_MS = 10000;
     private static final int DELETE_INTERVAL_MS = POLL_INTERVAL_MS * 10;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFilterTaskCreatorImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFilterTaskManagerImpl.class);
 
     private final ProcessorFilterService processorFilterService;
     private final ProcessorFilterTrackerDao processorFilterTrackerDao;
-    private final ProcessorFilterTaskDao processorFilterTaskDao;
+    private final ProcessorFilterTaskCreator processorFilterTaskDao;
     private final TaskManager taskManager;
     private final NodeInfo nodeInfo;
     private final ProcessorConfig processorConfig;
@@ -125,7 +125,7 @@ class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
      */
     private final AtomicBoolean filling = new AtomicBoolean();
     private final ConcurrentHashMap<Integer, Boolean> exhaustedFilterMap = new ConcurrentHashMap<>();
-    //    private volatile ProcessorFilterTaskCreatorRecentStreamDetails processorFilterTaskCreatorRecentStreamDetails;
+    //    private volatile ProcessorFilterTaskManagerRecentStreamDetails processorFilterTaskManagerRecentStreamDetails;
     private volatile int totalQueueSize = 1000;
     private volatile int lastQueueSizeForStats = -1;
 
@@ -136,15 +136,15 @@ class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
     private volatile boolean allowFillTaskStore = false;
 
     @Inject
-    ProcessorFilterTaskCreatorImpl(final ProcessorFilterService processorFilterService,
-                          final ProcessorFilterTrackerDao processorFilterTrackerDao,
-                          final ProcessorFilterTaskDao processorFilterTaskDao,
-                          final TaskManager taskManager,
-                          final NodeInfo nodeInfo,
-                          final ProcessorConfig processorConfig,
-                          final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
-                          final MetaService metaService,
-                          final Security security) {
+    ProcessorFilterTaskManagerImpl(final ProcessorFilterService processorFilterService,
+                                   final ProcessorFilterTrackerDao processorFilterTrackerDao,
+                                   final ProcessorFilterTaskCreator processorFilterTaskDao,
+                                   final TaskManager taskManager,
+                                   final NodeInfo nodeInfo,
+                                   final ProcessorConfig processorConfig,
+                                   final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
+                                   final MetaService metaService,
+                                   final Security security) {
 
         this.processorFilterService = processorFilterService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
@@ -179,7 +179,7 @@ class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
         try {
             allowFillTaskStore = false;
             clearTaskStore();
-//            processorFilterTaskCreatorRecentStreamDetails = null;
+//            processorFilterTaskManagerRecentStreamDetails = null;
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
@@ -238,7 +238,7 @@ class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
         }
 
         // Output some trace logging so we can see where tasks go.
-        taskStatusTraceLog.assignTasks(ProcessorFilterTaskCreatorImpl.class, assignedStreamTasks, nodeName);
+        taskStatusTraceLog.assignTasks(ProcessorFilterTaskManagerImpl.class, assignedStreamTasks, nodeName);
 
         return assignedStreamTasks;
     }
@@ -246,7 +246,7 @@ class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
     @Override
     public void abandonStreamTasks(final String nodeName, final List<ProcessorFilterTask> tasks) {
         // Output some trace logging so we can see where tasks go.
-        taskStatusTraceLog.abandonTasks(ProcessorFilterTaskCreatorImpl.class, tasks, nodeName);
+        taskStatusTraceLog.abandonTasks(ProcessorFilterTaskManagerImpl.class, tasks, nodeName);
 
         for (final ProcessorFilterTask streamTask : tasks) {
             abandon(streamTask);
@@ -272,8 +272,8 @@ class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
     }
 
 //    @Override
-//    public ProcessorFilterTaskCreatorRecentStreamDetails getProcessorFilterTaskCreatorRecentStreamDetails() {
-////        return processorFilterTaskCreatorRecentStreamDetails;
+//    public ProcessorFilterTaskManagerRecentStreamDetails getProcessorFilterTaskManagerRecentStreamDetails() {
+////        return processorFilterTaskManagerRecentStreamDetails;
 //        return null;
 //    }
 
@@ -462,7 +462,7 @@ class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
         scheduleDelete();
 
 //        // Set the last stream details for the next call to this method.
-//        processorFilterTaskCreatorRecentStreamDetails = recentStreamInfo;
+//        processorFilterTaskManagerRecentStreamDetails = recentStreamInfo;
 
         LOGGER.debug("doCreateTasks() - Finished in {}", logExecutionTime);
     }
@@ -521,7 +521,7 @@ class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
                                 // Set the latest stream ms time that this filter
                                 // will be applicable for. This might always be null
                                 // if the filter will be used indefinitely.
-                                if (tracker.getMaxStreamCreateMs() == null) {
+                                if (tracker.getMaxMetaCreateMs() == null) {
 //                                    final long maxStreamId = recentStreamInfo.getMaxStreamId();
                                     Long streamCreateMaxMs = null;
 //
@@ -562,7 +562,7 @@ class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
 //                                        streamCreateMaxMs = min(streamCreateMaxMs, streamQueryTime);
 //                                    }
 
-                                    tracker.setMaxStreamCreateMs(streamCreateMaxMs);
+                                    tracker.setMaxMetaCreateMs(streamCreateMaxMs);
                                 }
 
                                 // Here we do an optimisation and only bother
@@ -636,7 +636,7 @@ class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
             final BaseResultList<ProcessorFilterTask> streamTasks = processorFilterTaskDao.find(findProcessorFilterTaskCriteria);
             final int size = streamTasks.size();
 
-            taskStatusTraceLog.addUnownedTasks(ProcessorFilterTaskCreatorImpl.class, streamTasks);
+            taskStatusTraceLog.addUnownedTasks(ProcessorFilterTaskManagerImpl.class, streamTasks);
 
             for (final ProcessorFilterTask streamTask : streamTasks) {
                 try {
@@ -673,7 +673,7 @@ class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
                                             final int requiredTasks,
                                             final StreamTaskQueue queue,
                                             final ProcessorFilterTracker tracker) {
-        final EventRef minEvent = new EventRef(tracker.getMinStreamId(), tracker.getMinEventId());
+        final EventRef minEvent = new EventRef(tracker.getMinMetaId(), tracker.getMinEventId());
         final EventRef maxEvent = new EventRef(Long.MAX_VALUE, 0L);
         long maxStreams = requiredTasks;
         long maxEvents = 1000000;
@@ -697,8 +697,8 @@ class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
 
             if (limits.getStreamCount() != null) {
                 long streamLimit = limits.getStreamCount();
-                if (tracker.getStreamCount() != null) {
-                    streamLimit -= tracker.getStreamCount();
+                if (tracker.getMetaCount() != null) {
+                    streamLimit -= tracker.getMetaCount();
                 }
 
                 maxStreams = Math.min(streamLimit, maxStreams);
@@ -795,7 +795,7 @@ class ProcessorFilterTaskCreatorImpl implements ProcessorFilterTaskCreator {
         final Long maxMetaId = metaService.getMaxId();
         final List<Meta> streamList = runSelectMetaQuery(
                 queryData.getExpression(),
-                updatedTracker.getMinStreamId(),
+                updatedTracker.getMinMetaId(),
                 requiredTasks);
 
         // Just create regular stream processing tasks.

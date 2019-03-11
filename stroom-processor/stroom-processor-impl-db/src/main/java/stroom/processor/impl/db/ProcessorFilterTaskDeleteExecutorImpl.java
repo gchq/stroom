@@ -25,7 +25,7 @@ import stroom.db.util.JooqUtil;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.ProcessorFilterTaskDeleteExecutor;
-import stroom.processor.impl.ProcessorFilterTaskCreator;
+import stroom.processor.impl.ProcessorFilterTaskManager;
 import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
@@ -50,7 +50,7 @@ class ProcessorFilterTaskDeleteExecutorImpl extends AbstractBatchDeleteExecutor 
 
     private final ConnectionProvider connectionProvider;
     private final ProcessorFilterDao processorFilterDao;
-    private final ProcessorFilterTaskCreator processorFilterTaskCreator;
+    private final ProcessorFilterTaskManager processorFilterTaskManager;
 
     @Inject
     ProcessorFilterTaskDeleteExecutorImpl(final ConnectionProvider connectionProvider,
@@ -58,19 +58,19 @@ class ProcessorFilterTaskDeleteExecutorImpl extends AbstractBatchDeleteExecutor 
                                           final ProcessorConfig processorConfig,
                                           final TaskContext taskContext,
                                           final ProcessorFilterDao processorFilterDao,
-                                          final ProcessorFilterTaskCreator processorFilterTaskCreator) {
+                                          final ProcessorFilterTaskManager processorFilterTaskManager) {
         super(clusterLockService, taskContext, TASK_NAME, LOCK_NAME, processorConfig, TEMP_STRM_TASK_ID_TABLE);
 
         this.connectionProvider = connectionProvider;
         this.processorFilterDao = processorFilterDao;
-        this.processorFilterTaskCreator = processorFilterTaskCreator;
+        this.processorFilterTaskManager = processorFilterTaskManager;
 
         final BatchIdTransactionHelper batchIdTransactionHelper = new BatchIdTransactionHelper(connectionProvider, TEMP_STRM_TASK_ID_TABLE);
         setBatchIdTransactionHelper(batchIdTransactionHelper);
     }
 
     public void exec() {
-        final AtomicLong nextDeleteMs = processorFilterTaskCreator.getNextDeleteMs();
+        final AtomicLong nextDeleteMs = processorFilterTaskManager.getNextDeleteMs();
 
         try {
             if (nextDeleteMs.get() == 0) {

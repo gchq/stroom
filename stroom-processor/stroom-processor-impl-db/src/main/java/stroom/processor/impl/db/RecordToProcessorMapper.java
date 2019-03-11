@@ -12,12 +12,12 @@ class RecordToProcessorMapper implements Function<Record, Processor> {
     public Processor apply(final Record record) {
         final Processor processor = new Processor();
         processor.setId(record.get(PROCESSOR.ID));
-        processor.setVersion(record.get(PROCESSOR.VERSION).intValue()); // TODO : @66 Remove when version is an integer
+        processor.setVersion(record.get(PROCESSOR.VERSION));
         processor.setCreateTimeMs(record.get(PROCESSOR.CREATE_TIME_MS));
         processor.setCreateUser(record.get(PROCESSOR.CREATE_USER));
         processor.setUpdateTimeMs(record.get(PROCESSOR.UPDATE_TIME_MS));
         processor.setUpdateUser(record.get(PROCESSOR.UPDATE_USER));
-//        processor.setUuid(record.get(PROCESSOR.UUID)); TODO : @66 Fix
+        processor.setUuid(record.get(PROCESSOR.UUID));
         processor.setPipelineUuid(record.get(PROCESSOR.PIPELINE_UUID));
         processor.setTaskType(record.get(PROCESSOR.TASK_TYPE));
         processor.setEnabled(record.get(PROCESSOR.ENABLED));

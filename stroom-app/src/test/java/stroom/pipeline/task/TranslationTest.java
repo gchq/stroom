@@ -48,7 +48,7 @@ import stroom.pipeline.stepping.SteppingTask;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.impl.DataProcessorTask;
-import stroom.processor.impl.ProcessorFilterTaskCreator;
+import stroom.processor.impl.ProcessorFilterTaskManager;
 import stroom.processor.shared.ProcessorFilterTask;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
@@ -97,7 +97,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private NodeInfo nodeInfo;
     @Inject
-    private ProcessorFilterTaskCreator processorFilterTaskCreator;
+    private ProcessorFilterTaskManager processorFilterTaskManager;
     @Inject
     private TaskManager taskManager;
     @Inject
@@ -215,7 +215,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         addStream(inputFile, feed);
 
-        processorFilterTaskCreator.createTasks(new SimpleTaskContext());
+        processorFilterTaskManager.createTasks(new SimpleTaskContext());
 
         List<DataProcessorTask> tasks = getTasks();
         assertThat(tasks.size()).as("There should be one task here").isEqualTo(1);
@@ -361,13 +361,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private List<DataProcessorTask> getTasks() {
         List<DataProcessorTask> streamProcessorTasks = Collections.emptyList();
 
-        List<ProcessorFilterTask> streamTasks = processorFilterTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+        List<ProcessorFilterTask> streamTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
             streamProcessorTasks = new ArrayList<>(streamTasks.size());
             for (final ProcessorFilterTask streamTask : streamTasks) {
                 streamProcessorTasks.add(new DataProcessorTask(streamTask));
             }
-            streamTasks = processorFilterTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+            streamTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
 
         return streamProcessorTasks;
