@@ -191,7 +191,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
                 .build();
 
         Target targetRef = null;
-        try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+        try (final Target target = streamStore.openTarget(metaProperties)) {
             targetRef = target;
 
             int count = 0;
@@ -210,7 +210,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
             }
         } catch (final IOException | RuntimeException e) {
             LOGGER.error("importData() - aborting import ", e);
-            streamStore.deleteStreamTarget(targetRef);
+            streamStore.deleteTarget(targetRef);
         }
     }
 

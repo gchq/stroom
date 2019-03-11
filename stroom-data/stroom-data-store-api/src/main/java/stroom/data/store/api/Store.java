@@ -23,11 +23,11 @@ import stroom.meta.shared.MetaProperties;
 
 /**
  * <p>
- * API to the stream store.
+ * API to the data store.
  * </p>
  * <p>
  * <p>
- * The stream store abstracts a repository of large files keyed by some meta
+ * The store abstracts a repository of large files keyed by some meta
  * data.
  * </p>
  * <p>
@@ -39,12 +39,12 @@ import stroom.meta.shared.MetaProperties;
 public interface Store {
     /**
      * <p>
-     * Open a new stream (i.e. new file) based on some meta data
+     * Open a new target (i.e. new file) based on some meta data
      * </p>
      *
      * @return the stream to write to
      */
-    Target openStreamTarget(MetaProperties metaProperties) throws DataException;
+    Target openTarget(MetaProperties metaProperties) throws DataException;
 
     /**
      * <p>
@@ -54,7 +54,7 @@ public interface Store {
      * @param append allow appending to the stream (or wipe it?)
      * @return the stream to write to
      */
-    Target openExistingStreamTarget(Meta meta) throws DataException;
+    Target openExistingTarget(Meta meta) throws DataException;
 
 //    /**
 //     * <p>
@@ -70,7 +70,7 @@ public interface Store {
      *
      * @return items deleted
      */
-    Target deleteStreamTarget(Target target);
+    Target deleteTarget(Target target);
 
     /**
      * <p>
@@ -82,7 +82,7 @@ public interface Store {
      * @throws DataException in case of a IO error or stream volume not visible or non
      *                         existent.
      */
-    Source openStreamSource(long streamId) throws DataException;
+    Source openSource(long streamId) throws DataException;
 
     /**
      * <p>
@@ -99,7 +99,7 @@ public interface Store {
      * true.
      * @throws DataException Could be thrown if no volume
      */
-    Source openStreamSource(long streamId, boolean anyStatus) throws DataException;
+    Source openSource(long streamId, boolean anyStatus) throws DataException;
 
 
 //    /**

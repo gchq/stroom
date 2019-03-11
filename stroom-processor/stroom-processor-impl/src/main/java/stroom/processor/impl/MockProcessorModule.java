@@ -27,6 +27,7 @@ public class MockProcessorModule extends AbstractModule {
         bind(ProcessorFilterTaskManager.class).to(MockProcessorFilterTaskManager.class);
         bind(ProcessorService.class).to(MockProcessorService.class);
         bind(ProcessorFilterService.class).to(MockProcessorFilterService.class);
+        bind(ProcessorFilterTaskCreator.class).to(MockProcessorFilterTaskCreator.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(DataProcessorTask.class, DataProcessorTaskHandler.class);

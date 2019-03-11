@@ -127,7 +127,7 @@ public class StreamAppender extends AbstractAppender {
                 .processorTaskId(streamTaskId)
                 .build();
 
-        streamTarget = streamStore.openStreamTarget(metaProperties);
+        streamTarget = streamStore.openTarget(metaProperties);
 
         wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.next().get()) {
             @Override
@@ -198,7 +198,7 @@ public class StreamAppender extends AbstractAppender {
             // Close the stream target.
             try {
                 if (supersededOutputHelper.isSuperseded()) {
-                    streamStore.deleteStreamTarget(streamTarget);
+                    streamStore.deleteTarget(streamTarget);
                 } else {
                     streamTarget.close();
                 }

@@ -79,7 +79,7 @@ class TestStreamDumpTool {
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        try (final Target streamTarget = streamStore.openStreamTarget(metaProperties)) {
+        try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             TargetUtil.write(streamTarget, data);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);

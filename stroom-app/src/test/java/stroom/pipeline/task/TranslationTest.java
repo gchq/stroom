@@ -234,7 +234,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     if (!StreamTypeNames.ERROR.equals(streamTypeName)) {
                         processedMeta.add(meta);
                     } else {
-                        try (Source errorStreamSource = streamStore.openStreamSource(streamId)) {
+                        try (Source errorStreamSource = streamStore.openSource(streamId)) {
                             String errorStreamStr = SourceUtil.readString(errorStreamSource);
 
 //                            try (final InputStreamProvider inputStreamProvider = errorStreamSource.get(0)) {
@@ -323,7 +323,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     .build();
 
             Meta meta;
-            try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+            try (final Target target = streamStore.openTarget(metaProperties)) {
                 meta = target.getMeta();
                 final InputStream inputStream = new BufferedInputStream(Files.newInputStream(file));
                 TargetUtil.write(target, inputStream);
@@ -331,7 +331,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
             // Check that what was written to the store is the same as the
             // contents of the file.
-            try (final Source checkSource = streamStore.openStreamSource(meta.getId())) {
+            try (final Source checkSource = streamStore.openSource(meta.getId())) {
                 final byte[] original = Files.readAllBytes(file);
                 final byte[] stored = SourceUtil.read(checkSource);
                 assertThat(Arrays.equals(original, stored)).isTrue();
@@ -556,7 +556,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private void copyStream(final Meta meta, final OutputStream outputStream) throws IOException {
-        try (final Source streamSource = streamStore.openStreamSource(meta.getId())) {
+        try (final Source streamSource = streamStore.openSource(meta.getId())) {
             SourceUtil.read(streamSource, outputStream);
         }
     }

@@ -169,14 +169,14 @@ public final class StoreCreationTool {
 
         Meta meta;
 
-        try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+        try (final Target target = streamStore.openTarget(metaProperties)) {
             meta = target.getMeta();
             TargetUtil.write(target, data);
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
 
-        try (final Source checkSource = streamStore.openStreamSource(meta.getId())) {
+        try (final Source checkSource = streamStore.openSource(meta.getId())) {
             assertThat(SourceUtil.readString(checkSource)).isEqualTo(data);
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -313,7 +313,7 @@ public final class StoreCreationTool {
                 .build();
 
         Meta meta;
-        try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+        try (final Target target = streamStore.openTarget(metaProperties)) {
             meta = target.getMeta();
 
             try (final OutputStreamProvider outputStreamProvider = target.next()) {
@@ -333,7 +333,7 @@ public final class StoreCreationTool {
 
         // Check that the data was written ok.
         final String data = StreamUtil.fileToString(dataLocation);
-        try (final Source checkSource = streamStore.openStreamSource(meta.getId())) {
+        try (final Source checkSource = streamStore.openSource(meta.getId())) {
             assertThat(SourceUtil.readString(checkSource)).isEqualTo(data);
         }
     }

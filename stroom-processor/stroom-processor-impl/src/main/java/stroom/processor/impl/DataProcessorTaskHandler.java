@@ -47,7 +47,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
     private final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders;
     private final ProcessorCache processorCache;
     private final ProcessorFilterCache processorFilterCache;
-    private final ProcessorFilterTaskCreator processorFilterTaskDao;
+    private final ProcessorFilterTaskCreator processorFilterTaskCreator;
     private final Store streamStore;
     private final NodeInfo nodeInfo;
     private final TaskContext taskContext;
@@ -57,7 +57,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
     DataProcessorTaskHandler(final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders,
                              final ProcessorCache processorCache,
                              final ProcessorFilterCache processorFilterCache,
-                             final ProcessorFilterTaskCreator processorFilterTaskDao,
+                             final ProcessorFilterTaskCreator processorFilterTaskCreator,
                              final Store streamStore,
                              final NodeInfo nodeInfo,
                              final TaskContext taskContext,
@@ -65,7 +65,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
         this.executorProviders = executorProviders;
         this.processorCache = processorCache;
         this.processorFilterCache = processorFilterCache;
-        this.processorFilterTaskDao = processorFilterTaskDao;
+        this.processorFilterTaskCreator = processorFilterTaskCreator;
         this.streamStore = streamStore;
         this.nodeInfo = nodeInfo;
         this.taskContext = taskContext;
@@ -81,9 +81,9 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
             LOGGER.trace("Executing stream task: {}", streamTask.getId());
 
             // Open the stream source.
-            try (Source streamSource = streamStore.openStreamSource(streamTask.getMetaId())) {
-                if (streamSource != null) {
-                    final Meta meta = streamSource.getMeta();
+            try (Source source = streamStore.openSource(streamTask.getMetaId())) {
+                if (source != null) {
+                    final Meta meta = source.getMeta();
 
                     Processor destStreamProcessor = null;
                     ProcessorFilter destProcessorFilter = null;
@@ -116,7 +116,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
 
                     } else {
                         // Change the task status.... and save
-                        streamTask = processorFilterTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(),
+                        streamTask = processorFilterTaskCreator.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(),
                                 TaskStatus.PROCESSING, startTime, null);
                         // Avoid having to do another fetch
                         streamTask.setProcessorFilter(destProcessorFilter);
@@ -129,7 +129,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
 
                         try {
                             dataProcessorTaskExecutor.exec(destStreamProcessor, destProcessorFilter, streamTask,
-                                    streamSource);
+                                    source);
                             // Only record completion for this task if it was not
                             // terminated.
                             if (!Thread.currentThread().isInterrupted()) {
@@ -144,10 +144,10 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
                 LOGGER.error(e.getMessage(), e);
             } finally {
                 if (complete) {
-                    processorFilterTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
+                    processorFilterTaskCreator.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
                             startTime, System.currentTimeMillis());
                 } else {
-                    processorFilterTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.FAILED, startTime,
+                    processorFilterTaskCreator.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.FAILED, startTime,
                             System.currentTimeMillis());
                 }
             }

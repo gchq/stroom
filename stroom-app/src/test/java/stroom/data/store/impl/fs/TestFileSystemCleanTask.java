@@ -85,7 +85,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         // FILE1 LOCKED
         //
         // Write some data
-        final Target lockstreamTarget1 = streamStore.openStreamTarget(lockfile1);
+        final Target lockstreamTarget1 = streamStore.openTarget(lockfile1);
         TargetUtil.write(lockstreamTarget1, "MyTest");
         // Close the file but not the stream (you should use the closeStream
         // API)
@@ -103,7 +103,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         // FILE2 UNLOCKED
         //
         Meta meta;
-        try (final Target nolockstreamTarget1 = streamStore.openStreamTarget(nolockfile1)) {
+        try (final Target nolockstreamTarget1 = streamStore.openTarget(nolockfile1)) {
             meta = nolockstreamTarget1.getMeta();
             TargetUtil.write(nolockstreamTarget1, "MyTest");
         }
@@ -192,7 +192,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
                     .typeName(StreamTypeNames.RAW_EVENTS)
                     .createMs(time)
                     .build();
-            try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+            try (final Target target = streamStore.openTarget(metaProperties)) {
                 TargetUtil.write(target, "TEST");
             }
         }

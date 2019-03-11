@@ -27,12 +27,25 @@ import java.util.Objects;
 public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
     public static final String ENTITY_TYPE = "ProcessorFilter";
 
-    public static final Comparator<ProcessorFilter> HIGHEST_PRIORITY_FIRST_COMPARATOR = Comparator
-            .comparingInt(ProcessorFilter::getPriority)
-            .thenComparingLong(processorFilter ->
-                    processorFilter.processorFilterTracker.getMinMetaId())
-            .thenComparingLong(processorFilter ->
-                    processorFilter.processorFilterTracker.getMinEventId());
+    public static final Comparator<ProcessorFilter> HIGHEST_PRIORITY_FIRST_COMPARATOR = (o1, o2) -> {
+        if (o1.getPriority() == o2.getPriority()) {
+            // If priorities are the same then compare stream ids to
+            // prioritise lower stream ids.
+            if (o1.getProcessorFilterTracker().getMinMetaId() == o2.getProcessorFilterTracker()
+                    .getMinMetaId()) {
+                // If stream ids are the same then compare event ids to
+                // prioritise lower event ids.
+                return Long.compare(o1.getProcessorFilterTracker().getMinEventId(),
+                        o2.getProcessorFilterTracker().getMinEventId());
+            }
+
+            return Long.compare(o1.getProcessorFilterTracker().getMinMetaId(),
+                    o2.getProcessorFilterTracker().getMinMetaId());
+        }
+
+        // Highest Priority is important.
+        return Integer.compare(o2.getPriority(), o1.getPriority());
+    };
 
     private static final long serialVersionUID = -2478788451478923825L;
 

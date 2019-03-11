@@ -54,7 +54,7 @@ public final class SetupCorruptSampleData extends AbstractCommandLineTool {
 //
 //        final Stream sourceStream = commonTestScenarioCreator.createSample2LineRawFile(feed, StreamType.RAW_EVENTS);
 //
-//        final StreamTarget target = streamStore.openStreamTarget(
+//        final StreamTarget target = streamStore.openTarget(
 //                Stream.createProcessedStream(sourceStream, sourceStream.getFeed(), StreamType.EVENTS, null, null));
 //
 //        try {

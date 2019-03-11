@@ -576,7 +576,7 @@ public class PipelineStreamProcessor implements DataProcessorTaskExecutor {
                         .processorTaskId(processorTaskId)
                         .build();
 
-                processInfoStreamTarget = streamStore.openStreamTarget(dataProperties);
+                processInfoStreamTarget = streamStore.openTarget(dataProperties);
                 processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.next().get()) {
                     @Override
                     public void close() throws IOException {
@@ -603,7 +603,7 @@ public class PipelineStreamProcessor implements DataProcessorTaskExecutor {
                                 // Close the stream target.
                                 try {
                                     if (supersededOutputHelper.isSuperseded()) {
-                                        streamStore.deleteStreamTarget(processInfoStreamTarget);
+                                        streamStore.deleteTarget(processInfoStreamTarget);
                                     } else {
                                         processInfoStreamTarget.close();
                                     }

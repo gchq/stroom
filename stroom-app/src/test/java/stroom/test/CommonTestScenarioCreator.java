@@ -145,7 +145,7 @@ public class CommonTestScenarioCreator {
                 .feedName(feed)
                 .typeName(streamType)
                 .build();
-        try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+        try (final Target target = streamStore.openTarget(metaProperties)) {
             TargetUtil.write(target, "line1\nline2");
             target.getAttributes().put(StandardHeaderArguments.FEED, feed);
             return target.getMeta();
@@ -169,7 +169,7 @@ public class CommonTestScenarioCreator {
                 + "xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\" "
                 + "Version=\"3.0.0\"/>";
 
-        try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+        try (final Target target = streamStore.openTarget(metaProperties)) {
             TargetUtil.write(target, data);
             return target.getMeta();
         } catch (final IOException e) {

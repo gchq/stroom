@@ -131,7 +131,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final BaseResultList<Meta> resultList1 = metaService.find(findMetaCriteria);
         assertThat(resultList1.size()).as("Expecting 2 files to get merged").isEqualTo(1);
 
-        try (final Source streamSource = streamStore.openStreamSource(resultList1.getFirst().getId())) {
+        try (final Source streamSource = streamStore.openSource(resultList1.getFirst().getId())) {
             assertThat(streamSource.count()).isEqualTo(2);
 
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
@@ -191,10 +191,10 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final List<Meta> list = metaService.find(criteria);
         assertThat(list.size()).isEqualTo(3);
 
-        try (final Source source = streamStore.openStreamSource(list.get(0).getId())) {
+        try (final Source source = streamStore.openSource(list.get(0).getId())) {
             assertContent("expecting meta data", source, true, StreamTypeNames.META);
         }
-        try (final Source source = streamStore.openStreamSource(list.get(0).getId())) {
+        try (final Source source = streamStore.openSource(list.get(0).getId())) {
             assertThat(source.count()).isEqualTo(10);
         }
     }
@@ -254,7 +254,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final List<Meta> list = metaService.find(criteria);
         assertThat(list.size()).isEqualTo(1);
 
-        try (final Source source = streamStore.openStreamSource(list.get(0).getId())) {
+        try (final Source source = streamStore.openSource(list.get(0).getId())) {
             assertContent("expecting meta data", source, true, StreamTypeNames.META);
             try {
                 // TODO : @66 No idea what we might get here.
@@ -267,7 +267,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
             assertContent("expecting context data", source, true, StreamTypeNames.CONTEXT);
 
         }
-        try (final Source source = streamStore.openStreamSource(list.get(0).getId())) {
+        try (final Source source = streamStore.openSource(list.get(0).getId())) {
             assertThat(source.count()).isEqualTo(1);
 
 
@@ -304,7 +304,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final List<Meta> list = metaService.find(criteria);
         assertThat(list.size()).isEqualTo(1);
 
-        try (final Source source = streamStore.openStreamSource(list.get(0).getId())) {
+        try (final Source source = streamStore.openSource(list.get(0).getId())) {
             assertContent("expecting meta data", source, true, StreamTypeNames.META);
             try {
                 // TODO : @66 No idea what we might get here.
@@ -320,7 +320,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final String meta = "Feed:" + feedName1 + "\nProxy:ProxyTest\nCompression:Zip\nReceivedTime:2010-01-01T00:00:00.000Z\n";
 
-        try (final Source source = streamStore.openStreamSource(list.get(0).getId())) {
+        try (final Source source = streamStore.openSource(list.get(0).getId())) {
             assertThat(source.count()).isEqualTo(2);
 
             try (final InputStreamProvider inputStreamProvider = source.get(0)) {

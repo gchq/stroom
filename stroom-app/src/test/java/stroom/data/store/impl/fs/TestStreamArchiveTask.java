@@ -120,13 +120,13 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
                 .build();
 
         Meta oldFileMeta;
-        try (final Target oldFileTarget = streamStore.openStreamTarget(oldFile)) {
+        try (final Target oldFileTarget = streamStore.openTarget(oldFile)) {
             oldFileMeta = oldFileTarget.getMeta();
             TargetUtil.write(oldFileTarget, "MyTest");
         }
 
         Meta newFileMeta;
-        try (final Target newFileTarget = streamStore.openStreamTarget(newFile)) {
+        try (final Target newFileTarget = streamStore.openTarget(newFile)) {
             newFileMeta = newFileTarget.getMeta();
             TargetUtil.write(newFileTarget, "MyTest");
         }

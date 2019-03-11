@@ -215,7 +215,7 @@ public class MockStreamStore implements Store, Clearable {
 //    }
 
     @Override
-    public Target deleteStreamTarget(final Target target) {
+    public Target deleteTarget(final Target target) {
         final long streamId = target.getMeta().getId();
         openOutputStream.remove(streamId);
         fileData.remove(streamId);
@@ -255,8 +255,8 @@ public class MockStreamStore implements Store, Clearable {
 //    }
 
     @Override
-    public Source openStreamSource(final long streamId) throws DataException {
-        return openStreamSource(streamId, false);
+    public Source openSource(final long streamId) throws DataException {
+        return openSource(streamId, false);
     }
 
     /**
@@ -275,7 +275,7 @@ public class MockStreamStore implements Store, Clearable {
      * @throws DataException Could be thrown if no volume
      */
     @Override
-    public Source openStreamSource(final long streamId, final boolean anyStatus) throws DataException {
+    public Source openSource(final long streamId, final boolean anyStatus) throws DataException {
         final Meta meta = metaService.getMeta(streamId, anyStatus);
         if (meta == null) {
             return null;
@@ -285,7 +285,7 @@ public class MockStreamStore implements Store, Clearable {
     }
 
     @Override
-    public Target openStreamTarget(final MetaProperties metaProperties) {
+    public Target openTarget(final MetaProperties metaProperties) {
         final Meta meta = metaService.create(metaProperties);
 
         final Map<String, ByteArrayOutputStream> typeMap = new HashMap<>();
@@ -298,7 +298,7 @@ public class MockStreamStore implements Store, Clearable {
     }
 
     @Override
-    public Target openExistingStreamTarget(final Meta meta) throws DataException {
+    public Target openExistingTarget(final Meta meta) throws DataException {
         final Map<String, ByteArrayOutputStream> typeMap = new HashMap<>();
         typeMap.put(meta.getTypeName(), new ByteArrayOutputStream());
         openOutputStream.put(meta.getId(), typeMap);

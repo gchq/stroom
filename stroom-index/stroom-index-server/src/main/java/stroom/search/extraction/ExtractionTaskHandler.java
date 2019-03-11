@@ -201,7 +201,7 @@ public class ExtractionTaskHandler {
         long count = 0;
 
         // Open the stream source.
-        try (final Source source = streamStore.openStreamSource(streamId)) {
+        try (final Source source = streamStore.openSource(streamId)) {
             if (source != null) {
                 try (final InputStreamProvider inputStreamProvider = source.get(0)) {
                     // This is a valid stream so try and extract as many

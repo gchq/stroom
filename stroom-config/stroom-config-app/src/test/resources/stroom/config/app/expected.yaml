@@ -49,6 +49,8 @@ data:
       cachePrepStmts: true
       prepStmtCacheSize: 250
       prepStmtCacheSqlLimit: 2048
+  retention:
+    deleteBatchSize: 1000
   store:
     deletePurgeAge: "7d"
     deleteBatchSize: 1000
@@ -64,11 +66,6 @@ data:
       cachePrepStmts: true
       prepStmtCacheSize: 250
       prepStmtCacheSqlLimit: 2048
-feed:
-  receiptPolicyUuid: null
-  bufferSize: 8192
-  unknownClassification: "UNKNOWN CLASSIFICATION"
-  feedNamePattern: "^[A-Z0-9_-]{3,}$"
 dataSourceUrl:
   index: "http://127.0.0.1:8080/api/stroom-index/v2"
   statisticStore: "http://127.0.0.1:8080/api/sqlstatistics/v2"
@@ -136,9 +133,7 @@ pipeline:
     readAheadEnabled: true
   xslt:
     maxElements: 1000000
-policy:
-  deleteBatchSize: 1000
-process:
+processor:
   assignTasks: true
   createTasks: true
   deleteAge: "1d"
@@ -146,6 +141,15 @@ process:
   deleteBatchSize: 1000
   fillTaskQueue: true
   queueSize: 1000
+  connection:
+    jdbcDriverClassName: "com.mysql.jdbc.Driver"
+    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+    jdbcDriverUsername: "stroomuser"
+    jdbcDriverPassword: "stroompassword1"
+  connectionPool:
+    cachePrepStmts: true
+    prepStmtCacheSize: 250
+    prepStmtCacheSqlLimit: 2048
 properties:
   connection:
     jdbcDriverClassName: "com.mysql.jdbc.Driver"
@@ -162,6 +166,11 @@ proxyAggregation:
   maxAggregation: 10000
   maxAggregationScan: 100000
   maxStreamSize: "1G"
+feed:
+  receiptPolicyUuid: null
+  bufferSize: 8192
+  unknownClassification: "UNKNOWN CLASSIFICATION"
+  feedNamePattern: "^[A-Z0-9_-]{3,}$"
 queryHistory:
   itemsRetention: 100
   daysRetention: 365

@@ -21,7 +21,6 @@ import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Target;
-import stroom.data.store.impl.mock.MockStreamStore;
 import stroom.meta.impl.mock.MockMetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -54,7 +53,7 @@ class TestMockStreamStore {
                 .build();
 
         Meta meta = null;
-        try (final Target streamTarget = mockStreamStore.openStreamTarget(metaProperties)) {
+        try (final Target streamTarget = mockStreamStore.openTarget(metaProperties)) {
             meta = streamTarget.getMeta();
 
             try (final OutputStreamProvider outputStreamProvider = streamTarget.next()) {
@@ -73,7 +72,7 @@ class TestMockStreamStore {
 
         final Meta reload = mockMetaService.find(FindMetaCriteria.createFromMeta(meta)).get(0);
 
-        try (final Source streamSource = mockStreamStore.openStreamSource(reload.getId())) {
+        try (final Source streamSource = mockStreamStore.openSource(reload.getId())) {
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
                 String testMe = StreamUtil.streamToString(inputStreamProvider.get());
                 assertThat(testMe).isEqualTo("PARENT");
