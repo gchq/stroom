@@ -6,6 +6,7 @@ import stroom.processor.api.InclusiveRanges;
 import stroom.processor.shared.FindProcessorFilterTaskCriteria;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.TaskStatus;
 import stroom.util.shared.BaseResultList;
@@ -141,5 +142,10 @@ public class MockProcessorFilterTaskDao implements ProcessorFilterTaskDao {
                 .collect(Collectors.toList());
 
         return BaseResultList.createCriterialBasedList(list, criteria);
+    }
+
+    @Override
+    public BaseResultList<ProcessorFilterTaskSummaryRow> findSummary(final FindProcessorFilterTaskCriteria criteria) {
+        return null;
     }
 }

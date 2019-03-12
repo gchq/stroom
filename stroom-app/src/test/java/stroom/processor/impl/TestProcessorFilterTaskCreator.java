@@ -122,7 +122,7 @@ class TestProcessorFilterTaskManager extends AbstractCoreIntegrationTest {
                         .build())
                 .build();
 
-        commonTestScenarioCreator.createStreamProcessor(findStreamQueryData);
+        commonTestScenarioCreator.createProcessor(findStreamQueryData);
 
         for (int i = 0; i < 1000; i++) {
             commonTestScenarioCreator.createSample2LineRawFile(feedName1, StreamTypeNames.RAW_EVENTS);

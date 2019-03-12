@@ -23,7 +23,7 @@ import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.HasIntCrud;
 
-public interface ProcessorFilterTaskService extends HasIntCrud<ProcessorFilterTask> {
+public interface ProcessorFilterTaskService {
     BaseResultList<ProcessorFilterTask> find(final FindProcessorFilterTaskCriteria criteria);
 
     BaseResultList<ProcessorFilterTaskSummaryRow> findSummary(final FindProcessorFilterTaskCriteria criteria);

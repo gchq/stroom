@@ -43,7 +43,9 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
-    private ProcessorFilterTaskService streamTaskService;
+    private ProcessorFilterTaskService processorFilterTaskService;
+    @Inject
+    private ProcessorFilterTaskDao processorFilterTaskDao;
     @Inject
     private MetaService metaService;
     @Inject
@@ -63,31 +65,29 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
         // Create all required tasks.
         createTasks();
 
-        final ProcessorFilterTask ps1 = streamTaskService.find(FindProcessorFilterTaskCriteria.createWithStream(file1)).getFirst();
+        final ProcessorFilterTask ps1 = processorFilterTaskService.find(FindProcessorFilterTaskCriteria.createWithStream(file1)).getFirst();
         assertThat(ps1).isNotNull();
-        ps1.setStatus(TaskStatus.COMPLETE);
-
-        streamTaskService.update(ps1);
+        processorFilterTaskDao.changeTaskStatus(ps1, ps1.getNodeName(), TaskStatus.COMPLETE, ps1.getStartTimeMs(), ps1.getEndTimeMs());
 
         FindProcessorFilterTaskCriteria criteria = new FindProcessorFilterTaskCriteria();
         criteria.obtainTaskStatusSet().add(TaskStatus.COMPLETE);
 
-        assertThat(streamTaskService.find(criteria).size()).isEqualTo(1);
+        assertThat(processorFilterTaskService.find(criteria).size()).isEqualTo(1);
 
         // Check the date filter works
         criteria.setCreatePeriod(new Period(file1.getCreateMs() - 10000, file1.getCreateMs() + 10000));
-        assertThat(streamTaskService.find(criteria).size()).isEqualTo(1);
+        assertThat(processorFilterTaskService.find(criteria).size()).isEqualTo(1);
 
         criteria.setCreatePeriod(
                 new Period(Instant.ofEpochMilli(criteria.getCreatePeriod().getFrom()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli(),
                         Instant.ofEpochMilli(criteria.getCreatePeriod().getTo()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli()));
-        assertThat(streamTaskService.find(criteria).size()).isEqualTo(0);
+        assertThat(processorFilterTaskService.find(criteria).size()).isEqualTo(0);
 
         assertThat(metaService.getMeta(file1.getId())).isNotNull();
         assertThat(metaService.getMeta(file2.getId())).isNotNull();
 
         criteria = new FindProcessorFilterTaskCriteria();
-        assertThat(streamTaskService.findSummary(criteria)).isNotNull();
+        assertThat(processorFilterTaskService.findSummary(criteria)).isNotNull();
     }
 
     @Test
@@ -110,7 +110,7 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
 //        criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
 //        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.CONTEXT);
 
-        assertThat(streamTaskService.find(criteria).size()).isEqualTo(0);
+        assertThat(processorFilterTaskService.find(criteria).size()).isEqualTo(0);
     }
 
     @Test

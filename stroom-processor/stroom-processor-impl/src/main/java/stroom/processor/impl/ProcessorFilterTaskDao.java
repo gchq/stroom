@@ -5,6 +5,7 @@ import stroom.processor.api.InclusiveRanges;
 import stroom.processor.shared.FindProcessorFilterTaskCriteria;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.TaskStatus;
 import stroom.util.shared.BaseResultList;
@@ -47,5 +48,7 @@ public interface ProcessorFilterTaskDao {
                                          Long startTime,
                                          Long endTime);
 
-    BaseResultList<ProcessorFilterTask> find(FindProcessorFilterTaskCriteria criteria);
+    BaseResultList<ProcessorFilterTask> find(final FindProcessorFilterTaskCriteria criteria);
+
+    BaseResultList<ProcessorFilterTaskSummaryRow> findSummary(final FindProcessorFilterTaskCriteria criteria);
 }

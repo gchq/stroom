@@ -41,7 +41,7 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
 
-    private static final long serialVersionUID = -1541061659;
+    private static final long serialVersionUID = 159302171;
 
     /**
      * The reference instance of <code>stroom.processor_filter</code>
@@ -162,7 +162,7 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
      */
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.PROCESSOR_FILTER_PRIMARY, Indexes.PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID, Indexes.PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_ID);
+        return Arrays.<Index>asList(Indexes.PROCESSOR_FILTER_PRIMARY, Indexes.PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID, Indexes.PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_ID, Indexes.PROCESSOR_FILTER_UUID);
     }
 
     /**
@@ -186,7 +186,7 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
      */
     @Override
     public List<UniqueKey<ProcessorFilterRecord>> getKeys() {
-        return Arrays.<UniqueKey<ProcessorFilterRecord>>asList(Keys.KEY_PROCESSOR_FILTER_PRIMARY);
+        return Arrays.<UniqueKey<ProcessorFilterRecord>>asList(Keys.KEY_PROCESSOR_FILTER_PRIMARY, Keys.KEY_PROCESSOR_FILTER_UUID);
     }
 
     /**

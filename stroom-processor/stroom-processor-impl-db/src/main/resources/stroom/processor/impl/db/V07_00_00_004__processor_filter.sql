@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS processor_filter (
   priority                          int(11) NOT NULL,
   enabled                           bit(1) NOT NULL,
   PRIMARY KEY                       (id),
+  UNIQUE KEY                        uuid (uuid),
   KEY processor_filter_fk_processor_id (fk_processor_id),
   KEY processor_filter_fk_processor_filter_tracker_id (fk_processor_filter_tracker_id),
   CONSTRAINT processor_filter_fk_processor_filter_tracker_id FOREIGN KEY (fk_processor_filter_tracker_id) REFERENCES processor_filter_tracker (id),

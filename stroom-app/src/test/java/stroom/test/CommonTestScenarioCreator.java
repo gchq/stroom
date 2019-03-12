@@ -18,29 +18,29 @@
 package stroom.test;
 
 
-import stroom.index.service.IndexVolumeGroupService;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFields;
-import stroom.index.shared.IndexVolume;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
-import stroom.meta.shared.StandardHeaderArguments;
 import stroom.index.IndexStore;
+import stroom.index.service.IndexVolumeGroupService;
 import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFields;
+import stroom.index.shared.IndexVolume;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.processor.shared.QueryData;
-import stroom.streamstore.shared.StreamTypeNames;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.QueryData;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.streamstore.shared.StreamTypeNames;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -88,15 +88,16 @@ public class CommonTestScenarioCreator {
                         .build())
                 .build();
 
-        createStreamProcessor(findStreamQueryData);
+        createProcessor(findStreamQueryData);
     }
 
-    public void createStreamProcessor(final QueryData queryData) {
-        Processor streamProcessor = new Processor();
-        streamProcessor.setEnabled(true);
-        streamProcessor = streamProcessorService.create(streamProcessor);
+    public void createProcessor(final QueryData queryData) {
+        Processor processor = new Processor();
+        processor.setPipelineUuid(UUID.randomUUID().toString());
+        processor.setEnabled(true);
+        processor = streamProcessorService.create(processor);
 
-        processorFilterService.create(streamProcessor, queryData,  1, true);
+        processorFilterService.create(processor, queryData, 1, true);
     }
 
     public DocRef createIndex(final String name) {

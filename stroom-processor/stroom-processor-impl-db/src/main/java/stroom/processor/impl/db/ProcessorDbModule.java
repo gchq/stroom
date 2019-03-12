@@ -16,6 +16,8 @@ import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.ProcessorFilterTaskDao;
 import stroom.processor.impl.ProcessorFilterTaskDeleteExecutor;
 import stroom.processor.impl.ProcessorFilterTrackerDao;
+import stroom.util.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -33,6 +35,9 @@ public class ProcessorDbModule extends AbstractModule {
         bind(ProcessorFilterTaskDao.class).to(ProcessorFilterTaskDaoImpl.class);
         bind(ProcessorFilterTaskDeleteExecutor.class).to(ProcessorFilterTaskDeleteExecutorImpl.class);
         bind(ProcessorFilterTrackerDao.class).to(ProcessorFilterTrackerDaoImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(ProcessorNodeCache.class);
     }
 
     @Provides

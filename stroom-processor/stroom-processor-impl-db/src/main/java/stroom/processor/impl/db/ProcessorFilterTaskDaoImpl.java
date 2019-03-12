@@ -833,6 +833,7 @@ class ProcessorFilterTaskDaoImpl implements ProcessorFilterTaskDao {
         return BaseResultList.createCriterialBasedList(list, criteria);
     }
 
+    @Override
     public BaseResultList<ProcessorFilterTaskSummaryRow> findSummary(final FindProcessorFilterTaskCriteria criteria) {
         final List<Condition> conditions = convertCriteria(criteria);
 
@@ -872,6 +873,7 @@ class ProcessorFilterTaskDaoImpl implements ProcessorFilterTaskDao {
         JooqUtil.getStringCondition(PROCESSOR.PIPELINE_UUID, criteria.getPipelineUuidCriteria()).ifPresent(conditions::add);
         JooqUtil.getSetCondition(PROCESSOR_FILTER.ID, criteria.getProcessorFilterIdSet()).ifPresent(conditions::add);
         Optional.ofNullable(criteria.getCreateMs()).map(PROCESSOR_FILTER_TASK.CREATE_TIME_MS::eq).ifPresent(conditions::add);
+        JooqUtil.getRangeCondition(PROCESSOR_FILTER_TASK.CREATE_TIME_MS, criteria.getCreatePeriod()).ifPresent(conditions::add);
         JooqUtil.getSetCondition(PROCESSOR_FILTER_TASK.META_ID, criteria.getMetaIdSet()).ifPresent(conditions::add);
         return conditions;
     }

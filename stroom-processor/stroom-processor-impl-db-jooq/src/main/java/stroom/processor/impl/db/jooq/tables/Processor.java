@@ -41,7 +41,7 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Processor extends TableImpl<ProcessorRecord> {
 
-    private static final long serialVersionUID = -241795055;
+    private static final long serialVersionUID = 48873349;
 
     /**
      * The reference instance of <code>stroom.processor</code>
@@ -152,7 +152,7 @@ public class Processor extends TableImpl<ProcessorRecord> {
      */
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.PROCESSOR_PRIMARY, Indexes.PROCESSOR_PROCESSOR_PIPELINE_UUID);
+        return Arrays.<Index>asList(Indexes.PROCESSOR_PIPELINE_UUID, Indexes.PROCESSOR_PRIMARY, Indexes.PROCESSOR_UUID);
     }
 
     /**
@@ -176,7 +176,7 @@ public class Processor extends TableImpl<ProcessorRecord> {
      */
     @Override
     public List<UniqueKey<ProcessorRecord>> getKeys() {
-        return Arrays.<UniqueKey<ProcessorRecord>>asList(Keys.KEY_PROCESSOR_PRIMARY);
+        return Arrays.<UniqueKey<ProcessorRecord>>asList(Keys.KEY_PROCESSOR_PRIMARY, Keys.KEY_PROCESSOR_UUID, Keys.KEY_PROCESSOR_PIPELINE_UUID);
     }
 
     /**

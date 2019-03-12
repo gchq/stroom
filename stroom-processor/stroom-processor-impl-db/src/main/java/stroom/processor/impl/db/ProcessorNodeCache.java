@@ -18,6 +18,7 @@
 package stroom.processor.impl.db;
 
 import stroom.db.util.JooqUtil;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -28,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static stroom.processor.impl.db.jooq.tables.ProcessorNode.PROCESSOR_NODE;
 
 @Singleton
-class ProcessorNodeCache {
+class ProcessorNodeCache implements Clearable {
     private final Map<String, Integer> cache = new ConcurrentHashMap<>();
 
     private final ConnectionProvider connectionProvider;
@@ -88,7 +89,8 @@ class ProcessorNodeCache {
         );
     }
 
-    void clear() {
+    @Override
+    public void clear() {
         deleteAll();
         cache.clear();
     }

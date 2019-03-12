@@ -34,11 +34,13 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
+    public static final Index PROCESSOR_PIPELINE_UUID = Indexes0.PROCESSOR_PIPELINE_UUID;
     public static final Index PROCESSOR_PRIMARY = Indexes0.PROCESSOR_PRIMARY;
-    public static final Index PROCESSOR_PROCESSOR_PIPELINE_UUID = Indexes0.PROCESSOR_PROCESSOR_PIPELINE_UUID;
+    public static final Index PROCESSOR_UUID = Indexes0.PROCESSOR_UUID;
     public static final Index PROCESSOR_FILTER_PRIMARY = Indexes0.PROCESSOR_FILTER_PRIMARY;
     public static final Index PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID = Indexes0.PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID;
     public static final Index PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_ID = Indexes0.PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_ID;
+    public static final Index PROCESSOR_FILTER_UUID = Indexes0.PROCESSOR_FILTER_UUID;
     public static final Index PROCESSOR_FILTER_TASK_PRIMARY = Indexes0.PROCESSOR_FILTER_TASK_PRIMARY;
     public static final Index PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_FK_PROCESSOR_FILTER_ID = Indexes0.PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_FK_PROCESSOR_FILTER_ID;
     public static final Index PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_FK_PROCESSOR_NODE_ID = Indexes0.PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_FK_PROCESSOR_NODE_ID;
@@ -53,11 +55,13 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     private static class Indexes0 {
+        public static Index PROCESSOR_PIPELINE_UUID = Internal.createIndex("pipeline_uuid", Processor.PROCESSOR, new OrderField[] { Processor.PROCESSOR.PIPELINE_UUID }, true);
         public static Index PROCESSOR_PRIMARY = Internal.createIndex("PRIMARY", Processor.PROCESSOR, new OrderField[] { Processor.PROCESSOR.ID }, true);
-        public static Index PROCESSOR_PROCESSOR_PIPELINE_UUID = Internal.createIndex("processor_pipeline_uuid", Processor.PROCESSOR, new OrderField[] { Processor.PROCESSOR.PIPELINE_UUID }, false);
+        public static Index PROCESSOR_UUID = Internal.createIndex("uuid", Processor.PROCESSOR, new OrderField[] { Processor.PROCESSOR.UUID }, true);
         public static Index PROCESSOR_FILTER_PRIMARY = Internal.createIndex("PRIMARY", ProcessorFilter.PROCESSOR_FILTER, new OrderField[] { ProcessorFilter.PROCESSOR_FILTER.ID }, true);
         public static Index PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID = Internal.createIndex("processor_filter_fk_processor_filter_tracker_id", ProcessorFilter.PROCESSOR_FILTER, new OrderField[] { ProcessorFilter.PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID }, false);
         public static Index PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_ID = Internal.createIndex("processor_filter_fk_processor_id", ProcessorFilter.PROCESSOR_FILTER, new OrderField[] { ProcessorFilter.PROCESSOR_FILTER.FK_PROCESSOR_ID }, false);
+        public static Index PROCESSOR_FILTER_UUID = Internal.createIndex("uuid", ProcessorFilter.PROCESSOR_FILTER, new OrderField[] { ProcessorFilter.PROCESSOR_FILTER.UUID }, true);
         public static Index PROCESSOR_FILTER_TASK_PRIMARY = Internal.createIndex("PRIMARY", ProcessorFilterTask.PROCESSOR_FILTER_TASK, new OrderField[] { ProcessorFilterTask.PROCESSOR_FILTER_TASK.ID }, true);
         public static Index PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_FK_PROCESSOR_FILTER_ID = Internal.createIndex("processor_filter_task_fk_processor_filter_id", ProcessorFilterTask.PROCESSOR_FILTER_TASK, new OrderField[] { ProcessorFilterTask.PROCESSOR_FILTER_TASK.FK_PROCESSOR_FILTER_ID }, false);
         public static Index PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_FK_PROCESSOR_NODE_ID = Internal.createIndex("processor_filter_task_fk_processor_node_id", ProcessorFilterTask.PROCESSOR_FILTER_TASK, new OrderField[] { ProcessorFilterTask.PROCESSOR_FILTER_TASK.FK_PROCESSOR_NODE_ID }, false);

@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS processor (
   pipeline_uuid         varchar(255) NOT NULL,
   enabled               bit(1) NOT NULL,
   PRIMARY KEY           (id),
-  KEY processor_pipeline_uuid (pipeline_uuid)
+  UNIQUE KEY            uuid (uuid),
+  UNIQUE KEY		    pipeline_uuid (pipeline_uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP PROCEDURE IF EXISTS copy_processor;

@@ -31,7 +31,7 @@ class ProcessorDaoImpl implements ProcessorDao {
     public Processor create(final Processor processor) {
         // We don't use the delegate DAO here as we want to handle potential duplicates carefully so this behaves as a getOrCreate method.
         return JooqUtil.contextResult(connectionProvider, context -> {
-            context
+            final Optional<ProcessorRecord> optional = context
                     .insertInto(PROCESSOR,
                             PROCESSOR.CREATE_TIME_MS,
                             PROCESSOR.CREATE_USER,
@@ -50,7 +50,17 @@ class ProcessorDaoImpl implements ProcessorDao {
                             processor.getPipelineUuid(),
                             processor.isEnabled())
                     .onDuplicateKeyIgnore()
-                    .execute();
+                    .returning(PROCESSOR.ID)
+                    .fetchOptional();
+
+            if (optional.isPresent()) {
+                final Integer id = optional.get().getId();
+                return context
+                        .select()
+                        .from(PROCESSOR)
+                        .where(PROCESSOR.ID.eq(id))
+                        .fetchOneInto(Processor.class);
+            }
 
             return context
                     .select()
