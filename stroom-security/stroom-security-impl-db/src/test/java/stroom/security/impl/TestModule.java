@@ -49,7 +49,7 @@ public class TestModule extends AbstractModule {
             bind(SecurityDbConfig.class).toInstance(new SecurityDbConfig.Builder()
                     .withConnectionConfig(new ConnectionConfig.Builder()
                             .jdbcDriverClassName("com.mysql.jdbc.Driver")
-                            .jdbcUrl(String.format("jdbc:mysql://localhost:14450/%s?useUnicode=yes&characterEncoding=UTF-8", DATABASE_NAME))
+                            .jdbcUrl(String.format("jdbc:mysql://localhost:3307/%s?useUnicode=yes&characterEncoding=UTF-8", DATABASE_NAME))
                             .password("stroompassword1")
                             .username("stroomuser")
                             .build())

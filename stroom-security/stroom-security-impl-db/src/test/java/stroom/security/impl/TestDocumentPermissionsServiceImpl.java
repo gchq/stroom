@@ -44,8 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestDocumentPermissionsServiceImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDocumentPermissionsServiceImpl.class);
 
-    private static MySQLContainer dbContainer = new MySQLContainer()
-            .withDatabaseName(TestModule.DATABASE_NAME);//= null;//pu
+    private static MySQLContainer dbContainer = null;//new MySQLContainer().withDatabaseName(TestModule.DATABASE_NAME);//= null;//pu
 
     private static Injector injector;
 
@@ -86,26 +85,26 @@ class TestDocumentPermissionsServiceImpl {
         addPermissions(docRef.getUuid(), userGroup2, c1, p2);
         addPermissions(docRef.getUuid(), userGroup3, c1);
 
-        checkDocumentPermissions(userGroup1, docRef, c1, p1);
-        checkDocumentPermissions(userGroup2, docRef, c1, p2);
-        checkDocumentPermissions(userGroup3, docRef, c1);
+        checkDocumentPermissions(docRef.getUuid(), userGroup1, c1, p1);
+        checkDocumentPermissions(docRef.getUuid(), userGroup2, c1, p2);
+        checkDocumentPermissions(docRef.getUuid(), userGroup3, c1);
 
         removePermissions(docRef.getUuid(), userGroup2, p2);
-        checkDocumentPermissions(userGroup2, docRef, c1);
+        checkDocumentPermissions(docRef.getUuid(), userGroup2, c1);
 
         // Check user permissions.
         final UserRef user = createUser(FileSystemTestUtil.getUniqueTestString());
         userService.addUserToGroup(user.getUuid(), userGroup1.getUuid());
         userService.addUserToGroup(user.getUuid(), userGroup3.getUuid());
-        checkUserPermissions(user, docRef, c1, p1);
+        checkUserPermissions(docRef.getUuid(), user, c1, p1);
 
         addPermissions(docRef.getUuid(), userGroup2, c1, p2);
 
         userService.addUserToGroup(user.getUuid(), userGroup2.getUuid());
-        checkUserPermissions(user, docRef, c1, p1, p2);
+        checkUserPermissions(docRef.getUuid(), user, c1, p1, p2);
 
         removePermissions(docRef.getUuid(), userGroup2, p2);
-        checkUserPermissions(user, docRef, c1, p1);
+        checkUserPermissions(docRef.getUuid(), user, c1, p1);
     }
 
     private void addPermissions(final String docRefUuid, final UserRef user, final String... permissions) {
@@ -124,27 +123,29 @@ class TestDocumentPermissionsServiceImpl {
         }
     }
 
-    private void checkDocumentPermissions(final UserRef user, final DocRef docRef, final String... permissions) {
+    private void checkDocumentPermissions(final String docRefUuid, final UserRef user, final String... permissions) {
         final DocumentPermissions documentPermissions = documentPermissionService
-                .getPermissionsForDocument(docRef.getUuid());
-        final Set<String> permissionSet = documentPermissions.getPermissionsForUser(user);
+                .getPermissionsForDocument(docRefUuid);
+        final Set<String> permissionSet = documentPermissions.getPermissionsForUser(user.getUuid());
         assertThat(permissionSet.size()).isEqualTo(permissions.length);
         for (final String permission : permissions) {
             assertThat(permissionSet.contains(permission)).isTrue();
         }
 
-        checkUserPermissions(user, docRef, permissions);
+        checkUserPermissions(docRefUuid, user, permissions);
     }
 
-    private void checkUserPermissions(final UserRef user, final DocRef docRef, final String... permissions) {
+    private void checkUserPermissions(final String docRefUuid,
+                                      final UserRef user,
+                                      final String... permissions) {
         final Set<UserRef> allUsers = new HashSet<>();
         allUsers.add(user);
         allUsers.addAll(userService.findGroupsForUser(user.getUuid()));
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final UserRef userRef : allUsers) {
-            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(docRef.getUuid());
-            final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef);
+            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(docRefUuid);
+            final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef.getUuid());
             combinedPermissions.addAll(userPermissions);
         }
 
@@ -153,10 +154,12 @@ class TestDocumentPermissionsServiceImpl {
             assertThat(combinedPermissions.contains(permission)).isTrue();
         }
 
-        checkUserCachePermissions(user, docRef, permissions);
+        checkUserCachePermissions(docRefUuid, user, permissions);
     }
 
-    private void checkUserCachePermissions(final UserRef user, final DocRef docRef, final String... permissions) {
+    private void checkUserCachePermissions(final String docRefUuid,
+                                           final UserRef user,
+                                           final String... permissions) {
         userGroupsCache.clear();
         documentPermissionsCache.clear();
 
@@ -166,8 +169,8 @@ class TestDocumentPermissionsServiceImpl {
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final UserRef userRef : allUsers) {
-            final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
-            final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef);
+            final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRefUuid);
+            final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef.getUuid());
             combinedPermissions.addAll(userPermissions);
         }
 

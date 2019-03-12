@@ -271,10 +271,12 @@ class SecurityContextImpl implements SecurityContext {
         return false;
     }
 
-    private boolean hasUserDocumentPermission(final UserRef userRef, final DocRef docRef, final String permission) {
-        final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
+    private boolean hasUserDocumentPermission(final UserRef userRef,
+                                              final DocRef docRef,
+                                              final String permission) {
+        final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef.getUuid());
         if (documentPermissions != null) {
-            final Set<String> permissions = documentPermissions.getPermissionsForUser(userRef);
+            final Set<String> permissions = documentPermissions.getPermissionsForUser(userRef.getUuid());
             if (permissions != null) {
                 String perm = permission;
                 while (perm != null) {
@@ -302,7 +304,7 @@ class SecurityContextImpl implements SecurityContext {
                 documentPermissionService.clearDocumentPermissions(documentUuid);
 
                 // Make sure cache updates for the document.
-                documentPermissionsCache.remove(docRef);
+                documentPermissionsCache.remove(docRef.getUuid());
             }
         }
     }
@@ -333,7 +335,7 @@ class SecurityContextImpl implements SecurityContext {
                 copyPermissions(sourceType, sourceUuid, documentType, documentUuid);
 
                 // Make sure cache updates for the document.
-                documentPermissionsCache.remove(docRef);
+                documentPermissionsCache.remove(docRef.getUuid());
             }
         }
     }

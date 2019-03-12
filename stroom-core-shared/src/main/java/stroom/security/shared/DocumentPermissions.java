@@ -50,8 +50,8 @@ public class DocumentPermissions implements SharedObject {
         return userPermissions;
     }
 
-    public Set<String> getPermissionsForUser(final UserRef userRef) {
-        final Set<String> permissions = userPermissions.get(userRef);
+    public Set<String> getPermissionsForUser(final String userUuid) {
+        final Set<String> permissions = userPermissions.get(userUuid);
         if (permissions != null) {
             return permissions;
         }

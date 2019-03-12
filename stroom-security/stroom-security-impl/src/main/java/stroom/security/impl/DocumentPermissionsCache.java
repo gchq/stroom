@@ -40,19 +40,15 @@ import java.util.concurrent.TimeUnit;
 class DocumentPermissionsCache implements EntityEvent.Handler, Clearable {
     private static final int MAX_CACHE_ENTRIES = 10000;
 
-    private final Provider<EntityEventBus> eventBusProvider;
-
-    private final LoadingCache<DocRef, DocumentPermissions> cache;
+    private final LoadingCache<String, DocumentPermissions> cache;
 
     @Inject
     @SuppressWarnings("unchecked")
     DocumentPermissionsCache(final CacheManager cacheManager,
-                             final DocumentPermissionService documentPermissionService,
-                             final Provider<EntityEventBus> eventBusProvider) {
-        this.eventBusProvider = eventBusProvider;
+                             final DocumentPermissionService documentPermissionService) {
 
-        final CacheLoader<DocRef, DocumentPermissions> cacheLoader =
-                CacheLoader.from(d -> documentPermissionService.getPermissionsForDocument(d.getUuid()));
+        final CacheLoader<String, DocumentPermissions> cacheLoader =
+                CacheLoader.from(documentPermissionService::getPermissionsForDocument);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
                 .expireAfterAccess(30, TimeUnit.MINUTES);
@@ -60,14 +56,12 @@ class DocumentPermissionsCache implements EntityEvent.Handler, Clearable {
         cacheManager.registerCache("Document Permissions Cache", cacheBuilder, cache);
     }
 
-    DocumentPermissions get(final DocRef key) {
+    DocumentPermissions get(final String key) {
         return cache.getUnchecked(key);
     }
 
-    void remove(final DocRef docRef) {
-        cache.invalidate(docRef);
-        final EntityEventBus entityEventBus = eventBusProvider.get();
-        EntityEvent.fire(entityEventBus, docRef, EntityAction.CLEAR_CACHE);
+    void remove(final String docRefUuid) {
+        cache.invalidate(docRefUuid);
     }
 
     @Override
