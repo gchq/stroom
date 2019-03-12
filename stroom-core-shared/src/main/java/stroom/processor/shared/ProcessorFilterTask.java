@@ -34,8 +34,8 @@ public class ProcessorFilterTask implements SharedObject {
     private Long metaId;
     private String data;
     private String nodeName;
-    private Long createMs;
-    private Long statusMs;
+    private Long createTimeMs;
+    private Long statusTimeMs;
     private Long startTimeMs;
     private Long endTimeMs;
     private TaskStatus status = TaskStatus.UNPROCESSED;
@@ -99,20 +99,20 @@ public class ProcessorFilterTask implements SharedObject {
         this.startTimeMs = startTimeMs;
     }
 
-    public Long getCreateMs() {
-        return createMs;
+    public Long getCreateTimeMs() {
+        return createTimeMs;
     }
 
-    public void setCreateMs(final Long createMs) {
-        this.createMs = createMs;
+    public void setCreateTimeMs(final Long createTimeMs) {
+        this.createTimeMs = createTimeMs;
     }
 
-    public Long getStatusMs() {
-        return statusMs;
+    public Long getStatusTimeMs() {
+        return statusTimeMs;
     }
 
-    public void setStatusMs(final Long statusMs) {
-        this.statusMs = statusMs;
+    public void setStatusTimeMs(final Long statusTimeMs) {
+        this.statusTimeMs = statusTimeMs;
     }
 
     public Long getEndTimeMs() {
@@ -139,8 +139,8 @@ public class ProcessorFilterTask implements SharedObject {
                 ", metaId=" + metaId +
                 ", data='" + data + '\'' +
                 ", nodeName='" + nodeName + '\'' +
-                ", createMs=" + createMs +
-                ", statusMs=" + statusMs +
+                ", createTimeMs=" + createTimeMs +
+                ", statusTimeMs=" + statusTimeMs +
                 ", startTimeMs=" + startTimeMs +
                 ", endTimeMs=" + endTimeMs +
                 ", status=" + status +
@@ -153,21 +153,11 @@ public class ProcessorFilterTask implements SharedObject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final ProcessorFilterTask that = (ProcessorFilterTask) o;
-        return Objects.equals(status, that.status) &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(version, that.version) &&
-                Objects.equals(metaId, that.metaId) &&
-                Objects.equals(data, that.data) &&
-                Objects.equals(nodeName, that.nodeName) &&
-                Objects.equals(createMs, that.createMs) &&
-                Objects.equals(statusMs, that.statusMs) &&
-                Objects.equals(startTimeMs, that.startTimeMs) &&
-                Objects.equals(endTimeMs, that.endTimeMs) &&
-                Objects.equals(processorFilter, that.processorFilter);
+        return id == that.id;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, metaId, data, nodeName, createMs, statusMs, startTimeMs, endTimeMs, status, processorFilter);
+        return Objects.hash(id);
     }
 }

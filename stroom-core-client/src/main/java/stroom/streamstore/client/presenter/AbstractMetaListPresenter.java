@@ -277,10 +277,10 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 //
 //        TooltipUtil.addRowData(html, "Stream Id", row.getMeta().getId());
 //        TooltipUtil.addRowData(html, "Status", row.getMeta().getStatus());
-//        StreamTooltipPresenterUtil.addRowDateString(html, "Status Ms", row.getMeta().getStatusMs());
+//        StreamTooltipPresenterUtil.addRowDateString(html, "Status Ms", row.getMeta().getStatusTimeMs());
 //        TooltipUtil.addRowData(html, "Stream Task Id", row.getMeta().getProcessTaskId());
 //        TooltipUtil.addRowData(html, "Parent Stream Id", row.getMeta().getParentMetaId());
-//        StreamTooltipPresenterUtil.addRowDateString(html, "Created", row.getMeta().getCreateMs());
+//        StreamTooltipPresenterUtil.addRowDateString(html, "Created", row.getMeta().getCreateTimeMs());
 //        StreamTooltipPresenterUtil.addRowDateString(html, "Effective", row.getMeta().getEffectiveMs());
 //        TooltipUtil.addRowData(html, "Stream Type", row.getMeta().getTypeName());
 //        TooltipUtil.addRowData(html, "Feed", row.getMeta().getFeedName());

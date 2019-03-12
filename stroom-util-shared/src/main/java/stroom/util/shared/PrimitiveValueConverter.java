@@ -29,7 +29,10 @@ public class PrimitiveValueConverter<E extends HasPrimitiveValue> {
         }
     }
 
-    public E fromPrimitiveValue(byte i) {
+    public E fromPrimitiveValue(Byte i) {
+        if (i == null) {
+            return null;
+        }
         return map.get(i);
     }
 

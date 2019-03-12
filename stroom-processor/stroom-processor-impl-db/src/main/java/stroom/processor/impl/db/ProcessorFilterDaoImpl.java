@@ -59,7 +59,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
         return marshaller.unmarshal(JooqUtil.contextResult(connectionProvider, context -> context.transactionResult(nested -> {
-            final ProcessorFilterTrackerRecord processorFilterTrackerRecord = DSL.using(nested).newRecord(PROCESSOR_FILTER_TRACKER);
+            final ProcessorFilterTrackerRecord processorFilterTrackerRecord = DSL.using(nested).newRecord(PROCESSOR_FILTER_TRACKER, new ProcessorFilterTracker());
             processorFilterTrackerRecord.store();
             final ProcessorFilterTracker processorFilterTracker = processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
 

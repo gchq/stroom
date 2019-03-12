@@ -61,7 +61,7 @@ public class MockProcessorFilterTaskDao implements ProcessorFilterTaskDao {
                     TaskStatus.ASSIGNED.equals(task.getStatus()) ||
                     TaskStatus.PROCESSING.equals(task.getStatus())) {
                 task.setStatus(TaskStatus.UNPROCESSED);
-                task.setStatusMs(now);
+                task.setStatusTimeMs(now);
                 task.setNodeName(null);
                 dao.update(task);
             }
@@ -82,7 +82,7 @@ public class MockProcessorFilterTaskDao implements ProcessorFilterTaskDao {
         metaMap.forEach((meta, eventRanges) -> {
             final ProcessorFilterTask task = new ProcessorFilterTask();
             task.setVersion(1);
-            task.setCreateMs(now);
+            task.setCreateTimeMs(now);
             task.setStatus(TaskStatus.UNPROCESSED);
             task.setStartTimeMs(now);
 
@@ -113,7 +113,7 @@ public class MockProcessorFilterTaskDao implements ProcessorFilterTaskDao {
     public ProcessorFilterTask changeTaskStatus(final ProcessorFilterTask processorFilterTask, final String nodeName, final TaskStatus status, final Long startTime, final Long endTime) {
         processorFilterTask.setNodeName(nodeName);
         processorFilterTask.setStatus(status);
-        processorFilterTask.setStatusMs(System.currentTimeMillis());
+        processorFilterTask.setStatusTimeMs(System.currentTimeMillis());
         processorFilterTask.setStartTimeMs(startTime);
         processorFilterTask.setEndTimeMs(endTime);
         return processorFilterTask;

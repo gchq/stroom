@@ -72,7 +72,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                     TooltipUtil.addRowData(html, "Priority", row.getProcessorFilter().getPriority());
                 }
 
-                TooltipUtil.addRowData(html, "Status Time", toDateString(row.getStatusMs()));
+                TooltipUtil.addRowData(html, "Status Time", toDateString(row.getStatusTimeMs()));
                 TooltipUtil.addRowData(html, "Start Time", toDateString(row.getStartTimeMs()));
                 TooltipUtil.addRowData(html, "End Time", toDateString(row.getEndTimeMs()));
                 TooltipUtil.addRowData(html, "Node", row.getNodeName());
@@ -84,7 +84,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
 //                TooltipUtil.addRowData(html, "Stream Id", row.getMeta().getId());
 //                TooltipUtil.addRowData(html, "Status", row.getMeta().getStatus().getDisplayValue());
 //                TooltipUtil.addRowData(html, "Parent Stream Id", row.getMeta().getParentMetaId());
-//                TooltipUtil.addRowData(html, "Created", toDateString(row.getMeta().getCreateMs()));
+//                TooltipUtil.addRowData(html, "Created", toDateString(row.getMeta().getCreateTimeMs()));
 //                TooltipUtil.addRowData(html, "Effective", toDateString(row.getMeta().getEffectiveMs()));
 //                TooltipUtil.addRowData(html, "Stream Type", row.getMeta().getTypeName());
 //                TooltipUtil.addRowData(html, "Feed", row.getMeta().getFeedName());
@@ -118,7 +118,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                 new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_CREATE_TIME, false) {
                     @Override
                     public String getValue(final ProcessorFilterTask row) {
-                        return ClientDateUtil.toISOString(row.getCreateMs());
+                        return ClientDateUtil.toISOString(row.getCreateTimeMs());
                     }
                 }, "Create", ColumnSizeConstants.DATE_COL);
 

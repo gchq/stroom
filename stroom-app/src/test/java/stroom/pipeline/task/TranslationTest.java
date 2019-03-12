@@ -292,7 +292,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         // Make sure there are no more tasks.
         tasks = getTasks();
-        assertThat(tasks.size() == 0).as("There should not be any more tasks here").isTrue();
+        assertThat(tasks.size()).as("There should not be any more tasks here").isZero();
     }
 
     private void addStream(final Path file, final FeedDoc feed) throws IOException {

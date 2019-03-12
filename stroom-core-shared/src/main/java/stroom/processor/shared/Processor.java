@@ -148,27 +148,6 @@ public class Processor implements HasAuditInfo, HasUuid, SharedObject {
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        final Processor processor = (Processor) o;
-        return enabled == processor.enabled &&
-                Objects.equals(id, processor.id) &&
-                Objects.equals(version, processor.version) &&
-                Objects.equals(createTimeMs, processor.createTimeMs) &&
-                Objects.equals(createUser, processor.createUser) &&
-                Objects.equals(updateTimeMs, processor.updateTimeMs) &&
-                Objects.equals(updateUser, processor.updateUser) &&
-                Objects.equals(taskType, processor.taskType) &&
-                Objects.equals(pipelineUuid, processor.pipelineUuid);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, version, createTimeMs, createUser, updateTimeMs, updateUser, taskType, pipelineUuid, enabled);
-    }
-
-    @Override
     public String toString() {
         return "Processor{" +
                 "id=" + id +
@@ -181,5 +160,18 @@ public class Processor implements HasAuditInfo, HasUuid, SharedObject {
                 ", pipelineUuid='" + pipelineUuid + '\'' +
                 ", enabled=" + enabled +
                 '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final Processor processor = (Processor) o;
+        return Objects.equals(id, processor.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

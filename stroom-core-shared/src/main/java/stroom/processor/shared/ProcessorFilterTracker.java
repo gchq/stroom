@@ -244,23 +244,11 @@ public class ProcessorFilterTracker implements SharedObject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final ProcessorFilterTracker that = (ProcessorFilterTracker) o;
-        return minMetaId == that.minMetaId &&
-                minEventId == that.minEventId &&
-                complete == that.complete &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(version, that.version) &&
-                Objects.equals(minMetaCreateMs, that.minMetaCreateMs) &&
-                Objects.equals(maxMetaCreateMs, that.maxMetaCreateMs) &&
-                Objects.equals(metaCreateMs, that.metaCreateMs) &&
-                Objects.equals(lastPollMs, that.lastPollMs) &&
-                Objects.equals(lastPollTaskCount, that.lastPollTaskCount) &&
-                Objects.equals(status, that.status) &&
-                Objects.equals(metaCount, that.metaCount) &&
-                Objects.equals(eventCount, that.eventCount);
+        return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, minMetaId, minEventId, minMetaCreateMs, maxMetaCreateMs, metaCreateMs, lastPollMs, lastPollTaskCount, complete, status, metaCount, eventCount);
+        return Objects.hash(id);
     }
 }

@@ -41,7 +41,7 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTaskRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ProcessorFilterTask extends TableImpl<ProcessorFilterTaskRecord> {
 
-    private static final long serialVersionUID = 823066749;
+    private static final long serialVersionUID = -120754866;
 
     /**
      * The reference instance of <code>stroom.processor_filter_task</code>
@@ -64,7 +64,7 @@ public class ProcessorFilterTask extends TableImpl<ProcessorFilterTaskRecord> {
     /**
      * The column <code>stroom.processor_filter_task.version</code>.
      */
-    public final TableField<ProcessorFilterTaskRecord, Byte> VERSION = createField("version", org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
+    public final TableField<ProcessorFilterTaskRecord, Integer> VERSION = createField("version", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>stroom.processor_filter_task.fk_processor_filter_id</code>.
@@ -204,7 +204,7 @@ public class ProcessorFilterTask extends TableImpl<ProcessorFilterTaskRecord> {
      * {@inheritDoc}
      */
     @Override
-    public TableField<ProcessorFilterTaskRecord, Byte> getRecordVersion() {
+    public TableField<ProcessorFilterTaskRecord, Integer> getRecordVersion() {
         return VERSION;
     }
 

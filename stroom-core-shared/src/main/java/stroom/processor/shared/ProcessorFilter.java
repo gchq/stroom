@@ -190,7 +190,21 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
 
     @Override
     public String toString() {
-        return "[" + priority + "] - " + queryData.toString();
+        return "ProcessorFilter{" +
+                "id=" + id +
+                ", version=" + version +
+                ", createTimeMs=" + createTimeMs +
+                ", createUser='" + createUser + '\'' +
+                ", updateTimeMs=" + updateTimeMs +
+                ", updateUser='" + updateUser + '\'' +
+                ", uuid='" + uuid + '\'' +
+                ", data='" + data + '\'' +
+                ", queryData=" + queryData +
+                ", processor=" + processor +
+                ", processorFilterTracker=" + processorFilterTracker +
+                ", priority=" + priority +
+                ", enabled=" + enabled +
+                '}';
     }
 
     @Override
@@ -198,22 +212,11 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final ProcessorFilter that = (ProcessorFilter) o;
-        return priority == that.priority &&
-                enabled == that.enabled &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(version, that.version) &&
-                Objects.equals(createTimeMs, that.createTimeMs) &&
-                Objects.equals(createUser, that.createUser) &&
-                Objects.equals(updateTimeMs, that.updateTimeMs) &&
-                Objects.equals(updateUser, that.updateUser) &&
-                Objects.equals(data, that.data) &&
-                Objects.equals(queryData, that.queryData) &&
-                Objects.equals(processor, that.processor) &&
-                Objects.equals(processorFilterTracker, that.processorFilterTracker);
+        return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, createTimeMs, createUser, updateTimeMs, updateUser, data, queryData, processor, processorFilterTracker, priority, enabled);
+        return Objects.hash(id);
     }
 }

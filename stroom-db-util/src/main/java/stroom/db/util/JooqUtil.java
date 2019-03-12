@@ -179,7 +179,7 @@ public final class JooqUtil {
     public static <R extends Record, T extends Number> Optional<Condition> getRangeCondition(
             final Field<T> field,
             final Range<T> criteria) {
-        if (!criteria.isConstrained()) {
+        if (criteria == null || !criteria.isConstrained()) {
             return Optional.empty();
         }
 
@@ -218,7 +218,7 @@ public final class JooqUtil {
     public static <R extends Record, T> Optional<Condition> getSetCondition(
             final Field<T> field,
             final CriteriaSet<T> criteria) {
-        if (!criteria.isConstrained()) {
+        if (criteria == null || !criteria.isConstrained()) {
             return Optional.empty();
         }
 
@@ -243,7 +243,7 @@ public final class JooqUtil {
     public static <R extends Record> Optional<Condition> getStringCondition(
             final Field<String> field,
             final StringCriteria criteria) {
-        if (!criteria.isConstrained()) {
+        if (criteria == null || !criteria.isConstrained()) {
             return Optional.empty();
         }
 

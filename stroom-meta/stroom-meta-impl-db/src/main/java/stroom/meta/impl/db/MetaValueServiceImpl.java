@@ -142,7 +142,7 @@ class MetaValueServiceImpl implements MetaValueService {
 //                // Work out the batch inserts
 //                for (final MetaKey metaKey : keys) {
 //                    for (final AsyncFlush asyncFlush : batchInsert) {
-//                        if (asyncFlush.getMeta().getCreateMs() > applicableStreamAgeMs) {
+//                        if (asyncFlush.getMeta().getCreateTimeMs() > applicableStreamAgeMs) {
 //                            // Found a key
 //                            if (asyncFlush.getAttributeMap().containsKey(metaKey.getName())) {
 //                                final String newValue = asyncFlush.getAttributeMap().get(metaKey.getName());

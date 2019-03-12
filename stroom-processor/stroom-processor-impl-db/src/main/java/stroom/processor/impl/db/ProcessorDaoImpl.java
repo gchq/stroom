@@ -37,7 +37,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                             PROCESSOR.CREATE_USER,
                             PROCESSOR.UPDATE_TIME_MS,
                             PROCESSOR.UPDATE_USER,
-                            // PROCESSOR.UUID, // TODO : @66 Fix
+                            PROCESSOR.UUID,
                             PROCESSOR.TASK_TYPE,
                             PROCESSOR.PIPELINE_UUID,
                             PROCESSOR.ENABLED)
@@ -45,7 +45,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                             processor.getCreateUser(),
                             processor.getUpdateTimeMs(),
                             processor.getUpdateUser(),
-//                            processor.getUuid(),
+                            processor.getUuid(),
                             processor.getTaskType(),
                             processor.getPipelineUuid(),
                             processor.isEnabled())
