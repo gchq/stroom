@@ -86,7 +86,7 @@ public final class FindProcessorFilterTaskCriteria extends BaseCriteria implemen
      */
     private StringCriteria pipelineUuidCriteria = null;
 
-    private CriteriaSet<Status> statusSet;
+//    private CriteriaSet<Status> statusSet;
 
     private Period createPeriod;
 //    private Period effectivePeriod;
@@ -128,9 +128,9 @@ public final class FindProcessorFilterTaskCriteria extends BaseCriteria implemen
         if (pipelineUuidCriteria != null && pipelineUuidCriteria.isConstrained()) {
             return true;
         }
-        if (statusSet != null && statusSet.isConstrained()) {
-            return true;
-        }
+//        if (statusSet != null && statusSet.isConstrained()) {
+//            return true;
+//        }
         if (createPeriod != null && createPeriod.isConstrained()) {
             return true;
         }
@@ -229,16 +229,16 @@ public final class FindProcessorFilterTaskCriteria extends BaseCriteria implemen
         return processorFilterTaskIdSet;
     }
 
-    public CriteriaSet<Status> getStatusSet() {
-        return statusSet;
-    }
-
-    public CriteriaSet<Status> obtainStatusSet() {
-        if (statusSet == null) {
-            statusSet = new CriteriaSet<>();
-        }
-        return statusSet;
-    }
+//    public CriteriaSet<Status> getStatusSet() {
+//        return statusSet;
+//    }
+//
+//    public CriteriaSet<Status> obtainStatusSet() {
+//        if (statusSet == null) {
+//            statusSet = new CriteriaSet<>();
+//        }
+//        return statusSet;
+//    }
 
     //    public FindStreamCriteria getFindStreamCriteria() {
 //        return findStreamCriteria;
@@ -325,7 +325,7 @@ public final class FindProcessorFilterTaskCriteria extends BaseCriteria implemen
 //        if (streamTypeNameSet != null ? !streamTypeNameSet.equals(that.streamTypeNameSet) : that.streamTypeNameSet != null)
 //            return false;
         if (pipelineUuidCriteria != null ? pipelineUuidCriteria.equals(that.pipelineUuidCriteria) : that.pipelineUuidCriteria == null) return false;
-        if (statusSet != null ? statusSet.equals(that.statusSet) : that.statusSet == null) return false;
+//        if (statusSet != null ? statusSet.equals(that.statusSet) : that.statusSet == null) return false;
         if (createPeriod != null ? createPeriod.equals(that.createPeriod) : that.createPeriod == null) return false;
 
         return true;
@@ -343,7 +343,7 @@ public final class FindProcessorFilterTaskCriteria extends BaseCriteria implemen
 //        result = 31 * result + (feedNameSet != null ? feedNameSet.hashCode() : 0);
 //        result = 31 * result + (streamTypeNameSet != null ? streamTypeNameSet.hashCode() : 0);
         result = 31 * result + (pipelineUuidCriteria != null ? pipelineUuidCriteria.hashCode() : 0);
-        result = 31 * result + (statusSet != null ? statusSet.hashCode() : 0);
+//        result = 31 * result + (statusSet != null ? statusSet.hashCode() : 0);
         result = 31 * result + (createPeriod != null ? createPeriod.hashCode() : 0);
         return result;
     }

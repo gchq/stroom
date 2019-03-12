@@ -359,18 +359,18 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
      * @return The next task or null if there are currently no more tasks.
      */
     private List<DataProcessorTask> getTasks() {
-        List<DataProcessorTask> streamProcessorTasks = Collections.emptyList();
+        List<DataProcessorTask> dataProcessorTasks = Collections.emptyList();
 
-        List<ProcessorFilterTask> streamTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
-        while (streamTasks.size() > 0) {
-            streamProcessorTasks = new ArrayList<>(streamTasks.size());
-            for (final ProcessorFilterTask streamTask : streamTasks) {
-                streamProcessorTasks.add(new DataProcessorTask(streamTask));
+        List<ProcessorFilterTask> processorFilterTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+        while (processorFilterTasks.size() > 0) {
+            dataProcessorTasks = new ArrayList<>(processorFilterTasks.size());
+            for (final ProcessorFilterTask processorFilterTask : processorFilterTasks) {
+                dataProcessorTasks.add(new DataProcessorTask(processorFilterTask));
             }
-            streamTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+            processorFilterTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
 
-        return streamProcessorTasks;
+        return dataProcessorTasks;
     }
 
     protected void testSteppingTask(final String feedName, final Path dir) throws IOException {

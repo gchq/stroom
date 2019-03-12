@@ -169,7 +169,8 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
 
     private FindProcessorFilterTaskCriteria initCriteria() {
         final FindProcessorFilterTaskCriteria criteria = new FindProcessorFilterTaskCriteria();
-        criteria.obtainStatusSet().setSingleItem(Status.UNLOCKED);
+        // Only show owned stuff, i.e. tasks that are ready for processing or have been processed, not ones that belong to LOCKED meta.
+        criteria.obtainNodeNameCriteria().setMatchNull(false);
         return criteria;
     }
 }

@@ -248,18 +248,22 @@ public final class JooqUtil {
         }
 
         final Optional<Condition> valueCondition;
-        if (criteria.getMatchStyle() == null) {
-            if (criteria.isCaseInsensitive()) {
-                valueCondition = Optional.of(field.upper().eq(criteria.getMatchString()));
+        if (criteria.getMatchString() != null) {
+            if (criteria.getMatchStyle() == null) {
+                if (criteria.isCaseInsensitive()) {
+                    valueCondition = Optional.of(field.upper().eq(criteria.getMatchString()));
+                } else {
+                    valueCondition = Optional.of(field.eq(criteria.getMatchString()));
+                }
             } else {
-                valueCondition = Optional.of(field.eq(criteria.getMatchString()));
+                if (criteria.isCaseInsensitive()) {
+                    valueCondition = Optional.of(field.upper().like(criteria.getMatchString()));
+                } else {
+                    valueCondition = Optional.of(field.like(criteria.getMatchString()));
+                }
             }
         } else {
-            if (criteria.isCaseInsensitive()) {
-                valueCondition = Optional.of(field.upper().like(criteria.getMatchString()));
-            } else {
-                valueCondition = Optional.of(field.like(criteria.getMatchString()));
-            }
+            valueCondition = Optional.empty();
         }
 
         return convertMatchNull(field, criteria.getMatchNull(), valueCondition);

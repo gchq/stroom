@@ -246,8 +246,9 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         final FindProcessorFilterTaskCriteria criteria = new FindProcessorFilterTaskCriteria();
         criteria.setSort(FindProcessorFilterTaskCriteria.FIELD_CREATE_TIME, Direction.DESCENDING, false);
         criteria.obtainTaskStatusSet().setMatchAll(Boolean.FALSE);
-        // Only show unlocked stuff
-        criteria.obtainStatusSet().add(Status.UNLOCKED);
+
+        // Only show owned stuff, i.e. tasks that are ready for processing or have been processed, not ones that belong to LOCKED meta.
+        criteria.obtainNodeNameCriteria().setMatchNull(false);
 
 //        if (feedName != null) {
 //            criteria.obtainFeedNameSet().add(feedName);

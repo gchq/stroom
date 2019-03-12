@@ -39,6 +39,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -122,7 +123,8 @@ class ProcessorFilterTaskDaoImpl implements ProcessorFilterTaskDao {
     private final ClusterLockService clusterLockService;
     private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao;
     private final CoreConfig coreConfig;
-    private final stroom.processor.impl.db.ConnectionProvider connectionProvider;
+    private final ConnectionProvider connectionProvider;
+    private final ProcessorFilterMarshaller marshaller;
 
     private final GenericDao<ProcessorFilterTaskRecord, ProcessorFilterTask, Long> dao;
 
@@ -132,13 +134,15 @@ class ProcessorFilterTaskDaoImpl implements ProcessorFilterTaskDao {
                                final ClusterLockService clusterLockService,
                                final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao,
                                final CoreConfig coreConfig,
-                               final stroom.processor.impl.db.ConnectionProvider connectionProvider) {
+                               final ConnectionProvider connectionProvider,
+                               final ProcessorFilterMarshaller marshaller) {
         this.nodeInfo = nodeInfo;
         this.processorNodeCache = processorNodeCache;
         this.clusterLockService = clusterLockService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.coreConfig = coreConfig;
         this.connectionProvider = connectionProvider;
+        this.marshaller = marshaller;
 
         this.dao = new GenericDao<>(PROCESSOR_FILTER_TASK, PROCESSOR_FILTER_TASK.ID, ProcessorFilterTask.class, connectionProvider);
         this.dao.setObjectToRecordMapper((processorFilterTask, record) -> {
@@ -796,25 +800,32 @@ class ProcessorFilterTaskDaoImpl implements ProcessorFilterTaskDao {
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
+        final Map<Integer, ProcessorFilter> processorFilterCache = new HashMap<>();
+
         final List<ProcessorFilterTask> list = context
                 .select()
                 .from(PROCESSOR_FILTER_TASK)
                 .join(PROCESSOR_FILTER).on(PROCESSOR_FILTER_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
-                .join(PROCESSOR_NODE).on(PROCESSOR_FILTER_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
+                .leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_FILTER_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
                 .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                 .where(conditions)
                 .orderBy(orderFields)
                 .fetch()
                 .map(record -> {
-                    final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);
-                    final ProcessorFilter processorFilter = RECORD_TO_PROCESSOR_FILTER_MAPPER.apply(record);
-                    final ProcessorFilterTracker processorFilterTracker = RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
-                    final ProcessorFilterTask processorFilterTask = RECORD_TO_PROCESSOR_FILTER_TASK_MAPPER.apply(record);
+                    final Integer processorFilterId = record.get(PROCESSOR_FILTER_TASK.FK_PROCESSOR_FILTER_ID);
+                    final ProcessorFilter processorFilter = processorFilterCache.computeIfAbsent(processorFilterId, pfid -> {
+                        final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);
+                        final ProcessorFilterTracker processorFilterTracker = RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
 
-                    processorFilter.setProcessor(processor);
-                    processorFilter.setProcessorFilterTracker(processorFilterTracker);
-                    processorFilterTask.setProcessorFilter(processorFilter);
+                        final ProcessorFilter filter = RECORD_TO_PROCESSOR_FILTER_MAPPER.apply(record);
+                        filter.setProcessor(processor);
+                        filter.setProcessorFilterTracker(processorFilterTracker);
+                        return marshaller.unmarshal(filter);
+                    });
+
+                    final ProcessorFilterTask processorFilterTask = RECORD_TO_PROCESSOR_FILTER_TASK_MAPPER.apply(record);
+                    processorFilterTask.setProcessorFilter(marshaller.unmarshal(processorFilter));
 
                     return processorFilterTask;
                 });

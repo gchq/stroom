@@ -73,6 +73,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Keep a pool of stream tasks ready to go.
@@ -415,26 +417,19 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
         try {
             int remaining = totalQueueSize;
             for (final ProcessorFilter filter : filters) {
-                StreamTaskQueue queue = queueMap.get(filter);
-                if (queue == null) {
-                    queueMap.putIfAbsent(filter, new StreamTaskQueue());
-                    queue = queueMap.get(filter);
-                }
+                final StreamTaskQueue queue = queueMap.computeIfAbsent(filter, k -> new StreamTaskQueue());
+                final int queueSize = queue.size();
 
-                if (queue != null) {
-                    final int queueSize = queue.size();
+                // Reduce the number of tasks we need to get by the size of
+                // the
+                // current queue.
+                remaining -= queueSize;
 
-                    // Reduce the number of tasks we need to get by the size of
-                    // the
-                    // current queue.
-                    remaining -= queueSize;
-
-                    // Now go and fill this queue asynchronously.
-                    if (remaining > 0 && queueSize < halfQueueSize) {
-                        if (queue.compareAndSetFilling(false, true)) {
-                            // Create tasks for this filter.
-                            createTasksForFilter(taskContext, nodeName, filter, queue, totalQueueSize);
-                        }
+                // Now go and fill this queue asynchronously.
+                if (remaining > 0 && queueSize < halfQueueSize) {
+                    if (queue.compareAndSetFilling(false, true)) {
+                        // Create tasks for this filter.
+                        createTasksForFilter(taskContext, nodeName, filter, queue, totalQueueSize);
                     }
                 }
             }
@@ -629,30 +624,53 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
             final FindProcessorFilterTaskCriteria findProcessorFilterTaskCriteria = new FindProcessorFilterTaskCriteria();
             findProcessorFilterTaskCriteria.obtainTaskStatusSet().add(TaskStatus.UNPROCESSED);
             findProcessorFilterTaskCriteria.obtainNodeNameCriteria().setMatchNull(true);
-            findProcessorFilterTaskCriteria.obtainStatusSet().add(Status.UNLOCKED);
             findProcessorFilterTaskCriteria.obtainProcessorFilterIdSet().add(filter.getId());
             findProcessorFilterTaskCriteria.obtainPageRequest().setLength(tasksToCreate);
 
-            final BaseResultList<ProcessorFilterTask> streamTasks = processorFilterTaskDao.find(findProcessorFilterTaskCriteria);
-            final int size = streamTasks.size();
+            final BaseResultList<ProcessorFilterTask> processorFilterTasks = processorFilterTaskDao.find(findProcessorFilterTaskCriteria);
+            final int size = processorFilterTasks.size();
 
-            taskStatusTraceLog.addUnownedTasks(ProcessorFilterTaskManagerImpl.class, streamTasks);
+            taskStatusTraceLog.addUnownedTasks(ProcessorFilterTaskManagerImpl.class, processorFilterTasks);
 
-            for (final ProcessorFilterTask streamTask : streamTasks) {
-                try {
-                    final ProcessorFilterTask modified = processorFilterTaskDao.changeTaskStatus(streamTask, nodeName,
-                            TaskStatus.UNPROCESSED, null, null);
-                    if (modified != null) {
-                        queue.add(modified);
-                        count++;
-                        taskContext.info("Adding {}/{} non owned Tasks", count, size);
+            if (processorFilterTasks.size() > 0) {
+                // Find unlocked meta data corresponding to this list of unowned tasks.
+                final ExpressionOperator.Builder metaIdExpressionBuilder = new ExpressionOperator.Builder(Op.OR);
+                processorFilterTasks.forEach(task -> metaIdExpressionBuilder.addTerm(MetaFieldNames.ID, Condition.EQUALS, task.getMetaId().toString()));
+
+                final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                        .addOperator(metaIdExpressionBuilder.build())
+                        .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .build();
+
+                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+                findMetaCriteria.setExpression(expression);
+                findMetaCriteria.setSort(MetaFieldNames.ID, Direction.ASCENDING, false);
+                final BaseResultList<Meta> metaList = metaService.find(findMetaCriteria);
+
+                if (metaList.size() > 0) {
+                    // Change the ownership of tasks where we have unlocked meta data.
+                    final Map<Long, ProcessorFilterTask> metaIdToTaskMap = processorFilterTasks.stream()
+                            .collect(Collectors.toMap(ProcessorFilterTask::getMetaId, task -> task));
+
+                    for (final Meta meta : metaList) {
+                        final ProcessorFilterTask processorFilterTask = metaIdToTaskMap.get(meta.getId());
+
+                        try {
+                            final ProcessorFilterTask modified = processorFilterTaskDao.changeTaskStatus(processorFilterTask, nodeName,
+                                    TaskStatus.UNPROCESSED, null, null);
+                            if (modified != null) {
+                                queue.add(modified);
+                                count++;
+                                taskContext.info("Adding {}/{} non owned Tasks", count, size);
+                            }
+
+                            if (Thread.currentThread().isInterrupted()) {
+                                break;
+                            }
+                        } catch (final RuntimeException e) {
+                            LOGGER.error("doCreateTasks() - Failed to grab non owned task {}", processorFilterTask, e);
+                        }
                     }
-
-                    if (Thread.currentThread().isInterrupted()) {
-                        break;
-                    }
-                } catch (final RuntimeException e) {
-                    LOGGER.error("doCreateTasks() - Failed to grab non owned task {}", streamTask, e);
                 }
             }
 
