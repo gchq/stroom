@@ -229,8 +229,8 @@ ext.libs = [
         kryo                           : "com.esotericsoftware:kryo-shaded:4.0.0",
         lmdbjava                       : "org.lmdbjava:lmdbjava:0.6.3",
         log4j_over_slf4j               : "org.slf4j:log4j-over-slf4j", // version controlled by DW BOM
-        logback_classic                : "ch.qos.logback:logback-classic",
-        logback_core                   : "ch.qos.logback:logback-core",
+        logback_classic                : "ch.qos.logback:logback-classic", // version controlled by DW BOM
+        logback_core                   : "ch.qos.logback:logback-core", // version controlled by DW BOM
         lucene_analyzers_common        : "org.apache.lucene:lucene-analyzers-common:$versions.lucene",
         lucene_backward_codecs         : "org.apache.lucene:lucene-backward-codecs:$versions.lucene",
         lucene_core                    : "org.apache.lucene:lucene-core:$versions.lucene",
@@ -244,7 +244,7 @@ ext.libs = [
         reactivestreams                : "org.reactivestreams:reactive-streams:1.0.2", //used by rxjava
         rxjava                         : "io.reactivex.rxjava2:rxjava:$versions.rxjava",
         saxon_he                       : "net.sf.saxon:Saxon-HE:9.7.0-21",
-        slf4j_api                      : "org.slf4j:slf4j-api",
+        slf4j_api                      : "org.slf4j:slf4j-api", // version controlled by DW BOM
         stax_api                       : "stax:stax-api:1.0.1",
         swagger_annotations            : "io.swagger:swagger-annotations:$versions.swagger",
         test_containers                : "org.testcontainers:testcontainers:1.8.0",
