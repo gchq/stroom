@@ -32,9 +32,9 @@ import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.FindProcessorFilterTaskCriteria;
-import stroom.processor.shared.FindProcessorFilterTaskSummaryAction;
-import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
+import stroom.processor.shared.FindProcessorTaskCriteria;
+import stroom.processor.shared.FindProcessorTaskSummaryAction;
+import stroom.processor.shared.ProcessorTaskSummaryRow;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultList;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -44,10 +44,10 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
-public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridView<ProcessorFilterTaskSummaryRow>>
+public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridView<ProcessorTaskSummaryRow>>
         implements HasDocumentRead<SharedObject> {
-    private FindProcessorFilterTaskSummaryAction action = new FindProcessorFilterTaskSummaryAction(new FindProcessorFilterTaskCriteria());
-    private ActionDataProvider<ProcessorFilterTaskSummaryRow> dataProvider;
+    private FindProcessorTaskSummaryAction action = new FindProcessorTaskSummaryAction(new FindProcessorTaskCriteria());
+    private ActionDataProvider<ProcessorTaskSummaryRow> dataProvider;
 
     @Inject
     public ProcessorTaskSummaryPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
@@ -55,9 +55,9 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         super(eventBus, new DataGridViewImpl<>(true, false));
 
         // Info column.
-        final InfoColumn<ProcessorFilterTaskSummaryRow> infoColumn = new InfoColumn<ProcessorFilterTaskSummaryRow>() {
+        final InfoColumn<ProcessorTaskSummaryRow> infoColumn = new InfoColumn<ProcessorTaskSummaryRow>() {
             @Override
-            protected void showInfo(final ProcessorFilterTaskSummaryRow row, final int x, final int y) {
+            protected void showInfo(final ProcessorTaskSummaryRow row, final int x, final int y) {
                 final StringBuilder html = new StringBuilder();
 
                 TooltipUtil.addHeading(html, "Key Data");
@@ -75,53 +75,53 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         };
         getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
-        getView().addResizableColumn(new OrderByColumn<ProcessorFilterTaskSummaryRow, String>(new TextCell(),
-                FindProcessorFilterTaskCriteria.FIELD_PIPELINE_UUID, true) {
+        getView().addResizableColumn(new OrderByColumn<ProcessorTaskSummaryRow, String>(new TextCell(),
+                FindProcessorTaskCriteria.FIELD_PIPELINE_UUID, true) {
             @Override
-            public String getValue(final ProcessorFilterTaskSummaryRow row) {
+            public String getValue(final ProcessorTaskSummaryRow row) {
                 return row.getPipeline();
             }
         }, "Pipeline", 250);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorFilterTaskSummaryRow, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_FEED_NAME, true) {
+                new OrderByColumn<ProcessorTaskSummaryRow, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_FEED_NAME, true) {
                     @Override
-                    public String getValue(final ProcessorFilterTaskSummaryRow row) {
+                    public String getValue(final ProcessorTaskSummaryRow row) {
                         return row.getFeed();
                     }
                 }, "Feed", 250);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorFilterTaskSummaryRow, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_PRIORITY, false) {
+                new OrderByColumn<ProcessorTaskSummaryRow, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_PRIORITY, false) {
                     @Override
-                    public String getValue(final ProcessorFilterTaskSummaryRow row) {
+                    public String getValue(final ProcessorTaskSummaryRow row) {
                         return String.valueOf(row.getPriority());
                     }
                 }, "Priority", 100);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorFilterTaskSummaryRow, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_STATUS, false) {
+                new OrderByColumn<ProcessorTaskSummaryRow, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_STATUS, false) {
                     @Override
-                    public String getValue(final ProcessorFilterTaskSummaryRow row) {
+                    public String getValue(final ProcessorTaskSummaryRow row) {
                         return row.getStatus().getDisplayValue();
                     }
                 }, "Status", 100);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorFilterTaskSummaryRow, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_COUNT, false) {
+                new OrderByColumn<ProcessorTaskSummaryRow, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_COUNT, false) {
                     @Override
-                    public String getValue(final ProcessorFilterTaskSummaryRow row) {
+                    public String getValue(final ProcessorTaskSummaryRow row) {
                         return ModelStringUtil.formatCsv(row.getCount());
                     }
                 }, "Count", 100);
 
         getView().addEndColumn(new EndColumn<>());
 
-        this.dataProvider = new ActionDataProvider<ProcessorFilterTaskSummaryRow>(dispatcher, action) {
+        this.dataProvider = new ActionDataProvider<ProcessorTaskSummaryRow>(dispatcher, action) {
             @Override
-            protected void changeData(final ResultList<ProcessorFilterTaskSummaryRow> data) {
+            protected void changeData(final ResultList<ProcessorTaskSummaryRow> data) {
                 super.changeData(data);
-                final ProcessorFilterTaskSummaryRow selected = getView().getSelectionModel().getSelected();
+                final ProcessorTaskSummaryRow selected = getView().getSelectionModel().getSelected();
                 if (selected != null) {
                     // Reselect the task set.
                     getView().getSelectionModel().clear();
@@ -134,18 +134,18 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         dataProvider.addDataDisplay(getView().getDataDisplay());
     }
 
-    public MultiSelectionModel<ProcessorFilterTaskSummaryRow> getSelectionModel() {
+    public MultiSelectionModel<ProcessorTaskSummaryRow> getSelectionModel() {
         return getView().getSelectionModel();
     }
 
     private void setFeedCriteria(final String feedName) {
-//        final FindProcessorFilterTaskCriteria criteria = initCriteria();
+//        final FindProcessorTaskCriteria criteria = initCriteria();
 //        criteria.obtainFeedNameSet().add(feedName);
 //        dataProvider.setCriteria(criteria);
     }
 
     private void setPipelineCriteria(final DocRef pipelineRef) {
-        final FindProcessorFilterTaskCriteria criteria = initCriteria();
+        final FindProcessorTaskCriteria criteria = initCriteria();
         criteria.obtainPipelineUuidCriteria().setString(pipelineRef.getUuid());
         action.setCriteria(criteria);
         dataProvider.refresh();
@@ -167,8 +167,8 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         }
     }
 
-    private FindProcessorFilterTaskCriteria initCriteria() {
-        final FindProcessorFilterTaskCriteria criteria = new FindProcessorFilterTaskCriteria();
+    private FindProcessorTaskCriteria initCriteria() {
+        final FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria();
         // Only show owned stuff, i.e. tasks that are ready for processing or have been processed, not ones that belong to LOCKED meta.
         criteria.obtainNodeNameCriteria().setMatchNull(false);
         return criteria;

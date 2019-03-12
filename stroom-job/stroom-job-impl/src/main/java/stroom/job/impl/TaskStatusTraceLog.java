@@ -19,7 +19,7 @@ package stroom.job.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.job.api.DistributedTask;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorTask;
 
 import java.util.List;
 

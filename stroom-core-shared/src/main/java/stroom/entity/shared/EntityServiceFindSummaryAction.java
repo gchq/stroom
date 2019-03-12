@@ -17,9 +17,9 @@
 package stroom.entity.shared;
 
 import stroom.util.shared.BaseCriteria;
-import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
+import stroom.processor.shared.ProcessorTaskSummaryRow;
 
-public class EntityServiceFindSummaryAction<C extends BaseCriteria> extends FindAction<C, ProcessorFilterTaskSummaryRow> {
+public class EntityServiceFindSummaryAction<C extends BaseCriteria> extends FindAction<C, ProcessorTaskSummaryRow> {
     private static final long serialVersionUID = 800905016214418723L;
 
     public EntityServiceFindSummaryAction() {

@@ -23,7 +23,7 @@ import java.util.Objects;
 /**
  * Class used to represent processing a stream.
  */
-public class ProcessorFilterTask implements SharedObject {
+public class ProcessorTask implements SharedObject {
 //    public static final String ENTITY_TYPE = "StreamTask";
     private static final long serialVersionUID = 3926403008832938745L;
 
@@ -133,7 +133,7 @@ public class ProcessorFilterTask implements SharedObject {
 
     @Override
     public String toString() {
-        return "ProcessorFilterTask{" +
+        return "ProcessorTask{" +
                 "id=" + id +
                 ", version=" + version +
                 ", metaId=" + metaId +
@@ -152,7 +152,7 @@ public class ProcessorFilterTask implements SharedObject {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final ProcessorFilterTask that = (ProcessorFilterTask) o;
+        final ProcessorTask that = (ProcessorTask) o;
         return id == that.id;
     }
 

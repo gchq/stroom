@@ -30,7 +30,7 @@ class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIntegrati
     // @Inject
     // private TranslationStreamTaskService translationStreamTaskService;
     // @Inject
-    // private ProcessorFilterTaskManager processorFilterTaskManager;
+    // private ProcessorTaskManager processorTaskManager;
     // @Inject
     // private FeedService feedService;
     // @Inject
@@ -57,7 +57,7 @@ class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIntegrati
     // Stream raw = commonTestScenarioCreator.createSample2LineRawFile(efd1);
     //
     // // Create tasks.
-    // processorFilterTaskManager.createAllTasks();
+    // processorTaskManager.createAllTasks();
     //
     // assertThat(commonTestControl
     // .countEntity(TranslationStreamTask.class)).isEqualTo(1);
@@ -115,7 +115,7 @@ class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIntegrati
     // taskManager.exec(importTask);
     //
     // // Create tasks.
-    // processorFilterTaskManager.createAllTasks();
+    // processorTaskManager.createAllTasks();
     //
     // assertThat(translationStreamTaskService.find(
     // new FindTranslationStreamTaskCriteria()).size()).isEqualTo(5);

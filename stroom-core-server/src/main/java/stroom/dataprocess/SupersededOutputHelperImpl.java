@@ -9,7 +9,7 @@ import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.pipeline.task.SupersededOutputHelper;
 import stroom.processor.shared.Processor;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorTask;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -27,7 +27,7 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
 
     private Meta sourceMeta;
     private Processor streamProcessor;
-    private ProcessorFilterTask streamTask;
+    private ProcessorTask streamTask;
     private long processStartTime;
 
     private boolean initialised;
@@ -112,11 +112,11 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
 
     public void init(final Meta sourceMeta,
                      final Processor processor,
-                     final ProcessorFilterTask processorFilterTask,
+                     final ProcessorTask processorTask,
                      final long processStartTime) {
         this.sourceMeta = sourceMeta;
         this.streamProcessor = processor;
-        this.streamTask = processorFilterTask;
+        this.streamTask = processorTask;
         this.processStartTime = processStartTime;
 
         initialised = true;

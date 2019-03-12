@@ -20,9 +20,9 @@ package stroom.processor.impl;
 import org.junit.jupiter.api.Test;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.node.api.NodeInfo;
-import stroom.processor.api.ProcessorFilterTaskService;
-import stroom.processor.shared.FindProcessorFilterTaskCriteria;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.shared.FindProcessorTaskCriteria;
+import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -38,7 +38,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestProcessorFilterTaskManager extends AbstractCoreIntegrationTest {
+class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
     @Inject
     private ProcessorConfig processorConfig;
     @Inject
@@ -46,16 +46,16 @@ class TestProcessorFilterTaskManager extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
-    private ProcessorFilterTaskManager processorFilterTaskManager;
+    private ProcessorTaskManager processorTaskManager;
     @Inject
-    private ProcessorFilterTaskService processorFilterTaskService;
+    private ProcessorTaskService processorTaskService;
     @Inject
     private NodeInfo nodeInfo;
 
     @Test
     void testBasic() {
-        processorFilterTaskManager.shutdown();
-        processorFilterTaskManager.startup();
+        processorTaskManager.shutdown();
+        processorTaskManager.startup();
 
         assertThat(getTaskCount()).isZero();
 
@@ -67,10 +67,10 @@ class TestProcessorFilterTaskManager extends AbstractCoreIntegrationTest {
 
         assertThat(getTaskCount()).isZero();
 
-//        assertThat(processorFilterTaskManager.getProcessorFilterTaskManagerRecentStreamDetails()).isNull();
-        processorFilterTaskManager.createTasks(new SimpleTaskContext());
-//        assertThat(processorFilterTaskManager.getProcessorFilterTaskManagerRecentStreamDetails()).isNotNull();
-//        assertThat(processorFilterTaskManager.getProcessorFilterTaskManagerRecentStreamDetails().hasRecentDetail()).isFalse();
+//        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails()).isNull();
+        processorTaskManager.createTasks(new SimpleTaskContext());
+//        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails()).isNotNull();
+//        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isFalse();
 
         assertThat(getTaskCount()).isZero();
 
@@ -80,16 +80,16 @@ class TestProcessorFilterTaskManager extends AbstractCoreIntegrationTest {
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName1);
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName2);
 
-        processorFilterTaskManager.createTasks(new SimpleTaskContext());
-//        assertThat(processorFilterTaskManager.getProcessorFilterTaskManagerRecentStreamDetails().hasRecentDetail()).isTrue();
+        processorTaskManager.createTasks(new SimpleTaskContext());
+//        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isTrue();
         assertThat(getTaskCount()).isEqualTo(4);
 
         commonTestScenarioCreator.createSample2LineRawFile(feedName1, StreamTypeNames.RAW_EVENTS);
-        processorFilterTaskManager.createTasks(new SimpleTaskContext());
+        processorTaskManager.createTasks(new SimpleTaskContext());
 
         assertThat(getTaskCount()).isEqualTo(6);
 
-        processorFilterTaskManager.createTasks(new SimpleTaskContext());
+        processorTaskManager.createTasks(new SimpleTaskContext());
         assertThat(getTaskCount()).isEqualTo(6);
     }
 
@@ -97,8 +97,8 @@ class TestProcessorFilterTaskManager extends AbstractCoreIntegrationTest {
     void testMultiFeedInitialCreate() {
         final String nodeName = nodeInfo.getThisNodeName();
 
-        processorFilterTaskManager.shutdown();
-        processorFilterTaskManager.startup();
+        processorTaskManager.shutdown();
+        processorTaskManager.startup();
 
         assertThat(getTaskCount()).isZero();
         assertThat(getTaskCount()).isZero();
@@ -106,10 +106,10 @@ class TestProcessorFilterTaskManager extends AbstractCoreIntegrationTest {
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
 
-//        assertThat(processorFilterTaskManager.getProcessorFilterTaskManagerRecentStreamDetails()).isNull();
-        processorFilterTaskManager.createTasks(new SimpleTaskContext());
-//        assertThat(processorFilterTaskManager.getProcessorFilterTaskManagerRecentStreamDetails()).isNotNull();
-//        assertThat(processorFilterTaskManager.getProcessorFilterTaskManagerRecentStreamDetails().hasRecentDetail()).isFalse();
+//        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails()).isNull();
+        processorTaskManager.createTasks(new SimpleTaskContext());
+//        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails()).isNotNull();
+//        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isFalse();
 
         final QueryData findStreamQueryData = new QueryData.Builder()
                 .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
@@ -133,21 +133,21 @@ class TestProcessorFilterTaskManager extends AbstractCoreIntegrationTest {
         processorConfig.setQueueSize(1000);
         processorConfig.setFillTaskQueue(false);
 
-        processorFilterTaskManager.createTasks(new SimpleTaskContext());
+        processorTaskManager.createTasks(new SimpleTaskContext());
 
         // Because MySQL continues to create new incremental id's for streams this check will fail as Stroom thinks more
         // streams have been created so recreates recent stream info before this point which means that it doesn't have
         // recent stream info. This isn't a problem but this can't be checked in this test with MySql.
-        // assertThat(processorFilterTaskManager.getProcessorFilterTaskManagerRecentStreamDetails().hasRecentDetail()).isTrue();
+        // assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isTrue();
 
         assertThat(getTaskCount()).isEqualTo(1000);
-        List<ProcessorFilterTask> tasks = processorFilterTaskManager.assignStreamTasks(nodeName, 1000);
+        List<ProcessorTask> tasks = processorTaskManager.assignStreamTasks(nodeName, 1000);
         assertThat(tasks.size()).isEqualTo(1000);
 
-        processorFilterTaskManager.createTasks(new SimpleTaskContext());
-//        assertThat(processorFilterTaskManager.getProcessorFilterTaskManagerRecentStreamDetails().hasRecentDetail()).isTrue();
+        processorTaskManager.createTasks(new SimpleTaskContext());
+//        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isTrue();
         assertThat(getTaskCount()).isEqualTo(2000);
-        tasks = processorFilterTaskManager.assignStreamTasks(nodeName, 1000);
+        tasks = processorTaskManager.assignStreamTasks(nodeName, 1000);
         assertThat(tasks.size()).isEqualTo(1000);
 
         processorConfig.setQueueSize(initialQueueSize);
@@ -155,13 +155,13 @@ class TestProcessorFilterTaskManager extends AbstractCoreIntegrationTest {
     }
 
     private int getTaskCount() {
-        return processorFilterTaskService.find(new FindProcessorFilterTaskCriteria()).size();
+        return processorTaskService.find(new FindProcessorTaskCriteria()).size();
     }
 
     @Test
     void testLifecycle() {
-        processorFilterTaskManager.shutdown();
-        processorFilterTaskManager.startup();
+        processorTaskManager.shutdown();
+        processorTaskManager.startup();
 
         assertThat(getTaskCount()).isEqualTo(0);
 
@@ -169,22 +169,22 @@ class TestProcessorFilterTaskManager extends AbstractCoreIntegrationTest {
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName);
 
-        assertThat(processorFilterTaskManager.getStreamTaskQueueSize()).isEqualTo(0);
+        assertThat(processorTaskManager.getStreamTaskQueueSize()).isEqualTo(0);
 
-        processorFilterTaskManager.createTasks(new SimpleTaskContext());
-
-        assertThat(getTaskCount()).isEqualTo(1);
-        assertThat(processorFilterTaskManager.getStreamTaskQueueSize()).isEqualTo(1);
-
-        processorFilterTaskManager.shutdown();
+        processorTaskManager.createTasks(new SimpleTaskContext());
 
         assertThat(getTaskCount()).isEqualTo(1);
-        assertThat(processorFilterTaskManager.getStreamTaskQueueSize()).isEqualTo(0);
+        assertThat(processorTaskManager.getStreamTaskQueueSize()).isEqualTo(1);
 
-        processorFilterTaskManager.startup();
-        assertThat(processorFilterTaskManager.getStreamTaskQueueSize()).isEqualTo(0);
+        processorTaskManager.shutdown();
 
-        processorFilterTaskManager.createTasks(new SimpleTaskContext());
-        assertThat(processorFilterTaskManager.getStreamTaskQueueSize()).isEqualTo(1);
+        assertThat(getTaskCount()).isEqualTo(1);
+        assertThat(processorTaskManager.getStreamTaskQueueSize()).isEqualTo(0);
+
+        processorTaskManager.startup();
+        assertThat(processorTaskManager.getStreamTaskQueueSize()).isEqualTo(0);
+
+        processorTaskManager.createTasks(new SimpleTaskContext());
+        assertThat(processorTaskManager.getStreamTaskQueueSize()).isEqualTo(1);
     }
 }

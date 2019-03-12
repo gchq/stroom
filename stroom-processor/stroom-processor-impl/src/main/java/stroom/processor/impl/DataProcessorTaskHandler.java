@@ -27,7 +27,7 @@ import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.api.TaskType;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.TaskStatus;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
@@ -47,7 +47,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
     private final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders;
     private final ProcessorCache processorCache;
     private final ProcessorFilterCache processorFilterCache;
-    private final ProcessorFilterTaskDao processorFilterTaskDao;
+    private final ProcessorTaskDao processorTaskDao;
     private final Store streamStore;
     private final NodeInfo nodeInfo;
     private final TaskContext taskContext;
@@ -57,7 +57,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
     DataProcessorTaskHandler(final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders,
                              final ProcessorCache processorCache,
                              final ProcessorFilterCache processorFilterCache,
-                             final ProcessorFilterTaskDao processorFilterTaskDao,
+                             final ProcessorTaskDao processorTaskDao,
                              final Store streamStore,
                              final NodeInfo nodeInfo,
                              final TaskContext taskContext,
@@ -65,7 +65,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
         this.executorProviders = executorProviders;
         this.processorCache = processorCache;
         this.processorFilterCache = processorFilterCache;
-        this.processorFilterTaskDao = processorFilterTaskDao;
+        this.processorTaskDao = processorTaskDao;
         this.streamStore = streamStore;
         this.nodeInfo = nodeInfo;
         this.taskContext = taskContext;
@@ -77,7 +77,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
         return security.secureResult(() -> {
             boolean complete = false;
             final long startTime = System.currentTimeMillis();
-            ProcessorFilterTask streamTask = task.getProcessorFilterTask();
+            ProcessorTask streamTask = task.getProcessorTask();
             LOGGER.trace("Executing stream task: {}", streamTask.getId());
 
             // Open the stream source.
@@ -116,7 +116,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
 
                     } else {
                         // Change the task status.... and save
-                        streamTask = processorFilterTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(),
+                        streamTask = processorTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(),
                                 TaskStatus.PROCESSING, startTime, null);
                         // Avoid having to do another fetch
                         streamTask.setProcessorFilter(destProcessorFilter);
@@ -144,10 +144,10 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
                 LOGGER.error(e.getMessage(), e);
             } finally {
                 if (complete) {
-                    processorFilterTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
+                    processorTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
                             startTime, System.currentTimeMillis());
                 } else {
-                    processorFilterTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.FAILED, startTime,
+                    processorTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.FAILED, startTime,
                             System.currentTimeMillis());
                 }
             }

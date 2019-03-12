@@ -18,7 +18,7 @@ package stroom.processor.impl;
 
 import stroom.job.api.DistributedTask;
 import stroom.processor.api.DataProcessorTaskExecutor;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorTask;
 import stroom.task.api.ServerTask;
 import stroom.task.shared.SimpleThreadPool;
 import stroom.task.shared.ThreadPool;
@@ -28,17 +28,17 @@ public class DataProcessorTask extends ServerTask<VoidResult> implements Distrib
     private static final long serialVersionUID = 5719364078026952526L;
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool("Stream Processor#", 1);
 
-    private ProcessorFilterTask processorFilterTask;
+    private ProcessorTask processorTask;
 
     // Used for test code
     private transient DataProcessorTaskExecutor dataProcessorTaskExecutor;
 
-    public DataProcessorTask(final ProcessorFilterTask processorFilterTask) {
-        this.processorFilterTask = processorFilterTask;
+    public DataProcessorTask(final ProcessorTask processorTask) {
+        this.processorTask = processorTask;
     }
 
-    public ProcessorFilterTask getProcessorFilterTask() {
-        return processorFilterTask;
+    public ProcessorTask getProcessorTask() {
+        return processorTask;
     }
 
     public DataProcessorTaskExecutor getDataProcessorTaskExecutor() {
@@ -56,6 +56,6 @@ public class DataProcessorTask extends ServerTask<VoidResult> implements Distrib
 
     @Override
     public String getTraceString() {
-        return String.valueOf(processorFilterTask.getId());
+        return String.valueOf(processorTask.getId());
     }
 }

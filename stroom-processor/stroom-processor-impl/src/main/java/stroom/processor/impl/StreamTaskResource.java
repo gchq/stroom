@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.FindProcessorFilterCriteria;
-import stroom.processor.shared.FindProcessorFilterTaskCriteria;
+import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.security.SecurityContext;
 import stroom.util.RestResource;
@@ -126,8 +126,8 @@ public class StreamTaskResource implements RestResource {
             } catch (IllegalArgumentException exception) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("Invalid sortDirection field").build();
             }
-            if (sortBy.equalsIgnoreCase(FindProcessorFilterTaskCriteria.FIELD_PIPELINE_UUID)
-                    || sortBy.equalsIgnoreCase(FindProcessorFilterTaskCriteria.FIELD_PRIORITY)) {
+            if (sortBy.equalsIgnoreCase(FindProcessorTaskCriteria.FIELD_PIPELINE_UUID)
+                    || sortBy.equalsIgnoreCase(FindProcessorTaskCriteria.FIELD_PRIORITY)) {
                 criteria.setSort(sortBy, direction, false);
             } else if (sortBy.equalsIgnoreCase(FIELD_PROGRESS)) {
                 // Sorting progress is done below -- this is here for completeness.

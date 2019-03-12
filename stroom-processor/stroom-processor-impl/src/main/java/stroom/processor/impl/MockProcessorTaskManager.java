@@ -23,7 +23,7 @@ import stroom.meta.shared.MetaService;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 import stroom.task.api.TaskContext;
@@ -39,12 +39,12 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
-public class MockProcessorFilterTaskManager implements ProcessorFilterTaskManager, Clearable {
+public class MockProcessorTaskManager implements ProcessorTaskManager, Clearable {
     private final MetaService metaService;
     private final ProcessorFilterService processorFilterService;
 
     @Inject
-    MockProcessorFilterTaskManager(final MetaService metaService,
+    MockProcessorTaskManager(final MetaService metaService,
                           final ProcessorFilterService processorFilterService) {
         this.metaService = metaService;
         this.processorFilterService = processorFilterService;
@@ -56,8 +56,8 @@ public class MockProcessorFilterTaskManager implements ProcessorFilterTaskManage
     }
 
     @Override
-    public List<ProcessorFilterTask> assignStreamTasks(final String nodeName, final int count) {
-        List<ProcessorFilterTask> taskList = Collections.emptyList();
+    public List<ProcessorTask> assignStreamTasks(final String nodeName, final int count) {
+        List<ProcessorTask> taskList = Collections.emptyList();
         final FindProcessorFilterCriteria criteria = new FindProcessorFilterCriteria();
         final BaseResultList<ProcessorFilter> processorFilters = processorFilterService
                 .find(criteria);
@@ -83,7 +83,7 @@ public class MockProcessorFilterTaskManager implements ProcessorFilterTaskManage
                             // greater than this stream in future.
                             filter.getProcessorFilterTracker().setMinMetaId(meta.getId() + 1);
 
-                            final ProcessorFilterTask streamTask = new ProcessorFilterTask();
+                            final ProcessorTask streamTask = new ProcessorTask();
                             streamTask.setMetaId(meta.getId());
                             streamTask.setProcessorFilter(filter);
                             streamTask.setNodeName(nodeName);
@@ -127,7 +127,7 @@ public class MockProcessorFilterTaskManager implements ProcessorFilterTaskManage
     }
 
     @Override
-    public void abandonStreamTasks(final String nodeName, final List<ProcessorFilterTask> tasks) {
+    public void abandonStreamTasks(final String nodeName, final List<ProcessorTask> tasks) {
         // NA
     }
 }

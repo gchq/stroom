@@ -35,9 +35,9 @@ import stroom.entity.shared.NamedEntity;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.FindProcessorFilterTaskAction;
-import stroom.processor.shared.FindProcessorFilterTaskCriteria;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.shared.FindProcessorTaskAction;
+import stroom.processor.shared.FindProcessorTaskCriteria;
+import stroom.processor.shared.ProcessorTask;
 import stroom.util.shared.Sort.Direction;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -48,10 +48,10 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import java.util.ArrayList;
 
-public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<ProcessorFilterTask>> implements HasDocumentRead<SharedObject> {
-    private final FindActionDataProvider<FindProcessorFilterTaskCriteria, ProcessorFilterTask> dataProvider;
+public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<ProcessorTask>> implements HasDocumentRead<SharedObject> {
+    private final FindActionDataProvider<FindProcessorTaskCriteria, ProcessorTask> dataProvider;
 
-    private FindProcessorFilterTaskCriteria criteria;
+    private FindProcessorTaskCriteria criteria;
 
     @Inject
     public ProcessorTaskListPresenter(final EventBus eventBus,
@@ -60,9 +60,9 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         super(eventBus, new DataGridViewImpl<>(false));
 
         // Info column.
-        getView().addColumn(new InfoColumn<ProcessorFilterTask>() {
+        getView().addColumn(new InfoColumn<ProcessorTask>() {
             @Override
-            protected void showInfo(final ProcessorFilterTask row, final int x, final int y) {
+            protected void showInfo(final ProcessorTask row, final int x, final int y) {
                 final StringBuilder html = new StringBuilder();
                 TooltipUtil.addHeading(html, "Stream Task");
                 TooltipUtil.addRowData(html, "Stream Task Id", row.getId());
@@ -115,25 +115,25 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         }, "<br/>", ColumnSizeConstants.ICON_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_CREATE_TIME, false) {
+                new OrderByColumn<ProcessorTask, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_CREATE_TIME, false) {
                     @Override
-                    public String getValue(final ProcessorFilterTask row) {
+                    public String getValue(final ProcessorTask row) {
                         return ClientDateUtil.toISOString(row.getCreateTimeMs());
                     }
                 }, "Create", ColumnSizeConstants.DATE_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_STATUS, false) {
+                new OrderByColumn<ProcessorTask, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_STATUS, false) {
                     @Override
-                    public String getValue(final ProcessorFilterTask row) {
+                    public String getValue(final ProcessorTask row) {
                         return row.getStatus().getDisplayValue();
                     }
                 }, "Status", 80);
 
         getView()
-                .addColumn(new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_NODE, true) {
+                .addColumn(new OrderByColumn<ProcessorTask, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_NODE, true) {
                     @Override
-                    public String getValue(final ProcessorFilterTask row) {
+                    public String getValue(final ProcessorTask row) {
                         if (row.getNodeName() != null) {
                             return row.getNodeName();
                         } else {
@@ -141,9 +141,9 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                         }
                     }
                 }, "Node", 100);
-        getView().addColumn(new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_PRIORITY, false) {
+        getView().addColumn(new OrderByColumn<ProcessorTask, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_PRIORITY, false) {
             @Override
-            public String getValue(final ProcessorFilterTask row) {
+            public String getValue(final ProcessorTask row) {
                 if (row.getProcessorFilter() != null) {
                     return String.valueOf(row.getProcessorFilter().getPriority());
                 }
@@ -152,9 +152,9 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
             }
         }, "Priority", 100);
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_PIPELINE_UUID, true) {
+                new OrderByColumn<ProcessorTask, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_PIPELINE_UUID, true) {
                     @Override
-                    public String getValue(final ProcessorFilterTask row) {
+                    public String getValue(final ProcessorTask row) {
                         if (row.getProcessorFilter() != null) {
                             if (row.getProcessorFilter().getProcessor() != null) {
                                 if (row.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
@@ -167,16 +167,16 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                     }
                 }, "Pipeline", 200);
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_START_TIME, false) {
+                new OrderByColumn<ProcessorTask, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_START_TIME, false) {
                     @Override
-                    public String getValue(final ProcessorFilterTask row) {
+                    public String getValue(final ProcessorTask row) {
                         return ClientDateUtil.toISOString(row.getStartTimeMs());
                     }
                 }, "Start Time", ColumnSizeConstants.DATE_COL);
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindProcessorFilterTaskCriteria.FIELD_END_TIME_DATE, false) {
+                new OrderByColumn<ProcessorTask, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_END_TIME_DATE, false) {
                     @Override
-                    public String getValue(final ProcessorFilterTask row) {
+                    public String getValue(final ProcessorTask row) {
                         return ClientDateUtil.toISOString(row.getEndTimeMs());
                     }
                 }, "End Time", ColumnSizeConstants.DATE_COL);
@@ -203,7 +203,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         }
     }
 
-    public FindActionDataProvider<FindProcessorFilterTaskCriteria, ProcessorFilterTask> getDataProvider() {
+    public FindActionDataProvider<FindProcessorTaskCriteria, ProcessorTask> getDataProvider() {
         return dataProvider;
     }
 
@@ -212,18 +212,18 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         dataProvider.setAction(new EntityServiceFindAction<>(criteria));
     }
 
-    public FindProcessorFilterTaskCriteria getCriteria() {
+    public FindProcessorTaskCriteria getCriteria() {
         return criteria;
     }
 
     private void setPipelineCriteria(final DocRef pipelineRef) {
         criteria = initCriteria(null, pipelineRef);
-        dataProvider.setAction(new FindProcessorFilterTaskAction(criteria));
+        dataProvider.setAction(new FindProcessorTaskAction(criteria));
     }
 
     private void setNullCriteria() {
         criteria = initCriteria(null, null);
-        dataProvider.setAction(new FindProcessorFilterTaskAction(criteria));
+        dataProvider.setAction(new FindProcessorTaskAction(criteria));
     }
 
     public void clear() {
@@ -242,9 +242,9 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         }
     }
 
-    private FindProcessorFilterTaskCriteria initCriteria(final String feedName, final DocRef pipelineRef) {
-        final FindProcessorFilterTaskCriteria criteria = new FindProcessorFilterTaskCriteria();
-        criteria.setSort(FindProcessorFilterTaskCriteria.FIELD_CREATE_TIME, Direction.DESCENDING, false);
+    private FindProcessorTaskCriteria initCriteria(final String feedName, final DocRef pipelineRef) {
+        final FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria();
+        criteria.setSort(FindProcessorTaskCriteria.FIELD_CREATE_TIME, Direction.DESCENDING, false);
         criteria.obtainTaskStatusSet().setMatchAll(Boolean.FALSE);
 
         // Only show owned stuff, i.e. tasks that are ready for processing or have been processed, not ones that belong to LOCKED meta.

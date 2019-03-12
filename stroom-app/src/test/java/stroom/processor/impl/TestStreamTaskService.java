@@ -22,9 +22,9 @@ import org.junit.jupiter.api.Test;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.node.shared.Node;
-import stroom.processor.api.ProcessorFilterTaskService;
-import stroom.processor.shared.FindProcessorFilterTaskCriteria;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.shared.FindProcessorTaskCriteria;
+import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.TaskStatus;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.SimpleTaskContext;
@@ -43,13 +43,13 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
-    private ProcessorFilterTaskService processorFilterTaskService;
+    private ProcessorTaskService processorTaskService;
     @Inject
-    private ProcessorFilterTaskDao processorFilterTaskDao;
+    private ProcessorTaskDao processorTaskDao;
     @Inject
     private MetaService metaService;
     @Inject
-    private ProcessorFilterTaskManager processorFilterTaskManager;
+    private ProcessorTaskManager processorTaskManager;
 
     @Test
     void testSaveAndGetAll() {
@@ -65,29 +65,29 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
         // Create all required tasks.
         createTasks();
 
-        final ProcessorFilterTask ps1 = processorFilterTaskService.find(FindProcessorFilterTaskCriteria.createWithStream(file1)).getFirst();
+        final ProcessorTask ps1 = processorTaskService.find(FindProcessorTaskCriteria.createWithStream(file1)).getFirst();
         assertThat(ps1).isNotNull();
-        processorFilterTaskDao.changeTaskStatus(ps1, ps1.getNodeName(), TaskStatus.COMPLETE, ps1.getStartTimeMs(), ps1.getEndTimeMs());
+        processorTaskDao.changeTaskStatus(ps1, ps1.getNodeName(), TaskStatus.COMPLETE, ps1.getStartTimeMs(), ps1.getEndTimeMs());
 
-        FindProcessorFilterTaskCriteria criteria = new FindProcessorFilterTaskCriteria();
+        FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria();
         criteria.obtainTaskStatusSet().add(TaskStatus.COMPLETE);
 
-        assertThat(processorFilterTaskService.find(criteria).size()).isEqualTo(1);
+        assertThat(processorTaskService.find(criteria).size()).isEqualTo(1);
 
         // Check the date filter works
         criteria.setCreatePeriod(new Period(file1.getCreateMs() - 10000, file1.getCreateMs() + 10000));
-        assertThat(processorFilterTaskService.find(criteria).size()).isEqualTo(1);
+        assertThat(processorTaskService.find(criteria).size()).isEqualTo(1);
 
         criteria.setCreatePeriod(
                 new Period(Instant.ofEpochMilli(criteria.getCreatePeriod().getFrom()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli(),
                         Instant.ofEpochMilli(criteria.getCreatePeriod().getTo()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli()));
-        assertThat(processorFilterTaskService.find(criteria).size()).isEqualTo(0);
+        assertThat(processorTaskService.find(criteria).size()).isEqualTo(0);
 
         assertThat(metaService.getMeta(file1.getId())).isNotNull();
         assertThat(metaService.getMeta(file2.getId())).isNotNull();
 
-        criteria = new FindProcessorFilterTaskCriteria();
-        assertThat(processorFilterTaskService.findSummary(criteria)).isNotNull();
+        criteria = new FindProcessorTaskCriteria();
+        assertThat(processorTaskService.findSummary(criteria)).isNotNull();
     }
 
     @Test
@@ -97,10 +97,10 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
         final Node testNode = new Node();
         testNode.setId(1L);
 
-        final FindProcessorFilterTaskCriteria criteria = new FindProcessorFilterTaskCriteria();
+        final FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria();
         criteria.obtainNodeNameCriteria().setString("Node name");
-        criteria.setSort(FindProcessorFilterTaskCriteria.FIELD_CREATE_TIME);
-        criteria.obtainProcessorFilterTaskIdSet().add(1L);
+        criteria.setSort(FindProcessorTaskCriteria.FIELD_CREATE_TIME);
+        criteria.obtainProcessorTaskIdSet().add(1L);
 //        criteria.obtainFeedNameSet().add(feedName);
         criteria.obtainMetaIdSet().add(1L);
 //        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.RAW_EVENTS);
@@ -110,7 +110,7 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
 //        criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
 //        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.CONTEXT);
 
-        assertThat(processorFilterTaskService.find(criteria).size()).isEqualTo(0);
+        assertThat(processorTaskService.find(criteria).size()).isEqualTo(0);
     }
 
     @Test
@@ -120,10 +120,10 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
         final Node testNode = new Node();
         testNode.setId(1L);
 
-        final FindProcessorFilterTaskCriteria criteria = new FindProcessorFilterTaskCriteria();
+        final FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria();
         criteria.obtainNodeNameCriteria().setString("Node name");
-        criteria.setSort(FindProcessorFilterTaskCriteria.FIELD_CREATE_TIME);
-        criteria.obtainProcessorFilterTaskIdSet().add(1L);
+        criteria.setSort(FindProcessorTaskCriteria.FIELD_CREATE_TIME);
+        criteria.obtainProcessorTaskIdSet().add(1L);
 //        criteria.obtainFeedNameSet().add(feedName);
         criteria.obtainMetaIdSet().add(1L);
 //        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.RAW_EVENTS);
@@ -137,6 +137,6 @@ class TestStreamTaskService extends AbstractCoreIntegrationTest {
 
     private void createTasks() {
         // Make sure there are no tasks yet.
-        processorFilterTaskManager.createTasks(new SimpleTaskContext());
+        processorTaskManager.createTasks(new SimpleTaskContext());
     }
 }

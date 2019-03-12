@@ -20,7 +20,7 @@ package stroom.processor.impl;
 
 import com.google.common.base.Strings;
 import stroom.processor.shared.FindProcessorFilterCriteria;
-import stroom.processor.shared.FindProcessorFilterTaskCriteria;
+import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.util.shared.Sort;
 
 import java.util.Arrays;
@@ -82,8 +82,8 @@ public class SearchKeywords {
                 if (terms[1].equalsIgnoreCase(NEXT)) {
                     // We don't want any other sorts happening here, so we'll get rid of them.
                     criteria.removeSorts();
-                    criteria.addSort(FindProcessorFilterTaskCriteria.FIELD_PRIORITY, DESCENDING, false);
-                    criteria.addSort(FindProcessorFilterTaskCriteria.FIELD_POLL_AGE, Sort.Direction.ASCENDING, false);
+                    criteria.addSort(FindProcessorTaskCriteria.FIELD_PRIORITY, DESCENDING, false);
+                    criteria.addSort(FindProcessorTaskCriteria.FIELD_POLL_AGE, Sort.Direction.ASCENDING, false);
                 }
             }
         }

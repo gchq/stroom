@@ -28,10 +28,10 @@ import stroom.node.api.NodeInfo;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.FindProcessorFilterCriteria;
-import stroom.processor.shared.FindProcessorFilterTaskCriteria;
+import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.Limits;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
@@ -82,15 +82,15 @@ import java.util.stream.Collectors;
  * Fill up our pool if we are below our low water mark (FILL_LOW_SIZE).
  */
 @Singleton
-class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
+class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private static final int POLL_INTERVAL_MS = 10000;
     private static final int DELETE_INTERVAL_MS = POLL_INTERVAL_MS * 10;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFilterTaskManagerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorTaskManagerImpl.class);
 
     private final ProcessorFilterService processorFilterService;
     private final ProcessorFilterTrackerDao processorFilterTrackerDao;
-    private final ProcessorFilterTaskDao processorFilterTaskDao;
+    private final ProcessorTaskDao processorTaskDao;
     private final TaskManager taskManager;
     private final NodeInfo nodeInfo;
     private final ProcessorConfig processorConfig;
@@ -127,7 +127,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
      */
     private final AtomicBoolean filling = new AtomicBoolean();
     private final ConcurrentHashMap<Integer, Boolean> exhaustedFilterMap = new ConcurrentHashMap<>();
-    //    private volatile ProcessorFilterTaskManagerRecentStreamDetails processorFilterTaskManagerRecentStreamDetails;
+    //    private volatile ProcessorTaskManagerRecentStreamDetails processorTaskManagerRecentStreamDetails;
     private volatile int totalQueueSize = 1000;
     private volatile int lastQueueSizeForStats = -1;
 
@@ -138,9 +138,9 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
     private volatile boolean allowFillTaskStore = false;
 
     @Inject
-    ProcessorFilterTaskManagerImpl(final ProcessorFilterService processorFilterService,
+    ProcessorTaskManagerImpl(final ProcessorFilterService processorFilterService,
                                    final ProcessorFilterTrackerDao processorFilterTrackerDao,
-                                   final ProcessorFilterTaskDao processorFilterTaskDao,
+                                   final ProcessorTaskDao processorTaskDao,
                                    final TaskManager taskManager,
                                    final NodeInfo nodeInfo,
                                    final ProcessorConfig processorConfig,
@@ -152,7 +152,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.taskManager = taskManager;
         this.nodeInfo = nodeInfo;
-        this.processorFilterTaskDao = processorFilterTaskDao;
+        this.processorTaskDao = processorTaskDao;
         this.processorConfig = processorConfig;
         this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
         this.metaService = metaService;
@@ -165,7 +165,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
         createTasksLock.lock();
         try {
             // Anything that we owned release
-            processorFilterTaskDao.releaseOwnedTasks();
+            processorTaskDao.releaseOwnedTasks();
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
@@ -181,7 +181,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
         try {
             allowFillTaskStore = false;
             clearTaskStore();
-//            processorFilterTaskManagerRecentStreamDetails = null;
+//            processorTaskManagerRecentStreamDetails = null;
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
@@ -194,8 +194,8 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
      * the task to the node asking for the job
      */
     @Override
-    public List<ProcessorFilterTask> assignStreamTasks(final String nodeName, final int count) {
-        List<ProcessorFilterTask> assignedStreamTasks = Collections.emptyList();
+    public List<ProcessorTask> assignStreamTasks(final String nodeName, final int count) {
+        List<ProcessorTask> assignedStreamTasks = Collections.emptyList();
 
         try {
             if (processorConfig.isAssignTasks() && count > 0) {
@@ -212,9 +212,9 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
                         final StreamTaskQueue queue = queueMap.get(filter);
                         if (queue != null) {
                             // Add as many tasks as we can for this filter.
-                            ProcessorFilterTask streamTask = queue.poll();
+                            ProcessorTask streamTask = queue.poll();
                             while (streamTask != null) {
-                                final ProcessorFilterTask assigned = processorFilterTaskDao.changeTaskStatus(streamTask, nodeName,
+                                final ProcessorTask assigned = processorTaskDao.changeTaskStatus(streamTask, nodeName,
                                         TaskStatus.ASSIGNED, null, null);
                                 if (assigned != null) {
                                     assignedStreamTasks.add(assigned);
@@ -240,42 +240,42 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
         }
 
         // Output some trace logging so we can see where tasks go.
-        taskStatusTraceLog.assignTasks(ProcessorFilterTaskManagerImpl.class, assignedStreamTasks, nodeName);
+        taskStatusTraceLog.assignTasks(ProcessorTaskManagerImpl.class, assignedStreamTasks, nodeName);
 
         return assignedStreamTasks;
     }
 
     @Override
-    public void abandonStreamTasks(final String nodeName, final List<ProcessorFilterTask> tasks) {
+    public void abandonStreamTasks(final String nodeName, final List<ProcessorTask> tasks) {
         // Output some trace logging so we can see where tasks go.
-        taskStatusTraceLog.abandonTasks(ProcessorFilterTaskManagerImpl.class, tasks, nodeName);
+        taskStatusTraceLog.abandonTasks(ProcessorTaskManagerImpl.class, tasks, nodeName);
 
-        for (final ProcessorFilterTask streamTask : tasks) {
+        for (final ProcessorTask streamTask : tasks) {
             abandon(streamTask);
         }
     }
 
-    private void abandon(final ProcessorFilterTask streamTask) {
+    private void abandon(final ProcessorTask streamTask) {
         try {
             LOGGER.warn("abandon() - {}", streamTask);
-            processorFilterTaskDao.changeTaskStatus(streamTask, null, TaskStatus.UNPROCESSED, null, null);
+            processorTaskDao.changeTaskStatus(streamTask, null, TaskStatus.UNPROCESSED, null, null);
         } catch (final RuntimeException e) {
             LOGGER.error("abandon() - {}", streamTask, e);
         }
     }
 
-    private void release(final ProcessorFilterTask streamTask) {
+    private void release(final ProcessorTask streamTask) {
         try {
             LOGGER.warn("release() - {}", streamTask);
-            processorFilterTaskDao.changeTaskStatus(streamTask, null, TaskStatus.UNPROCESSED, null, null);
+            processorTaskDao.changeTaskStatus(streamTask, null, TaskStatus.UNPROCESSED, null, null);
         } catch (final RuntimeException e) {
             LOGGER.error("release() - {}", streamTask, e);
         }
     }
 
 //    @Override
-//    public ProcessorFilterTaskManagerRecentStreamDetails getProcessorFilterTaskManagerRecentStreamDetails() {
-////        return processorFilterTaskManagerRecentStreamDetails;
+//    public ProcessorTaskManagerRecentStreamDetails getProcessorTaskManagerRecentStreamDetails() {
+////        return processorTaskManagerRecentStreamDetails;
 //        return null;
 //    }
 
@@ -285,7 +285,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
             if (filter != null) {
                 final StreamTaskQueue queue = queueMap.remove(filter);
                 if (queue != null) {
-                    ProcessorFilterTask streamTask = queue.poll();
+                    ProcessorTask streamTask = queue.poll();
                     while (streamTask != null) {
                         streamTask = queue.poll();
                     }
@@ -443,7 +443,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
             if (!enabledFilterSet.contains(filter)) {
                 final StreamTaskQueue queue = queueMap.remove(filter);
                 if (queue != null) {
-                    ProcessorFilterTask streamTask = queue.poll();
+                    ProcessorTask streamTask = queue.poll();
                     while (streamTask != null) {
                         release(streamTask);
                         streamTask = queue.poll();
@@ -457,7 +457,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
         scheduleDelete();
 
 //        // Set the last stream details for the next call to this method.
-//        processorFilterTaskManagerRecentStreamDetails = recentStreamInfo;
+//        processorTaskManagerRecentStreamDetails = recentStreamInfo;
 
         LOGGER.debug("doCreateTasks() - Finished in {}", logExecutionTime);
     }
@@ -621,21 +621,21 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
 
         try {
             // First look for any items that are no-longer locked etc
-            final FindProcessorFilterTaskCriteria findProcessorFilterTaskCriteria = new FindProcessorFilterTaskCriteria();
-            findProcessorFilterTaskCriteria.obtainTaskStatusSet().add(TaskStatus.UNPROCESSED);
-            findProcessorFilterTaskCriteria.obtainNodeNameCriteria().setMatchNull(true);
-            findProcessorFilterTaskCriteria.obtainProcessorFilterIdSet().add(filter.getId());
-            findProcessorFilterTaskCriteria.obtainPageRequest().setLength(tasksToCreate);
+            final FindProcessorTaskCriteria findProcessorTaskCriteria = new FindProcessorTaskCriteria();
+            findProcessorTaskCriteria.obtainTaskStatusSet().add(TaskStatus.UNPROCESSED);
+            findProcessorTaskCriteria.obtainNodeNameCriteria().setMatchNull(true);
+            findProcessorTaskCriteria.obtainProcessorFilterIdSet().add(filter.getId());
+            findProcessorTaskCriteria.obtainPageRequest().setLength(tasksToCreate);
 
-            final BaseResultList<ProcessorFilterTask> processorFilterTasks = processorFilterTaskDao.find(findProcessorFilterTaskCriteria);
-            final int size = processorFilterTasks.size();
+            final BaseResultList<ProcessorTask> processorTasks = processorTaskDao.find(findProcessorTaskCriteria);
+            final int size = processorTasks.size();
 
-            taskStatusTraceLog.addUnownedTasks(ProcessorFilterTaskManagerImpl.class, processorFilterTasks);
+            taskStatusTraceLog.addUnownedTasks(ProcessorTaskManagerImpl.class, processorTasks);
 
-            if (processorFilterTasks.size() > 0) {
+            if (processorTasks.size() > 0) {
                 // Find unlocked meta data corresponding to this list of unowned tasks.
                 final ExpressionOperator.Builder metaIdExpressionBuilder = new ExpressionOperator.Builder(Op.OR);
-                processorFilterTasks.forEach(task -> metaIdExpressionBuilder.addTerm(MetaFieldNames.ID, Condition.EQUALS, task.getMetaId().toString()));
+                processorTasks.forEach(task -> metaIdExpressionBuilder.addTerm(MetaFieldNames.ID, Condition.EQUALS, task.getMetaId().toString()));
 
                 final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                         .addOperator(metaIdExpressionBuilder.build())
@@ -649,14 +649,14 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
 
                 if (metaList.size() > 0) {
                     // Change the ownership of tasks where we have unlocked meta data.
-                    final Map<Long, ProcessorFilterTask> metaIdToTaskMap = processorFilterTasks.stream()
-                            .collect(Collectors.toMap(ProcessorFilterTask::getMetaId, task -> task));
+                    final Map<Long, ProcessorTask> metaIdToTaskMap = processorTasks.stream()
+                            .collect(Collectors.toMap(ProcessorTask::getMetaId, task -> task));
 
                     for (final Meta meta : metaList) {
-                        final ProcessorFilterTask processorFilterTask = metaIdToTaskMap.get(meta.getId());
+                        final ProcessorTask processorTask = metaIdToTaskMap.get(meta.getId());
 
                         try {
-                            final ProcessorFilterTask modified = processorFilterTaskDao.changeTaskStatus(processorFilterTask, nodeName,
+                            final ProcessorTask modified = processorTaskDao.changeTaskStatus(processorTask, nodeName,
                                     TaskStatus.UNPROCESSED, null, null);
                             if (modified != null) {
                                 queue.add(modified);
@@ -668,7 +668,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
                                 break;
                             }
                         } catch (final RuntimeException e) {
-                            LOGGER.error("doCreateTasks() - Failed to grab non owned task {}", processorFilterTask, e);
+                            LOGGER.error("doCreateTasks() - Failed to grab non owned task {}", processorTask, e);
                         }
                     }
                 }
@@ -771,7 +771,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
 
                 // Create a task for each stream reference.
                 final Map<Meta, InclusiveRanges> map = createStreamMap(result);
-                processorFilterTaskDao.createNewTasks(
+                processorTaskDao.createNewTasks(
                         filter,
                         tracker,
                         streamQueryTime,
@@ -822,7 +822,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
             map.put(meta, null);
         }
 
-        processorFilterTaskDao.createNewTasks(
+        processorTaskDao.createNewTasks(
                 filter,
                 updatedTracker,
                 streamQueryTime,

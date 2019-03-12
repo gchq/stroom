@@ -18,7 +18,7 @@ package stroom.processor.shared;
 
 import stroom.docref.SharedObject;
 
-public class ProcessorFilterTaskSummaryRow implements SharedObject {
+public class ProcessorTaskSummaryRow implements SharedObject {
     private static final long serialVersionUID = 5631193345714122209L;
 
     private String pipeline;
@@ -27,10 +27,10 @@ public class ProcessorFilterTaskSummaryRow implements SharedObject {
     private TaskStatus status;
     private long count;
 
-    public ProcessorFilterTaskSummaryRow() {
+    public ProcessorTaskSummaryRow() {
     }
 
-    public ProcessorFilterTaskSummaryRow(final String pipeline, final String feed, final int priority, final TaskStatus status, final long count) {
+    public ProcessorTaskSummaryRow(final String pipeline, final String feed, final int priority, final TaskStatus status, final long count) {
         this.pipeline = pipeline;
         this.feed = feed;
         this.priority = priority;

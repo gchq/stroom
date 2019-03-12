@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.processor.impl;
+package stroom.processor.shared;
 
-public interface ProcessorFilterTaskDeleteExecutor {
-    void exec();
+import stroom.entity.shared.FindAction;
 
-    void delete(long age);
+public class FindProcessorTaskSummaryAction extends FindAction<FindProcessorTaskCriteria, ProcessorTaskSummaryRow> {
+    private static final long serialVersionUID = -6808045615241590297L;
+
+    public FindProcessorTaskSummaryAction() {
+        // Default constructor necessary for GWT serialisation.
+    }
+
+    public FindProcessorTaskSummaryAction(final FindProcessorTaskCriteria criteria) {
+        super(criteria);
+    }
 }

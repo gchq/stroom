@@ -30,7 +30,7 @@ class TestStreamTaskServiceBatchLocking extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
-    private ProcessorFilterTaskManager processorFilterTaskManager;
+    private ProcessorTaskManager processorTaskManager;
     @Inject
     private StroomEntityManager entityManager;
     @Inject

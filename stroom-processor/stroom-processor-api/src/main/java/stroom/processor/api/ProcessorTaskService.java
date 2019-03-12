@@ -17,14 +17,13 @@
 
 package stroom.processor.api;
 
-import stroom.processor.shared.FindProcessorFilterTaskCriteria;
-import stroom.processor.shared.ProcessorFilterTask;
-import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
+import stroom.processor.shared.FindProcessorTaskCriteria;
+import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskSummaryRow;
 import stroom.util.shared.BaseResultList;
-import stroom.util.shared.HasIntCrud;
 
-public interface ProcessorFilterTaskService {
-    BaseResultList<ProcessorFilterTask> find(final FindProcessorFilterTaskCriteria criteria);
+public interface ProcessorTaskService {
+    BaseResultList<ProcessorTask> find(final FindProcessorTaskCriteria criteria);
 
-    BaseResultList<ProcessorFilterTaskSummaryRow> findSummary(final FindProcessorFilterTaskCriteria criteria);
+    BaseResultList<ProcessorTaskSummaryRow> findSummary(final FindProcessorTaskCriteria criteria);
 }

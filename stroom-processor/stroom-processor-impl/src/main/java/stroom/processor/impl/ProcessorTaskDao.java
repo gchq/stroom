@@ -2,10 +2,10 @@ package stroom.processor.impl;
 
 import stroom.meta.shared.Meta;
 import stroom.processor.api.InclusiveRanges;
-import stroom.processor.shared.FindProcessorFilterTaskCriteria;
+import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterTask;
-import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
+import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskSummaryRow;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.TaskStatus;
 import stroom.util.shared.BaseResultList;
@@ -13,7 +13,7 @@ import stroom.util.shared.BaseResultList;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public interface ProcessorFilterTaskDao {
+public interface ProcessorTaskDao {
     /**
      * Anything that we owned release
      */
@@ -42,13 +42,13 @@ public interface ProcessorFilterTaskDao {
                         final boolean reachedLimit,
                         final Consumer<CreatedTasks> consumer);
 
-    ProcessorFilterTask changeTaskStatus(ProcessorFilterTask processorFilterTask,
+    ProcessorTask changeTaskStatus(ProcessorTask processorTask,
                                          String nodeName,
                                          TaskStatus status,
                                          Long startTime,
                                          Long endTime);
 
-    BaseResultList<ProcessorFilterTask> find(final FindProcessorFilterTaskCriteria criteria);
+    BaseResultList<ProcessorTask> find(final FindProcessorTaskCriteria criteria);
 
-    BaseResultList<ProcessorFilterTaskSummaryRow> findSummary(final FindProcessorFilterTaskCriteria criteria);
+    BaseResultList<ProcessorTaskSummaryRow> findSummary(final FindProcessorTaskCriteria criteria);
 }

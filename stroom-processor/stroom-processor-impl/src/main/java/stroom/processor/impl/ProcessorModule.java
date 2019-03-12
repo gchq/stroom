@@ -19,7 +19,7 @@ package stroom.processor.impl;
 import com.google.inject.AbstractModule;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.api.ProcessorFilterTaskService;
+import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.CreateProcessorFilterAction;
 import stroom.processor.shared.FetchProcessorAction;
@@ -32,11 +32,11 @@ import stroom.util.shared.Clearable;
 public class ProcessorModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(ProcessorFilterTaskManager.class).to(ProcessorFilterTaskManagerImpl.class);
+        bind(ProcessorTaskManager.class).to(ProcessorTaskManagerImpl.class);
         bind(ProcessorFilterService.class).to(ProcessorFilterServiceImpl.class);
         bind(ProcessorService.class).to(ProcessorServiceImpl.class);
-        bind(ProcessorFilterTaskService.class).to(ProcessorFilterTaskServiceImpl.class);
-//        bind(ProcessorFilterTaskService.class).to(StreamTaskServiceImpl.class);
+        bind(ProcessorTaskService.class).to(ProcessorTaskServiceImpl.class);
+//        bind(ProcessorTaskService.class).to(StreamTaskServiceImpl.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(CreateProcessorFilterAction.class, CreateProcessorHandler.class)

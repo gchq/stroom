@@ -48,7 +48,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                                 "processor_node|" +
                                 "processor_filter|" +
                                 "processor_filter_tracker|" +
-                                "processor_filter_task"
+                                "processor_task"
 
                         // We don't want to include flyway versioning
                         excludes = 'processor_schema_history'

@@ -18,14 +18,14 @@ package stroom.processor.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorTask;
 
 import java.util.List;
 
 class TaskStatusTraceLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskStatusTraceLog.class);
 
-    void createdTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks) {
+    void createdTasks(final Class<?> clazz, final List<ProcessorTask> streamTasks) {
         if (LOGGER.isTraceEnabled() && streamTasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master created ");
@@ -36,9 +36,9 @@ class TaskStatusTraceLog {
         }
     }
 
-    private void appendStreamTaskList(final StringBuilder sb, final List<ProcessorFilterTask> streamTasks) {
+    private void appendStreamTaskList(final StringBuilder sb, final List<ProcessorTask> streamTasks) {
         sb.append(" ( ");
-        for (final ProcessorFilterTask task : streamTasks) {
+        for (final ProcessorTask task : streamTasks) {
             sb.append(task.getId());
             sb.append(" ");
         }

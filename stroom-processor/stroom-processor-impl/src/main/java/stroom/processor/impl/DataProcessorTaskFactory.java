@@ -19,7 +19,7 @@ package stroom.processor.impl;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.DistributedTaskFactoryDescription;
 import stroom.processor.api.JobNames;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorTask;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -29,33 +29,33 @@ import java.util.List;
 
 @DistributedTaskFactoryDescription(jobName = JobNames.DATA_PROCESSOR, description = "Job to process data matching processor filters with their associated pipelines")
 public class DataProcessorTaskFactory implements DistributedTaskFactory<DataProcessorTask, VoidResult> {
-    private final ProcessorFilterTaskManager processorFilterTaskManager;
+    private final ProcessorTaskManager processorTaskManager;
 
     @Inject
-    DataProcessorTaskFactory(final ProcessorFilterTaskManager processorFilterTaskManager) {
-        this.processorFilterTaskManager = processorFilterTaskManager;
+    DataProcessorTaskFactory(final ProcessorTaskManager processorTaskManager) {
+        this.processorTaskManager = processorTaskManager;
     }
 
     @Override
     public List<DataProcessorTask> fetch(final String nodeName, final int count) {
-        final List<ProcessorFilterTask> streamTasks = processorFilterTaskManager.assignStreamTasks(nodeName, count);
+        final List<ProcessorTask> streamTasks = processorTaskManager.assignStreamTasks(nodeName, count);
         return wrap(streamTasks);
     }
 
     @Override
     public void abandon(final String nodeName, final List<DataProcessorTask> tasks) {
-        final List<ProcessorFilterTask> streamTasks = unwrap(tasks);
-        processorFilterTaskManager.abandonStreamTasks(nodeName, streamTasks);
+        final List<ProcessorTask> streamTasks = unwrap(tasks);
+        processorTaskManager.abandonStreamTasks(nodeName, streamTasks);
     }
 
     /**
      * Wrap stream tasks with stream processor tasks.
      */
-    private List<DataProcessorTask> wrap(final List<ProcessorFilterTask> in) {
+    private List<DataProcessorTask> wrap(final List<ProcessorTask> in) {
         List<DataProcessorTask> out = Collections.emptyList();
         if (in != null && in.size() > 0) {
             out = new ArrayList<>(in.size());
-            for (final ProcessorFilterTask task : in) {
+            for (final ProcessorTask task : in) {
                 out.add(new DataProcessorTask(task));
             }
         }
@@ -65,12 +65,12 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory<DataProc
     /**
      * Unwrap stream processor tasks and get a list of stream tasks.
      */
-    private List<ProcessorFilterTask> unwrap(final List<DataProcessorTask> in) {
-        List<ProcessorFilterTask> out = Collections.emptyList();
+    private List<ProcessorTask> unwrap(final List<DataProcessorTask> in) {
+        List<ProcessorTask> out = Collections.emptyList();
         if (in != null && in.size() > 0) {
             out = new ArrayList<>(in.size());
             for (final DataProcessorTask task : in) {
-                out.add(task.getProcessorFilterTask());
+                out.add(task.getProcessorTask());
             }
         }
         return out;

@@ -13,7 +13,7 @@ import stroom.index.IndexJobsModule;
 import stroom.index.selection.VolumeJobsModule;
 import stroom.pipeline.PipelineJobsModule;
 import stroom.pipeline.refdata.store.RefDataStoreJobsModule;
-import stroom.processor.impl.ProcessorFilterTaskJobsModule;
+import stroom.processor.impl.ProcessorTaskJobsModule;
 import stroom.resource.impl.ResourceJobsModule;
 import stroom.search.SearchJobsModule;
 import stroom.search.shard.ShardJobsModule;
@@ -44,7 +44,7 @@ public class JobsModule extends AbstractModule {
         install(new stroom.job.impl.JobSystemJobsModule());
         install(new stroom.meta.impl.db.MetaDbJobsModule());
         install(new stroom.node.impl.NodeJobsModule());
-        install(new ProcessorFilterTaskJobsModule());
+        install(new ProcessorTaskJobsModule());
         install(new stroom.receive.ProxyAggregationJobsModule());
         install(new VolumeJobsModule());
     }

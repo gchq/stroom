@@ -13,8 +13,8 @@ import stroom.db.util.HikariUtil;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.ProcessorFilterDao;
-import stroom.processor.impl.ProcessorFilterTaskDao;
-import stroom.processor.impl.ProcessorFilterTaskDeleteExecutor;
+import stroom.processor.impl.ProcessorTaskDao;
+import stroom.processor.impl.ProcessorTaskDeleteExecutor;
 import stroom.processor.impl.ProcessorFilterTrackerDao;
 import stroom.util.GuiceUtil;
 import stroom.util.shared.Clearable;
@@ -32,8 +32,8 @@ public class ProcessorDbModule extends AbstractModule {
     protected void configure() {
         bind(ProcessorDao.class).to(ProcessorDaoImpl.class);
         bind(ProcessorFilterDao.class).to(ProcessorFilterDaoImpl.class);
-        bind(ProcessorFilterTaskDao.class).to(ProcessorFilterTaskDaoImpl.class);
-        bind(ProcessorFilterTaskDeleteExecutor.class).to(ProcessorFilterTaskDeleteExecutorImpl.class);
+        bind(ProcessorTaskDao.class).to(ProcessorTaskDaoImpl.class);
+        bind(ProcessorTaskDeleteExecutor.class).to(ProcessorTaskDeleteExecutorImpl.class);
         bind(ProcessorFilterTrackerDao.class).to(ProcessorFilterTrackerDaoImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)

@@ -24,7 +24,7 @@ import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Clearable;
 import stroom.entity.shared.Entity;
-import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
+import stroom.processor.shared.ProcessorTaskSummaryRow;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 import stroom.cache.api.CacheManager;
@@ -129,7 +129,7 @@ public class CachingEntityManager implements StroomEntityManager, Clearable {
     }
 
 //    @Override
-//    public BaseResultList<ProcessorFilterTaskSummaryRow> executeNativeQuerySummaryDataResult(final SqlBuilder sql, final int numberKeys) {
+//    public BaseResultList<ProcessorTaskSummaryRow> executeNativeQuerySummaryDataResult(final SqlBuilder sql, final int numberKeys) {
 //        return stroomEntityManager.executeNativeQuerySummaryDataResult(sql, numberKeys);
 //    }
 

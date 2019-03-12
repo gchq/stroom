@@ -12,9 +12,9 @@ import org.jooq.impl.Internal;
 
 import stroom.processor.impl.db.jooq.tables.Processor;
 import stroom.processor.impl.db.jooq.tables.ProcessorFilter;
-import stroom.processor.impl.db.jooq.tables.ProcessorFilterTask;
 import stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker;
 import stroom.processor.impl.db.jooq.tables.ProcessorNode;
+import stroom.processor.impl.db.jooq.tables.ProcessorTask;
 
 
 /**
@@ -41,14 +41,14 @@ public class Indexes {
     public static final Index PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID = Indexes0.PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID;
     public static final Index PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_ID = Indexes0.PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_ID;
     public static final Index PROCESSOR_FILTER_UUID = Indexes0.PROCESSOR_FILTER_UUID;
-    public static final Index PROCESSOR_FILTER_TASK_PRIMARY = Indexes0.PROCESSOR_FILTER_TASK_PRIMARY;
-    public static final Index PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_FK_PROCESSOR_FILTER_ID = Indexes0.PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_FK_PROCESSOR_FILTER_ID;
-    public static final Index PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_FK_PROCESSOR_NODE_ID = Indexes0.PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_FK_PROCESSOR_NODE_ID;
-    public static final Index PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_META_ID_IDX = Indexes0.PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_META_ID_IDX;
-    public static final Index PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_STATUS_IDX = Indexes0.PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_STATUS_IDX;
     public static final Index PROCESSOR_FILTER_TRACKER_PRIMARY = Indexes0.PROCESSOR_FILTER_TRACKER_PRIMARY;
     public static final Index PROCESSOR_NODE_NAME = Indexes0.PROCESSOR_NODE_NAME;
     public static final Index PROCESSOR_NODE_PRIMARY = Indexes0.PROCESSOR_NODE_PRIMARY;
+    public static final Index PROCESSOR_TASK_PRIMARY = Indexes0.PROCESSOR_TASK_PRIMARY;
+    public static final Index PROCESSOR_TASK_PROCESSOR_TASK_FK_PROCESSOR_FILTER_ID = Indexes0.PROCESSOR_TASK_PROCESSOR_TASK_FK_PROCESSOR_FILTER_ID;
+    public static final Index PROCESSOR_TASK_PROCESSOR_TASK_FK_PROCESSOR_NODE_ID = Indexes0.PROCESSOR_TASK_PROCESSOR_TASK_FK_PROCESSOR_NODE_ID;
+    public static final Index PROCESSOR_TASK_PROCESSOR_TASK_META_ID_IDX = Indexes0.PROCESSOR_TASK_PROCESSOR_TASK_META_ID_IDX;
+    public static final Index PROCESSOR_TASK_PROCESSOR_TASK_STATUS_IDX = Indexes0.PROCESSOR_TASK_PROCESSOR_TASK_STATUS_IDX;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
@@ -62,13 +62,13 @@ public class Indexes {
         public static Index PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID = Internal.createIndex("processor_filter_fk_processor_filter_tracker_id", ProcessorFilter.PROCESSOR_FILTER, new OrderField[] { ProcessorFilter.PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID }, false);
         public static Index PROCESSOR_FILTER_PROCESSOR_FILTER_FK_PROCESSOR_ID = Internal.createIndex("processor_filter_fk_processor_id", ProcessorFilter.PROCESSOR_FILTER, new OrderField[] { ProcessorFilter.PROCESSOR_FILTER.FK_PROCESSOR_ID }, false);
         public static Index PROCESSOR_FILTER_UUID = Internal.createIndex("uuid", ProcessorFilter.PROCESSOR_FILTER, new OrderField[] { ProcessorFilter.PROCESSOR_FILTER.UUID }, true);
-        public static Index PROCESSOR_FILTER_TASK_PRIMARY = Internal.createIndex("PRIMARY", ProcessorFilterTask.PROCESSOR_FILTER_TASK, new OrderField[] { ProcessorFilterTask.PROCESSOR_FILTER_TASK.ID }, true);
-        public static Index PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_FK_PROCESSOR_FILTER_ID = Internal.createIndex("processor_filter_task_fk_processor_filter_id", ProcessorFilterTask.PROCESSOR_FILTER_TASK, new OrderField[] { ProcessorFilterTask.PROCESSOR_FILTER_TASK.FK_PROCESSOR_FILTER_ID }, false);
-        public static Index PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_FK_PROCESSOR_NODE_ID = Internal.createIndex("processor_filter_task_fk_processor_node_id", ProcessorFilterTask.PROCESSOR_FILTER_TASK, new OrderField[] { ProcessorFilterTask.PROCESSOR_FILTER_TASK.FK_PROCESSOR_NODE_ID }, false);
-        public static Index PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_META_ID_IDX = Internal.createIndex("processor_filter_task_meta_id_idx", ProcessorFilterTask.PROCESSOR_FILTER_TASK, new OrderField[] { ProcessorFilterTask.PROCESSOR_FILTER_TASK.META_ID }, false);
-        public static Index PROCESSOR_FILTER_TASK_PROCESSOR_FILTER_TASK_STATUS_IDX = Internal.createIndex("processor_filter_task_status_idx", ProcessorFilterTask.PROCESSOR_FILTER_TASK, new OrderField[] { ProcessorFilterTask.PROCESSOR_FILTER_TASK.STATUS }, false);
         public static Index PROCESSOR_FILTER_TRACKER_PRIMARY = Internal.createIndex("PRIMARY", ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER, new OrderField[] { ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER.ID }, true);
         public static Index PROCESSOR_NODE_NAME = Internal.createIndex("name", ProcessorNode.PROCESSOR_NODE, new OrderField[] { ProcessorNode.PROCESSOR_NODE.NAME }, true);
         public static Index PROCESSOR_NODE_PRIMARY = Internal.createIndex("PRIMARY", ProcessorNode.PROCESSOR_NODE, new OrderField[] { ProcessorNode.PROCESSOR_NODE.ID }, true);
+        public static Index PROCESSOR_TASK_PRIMARY = Internal.createIndex("PRIMARY", ProcessorTask.PROCESSOR_TASK, new OrderField[] { ProcessorTask.PROCESSOR_TASK.ID }, true);
+        public static Index PROCESSOR_TASK_PROCESSOR_TASK_FK_PROCESSOR_FILTER_ID = Internal.createIndex("processor_task_fk_processor_filter_id", ProcessorTask.PROCESSOR_TASK, new OrderField[] { ProcessorTask.PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID }, false);
+        public static Index PROCESSOR_TASK_PROCESSOR_TASK_FK_PROCESSOR_NODE_ID = Internal.createIndex("processor_task_fk_processor_node_id", ProcessorTask.PROCESSOR_TASK, new OrderField[] { ProcessorTask.PROCESSOR_TASK.FK_PROCESSOR_NODE_ID }, false);
+        public static Index PROCESSOR_TASK_PROCESSOR_TASK_META_ID_IDX = Internal.createIndex("processor_task_meta_id_idx", ProcessorTask.PROCESSOR_TASK, new OrderField[] { ProcessorTask.PROCESSOR_TASK.META_ID }, false);
+        public static Index PROCESSOR_TASK_PROCESSOR_TASK_STATUS_IDX = Internal.createIndex("processor_task_status_idx", ProcessorTask.PROCESSOR_TASK, new OrderField[] { ProcessorTask.PROCESSOR_TASK.STATUS }, false);
     }
 }

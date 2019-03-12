@@ -25,8 +25,8 @@ import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.impl.DataProcessorTask;
-import stroom.processor.impl.ProcessorFilterTaskManager;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.impl.ProcessorTaskManager;
+import stroom.processor.shared.ProcessorTask;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskManager;
 import stroom.test.common.StroomPipelineTestFileUtil;
@@ -74,19 +74,19 @@ public class CommonTranslationTestHelper {
             .getTestResourcesFile(DIR + "EmployeeReference.in");
 
     private final NodeInfo nodeInfo;
-    private final ProcessorFilterTaskManager processorFilterTaskManager;
+    private final ProcessorTaskManager processorTaskManager;
     private final StoreCreationTool storeCreationTool;
     private final TaskManager taskManager;
     private final MetaService metaService;
 
     @Inject
     CommonTranslationTestHelper(final NodeInfo nodeInfo,
-                                final ProcessorFilterTaskManager processorFilterTaskManager,
+                                final ProcessorTaskManager processorTaskManager,
                                 final StoreCreationTool storeCreationTool,
                                 final TaskManager taskManager,
                                 final MetaService metaService) {
         this.nodeInfo = nodeInfo;
-        this.processorFilterTaskManager = processorFilterTaskManager;
+        this.processorTaskManager = processorTaskManager;
         this.storeCreationTool = storeCreationTool;
         this.taskManager = taskManager;
         this.metaService = metaService;
@@ -94,17 +94,17 @@ public class CommonTranslationTestHelper {
 
     public List<DataProcessorTaskExecutor> processAll() {
         // Force creation of stream tasks.
-        processorFilterTaskManager.createTasks(new SimpleTaskContext());
+        processorTaskManager.createTasks(new SimpleTaskContext());
 
         final List<DataProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorFilterTask> streamTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+        List<ProcessorTask> streamTasks = processorTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
-            for (final ProcessorFilterTask streamTask : streamTasks) {
+            for (final ProcessorTask streamTask : streamTasks) {
                 final DataProcessorTask task = new DataProcessorTask(streamTask);
                 taskManager.exec(task);
                 results.add(task.getDataProcessorTaskExecutor());
             }
-            streamTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+            streamTasks = processorTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
 
         return results;

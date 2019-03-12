@@ -26,8 +26,8 @@ import stroom.meta.shared.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.entity.StroomEntityManager;
-import stroom.processor.api.ProcessorFilterTaskService;
-import stroom.processor.shared.FindProcessorFilterTaskCriteria;
+import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.util.sql.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
 import stroom.persist.ConnectionProvider;
@@ -53,8 +53,8 @@ import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestProcessorFilterTaskManager2 extends AbstractCoreIntegrationTest {
-    public static final Logger LOGGER = LoggerFactory.getLogger(TestProcessorFilterTaskManager2.class);
+class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
+    public static final Logger LOGGER = LoggerFactory.getLogger(TestProcessorTaskManager2.class);
 
     @Inject
     private ConnectionProvider connectionProvider;
@@ -63,11 +63,11 @@ class TestProcessorFilterTaskManager2 extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
-    private ProcessorFilterTaskManagerImpl processorFilterTaskManager;
+    private ProcessorTaskManagerImpl processorTaskManager;
     @Inject
-    private ProcessorFilterTaskService processorFilterTaskService;
+    private ProcessorTaskService processorTaskService;
     @Inject
-    private ProcessorFilterTaskDeleteExecutor streamTaskDeleteExecutor;
+    private ProcessorTaskDeleteExecutor streamTaskDeleteExecutor;
     @Inject
     private StroomEntityManager stroomEntityManager;
     @Inject
@@ -78,21 +78,21 @@ class TestProcessorFilterTaskManager2 extends AbstractCoreIntegrationTest {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
-        assertThat(processorFilterTaskService.find(new FindProcessorFilterTaskCriteria()).size()).isZero();
+        assertThat(processorTaskService.find(new FindProcessorTaskCriteria()).size()).isZero();
         final List<Meta> streams = metaService.find(new FindMetaCriteria());
         assertThat(streams.size()).isEqualTo(1);
 
         ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND).build();
-        assertThat(processorFilterTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName).build();
-        assertThat(processorFilterTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, "otherFed").build();
-        assertThat(processorFilterTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFieldNames.PIPELINE_UUID, Condition.EQUALS, "1234").build();
-        assertThat(processorFilterTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
     }
 
     @Test

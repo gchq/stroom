@@ -48,8 +48,8 @@ import stroom.pipeline.stepping.SteppingTask;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.impl.DataProcessorTask;
-import stroom.processor.impl.ProcessorFilterTaskManager;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.impl.ProcessorTaskManager;
+import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -97,7 +97,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private NodeInfo nodeInfo;
     @Inject
-    private ProcessorFilterTaskManager processorFilterTaskManager;
+    private ProcessorTaskManager processorTaskManager;
     @Inject
     private TaskManager taskManager;
     @Inject
@@ -215,7 +215,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         addStream(inputFile, feed);
 
-        processorFilterTaskManager.createTasks(new SimpleTaskContext());
+        processorTaskManager.createTasks(new SimpleTaskContext());
 
         List<DataProcessorTask> tasks = getTasks();
         assertThat(tasks.size()).as("There should be one task here").isEqualTo(1);
@@ -361,13 +361,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private List<DataProcessorTask> getTasks() {
         List<DataProcessorTask> dataProcessorTasks = Collections.emptyList();
 
-        List<ProcessorFilterTask> processorFilterTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
-        while (processorFilterTasks.size() > 0) {
-            dataProcessorTasks = new ArrayList<>(processorFilterTasks.size());
-            for (final ProcessorFilterTask processorFilterTask : processorFilterTasks) {
-                dataProcessorTasks.add(new DataProcessorTask(processorFilterTask));
+        List<ProcessorTask> processorTasks = processorTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+        while (processorTasks.size() > 0) {
+            dataProcessorTasks = new ArrayList<>(processorTasks.size());
+            for (final ProcessorTask processorTask : processorTasks) {
+                dataProcessorTasks.add(new DataProcessorTask(processorTask));
             }
-            processorFilterTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+            processorTasks = processorTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
 
         return dataProcessorTasks;

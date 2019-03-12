@@ -33,8 +33,8 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.impl.DataProcessorTask;
-import stroom.processor.impl.ProcessorFilterTaskManager;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.impl.ProcessorTaskManager;
+import stroom.processor.shared.ProcessorTask;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskManager;
@@ -94,7 +94,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     @Inject
     private XsltStore xsltStore;
     @Inject
-    private ProcessorFilterTaskManager processorFilterTaskManager;
+    private ProcessorTaskManager processorTaskManager;
     @Inject
     private NodeInfo nodeInfo;
 
@@ -136,14 +136,14 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      */
     private List<DataProcessorTaskExecutor> processAll() {
         final List<DataProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorFilterTask> streamTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+        List<ProcessorTask> streamTasks = processorTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
-            for (final ProcessorFilterTask streamTask : streamTasks) {
+            for (final ProcessorTask streamTask : streamTasks) {
                 final DataProcessorTask task = new DataProcessorTask(streamTask);
                 taskManager.exec(task);
                 results.add(task.getDataProcessorTaskExecutor());
             }
-            streamTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+            streamTasks = processorTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
         return results;
     }
@@ -347,7 +347,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
             }
 
             // Force creation of stream tasks.
-            processorFilterTaskManager.createTasks(new SimpleTaskContext());
+            processorTaskManager.createTasks(new SimpleTaskContext());
 
         } catch (final IOException e) {
             e.printStackTrace();

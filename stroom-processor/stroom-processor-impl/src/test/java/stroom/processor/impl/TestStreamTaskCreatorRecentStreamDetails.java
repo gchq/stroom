@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Disabled;
 
 
 @Disabled
-class TestProcessorFilterTaskManagerRecentStreamDetails {
+class TestProcessorTaskManagerRecentStreamDetails {
 //    @Test
 //    public void testSimple() {
 //        final ProcessorFilter filter = new ProcessorFilter();
@@ -30,28 +30,28 @@ class TestProcessorFilterTaskManagerRecentStreamDetails {
 //        findStreamCriteria.obtainFeeds().obtainInclude().add(1L);
 //
 //        // No history
-//        ProcessorFilterTaskManagerRecentStreamDetails details = new ProcessorFilterTaskManagerRecentStreamDetails(null, 0L);
+//        ProcessorTaskManagerRecentStreamDetails details = new ProcessorTaskManagerRecentStreamDetails(null, 0L);
 //
 //        assertThat(details.hasRecentDetail()).isFalse();
 //        assertThat(details.isApplicable(filter, findStreamCriteria)).isTrue();
 //        filter.getProcessorFilterTracker().setMinMetaId(1L);
 //
 //        // Fake that 10 streams came in for feed 2
-//        details = new ProcessorFilterTaskManagerRecentStreamDetails(details, 10L);
+//        details = new ProcessorTaskManagerRecentStreamDetails(details, 10L);
 //        details.addRecentFeedId(2L);
 //
 //        assertThat(details.hasRecentDetail()).isTrue();
 //        assertThat(details.isApplicable(filter, findStreamCriteria)).isFalse();
 //
 //        // Now add some more for feed 1
-//        details = new ProcessorFilterTaskManagerRecentStreamDetails(details, 21L);
+//        details = new ProcessorTaskManagerRecentStreamDetails(details, 21L);
 //        details.addRecentFeedId(1L);
 //
 //        assertThat(details.hasRecentDetail()).isTrue();
 //        assertThat(details.isApplicable(filter, findStreamCriteria)).isTrue();
 //
 //        // Now add some more for feed 2
-//        details = new ProcessorFilterTaskManagerRecentStreamDetails(details, 23L);
+//        details = new ProcessorTaskManagerRecentStreamDetails(details, 23L);
 //        details.addRecentFeedId(2L);
 //        assertThat(details.isApplicable(filter, findStreamCriteria)).isFalse();
 //    }

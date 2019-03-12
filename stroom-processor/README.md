@@ -13,7 +13,7 @@ entity processor {
 entity processor_filter {
 }
 
-entity processor_filter_task {
+entity processor_task {
 }
 
 entity processor_filter_tracker {
@@ -21,7 +21,7 @@ entity processor_filter_tracker {
 
 processor --{ processor_filter
 processor_filter_tracker --{ processor_filter
-processor_filter --{ processor_filter_task
+processor_filter --{ processor_task
 
 ' see http://plantuml.com/skinparam & https://github.com/plantuml/plantuml/pull/31
 

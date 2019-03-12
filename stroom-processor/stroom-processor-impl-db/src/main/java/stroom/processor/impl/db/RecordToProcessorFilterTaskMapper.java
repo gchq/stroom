@@ -1,30 +1,30 @@
 package stroom.processor.impl.db;
 
 import org.jooq.Record;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.TaskStatus;
 
 import java.util.function.Function;
 
-import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTask.PROCESSOR_FILTER_TASK;
+import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 import static stroom.processor.impl.db.jooq.tables.ProcessorNode.PROCESSOR_NODE;
 
-class RecordToProcessorFilterTaskMapper implements Function<Record, ProcessorFilterTask> {
+class RecordToProcessorTaskMapper implements Function<Record, ProcessorTask> {
     @Override
-    public ProcessorFilterTask apply(final Record record) {
-        final ProcessorFilterTask processorFilterTask = new ProcessorFilterTask();
-        processorFilterTask.setId(record.get(PROCESSOR_FILTER_TASK.ID));
-        processorFilterTask.setVersion(record.get(PROCESSOR_FILTER_TASK.VERSION));
-        processorFilterTask.setMetaId(record.get(PROCESSOR_FILTER_TASK.META_ID));
-        processorFilterTask.setData(record.get(PROCESSOR_FILTER_TASK.DATA));
+    public ProcessorTask apply(final Record record) {
+        final ProcessorTask processorTask = new ProcessorTask();
+        processorTask.setId(record.get(PROCESSOR_TASK.ID));
+        processorTask.setVersion(record.get(PROCESSOR_TASK.VERSION));
+        processorTask.setMetaId(record.get(PROCESSOR_TASK.META_ID));
+        processorTask.setData(record.get(PROCESSOR_TASK.DATA));
         if (record.field(PROCESSOR_NODE.NAME) != null) {
-            processorFilterTask.setNodeName(record.get(PROCESSOR_NODE.NAME));
+            processorTask.setNodeName(record.get(PROCESSOR_NODE.NAME));
         }
-        processorFilterTask.setStatus(TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(PROCESSOR_FILTER_TASK.STATUS)));
-        processorFilterTask.setStartTimeMs(record.get(PROCESSOR_FILTER_TASK.STATUS_TIME_MS));
-        processorFilterTask.setCreateTimeMs(record.get(PROCESSOR_FILTER_TASK.CREATE_TIME_MS));
-        processorFilterTask.setStatusTimeMs(record.get(PROCESSOR_FILTER_TASK.STATUS_TIME_MS));
-        processorFilterTask.setEndTimeMs(record.get(PROCESSOR_FILTER_TASK.END_TIME_MS));
-        return processorFilterTask;
+        processorTask.setStatus(TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(PROCESSOR_TASK.STATUS)));
+        processorTask.setStartTimeMs(record.get(PROCESSOR_TASK.STATUS_TIME_MS));
+        processorTask.setCreateTimeMs(record.get(PROCESSOR_TASK.CREATE_TIME_MS));
+        processorTask.setStatusTimeMs(record.get(PROCESSOR_TASK.STATUS_TIME_MS));
+        processorTask.setEndTimeMs(record.get(PROCESSOR_TASK.END_TIME_MS));
+        return processorTask;
     }
 }

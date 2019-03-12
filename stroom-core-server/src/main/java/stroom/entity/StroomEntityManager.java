@@ -20,7 +20,7 @@ import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.BaseResultList;
 import stroom.entity.shared.Entity;
 import stroom.util.shared.Flushable;
-import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
+import stroom.processor.shared.ProcessorTaskSummaryRow;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 
@@ -41,7 +41,7 @@ public interface StroomEntityManager extends Flushable {
 
     long executeNativeQueryLongResult(SqlBuilder sql);
 
-//    BaseResultList<ProcessorFilterTaskSummaryRow> executeNativeQuerySummaryDataResult(SqlBuilder sql, int numberKeys);
+//    BaseResultList<ProcessorTaskSummaryRow> executeNativeQuerySummaryDataResult(SqlBuilder sql, int numberKeys);
 
     @SuppressWarnings("rawtypes")
     List executeNativeQueryResultList(SqlBuilder sql);

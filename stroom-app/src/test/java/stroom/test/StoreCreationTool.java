@@ -595,15 +595,9 @@ public final class StoreCreationTool {
         // Create the indexing pipeline.
         final DocRef pipelineRef = getIndexingPipeline(indexRef, translationXsltLocation);
 
-        Processor streamProcessor = processorService.find(new FindProcessorCriteria(pipelineRef))
+        final Processor streamProcessor = processorService.find(new FindProcessorCriteria(pipelineRef))
                 .getFirst();
         if (streamProcessor == null) {
-            // Setup the stream processor.
-            streamProcessor = new Processor();
-            streamProcessor.setEnabled(true);
-            streamProcessor.setPipelineUuid(pipelineRef.getUuid());
-            streamProcessor = processorService.update(streamProcessor);
-
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
                     .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
@@ -611,7 +605,7 @@ public final class StoreCreationTool {
                             .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                             .build())
                     .build();
-            processorFilterService.create(streamProcessor, findStreamQueryData, 1, true);
+            processorFilterService.create(pipelineRef, findStreamQueryData, 1, true);
         }
 
         return indexRef;

@@ -14,20 +14,28 @@
  * limitations under the License.
  */
 
-package stroom.processor.shared;
+package stroom.processor.impl;
 
-import stroom.entity.shared.FindAction;
-import stroom.job.shared.FindJobNodeCriteria;
-import stroom.job.shared.JobNodeRow;
+import stroom.processor.shared.ProcessorTask;
+import stroom.task.api.TaskContext;
 
-public class FindProcessorFilterTaskAction extends FindAction<FindProcessorFilterTaskCriteria, ProcessorFilterTask> {
-    private static final long serialVersionUID = -6808045615241590297L;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
-    public FindProcessorFilterTaskAction() {
-        // Default constructor necessary for GWT serialisation.
-    }
+public interface ProcessorTaskManager {
+    List<ProcessorTask> assignStreamTasks(String nodeName, int count);
 
-    public FindProcessorFilterTaskAction(final FindProcessorFilterTaskCriteria criteria) {
-        super(criteria);
-    }
+    void abandonStreamTasks(String nodeName, List<ProcessorTask> tasks);
+
+    void createTasks(final TaskContext taskContext);
+
+    int getStreamTaskQueueSize();
+
+    void writeQueueStatistics();
+
+    AtomicLong getNextDeleteMs();
+
+    void startup();
+
+    void shutdown();
 }

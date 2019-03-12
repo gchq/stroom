@@ -25,8 +25,8 @@ import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.impl.DataProcessorTask;
-import stroom.processor.impl.ProcessorFilterTaskManager;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.impl.ProcessorTaskManager;
+import stroom.processor.shared.ProcessorTask;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
@@ -57,7 +57,7 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
     @Inject
     private NodeInfo nodeInfo;
     @Inject
-    private ProcessorFilterTaskManager processorFilterTaskManager;
+    private ProcessorTaskManager processorTaskManager;
     @Inject
     private StoreCreationTool storeCreationTool;
     @Inject
@@ -116,14 +116,14 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
      */
     private List<DataProcessorTaskExecutor> processAll() {
         final List<DataProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorFilterTask> streamTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+        List<ProcessorTask> streamTasks = processorTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
-            for (final ProcessorFilterTask streamTask : streamTasks) {
+            for (final ProcessorTask streamTask : streamTasks) {
                 final DataProcessorTask task = new DataProcessorTask(streamTask);
                 taskManager.exec(task);
                 results.add(task.getDataProcessorTaskExecutor());
             }
-            streamTasks = processorFilterTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+            streamTasks = processorTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
         return results;
     }

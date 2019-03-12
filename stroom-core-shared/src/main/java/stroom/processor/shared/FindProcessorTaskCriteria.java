@@ -30,7 +30,7 @@ import stroom.util.shared.StringCriteria;
  * API to find streams that have not yet been processed.
  * </p>
  */
-public final class FindProcessorFilterTaskCriteria extends BaseCriteria implements HasIsConstrained {
+public final class FindProcessorTaskCriteria extends BaseCriteria implements HasIsConstrained {
     public static final int SUMMARY_POS_PIPELINE = 0;
     public static final int SUMMARY_POS_FEED = 1;
     public static final int SUMMARY_POS_PRIORITY = 2;
@@ -64,7 +64,7 @@ public final class FindProcessorFilterTaskCriteria extends BaseCriteria implemen
     /**
      * Find with a key
      */
-    private CriteriaSet<Long> processorFilterTaskIdSet = null;
+    private CriteriaSet<Long> processorTaskIdSet = null;
 
     /**
      * Find with a key
@@ -96,8 +96,8 @@ public final class FindProcessorFilterTaskCriteria extends BaseCriteria implemen
      */
     private Long createMs = null;
 
-    public static FindProcessorFilterTaskCriteria createWithStream(final Meta meta) {
-        final FindProcessorFilterTaskCriteria criteria = new FindProcessorFilterTaskCriteria();
+    public static FindProcessorTaskCriteria createWithStream(final Meta meta) {
+        final FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria();
         criteria.obtainMetaIdSet().add(meta.getId());
         return criteria;
     }
@@ -113,7 +113,7 @@ public final class FindProcessorFilterTaskCriteria extends BaseCriteria implemen
         if (nodeNameCriteria != null && nodeNameCriteria.isConstrained()) {
             return true;
         }
-        if (processorFilterTaskIdSet != null && processorFilterTaskIdSet.isConstrained()) {
+        if (processorTaskIdSet != null && processorTaskIdSet.isConstrained()) {
             return true;
         }
         if (processorFilterIdSet != null && processorFilterIdSet.isConstrained()) {
@@ -207,8 +207,8 @@ public final class FindProcessorFilterTaskCriteria extends BaseCriteria implemen
 //        return streamTypeNameSet;
 //    }
 
-    public CriteriaSet<Long> getProcessorFilterTaskIdSet() {
-        return processorFilterTaskIdSet;
+    public CriteriaSet<Long> getProcessorTaskIdSet() {
+        return processorTaskIdSet;
     }
 
     public CriteriaSet<Integer> obtainProcessorFilterIdSet() {
@@ -222,11 +222,11 @@ public final class FindProcessorFilterTaskCriteria extends BaseCriteria implemen
         return processorFilterIdSet;
     }
 
-    public CriteriaSet<Long> obtainProcessorFilterTaskIdSet() {
-        if (processorFilterTaskIdSet == null) {
-            processorFilterTaskIdSet = new CriteriaSet<>();
+    public CriteriaSet<Long> obtainProcessorTaskIdSet() {
+        if (processorTaskIdSet == null) {
+            processorTaskIdSet = new CriteriaSet<>();
         }
-        return processorFilterTaskIdSet;
+        return processorTaskIdSet;
     }
 
 //    public CriteriaSet<Status> getStatusSet() {
@@ -251,7 +251,7 @@ public final class FindProcessorFilterTaskCriteria extends BaseCriteria implemen
 //        return findStreamCriteria;
 //    }
 
-//    public void copyFrom(final FindProcessorFilterTaskCriteria other) {
+//    public void copyFrom(final FindProcessorTaskCriteria other) {
 //        if (other == null) {
 //            return;
 //        }
@@ -306,17 +306,17 @@ public final class FindProcessorFilterTaskCriteria extends BaseCriteria implemen
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof FindProcessorFilterTaskCriteria)) return false;
+        if (!(o instanceof FindProcessorTaskCriteria)) return false;
         if (!super.equals(o)) return false;
 
-        final FindProcessorFilterTaskCriteria that = (FindProcessorFilterTaskCriteria) o;
+        final FindProcessorTaskCriteria that = (FindProcessorTaskCriteria) o;
 
         if (taskStatusSet != null ? !taskStatusSet.equals(that.taskStatusSet) : that.taskStatusSet != null)
             return false;
         if (metaIdSet != null ? !metaIdSet.equals(that.metaIdSet) : that.metaIdSet != null) return false;
         if (nodeNameCriteria != null ? !nodeNameCriteria.equals(that.nodeNameCriteria) : that.nodeNameCriteria != null)
             return false;
-        if (processorFilterTaskIdSet != null ? !processorFilterTaskIdSet.equals(that.processorFilterTaskIdSet) : that.processorFilterTaskIdSet != null)
+        if (processorTaskIdSet != null ? !processorTaskIdSet.equals(that.processorTaskIdSet) : that.processorTaskIdSet != null)
             return false;
         if (processorFilterIdSet != null ? !processorFilterIdSet.equals(that.processorFilterIdSet) : that.processorFilterIdSet != null)
             return false;
@@ -337,7 +337,7 @@ public final class FindProcessorFilterTaskCriteria extends BaseCriteria implemen
         result = 31 * result + (taskStatusSet != null ? taskStatusSet.hashCode() : 0);
         result = 31 * result + (metaIdSet != null ? metaIdSet.hashCode() : 0);
         result = 31 * result + (nodeNameCriteria != null ? nodeNameCriteria.hashCode() : 0);
-        result = 31 * result + (processorFilterTaskIdSet != null ? processorFilterTaskIdSet.hashCode() : 0);
+        result = 31 * result + (processorTaskIdSet != null ? processorTaskIdSet.hashCode() : 0);
         result = 31 * result + (processorFilterIdSet != null ? processorFilterIdSet.hashCode() : 0);
         result = 31 * result + (createMs != null ? createMs.hashCode() : 0);
 //        result = 31 * result + (feedNameSet != null ? feedNameSet.hashCode() : 0);

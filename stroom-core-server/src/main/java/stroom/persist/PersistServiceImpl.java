@@ -143,7 +143,7 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
 //                "stroom.processor.shared.Processor",
 //                "stroom.processor.shared.ProcessorFilter",
 //                "stroom.processor.shared.ProcessorFilterTracker",
-//                "stroom.processor.shared.ProcessorFilterTask"
+//                "stroom.processor.shared.ProcessorTask"
         );
 
         return new PersistenceUnitInfoImpl(name, entityClassNames, properties(dataSource));

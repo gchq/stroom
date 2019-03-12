@@ -3,10 +3,10 @@ package stroom.processor.impl;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.processor.api.InclusiveRanges;
-import stroom.processor.shared.FindProcessorFilterTaskCriteria;
+import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterTask;
-import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
+import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskSummaryRow;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.TaskStatus;
 import stroom.util.shared.BaseResultList;
@@ -18,22 +18,22 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Singleton
-public class MockProcessorFilterTaskDao implements ProcessorFilterTaskDao {
-    private final MockIntCrud<ProcessorFilterTask> dao = new MockIntCrud<>();
+public class MockProcessorTaskDao implements ProcessorTaskDao {
+    private final MockIntCrud<ProcessorTask> dao = new MockIntCrud<>();
 //
 //    @Override
-//    public ProcessorFilterTask create(final ProcessorFilterTask processorFilterTask) {
-//        return dao.create(processorFilterTask);
+//    public ProcessorTask create(final ProcessorTask processorTask) {
+//        return dao.create(processorTask);
 //    }
 //
 //    @Override
-//    public Optional<ProcessorFilterTask> fetch(final int id) {
+//    public Optional<ProcessorTask> fetch(final int id) {
 //        return dao.fetch(id);
 //    }
 //
 //    @Override
-//    public ProcessorFilterTask update(final ProcessorFilterTask processorFilterTask) {
-//        return dao.update(processorFilterTask);
+//    public ProcessorTask update(final ProcessorTask processorTask) {
+//        return dao.update(processorTask);
 //    }
 //
 //    @Override
@@ -42,8 +42,8 @@ public class MockProcessorFilterTaskDao implements ProcessorFilterTaskDao {
 //    }
 //
 //    @Override
-//    public BaseResultList<ProcessorFilterTask> find(final FindProcessorFilterTaskCriteria criteria) {
-//        final List<ProcessorFilterTask> list = dao
+//    public BaseResultList<ProcessorTask> find(final FindProcessorTaskCriteria criteria) {
+//        final List<ProcessorTask> list = dao
 //                .getMap()
 //                .values()
 //                .stream()
@@ -81,7 +81,7 @@ public class MockProcessorFilterTaskDao implements ProcessorFilterTaskDao {
         final long now = System.currentTimeMillis();
 
         metaMap.forEach((meta, eventRanges) -> {
-            final ProcessorFilterTask task = new ProcessorFilterTask();
+            final ProcessorTask task = new ProcessorTask();
             task.setVersion(1);
             task.setCreateTimeMs(now);
             task.setStatus(TaskStatus.UNPROCESSED);
@@ -111,18 +111,18 @@ public class MockProcessorFilterTaskDao implements ProcessorFilterTaskDao {
     }
 
     @Override
-    public ProcessorFilterTask changeTaskStatus(final ProcessorFilterTask processorFilterTask, final String nodeName, final TaskStatus status, final Long startTime, final Long endTime) {
-        processorFilterTask.setNodeName(nodeName);
-        processorFilterTask.setStatus(status);
-        processorFilterTask.setStatusTimeMs(System.currentTimeMillis());
-        processorFilterTask.setStartTimeMs(startTime);
-        processorFilterTask.setEndTimeMs(endTime);
-        return processorFilterTask;
+    public ProcessorTask changeTaskStatus(final ProcessorTask processorTask, final String nodeName, final TaskStatus status, final Long startTime, final Long endTime) {
+        processorTask.setNodeName(nodeName);
+        processorTask.setStatus(status);
+        processorTask.setStatusTimeMs(System.currentTimeMillis());
+        processorTask.setStartTimeMs(startTime);
+        processorTask.setEndTimeMs(endTime);
+        return processorTask;
     }
 
     @Override
-    public BaseResultList<ProcessorFilterTask> find(final FindProcessorFilterTaskCriteria criteria) {
-        final List<ProcessorFilterTask> list = dao
+    public BaseResultList<ProcessorTask> find(final FindProcessorTaskCriteria criteria) {
+        final List<ProcessorTask> list = dao
                 .getMap()
                 .values()
                 .stream()
@@ -145,7 +145,7 @@ public class MockProcessorFilterTaskDao implements ProcessorFilterTaskDao {
     }
 
     @Override
-    public BaseResultList<ProcessorFilterTaskSummaryRow> findSummary(final FindProcessorFilterTaskCriteria criteria) {
+    public BaseResultList<ProcessorTaskSummaryRow> findSummary(final FindProcessorTaskCriteria criteria) {
         return null;
     }
 }

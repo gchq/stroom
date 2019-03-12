@@ -23,8 +23,8 @@ import com.gwtplatform.mvp.client.View;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.processor.shared.FindProcessorFilterTaskCriteria;
-import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
+import stroom.processor.shared.FindProcessorTaskCriteria;
+import stroom.processor.shared.ProcessorTaskSummaryRow;
 
 public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPresenter.StreamTaskView>
         implements HasDocumentRead<SharedObject> {
@@ -53,23 +53,23 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
             // Clear the task list.
             processorTaskListPresenter.clear();
 
-            final ProcessorFilterTaskSummaryRow row = processorTaskSummaryPresenter.getSelectionModel().getSelected();
+            final ProcessorTaskSummaryRow row = processorTaskSummaryPresenter.getSelectionModel().getSelected();
 
             if (row != null) {
-                final FindProcessorFilterTaskCriteria findProcessorFilterTaskCriteria = processorTaskListPresenter.getCriteria();
+                final FindProcessorTaskCriteria findProcessorTaskCriteria = processorTaskListPresenter.getCriteria();
 
                 final String pipelineUuid = row.getPipeline();
 
-                findProcessorFilterTaskCriteria.obtainPipelineUuidCriteria().clear();
+                findProcessorTaskCriteria.obtainPipelineUuidCriteria().clear();
                 if (pipelineUuid != null) {
-                    findProcessorFilterTaskCriteria.obtainPipelineUuidCriteria().setString(pipelineUuid);
+                    findProcessorTaskCriteria.obtainPipelineUuidCriteria().setString(pipelineUuid);
                 }
 
 //                findStreamTaskCriteria.obtainFeedNameSet().clear();
-//                findStreamTaskCriteria.obtainFeedNameSet().add(row.getLabel().get(FindProcessorFilterTaskCriteria.SUMMARY_POS_FEED));
+//                findStreamTaskCriteria.obtainFeedNameSet().add(row.getLabel().get(FindProcessorTaskCriteria.SUMMARY_POS_FEED));
 
-                findProcessorFilterTaskCriteria.obtainTaskStatusSet().clear();
-                findProcessorFilterTaskCriteria.obtainTaskStatusSet().add(row.getStatus());
+                findProcessorTaskCriteria.obtainTaskStatusSet().clear();
+                findProcessorTaskCriteria.obtainTaskStatusSet().add(row.getStatus());
 
                 processorTaskListPresenter.getDataProvider().refresh();
             }

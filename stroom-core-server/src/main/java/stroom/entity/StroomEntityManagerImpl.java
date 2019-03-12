@@ -28,7 +28,7 @@ import stroom.util.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityAction;
-import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
+import stroom.processor.shared.ProcessorTaskSummaryRow;
 import stroom.entity.util.AbstractSqlBuilder;
 import stroom.entity.util.EntityServiceLogUtil;
 import stroom.entity.util.HqlBuilder;
@@ -212,14 +212,14 @@ public class StroomEntityManagerImpl implements StroomEntityManager {
 
 //    @SuppressWarnings("unchecked")
 //    @Override
-//    public BaseResultList<ProcessorFilterTaskSummaryRow> executeNativeQuerySummaryDataResult(final SqlBuilder sql,
+//    public BaseResultList<ProcessorTaskSummaryRow> executeNativeQuerySummaryDataResult(final SqlBuilder sql,
 //                                                                                             final int numberKeys) {
-//        final ArrayList<ProcessorFilterTaskSummaryRow> summaryData = new ArrayList<>();
+//        final ArrayList<ProcessorTaskSummaryRow> summaryData = new ArrayList<>();
 //
 //        final List<Object[]> list = executeNativeQueryResultList(sql);
 //
 //        for (final Object[] row : list) {
-//            final ProcessorFilterTaskSummaryRow summaryDataRow = new ProcessorFilterTaskSummaryRow();
+//            final ProcessorTaskSummaryRow summaryDataRow = new ProcessorTaskSummaryRow();
 //            int pos = 0;
 //            for (int i = 0; i < numberKeys; i++) {
 //                final Object key = row[pos++];

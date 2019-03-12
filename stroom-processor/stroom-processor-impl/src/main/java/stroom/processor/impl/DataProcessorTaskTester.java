@@ -22,7 +22,7 @@ import stroom.data.store.api.Source;
 import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorTask;
 
 public class DataProcessorTaskTester implements DataProcessorTaskExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataProcessorTaskTester.class);
@@ -30,7 +30,7 @@ public class DataProcessorTaskTester implements DataProcessorTaskExecutor {
     @Override
     public void exec(final Processor processor,
                      final ProcessorFilter processorFilter,
-                     final ProcessorFilterTask processorFilterTask,
+                     final ProcessorTask processorTask,
                      final Source source) {
         LOGGER.info("exec() - Processing stream {}", source.getMeta());
     }

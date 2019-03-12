@@ -17,10 +17,10 @@
 package stroom.processor.impl;
 
 
-import stroom.processor.api.ProcessorFilterTaskService;
-import stroom.processor.shared.FindProcessorFilterTaskCriteria;
-import stroom.processor.shared.ProcessorFilterTask;
-import stroom.processor.shared.ProcessorFilterTaskSummaryRow;
+import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.shared.FindProcessorTaskCriteria;
+import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskSummaryRow;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.BaseResultList;
@@ -29,28 +29,28 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-class ProcessorFilterTaskServiceImpl implements ProcessorFilterTaskService {
+class ProcessorTaskServiceImpl implements ProcessorTaskService {
     private static final String PERMISSION = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
 
-    private final ProcessorFilterTaskDao processorFilterTaskDao;
+    private final ProcessorTaskDao processorTaskDao;
     private final Security security;
 
     @Inject
-    ProcessorFilterTaskServiceImpl(final ProcessorFilterTaskDao processorFilterTaskDao,
+    ProcessorTaskServiceImpl(final ProcessorTaskDao processorTaskDao,
                                    final Security security) {
-        this.processorFilterTaskDao = processorFilterTaskDao;
+        this.processorTaskDao = processorTaskDao;
         this.security = security;
     }
 
     @Override
-    public BaseResultList<ProcessorFilterTask> find(final FindProcessorFilterTaskCriteria criteria) {
+    public BaseResultList<ProcessorTask> find(final FindProcessorTaskCriteria criteria) {
         return security.secureResult(PERMISSION, () ->
-                processorFilterTaskDao.find(criteria));
+                processorTaskDao.find(criteria));
     }
 
     @Override
-    public BaseResultList<ProcessorFilterTaskSummaryRow> findSummary(final FindProcessorFilterTaskCriteria criteria) {
+    public BaseResultList<ProcessorTaskSummaryRow> findSummary(final FindProcessorTaskCriteria criteria) {
         return security.secureResult(PERMISSION, () ->
-                processorFilterTaskDao.findSummary(criteria));
+                processorTaskDao.findSummary(criteria));
     }
 }

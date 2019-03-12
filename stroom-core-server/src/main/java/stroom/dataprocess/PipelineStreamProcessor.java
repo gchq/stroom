@@ -67,7 +67,7 @@ import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorTask;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
@@ -121,7 +121,7 @@ public class PipelineStreamProcessor implements DataProcessorTaskExecutor {
 
     private Processor streamProcessor;
     private ProcessorFilter processorFilter;
-    private ProcessorFilterTask streamTask;
+    private ProcessorTask streamTask;
     private Source streamSource;
 
     private long startTime;
@@ -176,11 +176,11 @@ public class PipelineStreamProcessor implements DataProcessorTaskExecutor {
     @Override
     public void exec(final Processor processor,
                      final ProcessorFilter processorFilter,
-                     final ProcessorFilterTask processorFilterTask,
+                     final ProcessorTask processorTask,
                      final Source streamSource) {
         this.streamProcessor = processor;
         this.processorFilter = processorFilter;
-        this.streamTask = processorFilterTask;
+        this.streamTask = processorTask;
         this.streamSource = streamSource;
 
         // Record when processing began so we know how long it took
@@ -192,7 +192,7 @@ public class PipelineStreamProcessor implements DataProcessorTaskExecutor {
 
         // Initialise the helper class that will ensure we only keep the latest output for this stream source and processor.
         final Meta meta = streamSource.getMeta();
-        supersededOutputHelper.init(meta, processor, processorFilterTask, startTime);
+        supersededOutputHelper.init(meta, processor, processorTask, startTime);
 
         // Setup the process info writer.
         try (final ProcessInfoOutputStreamProvider processInfoOutputStreamProvider = new ProcessInfoOutputStreamProvider(streamStore,
@@ -200,7 +200,7 @@ public class PipelineStreamProcessor implements DataProcessorTaskExecutor {
                 meta,
                 processor,
                 processorFilter,
-                processorFilterTask,
+                processorTask,
                 recordCount,
                 errorReceiverProxy,
                 supersededOutputHelper)) {
@@ -503,7 +503,7 @@ public class PipelineStreamProcessor implements DataProcessorTaskExecutor {
         private final Meta meta;
         private final Processor processor;
         private final ProcessorFilter processorFilter;
-        private final ProcessorFilterTask processorFilterTask;
+        private final ProcessorTask processorTask;
         private final RecordCount recordCount;
         private final ErrorReceiverProxy errorReceiverProxy;
         private final SupersededOutputHelper supersededOutputHelper;
@@ -516,7 +516,7 @@ public class PipelineStreamProcessor implements DataProcessorTaskExecutor {
                                         final Meta meta,
                                         final Processor processor,
                                         final ProcessorFilter processorFilter,
-                                        final ProcessorFilterTask processorFilterTask,
+                                        final ProcessorTask processorTask,
                                         final RecordCount recordCount,
                                         final ErrorReceiverProxy errorReceiverProxy,
                                         final SupersededOutputHelper supersededOutputHelper) {
@@ -525,7 +525,7 @@ public class PipelineStreamProcessor implements DataProcessorTaskExecutor {
             this.meta = meta;
             this.processor = processor;
             this.processorFilter = processorFilter;
-            this.processorFilterTask = processorFilterTask;
+            this.processorTask = processorTask;
             this.recordCount = recordCount;
             this.errorReceiverProxy = errorReceiverProxy;
             this.supersededOutputHelper = supersededOutputHelper;
@@ -560,8 +560,8 @@ public class PipelineStreamProcessor implements DataProcessorTaskExecutor {
                 if (processorFilter != null) {
                     processorFilterUuid = processorFilter.getUuid();
                 }
-                if (processorFilterTask != null) {
-                    processorTaskId = processorFilterTask.getId();
+                if (processorTask != null) {
+                    processorTaskId = processorTask.getId();
                 }
 
                 // Create a processing info stream to write all processing

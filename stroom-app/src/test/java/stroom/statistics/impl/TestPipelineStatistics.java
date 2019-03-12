@@ -19,7 +19,7 @@ package stroom.statistics.impl;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.processor.impl.ProcessorFilterTaskManager;
+import stroom.processor.impl.ProcessorTaskManager;
 import stroom.task.api.TaskManager;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTranslationTestHelper;
@@ -39,7 +39,7 @@ class TestPipelineStatistics {
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
-    private ProcessorFilterTaskManager processorFilterTaskManager;
+    private ProcessorTaskManager processorTaskManager;
 
     // FIXME : Sort out pipeline statistics.
     @Test

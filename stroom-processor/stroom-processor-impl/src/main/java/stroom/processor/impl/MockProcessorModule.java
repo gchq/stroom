@@ -24,11 +24,11 @@ import stroom.task.api.TaskHandlerBinder;
 public class MockProcessorModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(ProcessorFilterTaskManager.class).to(MockProcessorFilterTaskManager.class);
+        bind(ProcessorTaskManager.class).to(MockProcessorTaskManager.class);
         bind(ProcessorDao.class).to(MockProcessorDao.class);
         bind(ProcessorService.class).to(ProcessorServiceImpl.class);
         bind(ProcessorFilterDao.class).to(MockProcessorFilterDao.class);
-        bind(ProcessorFilterTaskDao.class).to(MockProcessorFilterTaskDao.class);
+        bind(ProcessorTaskDao.class).to(MockProcessorTaskDao.class);
         bind(ProcessorFilterService.class).to(ProcessorFilterServiceImpl.class);
 
         TaskHandlerBinder.create(binder())

@@ -19,8 +19,8 @@ package stroom.processor.api;
 import stroom.data.store.api.Source;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorTask;
 
 public interface DataProcessorTaskExecutor {
-    void exec(Processor processor, ProcessorFilter processorFilter, ProcessorFilterTask processorFilterTask, Source source);
+    void exec(Processor processor, ProcessorFilter processorFilter, ProcessorTask processorTask, Source source);
 }

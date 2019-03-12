@@ -9,21 +9,21 @@ public class StreamTaskLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
         super.configure();
-        bindStartup().to(ProcessorFilterTaskManagerStartup.class);
-        bindShutdown().to(ProcessorFilterTaskManagerShutdown.class);
+        bindStartup().to(ProcessorTaskManagerStartup.class);
+        bindShutdown().to(ProcessorTaskManagerShutdown.class);
     }
 
-    private static class ProcessorFilterTaskManagerStartup extends RunnableWrapper {
+    private static class ProcessorTaskManagerStartup extends RunnableWrapper {
         @Inject
-        ProcessorFilterTaskManagerStartup(final ProcessorFilterTaskManagerImpl processorFilterTaskManager) {
-            super(processorFilterTaskManager::startup);
+        ProcessorTaskManagerStartup(final ProcessorTaskManagerImpl processorTaskManager) {
+            super(processorTaskManager::startup);
         }
     }
 
-    private static class ProcessorFilterTaskManagerShutdown extends RunnableWrapper {
+    private static class ProcessorTaskManagerShutdown extends RunnableWrapper {
         @Inject
-        ProcessorFilterTaskManagerShutdown(final ProcessorFilterTaskManagerImpl processorFilterTaskManager) {
-            super(processorFilterTaskManager::shutdown);
+        ProcessorTaskManagerShutdown(final ProcessorTaskManagerImpl processorTaskManager) {
+            super(processorTaskManager::shutdown);
         }
     }
 }
