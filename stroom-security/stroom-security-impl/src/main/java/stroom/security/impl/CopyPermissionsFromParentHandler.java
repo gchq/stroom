@@ -1,6 +1,7 @@
 package stroom.security.impl;
 
 import stroom.docref.DocRef;
+import stroom.security.service.DocumentPermissionService;
 import stroom.util.shared.EntityServiceException;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
@@ -46,7 +47,7 @@ public class CopyPermissionsFromParentHandler
             throw new EntityServiceException("This node does not have a parent to copy permissions from!");
         }
 
-        DocumentPermissions parentsPermissions = documentPermissionService.getPermissionsForDocument(parent.get().getDocRef());
+        DocumentPermissions parentsPermissions = documentPermissionService.getPermissionsForDocument(parent.get().getDocRef().getUuid());
         return parentsPermissions;
     }
 }

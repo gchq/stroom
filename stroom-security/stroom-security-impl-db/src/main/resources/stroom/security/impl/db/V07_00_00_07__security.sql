@@ -31,7 +31,6 @@ CREATE TABLE IF NOT EXISTS app_permission (
 CREATE TABLE IF NOT EXISTS doc_permission (
   id                    bigint(20) NOT NULL AUTO_INCREMENT,
   user_uuid             varchar(255) NOT NULL,
-  doc_type              varchar(255) NOT NULL,
   doc_uuid              varchar(255) NOT NULL,
   permission            varchar(255) NOT NULL,
   FOREIGN KEY (user_uuid) REFERENCES stroom_user (uuid),
@@ -58,8 +57,8 @@ BEGIN
           -- TODO update auto-increment, see V7_0_0_1__config.sql as an example
     END IF;
     IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'DOC_PERM' > 0) THEN
-        INSERT INTO doc_permission (user_uuid, doc_type, doc_uuid, permission)
-        SELECT usr_uuid, doc_tp, doc_uuid, perm
+        INSERT INTO doc_permission (user_uuid, doc_uuid, permission)
+        SELECT usr_uuid, doc_uuid, perm
         FROM DOC_PERM;
           -- TODO update auto-increment, see V7_0_0_1__config.sql as an example
     END IF;
