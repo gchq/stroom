@@ -23,19 +23,13 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.LoginManager;
 import stroom.security.client.LogoutPlugin;
 import stroom.security.client.ManageUserPlugin;
-import stroom.security.client.presenter.DocumentPermissionsPresenter;
-import stroom.security.client.presenter.UsersAndGroupsPresenter;
 
 public interface SecurityGinjector extends Ginjector {
     LoginManager getLoginManager();
 
     AsyncProvider<LogoutPlugin> getLogoutPlugin();
 
-    AsyncProvider<UsersAndGroupsPresenter> getUsersAndGroupsPresenter();
-
     AsyncProvider<ManageUserPlugin> getManageUserPlugin();
-
-    AsyncProvider<DocumentPermissionsPresenter> getDocumentPermissionsPresenter();
 
     Provider<ClientSecurityContext> getSecurityContext();
 }

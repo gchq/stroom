@@ -51,7 +51,8 @@ class DocumentPermissionsCache implements EntityEvent.Handler, Clearable {
                              final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
 
-        final CacheLoader<DocRef, DocumentPermissions> cacheLoader = CacheLoader.from(documentPermissionService::getPermissionsForDocument);
+        final CacheLoader<DocRef, DocumentPermissions> cacheLoader =
+                CacheLoader.from(d -> documentPermissionService.getPermissionsForDocument(d.getUuid()));
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
                 .expireAfterAccess(30, TimeUnit.MINUTES);

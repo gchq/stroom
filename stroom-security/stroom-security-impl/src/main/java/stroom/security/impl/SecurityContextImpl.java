@@ -299,7 +299,7 @@ class SecurityContextImpl implements SecurityContext {
         if (userRef != null) {
             if (hasDocumentPermission(documentType, documentUuid, DocumentPermissionNames.OWNER)) {
                 final DocRef docRef = new DocRef(documentType, documentUuid);
-                documentPermissionService.clearDocumentPermissions(docRef);
+                documentPermissionService.clearDocumentPermissions(documentUuid);
 
                 // Make sure cache updates for the document.
                 documentPermissionsCache.remove(docRef);
@@ -320,7 +320,9 @@ class SecurityContextImpl implements SecurityContext {
                 if (owner) {
                     // Make the current user the owner of the new document.
                     try {
-                        documentPermissionService.addPermission(userRef.getUuid(), docRef, DocumentPermissionNames.OWNER);
+                        documentPermissionService.addPermission(docRef.getUuid(),
+                                userRef.getUuid(),
+                                DocumentPermissionNames.OWNER);
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
                     }
@@ -340,21 +342,23 @@ class SecurityContextImpl implements SecurityContext {
         if (sourceType != null && sourceUuid != null) {
             final DocRef sourceDocRef = new DocRef(sourceType, sourceUuid);
 
-            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(sourceDocRef);
+            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(sourceDocRef.getUuid());
             if (documentPermissions != null) {
-                final Map<UserRef, Set<String>> userPermissions = documentPermissions.getUserPermissions();
+                final Map<String, Set<String>> userPermissions = documentPermissions.getUserPermissions();
                 if (userPermissions != null && userPermissions.size() > 0) {
                     final DocRef destDocRef = new DocRef(destType, destUuid);
                     final String[] allowedPermissions = documentTypePermissions.getPermissions(destDocRef.getType());
 
-                    for (final Map.Entry<UserRef, Set<String>> entry : userPermissions.entrySet()) {
-                        final UserRef userRef = entry.getKey();
+                    for (final Map.Entry<String, Set<String>> entry : userPermissions.entrySet()) {
+                        final String userUuid = entry.getKey();
                         final Set<String> permissions = entry.getValue();
 
                         for (final String allowedPermission : allowedPermissions) {
                             if (permissions.contains(allowedPermission)) {
                                 try {
-                                    documentPermissionService.addPermission(userRef.getUuid(), destDocRef, allowedPermission);
+                                    documentPermissionService.addPermission(destDocRef.getUuid(),
+                                            userUuid,
+                                            allowedPermission);
                                 } catch (final RuntimeException e) {
                                     LOGGER.error(e.getMessage(), e);
                                 }

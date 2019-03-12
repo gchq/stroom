@@ -16,20 +16,21 @@
 
 package stroom.security.service;
 
-import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissions;
 
 import java.util.Set;
 
 public interface DocumentPermissionService {
 
-    Set<String> getPermissionsForDocumentForUser(DocRef document, String userUuid);
+    Set<String> getPermissionsForDocumentForUser(String docRefUuid,String userUuid);
 
-    DocumentPermissions getPermissionsForDocument(DocRef document);
+    DocumentPermissions getPermissionsForDocument(String docRefUuid);
 
-    void addPermission(String userUuid, DocRef document, String permission);
+    void addPermission(String docRefUuid, String userUuid, String permission);
 
-    void removePermission(String userUuid, DocRef document, String permission);
+    void removePermission(String docRefUuid, String userUuid, String permission);
 
-    void clearDocumentPermissions(DocRef document);
+    void clearDocumentPermissionsForUser(String docRefUuid, String userUuid);
+
+    void clearDocumentPermissions(String docRefUuid);
 }
