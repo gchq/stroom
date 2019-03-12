@@ -19,14 +19,10 @@ package stroom.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.volume.VolumeService;
-import stroom.node.shared.FindVolumeCriteria;
-import stroom.node.shared.VolumeEntity;
-import stroom.node.shared.VolumeEntity.VolumeType;
-import stroom.node.shared.VolumeEntity.VolumeUseStatus;
-import stroom.node.shared.VolumeState;
+import stroom.node.api.NodeInfo;
 import stroom.security.Security;
-import stroom.ui.config.shared.UiConfig;
+import stroom.util.BuildInfoProvider;
+import stroom.util.shared.BuildInfo;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -59,16 +55,16 @@ public class StatusServlet extends HttpServlet {
     private static final String AREA_VOLUME = "VOLUME";
     private static final String MSG_OK = "OK";
 
-    private final UiConfig clientProperties;
-    private final VolumeService volumeService;
+    private final BuildInfoProvider buildInfoProvider;
+    private final NodeInfo nodeInfo;
     private final Security security;
 
     @Inject
-    StatusServlet(final UiConfig clientProperties,
-                  final VolumeService volumeService,
+    StatusServlet(final BuildInfoProvider buildInfoProvider,
+                  final NodeInfo nodeInfo,
                   final Security security) {
-        this.clientProperties = clientProperties;
-        this.volumeService = volumeService;
+        this.buildInfoProvider = buildInfoProvider;
+        this.nodeInfo = nodeInfo;
         this.security = security;
     }
 
@@ -115,7 +111,6 @@ public class StatusServlet extends HttpServlet {
 
                 reportHTTP(pw);
                 reportNodeStatus(pw);
-                reportVolumeStatus(pw);
 
                 pw.close();
             } catch (final IOException e) {
@@ -136,54 +131,56 @@ public class StatusServlet extends HttpServlet {
      */
     private void reportNodeStatus(final PrintWriter pw) {
         try {
-            writeInfoLine(pw, AREA_BUILD, "Build version " + clientProperties.getBuildVersion());
-            writeInfoLine(pw, AREA_BUILD, "Build date " + clientProperties.getBuildDate());
-            writeInfoLine(pw, AREA_BUILD, "Up date " + clientProperties.getUpDate());
-            writeInfoLine(pw, AREA_BUILD, "Node name " + clientProperties.getNodeName());
+            final BuildInfo buildInfo = buildInfoProvider.get();
+            writeInfoLine(pw, AREA_BUILD, "Build version " + buildInfo.getBuildVersion());
+            writeInfoLine(pw, AREA_BUILD, "Build date " + buildInfo.getBuildDate());
+            writeInfoLine(pw, AREA_BUILD, "Up date " + buildInfo.getUpDate());
+            writeInfoLine(pw, AREA_BUILD, "Node name " + nodeInfo.getThisNodeName());
             writeInfoLine(pw, AREA_DB, MSG_OK);
         } catch (final RuntimeException e) {
             writeErrorLine(pw, AREA_DB, e.getMessage());
         }
     }
 
-    /**
-     * Sub reporting method.
-     */
-    private void reportVolumeStatus(final PrintWriter pw) {
-        try {
-            final FindVolumeCriteria criteria = new FindVolumeCriteria();
-            boolean oneOKVolume = false;
-            final List<VolumeEntity> volumeList = volumeService.find(criteria);
-            for (final VolumeEntity volume : volumeList) {
-                final VolumeState state = volume.getVolumeState();
-                if (state.getPercentUsed() == null) {
-                    writeErrorLine(pw, AREA_VOLUME,
-                            "Unknown Status for volume " + volume.getPath() + " on node " + volume.getNode().getName());
-                } else {
-                    if (volume.isFull()) {
-                        writeWarnLine(pw, AREA_VOLUME,
-                                "Volume " + volume.getPath() + " full on node " + volume.getNode().getName());
-                    } else {
-                        writeInfoLine(pw, AREA_VOLUME, "Volume " + volume.getPath() + " " + state.getPercentUsed()
-                                + "% full on node " + volume.getNode().getName());
-                        if (VolumeUseStatus.ACTIVE.equals(volume.getStreamStatus())
-                                && VolumeType.PUBLIC.equals(volume.getVolumeType())) {
-                            oneOKVolume = true;
-                        }
-                    }
-                }
-            }
-            if (volumeList.size() == 0) {
-                writeErrorLine(pw, AREA_VOLUME, "No volumes listed");
-            }
-            if (!oneOKVolume) {
-                writeErrorLine(pw, AREA_VOLUME, "No OK public volumes listed");
-            }
-
-        } catch (final RuntimeException e) {
-            writeErrorLine(pw, AREA_VOLUME, e.getMessage());
-        }
-    }
+    // TODO - GCHQ11 - report volumes
+//    /**
+//     * Sub reporting method.
+//     */
+//    private void reportVolumeStatus(final PrintWriter pw) {
+//        try {
+//            final FindVolumeCriteria criteria = new FindVolumeCriteria();
+//            boolean oneOKVolume = false;
+//            final List<VolumeEntity> volumeList = volumeService.find(criteria);
+//            for (final VolumeEntity volume : volumeList) {
+//                final VolumeState state = volume.getVolumeState();
+//                if (state.getPercentUsed() == null) {
+//                    writeErrorLine(pw, AREA_VOLUME,
+//                            "Unknown Status for volume " + volume.getPath() + " on node " + volume.getNode().getName());
+//                } else {
+//                    if (volume.isFull()) {
+//                        writeWarnLine(pw, AREA_VOLUME,
+//                                "Volume " + volume.getPath() + " full on node " + volume.getNode().getName());
+//                    } else {
+//                        writeInfoLine(pw, AREA_VOLUME, "Volume " + volume.getPath() + " " + state.getPercentUsed()
+//                                + "% full on node " + volume.getNode().getName());
+//                        if (VolumeUseStatus.ACTIVE.equals(volume.getStreamStatus())
+//                                && VolumeType.PUBLIC.equals(volume.getVolumeType())) {
+//                            oneOKVolume = true;
+//                        }
+//                    }
+//                }
+//            }
+//            if (volumeList.size() == 0) {
+//                writeErrorLine(pw, AREA_VOLUME, "No volumes listed");
+//            }
+//            if (!oneOKVolume) {
+//                writeErrorLine(pw, AREA_VOLUME, "No OK public volumes listed");
+//            }
+//
+//        } catch (final RuntimeException e) {
+//            writeErrorLine(pw, AREA_VOLUME, e.getMessage());
+//        }
+//    }
 
     /**
      * Write a info line.

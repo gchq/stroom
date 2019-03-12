@@ -17,7 +17,7 @@
 package stroom.importexport.shared;
 
 import stroom.task.shared.Action;
-import stroom.entity.shared.DocRefs;
+import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
 
 public class ExportConfigAction extends Action<ResourceGeneration> {

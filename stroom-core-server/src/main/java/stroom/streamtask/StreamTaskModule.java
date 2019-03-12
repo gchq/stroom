@@ -17,7 +17,6 @@
 package stroom.streamtask;
 
 import com.google.inject.AbstractModule;
-import stroom.entity.FindService;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.streamtask.resource.StreamTaskResource;
 import stroom.streamtask.shared.CreateProcessorAction;
@@ -26,6 +25,7 @@ import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.GuiceUtil;
 import stroom.util.RestResource;
+import stroom.util.entity.FindService;
 
 public class StreamTaskModule extends AbstractModule {
     @Override

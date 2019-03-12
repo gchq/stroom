@@ -16,6 +16,7 @@
 
 package stroom.util.shared;
 
+import stroom.docref.HasDisplayValue;
 import stroom.docref.SharedObject;
 
 public enum OutputState implements HasDisplayValue, SharedObject {

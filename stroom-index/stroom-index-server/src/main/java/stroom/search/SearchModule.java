@@ -17,17 +17,16 @@
 package stroom.search;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.Clearable;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 public class SearchModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new SearchElementModule());
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(LuceneSearchResponseCreatorManager.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(LuceneSearchResponseCreatorManager.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(AsyncSearchTask.class, AsyncSearchTaskHandler.class)

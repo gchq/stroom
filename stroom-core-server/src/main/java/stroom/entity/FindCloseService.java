@@ -17,7 +17,7 @@
 
 package stroom.entity;
 
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.shared.BaseCriteria;
 
 public interface FindCloseService<C extends BaseCriteria> {
     Long findClose(C criteria);

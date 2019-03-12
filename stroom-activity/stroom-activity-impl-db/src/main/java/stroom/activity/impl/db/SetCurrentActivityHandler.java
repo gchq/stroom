@@ -22,7 +22,7 @@ import event.logging.MultiObject;
 import event.logging.Object;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.activity.api.Activity;
+import stroom.activity.shared.Activity;
 import stroom.activity.api.CurrentActivity;
 import stroom.activity.shared.SetCurrentActivityAction;
 import stroom.event.logging.api.PurposeUtil;

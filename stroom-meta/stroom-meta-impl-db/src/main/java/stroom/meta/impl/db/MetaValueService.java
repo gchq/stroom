@@ -19,7 +19,7 @@ package stroom.meta.impl.db;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
-import stroom.entity.shared.Flushable;
+import stroom.util.shared.Flushable;
 
 import java.util.List;
 

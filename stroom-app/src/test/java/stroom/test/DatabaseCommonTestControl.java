@@ -20,15 +20,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.impl.CacheManagerService;
 import stroom.entity.StroomEntityManager;
-import stroom.entity.shared.Clearable;
+import stroom.index.service.IndexVolumeService;
+import stroom.index.shared.IndexVolume;
+import stroom.util.shared.Clearable;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
 import stroom.node.impl.NodeCreator;
-import stroom.node.shared.FindVolumeCriteria;
-import stroom.node.shared.VolumeEntity;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.util.io.FileUtil;
-import stroom.volume.VolumeService;
 
 import javax.inject.Inject;
 import java.nio.file.Paths;
@@ -46,7 +45,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCommonTestControl.class);
 
     private final StroomEntityManager entityManager;
-    private final VolumeService volumeService;
+    private final IndexVolumeService volumeService;
     private final ContentImportService contentImportService;
     private final IndexShardManager indexShardManager;
     private final IndexShardWriterCache indexShardWriterCache;
@@ -58,7 +57,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
     @Inject
     DatabaseCommonTestControl(final StroomEntityManager entityManager,
-                              final VolumeService volumeService,
+                              final IndexVolumeService volumeService,
                               final ContentImportService contentImportService,
                               final IndexShardManager indexShardManager,
                               final IndexShardWriterCache indexShardWriterCache,
@@ -103,8 +102,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         indexShardManager.deleteFromDisk();
 
         // Delete the contents of all volumes.
-        final List<VolumeEntity> volumes = volumeService.find(new FindVolumeCriteria());
-        for (final VolumeEntity volume : volumes) {
+        final List<IndexVolume> volumes = volumeService.getAll();
+        for (final IndexVolume volume : volumes) {
             // The parent will also pick up the index shard (as well as the
             // store)
             FileUtil.deleteContents(Paths.get(volume.getPath()));

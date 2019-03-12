@@ -18,16 +18,16 @@
 package stroom.index;
 
 import stroom.docref.DocRef;
-import stroom.docstore.Persistence;
-import stroom.docstore.Store;
-import stroom.docstore.StoreFactory;
+import stroom.docref.DocRefInfo;
+import stroom.docstore.api.Persistence;
+import stroom.docstore.api.Store;
+import stroom.docstore.api.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFields;
-import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;

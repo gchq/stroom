@@ -26,7 +26,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.cell.list.client.CustomCellList;
 import stroom.dashboard.client.query.QueryFavouritesPresenter.QueryFavouritesView;
-import stroom.dashboard.shared.QueryEntity;
+import stroom.dashboard.shared.StoredQuery;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
@@ -35,7 +35,7 @@ public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavourites
     private final Widget widget;
 
     @UiField(provided = true)
-    CustomCellList<QueryEntity> cellList;
+    CustomCellList<StoredQuery> cellList;
     @UiField
     SimplePanel bottom;
     @UiField
@@ -48,7 +48,7 @@ public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavourites
     }
 
     @Override
-    public CellList<QueryEntity> getCellList() {
+    public CellList<StoredQuery> getCellList() {
         return cellList;
     }
 

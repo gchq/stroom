@@ -1,0 +1,21 @@
+ext.moduleName = 'stroom.cluster.task.impl'
+
+dependencies {
+    compile project(':stroom-cache:stroom-cache-api')
+    compile project(':stroom-cluster:stroom-cluster-api')
+    compile project(':stroom-cluster:stroom-cluster-task-api')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-lifecycle:stroom-lifecycle-api')
+    compile project(':stroom-node:stroom-node-api')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-task:stroom-task-impl')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
+
+    compile libs.stroomDocRef
+    
+    compile libs.guice4
+    compile libs.javax_inject
+}

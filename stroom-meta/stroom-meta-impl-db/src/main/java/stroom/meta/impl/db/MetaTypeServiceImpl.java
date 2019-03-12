@@ -18,7 +18,7 @@
 package stroom.meta.impl.db;
 
 import stroom.db.util.JooqUtil;
-import stroom.meta.impl.db.tables.records.MetaTypeRecord;
+import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static stroom.meta.impl.db.tables.MetaType.META_TYPE;
+import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
 
 @Singleton
 class MetaTypeServiceImpl implements MetaTypeService {

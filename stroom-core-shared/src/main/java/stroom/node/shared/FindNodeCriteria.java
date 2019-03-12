@@ -16,7 +16,7 @@
 
 package stroom.node.shared;
 
-import stroom.entity.shared.FindNamedEntityCriteria;
+import stroom.util.shared.FindNamedEntityCriteria;
 
 public class FindNodeCriteria extends FindNamedEntityCriteria {
     private static final long serialVersionUID = 7492425814517445433L;

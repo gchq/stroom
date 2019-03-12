@@ -1,8 +1,8 @@
 package stroom.search.manualtesting;
 
 
-import stroom.util.test.data.FlatDataWriterBuilder;
-import stroom.util.test.data.TestDataGenerator;
+import stroom.test.common.util.test.data.FlatDataWriterBuilder;
+import stroom.test.common.util.test.data.TestDataGenerator;
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;

@@ -18,28 +18,29 @@ package stroom.data.store.upload;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.Status;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.OutputStreamProvider;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
+import stroom.data.store.impl.DataDownloadTask;
+import stroom.data.store.impl.StreamDownloadSettings;
+import stroom.data.store.impl.StreamUploadTask;
+import stroom.data.zip.StroomZipFile;
+import stroom.data.zip.StroomZipFileType;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.data.store.StreamDownloadSettings;
-import stroom.data.store.StreamDownloadTask;
-import stroom.data.store.StreamUploadTask;
-import stroom.data.store.api.OutputStreamProvider;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.proxy.repo.StroomZipFile;
-import stroom.proxy.repo.StroomZipFileType;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.Status;
 import stroom.security.util.UserTokenUtil;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.FileSystemTestUtil;
+import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -54,7 +55,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
-    private StreamStore streamStore;
+    private Store streamStore;
     @Inject
     private MetaService metaService;
     @Inject
@@ -73,7 +74,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(2);
 
-        taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findMetaCriteria, file, streamDownloadSettings));
+        taskManager.exec(new DataDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findMetaCriteria, file, streamDownloadSettings));
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(2);
 
@@ -114,35 +115,27 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
+        Meta originalMeta;
 
-        try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
-            try (final OutputStream outputStream = outputStreamProvider.next()) {
-                outputStream.write("DATA1".getBytes(StreamUtil.DEFAULT_CHARSET));
-            }
+        try (final Target streamTarget = streamStore.openStreamTarget(metaProperties)) {
+            originalMeta = streamTarget.getMeta();
 
-            try (final OutputStream outputStream = outputStreamProvider.next(StreamTypeNames.META)) {
-                outputStream.write("META:1\nX:1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-            }
+            for (int i = 1; i <= 2; i++) {
+                try (final OutputStreamProvider outputStreamProvider = streamTarget.next()) {
+                    try (final OutputStream outputStream = outputStreamProvider.get()) {
+                        outputStream.write(("DATA" + i).getBytes(StreamUtil.DEFAULT_CHARSET));
+                    }
 
-            try (final OutputStream outputStream = outputStreamProvider.next(StreamTypeNames.CONTEXT)) {
-                outputStream.write("CONTEXT1".getBytes(StreamUtil.DEFAULT_CHARSET));
-            }
+                    try (final OutputStream outputStream = outputStreamProvider.get(StreamTypeNames.META)) {
+                        outputStream.write(("META:" + i + "\nX:" + i + "\n").getBytes(StreamUtil.DEFAULT_CHARSET));
+                    }
 
-            try (final OutputStream outputStream = outputStreamProvider.next()) {
-                outputStream.write("DATA2".getBytes(StreamUtil.DEFAULT_CHARSET));
-            }
-
-            try (final OutputStream outputStream = outputStreamProvider.next(StreamTypeNames.META)) {
-                outputStream.write("META:2\nY:2\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-            }
-
-            try (final OutputStream outputStream = outputStreamProvider.next(StreamTypeNames.CONTEXT)) {
-                outputStream.write("CONTEXT2".getBytes(StreamUtil.DEFAULT_CHARSET));
+                    try (final OutputStream outputStream = outputStreamProvider.get(StreamTypeNames.CONTEXT)) {
+                        outputStream.write(("CONTEXT" + i).getBytes(StreamUtil.DEFAULT_CHARSET));
+                    }
+                }
             }
         }
-
-        streamStore.closeStreamTarget(streamTarget);
 
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
         findMetaCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
@@ -150,7 +143,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(1);
 
-        taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findMetaCriteria, file, streamDownloadSettings));
+        taskManager.exec(new DataDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findMetaCriteria, file, streamDownloadSettings));
 
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
         assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Manifest)).isTrue();
@@ -171,27 +164,22 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
 
         assertThat(streamList.size()).isEqualTo(2);
 
-        final Meta originalMeta = streamTarget.getMeta();
-
         for (final Meta meta : streamList) {
             assertThat(meta.getStatus()).isEqualTo(Status.UNLOCKED);
-            final StreamSource streamSource = streamStore.openStreamSource(meta.getId());
+            try (final Source streamSource = streamStore.openStreamSource(meta.getId())) {
+                for (int i = 1; i <= streamSource.count(); i++) {
+                    try (final InputStreamProvider inputStreamProvider = streamSource.get(i - 1)) {
+                        assertThat(StreamUtil.streamToString(inputStreamProvider.get(), false)).isEqualTo("DATA" + i);
+                        assertThat(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.CONTEXT), false)).isEqualTo("CONTEXT" + i);
 
-            assertThat(StreamUtil.streamToString(streamSource.getInputStream(), false)).isEqualTo("DATA1DATA2");
-            assertThat(StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.CONTEXT).getInputStream(), false)).isEqualTo("CONTEXT1CONTEXT2");
-
-            if (originalMeta.equals(meta)) {
-                assertContains(
-                        StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.META).getInputStream(), false),
-                        "META:1", "X:1", "META:2", "Y:2");
-            } else {
-                assertContains(
-                        StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.META).getInputStream(), false),
-                        "Compression:ZIP\n", "META:1\n", "X:1\n", "Z:ALL\n", "Compression:ZIP\n", "META:2\n", "Y:2\n",
-                        "Z:ALL\n");
+                        if (originalMeta.equals(meta)) {
+                            assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META), false), "META:" + i, "X:" + i);
+                        } else {
+                            assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META), false), "Compression:ZIP\n", "META:" + i + "\n", "X:" + i + "\n", "Z:ALL\n");
+                        }
+                    }
+                }
             }
-
-            streamStore.closeStreamSource(streamSource);
         }
     }
 

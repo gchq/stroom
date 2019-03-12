@@ -1,0 +1,102 @@
+ext.moduleName = 'stroom.proxy.app'
+
+def jarName = 'stroom-proxy-app.jar'
+def fatJarName = 'stroom-proxy-app-all.jar'
+
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+mainClassName = 'stroom.proxy.app.App'
+
+dependencies {
+    compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-data:stroom-data-zip')
+    compile project(':stroom-dictionary:stroom-dictionary-api')
+    compile project(':stroom-dictionary:stroom-dictionary-impl')
+    compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-docstore:stroom-docstore-impl-fs')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-proxy:stroom-proxy-repo')
+    compile project(':stroom-receive:stroom-receive-common')
+    compile project(':stroom-receive:stroom-receive-rules-impl')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+
+    compile libs.jetty_server
+    
+    compile libs.stroomDocRef
+
+    implementation(libs.dropwizard_assets) {
+        exclude(group: "org.glassfish.web", module: "javax.el")
+    }
+    implementation(libs.dropwizard_core) {
+        exclude(group: "org.glassfish.web", module: "javax.el")
+    }
+    compile libs.dropwizard_jersey
+    compile libs.dropwizard_jetty
+    compile libs.dropwizard_metrics_healthchecks
+    compile libs.dropwizard_servlets
+    compile libs.dropwizard_metrics_core
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_configuration
+    compile libs.guava
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.jackson_core
+    compile libs.jackson_databind
+    compile libs.javax_inject
+    compile libs.javax_servlet_api
+    compile libs.jaxb_api
+    compile libs.jersey_client
+    compile libs.slf4j_api
+    
+    testCompile project(':stroom-test-common')
+    testCompile libs.assertj_core
+    
+    testCompile libs.junit_jupiter_api
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}
+
+jar {
+    //we need to first generate the swagger spec files so they can be added in to the jar
+//    mustRunAfter generateSwaggerDocumentation
+    manifest {
+        attributes(
+                "Implementation-Title": "Stroom Proxy",
+                "Implementation-Version": versions.stroom,
+                "Main-Class": "stroom.proxy.app.App"
+        )
+    }
+    archiveName jarName
+}
+
+shadowJar {
+    // We want to run the tests before we build the fat jar. 
+    dependsOn test
+
+    // Allows us to build fat jars with lots of files
+    zip64 true
+
+    // A transformer to merges files in META-INF/services
+    mergeServiceFiles()
+
+    archiveName fatJarName
+}
+
+
+//
+//war {
+//    exclude 'WEB-INF/lib/**'
+//    exclude 'WEB-INF/classes/**'
+//}

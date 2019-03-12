@@ -18,7 +18,7 @@
 package stroom.streamtask;
 
 import stroom.entity.BaseEntityService;
-import stroom.entity.FindService;
+import stroom.util.entity.FindService;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.Processor;
 

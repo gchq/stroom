@@ -22,13 +22,12 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.entity.StroomEntityManager;
+import stroom.entity.shared.BaseEntity;
+import stroom.entity.util.SqlBuilder;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
-import stroom.entity.StroomEntityManager;
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.CriteriaSet;
-import stroom.entity.util.SqlBuilder;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
@@ -40,6 +39,7 @@ import stroom.streamtask.shared.ProcessorFilter;
 import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.streamtask.shared.ProcessorFilterTracker;
 import stroom.streamtask.shared.TaskStatus;
+import stroom.util.shared.CriteriaSet;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -48,6 +48,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 
 /**
  * Class used to do the transactional aspects of stream task creation
@@ -190,25 +191,25 @@ class StreamTaskCreatorTransactionHelper {
      * node and available to be handed to workers (i.e. their associated
      * streams are not locked).
      */
-    public CreatedTasks createNewTasks(final ProcessorFilter filter,
-                                       final ProcessorFilterTracker tracker,
-                                       final long streamQueryTime,
-                                       final Map<Meta, InclusiveRanges> streams,
-                                       final String thisNodeName,
-                                       final Long maxMetaId,
-                                       final boolean reachedLimit) {
+    void createNewTasks(final ProcessorFilter filter,
+                        final ProcessorFilterTracker tracker,
+                        final long streamQueryTime,
+                        final Map<Meta, InclusiveRanges> streams,
+                        final String thisNodeName,
+                        final Long maxMetaId,
+                        final boolean reachedLimit,
+                        final Consumer<CreatedTasks> consumer) {
         final Node node = nodeService.getNode(thisNodeName);
 
-        return entityManagerSupport.transactionResult(em -> {
-            List<ProcessorFilterTask> availableTaskList = Collections.emptyList();
-            int availableTasksCreated = 0;
-            int totalTasksCreated = 0;
-            long eventCount = 0;
-
-            try {
-                // Lock the cluster so that only this node can create tasks for this
-                // filter at this time.
-                lockCluster();
+        entityManagerSupport.transaction(em -> {
+//            try {
+            // Lock the cluster so that only this node can create tasks for this
+            // filter at this time.
+            clusterLockService.lock(LOCK_NAME, () -> {
+                List<ProcessorFilterTask> availableTaskList = Collections.emptyList();
+                int availableTasksCreated = 0;
+                int totalTasksCreated = 0;
+                long eventCount = 0;
 
                 // Get the current time.
                 final long streamTaskCreateMs = System.currentTimeMillis();
@@ -218,7 +219,6 @@ class StreamTaskCreatorTransactionHelper {
                 InclusiveRange eventIdRange = null;
 
                 if (streams.size() > 0) {
-
                     final List<String> columnNames = Arrays.asList(
                             BaseEntity.VERSION,
                             ProcessorFilterTask.CREATE_MS,
@@ -391,11 +391,11 @@ class StreamTaskCreatorTransactionHelper {
                 // Save the tracker state.
                 saveTracker(tracker);
 
-            } catch (final RuntimeException e) {
-                LOGGER.error("createNewTasks", e);
-            }
-
-            return new CreatedTasks(availableTaskList, availableTasksCreated, totalTasksCreated, eventCount);
+                consumer.accept(new CreatedTasks(availableTaskList, availableTasksCreated, totalTasksCreated, eventCount));
+            });
+//            } catch (final RuntimeException e) {
+//                LOGGER.error("createNewTasks", e);
+//            }
         });
     }
 
@@ -403,10 +403,10 @@ class StreamTaskCreatorTransactionHelper {
         return stroomEntityManager.saveEntity(tracker);
     }
 
-    private void lockCluster() {
-        clusterLockService.lock(LOCK_NAME);
-    }
-
+//    private void lockCluster() {
+//        clusterLockService.lock(LOCK_NAME);
+//    }
+//
 //    public StreamTaskCreatorRecentStreamDetails getRecentStreamInfo(
 //            final StreamTaskCreatorRecentStreamDetails lastRecent) {
 //        StreamTaskCreatorRecentStreamDetails recentStreamInfo = new StreamTaskCreatorRecentStreamDetails(lastRecent,

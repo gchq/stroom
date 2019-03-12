@@ -1,0 +1,41 @@
+ext.moduleName = 'stroom.data.store.util'
+
+dependencies {
+    compile project(':stroom-activity:stroom-activity-impl-mock')
+    compile project(':stroom-cache:stroom-cache-api')
+    compile project(':stroom-cache:stroom-cache-impl')
+    compile project(':stroom-cluster:stroom-cluster-lock-impl-mock')
+    compile project(':stroom-cluster:stroom-cluster-impl')
+    compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-data:stroom-data-store-api')
+    compile project(':stroom-data:stroom-data-store-impl-fs')
+    compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-meta:stroom-meta-impl-db')
+    compile project(':stroom-db-util')
+    compile project(':stroom-event-logging:stroom-event-logging-impl')
+    compile project(':stroom-node:stroom-node-impl')
+    compile project(':stroom-security:stroom-security-impl-mock')
+    compile project(':stroom-statistics:stroom-statistics-impl-mock')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.jaxb_api
+    compile libs.slf4j_api
+
+    testCompile libs.junit_jupiter_api
+    testCompile project(':stroom-test-common')
+    testCompile libs.hikari
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}

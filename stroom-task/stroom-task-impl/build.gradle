@@ -1,4 +1,32 @@
 ext.moduleName = 'stroom.task.impl'
 
 dependencies {
+    compile project(':stroom-cluster:stroom-cluster-task-api')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-lifecycle:stroom-lifecycle-api')
+    compile project(':stroom-node:stroom-node-api')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
+    
+    compile libs.stroomDocRef
+    
+    compile libs.guice4
+    compile libs.javax_inject
+
+    testCompile libs.assertj_core
+    testCompile libs.commons_lang
+    testCompile libs.junit_jupiter_api
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
 }

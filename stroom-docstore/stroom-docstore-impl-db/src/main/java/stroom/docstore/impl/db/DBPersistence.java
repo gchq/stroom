@@ -2,8 +2,8 @@ package stroom.docstore.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docstore.Persistence;
-import stroom.docstore.RWLockFactory;
+import stroom.docstore.api.Persistence;
+import stroom.docstore.api.RWLockFactory;
 import stroom.docref.DocRef;
 
 import javax.inject.Inject;

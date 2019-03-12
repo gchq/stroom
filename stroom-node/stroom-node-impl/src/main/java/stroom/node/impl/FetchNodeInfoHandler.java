@@ -19,8 +19,8 @@ package stroom.node.impl;
 
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.node.api.NodeService;
 import stroom.node.shared.FetchNodeInfoAction;
@@ -28,10 +28,10 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeInfoResult;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.cluster.api.ClusterCallEntry;
-import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.api.DefaultClusterResultCollector;
-import stroom.task.cluster.api.TargetType;
+import stroom.cluster.task.api.ClusterCallEntry;
+import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.DefaultClusterResultCollector;
+import stroom.cluster.task.api.TargetType;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

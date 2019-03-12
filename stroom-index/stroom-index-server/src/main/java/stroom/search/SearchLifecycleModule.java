@@ -16,10 +16,10 @@
 
 package stroom.search;
 
-import stroom.search.extraction.ExtractionTaskExecutor;
-import stroom.search.shard.IndexShardSearchTaskExecutor;
 import stroom.lifecycle.api.AbstractLifecycleModule;
 import stroom.lifecycle.api.RunnableWrapper;
+import stroom.search.extraction.ExtractionTaskExecutor;
+import stroom.search.shard.IndexShardSearchTaskExecutor;
 
 import javax.inject.Inject;
 

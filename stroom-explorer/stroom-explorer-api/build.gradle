@@ -1,12 +1,13 @@
 ext.moduleName = 'stroom.explorer.api'
 
 dependencies {
-    implementation project(':stroom-task:stroom-task-shared') // TODO : @66 Can be removed after we move to new UI and resources.
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-util-shared')
+    
+    compile libs.stroomDocRef
 
-    implementation libs.stroomDocRef
-    implementation libs.stroomQueryApi
-
+    compile libs.jaxb_api
+    
     testRuntimeOnly libs.javax_activation
     testRuntimeOnly libs.jaxb_runtime
 }

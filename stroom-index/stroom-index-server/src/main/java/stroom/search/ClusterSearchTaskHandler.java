@@ -23,13 +23,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
-import stroom.meta.shared.MetaService;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.index.IndexStore;
+import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
+import stroom.meta.shared.MetaService;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
@@ -51,12 +52,12 @@ import stroom.search.shard.IndexShardSearchTaskHandler;
 import stroom.search.shard.IndexShardSearchTaskProducer;
 import stroom.security.Security;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.TaskTerminatedException;
-import stroom.task.ThreadPoolImpl;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskTerminatedException;
 import stroom.task.shared.ThreadPool;
+import stroom.task.shared.ThreadPoolImpl;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
@@ -343,7 +344,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     final Executor extractionExecutor = executorProvider.getExecutor(ExtractionTaskProducer.THREAD_POOL);
                     final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(
                             extractionTaskExecutor,
-                            taskContext,
                             streamMapCreator,
                             storedData,
                             extractionFieldIndexMap,

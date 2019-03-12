@@ -1,3 +1,3 @@
 #!/bin/bash
-./gradlew clean build -x integrationTest -x stroom-dashboard-gwt:gwtCompile "$@"
+./gradlew clean build -x test -x stroom-dashboard-gwt:gwtCompile "$@"
 

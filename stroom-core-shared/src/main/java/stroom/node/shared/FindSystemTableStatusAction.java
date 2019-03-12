@@ -17,7 +17,7 @@
 package stroom.node.shared;
 
 import stroom.task.shared.Action;
-import stroom.entity.shared.ResultList;
+import stroom.util.shared.ResultList;
 
 /**
  * Action handler

@@ -42,7 +42,7 @@ import stroom.search.shard.IndexShardSearchConfig;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
-import stroom.util.test.TempDir;
+import stroom.test.common.util.test.TempDir;
 
 import javax.inject.Inject;
 import java.nio.file.Path;

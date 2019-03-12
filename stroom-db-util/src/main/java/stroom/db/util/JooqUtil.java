@@ -1,7 +1,9 @@
 package stroom.db.util;
 
+import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.SQLDialect;
 import org.jooq.SelectForUpdateStep;
@@ -13,20 +15,30 @@ import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.PageRequest;
 import stroom.util.logging.LambdaLogger;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Range;
+import stroom.util.shared.Sort;
+import stroom.util.shared.StringCriteria;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public final class JooqUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(JooqUtil.class);
 
     private static final String DEFAULT_ID_FIELD_NAME = "id";
+    private static final OrderField[] EMPTY_ORDER_FIELDS = new OrderField[0];
 
     private JooqUtil() {
         // Utility class.
@@ -73,25 +85,6 @@ public final class JooqUtil {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
-        return result;
-    }
-
-    public static <R extends Record> SelectForUpdateStep<R> applyLimits(final SelectLimitStep<R> select, final PageRequest pageRequest) {
-        SelectForUpdateStep<R> result = select;
-
-        if (pageRequest != null) {
-            if (pageRequest.getOffset() != null) {
-                final SelectLimitAfterOffsetStep<R> selectLimitAfterOffsetStep = select.offset(pageRequest.getOffset().intValue());
-                result = selectLimitAfterOffsetStep;
-
-                if (pageRequest.getLength() != null) {
-                    result = selectLimitAfterOffsetStep.limit(pageRequest.getLength());
-                }
-            } else if (pageRequest.getLength() != null) {
-                result = select.limit(pageRequest.getLength());
-            }
-        }
-
         return result;
     }
 
@@ -159,5 +152,160 @@ public final class JooqUtil {
             throw new RuntimeException(LambdaLogger.buildMessage("Field [id] not found on table [{}]", table.getName()));
         }
         return idField;
+    }
+
+    public static int getLimit(final PageRequest pageRequest) {
+        if (pageRequest != null) {
+            if (pageRequest.getLength() != null) {
+                return pageRequest.getLength();
+            }
+        }
+
+        return Integer.MAX_VALUE;
+    }
+
+    public static int getOffset(final PageRequest pageRequest) {
+        if (pageRequest != null) {
+            if (pageRequest.getOffset() != null) {
+                return pageRequest.getOffset().intValue();
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Used to build JOOQ conditions from our Criteria Range
+     *
+     * @param field    The jOOQ field being range queried
+     * @param criteria The criteria to apply
+     * @param <R>      The type of the record
+     * @param <T>      The type of the range
+     * @return A condition that applies the given range.
+     */
+    public static <R extends Record, T extends Number> Optional<Condition> getRangeCondition(
+            final TableField<R, T> field,
+            final Range<T> criteria) {
+        if (!criteria.isConstrained()) {
+            return Optional.empty();
+        }
+
+        Boolean matchNull = null;
+        if (criteria.isMatchNull()) {
+            matchNull = Boolean.TRUE;
+        }
+
+        final Optional<Condition> fromCondition;
+        if (criteria.getFrom() == null) {
+            fromCondition = Optional.empty();
+        } else {
+            fromCondition = Optional.of(field.greaterOrEqual(criteria.getFrom()));
+        }
+        final Optional<Condition> toCondition;
+        if (criteria.getTo() == null) {
+            toCondition = Optional.empty();
+        } else {
+            toCondition = Optional.of(field.lessThan(criteria.getTo()));
+        }
+
+        // Combine conditions.
+        final Optional<Condition> condition = fromCondition.map(c1 -> toCondition.map(c1::and).orElse(c1)).or(() -> toCondition);
+        return convertMatchNull(field, matchNull, condition);
+    }
+
+    /**
+     * Used to build jOOQ conditions from criteria sets
+     *
+     * @param field    The jOOQ field being set queried
+     * @param criteria The criteria to apply
+     * @param <R>      The type of the record
+     * @param <T>      The type of the range
+     * @return A condition that applies the given set.
+     */
+    public static <R extends Record, T> Optional<Condition> getSetCondition(
+            final TableField<R, T> field,
+            final CriteriaSet<T> criteria) {
+        if (!criteria.isConstrained()) {
+            return Optional.empty();
+        }
+
+        final Optional<Condition> setCondition;
+        if (criteria.size() > 0) {
+            setCondition = Optional.of(field.in(criteria.getSet()));
+        } else {
+            setCondition = Optional.empty();
+        }
+
+        return convertMatchNull(field, criteria.getMatchNull(), setCondition);
+    }
+
+    /**
+     * Used to build jOOQ conditions from string criteria
+     *
+     * @param field    The jOOQ field being queried
+     * @param criteria The criteria to apply
+     * @param <R>      The type of the record
+     * @return A condition that applies the given criteria
+     */
+    public static <R extends Record> Optional<Condition> getStringCondition(
+            final TableField<R, String> field,
+            final StringCriteria criteria) {
+        if (!criteria.isConstrained()) {
+            return Optional.empty();
+        }
+
+        final Optional<Condition> valueCondition;
+        if (criteria.getMatchStyle() == null) {
+            if (criteria.isCaseInsensitive()) {
+                valueCondition = Optional.of(field.upper().eq(criteria.getMatchString()));
+            } else {
+                valueCondition = Optional.of(field.eq(criteria.getMatchString()));
+            }
+        } else {
+            if (criteria.isCaseInsensitive()) {
+                valueCondition = Optional.of(field.upper().like(criteria.getMatchString()));
+            } else {
+                valueCondition = Optional.of(field.like(criteria.getMatchString()));
+            }
+        }
+
+        return convertMatchNull(field, criteria.getMatchNull(), valueCondition);
+    }
+
+    private static Optional<Condition> convertMatchNull(final TableField<?, ?> field, final Boolean matchNull, final Optional<Condition> condition) {
+        if (matchNull == null) {
+            return condition;
+        }
+        if (matchNull) {
+            return condition.map(c -> c.or(field.isNull())).or(() -> Optional.of(field.isNull()));
+        }
+        return condition.or(() -> Optional.of(field.isNotNull()));
+    }
+
+    public static OrderField[] getOrderFields(final Map<String, TableField> tableFieldMap, final BaseCriteria criteria) {
+        if (criteria.getSortList() == null) {
+            return EMPTY_ORDER_FIELDS;
+        }
+
+        return criteria.getSortList().stream()
+                .map(s -> getOrderField(tableFieldMap, s))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toArray(OrderField[]::new);
+    }
+
+    private static Optional<OrderField> getOrderField(final Map<String, TableField> tableFieldMap, final Sort sort) {
+        final TableField field = tableFieldMap.get(sort.getField());
+
+        if (null != field) {
+            switch (sort.getDirection()) {
+                case ASCENDING:
+                    return Optional.of(field.asc());
+                case DESCENDING:
+                    return Optional.of(field.desc());
+            }
+        }
+
+        return Optional.empty();
     }
 }

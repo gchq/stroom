@@ -3,13 +3,13 @@ package stroom.security.impl.db;
 import org.jooq.Record;
 import stroom.db.util.JooqUtil;
 import stroom.security.dao.AppPermissionDao;
-import stroom.security.impl.db.tables.records.AppPermissionRecord;
+import stroom.security.impl.db.jooq.tables.records.AppPermissionRecord;
 
 import javax.inject.Inject;
 import java.util.Set;
 
-import static stroom.security.impl.db.tables.AppPermission.APP_PERMISSION;
-import static stroom.security.impl.db.tables.StroomUser.STROOM_USER;
+import static stroom.security.impl.db.jooq.tables.AppPermission.APP_PERMISSION;
+import static stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
 
 public class AppPermissionDaoImpl implements AppPermissionDao {
 

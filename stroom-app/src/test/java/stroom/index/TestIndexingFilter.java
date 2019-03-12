@@ -23,9 +23,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
+
+import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShardKey;
@@ -36,13 +37,13 @@ import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.StroomPipelineTestFileUtil;
+import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;

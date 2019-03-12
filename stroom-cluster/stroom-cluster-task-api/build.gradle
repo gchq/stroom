@@ -1,0 +1,9 @@
+ext.moduleName = 'stroom.cluster.task.api'
+
+dependencies {
+    compile project(':stroom-core-shared')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util-shared')
+    
+    compile libs.stroomDocRef
+}

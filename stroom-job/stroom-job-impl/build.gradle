@@ -1,26 +1,25 @@
 ext.moduleName = 'stroom.job.impl'
 
 dependencies {
-    implementation project(":stroom-core-server")
-    implementation project(":stroom-core-shared")
-    implementation project(':stroom-entity-shared')
-    implementation project(":stroom-job:stroom-job-api")
-    implementation project(":stroom-job:stroom-job-shared")
-    implementation project(":stroom-job:stroom-job-impl-db")
-    implementation project(":stroom-cluster-lock:stroom-cluster-lock-api")
-    implementation project(':stroom-node:stroom-node-api')
-    implementation project(":stroom-security:stroom-security-api")
-    implementation project(":stroom-task:stroom-task-api")
-    implementation project(":stroom-task:stroom-task-cluster-api")
-    implementation project(":stroom-task:stroom-task-shared")
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    compile project(':stroom-cluster:stroom-cluster-lock-api')
+    compile project(':stroom-cluster:stroom-cluster-task-api')
+    compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-job:stroom-job-api')
+    compile project(':stroom-lifecycle:stroom-lifecycle-api')
+    compile project(':stroom-node:stroom-node-api')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
-    implementation libs.eventLogging
-    implementation libs.hibernate_core
-    implementation libs.guice4
-    implementation libs.hessian
-    implementation libs.dropwizard_lifecycle
-    implementation libs.javax_inject
-    implementation libs.slf4j_api
+    compile libs.stroomDocRef
+    
+    compile libs.eventLogging
+    compile libs.hibernate_core
+    compile libs.guice4
+    compile libs.hessian
+    compile libs.dropwizard_lifecycle
+    compile libs.javax_inject
+    compile libs.slf4j_api
 }

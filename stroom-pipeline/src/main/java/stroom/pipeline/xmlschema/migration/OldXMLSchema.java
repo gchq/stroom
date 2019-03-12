@@ -16,7 +16,7 @@
 
 package stroom.pipeline.xmlschema.migration;
 
-import stroom.importexport.api.ExternalFile;
+import stroom.importexport.shared.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 
 import javax.persistence.Transient;

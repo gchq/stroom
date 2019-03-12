@@ -20,24 +20,26 @@ package stroom.index;
 
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Range;
-import stroom.entity.shared.Sort.Direction;
+import stroom.index.service.IndexShardService;
+import stroom.index.service.IndexVolumeGroupService;
+import stroom.index.service.IndexVolumeService;
+
+import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexVolume;
+import stroom.util.shared.Range;
+import stroom.util.shared.Sort.Direction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
 import stroom.node.api.NodeInfo;
-import stroom.volume.VolumeService;
-import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
-import stroom.node.shared.VolumeEntity;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
-import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,11 +47,11 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private IndexStore indexStore;
     @Inject
+    private IndexVolumeGroupService indexVolumeGroupService;
+    @Inject
     private IndexShardService indexShardService;
     @Inject
     private NodeInfo nodeInfo;
-    @Inject
-    private VolumeService volumeService;
     @Inject
     private IndexVolumeService indexVolumeService;
 
@@ -63,24 +65,34 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
      */
     @Test
     void test() {
-        final VolumeEntity volume = volumeService.find(new FindVolumeCriteria()).getFirst();
+        // Create required volume groups
+        final String volumeGroup = String.format("IndexShardTest_%s", UUID.randomUUID());
+        indexVolumeGroupService.create(volumeGroup);
+
+        final IndexVolume volume = indexVolumeService.getAll().stream()
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Could not get index volume"));
+        indexVolumeService.addVolumeToGroup(volume.getId(), volumeGroup);
 
         final DocRef indexRef1 = indexStore.createDocument("Test Index 1");
         final IndexDoc index1 = indexStore.readDocument(indexRef1);
-        indexVolumeService.setVolumesForIndex(indexRef1, Collections.singleton(volume));
+        index1.setVolumeGroupName(volumeGroup);
+        indexStore.writeDocument(index1);
+
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
 
         final DocRef indexRef2 = indexStore.createDocument("Test Index 2");
         final IndexDoc index2 = indexStore.readDocument(indexRef2);
-        indexVolumeService.setVolumesForIndex(indexRef2, Collections.singleton(volume));
+        index2.setVolumeGroupName(volumeGroup);
+        indexStore.writeDocument(index2);
         final IndexShardKey indexShardKey2 = IndexShardKeyUtil.createTestKey(index2);
 
         final Node node = nodeInfo.getThisNode();
 
-        final IndexShard call1 = indexShardService.createIndexShard(indexShardKey1, node);
-        final IndexShard call2 = indexShardService.createIndexShard(indexShardKey1, node);
-        final IndexShard call3 = indexShardService.createIndexShard(indexShardKey1, node);
-        final IndexShard call4 = indexShardService.createIndexShard(indexShardKey2, node);
+        final IndexShard call1 = indexShardService.createIndexShard(indexShardKey1, node.getName());
+        final IndexShard call2 = indexShardService.createIndexShard(indexShardKey1, node.getName());
+        final IndexShard call3 = indexShardService.createIndexShard(indexShardKey1, node.getName());
+        final IndexShard call4 = indexShardService.createIndexShard(indexShardKey2, node.getName());
 
         assertThat(call1).isNotNull();
         assertThat(call2).isNotNull();
@@ -92,13 +104,13 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
         assertThat(indexShardService.find(criteria).size()).isEqualTo(4);
 
         // Find shards for index 1
-        criteria.getIndexSet().clear();
-        criteria.getIndexSet().add(indexRef1);
+        criteria.getIndexUuidSet().clear();
+        criteria.getIndexUuidSet().add(indexRef1.getUuid());
         assertThat(indexShardService.find(criteria).size()).isEqualTo(3);
 
         // Find shards for index 2
-        criteria.getIndexSet().clear();
-        criteria.getIndexSet().add(indexRef2);
+        criteria.getIndexUuidSet().clear();
+        criteria.getIndexUuidSet().add(indexRef2.getUuid());
         assertThat(indexShardService.find(criteria).size()).isEqualTo(1);
 
         // Set all the filters
@@ -108,11 +120,17 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testOrderBy() {
-        final VolumeEntity volume = volumeService.find(new FindVolumeCriteria()).getFirst();
+        final String indexVolumeGroup = String.format("IndexShardTestOrderBy_%s", UUID.randomUUID());
+        indexVolumeGroupService.create(indexVolumeGroup);
+
+        final IndexVolume volume = indexVolumeService.getAll().stream()
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Could not get index volume"));
+        indexVolumeService.addVolumeToGroup(volume.getId(), indexVolumeGroup);
 
         final DocRef indexRef = indexStore.createDocument("Test Index 1");
         final IndexDoc index = indexStore.readDocument(indexRef);
-        indexVolumeService.setVolumesForIndex(indexRef, Collections.singleton(volume));
+        index.setVolumeGroupName(indexVolumeGroup);
         index.setPartitionBy(PartitionBy.MONTH);
         index.setPartitionSize(1);
         indexStore.writeDocument(index);
@@ -136,9 +154,11 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
         findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, Direction.DESCENDING, false);
 
         // Find data.
-        final BaseResultList<IndexShard> list = indexShardService.find(findIndexShardCriteria);
+        final List<IndexShard> list = indexShardService.find(findIndexShardCriteria);
 
         assertThat(list.size()).isEqualTo(10);
+
+        list.forEach(i -> System.out.println(i.toString()));
 
         IndexShard lastShard = null;
         for (final IndexShard indexShard : list) {
@@ -155,9 +175,12 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void createShard(final IndexDoc index, final Node node, final String dateTime, final int shardNo) {
+    private void createShard(final IndexDoc index,
+                             final Node node,
+                             final String dateTime,
+                             final int shardNo) {
         final long timeMs = DateUtil.parseNormalDateTimeString(dateTime);
         final IndexShardKey key = IndexShardKeyUtil.createTimeBasedKey(index, timeMs, shardNo);
-        indexShardService.createIndexShard(key, node);
+        indexShardService.createIndexShard(key, node.getName());
     }
 }

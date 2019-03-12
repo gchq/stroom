@@ -17,7 +17,7 @@
 package stroom.pipeline.stepping;
 
 import org.xml.sax.Locator;
-import stroom.pipeline.scope.PipelineScoped;
+import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;

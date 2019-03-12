@@ -1,8 +1,0 @@
-ext.moduleName = 'stroom.task.cluster.api'
-
-dependencies {
-    implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-task:stroom-task-shared')
-    
-    implementation libs.stroomDocRef
-}

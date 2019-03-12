@@ -20,31 +20,26 @@ package stroom.test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.DashboardStore;
-import stroom.meta.shared.MetaFieldNames;
-import stroom.meta.impl.db.MetaKeyService;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
-import stroom.entity.shared.BaseResultList;
-import stroom.pipeline.feed.FeedDocCache;
-import stroom.pipeline.feed.FeedStore;
-import stroom.feed.shared.FeedDoc;
+import stroom.feed.api.FeedProperties;
+import stroom.feed.api.FeedStore;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.IndexStore;
-import stroom.index.IndexVolumeService;
-import stroom.volume.VolumeService;
-import stroom.node.shared.FindVolumeCriteria;
+import stroom.index.service.IndexVolumeService;
+import stroom.index.shared.IndexVolume;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.node.shared.Node;
-import stroom.node.shared.VolumeEntity;
-import stroom.persist.ConnectionProvider;
 import stroom.pipeline.PipelineStore;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.statistics.sql.entity.StatisticStoreStore;
-import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
+import stroom.statistics.impl.sql.entity.StatisticStoreStore;
+import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
+import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
@@ -88,52 +83,43 @@ public final class SetupSampleDataBean {
     private static final int LOAD_CYCLES = 10;
 
     private final FeedStore feedStore;
-    private final FeedDocCache feedDocCache;
-    private final StreamStore streamStore;
-    private final MetaKeyService metaKeyService;
+    private final FeedProperties feedProperties;
+    private final Store streamStore;
     private final CommonTestControl commonTestControl;
     private final ImportExportSerializer importExportSerializer;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final PipelineStore pipelineStore;
     private final DashboardStore dashboardStore;
-    private final VolumeService volumeService;
     private final IndexStore indexStore;
     private final IndexVolumeService indexVolumeService;
     private final StatisticStoreStore statisticStoreStore;
     private final StroomStatsStoreStore stroomStatsStoreStore;
-    private final ConnectionProvider connectionProvider;
 
     @Inject
     SetupSampleDataBean(final FeedStore feedStore,
-                        final FeedDocCache feedDocCache,
-                        final StreamStore streamStore,
-                        final MetaKeyService metaKeyService,
+                        final FeedProperties feedProperties,
+                        final Store streamStore,
                         final CommonTestControl commonTestControl,
                         final ImportExportSerializer importExportSerializer,
                         final StreamProcessorFilterService streamProcessorFilterService,
                         final PipelineStore pipelineStore,
                         final DashboardStore dashboardStore,
-                        final VolumeService volumeService,
                         final IndexStore indexStore,
                         final IndexVolumeService indexVolumeService,
                         final StatisticStoreStore statisticStoreStore,
-                        final StroomStatsStoreStore stroomStatsStoreStore,
-                        final ConnectionProvider connectionProvider) {
+                        final StroomStatsStoreStore stroomStatsStoreStore) {
         this.feedStore = feedStore;
-        this.feedDocCache = feedDocCache;
+        this.feedProperties = feedProperties;
         this.streamStore = streamStore;
-        this.metaKeyService = metaKeyService;
         this.commonTestControl = commonTestControl;
         this.importExportSerializer = importExportSerializer;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.pipelineStore = pipelineStore;
         this.dashboardStore = dashboardStore;
-        this.volumeService = volumeService;
         this.indexStore = indexStore;
         this.indexVolumeService = indexVolumeService;
         this.statisticStoreStore = statisticStoreStore;
         this.stroomStatsStoreStore = stroomStatsStoreStore;
-        this.connectionProvider = connectionProvider;
     }
 
 //    private void createStreamAttributes() {
@@ -166,7 +152,7 @@ public final class SetupSampleDataBean {
         // the root directories that we want to
         // process
         final Path[] rootDirs = new Path[]{StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(ROOT_DIR_NAME),
-                Paths.get("./stroom-statistics/stroom-statistics-server/src/test/resources").resolve(ROOT_DIR_NAME)};
+                Paths.get("./stroom-statistics/stroom-statistics-impl/src/test/resources").resolve(ROOT_DIR_NAME)};
 
         // process each root dir in turn
         for (final Path dir : rootDirs) {
@@ -177,14 +163,14 @@ public final class SetupSampleDataBean {
 
 
         // Add volumes to all indexes.
-        final BaseResultList<VolumeEntity> volumeList = volumeService.find(new FindVolumeCriteria());
+        final List<IndexVolume> volumeList = indexVolumeService.getAll();
         final List<DocRef> indexList = indexStore.list();
         logDocRefs(indexList, "indexes");
-        final Set<VolumeEntity> volumeSet = new HashSet<>(volumeList);
 
-        for (final DocRef indexRef : indexList) {
-            indexVolumeService.setVolumesForIndex(indexRef, volumeSet);
-        }
+        // TODO replace this with new volumes index
+//        for (final DocRef indexRef : indexList) {
+//            indexVolumeService.setVolumesForIndex(indexRef, volumeSet);
+//        }
 
         // Create index pipeline processor filters
         createIndexingProcessorFilter("Example index", StreamTypeNames.EVENTS, Optional.empty());
@@ -302,7 +288,7 @@ public final class SetupSampleDataBean {
 //            }
 
             LOGGER.info("Node count = " + commonTestControl.countEntity(Node.TABLE_NAME));
-            LOGGER.info("Volume count = " + commonTestControl.countEntity(VolumeEntity.TABLE_NAME));
+//            LOGGER.info("Volume count = " + commonTestControl.countEntity(VolumeEntity.TABLE_NAME));
             LOGGER.info("Feed count = " + feedStore.list().size());
 //            LOGGER.info("StreamAttributeKey count = " + commonTestControl.countEntity(StreamAttributeKey.class));
             LOGGER.info("Dashboard count = " + dashboardStore.list().size());
@@ -316,7 +302,7 @@ public final class SetupSampleDataBean {
 
         if (Files.exists(dataDir)) {
             // Load data.
-            final DataLoader dataLoader = new DataLoader(feedDocCache, streamStore);
+            final DataLoader dataLoader = new DataLoader(feedProperties, streamStore);
 
             // We spread the received time over 10 min intervals to help test
             // repo
@@ -327,7 +313,7 @@ public final class SetupSampleDataBean {
 
             // Load each data item 10 times to create a reasonable amount to
             // test.
-            final FeedDoc fd = dataLoader.getFeed("DATA_SPLITTER-EVENTS");
+            final String feedName = "DATA_SPLITTER-EVENTS";
             for (int i = 0; i < LOAD_CYCLES; i++) {
                 LOGGER.info("Loading data from {}, iteration {}", dataDir.toAbsolutePath().toString(), i);
                 // Load reference data first.
@@ -340,7 +326,7 @@ public final class SetupSampleDataBean {
 
                 // Load some randomly generated data.
                 final String randomData = createRandomData();
-                dataLoader.loadInputStream(fd, "Gen data", StreamUtil.stringToStream(randomData), false, startTime);
+                dataLoader.loadInputStream(feedName, "Gen data", StreamUtil.stringToStream(randomData), false, startTime);
                 startTime += tenMinMs;
             }
         } else {
@@ -351,7 +337,7 @@ public final class SetupSampleDataBean {
         if (Files.exists(exampleDataDir)) {
             LOGGER.info("Loading example data from {}", exampleDataDir.toAbsolutePath().toString());
             // Load data.
-            final DataLoader dataLoader = new DataLoader(feedDocCache, streamStore);
+            final DataLoader dataLoader = new DataLoader(feedProperties, streamStore);
             long startTime = System.currentTimeMillis();
 
             // Then load event data.
@@ -375,11 +361,8 @@ public final class SetupSampleDataBean {
                                final BiFunction<Integer, Instant, String> dataGenerationFunction) {
         try {
             LOGGER.info("Generating statistics test data for feed {}", feedName);
-
-            final FeedDoc feed = dataLoader.getFeed(feedName);
-
             dataLoader.loadInputStream(
-                    feed,
+                    feedName,
                     "Auto generated statistics data",
                     StreamUtil.stringToStream(dataGenerationFunction.apply(iterations, startTime)),
                     false,
@@ -394,7 +377,7 @@ public final class SetupSampleDataBean {
      * exist it will fail silently
      */
     private void generateSampleStatisticsData() {
-        final DataLoader dataLoader = new DataLoader(feedDocCache, streamStore);
+        final DataLoader dataLoader = new DataLoader(feedProperties, streamStore);
         final long startTime = System.currentTimeMillis();
 
         //keep the big and small feeds apart in terms of their event times
@@ -430,11 +413,9 @@ public final class SetupSampleDataBean {
                 GenerateSampleStatisticsData::generateValueData);
 
         try {
-            final FeedDoc apiFeed = dataLoader.getFeed(STATS_COUNT_API_FEED_NAME);
-            String sampleData = new String(Files.readAllBytes(Paths.get(STATS_COUNT_API_DATA_FILE)));
-
+            final String sampleData = new String(Files.readAllBytes(Paths.get(STATS_COUNT_API_DATA_FILE)));
             dataLoader.loadInputStream(
-                    apiFeed,
+                    STATS_COUNT_API_FEED_NAME,
                     "Sample statistics count data for export to API",
                     StreamUtil.stringToStream(sampleData),
                     false,

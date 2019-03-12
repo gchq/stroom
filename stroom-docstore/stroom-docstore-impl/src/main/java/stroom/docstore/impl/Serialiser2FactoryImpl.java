@@ -1,7 +1,7 @@
 package stroom.docstore.impl;
 
-import stroom.docstore.Serialiser2;
-import stroom.docstore.Serialiser2Factory;
+import stroom.docstore.api.Serialiser2;
+import stroom.docstore.api.Serialiser2Factory;
 
 public class Serialiser2FactoryImpl implements Serialiser2Factory {
 

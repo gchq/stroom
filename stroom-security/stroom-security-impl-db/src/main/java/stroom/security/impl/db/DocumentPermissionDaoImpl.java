@@ -4,14 +4,14 @@ import org.jooq.Record;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.security.dao.DocumentPermissionDao;
-import stroom.security.impl.db.tables.records.DocPermissionRecord;
+import stroom.security.impl.db.jooq.tables.records.DocPermissionRecord;
 import stroom.security.shared.DocumentPermissionJooq;
 
 import javax.inject.Inject;
 import java.util.Set;
 
-import static stroom.security.impl.db.tables.DocPermission.DOC_PERMISSION;
-import static stroom.security.impl.db.tables.StroomUser.STROOM_USER;
+import static stroom.security.impl.db.jooq.tables.DocPermission.DOC_PERMISSION;
+import static stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
 
 public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
 

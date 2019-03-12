@@ -2,30 +2,30 @@
 ext.moduleName = 'stroom.docstore.server'
 
 dependencies {
-    implementation project(':stroom-docstore:stroom-docstore-shared')
-    implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-explorer:stroom-explorer-api')
-    implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-util-shared')
-    implementation project(':stroom-util')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-importexport:stroom-importexport-api')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
 
     // stroom libs
-    implementation libs.stroomDocRef
-    implementation libs.stroomQueryApi
+    compile libs.stroomDocRef
 
     // 3rd party libs
-    implementation libs.guice4
-    implementation libs.guice_assistedinject
-    implementation libs.jackson_annotations
-    implementation libs.jackson_databind
-    implementation libs.javax_inject
-    implementation libs.slf4j_api
+    compile libs.guice4
+    compile libs.guice_assistedinject
+    compile libs.jackson_annotations
+    compile libs.jackson_databind
+    compile libs.javax_inject
+    compile libs.jaxb_api
+    compile libs.slf4j_api
     
-    testImplementation libs.assertj_core
-    testImplementation libs.junit_jupiter_api
-    testImplementation libs.mockito_core
-    testImplementation libs.mockito_junit_jupiter
+    testCompile libs.assertj_core
+    testCompile libs.junit_jupiter_api
+    testCompile libs.mockito_core
+    testCompile libs.mockito_junit_jupiter
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

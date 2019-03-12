@@ -21,7 +21,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.security.client.ClientSecurityContext;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 
 public abstract class NodeToolsPlugin extends Plugin {

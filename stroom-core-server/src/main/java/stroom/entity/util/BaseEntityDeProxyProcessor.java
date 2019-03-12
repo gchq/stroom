@@ -23,9 +23,9 @@ import org.hibernate.proxy.LazyInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.EntityServiceException;
+import stroom.util.shared.EntityServiceException;
 import stroom.entity.shared.HasEntity;
-import stroom.entity.shared.HasPassword;
+import stroom.util.shared.HasPassword;
 import stroom.docref.SharedObject;
 
 import java.beans.IntrospectionException;

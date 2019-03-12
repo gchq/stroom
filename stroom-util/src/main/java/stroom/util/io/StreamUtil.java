@@ -27,6 +27,7 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,11 +42,8 @@ public final class StreamUtil {
      * Buffer size to use.
      */
     public static final int BUFFER_SIZE = 8192;
-    // TODO 2016-04-20: Replace all references to "UTF-8" (throughout the
-    // code-base) with a reference to StandardCharsets.UTF_8. Possibly remove
-    // the default charset name just leaving default charset.
-    public static final String DEFAULT_CHARSET_NAME = "UTF-8";
-    public static final Charset DEFAULT_CHARSET = Charset.forName(DEFAULT_CHARSET_NAME);
+    public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
+    public static final String DEFAULT_CHARSET_NAME = DEFAULT_CHARSET.name();
     public static final Locale DEFAULT_LOCALE = Locale.ENGLISH;
     private static final ByteSlice ZERO_BYTES = new ByteSlice(new byte[0]);
 
@@ -95,7 +93,11 @@ public final class StreamUtil {
     }
 
     public static byte[] streamToBytes(final InputStream stream) {
-        return doStreamToBuffer(stream, true).toByteArray();
+        final MyByteArrayOutputStream byteArrayOutputStream = doStreamToBuffer(stream, true);
+        if (byteArrayOutputStream == null) {
+            return new byte[0];
+        }
+        return byteArrayOutputStream.toByteArray();
     }
 
     public static ByteArrayOutputStream streamToBuffer(final InputStream stream) {

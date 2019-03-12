@@ -19,9 +19,9 @@ package stroom.cache.impl;
 
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.FindCacheInfoCriteria;
-import stroom.entity.FindClearService;
-import stroom.entity.FindService;
-import stroom.entity.shared.Clearable;
+import stroom.util.entity.FindClearService;
+import stroom.util.entity.FindService;
+import stroom.util.shared.Clearable;
 
 /**
  * This class maintains several caches used throughout the application.

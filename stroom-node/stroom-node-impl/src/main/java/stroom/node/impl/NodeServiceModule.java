@@ -18,8 +18,8 @@ package stroom.node.impl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.EntityTypeBinder;
-import stroom.entity.FindService;
+import stroom.util.entity.EntityTypeBinder;
+import stroom.util.entity.FindService;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
@@ -28,8 +28,6 @@ import stroom.persist.EntityManagerModule;
 public class NodeServiceModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new EntityManagerModule());
-
         bind(NodeInfo.class).to(NodeInfoImpl.class);
         bind(NodeService.class).to(NodeServiceImpl.class);
 

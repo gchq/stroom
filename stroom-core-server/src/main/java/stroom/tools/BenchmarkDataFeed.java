@@ -16,7 +16,7 @@
 
 package stroom.tools;
 
-import stroom.task.StroomThreadGroup;
+import stroom.util.thread.StroomThreadGroup;
 import stroom.util.ArgsUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;

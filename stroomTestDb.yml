@@ -7,7 +7,7 @@ services:
     container_name: stroom-test-db
     ports:
         # Expose mysql on 14450
-      - "14450:3306"
+      - "3307:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=stroompassword1
       - MYSQL_USER=stroomuser

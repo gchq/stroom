@@ -1,9 +1,0 @@
-{
-  "authenticationServiceUrl": "https://IP_ADDRESS/authService/authentication/v1",
-  "authorisationServiceUrl": "http://IP_ADDRESS:8080/api/authorisation/v1",
-  "stroomBaseServiceUrl": "http://IP_ADDRESS:8080/api",
-  "advertisedUrl": "http://IP_ADDRESS:5001",
-  "authUsersUiUrl": "https://IP_ADDRESS:9443/userSearch",
-  "authTokensUiUrl": "https://IP_ADDRESS:9443/tokens",
-  "appClientId": "stroom-ui"
-}

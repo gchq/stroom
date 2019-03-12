@@ -16,10 +16,10 @@
 
 package stroom.pipeline.writer;
 
-import stroom.io.EncodingWriter;
-import stroom.io.MultiOutputStream;
-import stroom.io.NullOutputStream;
-import stroom.io.OutputStreamWrapper;
+import stroom.util.io.EncodingWriter;
+import stroom.util.io.MultiOutputStream;
+import stroom.util.io.NullOutputStream;
+import stroom.util.io.OutputStreamWrapper;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.ErrorReceiver;

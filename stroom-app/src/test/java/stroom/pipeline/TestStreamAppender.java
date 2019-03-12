@@ -18,11 +18,12 @@ package stroom.pipeline;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.data.store.api.InputStreamProvider;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.StreamUtil;
 
@@ -35,7 +36,7 @@ class TestStreamAppender extends AbstractStreamAppenderTest {
     @Inject
     private MetaService dataMetaService;
     @Inject
-    private StreamStore streamStore;
+    private Store streamStore;
 
     @Test
     void testXML() throws Exception {
@@ -49,11 +50,13 @@ class TestStreamAppender extends AbstractStreamAppenderTest {
 
         final List<Meta> list = dataMetaService.find(new FindMetaCriteria());
         final long id = list.get(0).getId();
-        final StreamSource streamSource = streamStore.openStreamSource(id);
-        final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(streamSource.getInputStream());
-        StreamUtil.streamToString(byteCountInputStream);
-        assertThat(byteCountInputStream.getCount()).isEqualTo(1198);
-        streamStore.closeStreamSource(streamSource);
+        try (final Source streamSource = streamStore.openStreamSource(id)) {
+            try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
+                final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStreamProvider.get());
+                StreamUtil.streamToString(byteCountInputStream);
+                assertThat(byteCountInputStream.getCount()).isEqualTo(1198);
+            }
+        }
     }
 
     @Test

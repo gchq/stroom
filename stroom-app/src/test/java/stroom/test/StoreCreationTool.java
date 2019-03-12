@@ -17,28 +17,28 @@
 package stroom.test;
 
 
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.store.api.StreamTargetUtil;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.SourceUtil;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
+import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
-import stroom.entity.shared.BaseResultList;
-import stroom.pipeline.feed.FeedStore;
+import stroom.index.shared.AnalyzerType;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFields;
+import stroom.util.shared.BaseResultList;
+import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.index.IndexStore;
 import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexField.AnalyzerType;
-import stroom.index.shared.IndexFields;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaProperties;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
-import stroom.pipeline.textconverter.TextConverterStore;
-import stroom.pipeline.xslt.XsltStore;
 import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
@@ -47,6 +47,8 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.pipeline.textconverter.TextConverterStore;
+import stroom.pipeline.xslt.XsltStore;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;
@@ -55,6 +57,7 @@ import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.Processor;
+import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -93,7 +96,7 @@ public final class StoreCreationTool {
             .getFile("samples/config/Standard_Pipelines/Search_Extraction.Pipeline.3d9d60e9-61c2-4c88-a57b-7bc584dd970e.xml");
     private static long effectiveMsOffset = 0;
 
-    private final StreamStore streamStore;
+    private final Store streamStore;
     private final FeedStore feedStore;
     private final TextConverterStore textConverterStore;
     private final XsltStore xsltStore;
@@ -105,7 +108,7 @@ public final class StoreCreationTool {
     private final IndexStore indexStore;
 
     @Inject
-    public StoreCreationTool(final StreamStore streamStore,
+    public StoreCreationTool(final Store streamStore,
                              final FeedStore feedStore,
                              final TextConverterStore textConverterStore,
                              final XsltStore xsltStore,
@@ -164,14 +167,17 @@ public final class StoreCreationTool {
 
         final String data = StreamUtil.fileToString(dataLocation);
 
-        final StreamTarget target = streamStore.openStreamTarget(metaProperties);
-        StreamTargetUtil.write(target, data);
-        streamStore.closeStreamTarget(target);
+        Meta meta;
 
-        try {
-            final StreamSource checkSource = streamStore.openStreamSource(target.getMeta().getId());
-            assertThat(StreamUtil.streamToString(checkSource.getInputStream())).isEqualTo(data);
-            streamStore.closeStreamSource(checkSource);
+        try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+            meta = target.getMeta();
+            TargetUtil.write(target, data);
+        } catch (final IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        try (final Source checkSource = streamStore.openStreamSource(meta.getId())) {
+            assertThat(SourceUtil.readString(checkSource)).isEqualTo(data);
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -306,27 +312,30 @@ public final class StoreCreationTool {
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
-        final StreamTarget dataTarget = streamStore.openStreamTarget(metaProperties);
-        try (final OutputStreamProvider outputStreamProvider = dataTarget.getOutputStreamProvider()) {
-            try (final InputStream inputStream = Files.newInputStream(dataLocation);
-                 final SegmentOutputStream outputStream = outputStreamProvider.next()) {
-                StreamUtil.streamToStream(inputStream, outputStream);
-            }
+        Meta meta;
+        try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+            meta = target.getMeta();
 
-            if (contextLocation != null) {
-                try (final InputStream inputStream = Files.newInputStream(contextLocation);
-                     final SegmentOutputStream outputStream = outputStreamProvider.next(StreamTypeNames.CONTEXT)) {
+            try (final OutputStreamProvider outputStreamProvider = target.next()) {
+                try (final InputStream inputStream = Files.newInputStream(dataLocation);
+                     final SegmentOutputStream outputStream = outputStreamProvider.get()) {
                     StreamUtil.streamToStream(inputStream, outputStream);
+                }
+
+                if (contextLocation != null) {
+                    try (final InputStream inputStream = Files.newInputStream(contextLocation);
+                         final SegmentOutputStream outputStream = outputStreamProvider.get(StreamTypeNames.CONTEXT)) {
+                        StreamUtil.streamToStream(inputStream, outputStream);
+                    }
                 }
             }
         }
-        streamStore.closeStreamTarget(dataTarget);
 
         // Check that the data was written ok.
         final String data = StreamUtil.fileToString(dataLocation);
-        final StreamSource checkSource = streamStore.openStreamSource(dataTarget.getMeta().getId());
-        assertThat(StreamUtil.streamToString(checkSource.getInputStream())).isEqualTo(data);
-        streamStore.closeStreamSource(checkSource);
+        try (final Source checkSource = streamStore.openStreamSource(meta.getId())) {
+            assertThat(SourceUtil.readString(checkSource)).isEqualTo(data);
+        }
     }
 
     private DocRef getEventFeed(final String feedName, final TextConverterType translationTextConverterType,

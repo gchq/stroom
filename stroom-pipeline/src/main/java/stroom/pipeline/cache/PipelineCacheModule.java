@@ -20,7 +20,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEvent.Handler;
-import stroom.entity.shared.Clearable;
+import stroom.util.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 public class PipelineCacheModule extends AbstractModule {
     @Override
@@ -30,10 +31,10 @@ public class PipelineCacheModule extends AbstractModule {
         bind(ParserFactoryPool.class).to(ParserFactoryPoolImpl.class);
         bind(XsltPool.class).to(XsltPoolImpl.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(SchemaPoolImpl.class);
-        clearableBinder.addBinding().to(ParserFactoryPoolImpl.class);
-        clearableBinder.addBinding().to(XsltPoolImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(SchemaPoolImpl.class)
+                .addBinding(ParserFactoryPoolImpl.class)
+                .addBinding(XsltPoolImpl.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(ParserFactoryPoolImpl.class);

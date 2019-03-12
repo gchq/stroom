@@ -1,8 +1,8 @@
 package stroom.importexport.impl;
 
 import io.swagger.annotations.Api;
-import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.EntityServiceException;
+import stroom.util.shared.DocRefs;
+import stroom.util.shared.EntityServiceException;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.resource.api.ResourceStore;
 import stroom.security.SecurityContext;

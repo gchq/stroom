@@ -21,17 +21,18 @@ import com.google.inject.Provides;
 import stroom.cache.impl.CacheModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
+import stroom.explorer.impl.MockExplorerModule;
+import stroom.feed.impl.FeedModule;
 import stroom.importexport.impl.ImportExportModule;
-import stroom.io.BasicStreamCloser;
-import stroom.io.StreamCloser;
+import stroom.util.io.BasicStreamCloser;
+import stroom.util.io.StreamCloser;
+import stroom.meta.statistics.api.MetaStatistics;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.Node;
 import stroom.pipeline.cache.PipelineCacheModule;
-import stroom.pipeline.feed.FeedModule;
-import stroom.pipeline.scope.PipelineScopeModule;
-import stroom.pipeline.scope.PipelineScoped;
-import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.streamtask.statistic.MetaDataStatistic;
+import stroom.util.pipeline.scope.PipelineScopeModule;
+import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
@@ -56,7 +57,7 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.entity.EntityModule());
 //        install(new stroom.entity.cluster.EntityClusterModule());
 //        install(new EntityClusterTaskModule());
-        install(new stroom.explorer.MockExplorerModule());
+        install(new MockExplorerModule());
         install(new FeedModule());
         install(new PipelineScopeModule());
         install(new ImportExportModule());
@@ -81,9 +82,9 @@ public class CliModule extends AbstractModule {
         install(new DocStoreModule());
         install(new stroom.docstore.impl.fs.FSPersistenceModule());
 //        install(new stroom.streamtask.StreamTaskModule());
-//        install(new stroom.task.TaskModule());
-//        install(new stroom.task.cluster.ClusterTaskModule());
-//        install(new stroom.volume.VolumeModule());
+//        install(new stroom.task.impl.TaskModule());
+//        install(new stroom.task.cluster.impl.ClusterTaskModule());
+//        install(new stroom.index.selection.VolumeModule());
 
         bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);
         bind(StreamCloser.class).to(BasicStreamCloser.class).in(PipelineScoped.class);
@@ -94,7 +95,7 @@ public class CliModule extends AbstractModule {
     }
 
     @Provides
-    public MetaDataStatistic metaDataStatistic() {
+    public MetaStatistics metaStatistics() {
         return metaData -> {
         };
     }

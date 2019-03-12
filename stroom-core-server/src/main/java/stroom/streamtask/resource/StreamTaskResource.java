@@ -21,8 +21,6 @@ package stroom.streamtask.resource;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Sort;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.SecurityContext;
 import stroom.streamtask.StreamProcessorFilterService;
@@ -31,6 +29,8 @@ import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.util.RestResource;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Sort;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -47,9 +47,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Comparator.comparingInt;
-import static stroom.entity.shared.Sort.Direction.ASCENDING;
 import static stroom.streamtask.resource.SearchKeywords.SORT_NEXT;
 import static stroom.streamtask.resource.SearchKeywords.addFiltering;
+import static stroom.util.shared.Sort.Direction.ASCENDING;
 
 @Api(value = "stream task - /v1")
 @Path("/streamtasks/v1")

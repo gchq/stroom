@@ -17,13 +17,14 @@
 package stroom.entity;
 
 import event.logging.BaseAdvancedQueryItem;
-import stroom.entity.shared.BaseCriteria;
+import stroom.util.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.BaseResultList;
+import stroom.util.shared.BaseResultList;
 import stroom.entity.shared.Entity;
 import stroom.entity.util.FieldMap;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
+import stroom.util.entity.FindService;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;

@@ -17,12 +17,18 @@
 package stroom.entity.event;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
+import stroom.entity.shared.EntityEvent;
+import stroom.entity.shared.EntityEvent.Handler;
 import stroom.entity.shared.EntityEventBus;
 
 public class EntityEventModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(EntityEventBus.class).to(EntityEventBusImpl.class);
+
+        // Ensure the multibinder is created.
+        Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
     }
 
     @Override

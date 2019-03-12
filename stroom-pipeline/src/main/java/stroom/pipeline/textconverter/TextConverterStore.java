@@ -17,7 +17,7 @@
 
 package stroom.pipeline.textconverter;
 
-import stroom.docstore.DocumentStore;
+import stroom.docstore.api.DocumentStore;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.docref.DocRef;
 

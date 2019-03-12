@@ -17,14 +17,14 @@
 
 package stroom.pipeline.refdata;
 
-import stroom.pipeline.scope.PipelineScoped;
+import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 
 import javax.inject.Inject;
 
 @PipelineScoped
-public class RefDataStoreHolder {
+class RefDataStoreHolder {
 
     private final RefDataStoreFactory refDataStoreFactory;
     private final RefDataStore offHeapRefDataStore;
@@ -40,7 +40,7 @@ public class RefDataStoreHolder {
     /**
      * Gets a shared off heap store for long term storage of re-usable reference data
      */
-    public RefDataStore getOffHeapRefDataStore() {
+    RefDataStore getOffHeapRefDataStore() {
         return offHeapRefDataStore;
     }
 
@@ -48,7 +48,7 @@ public class RefDataStoreHolder {
      * Gets a pipeline scoped on-heap store for storing transient context data for the life
      * of the pipeline process.
      */
-    public RefDataStore getOnHeapRefDataStore() {
+    RefDataStore getOnHeapRefDataStore() {
 
         // on demand creation of a RefDataStore for this pipeline scope
         if (onHeapRefDataStore == null) {

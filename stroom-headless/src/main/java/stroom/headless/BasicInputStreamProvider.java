@@ -1,36 +1,38 @@
 package stroom.headless;
 
+import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
-import stroom.data.store.api.StreamSourceInputStream;
-import stroom.data.store.api.StreamSourceInputStreamProvider;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
-class BasicInputStreamProvider implements StreamSourceInputStreamProvider {
-    private final StreamSourceInputStream inputStream;
+class BasicInputStreamProvider implements InputStreamProvider {
+    private final Map<String, SegmentInputStream> inputStreamMap = new HashMap<>();
 
-    BasicInputStreamProvider(final InputStream inputStream, final long size) {
-        this.inputStream = new StreamSourceInputStreamImpl(inputStream, size);
+    @Override
+    public SegmentInputStream get() {
+        return inputStreamMap.get(null);
     }
 
     @Override
-    public long getStreamCount() {
-        return 1;
+    public SegmentInputStream get(final String streamType) {
+        return inputStreamMap.get(streamType);
+    }
+
+    public void put(final String streamType, final InputStream inputStream, final int size) {
+        inputStreamMap.put(streamType, new SingleSegmentInputStreamImpl(inputStream, size));
     }
 
     @Override
-    public StreamSourceInputStream getStream(final long streamNo) {
-        return inputStream;
-    }
-
-    @Override
-    public SegmentInputStream getSegmentInputStream(final long streamNo) {
-        return null;
-    }
-
-    @Override
-    public void close() throws IOException {
-        inputStream.close();
+    public void close() {
+        inputStreamMap.forEach((k, v) -> {
+            try {
+                v.close();
+            } catch (final IOException e) {
+                // Ignore.
+            }
+        });
     }
 }

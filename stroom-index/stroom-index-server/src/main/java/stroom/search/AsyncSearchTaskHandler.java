@@ -19,27 +19,27 @@ package stroom.search;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.Sort.Direction;
-import stroom.index.IndexShardService;
+import stroom.index.shared.IndexField;
+import stroom.util.shared.Sort.Direction;
 import stroom.index.IndexStore;
+import stroom.index.service.IndexShardService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.query.api.v2.Query;
 import stroom.security.Security;
-import stroom.task.GenericServerTask;
-import stroom.task.api.TaskManager;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskContext;
-import stroom.task.cluster.ClusterDispatchAsync;
-import stroom.task.cluster.NodeNotFoundException;
-import stroom.task.cluster.NullClusterStateException;
-import stroom.task.cluster.TargetNodeSetFactory;
-import stroom.task.cluster.TerminateTaskClusterTask;
-import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.api.TargetType;
+import stroom.task.api.TaskManager;
+import stroom.cluster.task.api.ClusterDispatchAsync;
+import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.NodeNotFoundException;
+import stroom.cluster.task.api.NullClusterStateException;
+import stroom.cluster.task.api.TargetNodeSetFactory;
+import stroom.cluster.task.api.TargetType;
+import stroom.cluster.task.api.TerminateTaskClusterTask;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.util.shared.VoidResult;
 
@@ -113,7 +113,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
                     // Get a list of search index shards to look through.
                     final FindIndexShardCriteria findIndexShardCriteria = new FindIndexShardCriteria();
-                    findIndexShardCriteria.getIndexSet().add(query.getDataSource());
+                    findIndexShardCriteria.getIndexUuidSet().add(query.getDataSource().getUuid());
                     // Only non deleted indexes.
                     findIndexShardCriteria.getIndexShardStatusSet().addAll(IndexShard.NON_DELETED_INDEX_SHARD_STATUS);
                     // Order by partition name and key.
@@ -125,10 +125,10 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     final Map<String, List<Long>> shardMap = new HashMap<>();
                     for (final IndexShard indexShard : indexShards) {
                         if (IndexShardStatus.CORRUPT.equals(indexShard.getStatus())) {
-                            resultCollector.getErrorSet(indexShard.getNode().getName()).add(
+                            resultCollector.getErrorSet(indexShard.getNodeName()).add(
                                     "Attempt to search an index shard marked as corrupt: id=" + indexShard.getId() + ".");
                         } else {
-                            final String nodeName = indexShard.getNode().getName();
+                            final String nodeName = indexShard.getNodeName();
                             shardMap.computeIfAbsent(nodeName, k -> new ArrayList<>()).add(indexShard.getId());
                         }
                     }

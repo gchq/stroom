@@ -17,12 +17,12 @@
 
 package stroom.pipeline.task;
 
-import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.Meta;
-import stroom.data.store.api.StreamSourceInputStream;
-import stroom.data.store.api.StreamSourceInputStreamProvider;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.SizeAwareInputStream;
 import stroom.docref.DocRef;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.state.MetaDataProvider;
@@ -86,17 +86,17 @@ public class StreamMetaDataProvider implements MetaDataProvider {
                 lastMetaStreamNo = metaHolder.getStreamNo();
 
                 // Setup meta data.
-                final StreamSourceInputStreamProvider provider = metaHolder.getProvider(StreamTypeNames.META);
+                final InputStreamProvider provider = metaHolder.getInputStreamProvider();
                 if (provider != null) {
                     // Get the input stream.
-                    final StreamSourceInputStream inputStream = provider.getStream(lastMetaStreamNo);
+                    final SizeAwareInputStream inputStream = provider.get(StreamTypeNames.META);
 
                     // Make sure we got an input stream.
                     if (inputStream != null) {
                         // Only use meta data if we actually have some.
                         final long byteCount = inputStream.size();
                         if (byteCount > MINIMUM_BYTE_COUNT) {
-                            AttributeMapUtil.read(inputStream, false, metaData);
+                            AttributeMapUtil.read(inputStream, metaData);
                         }
                     }
                 }

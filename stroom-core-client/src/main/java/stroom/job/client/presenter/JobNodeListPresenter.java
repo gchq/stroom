@@ -32,50 +32,48 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.EntitySaveTask;
-import stroom.entity.client.SaveQueue;
+import stroom.entity.client.ActionQueue;
 import stroom.job.client.JobTypeCell;
-import stroom.job.shared.FetchJobDataAction;
+import stroom.job.shared.FindJobNodeAction;
+import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeRow;
+import stroom.job.shared.UpdateJobNodeAction;
 import stroom.monitoring.client.presenter.SchedulePresenter;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNodeRow>> {
     private final SchedulePresenter schedulePresenter;
 
-    private final SaveQueue<JobNode> jobNodeSaver;
-
+    private final FindJobNodeAction action = new FindJobNodeAction();
     private final ActionDataProvider<JobNodeRow> dataProvider;
-    private final FetchJobDataAction action = new FetchJobDataAction();
+    private final ActionQueue<JobNode> actionQueue;
 
     @Inject
-    public JobNodeListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-                                final TooltipPresenter tooltipPresenter, final SchedulePresenter schedulePresenter) {
+    public JobNodeListPresenter(final EventBus eventBus,
+                                final ClientDispatchAsync dispatcher,
+                                final SchedulePresenter schedulePresenter) {
         super(eventBus, new DataGridViewImpl<>(false));
         this.schedulePresenter = schedulePresenter;
 
         initTable();
 
-        jobNodeSaver = new SaveQueue<JobNode>(dispatcher) {
-            @Override
-            public void onComplete() {
-                super.onComplete();
-                dataProvider.refresh();
-            }
-        };
-
         dataProvider = new ActionDataProvider<>(dispatcher, action);
         dataProvider.addDataDisplay(getView().getDataDisplay());
 
+        actionQueue = new ActionQueue<JobNode>(dispatcher) {
+            @Override
+            public void onComplete() {
+                dataProvider.refresh();
+            }
+        };
     }
 
     /**
@@ -85,7 +83,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         final Column<JobNodeRow, String> nameColumn = new Column<JobNodeRow, String>(new TextCell()) {
             @Override
             public String getValue(final JobNodeRow row) {
-                return row.getEntity().getJob().getName();
+                return row.getJobNode().getJob().getName();
             }
         };
         getView().addResizableColumn(nameColumn, "Job", 200);
@@ -93,7 +91,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         final Column<JobNodeRow, String> nodeColumn = new Column<JobNodeRow, String>(new TextCell()) {
             @Override
             public String getValue(final JobNodeRow row) {
-                return row.getEntity().getNode().getName();
+                return row.getJobNode().getNodeName();
             }
         };
         getView().addResizableColumn(nodeColumn, "Node", 200);
@@ -102,7 +100,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         final Column<JobNodeRow, String> typeColumn = new Column<JobNodeRow, String>(new TextCell()) {
             @Override
             public String getValue(final JobNodeRow row) {
-                final JobNode jobNode = row.getEntity();
+                final JobNode jobNode = row.getJobNode();
                 final JobType jobType = jobNode.getJobType();
                 if (JobType.CRON.equals(jobType)) {
                     return "Cron " + jobNode.getSchedule();
@@ -120,11 +118,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         final Column<JobNodeRow, JobType> typeEditColumn = new Column<JobNodeRow, JobType>(new JobTypeCell()) {
             @Override
             public JobType getValue(final JobNodeRow row) {
-                if (row.getEntity().isPersistent()) {
-                    return row.getEntity().getJobType();
-                }
-
-                return null;
+                return row.getJobNode().getJobType();
             }
 
             @Override
@@ -139,7 +133,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
                 if (row != null && "click".equals(eventType)) {
                     final String tagName = target.getTagName();
                     if ("img".equalsIgnoreCase(tagName)) {
-                        final JobNode jobNode = row.getEntity();
+                        final JobNode jobNode = row.getJobNode();
                         JobNodeInfo jobNodeInfo = row.getJobNodeInfo();
                         if (jobNodeInfo == null) {
                             jobNodeInfo = new JobNodeInfo();
@@ -159,12 +153,9 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
                             @Override
                             public void onHide(final boolean autoClose, final boolean ok) {
                                 if (ok) {
-                                    jobNodeSaver.save(new EntitySaveTask<JobNode>(row) {
-                                        @Override
-                                        protected void setValue(final JobNode entity) {
-                                            entity.setSchedule(schedulePresenter.getScheduleString());
-                                        }
-                                    });
+                                    final JobNode jobNode = row.getJobNode();
+                                    jobNode.setSchedule(schedulePresenter.getScheduleString());
+                                    actionQueue.dispatch(jobNode, new UpdateJobNodeAction(jobNode));
                                 }
                             }
                         };
@@ -180,19 +171,18 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         final Column<JobNodeRow, Number> maxColumn = new Column<JobNodeRow, Number>(new ValueSpinnerCell(1, 1000)) {
             @Override
             public Number getValue(final JobNodeRow row) {
-                if (row.getEntity().getJobType().equals(JobType.DISTRIBUTED)) {
-                    return new EditableInteger(row.getEntity().getTaskLimit());
+                if (row.getJobNode().getJobType().equals(JobType.DISTRIBUTED)) {
+                    return new EditableInteger(row.getJobNode().getTaskLimit());
                 }
                 return null;
             }
         };
 
-        maxColumn.setFieldUpdater((index, row, value) -> jobNodeSaver.save(new EntitySaveTask<JobNode>(row) {
-            @Override
-            protected void setValue(final JobNode entity) {
-                entity.setTaskLimit(value.intValue());
-            }
-        }));
+        maxColumn.setFieldUpdater((index, row, value) -> {
+            final JobNode jobNode = row.getJobNode();
+            jobNode.setTaskLimit(value.intValue());
+            actionQueue.dispatch(jobNode, new UpdateJobNodeAction(jobNode));
+        });
         getView().addColumn(maxColumn, "Max", 59);
 
         // Cur.
@@ -226,25 +216,24 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
                 TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final JobNodeRow row) {
-                return TickBoxState.fromBoolean(row.getEntity().isEnabled());
+                return TickBoxState.fromBoolean(row.getJobNode().isEnabled());
             }
         };
         enabledColumn.setFieldUpdater((index, jobNodeRow, value) -> {
             final boolean newValue = value.toBoolean();
-            jobNodeSaver.save(new EntitySaveTask<JobNode>(jobNodeRow) {
-                @Override
-                protected void setValue(final JobNode entity) {
-                    entity.setEnabled(newValue);
-                }
-            });
+            final JobNode jobNode = jobNodeRow.getJobNode();
+            jobNode.setEnabled(newValue);
+            actionQueue.dispatch(jobNode, new UpdateJobNodeAction(jobNode));
         });
         getView().addColumn(enabledColumn, "Enabled", 80);
 
         getView().addEndColumn(new EndColumn<>());
     }
 
-    public void read(final Job entity) {
-        action.setJob(entity);
+    public void read(final Job job) {
+        final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
+        criteria.getJobName().setString(job.getName());
+        action.setCriteria(criteria);
         dataProvider.refresh();
     }
 }

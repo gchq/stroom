@@ -1,0 +1,34 @@
+ext.moduleName = 'stroom.receive.common'
+
+dependencies {
+    compile project(':stroom-core-shared')
+    compile project(':stroom-data:stroom-data-store-api')
+    compile project(':stroom-data:stroom-data-zip')
+    compile project(':stroom-feed:stroom-feed-api')
+    compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-meta:stroom-meta-statistics-api')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
+    
+    compile libs.commons_compress
+    compile libs.javax_servlet_api
+    compile libs.stroomDocRef
+
+    compile libs.javax_inject
+    compile libs.jaxb_api
+    compile libs.slf4j_api
+
+    testCompile libs.assertj_core
+    testCompile libs.commons_lang
+    testCompile libs.junit_jupiter_api
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}
