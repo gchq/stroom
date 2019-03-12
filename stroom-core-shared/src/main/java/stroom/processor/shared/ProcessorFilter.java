@@ -50,7 +50,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
     private static final long serialVersionUID = -2478788451478923825L;
 
     // standard id, OCC and audit fields
-    private int id;
+    private Integer id;
     private Integer version;
     private Long createTimeMs;
     private String createUser;
@@ -74,11 +74,11 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(final int id) {
+    public void setId(final Integer id) {
         this.id = id;
     }
 

@@ -16,6 +16,7 @@ import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BaseResultList;
@@ -54,7 +55,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
-        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Creating a {}", PROCESSOR_FILTER.getName()));
+        LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
 
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
         return marshaller.unmarshal(JooqUtil.contextResult(connectionProvider, context -> context.transactionResult(nested -> {

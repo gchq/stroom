@@ -56,7 +56,16 @@ public class MockIntCrud<T> implements HasIntCrud<T> {
             final Method method = t.getClass().getMethod("setId", Integer.class);
             method.invoke(t, id);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
+            try {
+                final Method method = t.getClass().getMethod("setId", Integer.TYPE);
+                method.invoke(t, id);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e2) {
+                throw new RuntimeException(e2);
+            }
         }
+    }
+
+    public Map<Integer, T> getMap() {
+        return map;
     }
 }

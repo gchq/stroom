@@ -23,7 +23,6 @@ import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.Range;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
@@ -35,8 +34,11 @@ import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.Range;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
@@ -137,12 +139,12 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                         refStreamDefReentrantLock.lockInterruptibly();
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        throw new RuntimeException(LambdaLogger.buildMessage(
+                        throw new RuntimeException(LogUtil.message(
                                 "Acquisition of lock for {} aborted due to thread interruption",
                                 refStreamDefinition));
                     }
                 },
-                () -> LambdaLogger.buildMessage("Acquiring lock for {}", refStreamDefinition));
+                LambdaLogUtil.message("Acquiring lock for {}", refStreamDefinition));
     }
 
     @Override
@@ -378,7 +380,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         LOGGER.trace("Close called for {}", refStreamDefinition);
 
         if (currentLoaderState.equals(LoaderState.INITIALISED)) {
-            LOGGER.warn(LambdaLogger.buildMessage("Reference data loader for {} was initialised but then closed before being completed",
+            LOGGER.warn(LogUtil.message("Reference data loader for {} was initialised but then closed before being completed",
                     refStreamDefinition));
         }
         if (writeTxn != null) {
@@ -463,7 +465,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
             }
         }
         if (!isCurrentStateValid) {
-            throw new IllegalStateException(LambdaLogger.buildMessage("Current loader state: {}, valid states: {}",
+            throw new IllegalStateException(LogUtil.message("Current loader state: {}, valid states: {}",
                     currentLoaderState, Arrays.toString(validStates)));
         }
     }

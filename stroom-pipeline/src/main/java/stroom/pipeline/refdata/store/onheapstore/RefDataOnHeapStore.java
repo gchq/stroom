@@ -3,7 +3,6 @@ package stroom.pipeline.refdata.store.onheapstore;
 import com.codahale.metrics.health.HealthCheck;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.Range;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
@@ -13,8 +12,11 @@ import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.Range;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.HashMap;
@@ -113,7 +115,7 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
                 boolean doesStoreContainRanges = rangeValueNestedMap.containsKey(mapDefinition);
                 if (doesStoreContainRanges) {
                     // we have ranges for this map def so we would expect to be able to convert the key
-                    throw new RuntimeException(LambdaLogger.buildMessage(
+                    throw new RuntimeException(LogUtil.message(
                             "Key {} cannot be used with the range store as it cannot be converted to a long", key), e);
                 }
                 // no ranges for this map def so the fact that we could not convert the key to a long
@@ -122,7 +124,7 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
             }
         }
         final Optional<RefDataValue> result2 = result;
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("getValue({}, {}) returning {}",
+        LAMBDA_LOGGER.trace(LambdaLogUtil.message("getValue({}, {}) returning {}",
                 mapDefinition, key, result2));
         return result;
     }
@@ -213,22 +215,22 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
     @Override
     public void logAllContents(final Consumer<String> logEntryConsumer) {
 
-        logEntryConsumer.accept(LambdaLogger.buildMessage("Dumping contents of processingInfoMap"));
+        logEntryConsumer.accept(LogUtil.message("Dumping contents of processingInfoMap"));
 
         processingInfoMap.forEach((k, v) ->
-                logEntryConsumer.accept(LambdaLogger.buildMessage("{} => {}", k, v)));
+                logEntryConsumer.accept(LogUtil.message("{} => {}", k, v)));
 
-        logEntryConsumer.accept(LambdaLogger.buildMessage("Dumping contents of keyValueMap"));
+        logEntryConsumer.accept(LogUtil.message("Dumping contents of keyValueMap"));
 
         keyValueMap.forEach((k, v) ->
-                logEntryConsumer.accept(LambdaLogger.buildMessage("{} => {}", k, v)));
+                logEntryConsumer.accept(LogUtil.message("{} => {}", k, v)));
 
-        logEntryConsumer.accept(LambdaLogger.buildMessage("Dumping contents of rangeValueNestedMap"));
+        logEntryConsumer.accept(LogUtil.message("Dumping contents of rangeValueNestedMap"));
 
         rangeValueNestedMap.forEach((k, v) -> {
-            logEntryConsumer.accept(LambdaLogger.buildMessage("{} =>", k));
+            logEntryConsumer.accept(LogUtil.message("{} =>", k));
             v.forEach((subKey, subValue) ->
-                    logEntryConsumer.accept(LambdaLogger.buildMessage("   {} => {}", subKey, subValue)));
+                    logEntryConsumer.accept(LogUtil.message("   {} => {}", subKey, subValue)));
         });
     }
 
@@ -250,7 +252,7 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
                         refDataProcessingInfo.getEffectiveTimeEpochMs(),
                         refDataProcessingInfo.getProcessingState());
             } else {
-                throw new RuntimeException(LambdaLogger.buildMessage(
+                throw new RuntimeException(LogUtil.message(
                         "No processing info entry found for {}", refStreamDefinition));
             }
         });

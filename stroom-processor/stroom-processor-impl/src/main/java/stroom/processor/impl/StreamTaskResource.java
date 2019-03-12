@@ -27,7 +27,7 @@ import stroom.processor.shared.FindProcessorFilterTaskCriteria;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.security.SecurityContext;
 import stroom.util.RestResource;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
@@ -100,7 +100,7 @@ public class StreamTaskResource implements RestResource {
                 .orElseGet(() ->
                         Response
                                 .status(Response.Status.NOT_FOUND)
-                                .entity(LambdaLogger.buildMessage("Filter with ID {} could not be found", filterId))
+                                .entity(LogUtil.message("Filter with ID {} could not be found", filterId))
                                 .build());
     }
 

@@ -25,8 +25,6 @@ import stroom.processor.shared.QueryData;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.HasIntCrud;
 
-import java.util.Optional;
-
 public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
     ProcessorFilter create(final DocRef pipelineRef,
                            final QueryData queryData,
@@ -37,12 +35,6 @@ public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
                            final QueryData queryData,
                            final int priority,
                            final boolean enabled);
-//
-//    Optional<ProcessorFilter> fetch(final int id);
-//
-//    ProcessorFilter update(final ProcessorFilter processorFilter);
-//
-//    boolean delete(final int id);
 
     BaseResultList<ProcessorFilter> find(FindProcessorFilterCriteria criteria);
 }

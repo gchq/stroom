@@ -45,7 +45,7 @@ import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -237,10 +237,10 @@ public final class SetupSampleDataBean {
         final List<DocRef> pipelines = pipelineStore.list().stream().filter(docRef -> pipelineName.equals(docRef.getName())).collect(Collectors.toList());
 
         if (pipelines == null || pipelines.size() == 0) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
+            throw new RuntimeException(LogUtil.message(
                     "Expecting to find one pipeline with name [{}]", pipelineName));
         } else if (pipelines.size() > 1) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
+            throw new RuntimeException(LogUtil.message(
                     "More than 1 pipeline found for index [{}]", pipelineName));
         } else {
             final DocRef pipeline = pipelines.get(0);

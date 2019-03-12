@@ -19,12 +19,13 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.pipeline.refdata.store.ProcessingState;
+import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Deserializer;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serializer;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.pipeline.refdata.store.ProcessingState;
-import stroom.pipeline.refdata.store.RefDataProcessingInfo;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -109,7 +110,7 @@ public class RefDataProcessingInfoSerde implements
                 timeMsBuffer, timeMsBuffer.position(),
                 processingInfoBuffer, LAST_ACCESSED_TIME_OFFSET);
 
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("wasAccessedAfter returns {} for test time {} lastAccessed time {}",
+        LAMBDA_LOGGER.trace(LambdaLogUtil.message("wasAccessedAfter returns {} for test time {} lastAccessed time {}",
                 compareResult,
                 Instant.ofEpochMilli(timeMsBuffer.getLong(0)),
                 Instant.ofEpochMilli(processingInfoBuffer.getLong(LAST_ACCESSED_TIME_OFFSET))));

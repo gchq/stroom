@@ -19,7 +19,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -33,7 +33,7 @@ public class StringSerde implements Serde<String> {
             byteBuffer.flip();
             return str;
         } catch (Exception e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Unable to decode string from byteBuffer {}",
+            throw new RuntimeException(LogUtil.message("Unable to decode string from byteBuffer {}",
                     ByteBufferUtils.byteBufferInfo(byteBuffer)), e);
         }
     }

@@ -97,7 +97,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
         return result;
 
 //        final JobNode result = JooqUtil.contextResult(connectionProvider, context -> {
-//            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Creating a {}", JOB_NODE.getName()));
+//            LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", JOB_NODE.getName()));
 //            JobNodeRecord record = context.newRecord(JOB_NODE, jobNode);
 //            record.set(JOB_NODE.JOB_ID, jobNode.getJob().getId());
 //            record.store();

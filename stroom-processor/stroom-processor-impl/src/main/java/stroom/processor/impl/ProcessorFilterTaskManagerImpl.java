@@ -88,7 +88,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
 
     private final ProcessorFilterService processorFilterService;
     private final ProcessorFilterTrackerDao processorFilterTrackerDao;
-    private final ProcessorFilterTaskCreator processorFilterTaskCreator;
+    private final ProcessorFilterTaskDao processorFilterTaskDao;
     private final TaskManager taskManager;
     private final NodeInfo nodeInfo;
     private final ProcessorConfig processorConfig;
@@ -138,7 +138,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
     @Inject
     ProcessorFilterTaskManagerImpl(final ProcessorFilterService processorFilterService,
                                    final ProcessorFilterTrackerDao processorFilterTrackerDao,
-                                   final ProcessorFilterTaskCreator processorFilterTaskCreator,
+                                   final ProcessorFilterTaskDao processorFilterTaskDao,
                                    final TaskManager taskManager,
                                    final NodeInfo nodeInfo,
                                    final ProcessorConfig processorConfig,
@@ -150,7 +150,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.taskManager = taskManager;
         this.nodeInfo = nodeInfo;
-        this.processorFilterTaskCreator = processorFilterTaskCreator;
+        this.processorFilterTaskDao = processorFilterTaskDao;
         this.processorConfig = processorConfig;
         this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
         this.metaService = metaService;
@@ -163,7 +163,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
         createTasksLock.lock();
         try {
             // Anything that we owned release
-            processorFilterTaskCreator.releaseOwnedTasks();
+            processorFilterTaskDao.releaseOwnedTasks();
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
@@ -212,7 +212,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
                             // Add as many tasks as we can for this filter.
                             ProcessorFilterTask streamTask = queue.poll();
                             while (streamTask != null) {
-                                final ProcessorFilterTask assigned = processorFilterTaskCreator.changeTaskStatus(streamTask, nodeName,
+                                final ProcessorFilterTask assigned = processorFilterTaskDao.changeTaskStatus(streamTask, nodeName,
                                         TaskStatus.ASSIGNED, null, null);
                                 if (assigned != null) {
                                     assignedStreamTasks.add(assigned);
@@ -256,7 +256,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
     private void abandon(final ProcessorFilterTask streamTask) {
         try {
             LOGGER.warn("abandon() - {}", streamTask);
-            processorFilterTaskCreator.changeTaskStatus(streamTask, null, TaskStatus.UNPROCESSED, null, null);
+            processorFilterTaskDao.changeTaskStatus(streamTask, null, TaskStatus.UNPROCESSED, null, null);
         } catch (final RuntimeException e) {
             LOGGER.error("abandon() - {}", streamTask, e);
         }
@@ -265,7 +265,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
     private void release(final ProcessorFilterTask streamTask) {
         try {
             LOGGER.warn("release() - {}", streamTask);
-            processorFilterTaskCreator.changeTaskStatus(streamTask, null, TaskStatus.UNPROCESSED, null, null);
+            processorFilterTaskDao.changeTaskStatus(streamTask, null, TaskStatus.UNPROCESSED, null, null);
         } catch (final RuntimeException e) {
             LOGGER.error("release() - {}", streamTask, e);
         }
@@ -633,14 +633,14 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
             findProcessorFilterTaskCriteria.obtainProcessorFilterIdSet().add(filter.getId());
             findProcessorFilterTaskCriteria.obtainPageRequest().setLength(tasksToCreate);
 
-            final BaseResultList<ProcessorFilterTask> streamTasks = processorFilterTaskCreator.find(findProcessorFilterTaskCriteria);
+            final BaseResultList<ProcessorFilterTask> streamTasks = processorFilterTaskDao.find(findProcessorFilterTaskCriteria);
             final int size = streamTasks.size();
 
             taskStatusTraceLog.addUnownedTasks(ProcessorFilterTaskManagerImpl.class, streamTasks);
 
             for (final ProcessorFilterTask streamTask : streamTasks) {
                 try {
-                    final ProcessorFilterTask modified = processorFilterTaskCreator.changeTaskStatus(streamTask, nodeName,
+                    final ProcessorFilterTask modified = processorFilterTaskDao.changeTaskStatus(streamTask, nodeName,
                             TaskStatus.UNPROCESSED, null, null);
                     if (modified != null) {
                         queue.add(modified);
@@ -753,7 +753,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
 
                 // Create a task for each stream reference.
                 final Map<Meta, InclusiveRanges> map = createStreamMap(result);
-                processorFilterTaskCreator.createNewTasks(
+                processorFilterTaskDao.createNewTasks(
                         filter,
                         tracker,
                         streamQueryTime,
@@ -804,7 +804,7 @@ class ProcessorFilterTaskManagerImpl implements ProcessorFilterTaskManager {
             map.put(meta, null);
         }
 
-        processorFilterTaskCreator.createNewTasks(
+        processorFilterTaskDao.createNewTasks(
                 filter,
                 updatedTracker,
                 streamQueryTime,

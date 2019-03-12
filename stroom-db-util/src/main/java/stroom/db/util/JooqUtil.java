@@ -11,7 +11,7 @@ import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaSet;
 import stroom.util.shared.PageRequest;
@@ -142,7 +142,7 @@ public final class JooqUtil {
     private static Field<Integer> getIdField(Table<?> table) {
         final Field<Integer> idField = table.field(DEFAULT_ID_FIELD_NAME, Integer.class);
         if (idField == null) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Field [id] not found on table [{}]", table.getName()));
+            throw new RuntimeException(LogUtil.message("Field [id] not found on table [{}]", table.getName()));
         }
         return idField;
     }

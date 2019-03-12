@@ -20,14 +20,8 @@ package stroom.processor.api;
 import stroom.docref.DocRef;
 import stroom.processor.shared.FindProcessorCriteria;
 import stroom.processor.shared.Processor;
-import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.QueryData;
-import stroom.util.logging.LambdaLogger;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.HasIntCrud;
-
-import java.util.List;
-import java.util.Optional;
 
 public interface ProcessorService extends HasIntCrud<Processor> {
     Processor create(DocRef pipelineRef, boolean enabled);
@@ -37,7 +31,7 @@ public interface ProcessorService extends HasIntCrud<Processor> {
 //    default Processor fetchByUuidOrThrow(final String uuid) {
 //        return fetchByUuid(uuid)
 //                .orElseThrow(() -> new RuntimeException(
-//                        LambdaLogger.buildMessage("Could not find processor with UUID {}", uuid)));
+//                        LogUtil.message("Could not find processor with UUID {}", uuid)));
 //    }
 
     BaseResultList<Processor> find(FindProcessorCriteria criteria);

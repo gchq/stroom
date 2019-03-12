@@ -31,6 +31,7 @@ import stroom.pipeline.refdata.store.ValueConsumerId;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -74,7 +75,7 @@ public class OnHeapRefDataValueProxyConsumer
                     // work out which byteBufferConsumer to use based on the typeId in the value byteBuffer
                     final RefDataValueConsumer.Factory consumerFactory = typeToRefDataValueConsumerFactoryMap.get(new ValueConsumerId(typeId));
 
-                    Objects.requireNonNull(consumerFactory, () -> LambdaLogger.buildMessage("No factory found for typeId {}", typeId));
+                    Objects.requireNonNull(consumerFactory, LambdaLogUtil.message("No factory found for typeId {}", typeId));
                     final RefDataValueConsumer consumer = consumerFactory.create(receiver, pipelineConfiguration);
 
                     consumer.consume(refDataValue);
@@ -84,7 +85,7 @@ public class OnHeapRefDataValueProxyConsumer
                     } else if (refDataValue.getTypeId() == FastInfosetValue.TYPE_ID) {
 
                         ByteBuffer valueByteBuffer = ((FastInfosetValue) refDataValue).getByteBuffer();
-                        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
+                        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
                                 "Consuming {}", ByteBufferUtils.byteBufferInfo(valueByteBuffer)));
 
                         fastInfosetByteBufferConsumer.consumeBytes(receiver, valueByteBuffer);

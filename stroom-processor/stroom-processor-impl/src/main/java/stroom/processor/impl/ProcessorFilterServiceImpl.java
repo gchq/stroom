@@ -20,6 +20,7 @@ package stroom.processor.impl;
 import stroom.db.util.AuditUtil;
 import stroom.docref.DocRef;
 import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -38,17 +39,20 @@ import java.util.UUID;
 class ProcessorFilterServiceImpl implements ProcessorFilterService {
     private static final String PERMISSION = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
 
+    private final ProcessorService processorService;
+    private final ProcessorFilterDao processorFilterDao;
     private final Security security;
     private final SecurityContext securityContext;
-    private final ProcessorFilterDao processorFilterDao;
 
     @Inject
-    ProcessorFilterServiceImpl(final Security security,
-                               final SecurityContext securityContext,
-                               final ProcessorFilterDao processorFilterDao) {
+    ProcessorFilterServiceImpl(final ProcessorService processorService,
+                               final ProcessorFilterDao processorFilterDao,
+                               final Security security,
+                               final SecurityContext securityContext) {
+        this.processorService = processorService;
+        this.processorFilterDao = processorFilterDao;
         this.security = security;
         this.securityContext = securityContext;
-        this.processorFilterDao = processorFilterDao;
     }
 
     @Override
@@ -56,7 +60,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                   final QueryData queryData,
                                   final int priority,
                                   final boolean enabled) {
-        return null;
+        final Processor processor = processorService.create(pipelineRef, enabled);
+        return create(processor, queryData, priority, enabled);
     }
 
     @Override
@@ -65,7 +70,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                   final int priority,
                                   final boolean enabled) {
         // now create the filter and tracker
-        ProcessorFilter processorFilter = new ProcessorFilter();
+        final ProcessorFilter processorFilter = new ProcessorFilter();
         AuditUtil.stamp(securityContext.getUserId(), processorFilter);
         // Blank tracker
         processorFilter.setEnabled(enabled);

@@ -47,7 +47,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
     private final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders;
     private final ProcessorCache processorCache;
     private final ProcessorFilterCache processorFilterCache;
-    private final ProcessorFilterTaskCreator processorFilterTaskCreator;
+    private final ProcessorFilterTaskDao processorFilterTaskDao;
     private final Store streamStore;
     private final NodeInfo nodeInfo;
     private final TaskContext taskContext;
@@ -57,7 +57,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
     DataProcessorTaskHandler(final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders,
                              final ProcessorCache processorCache,
                              final ProcessorFilterCache processorFilterCache,
-                             final ProcessorFilterTaskCreator processorFilterTaskCreator,
+                             final ProcessorFilterTaskDao processorFilterTaskDao,
                              final Store streamStore,
                              final NodeInfo nodeInfo,
                              final TaskContext taskContext,
@@ -65,7 +65,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
         this.executorProviders = executorProviders;
         this.processorCache = processorCache;
         this.processorFilterCache = processorFilterCache;
-        this.processorFilterTaskCreator = processorFilterTaskCreator;
+        this.processorFilterTaskDao = processorFilterTaskDao;
         this.streamStore = streamStore;
         this.nodeInfo = nodeInfo;
         this.taskContext = taskContext;
@@ -116,7 +116,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
 
                     } else {
                         // Change the task status.... and save
-                        streamTask = processorFilterTaskCreator.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(),
+                        streamTask = processorFilterTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(),
                                 TaskStatus.PROCESSING, startTime, null);
                         // Avoid having to do another fetch
                         streamTask.setProcessorFilter(destProcessorFilter);
@@ -144,10 +144,10 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
                 LOGGER.error(e.getMessage(), e);
             } finally {
                 if (complete) {
-                    processorFilterTaskCreator.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
+                    processorFilterTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
                             startTime, System.currentTimeMillis());
                 } else {
-                    processorFilterTaskCreator.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.FAILED, startTime,
+                    processorFilterTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.FAILED, startTime,
                             System.currentTimeMillis());
                 }
             }

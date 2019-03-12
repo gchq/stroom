@@ -24,6 +24,7 @@ import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.ResultHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -171,7 +172,7 @@ class EventSearchResultHandler implements ResultHandler {
     public boolean busy() {
         boolean isBusy = pendingMerges.size() > 0 || merging.get();
         LAMBDA_LOGGER.trace(() ->
-                LambdaLogger.buildMessage("busy() called, pendingMerges: {}, merging: {}, returning {}",
+                LogUtil.message("busy() called, pendingMerges: {}, merging: {}, returning {}",
                         pendingMerges.size(), merging.get(), isBusy));
         return isBusy;
     }

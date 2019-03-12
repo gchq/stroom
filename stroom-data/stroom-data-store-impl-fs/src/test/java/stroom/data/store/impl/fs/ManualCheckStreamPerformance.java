@@ -20,7 +20,7 @@ import com.google.common.base.Strings;
 import stroom.util.ArgsUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -80,7 +80,7 @@ abstract class ManualCheckStreamPerformance {
         }
         final long average = totalTime / threadTimes.size();
 
-        System.out.println(LambdaLogger.buildMessage("Average for {} is {}",
+        System.out.println(LogUtil.message("Average for {} is {}",
                 Strings.padStart(msg, 20, ' '),
                 Strings.padStart("" + average, 10, ' ')));
     }

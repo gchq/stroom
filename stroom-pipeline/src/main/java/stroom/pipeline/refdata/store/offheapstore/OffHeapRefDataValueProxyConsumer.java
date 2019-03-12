@@ -9,7 +9,7 @@ import stroom.pipeline.refdata.RefDataValueByteBufferConsumer;
 import stroom.pipeline.refdata.store.AbstractConsumer;
 import stroom.pipeline.refdata.store.ByteBufferConsumerId;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLogUtil;
 
 import javax.inject.Inject;
 import java.util.Map;
@@ -49,10 +49,10 @@ public class OffHeapRefDataValueProxyConsumer
             // work out which byteBufferConsumer to use based on the typeId in the value byteBuffer
             final RefDataValueByteBufferConsumer.Factory consumerFactory = typeToByteBufferConsumerFactoryMap.get(new ByteBufferConsumerId(typeId));
 
-            Objects.requireNonNull(consumerFactory, () -> LambdaLogger.buildMessage("No factory found for typeId {}", typeId));
+            Objects.requireNonNull(consumerFactory, LambdaLogUtil.message("No factory found for typeId {}", typeId));
             final RefDataValueByteBufferConsumer consumer = consumerFactory.create(receiver, pipelineConfiguration);
 
-            Objects.requireNonNull(consumer, () -> LambdaLogger.buildMessage("No consumer for typeId {}", typeId));
+            Objects.requireNonNull(consumer, LambdaLogUtil.message("No consumer for typeId {}", typeId));
 
             // now we have the appropriate consumer for the value type, consume the value
             consumer.consumeBytes(receiver, typedByteBuffer.getByteBuffer());

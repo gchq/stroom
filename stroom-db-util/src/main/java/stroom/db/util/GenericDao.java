@@ -5,6 +5,7 @@ import org.jooq.Record;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.UpdatableRecord;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasCrud;
@@ -61,14 +62,14 @@ public class GenericDao<RecordType extends UpdatableRecord, ObjectType, IdType>
     }
 
     public ObjectType create(final DSLContext context, @Nonnull final ObjectType object) {
-        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Creating a {}", table.getName()));
+        LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", table.getName()));
         final RecordType record = objectToRecordMapper.apply(object, context.newRecord(table));
         record.store();
         return recordToObjectMapper.apply(record);
     }
 
     public Optional<ObjectType> fetch(final DSLContext context, @Nonnull final IdType id) {
-        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+        LAMBDA_LOGGER.debug(LambdaLogUtil.message(
                 "Fetching {} with id {}", table.getName(), id));
         return context
                 .selectFrom(table)
@@ -78,13 +79,13 @@ public class GenericDao<RecordType extends UpdatableRecord, ObjectType, IdType>
 
     public ObjectType update(final DSLContext context, @Nonnull final ObjectType object) {
             final RecordType record = objectToRecordMapper.apply(object, context.newRecord(table));
-            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Updating a {} with id {}", table.getName(), record.get(idField)));
+        LAMBDA_LOGGER.debug(LambdaLogUtil.message("Updating a {} with id {}", table.getName(), record.get(idField)));
             record.update();
             return recordToObjectMapper.apply(record);
     }
 
     public boolean delete(final DSLContext context, @Nonnull final IdType id) {
-        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+        LAMBDA_LOGGER.debug(LambdaLogUtil.message(
                 "Deleting a {} with id {}", table.getName(), id));
         return context
                 .deleteFrom(table)
