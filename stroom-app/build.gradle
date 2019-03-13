@@ -172,7 +172,6 @@ dependencies {
 
     testCompile libs.commons_io
     testCompile libs.guice4
-    testCompile libs.hibernate_core
     testCompile libs.hibernate_jpa_api
     testCompile libs.hikari
     testCompile libs.junit_jupiter_api

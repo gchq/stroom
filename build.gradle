@@ -172,8 +172,6 @@ ext.libs = [
         gwtp_mvp_client                : "com.gwtplatform:gwtp-mvp-client:0.7",
         hbase                          : "org.apache.hbase:hbase-common:1.2.1", //should be set to be consistent with CDH version
         hessian                        : "com.caucho:hessian:4.0.51",
-        hibernate_core                 : "org.hibernate:hibernate-core:$versions.hibernate" /* LATEST 5.2.13.Final */,
-        hibernate_entitymanager        : "org.hibernate:hibernate-entitymanager:$versions.hibernate" /* LATEST 5.2.5.Final */,
         hibernate_jpa_api              : "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.2.Final",
         hibernate_validator            : "org.hibernate:hibernate-validator:5.3.4.Final",
         hikari                         : "com.zaxxer:HikariCP:$versions.hikari",

@@ -16,7 +16,6 @@ dependencies {
     compile libs.stroomDocRef
     
     compile libs.eventLogging
-    compile libs.hibernate_core
     compile libs.guice4
     compile libs.hessian
     compile libs.dropwizard_lifecycle

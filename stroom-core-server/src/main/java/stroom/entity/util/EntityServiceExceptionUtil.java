@@ -17,11 +17,10 @@
 package stroom.entity.util;
 
 import com.caucho.hessian.HessianException;
-import org.hibernate.PropertyValueException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.EntityServiceException;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.EntityServiceException;
 
 import javax.persistence.EntityExistsException;
 import javax.persistence.OptimisticLockException;
@@ -68,19 +67,6 @@ public class EntityServiceExceptionUtil {
             }
             // Unknown type of error
             return getDefaultMessage(psEx, rootEx);
-        }
-        if (e instanceof PropertyValueException) {
-            final PropertyValueException pEx = (PropertyValueException) e;
-            final StringBuilder msg = new StringBuilder();
-            msg.append("Unable to save record state.  ");
-            msg.append(pEx.getPropertyName());
-            msg.append(": ");
-            if (pEx.getMessage().contains("not-null")) {
-                msg.append("mandatory");
-            } else {
-                msg.append(pEx.getMessage());
-            }
-            return msg.toString();
         }
         if (e instanceof ConstraintViolationException) {
             final ConstraintViolationException constraintViolationException = (ConstraintViolationException) e;
@@ -139,15 +125,6 @@ public class EntityServiceExceptionUtil {
         }
         if (thEx instanceof HessianException) {
             return new EntityServiceException(thEx.getMessage(), thEx.getClass().getName(), true);
-        }
-        if (thEx instanceof org.hibernate.exception.ConstraintViolationException) {
-            final org.hibernate.exception.ConstraintViolationException cvEx = (org.hibernate.exception.ConstraintViolationException) thEx;
-            final EntityServiceException entityServiceException = new EntityServiceException(
-                    "Unable to save due to constraint ");
-            entityServiceException.setDetail(appendDetail(cvEx.getMessage()) +
-                    appendDetail(cvEx.getSQLException().getMessage()) +
-                    appendDetail(cvEx.getConstraintName()));
-            return entityServiceException;
         }
         if (thEx instanceof UnknownHostException) {
             return new EntityServiceException("Unknown host: " + thEx.getMessage(), thEx.getClass().getName(), true);

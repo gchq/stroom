@@ -17,7 +17,6 @@ dependencies {
 
     compile libs.stroomDocRef
     
-    compile libs.hibernate_core
     compile libs.flyway_core
     compile libs.guice4
     compile libs.hikari

@@ -53,7 +53,6 @@ dependencies {
     compile libs.guice4
     compile libs.gwt_servlet
     compile libs.hessian
-    compile libs.hibernate_core
     compile libs.hibernate_jpa_api
     compile libs.hikari
     compile libs.jackson_annotations
@@ -74,7 +73,6 @@ dependencies {
     compile libs.xml_apis
 
     runtimeOnly libs.aopalliance
-    runtimeOnly libs.hibernate_entitymanager
     // dropwizard 1.0.6 uses hibernate-validator 5.2.4.Final
     // dropwizard 1.1.0 uses hibernate-validator 5.3.4.Final
     // so be consistent with dropwizard to avoid problems with different versions of javax.el
