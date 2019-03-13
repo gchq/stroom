@@ -28,7 +28,7 @@ import stroom.security.impl.db.jooq.tables.StroomUserGroups;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class StroomUserGroupsRecord extends UpdatableRecordImpl<StroomUserGroupsRecord> implements Record3<Long, String, String> {
 
-    private static final long serialVersionUID = -1261177413;
+    private static final long serialVersionUID = -870854203;
 
     /**
      * Setter for <code>stroom.stroom_user_groups.id</code>.

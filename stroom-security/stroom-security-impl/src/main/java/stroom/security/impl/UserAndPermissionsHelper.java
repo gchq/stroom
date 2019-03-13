@@ -42,7 +42,7 @@ class UserAndPermissionsHelper {
         addPermissions(appPermissionSet, userRef);
 
         // Get user groups for this user.
-        final List<UserRef> userGroups = userGroupsCache.get(userRef);
+        final List<UserRef> userGroups = userGroupsCache.get(userRef.getUuid());
 
         // Add app permissions set on groups this user belongs to.
         if (userGroups != null) {

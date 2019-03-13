@@ -17,6 +17,8 @@
 package stroom.security.impl;
 
 import stroom.security.Security;
+import stroom.security.service.UserAppPermissionService;
+import stroom.security.service.UserService;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.PermissionNames;
@@ -123,7 +125,7 @@ class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult
 
     private void addUserToGroup(final UserRef user, final UserRef userGroup) {
         try {
-            userService.addUserToGroup(user, userGroup);
+            userService.addUserToGroup(user.getUuid(), userGroup.getUuid());
             authorisationEventLog.addUserToGroup(user.getName(), userGroup.getName(), true, null);
         } catch (final RuntimeException e) {
             authorisationEventLog.addUserToGroup(user.getName(), userGroup.getName(), false, e.getMessage());
@@ -132,7 +134,7 @@ class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult
 
     private void removeUserFromGroup(final UserRef user, final UserRef userGroup) {
         try {
-            userService.removeUserFromGroup(user, userGroup);
+            userService.removeUserFromGroup(user.getUuid(), userGroup.getUuid());
             authorisationEventLog.removeUserFromGroup(user.getName(), userGroup.getName(), true, null);
         } catch (final RuntimeException e) {
             authorisationEventLog.removeUserFromGroup(user.getName(), userGroup.getName(), false, e.getMessage());
@@ -141,7 +143,7 @@ class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult
 
     private void addPermission(UserRef userRef, String permission) {
         try {
-            userAppPermissionService.addPermission(userRef, permission);
+            userAppPermissionService.addPermission(userRef.getUuid(), permission);
             authorisationEventLog.addUserToGroup(userRef.getName(), permission, true, null);
         } catch (final RuntimeException e) {
             authorisationEventLog.addUserToGroup(userRef.getName(), permission, false, e.getMessage());
@@ -150,7 +152,7 @@ class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult
 
     private void removePermission(UserRef userRef, String permission) {
         try {
-            userAppPermissionService.removePermission(userRef, permission);
+            userAppPermissionService.removePermission(userRef.getUuid(), permission);
             authorisationEventLog.removeUserFromGroup(userRef.getName(), permission, true, null);
         } catch (final RuntimeException e) {
             authorisationEventLog.removeUserFromGroup(userRef.getName(), permission, false, e.getMessage());

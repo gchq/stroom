@@ -19,6 +19,8 @@ package stroom.security.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.Security;
+import stroom.security.service.UserAppPermissionService;
+import stroom.security.service.UserService;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
@@ -117,7 +119,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
                 final UserRef userGroup = createOrRefreshAdminUserGroup();
                 try {
-                    userService.addUserToGroup(userRef, userGroup);
+                    userService.addUserToGroup(userRef.getUuid(), userGroup.getUuid());
                 } catch (final RuntimeException e) {
                     // Expected.
                     LOGGER.debug(e.getMessage());
@@ -146,7 +148,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
             final UserRef newUserGroup = userService.createUserGroup(userGroupName);
             try {
-                userAppPermissionService.addPermission(newUserGroup, PermissionNames.ADMINISTRATOR);
+                userAppPermissionService.addPermission(newUserGroup.getUuid(), PermissionNames.ADMINISTRATOR);
             } catch (final RuntimeException e) {
                 // Expected.
                 LOGGER.debug(e.getMessage());

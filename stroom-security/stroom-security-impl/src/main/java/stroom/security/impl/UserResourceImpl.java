@@ -3,7 +3,11 @@ package stroom.security.impl;
 import stroom.security.dao.UserDao;
 import stroom.security.rest.CreateDTO;
 import stroom.security.rest.UserResource;
+import stroom.security.service.UserService;
+import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
+import stroom.security.shared.UserRef;
+import stroom.util.shared.StringCriteria;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
@@ -14,65 +18,54 @@ import java.util.stream.Collectors;
 
 public class UserResourceImpl implements UserResource {
 
-    private final UserDao userDao;
+    private final UserService userService;
 
     @Inject
-    public UserResourceImpl(final UserDao userDao) {
-        this.userDao = userDao;
+    public UserResourceImpl(final UserService userService) {
+        this.userService = userService;
     }
 
     @Override
     public Response get(final String name,
-                              final Boolean isGroup,
-                              final String uuid) {
-        final List<User> users = new ArrayList<>();
+                        final Boolean isGroup,
+                        final String uuid) {
 
-        // If all the identification fields are null, just do a find which should return them all
-        if (null == name && null == uuid) {
-            users.addAll(userDao.find(isGroup, name));
-        } else {
-            if (null != name) {
-                if (null != isGroup) {
-                    users.addAll(userDao.find(isGroup, name));
-                } else {
-                    Optional.ofNullable(userDao.getUserByName(name))
-                            .ifPresent(users::add);
-                }
-            }
-            if (null != uuid) {
-                Optional.ofNullable(userDao.getByUuid(uuid))
-                        .ifPresent(users::add);
-            }
-        }
+        final FindUserCriteria criteria = new FindUserCriteria();
+        criteria.setName(new StringCriteria(name));
+        criteria.setGroup(isGroup);
+        final List<User> users = userService.find(criteria);
+        
+        return Response.ok(users).build();
+    }
 
-        final List<User> distinct = users.stream()
-                .distinct()
-                .collect(Collectors.toList());
-
-        return Response.ok(distinct).build();
+    @Override
+    public Response get(String userUuid) {
+        final User user = userService.loadByUuid(userUuid);
+        
+        return Response.ok(user).build();
     }
 
     @Override
     public Response findUsersInGroup(final String groupUuid) {
-        final List<User> users = userDao.findUsersInGroup(groupUuid);
+        final List<UserRef> users = userService.findUsersInGroup(groupUuid);
 
         return Response.ok(users).build();
     }
 
     @Override
     public Response findGroupsForUser(final String userUuid) {
-        final List<User> groups = userDao.findGroupsForUser(userUuid);
+        final List<UserRef> groups = userService.findGroupsForUser(userUuid);
         return Response.ok(groups).build();
     }
 
     @Override
     public Response create(final CreateDTO createDTO) {
-        User user;
+        UserRef user;
 
         if (null != createDTO.getGroup() && createDTO.getGroup()) {
-            user = userDao.createUser(createDTO.getName());
+            user = userService.createUser(createDTO.getName());
         } else {
-            user = userDao.createUserGroup(createDTO.getName());
+            user = userService.createUserGroup(createDTO.getName());
         }
 
         return Response.ok(user).build();
@@ -80,7 +73,7 @@ public class UserResourceImpl implements UserResource {
 
     @Override
     public Response deleteUser(final String uuid) {
-        userDao.deleteUser(uuid);
+        userService.delete(uuid);
 
         return Response.noContent().build();
     }
@@ -88,7 +81,7 @@ public class UserResourceImpl implements UserResource {
     @Override
     public Response addUserToGroup(final String userUuid,
                                   final String groupUuid) {
-        userDao.addUserToGroup(userUuid, groupUuid);
+        userService.addUserToGroup(userUuid, groupUuid);
 
         return Response.noContent().build();
     }
@@ -96,7 +89,7 @@ public class UserResourceImpl implements UserResource {
     @Override
     public Response removeUserFromGroup(final String userUuid,
                                        final String groupUuid) {
-        userDao.removeUserFromGroup(userUuid, groupUuid);
+        userService.removeUserFromGroup(userUuid, groupUuid);
 
         return Response.noContent().build();
     }

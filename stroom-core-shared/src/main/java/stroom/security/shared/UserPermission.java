@@ -24,20 +24,20 @@ import java.io.Serializable;
 public class UserPermission implements Serializable, Comparable<UserPermission> {
     private static final long serialVersionUID = 2536752322307664050L;
 
-    private UserRef userRef;
+    private String userUuid;
     private String permission;
 
     public UserPermission() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public UserPermission(final UserRef userRef, final String permission) {
-        this.userRef = userRef;
+    public UserPermission(final String userUuid, final String permission) {
+        this.userUuid = userUuid;
         this.permission = permission;
     }
 
-    public UserRef getUserRef() {
-        return userRef;
+    public String getUserUuid() {
+        return userUuid;
     }
 
     public String getPermission() {
@@ -47,7 +47,7 @@ public class UserPermission implements Serializable, Comparable<UserPermission> 
     @Override
     public int hashCode() {
         final HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
-        hashCodeBuilder.append(userRef);
+        hashCodeBuilder.append(userUuid);
         hashCodeBuilder.append(permission);
         return hashCodeBuilder.toHashCode();
     }
@@ -62,14 +62,14 @@ public class UserPermission implements Serializable, Comparable<UserPermission> 
 
         final UserPermission keyByName = (UserPermission) o;
         final EqualsBuilder equalsBuilder = new EqualsBuilder();
-        equalsBuilder.append(userRef, keyByName.userRef);
+        equalsBuilder.append(userUuid, keyByName.userUuid);
         equalsBuilder.append(permission, keyByName.permission);
         return equalsBuilder.isEquals();
     }
 
     @Override
     public String toString() {
-        return userRef + "-" + permission;
+        return userUuid + "-" + permission;
     }
 
     @Override

@@ -17,64 +17,26 @@
 
 package stroom.security.client;
 
-import com.google.gwt.inject.client.AsyncProvider;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.core.client.MenuKeys;
-import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.DocumentPermissionsPresenter;
-import stroom.security.client.presenter.UsersAndGroupsPresenter;
-import stroom.security.shared.PermissionNames;
-import stroom.svg.client.SvgPresets;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.ui.config.client.UiConfigCache;
 
 public class ManageUserPlugin extends NodeToolsPlugin {
-    private final AsyncProvider<UsersAndGroupsPresenter> usersAndGroupsPresenterProvider;
+    private final UiConfigCache clientPropertyCache;
 
     @Inject
-    public ManageUserPlugin(final EventBus eventBus, final ClientSecurityContext securityContext,
-                            final AsyncProvider<UsersAndGroupsPresenter> usersAndGroupsPresenterProvider,
-                            final AsyncProvider<DocumentPermissionsPresenter> documentPermissionsPresenterProvider) {
+    public ManageUserPlugin(final EventBus eventBus,
+                            final ClientSecurityContext securityContext,
+                            final UiConfigCache clientPropertyCache) {
         super(eventBus, securityContext);
-        this.usersAndGroupsPresenterProvider = usersAndGroupsPresenterProvider;
-
-        eventBus.addHandler(ShowPermissionsDialogEvent.getType(),
-                event -> documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentPermissionsPresenter>() {
-                    @Override
-                    public void onSuccess(final DocumentPermissionsPresenter presenter) {
-                        presenter.show(event.getExplorerNode());
-                    }
-
-                    @Override
-                    public void onFailure(final Throwable caught) {
-                    }
-                }));
+        this.clientPropertyCache = clientPropertyCache;
     }
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
-            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                    new IconMenuItem(1, SvgPresets.USER, SvgPresets.USER, "User Permissions", null, true,
-                            () -> usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
-                                @Override
-                                public void onSuccess(final UsersAndGroupsPresenter presenter) {
-                                    final PopupSize popupSize = new PopupSize(800, 600, true);
-                                    ShowPopupEvent.fire(ManageUserPlugin.this, presenter,
-                                            PopupType.CLOSE_DIALOG, null, popupSize, "User Permissions", null, null);
-                                }
-
-                                @Override
-                                public void onFailure(final Throwable caught) {
-                                }
-                            })));
-        }
+        // TODO Add a menu item to present the authorisation manager from the new UI in an iFrame
     }
 }

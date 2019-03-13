@@ -14,15 +14,26 @@
  * limitations under the License.
  */
 
-package stroom.security.impl;
+package stroom.security.service;
 
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 
+import java.util.Set;
+
 public interface UserAppPermissionService {
-    UserAppPermissions getPermissionsForUser(UserRef userRef);
+    default UserAppPermissions getPermissionsForUser(UserRef userRef) {
+        final Set<String> permissionNames = getPermissionNamesForUser(userRef.getUuid());
+        final Set<String> allNames = getAllPermissionNames();
 
-    void addPermission(UserRef userRef, String permission);
+        return new UserAppPermissions(userRef, allNames, permissionNames);
+    }
 
-    void removePermission(UserRef userRef, String permission);
+    Set<String> getPermissionNamesForUser(String userUuid);
+
+    Set<String> getAllPermissionNames();
+
+    void addPermission(String userUuid, String permission);
+
+    void removePermission(String userUuid, String permission);
 }

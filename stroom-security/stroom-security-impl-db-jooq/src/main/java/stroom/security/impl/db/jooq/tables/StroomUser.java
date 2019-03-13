@@ -41,7 +41,7 @@ import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class StroomUser extends TableImpl<StroomUserRecord> {
 
-    private static final long serialVersionUID = 1563406415;
+    private static final long serialVersionUID = -741340484;
 
     /**
      * The reference instance of <code>stroom.stroom_user</code>
