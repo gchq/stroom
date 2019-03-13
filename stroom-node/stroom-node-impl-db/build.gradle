@@ -1,22 +1,16 @@
 ext.moduleName = 'stroom.node.impl.db'
 
 dependencies {
-    compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-node:stroom-node-impl')
     compile project(':stroom-node:stroom-node-impl-db-jooq')
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-core-shared')
     compile project(':stroom-db-util')
-//    compile project(':stroom-event-logging:stroom-event-logging-api')
-    compile project(':stroom-security:stroom-security-api')
-//    compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-
     compile libs.eventLogging
     compile libs.stroomDocRef
-//    compile libs.stroomQueryApi
 
     compile libs.flyway_core
     compile libs.guice4
@@ -32,7 +26,6 @@ dependencies {
     testCompile project(':stroom-security:stroom-security-impl-mock')
 
     testCompile libs.assertj_core
-//    testCompile libs.commons_io
     testCompile libs.mockito_core
     testCompile libs.mockito_junit_jupiter
 

@@ -17,22 +17,20 @@
 package stroom.node.impl;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.EntityEvent;
 import stroom.node.shared.ClusterNodeInfoAction;
-import stroom.node.shared.FetchNodeInfoAction;
+import stroom.node.shared.FetchNodeStatusAction;
+import stroom.node.shared.FindNodeAction;
 import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.GuiceUtil;
-import stroom.util.shared.Clearable;
 
 public class NodeHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
         TaskHandlerBinder.create(binder())
                 .bind(ClusterNodeInfoAction.class, ClusterNodeInfoHandler.class)
-                .bind(FetchNodeInfoAction.class, FetchNodeInfoHandler.class)
+                .bind(FetchNodeStatusAction.class, FetchNodeStatusHandler.class)
                 .bind(FindSystemTableStatusAction.class, FindSystemTableStatusHandler.class)
-                .bind(NodeInfoClusterTask.class, NodeInfoClusterHandler.class);
+                .bind(FindNodeAction.class, FindNodeHandler.class)
+                .bind(NodeStatusClusterTask.class, NodeStatusClusterHandler.class);
     }
 }

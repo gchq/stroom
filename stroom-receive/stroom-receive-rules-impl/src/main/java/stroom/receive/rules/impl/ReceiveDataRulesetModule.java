@@ -23,7 +23,7 @@ import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.util.GuiceUtil;
 import stroom.util.RestResource;
-import stroom.util.entity.EntityTypeBinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 
 public class ReceiveDataRulesetModule extends AbstractModule {
     @Override
@@ -41,7 +41,7 @@ public class ReceiveDataRulesetModule extends AbstractModule {
                 .addBinding(ReceiveDataRuleSetResource.class)
                 .addBinding(ReceiveDataRuleSetResource2.class);
 
-        EntityTypeBinder.create(binder())
+        DocumentActionHandlerBinder.create(binder())
                 .bind(ReceiveDataRules.DOCUMENT_TYPE, ReceiveDataRuleSetServiceImpl.class);
 
     }

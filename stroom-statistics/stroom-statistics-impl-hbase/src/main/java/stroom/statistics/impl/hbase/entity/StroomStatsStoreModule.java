@@ -18,7 +18,7 @@ package stroom.statistics.impl.hbase.entity;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.util.entity.EntityTypeBinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
@@ -34,7 +34,7 @@ public class StroomStatsStoreModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(StroomStatsStoreStoreImpl.class);
 
-        EntityTypeBinder.create(binder())
+        DocumentActionHandlerBinder.create(binder())
                 .bind(StroomStatsStoreDoc.DOCUMENT_TYPE, StroomStatsStoreStoreImpl.class);
 
 //        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);

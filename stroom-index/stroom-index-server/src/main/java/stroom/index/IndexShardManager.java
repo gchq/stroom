@@ -17,16 +17,15 @@
 
 package stroom.index;
 
-import stroom.util.entity.FindDeleteService;
-import stroom.entity.FindFlushService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.util.entity.FindDeleteService;
 
 /**
  * API into our index shard manager.
  */
-public interface IndexShardManager extends FindDeleteService<FindIndexShardCriteria>, FindFlushService<FindIndexShardCriteria> {
+public interface IndexShardManager extends FindDeleteService<FindIndexShardCriteria> {
     void setStatus(long indexShardId, IndexShardStatus status);
 
     void update(long indexShardId,
@@ -40,4 +39,6 @@ public interface IndexShardManager extends FindDeleteService<FindIndexShardCrite
     void deleteFromDisk();
 
     void checkRetention();
+
+    Long findFlush(FindIndexShardCriteria criteria);
 }

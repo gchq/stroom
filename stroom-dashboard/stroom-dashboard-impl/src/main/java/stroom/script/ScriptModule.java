@@ -18,7 +18,7 @@ package stroom.script;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.util.entity.EntityTypeBinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.script.shared.FetchScriptAction;
@@ -39,7 +39,7 @@ public class ScriptModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.script.ScriptStoreImpl.class);
 
-        EntityTypeBinder.create(binder())
+        DocumentActionHandlerBinder.create(binder())
                 .bind(ScriptDoc.DOCUMENT_TYPE, ScriptStoreImpl.class);
 
 //        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);

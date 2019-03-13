@@ -17,77 +17,114 @@
 
 package stroom.job.impl;
 
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.Query;
-import event.logging.Query.Advanced;
-import stroom.event.logging.api.DocumentEventLog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.cluster.task.api.ClusterCallEntry;
+import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.DefaultClusterResultCollector;
+import stroom.cluster.task.api.TargetType;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
+import stroom.job.shared.JobNodeInfo;
+import stroom.job.shared.JobNodeRow;
 import stroom.security.Security;
+import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.SharedMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Singleton
 class JobNodeService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeService.class);
+
     private final JobNodeDao jobNodeDao;
     private final Security security;
-    private final DocumentEventLog documentEventLog;
+    private final SecurityContext securityContext;
+    private final ClusterDispatchAsyncHelper dispatchHelper;
 
     @Inject
     JobNodeService(final JobNodeDao jobNodeDao,
                    final Security security,
-                   final DocumentEventLog documentEventLog) {
+                   final SecurityContext securityContext,
+                   final ClusterDispatchAsyncHelper dispatchHelper) {
         this.jobNodeDao = jobNodeDao;
         this.security = security;
-        this.documentEventLog = documentEventLog;
+        this.securityContext = securityContext;
+        this.dispatchHelper = dispatchHelper;
     }
 
     JobNode update(final JobNode jobNode) {
         // Stop Job Nodes being saved with invalid crons.
         ensureSchedule(jobNode);
 
-        JobNode result = null;
-        try {
-            result = security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
-                final Optional<JobNode> before = jobNodeDao.fetch(jobNode.getId());
+        return security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
+            final Optional<JobNode> before = fetch(jobNode.getId());
 
                 // We always want to update a job node instance even if we have a stale version.
                 before.ifPresent(j -> jobNode.setVersion(j.getVersion()));
 
                 final JobNode after = jobNodeDao.update(jobNode);
-                documentEventLog.update(before.orElse(null), after, null);
                 return after;
             });
-        } catch (final RuntimeException e) {
-            documentEventLog.update(jobNode, null, e);
-        }
-
-        return result;
     }
 
-    BaseResultList<JobNode> find(final FindJobNodeCriteria findJobNodeCriteria) {
-        final Query query = new Query();
-        final Advanced advanced = new Advanced();
-        query.setAdvanced(advanced);
-        final And and = new And();
-        advanced.getAdvancedQueryItems().add(and);
+    private BaseResultList<JobNode> find(final FindJobNodeCriteria findJobNodeCriteria) {
+        return security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobNodeDao.find(findJobNodeCriteria));
+    }
 
-        BaseResultList<JobNode> results = null;
-        try {
-            results = security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobNodeDao.find(findJobNodeCriteria));
-            documentEventLog.search(findJobNodeCriteria, query, results, null);
-        } catch (final RuntimeException e) {
-            documentEventLog.search(findJobNodeCriteria, query, null, e);
-        }
+    BaseResultList<JobNodeRow> findStatus(final FindJobNodeCriteria findJobNodeCriteria) {
+        return security.secureResult(() -> {
+            // Add the root node.
+            final List<JobNodeRow> values = new ArrayList<>();
 
-        return results;
+            if (findJobNodeCriteria == null) {
+                return BaseResultList.createUnboundedList(values);
+            }
+
+            DefaultClusterResultCollector<SharedMap<JobNode, JobNodeInfo>> collector;
+            collector = dispatchHelper.execAsync(new JobNodeInfoClusterTask(securityContext.getUserId()), TargetType.ACTIVE);
+
+            final List<JobNode> jobNodes = find(findJobNodeCriteria);
+
+            // Sort job nodes by node name.
+            jobNodes.sort((JobNode o1, JobNode o2) -> o1.getNodeName().compareToIgnoreCase(o2.getNodeName()));
+
+            // Create the JobNodeRow value
+            for (final JobNode jobNode : jobNodes) {
+                JobNodeInfo jobNodeInfo = null;
+
+                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response = collector.getResponse(jobNode.getNodeName());
+
+                if (response == null) {
+                    LOGGER.debug("No response for: {}", jobNode);
+                } else if (response.getError() != null) {
+                    LOGGER.debug("Error response for: {} - {}", jobNode, response.getError().getMessage());
+                    LOGGER.debug(response.getError().getMessage(), response.getError());
+                } else {
+                    final Map<JobNode, JobNodeInfo> map = response.getResult();
+                    if (map == null) {
+                        LOGGER.warn("No data for: {}", jobNode);
+                    } else {
+                        jobNodeInfo = map.get(jobNode);
+                    }
+                }
+
+                final JobNodeRow jobNodeRow = new JobNodeRow(jobNode, jobNodeInfo);
+                values.add(jobNodeRow);
+            }
+
+            return BaseResultList.createUnboundedList(values);
+        });
     }
 
     private void ensureSchedule(final JobNode jobNode) {
@@ -104,5 +141,9 @@ class JobNodeService {
                 ModelStringUtil.parseDurationString(jobNode.getSchedule());
             }
         }
+    }
+
+    Optional<JobNode> fetch(final int id) {
+        return jobNodeDao.fetch(id);
     }
 }

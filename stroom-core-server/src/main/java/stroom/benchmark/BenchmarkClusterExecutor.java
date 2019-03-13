@@ -31,15 +31,12 @@ import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
-import stroom.node.api.NodeService;
-import stroom.node.shared.FindNodeCriteria;
-import stroom.node.shared.Node;
 import stroom.pipeline.PipelineStore;
 import stroom.processor.api.JobNames;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.FindProcessorCriteria;
+import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
@@ -47,7 +44,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.api.InternalStatisticEvent;
-import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.AsyncExecutorHelper;
@@ -61,12 +57,8 @@ import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // 20 min timeout
@@ -85,10 +77,8 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final MetaService metaService;
     private final JobManager jobManager;
-    private final NodeService nodeService;
     private final TaskContext taskContext;
     private final ExecutorProvider executorProvider;
-    private final Set<String> nodeNameSet = new HashSet<>();
     private final InternalStatisticsReceiver statistics;
     private final BenchmarkClusterConfig benchmarkClusterConfig;
 
@@ -107,7 +97,6 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              final ProcessorService streamProcessorService,
                              final ClusterDispatchAsyncHelper dispatchHelper,
                              final JobManager jobManager,
-                             final NodeService nodeService,
                              final ExecutorProvider executorProvider,
                              final InternalStatisticsReceiver statistics,
                              final BenchmarkClusterConfig benchmarkClusterConfig) {
@@ -118,7 +107,6 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         this.dispatchHelper = dispatchHelper;
         this.metaService = metaService;
         this.jobManager = jobManager;
-        this.nodeService = nodeService;
         this.taskContext = taskContext;
         this.executorProvider = executorProvider;
         this.statistics = statistics;
@@ -136,8 +124,6 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         LOGGER.info("Using benchmark stream count of {}", benchmarkClusterConfig.getStreamCount());
         LOGGER.info("Using benchmark record count of {}", benchmarkClusterConfig.getRecordCount());
         LOGGER.info("Using benchmark concurrent writers of {}", benchmarkClusterConfig.getConcurrentWriters());
-
-        nodeNameSet.addAll(nodeService.find(new FindNodeCriteria()).stream().map(Node::getName).collect(Collectors.toSet()));
 
         // // Remove all old benchmark data.
         // removeOldData(folder, null);
@@ -464,12 +450,13 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
         final List<InternalStatisticEvent> statisticEventList = new ArrayList<>();
 
-        for (final String nodeName : nodeNameSet) {
-            long nodeWritten = 0;
-            long nodeError = 0;
-            final Period nodePeriod = new Period();
+        // TODO : @66 LOOK AT PROCESSOR TASKS TO ESTABLISH NODE
 
-            // TODO : @66 LOOK AT PROCESSOR TASKS TO ESTABLISH NODE
+//            long nodeWritten = 0;
+//            long nodeError = 0;
+//            final Period nodePeriod = new Period();
+//
+
 //            for (final StreamDataRow processedStream : processedStreams) {
 //                if (node.getName().equals(processedStream.getAttributeValue(StreamDataSource.NODE))) {
 //                    nodeWritten += getLong(processedStream, StreamDataSource.REC_WRITE);
@@ -478,14 +465,13 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 //                    checkPeriod(nodePeriod, processedStream);
 //                }
 //            }
+//
+//            Map<String, String> tags = Map.of("Node", nodeName, "Feed", feedName, "Type", EPS);
+//            statisticEventList.add(InternalStatisticEvent.createValueStat(InternalStatisticKey.BENCHMARK_CLUSTER, nowMs, tags, (double) toEPS(nodeWritten, nodePeriod)));
+//
+//            tags = Map.of("Node", nodeName, "Feed", feedName, "Type", ERROR);
+//            statisticEventList.add(InternalStatisticEvent.createValueStat(InternalStatisticKey.BENCHMARK_CLUSTER, nowMs, tags, (double) toEPS(nodeError, nodePeriod)));
 
-            Map<String, String> tags = Map.of("Node", nodeName, "Feed", feedName, "Type", EPS);
-            statisticEventList.add(InternalStatisticEvent.createValueStat(InternalStatisticKey.BENCHMARK_CLUSTER, nowMs, tags, (double) toEPS(nodeWritten, nodePeriod)));
-
-            tags = Map.of("Node", nodeName, "Feed", feedName, "Type", ERROR);
-            statisticEventList.add(InternalStatisticEvent.createValueStat(InternalStatisticKey.BENCHMARK_CLUSTER, nowMs, tags, (double) toEPS(nodeError, nodePeriod)));
-
-        }
         final Period clusterPeriod = new Period();
 
         for (final MetaRow row : rows) {

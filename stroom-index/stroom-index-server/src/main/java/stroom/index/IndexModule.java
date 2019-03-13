@@ -30,10 +30,9 @@ import stroom.index.service.IndexVolumeGroupServiceImpl;
 import stroom.index.service.IndexVolumeService;
 import stroom.index.service.IndexVolumeServiceImpl;
 import stroom.index.shared.IndexDoc;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.GuiceUtil;
 import stroom.util.RestResource;
-import stroom.util.entity.EntityTypeBinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
 
@@ -70,7 +69,7 @@ public class IndexModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(StroomIndexQueryResourceImpl.class);
 
-        EntityTypeBinder.create(binder())
+        DocumentActionHandlerBinder.create(binder())
                 .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
 
         // TODO Shards are no longer Findable Entities

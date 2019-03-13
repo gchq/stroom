@@ -19,7 +19,7 @@ package stroom.feed.impl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.util.GuiceUtil;
-import stroom.util.entity.EntityTypeBinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.feed.api.FeedProperties;
@@ -46,7 +46,7 @@ public class FeedModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(FeedDocCache.class);
 
-        EntityTypeBinder.create(binder())
+        DocumentActionHandlerBinder.create(binder())
                 .bind(FeedDoc.DOCUMENT_TYPE, FeedStoreImpl.class);
 
         // Provide object info to the logging service.

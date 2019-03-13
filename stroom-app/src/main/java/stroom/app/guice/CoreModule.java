@@ -28,7 +28,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.document.DocumentModule());
         install(new stroom.elastic.impl.ElasticModule());
         install(new stroom.elastic.impl.http.HttpElasticModule());
-        install(new stroom.entity.EntityModule());
         install(new stroom.entity.event.EntityEventModule());
         install(new stroom.entity.cluster.EntityClusterModule());
         install(new stroom.entity.event.EntityClusterTaskModule());

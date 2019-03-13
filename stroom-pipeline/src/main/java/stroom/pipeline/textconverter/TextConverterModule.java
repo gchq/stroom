@@ -18,7 +18,7 @@ package stroom.pipeline.textconverter;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.util.entity.EntityTypeBinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.shared.TextConverterDoc;
@@ -34,7 +34,7 @@ public class TextConverterModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(TextConverterStoreImpl.class);
 
-        EntityTypeBinder.create(binder())
+        DocumentActionHandlerBinder.create(binder())
                 .bind(TextConverterDoc.DOCUMENT_TYPE, TextConverterStoreImpl.class);
     }
 }

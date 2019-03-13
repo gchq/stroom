@@ -18,7 +18,6 @@ package stroom.test;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import stroom.persist.PersistService;
 import stroom.task.api.TaskManager;
 
 /**
@@ -32,9 +31,6 @@ public final class SetupSampleData {
 
         final Injector injector = Guice.createInjector(new CoreTestModule());
 
-        // Start persistance
-        injector.getInstance(PersistService.class).start();
-
         // Start task manager
         injector.getInstance(TaskManager.class).startup();
 
@@ -47,8 +43,5 @@ public final class SetupSampleData {
 
         // Stop task manager
         injector.getInstance(TaskManager.class).shutdown();
-
-        // Stop persistance
-        injector.getInstance(PersistService.class).stop();
     }
 }

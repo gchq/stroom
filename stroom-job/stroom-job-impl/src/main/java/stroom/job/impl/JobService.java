@@ -18,10 +18,6 @@
 package stroom.job.impl;
 
 
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.Query;
-import event.logging.Query.Advanced;
-import stroom.event.logging.api.DocumentEventLog;
 import stroom.job.api.DistributedTaskFactoryDescription;
 import stroom.job.api.ScheduledJob;
 import stroom.job.api.TaskConsumer;
@@ -44,7 +40,6 @@ import java.util.Set;
 class JobService {
     private final JobDao jobDao;
     private final Security security;
-    private final DocumentEventLog documentEventLog;
 
     private final Map<String, String> jobDescriptionMap = new HashMap<>();
     private final Set<String> jobAdvancedSet = new HashSet<>();
@@ -52,12 +47,10 @@ class JobService {
     @Inject
     JobService(final JobDao jobDao,
                final Security security,
-               final DocumentEventLog documentEventLog,
                final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
                final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
         this.jobDao = jobDao;
         this.security = security;
-        this.documentEventLog = documentEventLog;
 
         scheduledJobsMap.keySet().forEach(scheduledJob -> {
             jobDescriptionMap.put(scheduledJob.getName(), scheduledJob.getDescription());
@@ -74,44 +67,26 @@ class JobService {
     }
 
     Job update(final Job job) {
-        Job result = null;
-        try {
-            result = security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
-                final Optional<Job> before = jobDao.fetch(job.getId()).map(this::decorate);
+        return security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
+            final Optional<Job> before = fetch(job.getId());
 
                 // We always want to update a job instance even if we have a stale version.
                 before.ifPresent(j -> job.setVersion(j.getVersion()));
 
                 final Job after = jobDao.update(job);
-                documentEventLog.update(before.orElse(null), after, null);
                 return decorate(after);
             });
-        } catch (final RuntimeException e) {
-            documentEventLog.update(job, null, e);
-        }
-
-        return result;
     }
 
     BaseResultList<Job> find(final FindJobCriteria findJobCriteria) {
-        final Query query = new Query();
-        final Advanced advanced = new Advanced();
-        query.setAdvanced(advanced);
-        final And and = new And();
-        advanced.getAdvancedQueryItems().add(and);
-
-        BaseResultList<Job> results = null;
-        try {
-            results = security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobDao.find(findJobCriteria));
-            results.forEach(this::decorate);
-            documentEventLog.search(findJobCriteria, query, results, null);
-        } catch (final RuntimeException e) {
-            documentEventLog.search(findJobCriteria, query, null, e);
-        }
-
+        final BaseResultList<Job> results = security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobDao.find(findJobCriteria));
+        results.forEach(this::decorate);
         return results;
     }
 
+    Optional<Job> fetch(final int id) {
+        return jobDao.fetch(id).map(this::decorate);
+    }
 
     private Job decorate(final Job job) {
         job.setDescription(jobDescriptionMap.get(job.getName()));

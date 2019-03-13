@@ -23,19 +23,17 @@ import stroom.docref.DocRef;
 import stroom.index.service.IndexShardService;
 import stroom.index.service.IndexVolumeGroupService;
 import stroom.index.service.IndexVolumeService;
-
-import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexVolume;
-import stroom.util.shared.Range;
-import stroom.util.shared.Sort.Direction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexVolume;
 import stroom.node.api.NodeInfo;
-import stroom.node.shared.Node;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.Range;
+import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -87,12 +85,12 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
         indexStore.writeDocument(index2);
         final IndexShardKey indexShardKey2 = IndexShardKeyUtil.createTestKey(index2);
 
-        final Node node = nodeInfo.getThisNode();
+        final String nodeName = nodeInfo.getThisNodeName();
 
-        final IndexShard call1 = indexShardService.createIndexShard(indexShardKey1, node.getName());
-        final IndexShard call2 = indexShardService.createIndexShard(indexShardKey1, node.getName());
-        final IndexShard call3 = indexShardService.createIndexShard(indexShardKey1, node.getName());
-        final IndexShard call4 = indexShardService.createIndexShard(indexShardKey2, node.getName());
+        final IndexShard call1 = indexShardService.createIndexShard(indexShardKey1, nodeName);
+        final IndexShard call2 = indexShardService.createIndexShard(indexShardKey1, nodeName);
+        final IndexShard call3 = indexShardService.createIndexShard(indexShardKey1, nodeName);
+        final IndexShard call4 = indexShardService.createIndexShard(indexShardKey2, nodeName);
 
         assertThat(call1).isNotNull();
         assertThat(call2).isNotNull();
@@ -135,18 +133,18 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
         index.setPartitionSize(1);
         indexStore.writeDocument(index);
 
-        final Node node = nodeInfo.getThisNode();
+        final String nodeName = nodeInfo.getThisNodeName();
 
-        createShard(index, node, "2013-05-01T00:00:00.000Z", 1);
-        createShard(index, node, "2013-05-01T00:00:00.000Z", 2);
-        createShard(index, node, "2013-06-01T00:00:00.000Z", 3);
-        createShard(index, node, "2013-02-01T00:00:00.000Z", 4);
-        createShard(index, node, "2013-02-01T00:00:00.000Z", 5);
-        createShard(index, node, "2012-01-01T00:00:00.000Z", 6);
-        createShard(index, node, "2011-02-01T00:00:00.000Z", 7);
-        createShard(index, node, "2014-08-01T00:00:00.000Z", 8);
-        createShard(index, node, "2011-01-01T00:00:00.000Z", 9);
-        createShard(index, node, "2011-02-01T00:00:00.000Z", 10);
+        createShard(index, nodeName, "2013-05-01T00:00:00.000Z", 1);
+        createShard(index, nodeName, "2013-05-01T00:00:00.000Z", 2);
+        createShard(index, nodeName, "2013-06-01T00:00:00.000Z", 3);
+        createShard(index, nodeName, "2013-02-01T00:00:00.000Z", 4);
+        createShard(index, nodeName, "2013-02-01T00:00:00.000Z", 5);
+        createShard(index, nodeName, "2012-01-01T00:00:00.000Z", 6);
+        createShard(index, nodeName, "2011-02-01T00:00:00.000Z", 7);
+        createShard(index, nodeName, "2014-08-01T00:00:00.000Z", 8);
+        createShard(index, nodeName, "2011-01-01T00:00:00.000Z", 9);
+        createShard(index, nodeName, "2011-02-01T00:00:00.000Z", 10);
 
         final FindIndexShardCriteria findIndexShardCriteria = new FindIndexShardCriteria();
         // Order by partition name and key.
@@ -176,11 +174,11 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     private void createShard(final IndexDoc index,
-                             final Node node,
+                             final String nodeName,
                              final String dateTime,
                              final int shardNo) {
         final long timeMs = DateUtil.parseNormalDateTimeString(dateTime);
         final IndexShardKey key = IndexShardKeyUtil.createTimeBasedKey(index, timeMs, shardNo);
-        indexShardService.createIndexShard(key, node.getName());
+        indexShardService.createIndexShard(key, nodeName);
     }
 }

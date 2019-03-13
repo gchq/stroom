@@ -10,7 +10,6 @@ import stroom.index.IndexLifecycleModule;
 import stroom.job.impl.JobSystemLifecycleModule;
 import stroom.kafka.impl.KafkaLifecycleModule;
 import stroom.meta.impl.db.MetaDbLifecycleModule;
-import stroom.persist.EntityManagerLifecycleModule;
 import stroom.pipeline.destination.RollingDestinationsLifecycleModule;
 import stroom.processor.impl.StreamTaskLifecycleModule;
 import stroom.resource.impl.ResourceLifecycleModule;
@@ -28,7 +27,6 @@ public class LifecycleModule extends AbstractModule {
         install(new ClusterTaskLifecycleModule());
         install(new MetaDbLifecycleModule());
         install(new EntityEventLifecycleModule());
-        install(new EntityManagerLifecycleModule());
         install(new ImportExportLifecycleModule());
         install(new IndexLifecycleModule());
         install(new InternalStatisticsLifecycleModule());

@@ -21,7 +21,6 @@ import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import stroom.db.util.HikariUtil;
-import stroom.persist.PersistService;
 import stroom.task.api.TaskManager;
 import stroom.test.common.util.test.TempDir;
 
@@ -35,9 +34,6 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
         HikariUtil.setTesting(true);
 
         injector = Guice.createInjector(new CoreTestModule());
-
-        // Start persistance
-        injector.getInstance(PersistService.class).start();
 
         // Start task manager
         injector.getInstance(TaskManager.class).startup();

@@ -34,7 +34,7 @@ public class Node implements HasAuditInfo, SharedObject {
     private Long updateTimeMs;
     private String updateUser;
     private String name;
-    private String clusterURL;
+    private String url;
 
     /**
      * A number to imply how import that this node is from the POV of being a
@@ -117,12 +117,12 @@ public class Node implements HasAuditInfo, SharedObject {
         this.name = name;
     }
 
-    public String getClusterURL() {
-        return clusterURL;
+    public String getUrl() {
+        return url;
     }
 
-    public void setClusterURL(final String clusterURL) {
-        this.clusterURL = clusterURL;
+    public void setUrl(final String url) {
+        this.url = url;
     }
 
     public int getPriority() {
@@ -147,7 +147,7 @@ public class Node implements HasAuditInfo, SharedObject {
 //        sb.append(", name=");
 //        sb.append(getName());
 //        sb.append(", clusterCallUrl=");
-//        sb.append(clusterURL);
+//        sb.append(url);
 //        sb.append(", priority=");
 //        sb.append(priority);
 //    }

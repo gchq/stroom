@@ -18,7 +18,7 @@ package stroom.pipeline;
 
 import com.google.inject.AbstractModule;
 import stroom.docstore.shared.Doc;
-import stroom.util.entity.EntityTypeBinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
@@ -48,7 +48,7 @@ public class PipelineModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(PipelineResource.class);
 
-        EntityTypeBinder.create(binder())
+        DocumentActionHandlerBinder.create(binder())
                 .bind(PipelineDoc.DOCUMENT_TYPE, PipelineStoreImpl.class);
 
         // Provide object info to the logging service.

@@ -19,15 +19,11 @@ package stroom.node.impl.mock;
 import com.google.inject.AbstractModule;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.util.GuiceUtil;
-import stroom.util.shared.Clearable;
 
 public class MockNodeServiceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(NodeService.class).to(MockNodeService.class);
         bind(NodeInfo.class).to(MockNodeInfo.class);
-
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(MockNodeService.class);
     }
 }

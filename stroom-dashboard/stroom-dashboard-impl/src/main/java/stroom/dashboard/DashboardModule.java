@@ -27,10 +27,9 @@ import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.ValidateExpressionAction;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.storedquery.api.StoredQueryService;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.GuiceUtil;
-import stroom.util.entity.EntityTypeBinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.util.shared.Clearable;
 
 public class DashboardModule extends AbstractModule {
@@ -54,7 +53,7 @@ public class DashboardModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.dashboard.DashboardStoreImpl.class);
 
-        EntityTypeBinder.create(binder())
+        DocumentActionHandlerBinder.create(binder())
                 .bind(DashboardDoc.DOCUMENT_TYPE, DashboardStoreImpl.class);
     }
 }

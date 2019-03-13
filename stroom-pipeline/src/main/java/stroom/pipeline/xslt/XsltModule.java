@@ -22,7 +22,7 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.GuiceUtil;
 import stroom.util.RestResource;
-import stroom.util.entity.EntityTypeBinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 
 import javax.xml.transform.URIResolver;
 
@@ -44,7 +44,7 @@ public class XsltModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(XsltStoreImpl.class);
 
-        EntityTypeBinder.create(binder())
+        DocumentActionHandlerBinder.create(binder())
                 .bind(XsltDoc.DOCUMENT_TYPE, XsltStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)

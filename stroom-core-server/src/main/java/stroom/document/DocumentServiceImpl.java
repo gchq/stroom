@@ -19,7 +19,7 @@ package stroom.document;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
-import stroom.entity.EntityServiceBeanRegistry;
+import stroom.entity.DocumentActionHandlerRegistry;
 import stroom.util.shared.EntityServiceException;
 import stroom.event.logging.api.DocumentEventLog;
 
@@ -27,12 +27,12 @@ import javax.inject.Inject;
 
 class DocumentServiceImpl implements DocumentService {
     private final DocumentEventLog documentEventLog;
-    private final EntityServiceBeanRegistry beanRegistry;
+    private final DocumentActionHandlerRegistry documentActionHandlerRegistry;
 
     @Inject
-    public DocumentServiceImpl(final DocumentEventLog documentEventLog, final EntityServiceBeanRegistry beanRegistry) {
+    public DocumentServiceImpl(final DocumentEventLog documentEventLog, final DocumentActionHandlerRegistry documentActionHandlerRegistry) {
         this.documentEventLog = documentEventLog;
-        this.beanRegistry = beanRegistry;
+        this.documentActionHandlerRegistry = documentActionHandlerRegistry;
     }
 
     @Override
@@ -70,13 +70,10 @@ class DocumentServiceImpl implements DocumentService {
     }
 
     private DocumentActionHandler getDocumentActionHandler(final String type) {
-        final Object bean = beanRegistry.getEntityServiceByType(type);
-        if (bean == null) {
+        final DocumentActionHandler documentActionHandler = documentActionHandlerRegistry.getHandler(type);
+        if (documentActionHandler == null) {
             throw new EntityServiceException("No document action handler can be found for type '" + type + "'");
         }
-        if (!(bean instanceof DocumentActionHandler)) {
-            throw new EntityServiceException("Bean is not a document action handler");
-        }
-        return (DocumentActionHandler) bean;
+        return documentActionHandler;
     }
 }

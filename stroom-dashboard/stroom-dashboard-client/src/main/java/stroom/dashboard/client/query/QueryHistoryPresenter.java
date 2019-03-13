@@ -21,14 +21,14 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.dashboard.shared.FindStoredQueryAction;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityServiceFindAction;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort.Direction;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort.Direction;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -91,7 +91,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         criteria.setFavourite(false);
         criteria.setPageRequest(new PageRequest(0L, 100));
 
-        final EntityServiceFindAction<FindStoredQueryCriteria, StoredQuery> action = new EntityServiceFindAction<>(criteria);
+        final FindStoredQueryAction action = new FindStoredQueryAction(criteria);
         dispatcher.exec(action).onSuccess(result -> {
             selectionModel.clear();
 

@@ -5,10 +5,10 @@ dependencies {
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-util-shared')
-//
-    compile libs.stroomDocRef
 
+    compile libs.guice4
     compile libs.jackson_annotations
     compile libs.jaxb_api
+    compile libs.stroomDocRef
 }
 

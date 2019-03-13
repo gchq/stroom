@@ -1,7 +1,6 @@
 package stroom.data.store.impl.fs;
 
 import org.jooq.Condition;
-import org.jooq.TableField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.store.impl.fs.shared.FsVolume;
@@ -10,13 +9,11 @@ import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.util.concurrent.AtomicSequence;
 import stroom.util.shared.BaseResultList;
-import stroom.util.shared.CriteriaSet;
 import stroom.util.shared.PageRequest;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume.FS_META_VOLUME;
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;
@@ -117,8 +114,8 @@ public class DataVolumeServiceImpl implements DataVolumeService {
     // @Transactional
     public BaseResultList<DataVolume> find(final FindDataVolumeCriteria criteria) {
         final List<Condition> conditions = new ArrayList<>();
-        JooqUtil.applySet(FS_META_VOLUME.FS_VOLUME_ID, criteria.getVolumeIdSet()).ifPresent(conditions::add);
-        JooqUtil.applySet(FS_META_VOLUME.META_ID, criteria.getMetaIdSet()).ifPresent(conditions::add);
+        JooqUtil.getSetCondition(FS_META_VOLUME.FS_VOLUME_ID, criteria.getVolumeIdSet()).ifPresent(conditions::add);
+        JooqUtil.getSetCondition(FS_META_VOLUME.META_ID, criteria.getMetaIdSet()).ifPresent(conditions::add);
 
         return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
             if (!criteria.isValidCriteria()) {

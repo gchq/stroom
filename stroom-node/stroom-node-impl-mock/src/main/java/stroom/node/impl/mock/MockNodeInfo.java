@@ -17,36 +17,16 @@
 package stroom.node.impl.mock;
 
 import stroom.node.api.NodeInfo;
-import stroom.node.shared.Node;
 
 import javax.inject.Inject;
 
-public class MockNodeInfo implements NodeInfo {
-    private volatile Node defaultNode;
-
-    public MockNodeInfo(final Node defaultNode) {
-        this.defaultNode = defaultNode;
-    }
-
+class MockNodeInfo implements NodeInfo {
     @Inject
-    public MockNodeInfo() {
-    }
-
-    private Node get() {
-        if (defaultNode == null) {
-            defaultNode = new Node();
-            defaultNode.setName("MockNode");
-        }
-        return defaultNode;
-    }
-
-    @Override
-    public Node getThisNode() {
-        return get();
+    MockNodeInfo() {
     }
 
     @Override
     public String getThisNodeName() {
-        return get().getName();
+        return "MockNode";
     }
 }

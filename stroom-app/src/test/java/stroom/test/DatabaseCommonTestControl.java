@@ -18,13 +18,11 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cache.impl.CacheManagerService;
-import stroom.entity.StroomEntityManager;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
+import stroom.index.VolumeCreator;
 import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
-import stroom.node.impl.NodeCreator;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Clearable;
@@ -44,27 +42,24 @@ import java.util.Set;
 public class DatabaseCommonTestControl implements CommonTestControl {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCommonTestControl.class);
 
-    private final StroomEntityManager entityManager;
     private final IndexVolumeService volumeService;
     private final ContentImportService contentImportService;
     private final IndexShardManager indexShardManager;
     private final IndexShardWriterCache indexShardWriterCache;
     private final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
-    private final NodeCreator nodeConfig;
+    private final VolumeCreator nodeConfig;
     private final ProcessorTaskManager processorTaskManager;
     private final Set<Clearable> clearables;
 
     @Inject
-    DatabaseCommonTestControl(final StroomEntityManager entityManager,
-                              final IndexVolumeService volumeService,
+    DatabaseCommonTestControl(final IndexVolumeService volumeService,
                               final ContentImportService contentImportService,
                               final IndexShardManager indexShardManager,
                               final IndexShardWriterCache indexShardWriterCache,
                               final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
-                              final NodeCreator nodeConfig,
+                              final VolumeCreator nodeConfig,
                               final ProcessorTaskManager processorTaskManager,
                               final Set<Clearable> clearables) {
-        this.entityManager = entityManager;
         this.volumeService = volumeService;
         this.contentImportService = contentImportService;
         this.indexShardManager = indexShardManager;
@@ -105,9 +100,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             // store)
             FileUtil.deleteContents(Paths.get(volume.getPath()));
         }
-
-        //ensure any hibernate entities are flushed down before we clear the tables
-        entityManager.clearContext();
 
         // Clear all the tables using direct sql on a different connection
         // in theory truncating the tables should be quicker but it was taking 1.5s to truncate all the tables

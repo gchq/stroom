@@ -12,8 +12,6 @@ import javax.inject.Singleton;
 public class CoreConfig implements IsConfig {
     private ConnectionConfig connectionConfig = new ConnectionConfig();
     private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
-    private HibernateConfig hibernateConfig = new HibernateConfig();
-    private int databaseMultiInsertMaxBatchSize = 500;
 
     @JsonProperty("connection")
     public ConnectionConfig getConnectionConfig() {
@@ -33,28 +31,11 @@ public class CoreConfig implements IsConfig {
         this.connectionPoolConfig = connectionPoolConfig;
     }
 
-    @JsonProperty("hibernate")
-    public HibernateConfig getHibernateConfig() {
-        return hibernateConfig;
-    }
-
-    public void setHibernateConfig(final HibernateConfig hibernateConfig) {
-        this.hibernateConfig = hibernateConfig;
-    }
-
-    @JsonPropertyDescription("The maximum number of rows to insert in a single multi insert statement, e.g. INSERT INTO X VALUES (...), (...), (...)")
-    public int getDatabaseMultiInsertMaxBatchSize() {
-        return databaseMultiInsertMaxBatchSize;
-    }
-
-    public void setDatabaseMultiInsertMaxBatchSize(final int databaseMultiInsertMaxBatchSize) {
-        this.databaseMultiInsertMaxBatchSize = databaseMultiInsertMaxBatchSize;
-    }
-
     @Override
     public String toString() {
         return "CoreConfig{" +
-                ", databaseMultiInsertMaxBatchSize=" + databaseMultiInsertMaxBatchSize +
+                "connectionConfig=" + connectionConfig +
+                ", connectionPoolConfig=" + connectionPoolConfig +
                 '}';
     }
 }

@@ -17,9 +17,6 @@
 package stroom.persist;
 
 import com.google.inject.AbstractModule;
-import stroom.entity.EntityModule;
-import stroom.entity.StroomEntityManager;
-import stroom.entity.StroomEntityManagerImpl;
 import stroom.entity.event.EntityEventModule;
 
 /**
@@ -30,12 +27,7 @@ public class EntityManagerModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new DataSourceModule());
-        install(new EntityModule());
         install(new EntityEventModule());
-
-        bind(PersistService.class).to(PersistServiceImpl.class);
-        bind(EntityManagerSupport.class).to(EntityManagerSupportImpl.class);
-        bind(StroomEntityManager.class).to(StroomEntityManagerImpl.class);
     }
 
     @Override

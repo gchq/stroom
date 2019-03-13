@@ -280,7 +280,7 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
         set.setMatchAll(criteriaSet.getMatchAll());
         set.setMatchNull(criteriaSet.getMatchNull());
         set.setSet(criteriaSet.getSet().stream().map(VolumeUseStatus::getPrimitiveValue).collect(Collectors.toSet()));
-        return JooqUtil.applySet(field, set);
+        return JooqUtil.getSetCondition(field, set);
 
 //        return criteriaSetToCondition(field, set);
     }

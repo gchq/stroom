@@ -34,7 +34,8 @@ import javax.sql.DataSource;
 public class DataSourceModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(DataSource.class).toProvider(DataSourceProvider.class);
+        // Force creation of connection provider so that legacy migration code executes.
+        bind(DataSource.class).toProvider(DataSourceProvider.class).asEagerSingleton();
     }
 
     @Provides

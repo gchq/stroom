@@ -24,7 +24,7 @@ import stroom.index.service.IndexVolumeGroupService;
 import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
 import stroom.util.GuiceUtil;
-import stroom.util.entity.EntityTypeBinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.util.shared.Clearable;
 
 public class MockIndexModule extends AbstractModule {
@@ -59,7 +59,7 @@ public class MockIndexModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(IndexStoreImpl.class);
 
-        EntityTypeBinder.create(binder())
+        DocumentActionHandlerBinder.create(binder())
                 .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
 
 //        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);

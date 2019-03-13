@@ -27,12 +27,12 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.shared.CreateStoredQueryAction;
 import stroom.dashboard.shared.DeleteStoredQueryAction;
+import stroom.dashboard.shared.FindStoredQueryAction;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.UpdateStoredQueryAction;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
-import stroom.entity.shared.EntityServiceFindAction;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.client.ExpressionTreePresenter;
@@ -221,7 +221,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         criteria.setFavourite(true);
         criteria.setPageRequest(new PageRequest(0L, 100));
 
-        final EntityServiceFindAction<FindStoredQueryCriteria, StoredQuery> action = new EntityServiceFindAction<>(criteria);
+        final FindStoredQueryAction action = new FindStoredQueryAction(criteria);
         dispatcher.exec(action).onSuccess(result -> {
             selectionModel.clear();
             getView().getCellList().setRowData(result);

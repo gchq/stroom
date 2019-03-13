@@ -18,6 +18,7 @@ import stroom.persist.CoreConfig;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.impl.CreatedTasks;
+import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 import stroom.processor.shared.FindProcessorTaskCriteria;
@@ -122,7 +123,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private final ProcessorNodeCache processorNodeCache;
     private final ClusterLockService clusterLockService;
     private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao;
-    private final CoreConfig coreConfig;
+    private final ProcessorConfig processorConfig;
     private final ConnectionProvider connectionProvider;
     private final ProcessorFilterMarshaller marshaller;
 
@@ -133,14 +134,14 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                final ProcessorNodeCache processorNodeCache,
                                final ClusterLockService clusterLockService,
                                final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao,
-                               final CoreConfig coreConfig,
+                               final ProcessorConfig processorConfig,
                                final ConnectionProvider connectionProvider,
                                final ProcessorFilterMarshaller marshaller) {
         this.nodeInfo = nodeInfo;
         this.processorNodeCache = processorNodeCache;
         this.clusterLockService = clusterLockService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
-        this.coreConfig = coreConfig;
+        this.processorConfig = processorConfig;
         this.connectionProvider = connectionProvider;
         this.marshaller = marshaller;
 
@@ -389,7 +390,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         batchBindStep.bind(BindValues);
 
                         // Execute insert if we have reached batch size.
-                        if (rowCount >= coreConfig.getDatabaseMultiInsertMaxBatchSize()) {
+                        if (rowCount >= processorConfig.getDatabaseMultiInsertMaxBatchSize()) {
                             executeInsert(batchBindStep, rowCount);
                             rowCount = 0;
                             batchBindStep = null;

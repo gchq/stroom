@@ -159,7 +159,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
      * Creates a new index shard writer for the specified key and opens a writer for it.
      */
     private IndexShardWriter openNewShard(final IndexShardKey indexShardKey) {
-        final IndexShard indexShard = indexShardService.createIndexShard(indexShardKey, nodeInfo.getThisNode().getName());
+        final IndexShard indexShard = indexShardService.createIndexShard(indexShardKey, nodeInfo.getThisNodeName());
         return openWriter(indexShardKey, indexShard);
     }
 

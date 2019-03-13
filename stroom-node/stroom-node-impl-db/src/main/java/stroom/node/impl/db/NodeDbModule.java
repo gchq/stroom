@@ -2,7 +2,6 @@ package stroom.node.impl.db;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.multibindings.Multibinder;
 import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
@@ -11,15 +10,7 @@ import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
-import stroom.entity.shared.EntityEvent;
-import stroom.entity.shared.EntityEvent.Handler;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
-import stroom.node.impl.InternalNodeService;
-import stroom.node.shared.UpdateNodeAction;
-import stroom.task.api.TaskHandlerBinder;
-import stroom.util.GuiceUtil;
-import stroom.util.shared.Clearable;
+import stroom.node.impl.NodeDao;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -32,9 +23,7 @@ public class NodeDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(NodeService.class).to(NodeServiceImpl.class);
-        bind(InternalNodeService.class).to(NodeServiceImpl.class);
-        bind(NodeInfo.class).to(NodeInfoImpl.class);
+        bind(NodeDao.class).to(NodeDaoImpl.class);
 
 //        bind(NodeDbService.class).to(NodeDbServiceImpl.class);
 //        bind(CurrentNodeDb.class).to(CurrentNodeDbImpl.class);
@@ -47,14 +36,6 @@ public class NodeDbModule extends AbstractModule {
 //                .bind(FindNodeDbAction.class, FindNodeDbHandler.class)
 //                .bind(SetCurrentNodeDbAction.class, SetCurrentNodeDbHandler.class);
 
-        TaskHandlerBinder.create(binder())
-                .bind(UpdateNodeAction.class, UpdateNodeHandler.class);
-
-
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(NodeInfoImpl.class);
-
-        final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(NodeInfoImpl.class);
     }
 
     @Provides

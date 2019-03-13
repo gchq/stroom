@@ -20,18 +20,21 @@ package stroom.node.api;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.util.entity.FindService;
+import stroom.util.shared.BaseResultList;
+
+import java.util.List;
 
 /**
  * <p>
  * Class to manage nodes.
  * </p>
  */
-public interface NodeService extends FindService<Node, FindNodeCriteria> {
+public interface NodeService  {
     String getClusterUrl(String nodeName);
 
     boolean isEnabled(String nodeName);
 
     int getPriority(String nodeName);
 
-    Node getNode(String nodeName);
+    List<String> findNodeNames(FindNodeCriteria criteria);
 }

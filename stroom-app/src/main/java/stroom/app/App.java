@@ -37,7 +37,6 @@ import stroom.data.store.impl.ImportFileServlet;
 import stroom.dispatch.shared.DispatchService;
 import stroom.feed.RemoteFeedServiceRPC;
 import stroom.lifecycle.impl.LifecycleService;
-import stroom.persist.PersistLifecycle;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.resource.impl.SessionResourceStoreImpl;
@@ -203,9 +202,6 @@ public class App extends Application<Config> {
 
         final AppModule appModule = new AppModule(configuration, environment);
         final Injector injector = Guice.createInjector(appModule);
-
-        // Start the persistence service. This needs to be done before anything else as other filters and services rely on it.
-        injector.getInstance(PersistLifecycle.class).startPersistence();
 
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 

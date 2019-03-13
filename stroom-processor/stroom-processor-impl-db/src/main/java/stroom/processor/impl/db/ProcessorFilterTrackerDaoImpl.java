@@ -2,7 +2,6 @@ package stroom.processor.impl.db;
 
 import org.jooq.DSLContext;
 import stroom.db.util.GenericDao;
-import stroom.persist.ConnectionProvider;
 import stroom.processor.impl.ProcessorFilterTrackerDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord;
 import stroom.processor.shared.ProcessorFilterTracker;

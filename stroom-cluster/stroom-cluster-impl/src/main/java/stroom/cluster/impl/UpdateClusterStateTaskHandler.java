@@ -24,7 +24,6 @@ import stroom.cluster.api.ClusterState;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.FindNodeCriteria;
-import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.ExecutorProvider;
@@ -36,7 +35,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 
 class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterStateTask, VoidResult> {
@@ -95,9 +93,9 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
 
         // Get nodes and ensure uniqueness.
          Set<String> uniqueNodes = Collections.emptySet();
-        final List<Node> nodes = nodeService.find(new FindNodeCriteria());
+        final List<String> nodes = nodeService.findNodeNames(new FindNodeCriteria());
         if (nodes != null) {
-            uniqueNodes = nodes.stream().map(Node::getName).collect(Collectors.toSet());
+            uniqueNodes = Set.copyOf(nodes);
         }
         clusterState.setAllNodes(uniqueNodes);
 

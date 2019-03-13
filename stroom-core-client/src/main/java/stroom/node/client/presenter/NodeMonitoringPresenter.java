@@ -36,9 +36,9 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.ClusterNodeInfoAction;
-import stroom.node.shared.FetchNodeInfoAction;
+import stroom.node.shared.FetchNodeStatusAction;
 import stroom.node.shared.Node;
-import stroom.node.shared.NodeInfoResult;
+import stroom.node.shared.NodeStatusResult;
 import stroom.node.shared.UpdateNodeAction;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.svg.client.Icon;
@@ -55,17 +55,18 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
-public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<NodeInfoResult>> implements Refreshable {
+public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<NodeStatusResult>> implements Refreshable {
     private final ClientDispatchAsync dispatcher;
     private final TooltipPresenter tooltipPresenter;
-    private final FetchNodeInfoAction action = new FetchNodeInfoAction();
-    private final ActionDataProvider<NodeInfoResult> dataProvider;
+    private final FetchNodeStatusAction action = new FetchNodeStatusAction();
+    private final ActionDataProvider<NodeStatusResult> dataProvider;
 
     private final ButtonView editButton;
     private final Provider<NodeEditPresenter> nodeEditPresenterProvider;
 
     @Inject
-    public NodeMonitoringPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
+    public NodeMonitoringPresenter(final EventBus eventBus,
+                                   final ClientDispatchAsync dispatcher,
                                    final TooltipPresenter tooltipPresenter,
                                    final Provider<NodeEditPresenter> nodeEditPresenterProvider) {
         super(eventBus, new DataGridViewImpl<>(true));
@@ -100,9 +101,9 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
      */
     private void initTableColumns() {
         // Info column.
-        final InfoColumn<NodeInfoResult> infoColumn = new InfoColumn<NodeInfoResult>() {
+        final InfoColumn<NodeStatusResult> infoColumn = new InfoColumn<NodeStatusResult>() {
             @Override
-            protected void showInfo(final NodeInfoResult row, final int x, final int y) {
+            protected void showInfo(final NodeStatusResult row, final int x, final int y) {
                 dispatcher.exec(new ClusterNodeInfoAction(row.getNode().getName()))
                         .onSuccess(result -> {
                             final StringBuilder html = new StringBuilder();
@@ -118,7 +119,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                                 TooltipUtil.addRowData(html, "Cluster URL", result.getClusterURL(), true);
                             } else {
                                 TooltipUtil.addRowData(html, "Node Name", row.getNode().getName(), true);
-                                TooltipUtil.addRowData(html, "Cluster URL", row.getNode().getClusterURL(), true);
+                                TooltipUtil.addRowData(html, "Cluster URL", row.getNode().getUrl(), true);
                             }
 
                             TooltipUtil.addRowData(html, "Ping", ModelStringUtil.formatDurationString(row.getPing()));
@@ -156,9 +157,9 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         getView().addColumn(infoColumn, "<br/>", 20);
 
         // Name.
-        final Column<NodeInfoResult, String> nameColumn = new Column<NodeInfoResult, String>(new TextCell()) {
+        final Column<NodeStatusResult, String> nameColumn = new Column<NodeStatusResult, String>(new TextCell()) {
             @Override
-            public String getValue(final NodeInfoResult row) {
+            public String getValue(final NodeStatusResult row) {
                 if (row == null) {
                     return null;
                 }
@@ -168,21 +169,21 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         getView().addResizableColumn(nameColumn, "Name", 100);
 
         // Host Name.
-        final Column<NodeInfoResult, String> hostNameColumn = new Column<NodeInfoResult, String>(new TextCell()) {
+        final Column<NodeStatusResult, String> hostNameColumn = new Column<NodeStatusResult, String>(new TextCell()) {
             @Override
-            public String getValue(final NodeInfoResult row) {
+            public String getValue(final NodeStatusResult row) {
                 if (row == null) {
                     return null;
                 }
-                return row.getNode().getClusterURL();
+                return row.getNode().getUrl();
             }
         };
         getView().addResizableColumn(hostNameColumn, "Cluster URL", 400);
 
         // Ping.
-        final Column<NodeInfoResult, String> pingColumn = new Column<NodeInfoResult, String>(new TextCell()) {
+        final Column<NodeStatusResult, String> pingColumn = new Column<NodeStatusResult, String>(new TextCell()) {
             @Override
-            public String getValue(final NodeInfoResult row) {
+            public String getValue(final NodeStatusResult row) {
                 if (row == null) {
                     return null;
                 }
@@ -199,10 +200,10 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         getView().addResizableColumn(pingColumn, "Ping", 150);
 
         // Master.
-        final Column<NodeInfoResult, TickBoxState> masterColumn = new Column<NodeInfoResult, TickBoxState>(
+        final Column<NodeStatusResult, TickBoxState> masterColumn = new Column<NodeStatusResult, TickBoxState>(
                 TickBoxCell.create(new TickBoxCell.NoBorderAppearance(), false, false, false)) {
             @Override
-            public TickBoxState getValue(final NodeInfoResult row) {
+            public TickBoxState getValue(final NodeStatusResult row) {
                 if (row == null) {
                     return null;
                 }
@@ -212,10 +213,10 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         getView().addColumn(masterColumn, "Master", 50);
 
         // Priority.
-        final Column<NodeInfoResult, Number> priorityColumn = new Column<NodeInfoResult, Number>(
+        final Column<NodeStatusResult, Number> priorityColumn = new Column<NodeStatusResult, Number>(
                 new ValueSpinnerCell(1, 100)) {
             @Override
-            public Number getValue(final NodeInfoResult row) {
+            public Number getValue(final NodeStatusResult row) {
                 if (row == null) {
                     return null;
                 }
@@ -226,10 +227,10 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         getView().addColumn(priorityColumn, "Priority", 55);
 
         // Enabled
-        final Column<NodeInfoResult, TickBoxState> enabledColumn = new Column<NodeInfoResult, TickBoxState>(
+        final Column<NodeStatusResult, TickBoxState> enabledColumn = new Column<NodeStatusResult, TickBoxState>(
                 TickBoxCell.create(false, false)) {
             @Override
-            public TickBoxState getValue(final NodeInfoResult row) {
+            public TickBoxState getValue(final NodeStatusResult row) {
                 if (row == null) {
                     return null;
                 }
@@ -243,18 +244,18 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         getView().addEndColumn(new EndColumn<>());
     }
 
-    private void onEdit(final NodeInfoResult nodeInfo) {
-        final Node node = nodeInfo.getNode();
+    private void onEdit(final NodeStatusResult nodeStatusResult) {
+        final Node node = nodeStatusResult.getNode();
         final NodeEditPresenter editor = nodeEditPresenterProvider.get();
         editor.setName(node.getName());
-        editor.setClusterUrl(node.getClusterURL());
+        editor.setClusterUrl(node.getUrl());
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
-                    if (node.getClusterURL() == null || !node.getClusterURL().equals(editor.getClusterUrl())) {
-                        node.setClusterURL(editor.getClusterUrl());
+                    if (node.getUrl() == null || !node.getUrl().equals(editor.getClusterUrl())) {
+                        node.setUrl(editor.getClusterUrl());
                         dispatcher.exec(new UpdateNodeAction(node)).onSuccess(result -> refresh());
                     }
                 }
@@ -273,7 +274,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     }
 
     private void enableButtons() {
-        final NodeInfoResult selected = getView().getSelectionModel().getSelected();
+        final NodeStatusResult selected = getView().getSelectionModel().getSelected();
         editButton.setEnabled(selected != null);
     }
 

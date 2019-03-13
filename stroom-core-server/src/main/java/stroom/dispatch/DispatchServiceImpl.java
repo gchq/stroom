@@ -22,21 +22,20 @@ import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dispatch.shared.DispatchService;
-import stroom.task.shared.Action;
-import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.PermissionException;
-import stroom.entity.util.BaseEntityDeProxyProcessor;
+import stroom.docref.SharedObject;
 import stroom.entity.util.EntityServiceExceptionUtil;
+import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.security.SecurityContext;
 import stroom.security.util.UserTokenUtil;
-import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.servlet.SessionListListener;
 import stroom.task.api.TaskHandler;
-import stroom.task.impl.TaskHandlerBeanRegistry;
 import stroom.task.api.TaskIdFactory;
 import stroom.task.api.TaskManager;
+import stroom.task.impl.TaskHandlerBeanRegistry;
+import stroom.task.shared.Action;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ModelStringUtil;
-import stroom.docref.SharedObject;
+import stroom.util.shared.PermissionException;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -50,8 +49,6 @@ import java.util.Map;
 import java.util.Optional;
 
 public class DispatchServiceImpl extends RemoteServiceServlet implements DispatchService {
-    public static final String BEAN_NAME = "dispatchService";
-
     private static final Logger LOGGER = LoggerFactory.getLogger(DispatchServiceImpl.class);
 
     // This path is where we expect to find the `.gwt.rpc` file. It must be valid for startup for both dev and executable
@@ -98,12 +95,9 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
         action.setUserToken(UserTokenUtil.create(userName, httpServletRequestHolder.getSessionId()));
 
         try {
-            final Action<R> processedAction = processAction(action);
-            final R r = taskManager.exec(processedAction);
-            final R processedResult = processResult(r);
-
-            LOGGER.debug("exec() - >> {} returns {}", action.getClass().getName(), processedResult);
-            return processedResult;
+            final R r = taskManager.exec(action);
+            LOGGER.debug("exec() - >> {} returns {}", action.getClass().getName(), r);
+            return r;
         } catch (final PermissionException e) {
             LOGGER.debug(e.getMessage(), e);
             throw new EntityServiceException(e.getGenericMessage());
@@ -113,26 +107,6 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
         } finally {
             LOGGER.debug("exec() - << {} took {}", action.getClass().getName(),
                     ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private <R extends SharedObject> Action<R> processAction(final Action<R> action) {
-        try {
-            final BaseEntityDeProxyProcessor processor = new BaseEntityDeProxyProcessor(true);
-            return (Action<R>) processor.process(action);
-        } catch (final RuntimeException e) {
-            throw EntityServiceExceptionUtil.create(e);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private <R extends SharedObject> R processResult(final R result) {
-        try {
-            final BaseEntityDeProxyProcessor processor = new BaseEntityDeProxyProcessor(false);
-            return (R) processor.process(result);
-        } catch (final RuntimeException e) {
-            throw EntityServiceExceptionUtil.create(e);
         }
     }
 

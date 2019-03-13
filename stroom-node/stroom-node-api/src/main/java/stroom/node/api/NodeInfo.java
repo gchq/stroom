@@ -16,10 +16,6 @@
 
 package stroom.node.api;
 
-import stroom.node.shared.Node;
-
 public interface NodeInfo {
-    Node getThisNode();
-
     String getThisNodeName();
 }

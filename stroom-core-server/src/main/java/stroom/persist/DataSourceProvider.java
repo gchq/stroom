@@ -39,47 +39,9 @@ public class DataSourceProvider implements Provider<DataSource> {
         final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
         final HikariConfig config = HikariUtil.createConfig(connectionConfig, connectionPoolConfig);
         return new HikariDataSource(config);
-//            dataSource.setDataSourceName("stroom");
-//            dataSource.setDescription("Stroom data source");
-//
-//            final ConnectionConfig dataSourceConfig = coreConfig.getConnectionConfig();
-//            dataSource.setDriverClass(dataSourceConfig.getJdbcDriverClassName());
-//            dataSource.setJdbcUrl(dataSourceConfig.getJdbcDriverUrl());
-//            dataSource.setUser(dataSourceConfig.getJdbcDriverUsername());
-//            dataSource.setPassword(dataSourceConfig.getJdbcDriverPassword());
-//
-//            final C3P0Config config = getC3P0Config();
-//            dataSource.setMaxStatements(config.getMaxStatements());
-//            dataSource.setMaxStatementsPerConnection(config.getMaxStatementsPerConnection());
-//            dataSource.setInitialPoolSize(config.getInitialPoolSize());
-//            dataSource.setMinPoolSize(config.getMinPoolSize());
-//            dataSource.setMaxPoolSize(config.getMaxPoolSize());
-//            dataSource.setIdleConnectionTestPeriod(config.getIdleConnectionTestPeriod());
-//            dataSource.setMaxIdleTime(config.getMaxIdleTime());
-//            dataSource.setAcquireIncrement(config.getAcquireIncrement());
-//            dataSource.setAcquireRetryAttempts(config.getAcquireRetryAttempts());
-//            dataSource.setAcquireRetryDelay(config.getAcquireRetryDelay());
-//            dataSource.setCheckoutTimeout(config.getCheckoutTimeout());
-//            dataSource.setMaxAdministrativeTaskTime(config.getMaxAdministrativeTaskTime());
-//            dataSource.setMaxIdleTimeExcessConnections(config.getMaxIdleTimeExcessConnections());
-//            dataSource.setMaxConnectionAge(config.getMaxConnectionAge());
-//            dataSource.setUnreturnedConnectionTimeout(config.getUnreturnedConnectionTimeout());
-//            dataSource.setStatementCacheNumDeferredCloseThreads(config.getStatementCacheNumDeferredCloseThreads());
-//            dataSource.setNumHelperThreads(config.getNumHelperThreads());
-//
-//            dataSource.setPreferredTestQuery("select 1");
-//            dataSource.setConnectionTesterClassName(StroomProperties.getProperty("stroom.connectionTesterClassName"));
-//
-//            return dataSource;
-//        } catch (final PropertyVetoException e) {
-//            LOGGER.error(e.getMessage(), e);
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
     }
 
     private Flyway flyway(final DataSource dataSource) {
-        final String jpaHbm2DdlAuto = configProvider.get().getHibernateConfig().getJpaHbm2DdlAuto();
-        if (!"update".equals(jpaHbm2DdlAuto)) {
             final Flyway flyway = Flyway.configure()
                     .dataSource(dataSource)
                     .locations("stroom/db/migration/mysql")
@@ -196,9 +158,6 @@ public class DataSourceProvider implements Provider<DataSource> {
             }
 
             return flyway;
-        }
-
-        return null;
     }
 
     private void migrateDatabase(final Flyway flyway) {

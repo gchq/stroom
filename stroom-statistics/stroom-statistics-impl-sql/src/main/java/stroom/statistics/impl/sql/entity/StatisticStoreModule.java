@@ -24,7 +24,7 @@ import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.GuiceUtil;
-import stroom.util.entity.EntityTypeBinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.util.shared.Clearable;
 
 public class StatisticStoreModule extends AbstractModule {
@@ -46,7 +46,7 @@ public class StatisticStoreModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(StatisticStoreStoreImpl.class);
 
-        EntityTypeBinder.create(binder())
+        DocumentActionHandlerBinder.create(binder())
                 .bind(StatisticStoreDoc.DOCUMENT_TYPE, StatisticStoreStoreImpl.class);
 
 //        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);

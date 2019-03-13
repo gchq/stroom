@@ -8,7 +8,6 @@ import org.jooq.Record;
 import org.jooq.impl.DSL;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
-import stroom.persist.ConnectionProvider;
 import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord;

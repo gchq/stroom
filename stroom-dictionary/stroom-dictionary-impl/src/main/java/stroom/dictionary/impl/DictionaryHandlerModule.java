@@ -19,7 +19,7 @@ package stroom.dictionary.impl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.util.entity.EntityTypeBinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 
@@ -32,7 +32,7 @@ public class DictionaryHandlerModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(DictionaryStoreImpl.class);
 
-        EntityTypeBinder.create(binder())
+        DocumentActionHandlerBinder.create(binder())
                 .bind(DictionaryDoc.ENTITY_TYPE, DictionaryStoreImpl.class);
     }
 }

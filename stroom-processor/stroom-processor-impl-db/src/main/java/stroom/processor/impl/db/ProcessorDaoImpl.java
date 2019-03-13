@@ -3,7 +3,6 @@ package stroom.processor.impl.db;
 import org.jooq.Condition;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
-import stroom.persist.ConnectionProvider;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 import stroom.processor.shared.FindProcessorCriteria;

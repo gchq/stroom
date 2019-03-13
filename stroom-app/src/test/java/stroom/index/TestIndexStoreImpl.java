@@ -20,7 +20,6 @@ package stroom.index;
 
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.entity.util.BaseEntityDeProxyProcessor;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
@@ -118,7 +117,6 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
     @Test
     void testClientSideStuff1() {
         IndexDoc index = indexStore.readDocument(refIndex);
-        index = ((IndexDoc) new BaseEntityDeProxyProcessor(true).process(index));
         indexStore.writeDocument(index);
 
     }
@@ -126,7 +124,6 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
     @Test
     void testClientSideStuff2() {
         IndexDoc index = indexStore.readDocument(testIndex);
-        index = ((IndexDoc) new BaseEntityDeProxyProcessor(true).process(index));
         indexStore.writeDocument(index);
     }
 }

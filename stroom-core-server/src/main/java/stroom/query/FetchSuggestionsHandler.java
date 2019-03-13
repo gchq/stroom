@@ -94,18 +94,18 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
         });
     }
 
-    @SuppressWarnings("unchecked")
-    private SharedList<SharedString> createList(final FindService service, final String text) {
-        final SharedList<SharedString> result = new SharedList<>();
-        final FindNamedEntityCriteria criteria = (FindNamedEntityCriteria) service.createCriteria();
-        criteria.setName(new StringCriteria(text, MatchStyle.WildEnd));
-        final List<Object> list = service.find(criteria);
-        list
-                .stream()
-                .sorted(Comparator.comparing(e -> ((NamedEntity) e).getName()))
-                .forEachOrdered(e -> result.add(SharedString.wrap(((NamedEntity) e).getName())));
-        return result;
-    }
+//    @SuppressWarnings("unchecked")
+//    private SharedList<SharedString> createList(final FindService service, final String text) {
+//        final SharedList<SharedString> result = new SharedList<>();
+//        final FindNamedEntityCriteria criteria = (FindNamedEntityCriteria) service.createCriteria();
+//        criteria.setName(new StringCriteria(text, MatchStyle.WildEnd));
+//        final List<Object> list = service.find(criteria);
+//        list
+//                .stream()
+//                .sorted(Comparator.comparing(e -> ((NamedEntity) e).getName()))
+//                .forEachOrdered(e -> result.add(SharedString.wrap(((NamedEntity) e).getName())));
+//        return result;
+//    }
 
     private SharedList<SharedString> createFeedList(final String text) {
         return metaService.getFeeds()

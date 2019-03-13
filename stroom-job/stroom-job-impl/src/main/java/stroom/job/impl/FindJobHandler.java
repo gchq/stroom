@@ -17,6 +17,10 @@
 
 package stroom.job.impl;
 
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.Query;
+import event.logging.Query.Advanced;
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.job.shared.FindJobAction;
 import stroom.job.shared.Job;
 import stroom.task.api.AbstractTaskHandler;
@@ -27,14 +31,32 @@ import javax.inject.Inject;
 
 class FindJobHandler extends AbstractTaskHandler<FindJobAction, ResultList<Job>> {
     private final JobService jobService;
+    private final DocumentEventLog documentEventLog;
 
     @Inject
-    FindJobHandler(final JobService jobService) {
+    FindJobHandler(final JobService jobService,
+                   final DocumentEventLog documentEventLog) {
         this.jobService = jobService;
+        this.documentEventLog = documentEventLog;
     }
 
     @Override
     public BaseResultList<Job> exec(final FindJobAction action) {
-        return jobService.find(action.getCriteria());
+        BaseResultList<Job> results = null;
+
+        final Query query = new Query();
+        final Advanced advanced = new Advanced();
+        query.setAdvanced(advanced);
+        final And and = new And();
+        advanced.getAdvancedQueryItems().add(and);
+
+        try {
+            results = jobService.find(action.getCriteria());
+            documentEventLog.search(action.getCriteria(), query, results, null);
+        } catch (final RuntimeException e) {
+            documentEventLog.search(action.getCriteria(), query, results, e);
+        }
+
+        return results;
     }
 }

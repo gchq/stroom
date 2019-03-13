@@ -30,10 +30,8 @@ import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
 import stroom.entity.client.presenter.FindActionDataProvider;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.NamedEntity;
 import stroom.feed.shared.FeedDoc;
-import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.FindProcessorTaskAction;
 import stroom.processor.shared.FindProcessorTaskCriteria;
@@ -209,7 +207,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
 
     private void setFeedCriteria(final String feedName) {
         criteria = initCriteria(feedName, null);
-        dataProvider.setAction(new EntityServiceFindAction<>(criteria));
+        dataProvider.setAction(new FindProcessorTaskAction(criteria));
     }
 
     public FindProcessorTaskCriteria getCriteria() {

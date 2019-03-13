@@ -30,8 +30,6 @@ import stroom.index.IndexStore;
 import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.node.api.NodeService;
-import stroom.node.shared.FindNodeCriteria;
 import stroom.pipeline.PipelineStore;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
@@ -95,7 +93,6 @@ public final class SetupSampleDataBean {
     private final IndexVolumeService indexVolumeService;
     private final StatisticStoreStore statisticStoreStore;
     private final StroomStatsStoreStore stroomStatsStoreStore;
-    private final NodeService nodeService;
 
     @Inject
     SetupSampleDataBean(final FeedStore feedStore,
@@ -109,8 +106,7 @@ public final class SetupSampleDataBean {
                         final IndexStore indexStore,
                         final IndexVolumeService indexVolumeService,
                         final StatisticStoreStore statisticStoreStore,
-                        final StroomStatsStoreStore stroomStatsStoreStore,
-                        final NodeService nodeService) {
+                        final StroomStatsStoreStore stroomStatsStoreStore) {
         this.feedStore = feedStore;
         this.feedProperties = feedProperties;
         this.streamStore = streamStore;
@@ -123,7 +119,6 @@ public final class SetupSampleDataBean {
         this.indexVolumeService = indexVolumeService;
         this.statisticStoreStore = statisticStoreStore;
         this.stroomStatsStoreStore = stroomStatsStoreStore;
-        this.nodeService = nodeService;
     }
 
 //    private void createStreamAttributes() {
@@ -293,7 +288,6 @@ public final class SetupSampleDataBean {
 //                feedService.save(feed);
 //            }
 
-            LOGGER.info("Node count = " + nodeService.find(new FindNodeCriteria()).size());
 //            LOGGER.info("Volume count = " + commonTestControl.countEntity(VolumeEntity.TABLE_NAME));
             LOGGER.info("Feed count = " + feedStore.list().size());
 //            LOGGER.info("StreamAttributeKey count = " + commonTestControl.countEntity(StreamAttributeKey.class));

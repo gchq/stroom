@@ -27,10 +27,9 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.UpdateFsVolumeAction;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityServiceFindAction;
 import stroom.item.client.ItemListBox;
+import stroom.node.shared.FindNodeAction;
 import stroom.node.shared.FindNodeCriteria;
-import stroom.node.shared.Node;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -66,7 +65,7 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
             opening = true;
 
             this.volume = volume;
-            clientDispatchAsync.exec(new EntityServiceFindAction<FindNodeCriteria, Node>(new FindNodeCriteria())).onSuccess(result -> {
+            clientDispatchAsync.exec(new FindNodeAction(new FindNodeCriteria())).onSuccess(result -> {
                 getView().getPath().setText(volume.getPath());
                 getView().getStatus().addItems(VolumeUseStatus.values());
                 getView().getStatus().setSelectedItem(volume.getStatus());

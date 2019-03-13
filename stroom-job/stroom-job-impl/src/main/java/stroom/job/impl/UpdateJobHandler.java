@@ -17,22 +17,37 @@
 
 package stroom.job.impl;
 
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.job.shared.Job;
 import stroom.job.shared.UpdateJobAction;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
+import java.util.Optional;
 
 class UpdateJobHandler extends AbstractTaskHandler<UpdateJobAction, Job> {
     private final JobService jobService;
+    private final DocumentEventLog documentEventLog;
 
     @Inject
-    UpdateJobHandler(final JobService jobService) {
+    UpdateJobHandler(final JobService jobService,
+                     final DocumentEventLog documentEventLog) {
         this.jobService = jobService;
+        this.documentEventLog = documentEventLog;
     }
 
     @Override
     public Job exec(final UpdateJobAction action) {
-        return jobService.update(action.getJob());
+        Job result = null;
+
+        try {
+            final Optional<Job> before = jobService.fetch(action.getJob().getId());
+            result = jobService.update(action.getJob());
+            documentEventLog.update(before.orElse(null), result, null);
+        } catch (final RuntimeException e) {
+            documentEventLog.update(action.getJob(), result, e);
+        }
+
+        return result;
     }
 }

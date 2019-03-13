@@ -17,11 +17,30 @@
 package stroom.node.impl;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
+import stroom.entity.shared.EntityEvent;
+import stroom.entity.shared.EntityEvent.Handler;
+import stroom.node.api.NodeInfo;
+import stroom.node.api.NodeService;
 import stroom.node.shared.DBTableService;
+import stroom.node.shared.UpdateNodeAction;
+import stroom.task.api.TaskHandlerBinder;
+import stroom.util.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 public class NodeModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DBTableService.class).to(DBTableServiceImpl.class);
+        bind(NodeInfo.class).to(NodeInfoImpl.class);
+        bind(NodeService.class).to(NodeServiceImpl.class);
+
+        TaskHandlerBinder.create(binder())
+                .bind(UpdateNodeAction.class, UpdateNodeHandler.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(NodeServiceImpl.class);
+
+        final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
+        entityEventHandlerBinder.addBinding().to(NodeServiceImpl.class);
     }
 }

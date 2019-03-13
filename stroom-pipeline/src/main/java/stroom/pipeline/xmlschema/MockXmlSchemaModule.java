@@ -18,7 +18,7 @@ package stroom.pipeline.xmlschema;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.util.entity.EntityTypeBinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
@@ -40,7 +40,7 @@ public class MockXmlSchemaModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(XmlSchemaStoreImpl.class);
 
-        EntityTypeBinder.create(binder())
+        DocumentActionHandlerBinder.create(binder())
                 .bind(XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaStoreImpl.class);
 
 //        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);

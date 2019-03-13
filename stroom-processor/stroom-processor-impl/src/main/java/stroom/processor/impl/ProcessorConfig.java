@@ -21,6 +21,7 @@ public class ProcessorConfig implements BatchDeleteConfig, IsConfig {
     private int deleteBatchSize = 1000;
     private boolean fillTaskQueue = true;
     private int queueSize = 1000;
+    private int databaseMultiInsertMaxBatchSize = 500;
 
     @JsonProperty("connection")
     public ConnectionConfig getConnectionConfig() {
@@ -103,16 +104,28 @@ public class ProcessorConfig implements BatchDeleteConfig, IsConfig {
         this.queueSize = queueSize;
     }
 
+    @JsonPropertyDescription("The maximum number of rows to insert in a single multi insert statement, e.g. INSERT INTO X VALUES (...), (...), (...)")
+    public int getDatabaseMultiInsertMaxBatchSize() {
+        return databaseMultiInsertMaxBatchSize;
+    }
+
+    public void setDatabaseMultiInsertMaxBatchSize(final int databaseMultiInsertMaxBatchSize) {
+        this.databaseMultiInsertMaxBatchSize = databaseMultiInsertMaxBatchSize;
+    }
+
     @Override
     public String toString() {
         return "ProcessorConfig{" +
-                "assignTasks=" + assignTasks +
+                "connectionConfig=" + connectionConfig +
+                ", connectionPoolConfig=" + connectionPoolConfig +
+                ", assignTasks=" + assignTasks +
                 ", createTasks=" + createTasks +
                 ", deleteAge='" + deleteAge + '\'' +
                 ", deletePurgeAge='" + deletePurgeAge + '\'' +
                 ", deleteBatchSize=" + deleteBatchSize +
                 ", fillTaskQueue=" + fillTaskQueue +
                 ", queueSize=" + queueSize +
+                ", databaseMultiInsertMaxBatchSize=" + databaseMultiInsertMaxBatchSize +
                 '}';
     }
 }

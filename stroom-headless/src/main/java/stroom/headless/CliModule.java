@@ -118,16 +118,6 @@ public class CliModule extends AbstractModule {
 
     @Provides
     public NodeInfo nodeInfo() {
-        return new NodeInfo() {
-            @Override
-            public Node getThisNode() {
-                return null;
-            }
-
-            @Override
-            public String getThisNodeName() {
-                return null;
-            }
-        };
+        return () -> null;
     }
 }
