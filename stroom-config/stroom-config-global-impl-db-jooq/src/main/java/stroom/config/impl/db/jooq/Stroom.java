@@ -30,7 +30,7 @@ import stroom.config.impl.db.jooq.tables.Config;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = 1029932226;
+    private static final long serialVersionUID = -161254269;
 
     /**
      * The reference instance of <code>stroom</code>
