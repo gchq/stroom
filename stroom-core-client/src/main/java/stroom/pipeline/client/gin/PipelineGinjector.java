@@ -26,8 +26,8 @@ import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter;
-import stroom.process.client.presenter.ProcessorListPresenter;
-import stroom.process.client.presenter.ProcessorPresenter;
+import stroom.processor.client.presenter.ProcessorListPresenter;
+import stroom.processor.client.presenter.ProcessorPresenter;
 
 public interface PipelineGinjector {
     AsyncProvider<XsltPlugin> getXSLTPlugin();

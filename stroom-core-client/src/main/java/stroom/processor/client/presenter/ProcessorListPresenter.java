@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.process.client.presenter;
+package stroom.processor.client.presenter;
 
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.NumberCell;

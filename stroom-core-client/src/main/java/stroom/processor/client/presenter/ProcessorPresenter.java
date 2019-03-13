@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.process.client.presenter;
+package stroom.processor.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -27,7 +27,6 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.DeleteProcessorAction;
 import stroom.processor.shared.DeleteProcessorFilterAction;

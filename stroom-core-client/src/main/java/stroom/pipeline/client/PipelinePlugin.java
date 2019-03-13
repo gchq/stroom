@@ -30,7 +30,7 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.process.client.presenter.ProcessorPresenter;
+import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.shared.Processor;
 
 public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {

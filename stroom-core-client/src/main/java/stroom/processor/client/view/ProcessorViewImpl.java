@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.process.client.view;
+package stroom.processor.client.view;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -24,16 +23,18 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.process.client.presenter.ProcessorEditPresenter.ProcessorEditView;
+import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
 
-public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView {
+public class ProcessorViewImpl extends ViewImpl implements ProcessorView {
     private final Widget widget;
-
     @UiField
-    SimplePanel expression;
+    ResizeSimplePanel processorList;
+    @UiField
+    SimplePanel details;
 
     @Inject
-    public ProcessorEditViewImpl(final ProcessorEditViewImpl.Binder binder) {
+    public ProcessorViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -43,10 +44,15 @@ public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView
     }
 
     @Override
-    public void setExpressionView(final View view) {
-        expression.setWidget(view.asWidget());
+    public void setProcessorList(final View view) {
+        this.processorList.setWidget(view.asWidget());
     }
 
-    public interface Binder extends UiBinder<Widget, ProcessorEditViewImpl> {
+    @Override
+    public void setDetailsView(final View view) {
+        this.details.setWidget(view.asWidget());
+    }
+
+    public interface Binder extends UiBinder<Widget, ProcessorViewImpl> {
     }
 }

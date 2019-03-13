@@ -1,4 +1,4 @@
-package stroom.process.client.presenter;
+package stroom.processor.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -9,7 +9,7 @@ import stroom.datasource.api.v2.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.process.client.presenter.ProcessorEditPresenter.ProcessorEditView;
+import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.shared.CreateProcessorFilterAction;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;

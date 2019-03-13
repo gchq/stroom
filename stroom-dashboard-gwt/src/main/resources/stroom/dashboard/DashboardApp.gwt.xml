@@ -75,7 +75,7 @@
     <inherits name="stroom.streamstore.StreamStore"/>
     <inherits name="stroom.streamtask.StreamTask"/>
     <inherits name="stroom.task.Task"/>
-    <inherits name="stroom.process.Process"/>
+    <inherits name="stroom.processor.Processor"/>
     <inherits name="stroom.pipeline.Pipeline"/>
     <inherits name="stroom.pipeline.structure.Structure"/>
     <inherits name="stroom.pipeline.stepping.PipelineStepping"/>
