@@ -34,8 +34,9 @@ public abstract class TaskBasedEntity extends BaseEntityBig {
     public static final String STATUS = SQLNameConstants.STATUS;
     public static final String STATUS_MS = SQLNameConstants.STATUS + SQLNameConstants.MS_SUFFIX;
     public static final String CREATE_MS = SQLNameConstants.CREATE + SQLNameConstants.MS_SUFFIX;
+    public static final String FK_NODE_ID = FK_PREFIX + SQLNameConstants.NODE + ID_SUFFIX;
     private static final long serialVersionUID = -6752797140242673318L;
-    private Node node;
+    private Integer nodeId;
 
     private Long createMs;
     private Long statusMs;
@@ -43,14 +44,13 @@ public abstract class TaskBasedEntity extends BaseEntityBig {
     private Long endTimeMs;
     private byte pstatus = TaskStatus.UNPROCESSED.getPrimitiveValue();
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = Node.FOREIGN_KEY)
-    public Node getNode() {
-        return node;
+    @Column(name = FK_NODE_ID, nullable = false)
+    public Integer getNodeId() {
+        return nodeId;
     }
 
-    public void setNode(final Node node) {
-        this.node = node;
+    public void setNodeId(final Integer nodeId) {
+        this.nodeId = nodeId;
     }
 
     @Column(name = STATUS, nullable = false)

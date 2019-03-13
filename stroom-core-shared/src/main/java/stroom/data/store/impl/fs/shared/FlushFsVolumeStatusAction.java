@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,26 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.node.api;
+package stroom.data.store.impl.fs.shared;
 
-import stroom.node.shared.FindNodeCriteria;
-import stroom.node.shared.Node;
-import stroom.util.entity.FindService;
+import stroom.task.shared.Action;
+import stroom.util.shared.VoidResult;
 
-/**
- * <p>
- * Class to manage nodes.
- * </p>
- */
-public interface NodeService extends FindService<Node, FindNodeCriteria> {
-    String getClusterUrl(String nodeName);
+public class FlushFsVolumeStatusAction extends Action<VoidResult> {
+    private static final long serialVersionUID = 8503583077432248983L;
 
-    boolean isEnabled(String nodeName);
+    public FlushFsVolumeStatusAction() {
+        // Default constructor necessary for GWT serialisation.
+    }
 
-    int getPriority(String nodeName);
-
-    Node getNode(String nodeName);
+    @Override
+    public String getTaskName() {
+        return "Save Volume Status";
+    }
 }

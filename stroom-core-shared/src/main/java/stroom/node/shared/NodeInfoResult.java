@@ -16,17 +16,26 @@
 
 package stroom.node.shared;
 
-import stroom.entity.shared.EntityRow;
+import stroom.docref.SharedObject;
 
-public class NodeInfoResult extends EntityRow<Node> {
+public class NodeInfoResult implements SharedObject {
     private static final long serialVersionUID = -6143973264434353978L;
 
+    private Node node;
     private Long ping;
     private boolean master;
     private String error;
 
     public NodeInfoResult() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    public Node getNode() {
+        return node;
+    }
+
+    public void setNode(final Node node) {
+        this.node = node;
     }
 
     public Long getPing() {

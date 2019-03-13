@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.node.impl;
+package stroom.node.impl.db;
 
+import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventHandler;
-import stroom.util.shared.Clearable;
-import stroom.entity.shared.EntityAction;
 import stroom.node.api.NodeInfo;
+import stroom.node.impl.InternalNodeService;
+import stroom.node.impl.NodeConfig;
 import stroom.node.shared.Node;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -29,15 +31,15 @@ import javax.inject.Singleton;
 @Singleton
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
 public class NodeInfoImpl implements NodeInfo, Clearable, EntityEvent.Handler {
-    private final NodeServiceTransactionHelper nodeServiceTransactionHelper;
+    private final InternalNodeService nodeService;
     private final NodeConfig nodeConfig;
 
     private volatile Node thisNode;
 
     @Inject
-    public NodeInfoImpl(final NodeServiceTransactionHelper nodeServiceTransactionHelper,
+    public NodeInfoImpl(final InternalNodeService nodeService,
                         final NodeConfig nodeConfig) {
-        this.nodeServiceTransactionHelper = nodeServiceTransactionHelper;
+        this.nodeService = nodeService;
         this.nodeConfig = nodeConfig;
     }
 
@@ -51,11 +53,11 @@ public class NodeInfoImpl implements NodeInfo, Clearable, EntityEvent.Handler {
         if (thisNode == null) {
             synchronized (this) {
                 if (thisNode == null) {
-                    thisNode = nodeServiceTransactionHelper.getNode(nodeConfig.getNodeName());
+                    thisNode = nodeService.getNode(nodeConfig.getNodeName());
 
                     if (thisNode == null) {
                         // This will start a new mini transaction for the update
-                        thisNode = nodeServiceTransactionHelper.buildNode(nodeConfig.getNodeName());
+                        thisNode = nodeService.create(nodeConfig.getNodeName());
                     }
                 }
 

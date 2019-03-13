@@ -21,6 +21,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.data.store.impl.fs.shared.DeleteFsVolumeAction;
 import stroom.data.store.impl.fs.shared.FetchFsVolumeAction;
 import stroom.data.store.impl.fs.shared.FindFsVolumeAction;
+import stroom.data.store.impl.fs.shared.FlushFsVolumeStatusAction;
 import stroom.data.store.impl.fs.shared.UpdateFsVolumeAction;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEvent.Handler;
@@ -32,8 +33,9 @@ public class FsDataStoreTaskHandlerModule extends AbstractModule {
         TaskHandlerBinder.create(binder())
                 .bind(FsCleanSubTask.class, FsCleanSubTaskHandler.class)
                 .bind(DeleteFsVolumeAction.class, DeleteFSVolumeHandler.class)
-                .bind(FindFsVolumeAction.class, FindFsVolumeHandler.class)
                 .bind(FetchFsVolumeAction.class, FetchFSVolumeHandler.class)
+                .bind(FindFsVolumeAction.class, FindFsVolumeHandler.class)
+                .bind(FlushFsVolumeStatusAction.class, FlushFsVolumeStatusHandler.class)
                 .bind(UpdateFsVolumeAction.class, UpdateFsVolumeHandler.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);

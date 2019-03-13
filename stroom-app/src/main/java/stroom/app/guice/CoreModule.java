@@ -47,6 +47,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.node.impl.NodeModule());
         install(new stroom.node.impl.NodeHandlerModule());
         install(new stroom.node.impl.NodeServiceModule());
+        install(new stroom.node.impl.db.NodeDbModule());
         install(new stroom.persist.EntityManagerModule());
         install(new stroom.pipeline.PipelineModule());
         install(new stroom.pipeline.PipelineHandlerModule());

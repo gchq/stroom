@@ -75,7 +75,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                 TooltipUtil.addRowData(html, "Status Time", toDateString(row.getStatusMs()));
                 TooltipUtil.addRowData(html, "Start Time", toDateString(row.getStartTimeMs()));
                 TooltipUtil.addRowData(html, "End Time", toDateString(row.getEndTimeMs()));
-                TooltipUtil.addRowData(html, "Node", toNameString(row.getNode()));
+                TooltipUtil.addRowData(html, "Node", row.getNodeName());
 
                 // TODO : @66 REINSTATE STREAM DETAILS FOR A TASK
 
@@ -134,8 +134,8 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                 .addColumn(new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_NODE, true) {
                     @Override
                     public String getValue(final ProcessorFilterTask row) {
-                        if (row.getNode() != null) {
-                            return row.getNode().getName();
+                        if (row.getNodeName() != null) {
+                            return row.getNodeName();
                         } else {
                             return "";
                         }

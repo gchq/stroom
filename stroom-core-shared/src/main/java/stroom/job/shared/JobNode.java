@@ -37,32 +37,34 @@ import javax.validation.constraints.Min;
  * This class records and manages all jobs across all nodes.
  */
 @Entity
-@Table(name = "JB_ND", uniqueConstraints = @UniqueConstraint(columnNames = {"FK_ND_ID", "FK_JB_ID"}))
+@Table(name = "JB_ND", uniqueConstraints = @UniqueConstraint(columnNames = {JobNode.NODE_NAME, "FK_JB_ID"}))
 public class JobNode extends AuditedEntity {
     public static final String ENTITY_TYPE = "JobNode";
     public static final String TABLE_NAME = SQLNameConstants.JOB + SEP + SQLNameConstants.NODE;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
+    public static final String NODE_NAME = SQLNameConstants.NODE + SEP + SQLNameConstants.NAME;
     public static final String TASK_LIMIT = SQLNameConstants.TASK + SQLNameConstants.LIMIT_SUFFIX;
     public static final String LOCK_TASK_LIMIT = SQLNameConstants.LOCK + SEP + SQLNameConstants.TASK
             + SQLNameConstants.LIMIT_SUFFIX;
     public static final String JOB_TYPE = SQLNameConstants.JOB + SQLNameConstants.TYPE_SUFFIX;
     public static final String SCHEDULE = "SCHEDULE";
+
     private static final long serialVersionUID = 6581293484621389638L;
-    private Node node;
+
+    private String nodeName;
     private Job job;
     private int taskLimit = 20;
     private byte pJobType = JobType.UNKNOWN.getPrimitiveValue();
     private String schedule;
     private boolean enabled;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = Node.FOREIGN_KEY)
-    public Node getNode() {
-        return node;
+    @Column(name = NODE_NAME, nullable = false)
+    public String getNodeName() {
+        return nodeName;
     }
 
-    public void setNode(final Node node) {
-        this.node = node;
+    public void setNodeName(final String nodeName) {
+        this.nodeName = nodeName;
     }
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

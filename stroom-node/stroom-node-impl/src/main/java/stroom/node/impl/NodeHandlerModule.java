@@ -29,15 +29,10 @@ import stroom.util.shared.Clearable;
 public class NodeHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(NodeInfoImpl.class);
-
         TaskHandlerBinder.create(binder())
                 .bind(ClusterNodeInfoAction.class, ClusterNodeInfoHandler.class)
                 .bind(FetchNodeInfoAction.class, FetchNodeInfoHandler.class)
                 .bind(FindSystemTableStatusAction.class, FindSystemTableStatusHandler.class)
                 .bind(NodeInfoClusterTask.class, NodeInfoClusterHandler.class);
-
-        final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(NodeInfoImpl.class);
     }
 }

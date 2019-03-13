@@ -40,13 +40,23 @@ public class ProcessorFilterTask extends TaskBasedEntity {
     public static final String DATA = SQLNameConstants.DATA;
     private static final long serialVersionUID = 3926403008832938745L;
     private Long streamId;
-
+    private String nodeName;
     private String data;
 
     /**
      * We don't eager fetch this one ... you need to call load.
      */
     private ProcessorFilter streamProcessorFilter;
+
+    @Transient
+    public String getNodeName() {
+        return nodeName;
+    }
+
+    @Transient
+    public void setNodeName(final String nodeName) {
+        this.nodeName = nodeName;
+    }
 
     @Column(name = STREAM_ID, nullable = false)
     public Long getStreamId() {

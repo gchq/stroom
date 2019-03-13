@@ -16,32 +16,24 @@
 
 package stroom.node.shared;
 
-import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.SQLNameConstants;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
+import stroom.docref.SharedObject;
+import stroom.util.shared.HasAuditInfo;
 
 /**
  * Represents a node for storage and processing.
  */
-@Entity
-@Table(name = "ND", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
-public class Node extends NamedEntity {
-    public static final String TABLE_NAME = SQLNameConstants.NODE;
-    public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String CLUSTER_URL = SQLNameConstants.CLUSTER + SEP + SQLNameConstants.URL;
-    public static final String CONCURRENT_TASKS = SQLNameConstants.CONCURRENT + SEP + SQLNameConstants.TASK;
-    public static final String PATH = SQLNameConstants.PATH;
-    public static final String NODE_STATUS = SQLNameConstants.NODE + SQLNameConstants.STATUS_SUFFIX;
-    public static final String ENTITY_TYPE = "Node";
+public class Node implements HasAuditInfo, SharedObject {
     private static final long serialVersionUID = 3578705325508265924L;
+
+    public static final String ENTITY_TYPE = "Node";
+
+    private Integer id;
+    private Integer version;
+    private Long createTimeMs;
+    private String createUser;
+    private Long updateTimeMs;
+    private String updateUser;
+    private String name;
     private String clusterURL;
 
     /**
@@ -52,6 +44,10 @@ public class Node extends NamedEntity {
     private int priority = 1;
     private boolean enabled = true;
 
+    public Node() {
+        // Default constructor necessary for GWT serialisation.
+    }
+
     /**
      * Utility to create a node.
      */
@@ -61,7 +57,66 @@ public class Node extends NamedEntity {
         return node;
     }
 
-    @Column(name = CLUSTER_URL)
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(final Integer id) {
+        this.id = id;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(final Integer version) {
+        this.version = version;
+    }
+
+    @Override
+    public Long getCreateTimeMs() {
+        return createTimeMs;
+    }
+
+    public void setCreateTimeMs(final Long createTimeMs) {
+        this.createTimeMs = createTimeMs;
+    }
+
+    @Override
+    public String getCreateUser() {
+        return createUser;
+    }
+
+    public void setCreateUser(final String createUser) {
+        this.createUser = createUser;
+    }
+
+    @Override
+    public Long getUpdateTimeMs() {
+        return updateTimeMs;
+    }
+
+    public void setUpdateTimeMs(final Long updateTimeMs) {
+        this.updateTimeMs = updateTimeMs;
+    }
+
+    @Override
+    public String getUpdateUser() {
+        return updateUser;
+    }
+
+    public void setUpdateUser(final String updateUser) {
+        this.updateUser = updateUser;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(final String name) {
+        this.name = name;
+    }
+
     public String getClusterURL() {
         return clusterURL;
     }
@@ -70,7 +125,6 @@ public class Node extends NamedEntity {
         this.clusterURL = clusterURL;
     }
 
-    @Column(name = SQLNameConstants.PRIORITY, columnDefinition = SMALLINT_UNSIGNED, nullable = false)
     public int getPriority() {
         return priority;
     }
@@ -79,7 +133,6 @@ public class Node extends NamedEntity {
         this.priority = priority;
     }
 
-    @Column(name = SQLNameConstants.ENABLED, nullable = false)
     public boolean isEnabled() {
         return enabled;
     }
@@ -88,28 +141,28 @@ public class Node extends NamedEntity {
         this.enabled = enabled;
     }
 
-    @Override
-    protected void toString(final StringBuilder sb) {
-        super.toString(sb);
-        sb.append(", name=");
-        sb.append(getName());
-        sb.append(", clusterCallUrl=");
-        sb.append(clusterURL);
-        sb.append(", priority=");
-        sb.append(priority);
-    }
-
-    @Transient
-    @Override
-    public final String getType() {
-        return ENTITY_TYPE;
-    }
-
-    public Node copy() {
-        final Node node = new Node();
-        node.setName(getName());
-        node.priority = priority;
-        node.enabled = enabled;
-        return node;
-    }
+//    @Override
+//    protected void toString(final StringBuilder sb) {
+//        super.toString(sb);
+//        sb.append(", name=");
+//        sb.append(getName());
+//        sb.append(", clusterCallUrl=");
+//        sb.append(clusterURL);
+//        sb.append(", priority=");
+//        sb.append(priority);
+//    }
+//
+//    @Transient
+//    @Override
+//    public final String getType() {
+//        return ENTITY_TYPE;
+//    }
+//
+//    public Node copy() {
+//        final Node node = new Node();
+//        node.setName(getName());
+//        node.priority = priority;
+//        node.enabled = enabled;
+//        return node;
+//    }
 }

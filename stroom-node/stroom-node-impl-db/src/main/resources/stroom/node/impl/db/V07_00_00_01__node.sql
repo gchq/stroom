@@ -8,11 +8,12 @@ CREATE TABLE IF NOT EXISTS node (
   create_user           varchar(255) NOT NULL,
   update_time_ms        bigint(20) NOT NULL,
   update_user           varchar(255) NOT NULL,
-  url                   varchar(255) NOT NULL,
+  url                   varchar(255) DEFAULT NULL,
   name                  varchar(255) NOT NULL,
   priority              smallint(6) NOT NULL,
   enabled               bit(1) NOT NULL,
-  PRIMARY KEY           (id)
+  PRIMARY KEY           (id),
+  UNIQUE KEY            name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --

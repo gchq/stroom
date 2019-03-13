@@ -120,7 +120,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
                     final JobNode newJobNode = new JobNode();
                     newJobNode.setJob(job);
-                    newJobNode.setNode(node);
+                    newJobNode.setNodeName(node.getName());
                     newJobNode.setEnabled(scheduledJob.isEnabled());
 
                     switch (scheduledJob.getSchedule().getScheduleType()) {
@@ -138,8 +138,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                     // Add the job node to the DB if it isn't there already.
                     JobNode existingJobNode = existingJobMap.get(scheduledJob.getName());
                     if (existingJobNode == null) {
-                        LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
-                                newJobNode.getNode().getName());
+                        LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(), newJobNode.getNodeName());
                         save(newJobNode);
                         existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
 
@@ -167,12 +166,12 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
                         final JobNode newJobNode = new JobNode();
                         newJobNode.setJob(job);
-                        newJobNode.setNode(node);
+                        newJobNode.setNodeName(node.getName());
                         newJobNode.setEnabled(false);
                         newJobNode.setJobType(JobType.DISTRIBUTED);
 
                         LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
-                                newJobNode.getNode().getName());
+                                newJobNode.getNodeName());
                         save(newJobNode);
                         existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
                     }

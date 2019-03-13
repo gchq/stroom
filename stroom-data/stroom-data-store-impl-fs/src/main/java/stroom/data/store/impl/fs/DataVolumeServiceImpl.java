@@ -73,30 +73,30 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 //            return BaseResultList.createCriterialBasedList(results, criteria);
 //        });
 //    }
-
-    private Optional<Condition> longCriteriaSetToCondition(final TableField<?, ?> field, final CriteriaSet<Long> criteriaSet) {
-        if (criteriaSet == null || Boolean.TRUE.equals(criteriaSet.getMatchAll())) {
-            return Optional.empty();
-        }
-
-        if (criteriaSet.getMatchNull() != null && criteriaSet.getMatchNull()) {
-            return Optional.of(field.isNull());
-        }
-
-        return Optional.of(field.in(criteriaSet.getSet()));
-    }
-
-    private Optional<Condition> integerCriteriaSetToCondition(final TableField<?, ?> field, final CriteriaSet<Integer> criteriaSet) {
-        if (criteriaSet == null || Boolean.TRUE.equals(criteriaSet.getMatchAll())) {
-            return Optional.empty();
-        }
-
-        if (criteriaSet.getMatchNull() != null && criteriaSet.getMatchNull()) {
-            return Optional.of(field.isNull());
-        }
-
-        return Optional.of(field.in(criteriaSet.getSet()));
-    }
+//
+//    private Optional<Condition> longCriteriaSetToCondition(final TableField<?, ?> field, final CriteriaSet<Long> criteriaSet) {
+//        if (criteriaSet == null || Boolean.TRUE.equals(criteriaSet.getMatchAll())) {
+//            return Optional.empty();
+//        }
+//
+//        if (criteriaSet.getMatchNull() != null && criteriaSet.getMatchNull()) {
+//            return Optional.of(field.isNull());
+//        }
+//
+//        return Optional.of(field.in(criteriaSet.getSet()));
+//    }
+//
+//    private Optional<Condition> integerCriteriaSetToCondition(final TableField<?, ?> field, final CriteriaSet<Integer> criteriaSet) {
+//        if (criteriaSet == null || Boolean.TRUE.equals(criteriaSet.getMatchAll())) {
+//            return Optional.empty();
+//        }
+//
+//        if (criteriaSet.getMatchNull() != null && criteriaSet.getMatchNull()) {
+//            return Optional.of(field.isNull());
+//        }
+//
+//        return Optional.of(field.in(criteriaSet.getSet()));
+//    }
 
     private int getOffset(final PageRequest pageRequest) {
         if (pageRequest == null || pageRequest.getOffset() == null) {
@@ -116,12 +116,9 @@ public class DataVolumeServiceImpl implements DataVolumeService {
     @Override
     // @Transactional
     public BaseResultList<DataVolume> find(final FindDataVolumeCriteria criteria) {
-        final Optional<Condition> volumeIdCondition = integerCriteriaSetToCondition(FS_META_VOLUME.FS_VOLUME_ID, criteria.getVolumeIdSet());
-        final Optional<Condition> streamIdCondition = longCriteriaSetToCondition(FS_META_VOLUME.META_ID, criteria.getMetaIdSet());
-
         final List<Condition> conditions = new ArrayList<>();
-        volumeIdCondition.ifPresent(conditions::add);
-        streamIdCondition.ifPresent(conditions::add);
+        JooqUtil.applySet(FS_META_VOLUME.FS_VOLUME_ID, criteria.getVolumeIdSet()).ifPresent(conditions::add);
+        JooqUtil.applySet(FS_META_VOLUME.META_ID, criteria.getMetaIdSet()).ifPresent(conditions::add);
 
         return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
             if (!criteria.isValidCriteria()) {

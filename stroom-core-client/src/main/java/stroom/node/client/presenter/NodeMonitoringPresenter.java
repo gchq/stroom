@@ -34,14 +34,12 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.EntitySaveTask;
-import stroom.entity.client.SaveQueue;
-import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.ClusterNodeInfoAction;
 import stroom.node.shared.FetchNodeInfoAction;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeInfoResult;
+import stroom.node.shared.UpdateNodeAction;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
@@ -62,7 +60,6 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     private final TooltipPresenter tooltipPresenter;
     private final FetchNodeInfoAction action = new FetchNodeInfoAction();
     private final ActionDataProvider<NodeInfoResult> dataProvider;
-    private final SaveQueue<Node> saveQueue;
 
     private final ButtonView editButton;
     private final Provider<NodeEditPresenter> nodeEditPresenterProvider;
@@ -78,8 +75,6 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         initTableColumns();
         dataProvider = new ActionDataProvider<>(dispatcher, action);
         dataProvider.addDataDisplay(getView().getDataDisplay());
-
-        saveQueue = new SaveQueue<>(dispatcher);
 
         editButton = getView().addButton(SvgPresets.EDIT);
         editButton.setTitle("Edit Node");
@@ -108,7 +103,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         final InfoColumn<NodeInfoResult> infoColumn = new InfoColumn<NodeInfoResult>() {
             @Override
             protected void showInfo(final NodeInfoResult row, final int x, final int y) {
-                dispatcher.exec(new ClusterNodeInfoAction(row.getEntity().getName()))
+                dispatcher.exec(new ClusterNodeInfoAction(row.getNode().getName()))
                         .onSuccess(result -> {
                             final StringBuilder html = new StringBuilder();
                             TooltipUtil.addHeading(html, "Node Details");
@@ -122,8 +117,8 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                                 TooltipUtil.addRowData(html, "Discover Time", result.getDiscoverTime(), true);
                                 TooltipUtil.addRowData(html, "Cluster URL", result.getClusterURL(), true);
                             } else {
-                                TooltipUtil.addRowData(html, "Node Name", row.getEntity().getName(), true);
-                                TooltipUtil.addRowData(html, "Cluster URL", row.getEntity().getClusterURL(), true);
+                                TooltipUtil.addRowData(html, "Node Name", row.getNode().getName(), true);
+                                TooltipUtil.addRowData(html, "Cluster URL", row.getNode().getClusterURL(), true);
                             }
 
                             TooltipUtil.addRowData(html, "Ping", ModelStringUtil.formatDurationString(row.getPing()));
@@ -167,7 +162,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 if (row == null) {
                     return null;
                 }
-                return row.getEntity().getName();
+                return row.getNode().getName();
             }
         };
         getView().addResizableColumn(nameColumn, "Name", 100);
@@ -179,7 +174,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 if (row == null) {
                     return null;
                 }
-                return row.getEntity().getClusterURL();
+                return row.getNode().getClusterURL();
             }
         };
         getView().addResizableColumn(hostNameColumn, "Cluster URL", 400);
@@ -224,15 +219,10 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 if (row == null) {
                     return null;
                 }
-                return new EditableInteger(row.getEntity().getPriority());
+                return new EditableInteger(row.getNode().getPriority());
             }
         };
-        priorityColumn.setFieldUpdater((index, row, value) -> saveQueue.save(new EntitySaveTask<Node>(row) {
-            @Override
-            protected void setValue(final Node entity) {
-                entity.setPriority(value.intValue());
-            }
-        }));
+        priorityColumn.setFieldUpdater((index, row, value) -> dispatcher.exec(new UpdateNodeAction(row.getNode())));
         getView().addColumn(priorityColumn, "Priority", 55);
 
         // Enabled
@@ -243,15 +233,10 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 if (row == null) {
                     return null;
                 }
-                return TickBoxState.fromBoolean(row.getEntity().isEnabled());
+                return TickBoxState.fromBoolean(row.getNode().isEnabled());
             }
         };
-        enabledColumn.setFieldUpdater((index, row, value) -> saveQueue.save(new EntitySaveTask<Node>(row) {
-            @Override
-            protected void setValue(final Node entity) {
-                entity.setEnabled(value.toBoolean());
-            }
-        }));
+        enabledColumn.setFieldUpdater((index, row, value) -> dispatcher.exec(new UpdateNodeAction(row.getNode())));
 
         getView().addColumn(enabledColumn, "Enabled", 60);
 
@@ -259,7 +244,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     }
 
     private void onEdit(final NodeInfoResult nodeInfo) {
-        final Node node = nodeInfo.getEntity();
+        final Node node = nodeInfo.getNode();
         final NodeEditPresenter editor = nodeEditPresenterProvider.get();
         editor.setName(node.getName());
         editor.setClusterUrl(node.getClusterURL());
@@ -270,7 +255,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 if (ok) {
                     if (node.getClusterURL() == null || !node.getClusterURL().equals(editor.getClusterUrl())) {
                         node.setClusterURL(editor.getClusterUrl());
-                        dispatcher.exec(new EntityServiceSaveAction<>(node)).onSuccess(result -> refresh());
+                        dispatcher.exec(new UpdateNodeAction(node)).onSuccess(result -> refresh());
                     }
                 }
 

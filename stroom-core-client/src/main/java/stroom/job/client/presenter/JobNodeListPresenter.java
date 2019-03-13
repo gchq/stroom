@@ -93,7 +93,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         final Column<JobNodeRow, String> nodeColumn = new Column<JobNodeRow, String>(new TextCell()) {
             @Override
             public String getValue(final JobNodeRow row) {
-                return row.getEntity().getNode().getName();
+                return row.getEntity().getNodeName();
             }
         };
         getView().addResizableColumn(nodeColumn, "Node", 200);

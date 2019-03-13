@@ -23,7 +23,7 @@ dependencies {
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.jaxb_api
-    implementation(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
+    compile(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
 
     testCompile project(':stroom-docstore:stroom-docstore-impl')
     testCompile project(':stroom-docstore:stroom-docstore-impl-memory')

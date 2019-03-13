@@ -16,9 +16,10 @@
 
 package stroom.job.shared;
 
-import stroom.util.shared.BaseCriteria;
 import stroom.entity.shared.EntityIdSet;
-import stroom.node.shared.Node;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.IdSet;
+import stroom.util.shared.StringCriteria;
 
 /**
  * Criteria object used to fetch a job that matches the parameters specified.
@@ -28,10 +29,10 @@ public class FindJobNodeCriteria extends BaseCriteria {
 
     private String jobName;
     private EntityIdSet<Job> jobIdSet = new EntityIdSet<>();
-    private EntityIdSet<Node> nodeIdSet = new EntityIdSet<>();
+    private StringCriteria nodeCriteria = new StringCriteria();
 
-    public EntityIdSet<Node> getNodeIdSet() {
-        return nodeIdSet;
+    public StringCriteria getNodeCriteria() {
+        return nodeCriteria;
     }
 
     public EntityIdSet<Job> getJobIdSet() {
@@ -45,5 +46,4 @@ public class FindJobNodeCriteria extends BaseCriteria {
     public void setJobName(String jobName) {
         this.jobName = jobName;
     }
-
 }

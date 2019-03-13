@@ -276,32 +276,34 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
         return fileVolume;
     }
 
-    private Optional<Condition> volumeStatusCriteriaSetToCondition(final TableField<?, ?> field, final CriteriaSet<VolumeUseStatus> criteriaSet) {
-        final CriteriaSet<Number> set = new CriteriaSet<>();
+    private Optional<Condition> volumeStatusCriteriaSetToCondition(final TableField<FsVolumeRecord, Byte> field, final CriteriaSet<VolumeUseStatus> criteriaSet) {
+        final CriteriaSet<Byte> set = new CriteriaSet<>();
         set.setMatchAll(criteriaSet.getMatchAll());
         set.setMatchNull(criteriaSet.getMatchNull());
         set.setSet(criteriaSet.getSet().stream().map(VolumeUseStatus::getPrimitiveValue).collect(Collectors.toSet()));
-        return criteriaSetToCondition(field, set);
+        return JooqUtil.applySet(field, set);
+
+//        return criteriaSetToCondition(field, set);
     }
 
-    private Optional<Condition> criteriaSetToCondition(final TableField<?, ?> field, final CriteriaSet<Number> criteriaSet) {
-        if (criteriaSet == null || !criteriaSet.isConstrained()) {
-            return Optional.empty();
-        }
-
-        if (criteriaSet.isMatchNothing()) {
-            return Optional.of(field.in(Collections.emptySet()));
-        }
-
-        if (criteriaSet.getMatchNull() != null && criteriaSet.getMatchNull()) {
-            if (criteriaSet.getSet().isEmpty()) {
-                return Optional.of(field.isNull());
-            }
-            return Optional.of(field.in(criteriaSet.getSet()).or(field.isNull()));
-        }
-
-        return Optional.of(field.in(criteriaSet.getSet()));
-    }
+//    private Optional<Condition> criteriaSetToCondition(final TableField<?, ?> field, final CriteriaSet<Number> criteriaSet) {
+//        if (criteriaSet == null || !criteriaSet.isConstrained()) {
+//            return Optional.empty();
+//        }
+//
+//        if (criteriaSet.isMatchNothing()) {
+//            return Optional.of(field.in(Collections.emptySet()));
+//        }
+//
+//        if (criteriaSet.getMatchNull() != null && criteriaSet.getMatchNull()) {
+//            if (criteriaSet.getSet().isEmpty()) {
+//                return Optional.of(field.isNull());
+//            }
+//            return Optional.of(field.in(criteriaSet.getSet()).or(field.isNull()));
+//        }
+//
+//        return Optional.of(field.in(criteriaSet.getSet()));
+//    }
 
 
     @Override

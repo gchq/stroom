@@ -29,7 +29,7 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FetchFsVolumeAction;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.node.client.view.WrapperView;
-import stroom.node.shared.FlushVolumeStatusAction;
+import stroom.data.store.impl.fs.shared.FlushFsVolumeStatusAction;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -89,7 +89,7 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
         }));
         registerHandler(openButton.addClickHandler(event -> open(popupUiHandlers)));
         registerHandler(deleteButton.addClickHandler(event -> delete()));
-        registerHandler(rescanButton.addClickHandler(event -> dispatcher.exec(new FlushVolumeStatusAction()).onSuccess(result -> refresh())));
+        registerHandler(rescanButton.addClickHandler(event -> dispatcher.exec(new FlushFsVolumeStatusAction()).onSuccess(result -> refresh())));
     }
 
     private void open(final PopupUiHandlers popupUiHandlers) {
