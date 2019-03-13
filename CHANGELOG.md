@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.29] - 2019-03-13
+
 * Issue **#1115** : Add missing super.startProcessing to AbstractKafkaProducerFilter.
 
 * Improve exception handling and logging in RemoteDataSourceProvider. Now the full url is included in dashboard connection errors.
@@ -1503,7 +1506,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.28...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.29...6.0
+[v6.0-beta.29]: https://github.com/gchq/stroom/compare/v6.0-beta.28...v6.0-beta.29
 [v6.0-beta.28]: https://github.com/gchq/stroom/compare/v6.0-beta.27...v6.0-beta.28
 [v6.0-beta.27]: https://github.com/gchq/stroom/compare/v6.0-beta.26...v6.0-beta.27
 [v6.0-beta.26]: https://github.com/gchq/stroom/compare/v6.0-beta.25...v6.0-beta.26
