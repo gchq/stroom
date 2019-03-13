@@ -1,5 +1,6 @@
 package stroom.processor.impl;
 
+import stroom.util.shared.Clearable;
 import stroom.util.shared.HasIntCrud;
 
 import java.lang.reflect.InvocationTargetException;
@@ -9,7 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class MockIntCrud<T> implements HasIntCrud<T> {
+public class MockIntCrud<T> implements HasIntCrud<T>, Clearable {
     private final Map<Integer, T> map = new HashMap<>();
     private final AtomicInteger generatedId = new AtomicInteger();
 
@@ -67,5 +68,11 @@ public class MockIntCrud<T> implements HasIntCrud<T> {
 
     public Map<Integer, T> getMap() {
         return map;
+    }
+
+    @Override
+    public void clear() {
+        map.clear();
+        generatedId.set(0);
     }
 }

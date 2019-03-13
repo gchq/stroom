@@ -5,11 +5,12 @@ import stroom.meta.shared.Status;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskSummaryRow;
-import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.TaskStatus;
 import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
 import java.util.List;
@@ -18,7 +19,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Singleton
-public class MockProcessorTaskDao implements ProcessorTaskDao {
+public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     private final MockIntCrud<ProcessorTask> dao = new MockIntCrud<>();
 //
 //    @Override
@@ -147,5 +148,10 @@ public class MockProcessorTaskDao implements ProcessorTaskDao {
     @Override
     public BaseResultList<ProcessorTaskSummaryRow> findSummary(final FindProcessorTaskCriteria criteria) {
         return null;
+    }
+
+    @Override
+    public void clear() {
+        dao.clear();
     }
 }

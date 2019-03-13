@@ -16,11 +16,9 @@
 
 package stroom.test;
 
-import stroom.docstore.impl.memory.MemoryPersistence;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.Set;
 
 /**
@@ -28,12 +26,10 @@ import java.util.Set;
  */
 public class MockCommonTestControl implements CommonTestControl {
     private final Set<Clearable> clearables;
-    private final Provider<MemoryPersistence> memoryPersistenceProvider;
 
     @Inject
-    MockCommonTestControl(final Set<Clearable> clearables, final Provider<MemoryPersistence> memoryPersistenceProvider) {
+    MockCommonTestControl(final Set<Clearable> clearables) {
         this.clearables = clearables;
-        this.memoryPersistenceProvider = memoryPersistenceProvider;
     }
 
     @Override
@@ -43,13 +39,6 @@ public class MockCommonTestControl implements CommonTestControl {
     @Override
     public void teardown() {
         clearables.forEach(Clearable::clear);
-
-        try {
-            final MemoryPersistence memoryPersistence = memoryPersistenceProvider.get();
-            memoryPersistence.clear();
-        } catch (final RuntimeException e) {
-            // Ignore.
-        }
     }
 
     @Override

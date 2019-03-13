@@ -17,9 +17,12 @@
 package stroom.processor.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.pipeline.refdata.EffectiveStreamCache;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 public class MockProcessorModule extends AbstractModule {
     @Override
@@ -33,5 +36,10 @@ public class MockProcessorModule extends AbstractModule {
 
         TaskHandlerBinder.create(binder())
                 .bind(DataProcessorTask.class, DataProcessorTaskHandler.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(MockProcessorDao.class)
+                .addBinding(MockProcessorFilterDao.class)
+                .addBinding(MockProcessorTaskDao.class);
     }
 }

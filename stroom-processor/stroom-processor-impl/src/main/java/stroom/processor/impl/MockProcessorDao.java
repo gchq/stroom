@@ -3,6 +3,7 @@ package stroom.processor.impl;
 import stroom.processor.shared.FindProcessorCriteria;
 import stroom.processor.shared.Processor;
 import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Singleton
-public class MockProcessorDao implements ProcessorDao {
+public class MockProcessorDao implements ProcessorDao, Clearable {
     private final MockIntCrud<Processor> dao = new MockIntCrud<>();
 
     @Override
@@ -51,5 +52,10 @@ public class MockProcessorDao implements ProcessorDao {
                 .collect(Collectors.toList());
 
         return BaseResultList.createCriterialBasedList(list, criteria);
+    }
+
+    @Override
+    public void clear() {
+        dao.clear();
     }
 }

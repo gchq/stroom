@@ -4,6 +4,7 @@ import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Singleton
-public class MockProcessorFilterDao implements ProcessorFilterDao {
+public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     private final MockIntCrud<ProcessorFilter> dao = new MockIntCrud<>();
 
     @Override
@@ -47,5 +48,10 @@ public class MockProcessorFilterDao implements ProcessorFilterDao {
                 .collect(Collectors.toList());
 
         return BaseResultList.createCriterialBasedList(list, criteria);
+    }
+
+    @Override
+    public void clear() {
+        dao.clear();
     }
 }

@@ -52,7 +52,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
     private final NodeCreator nodeConfig;
     private final ProcessorTaskManager processorTaskManager;
-    private final CacheManagerService stroomCacheManager;
     private final Set<Clearable> clearables;
 
     @Inject
@@ -64,7 +63,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
                               final NodeCreator nodeConfig,
                               final ProcessorTaskManager processorTaskManager,
-                              final CacheManagerService stroomCacheManager,
                               final Set<Clearable> clearables) {
         this.entityManager = entityManager;
         this.volumeService = volumeService;
@@ -74,7 +72,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.databaseCommonTestControlTransactionHelper = databaseCommonTestControlTransactionHelper;
         this.nodeConfig = nodeConfig;
         this.processorTaskManager = processorTaskManager;
-        this.stroomCacheManager = stroomCacheManager;
         this.clearables = clearables;
     }
 
@@ -116,9 +113,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         // in theory truncating the tables should be quicker but it was taking 1.5s to truncate all the tables
         // so used delete with no constraint checks instead
         databaseCommonTestControlTransactionHelper.clearAllTables();
-
-        // ensure all the caches are empty
-        stroomCacheManager.clear();
 
         clearables.forEach(Clearable::clear);
         LOGGER.info("test environment teardown completed in {}", Duration.between(startTime, Instant.now()));

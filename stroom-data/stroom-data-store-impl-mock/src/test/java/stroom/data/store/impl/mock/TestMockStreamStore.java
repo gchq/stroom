@@ -43,7 +43,7 @@ class TestMockStreamStore {
     @Test
     void testExample() throws IOException {
         final MockMetaService mockMetaService = new MockMetaService();
-        final MockStreamStore mockStreamStore = new MockStreamStore(mockMetaService);
+        final MockStore mockStreamStore = new MockStore(mockMetaService);
 
         mockStreamStore.clear();
 

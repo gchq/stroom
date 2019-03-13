@@ -17,7 +17,7 @@
 package stroom.pipeline.task;
 
 import org.junit.jupiter.api.Test;
-import stroom.data.store.impl.mock.MockStreamStore;
+import stroom.data.store.impl.mock.MockStore;
 import stroom.node.api.NodeInfo;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
@@ -37,7 +37,7 @@ class TestTranslationTaskContextAndFlattening extends AbstractProcessIntegration
     private static final String CONTEXT_RESOURCE_NAME = DIR + "TestTaskContext.ctx";
 
     @Inject
-    private MockStreamStore streamStore;
+    private MockStore streamStore;
     @Inject
     private NodeInfo nodeInfo;
     @Inject

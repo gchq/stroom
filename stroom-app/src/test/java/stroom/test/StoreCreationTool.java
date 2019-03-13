@@ -95,7 +95,7 @@ public final class StoreCreationTool {
             .getFile("samples/config/Standard_Pipelines/Search_Extraction.Pipeline.3d9d60e9-61c2-4c88-a57b-7bc584dd970e.xml");
     private static long effectiveMsOffset = 0;
 
-    private final Store streamStore;
+    private final Store store;
     private final FeedStore feedStore;
     private final TextConverterStore textConverterStore;
     private final XsltStore xsltStore;
@@ -107,7 +107,7 @@ public final class StoreCreationTool {
     private final IndexStore indexStore;
 
     @Inject
-    public StoreCreationTool(final Store streamStore,
+    public StoreCreationTool(final Store store,
                              final FeedStore feedStore,
                              final TextConverterStore textConverterStore,
                              final XsltStore xsltStore,
@@ -117,7 +117,7 @@ public final class StoreCreationTool {
                              final ProcessorService processorService,
                              final ProcessorFilterService processorFilterService,
                              final IndexStore indexStore) {
-        this.streamStore = streamStore;
+        this.store = store;
         this.feedStore = feedStore;
         this.textConverterStore = textConverterStore;
         this.xsltStore = xsltStore;
@@ -168,14 +168,14 @@ public final class StoreCreationTool {
 
         Meta meta;
 
-        try (final Target target = streamStore.openTarget(metaProperties)) {
+        try (final Target target = store.openTarget(metaProperties)) {
             meta = target.getMeta();
             TargetUtil.write(target, data);
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
 
-        try (final Source checkSource = streamStore.openSource(meta.getId())) {
+        try (final Source checkSource = store.openSource(meta.getId())) {
             assertThat(SourceUtil.readString(checkSource)).isEqualTo(data);
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -301,7 +301,7 @@ public final class StoreCreationTool {
                 .build();
 
         Meta meta;
-        try (final Target target = streamStore.openTarget(metaProperties)) {
+        try (final Target target = store.openTarget(metaProperties)) {
             meta = target.getMeta();
 
             try (final OutputStreamProvider outputStreamProvider = target.next()) {
@@ -321,7 +321,7 @@ public final class StoreCreationTool {
 
         // Check that the data was written ok.
         final String data = StreamUtil.fileToString(dataLocation);
-        try (final Source checkSource = streamStore.openSource(meta.getId())) {
+        try (final Source checkSource = store.openSource(meta.getId())) {
             assertThat(SourceUtil.readString(checkSource)).isEqualTo(data);
         }
     }

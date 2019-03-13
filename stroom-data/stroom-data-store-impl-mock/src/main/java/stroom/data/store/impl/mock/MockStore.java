@@ -55,7 +55,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-public class MockStreamStore implements Store, Clearable {
+public class MockStore implements Store, Clearable {
     /**
      * Our stream data.
      */
@@ -69,7 +69,7 @@ public class MockStreamStore implements Store, Clearable {
 
     @SuppressWarnings("unused")
     @Inject
-    public MockStreamStore(final MetaService metaService) {
+    public MockStore(final MetaService metaService) {
         this.metaService = metaService;
     }
 
@@ -137,6 +137,7 @@ public class MockStreamStore implements Store, Clearable {
         fileData.clear();
         openOutputStream.clear();
         openInputStream.clear();
+        lastMeta = null;
         ((MockMetaService) metaService).clear();
     }
 

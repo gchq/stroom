@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import stroom.meta.impl.mock.MockMetaService;
 import stroom.meta.shared.MetaProperties;
 import stroom.data.store.api.Target;
-import stroom.data.store.impl.mock.MockStreamStore;
+import stroom.data.store.impl.mock.MockStore;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.SimpleCron;
@@ -31,7 +31,7 @@ import java.io.IOException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRollingStreamDestination {
-    private MockStreamStore streamStore = new MockStreamStore(new MockMetaService());
+    private MockStore streamStore = new MockStore(new MockMetaService());
 
     @Test
     void testFrequency() throws IOException {

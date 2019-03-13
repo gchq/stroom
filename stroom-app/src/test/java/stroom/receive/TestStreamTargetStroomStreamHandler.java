@@ -19,7 +19,7 @@ package stroom.receive;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.store.impl.mock.MockStreamStore;
+import stroom.data.store.impl.mock.MockStore;
 import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFileType;
 import stroom.docref.DocRef;
@@ -40,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest {
     @Inject
-    private MockStreamStore streamStore;
+    private MockStore streamStore;
     @Inject
     private FeedProperties feedProperties;
     @Inject
