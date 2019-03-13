@@ -20,8 +20,10 @@ package stroom.pipeline.refdata.store;
 import com.google.common.util.concurrent.Striped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
@@ -61,13 +63,13 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                 try {
                     work.accept(refDataLoader);
                 } catch (Exception e) {
-                    throw new RuntimeException(LambdaLogger.buildMessage(
+                    throw new RuntimeException(LogUtil.message(
                             "Error performing action with refDataLoader for {}", refStreamDefinition), e);
                 }
                 result = true;
             }
         } catch (Exception e) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
+            throw new RuntimeException(LogUtil.message(
                     "Error closing refDataLoader for {}", refStreamDefinition), e);
         }
         return result;
@@ -86,12 +88,12 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                         lock.lockInterruptibly();
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        throw new RuntimeException(LambdaLogger.buildMessage(
+                        throw new RuntimeException(LogUtil.message(
                                 "Thread interrupted while trying to acquire lock for refStreamDefinition {}",
                                 refStreamDefinition));
                     }
                 },
-                () -> LambdaLogger.buildMessage("Acquiring lock for {}", refStreamDefinition));
+                LambdaLogUtil.message("Acquiring lock for {}", refStreamDefinition));
         try {
             // now we have sole access to this RefStreamDefinition so perform the work on it
             work.run();

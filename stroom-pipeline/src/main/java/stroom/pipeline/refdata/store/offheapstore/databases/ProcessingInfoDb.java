@@ -9,16 +9,17 @@ import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.pipeline.refdata.util.PooledByteBufferPair;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
+import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefStreamDefinitionSerde;
+import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.pipeline.refdata.util.PooledByteBufferPair;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -109,7 +110,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
             LOGGER.debug("Scanning from start of DB");
             keyRange = KeyRange.all();
         } else {
-            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+            LAMBDA_LOGGER.debug(LambdaLogUtil.message(
                     "Scanning from {}", ByteBufferUtils.byteBufferInfo(startKeyBuffer)));
             keyRange = KeyRange.atLeast(startKeyBuffer);
         }

@@ -49,6 +49,7 @@ import stroom.security.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
@@ -201,7 +202,7 @@ public class ExtractionTaskHandler {
         long count = 0;
 
         // Open the stream source.
-        try (final Source source = streamStore.openStreamSource(streamId)) {
+        try (final Source source = streamStore.openSource(streamId)) {
             if (source != null) {
                 try (final InputStreamProvider inputStreamProvider = source.get(0)) {
                     // This is a valid stream so try and extract as many
@@ -268,7 +269,7 @@ public class ExtractionTaskHandler {
                 // Process the boundary.
                 LAMBDA_LOGGER.logDurationIfDebugEnabled(
                         () -> pipeline.process(inputStream, encoding),
-                        () -> LambdaLogger.buildMessage("Processing pipeline {}, stream {}",
+                        LambdaLogUtil.message("Processing pipeline {}, stream {}",
                                 pipelineRef.getUuid(), source.getMeta().getId()));
 
             } catch (final TerminatedException e) {

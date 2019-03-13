@@ -149,7 +149,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
     }
 
     private void processFile(final Store streamStore, final long streamId, final String match) {
-        try (final Source streamSource = streamStore.openStreamSource(streamId)) {
+        try (final Source streamSource = streamStore.openSource(streamId)) {
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
                 try (final InputStream inputStream = inputStreamProvider.get()) {
 

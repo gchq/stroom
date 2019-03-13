@@ -22,16 +22,16 @@ import org.lmdbjava.CursorIterator;
 import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.store.MapDefinition;
-import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.UID;
+import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.MapDefinitionSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
-import stroom.util.logging.LambdaLogger;
+import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.pipeline.refdata.util.PooledByteBuffer;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -61,7 +61,7 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
 
         boolean didPutSuceed = put(writeTxn, mapDefinitionKeyBuffer, uidValueBuffer, false);
         if (!didPutSuceed) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Failed to put mapDefinition {}, uid {}",
+            throw new RuntimeException(LogUtil.message("Failed to put mapDefinition {}, uid {}",
                     ByteBufferUtils.byteBufferInfo(mapDefinitionKeyBuffer),
                     ByteBufferUtils.byteBufferInfo(uidValueBuffer)));
         }

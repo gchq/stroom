@@ -33,6 +33,7 @@ import stroom.index.shared.IndexShard;
 import stroom.search.SearchException;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
@@ -104,7 +105,7 @@ public class IndexShardSearchTaskHandler {
                         }
                     }
                 },
-                () -> LambdaLogger.buildMessage("exec() for shard {}", task.getShardNumber()));
+                LambdaLogUtil.message("exec() for shard {}", task.getShardNumber()));
 
         return VoidResult.INSTANCE;
     }

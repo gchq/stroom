@@ -21,6 +21,8 @@ DROP PROCEDURE IF EXISTS copy_config;
 DELIMITER //
 CREATE PROCEDURE copy_config ()
 BEGIN
+    -- If table exists (it may not if this migration runs before core stroom's) then migrate its data,
+    -- if it doesn't exist then it won't ever have data to migrate
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'GLOB_PROP' > 0) THEN
     INSERT INTO config (id, version, create_time_ms, create_user, update_time_ms, update_user, name, val)
     SELECT ID, 1, CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, VAL

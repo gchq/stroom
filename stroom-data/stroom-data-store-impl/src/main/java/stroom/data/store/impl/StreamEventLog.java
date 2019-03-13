@@ -183,9 +183,9 @@ public class StreamEventLog {
 //        CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorIdSet",
 //                findMetaCriteria.getStreamProcessorIdSet());
 //        CriteriaLoggingUtil.appendIncludeExcludeEntityIdSet(items, "feeds", findMetaCriteria.getFeeds());
-//        CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", findMetaCriteria.getPipelineSet());
+//        CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", findMetaCriteria.getPipelineUuidCriteria());
 //        CriteriaLoggingUtil.appendEntityIdSet(items, "streamTypeIdSet", findMetaCriteria.getStreamTypeIdSet());
-//        CriteriaLoggingUtil.appendEntityIdSet(items, "streamIdSet", findMetaCriteria.getStreamIdSet());
+//        CriteriaLoggingUtil.appendEntityIdSet(items, "streamIdSet", findMetaCriteria.getMetaIdSet());
 //        CriteriaLoggingUtil.appendCriteriaSet(items, "statusSet", findMetaCriteria.getStatusSet());
 //        CriteriaLoggingUtil.appendRangeTerm(items, "streamIdRange", findMetaCriteria.getStreamIdRange());
 //        CriteriaLoggingUtil.appendEntityIdSet(items, "parentStreamIdSet", findMetaCriteria.getParentStreamIdSet());

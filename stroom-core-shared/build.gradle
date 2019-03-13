@@ -12,7 +12,7 @@ dependencies {
     compile libs.javax_inject;
     compile libs.jaxb_api
     compile libs.validation_api
-
-    testRuntimeOnly libs.jaxb_runtime
+    
     testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
 }

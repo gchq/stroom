@@ -24,7 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
-import stroom.data.store.impl.mock.MockStreamStore;
+import stroom.data.store.impl.mock.MockStore;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.util.date.DateUtil;
@@ -56,7 +56,7 @@ class TestDataFeedServiceImpl {
     @Inject
     private MockHttpServletResponse response;
     @Inject
-    private MockStreamStore streamStore;
+    private MockStore streamStore;
 
     @BeforeEach
     void init() {
@@ -107,7 +107,7 @@ class TestDataFeedServiceImpl {
 
         checkOK();
 
-        try (final Source source = streamStore.openStreamSource(streamStore.getLastMeta().getId())) {
+        try (final Source source = streamStore.openSource(streamStore.getLastMeta().getId())) {
             assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
             assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
         }
@@ -123,7 +123,7 @@ class TestDataFeedServiceImpl {
 
         checkOK();
 
-        try (final Source source = streamStore.openStreamSource(streamStore.getLastMeta().getId())) {
+        try (final Source source = streamStore.openSource(streamStore.getLastMeta().getId())) {
             assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
             assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
         }
@@ -141,7 +141,7 @@ class TestDataFeedServiceImpl {
 
         checkOK();
 
-        try (final Source source = streamStore.openStreamSource(streamStore.getLastMeta().getId())) {
+        try (final Source source = streamStore.openSource(streamStore.getLastMeta().getId())) {
             assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
             assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
         }
@@ -158,7 +158,7 @@ class TestDataFeedServiceImpl {
 
         checkOK();
 
-        try (final Source source = streamStore.openStreamSource(streamStore.getLastMeta().getId())) {
+        try (final Source source = streamStore.openSource(streamStore.getLastMeta().getId())) {
             assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
             assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
         }
@@ -225,7 +225,7 @@ class TestDataFeedServiceImpl {
 
         checkOK();
 
-        try (final Source source = streamStore.openStreamSource(streamStore.getLastMeta().getId())) {
+        try (final Source source = streamStore.openSource(streamStore.getLastMeta().getId())) {
             assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
         }
     }
@@ -251,7 +251,7 @@ class TestDataFeedServiceImpl {
 
         checkOK();
 
-        try (final Source source = streamStore.openStreamSource(streamStore.getLastMeta().getId())) {
+        try (final Source source = streamStore.openSource(streamStore.getLastMeta().getId())) {
             assertThat(SourceUtil.readString(source)).isEqualTo("LINE1\nLINE2\n");
         }
     }

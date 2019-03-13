@@ -20,14 +20,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.impl.CacheManagerService;
 import stroom.entity.StroomEntityManager;
-import stroom.index.service.IndexVolumeService;
-import stroom.index.shared.IndexVolume;
-import stroom.util.shared.Clearable;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
+import stroom.index.service.IndexVolumeService;
+import stroom.index.shared.IndexVolume;
 import stroom.node.impl.NodeCreator;
-import stroom.streamtask.StreamTaskCreator;
+import stroom.processor.impl.ProcessorTaskManager;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import java.nio.file.Paths;
@@ -51,8 +51,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final IndexShardWriterCache indexShardWriterCache;
     private final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
     private final NodeCreator nodeConfig;
-    private final StreamTaskCreator streamTaskCreator;
-    private final CacheManagerService stroomCacheManager;
+    private final ProcessorTaskManager processorTaskManager;
     private final Set<Clearable> clearables;
 
     @Inject
@@ -63,8 +62,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final IndexShardWriterCache indexShardWriterCache,
                               final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
                               final NodeCreator nodeConfig,
-                              final StreamTaskCreator streamTaskCreator,
-                              final CacheManagerService stroomCacheManager,
+                              final ProcessorTaskManager processorTaskManager,
                               final Set<Clearable> clearables) {
         this.entityManager = entityManager;
         this.volumeService = volumeService;
@@ -73,8 +71,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.indexShardWriterCache = indexShardWriterCache;
         this.databaseCommonTestControlTransactionHelper = databaseCommonTestControlTransactionHelper;
         this.nodeConfig = nodeConfig;
-        this.streamTaskCreator = streamTaskCreator;
-        this.stroomCacheManager = stroomCacheManager;
+        this.processorTaskManager = processorTaskManager;
         this.clearables = clearables;
     }
 
@@ -84,7 +81,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         nodeConfig.setup();
 
         // Ensure we can create tasks.
-        streamTaskCreator.startup();
+        processorTaskManager.startup();
         LOGGER.info("test environment setup completed in {}", Duration.between(startTime, Instant.now()));
     }
 
@@ -95,7 +92,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     public void teardown() {
         Instant startTime = Instant.now();
         // Make sure we are no longer creating tasks.
-        streamTaskCreator.shutdown();
+        processorTaskManager.shutdown();
 
         // Make sure we don't delete database entries without clearing the pool.
         indexShardWriterCache.shutdown();
@@ -117,16 +114,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         // so used delete with no constraint checks instead
         databaseCommonTestControlTransactionHelper.clearAllTables();
 
-        // ensure all the caches are empty
-        stroomCacheManager.clear();
-
         clearables.forEach(Clearable::clear);
         LOGGER.info("test environment teardown completed in {}", Duration.between(startTime, Instant.now()));
-    }
-
-    @Override
-    public int countEntity(final String tableName) {
-        return databaseCommonTestControlTransactionHelper.countEntity(tableName);
     }
 
     @Override

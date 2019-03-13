@@ -19,7 +19,7 @@ package stroom.util.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -101,7 +101,7 @@ public final class FileUtil {
             tempDir = Files.createTempDirectory(prefix);
         } catch (IOException e) {
             throw new RuntimeException(
-                    LambdaLogger.buildMessage("Error creating temporary directory with prefix {}", prefix), e);
+                    LogUtil.message("Error creating temporary directory with prefix {}", prefix), e);
         }
         // make the jvm delete the file on jvm exit
         tempDir.toFile().deleteOnExit();

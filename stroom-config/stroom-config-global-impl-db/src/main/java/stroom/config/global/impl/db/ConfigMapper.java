@@ -31,7 +31,7 @@ import stroom.docref.DocRef;
 import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Inject;
@@ -78,7 +78,7 @@ public class ConfigMapper {
             IsConfig vanillaObject = configObject.getClass().getDeclaredConstructor().newInstance();
             addConfigObjectMethods(vanillaObject, ROOT_PROPERTY_PATH, new HashMap<>(), this::defaultPropertyConsumer);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Unable to call constructor on class {}",
+            throw new RuntimeException(LogUtil.message("Unable to call constructor on class {}",
                     configObject.getClass().getName()), e);
         }
 
@@ -131,7 +131,7 @@ public class ConfigMapper {
                     }
                 } else {
                     // This is not expected
-                    throw  new RuntimeException(LambdaLogger.buildMessage(
+                    throw  new RuntimeException(LogUtil.message(
                             "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
                             valueType.getName(),
                             IsConfig.class.getSimpleName()));
@@ -275,7 +275,7 @@ public class ConfigMapper {
                     return value.toString();
                 }
             } else {
-                throw new RuntimeException(LambdaLogger.buildMessage("Value [{}] of type {}, is not a supported type",
+                throw new RuntimeException(LogUtil.message("Value [{}] of type {}, is not a supported type",
                         value, value.getClass().getName()));
             }
         } else {
@@ -318,7 +318,7 @@ public class ConfigMapper {
                 prop.setValueOnConfigObject(typedValue);
                 return typedValue;
             } else {
-                LOGGER.error(LambdaLogger.buildMessage("Cannot find property with key [{}]", key));
+                LOGGER.error(LogUtil.message("Cannot find property with key [{}]", key));
             }
         } catch (final IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
             // TODO why swallow these exceptions
@@ -450,7 +450,7 @@ public class ConfigMapper {
                     .map(type::cast)
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
+            throw new RuntimeException(LogUtil.message(
                     "Error de-serialising a List<?> from [{}]", serialisedForm), e);
         }
     }
@@ -471,7 +471,7 @@ public class ConfigMapper {
                     final List<String> parts = Splitter.on(keyValueDelimiter).splitToList(keyValueStr);
 
                     if (parts.size() < 1 || parts.size() > 2) {
-                        throw new RuntimeException(LambdaLogger.buildMessage("Too many parts [{}] in value [{}], whole value [{}]",
+                        throw new RuntimeException(LogUtil.message("Too many parts [{}] in value [{}], whole value [{}]",
                                 parts.size(), keyValueStr, serialisedForm));
                     }
 
@@ -503,7 +503,7 @@ public class ConfigMapper {
                     .name(parts.get(2))
                     .build();
         } catch (Exception e) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
+            throw new RuntimeException(LogUtil.message(
                     "Error de-serialising a docRef from [{}]", serialisedForm), e);
         }
     }
@@ -531,7 +531,7 @@ public class ConfigMapper {
             ParameterizedType pt = (ParameterizedType) type;
             return getDataType(pt.getRawType());
         } else {
-            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type of type {}",
+            throw new RuntimeException(LogUtil.message("Unexpected type of type {}",
                     type.getClass().getName()));
         }
     }
@@ -545,7 +545,7 @@ public class ConfigMapper {
 
             return Arrays.asList(specificTypes);
         } else {
-            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type of type {}",
+            throw new RuntimeException(LogUtil.message("Unexpected type of type {}",
                     type.getClass().getName()));
         }
     }

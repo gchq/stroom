@@ -1,18 +1,18 @@
 package stroom.docstore.impl.memory;
 
+import stroom.docref.DocRef;
 import stroom.docstore.api.Persistence;
 import stroom.docstore.api.RWLockFactory;
-import stroom.docref.DocRef;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Singleton
-public class MemoryPersistence implements Persistence {
+public class MemoryPersistence implements Persistence, Clearable {
     private static final RWLockFactory LOCK_FACTORY = new NoLockFactory();
 
     private final Map<DocRef, Map<String, byte[]>> map = new ConcurrentHashMap<>();
@@ -23,12 +23,12 @@ public class MemoryPersistence implements Persistence {
     }
 
     @Override
-    public Map<String, byte[]> read(final DocRef docRef) throws IOException {
+    public Map<String, byte[]> read(final DocRef docRef) {
         return map.get(docRef);
     }
 
     @Override
-    public void write(final DocRef docRef, final boolean update, final Map<String, byte[]> data) throws IOException {
+    public void write(final DocRef docRef, final boolean update, final Map<String, byte[]> data) {
         if (update) {
             if (!map.containsKey(docRef)) {
                 throw new RuntimeException("Document does not exist with uuid=" + docRef.getUuid());
@@ -58,6 +58,7 @@ public class MemoryPersistence implements Persistence {
         return LOCK_FACTORY;
     }
 
+    @Override
     public void clear() {
         map.clear();
     }

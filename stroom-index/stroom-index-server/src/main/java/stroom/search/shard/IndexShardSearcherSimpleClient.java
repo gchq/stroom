@@ -67,7 +67,7 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
 //                        final Long segment = Long.valueOf(document.getField(IndexConstants.EVENT_ID).stringValue());
 //
 //                        // Try and open the stream source - pnly open unlocked ones.
-//                        final StreamSource streamSource = streamStore.openStreamSource(streamId);
+//                        final StreamSource streamSource = streamStore.openSource(streamId);
 //                        if (streamSource != null) {
 //                            final RASegmentInputStream inputStream = new RASegmentInputStream(streamSource);
 //                            inputStream.include(segment);

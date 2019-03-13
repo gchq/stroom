@@ -18,9 +18,9 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import org.apache.hadoop.hbase.util.ByteBufferUtils;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
-import stroom.util.logging.LambdaLogger;
+import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
+import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
 
@@ -113,7 +113,7 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
                     thisBuffer, VALUE_HASH_CODE_OFFSET, VALUE_HASH_CODE_BYTES,
                     thatBuffer, VALUE_HASH_CODE_OFFSET, VALUE_HASH_CODE_BYTES);
         } catch (Exception e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error comparing [{}] & [{}]",
+            throw new RuntimeException(LogUtil.message("Error comparing [{}] & [{}]",
                     stroom.pipeline.refdata.util.ByteBufferUtils.byteBufferInfo(thisBuffer),
                     stroom.pipeline.refdata.util.ByteBufferUtils.byteBufferInfo(thatBuffer)), e);
         }

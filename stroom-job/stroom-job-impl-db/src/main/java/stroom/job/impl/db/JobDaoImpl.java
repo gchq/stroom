@@ -17,8 +17,8 @@
 package stroom.job.impl.db;
 
 import org.jooq.Condition;
+import org.jooq.Field;
 import org.jooq.OrderField;
-import org.jooq.TableField;
 import stroom.db.util.AuditUtil;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
@@ -54,7 +54,7 @@ import static stroom.job.impl.db.jooq.Tables.JOB_NODE;
 public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(JobDao.class);
 
-    private static final Map<String, TableField> TABLE_FIELD_MAP = Map.of(
+    private static final Map<String, Field> FIELD_MAP = Map.of(
             FindJobCriteria.FIELD_ID, JOB.ID,
             FindJobCriteria.FIELD_NAME, JOB.NAME);
 
@@ -97,7 +97,7 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
         final Collection<Condition> conditions = new ArrayList<>();
         JooqUtil.getStringCondition(JOB.NAME, criteria.getName()).ifPresent(conditions::add);
 
-        final OrderField[] orderFields = JooqUtil.getOrderFields(TABLE_FIELD_MAP, criteria);
+        final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<Job> list = JooqUtil.contextResult(connectionProvider, context -> context
                 .select()

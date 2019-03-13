@@ -29,8 +29,10 @@ import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.query.common.v2.TablePayload;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.task.api.TaskContext;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -220,7 +222,7 @@ public class SqlStatisticsStore implements Store {
                             if (now >= nextProcessPayloadsTime.get() ||
                                     countSinceLastSend.get() >= resultHandlerBatchSize) {
 
-                                LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("{} vs {}, {} vs {}",
+                                LAMBDA_LOGGER.debug(LambdaLogUtil.message("{} vs {}, {} vs {}",
                                         now, nextProcessPayloadsTime,
                                         countSinceLastSend.get(), resultHandlerBatchSize));
 
@@ -247,7 +249,7 @@ public class SqlStatisticsStore implements Store {
                             completeSearch();
 
                             LAMBDA_LOGGER.debug(() ->
-                                    LambdaLogger.buildMessage("Query finished in {}", Duration.between(queryStart, Instant.now())));
+                                    LogUtil.message("Query finished in {}", Duration.between(queryStart, Instant.now())));
                         });
 
         LOGGER.debug("Out of flowable");
@@ -286,7 +288,7 @@ public class SqlStatisticsStore implements Store {
 
         if (!Thread.currentThread().isInterrupted()) {
             LAMBDA_LOGGER.debug(() ->
-                    LambdaLogger.buildMessage("processPayloads called for {} coprocessors", coprocessorMap.size()));
+                    LogUtil.message("processPayloads called for {} coprocessors", coprocessorMap.size()));
 
             //build a payload map from whatever the coprocessors have in them, if anything
             final Map<CoprocessorSettingsMap.CoprocessorKey, Payload> payloadMap = coprocessorMap.entrySet().stream()

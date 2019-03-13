@@ -1,9 +1,9 @@
 package stroom.job.impl.db;
 
 import org.jooq.Condition;
+import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
-import org.jooq.TableField;
 import stroom.db.util.AuditUtil;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
@@ -35,7 +35,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 //    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(JobNodeDaoImpl.class);
 
 
-    private static final Map<String, TableField> TABLE_FIELD_MAP = Map.of(
+    private static final Map<String, Field> FIELD_MAP = Map.of(
             FindJobNodeCriteria.FIELD_ID, JOB_NODE.ID);
 
     private static final Function<Record, Job> RECORD_TO_JOB_MAPPER = record -> {
@@ -97,7 +97,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
         return result;
 
 //        final JobNode result = JooqUtil.contextResult(connectionProvider, context -> {
-//            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Creating a {}", JOB_NODE.getName()));
+//            LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", JOB_NODE.getName()));
 //            JobNodeRecord record = context.newRecord(JOB_NODE, jobNode);
 //            record.set(JOB_NODE.JOB_ID, jobNode.getJob().getId());
 //            record.store();
@@ -132,7 +132,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
         JooqUtil.getStringCondition(JOB.NAME, criteria.getJobName()).ifPresent(conditions::add);
         JooqUtil.getStringCondition(JOB_NODE.NODE_NAME, criteria.getNodeName()).ifPresent(conditions::add);
 
-        final OrderField[] orderFields = JooqUtil.getOrderFields(TABLE_FIELD_MAP, criteria);
+        final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<JobNode> list = JooqUtil.contextResult(connectionProvider, context -> context
                 .select()

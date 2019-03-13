@@ -147,6 +147,12 @@ include 'stroom-lifecycle:stroom-lifecycle-impl'
 // Pipeline
 include 'stroom-pipeline'
 
+// Processor
+include 'stroom-processor:stroom-processor-api'
+include 'stroom-processor:stroom-processor-impl'
+include 'stroom-processor:stroom-processor-impl-db'
+include 'stroom-processor:stroom-processor-impl-db-jooq'
+
 // Proxy
 include 'stroom-proxy:stroom-proxy-app'
 include 'stroom-proxy:stroom-proxy-repo'

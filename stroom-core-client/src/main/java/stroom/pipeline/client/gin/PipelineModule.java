@@ -69,12 +69,12 @@ import stroom.pipeline.structure.client.view.NewPipelineReferenceViewImpl;
 import stroom.pipeline.structure.client.view.NewPropertyViewImpl;
 import stroom.pipeline.structure.client.view.PipelineStructureViewImpl;
 import stroom.pipeline.structure.client.view.PipelineTreeViewImpl;
-import stroom.process.client.presenter.ProcessorEditPresenter;
-import stroom.process.client.presenter.ProcessorEditPresenter.ProcessorEditView;
-import stroom.process.client.presenter.ProcessorPresenter;
-import stroom.process.client.presenter.ProcessorPresenter.ProcessorView;
-import stroom.process.client.view.ProcessorEditViewImpl;
-import stroom.process.client.view.ProcessorViewImpl;
+import stroom.processor.client.presenter.ProcessorEditPresenter;
+import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
+import stroom.processor.client.presenter.ProcessorPresenter;
+import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
+import stroom.processor.client.view.ProcessorEditViewImpl;
+import stroom.processor.client.view.ProcessorViewImpl;
 
 public class PipelineModule extends PluginModule {
     @Override

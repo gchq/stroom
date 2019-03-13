@@ -19,18 +19,18 @@ package stroom.pipeline.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.streamtask.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilter;
 
 public class CreateProcessorEvent extends GwtEvent<CreateProcessorEvent.Handler> {
     private static Type<Handler> TYPE;
-    private final ProcessorFilter streamProcessorFilter;
+    private final ProcessorFilter processorFilter;
 
-    private CreateProcessorEvent(final ProcessorFilter streamProcessorFilter) {
-        this.streamProcessorFilter = streamProcessorFilter;
+    private CreateProcessorEvent(final ProcessorFilter processorFilter) {
+        this.processorFilter = processorFilter;
     }
 
-    public static <T> void fire(final HasHandlers source, final ProcessorFilter streamProcessorFilter) {
-        source.fireEvent(new CreateProcessorEvent(streamProcessorFilter));
+    public static <T> void fire(final HasHandlers source, final ProcessorFilter processorFilter) {
+        source.fireEvent(new CreateProcessorEvent(processorFilter));
     }
 
     public static Type<Handler> getType() {
@@ -50,8 +50,8 @@ public class CreateProcessorEvent extends GwtEvent<CreateProcessorEvent.Handler>
         handler.onCreate(this);
     }
 
-    public ProcessorFilter getStreamProcessorFilter() {
-        return streamProcessorFilter;
+    public ProcessorFilter getProcessorFilter() {
+        return processorFilter;
     }
 
     public interface Handler extends EventHandler {

@@ -29,7 +29,6 @@ import org.lmdbjava.EnvFlags;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.writer.PathCreator;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
@@ -53,10 +52,13 @@ import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.pipeline.refdata.util.PooledByteBufferPair;
+import stroom.pipeline.writer.PathCreator;
 import stroom.util.HasHealthCheck;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
@@ -324,7 +326,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     boolean doesStoreContainRanges = rangeStoreDb.containsMapDefinition(readTxn, mapUid);
                     if (doesStoreContainRanges) {
                         // we have ranges for this map def so we would expect to be able to convert the key
-                        throw new RuntimeException(LambdaLogger.buildMessage(
+                        throw new RuntimeException(LogUtil.message(
                                 "Key {} cannot be used with the range store as it cannot be converted to a long", key), e);
                     }
                     // no ranges for this map def so the fact that we could not convert the key to a long
@@ -635,7 +637,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             //dereference this value, deleting it if required
             deReferenceOrDeleteValue(writeTxn, valueStoreKeyBuffer, valueEntryDeleteCount, valueEntryDeReferenceCount);
         });
-        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Deleted {} value entries, de-referenced {} value entries",
+        LAMBDA_LOGGER.debug(LambdaLogUtil.message("Deleted {} value entries, de-referenced {} value entries",
                 valueEntryDeleteCount.get(), valueEntryDeReferenceCount.get()));
 
         LOGGER.debug("Deleting range/value entries and de-referencing/deleting their values");
@@ -703,7 +705,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     void doWithLmdb(final String dbName, final Consumer<LmdbDb> work) {
         LmdbDb lmdbDb = databaseMap.get(dbName);
         if (lmdbDb == null) {
-            throw new IllegalArgumentException(LambdaLogger.buildMessage("No database with name {} exists", dbName));
+            throw new IllegalArgumentException(LogUtil.message("No database with name {} exists", dbName));
         }
         work.accept(lmdbDb);
     }
@@ -725,7 +727,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     long getEntryCount(final String dbName) {
         LmdbDb lmdbDb = databaseMap.get(dbName);
         if (lmdbDb == null) {
-            throw new IllegalArgumentException(LambdaLogger.buildMessage("No database with name {} exists", dbName));
+            throw new IllegalArgumentException(LogUtil.message("No database with name {} exists", dbName));
         }
         return lmdbDb.getEntryCount();
     }
@@ -823,7 +825,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             LOGGER.debug("Ensuring directory {}", storeDir);
             Files.createDirectories(storeDir);
         } catch (IOException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error ensuring store directory {} exists", storeDirStr), e);
+            throw new RuntimeException(LogUtil.message("Error ensuring store directory {} exists", storeDirStr), e);
         }
 
         return storeDir;

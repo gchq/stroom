@@ -344,7 +344,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     }
 
     private void checkFull(final long streamId, final String outputReference) throws IOException {
-        try (final Source streamSource = streamStore.openStreamSource(streamId)) {
+        try (final Source streamSource = streamStore.openSource(streamId)) {
             final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(outputReference);
             final String refData = StreamUtil.fileToString(refFile);
             final String data = SourceUtil.readString(streamSource);
@@ -353,7 +353,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     }
 
     private void checkOuterData(final long streamId, final int count, final String ref) throws IOException {
-        try (final Source streamSource = streamStore.openStreamSource(streamId)) {
+        try (final Source streamSource = streamStore.openSource(streamId)) {
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
                 final SegmentInputStream segmentInputStream = inputStreamProvider.get();
 
@@ -370,7 +370,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     }
 
     private void checkInnerData(final long streamId, final int count, final String ref) throws IOException {
-        try (final Source streamSource = streamStore.openStreamSource(streamId)) {
+        try (final Source streamSource = streamStore.openSource(streamId)) {
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
                 final SegmentInputStream segmentInputStream = inputStreamProvider.get();
 

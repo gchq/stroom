@@ -117,7 +117,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
                 .build();
         Meta originalMeta;
 
-        try (final Target streamTarget = streamStore.openStreamTarget(metaProperties)) {
+        try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             originalMeta = streamTarget.getMeta();
 
             for (int i = 1; i <= 2; i++) {
@@ -166,7 +166,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
 
         for (final Meta meta : streamList) {
             assertThat(meta.getStatus()).isEqualTo(Status.UNLOCKED);
-            try (final Source streamSource = streamStore.openStreamSource(meta.getId())) {
+            try (final Source streamSource = streamStore.openSource(meta.getId())) {
                 for (int i = 1; i <= streamSource.count(); i++) {
                     try (final InputStreamProvider inputStreamProvider = streamSource.get(i - 1)) {
                         assertThat(StreamUtil.streamToString(inputStreamProvider.get(), false)).isEqualTo("DATA" + i);

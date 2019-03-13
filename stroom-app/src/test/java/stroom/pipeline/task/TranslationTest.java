@@ -26,7 +26,6 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
-import stroom.util.shared.BaseResultList;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
@@ -46,6 +45,12 @@ import stroom.pipeline.shared.SharedStepData;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.pipeline.stepping.SteppingTask;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorService;
+import stroom.processor.impl.DataProcessorTask;
+import stroom.processor.impl.ProcessorTaskManager;
+import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -53,23 +58,17 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.security.util.UserTokenUtil;
-import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.streamtask.StreamProcessorFilterService;
-import stroom.streamtask.StreamProcessorService;
-import stroom.streamtask.StreamProcessorTask;
-import stroom.streamtask.StreamTaskCreator;
-import stroom.streamtask.shared.Processor;
-import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.common.ComparisonHelper;
 import stroom.test.ContentImportService;
+import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Indicators;
 
 import javax.inject.Inject;
@@ -98,7 +97,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private NodeInfo nodeInfo;
     @Inject
-    private StreamTaskCreator streamTaskCreator;
+    private ProcessorTaskManager processorTaskManager;
     @Inject
     private TaskManager taskManager;
     @Inject
@@ -106,9 +105,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private PipelineStore pipelineStore;
     @Inject
-    private StreamProcessorService streamProcessorService;
+    private ProcessorService streamProcessorService;
     @Inject
-    private StreamProcessorFilterService streamProcessorFilterService;
+    private ProcessorFilterService processorFilterService;
     @Inject
     private Store streamStore;
     @Inject
@@ -149,8 +148,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         }
     }
 
-    protected void processData(final Path inputDir, final Path outputDir, final boolean reference,
-                               final boolean compareOutput, final List<Exception> exceptions) {
+    private void processData(final Path inputDir, final Path outputDir, final boolean reference,
+                             final boolean compareOutput, final List<Exception> exceptions) {
         // Create a stream processor for each pipeline.
         final List<DocRef> pipelines = pipelineStore.list();
         for (final DocRef pipelineRef : pipelines) {
@@ -163,11 +162,6 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             final FeedDoc feedDoc = feed;
 
             if (feedDoc != null && feedDoc.isReference() == reference) {
-                Processor streamProcessor = new Processor();
-                streamProcessor.setPipelineUuid(pipelineRef.getUuid());
-                streamProcessor.setEnabled(true);
-                streamProcessor = streamProcessorService.save(streamProcessor);
-
                 int priority = 1;
                 if (feed.isReference()) {
                     priority++;
@@ -183,7 +177,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                                 .build())
                         .build();
 
-                streamProcessorFilterService.addFindStreamCriteria(streamProcessor, priority, findStreamQueryData);
+                processorFilterService.create(pipelineRef, findStreamQueryData, priority, true);
 
                 // Add data.
                 final List<Path> files = new ArrayList<>();
@@ -221,12 +215,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         addStream(inputFile, feed);
 
-        streamTaskCreator.createTasks(new SimpleTaskContext());
+        processorTaskManager.createTasks(new SimpleTaskContext());
 
-        List<StreamProcessorTask> tasks = getTasks();
+        List<DataProcessorTask> tasks = getTasks();
         assertThat(tasks.size()).as("There should be one task here").isEqualTo(1);
 
-        for (final StreamProcessorTask task : tasks) {
+        for (final DataProcessorTask task : tasks) {
             final long startStreamId = getLatestStreamId();
             taskManager.exec(task);
             final long endStreamId = getLatestStreamId();
@@ -240,7 +234,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     if (!StreamTypeNames.ERROR.equals(streamTypeName)) {
                         processedMeta.add(meta);
                     } else {
-                        try (Source errorStreamSource = streamStore.openStreamSource(streamId)) {
+                        try (Source errorStreamSource = streamStore.openSource(streamId)) {
                             String errorStreamStr = SourceUtil.readString(errorStreamSource);
 
 //                            try (final InputStreamProvider inputStreamProvider = errorStreamSource.get(0)) {
@@ -298,7 +292,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         // Make sure there are no more tasks.
         tasks = getTasks();
-        assertThat(tasks.size() == 0).as("There should not be any more tasks here").isTrue();
+        assertThat(tasks.size()).as("There should not be any more tasks here").isZero();
     }
 
     private void addStream(final Path file, final FeedDoc feed) throws IOException {
@@ -329,7 +323,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     .build();
 
             Meta meta;
-            try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+            try (final Target target = streamStore.openTarget(metaProperties)) {
                 meta = target.getMeta();
                 final InputStream inputStream = new BufferedInputStream(Files.newInputStream(file));
                 TargetUtil.write(target, inputStream);
@@ -337,7 +331,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
             // Check that what was written to the store is the same as the
             // contents of the file.
-            try (final Source checkSource = streamStore.openStreamSource(meta.getId())) {
+            try (final Source checkSource = streamStore.openSource(meta.getId())) {
                 final byte[] original = Files.readAllBytes(file);
                 final byte[] stored = SourceUtil.read(checkSource);
                 assertThat(Arrays.equals(original, stored)).isTrue();
@@ -364,19 +358,19 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
      *
      * @return The next task or null if there are currently no more tasks.
      */
-    private List<StreamProcessorTask> getTasks() {
-        List<StreamProcessorTask> streamProcessorTasks = Collections.emptyList();
+    private List<DataProcessorTask> getTasks() {
+        List<DataProcessorTask> dataProcessorTasks = Collections.emptyList();
 
-        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
-        while (streamTasks.size() > 0) {
-            streamProcessorTasks = new ArrayList<>(streamTasks.size());
-            for (final ProcessorFilterTask streamTask : streamTasks) {
-                streamProcessorTasks.add(new StreamProcessorTask(streamTask));
+        List<ProcessorTask> processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
+        while (processorTasks.size() > 0) {
+            dataProcessorTasks = new ArrayList<>(processorTasks.size());
+            for (final ProcessorTask processorTask : processorTasks) {
+                dataProcessorTasks.add(new DataProcessorTask(processorTask));
             }
-            streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+            processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
         }
 
-        return streamProcessorTasks;
+        return dataProcessorTasks;
     }
 
     protected void testSteppingTask(final String feedName, final Path dir) throws IOException {
@@ -562,7 +556,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private void copyStream(final Meta meta, final OutputStream outputStream) throws IOException {
-        try (final Source streamSource = streamStore.openStreamSource(meta.getId())) {
+        try (final Source streamSource = streamStore.openSource(meta.getId())) {
             SourceUtil.read(streamSource, outputStream);
         }
     }

@@ -18,20 +18,16 @@
 package stroom.index;
 
 
-import stroom.docref.DocRef;
 import stroom.index.service.IndexShardService;
-import stroom.index.shared.IndexShardKey;
-import stroom.util.shared.BaseResultList;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;

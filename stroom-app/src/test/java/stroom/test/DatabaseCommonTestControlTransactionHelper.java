@@ -16,8 +16,8 @@
 
 package stroom.test;
 
-import stroom.persist.ConnectionProvider;
 import stroom.db.util.DbUtil;
+import stroom.persist.ConnectionProvider;
 
 import javax.inject.Inject;
 import java.sql.Connection;
@@ -34,20 +34,6 @@ class DatabaseCommonTestControlTransactionHelper {
     @Inject
     DatabaseCommonTestControlTransactionHelper(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
-    }
-
-    /**
-     * Count the records.
-     *
-     * @param clazz to count
-     * @return the count
-     */
-    int countEntity(final String tableName) {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            return DbUtil.countEntity(connection, tableName);
-        } catch (final SQLException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
     }
 
     void clearAllTables() {

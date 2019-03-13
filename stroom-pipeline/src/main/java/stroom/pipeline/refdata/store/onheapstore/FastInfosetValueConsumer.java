@@ -25,6 +25,7 @@ import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -46,7 +47,7 @@ public class FastInfosetValueConsumer implements RefDataValueConsumer {
     @Override
     public void consume(final RefDataValue refDataValue) {
         ByteBuffer valueByteBuffer = ((FastInfosetValue) refDataValue).getByteBuffer();
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
+        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
                 "Consuming {}", ByteBufferUtils.byteBufferInfo(valueByteBuffer)));
 
         fastInfosetByteBufferConsumer.consumeBytes(receiver, valueByteBuffer);

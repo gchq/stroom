@@ -93,10 +93,5 @@ public class V07_00_00_021__SqlStatistics extends BaseJavaMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "RENAME TABLE STAT_DAT_SRC TO OLD_STAT_DAT_SRC")) {
-            preparedStatement.execute();
-        }
     }
 }
