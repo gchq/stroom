@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Improve exception handling and logging in RemoteDataSourceProvider. Now the full url is included in dashboard connection errors.
+
 * Change Travis build to generate sha256 hashes for release zip/jars.
 
 * Uplift the visualisations content pack to v3.2.1
