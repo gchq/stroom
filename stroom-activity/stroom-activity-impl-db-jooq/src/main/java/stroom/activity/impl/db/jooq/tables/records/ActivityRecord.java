@@ -28,7 +28,7 @@ import stroom.activity.impl.db.jooq.tables.Activity;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ActivityRecord extends UpdatableRecordImpl<ActivityRecord> implements Record8<Integer, Integer, Long, String, Long, String, String, String> {
 
-    private static final long serialVersionUID = -1734083532;
+    private static final long serialVersionUID = 311952532;
 
     /**
      * Setter for <code>stroom.activity.id</code>.

@@ -19,12 +19,12 @@ package stroom.pipeline.refdata;
 
 import stroom.docref.DocRef;
 import stroom.pipeline.PipelineStore;
-import stroom.util.pipeline.scope.PipelineScoped;
-import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.util.logging.LambdaLogger;
+import stroom.pipeline.shared.data.PipelineReference;
+import stroom.util.logging.LogUtil;
+import stroom.util.pipeline.scope.PipelineScoped;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -81,7 +81,7 @@ public class RefDataLoaderHolder {
             return pipelineDocRefToVersionCache.computeIfAbsent(pipelineReference.getPipeline(), docRef ->
                     pipelineStore.readDocument(pipelineReference.getPipeline()).getVersion());
         } catch (Exception e) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
+            throw new RuntimeException(LogUtil.message(
                     "pipelineReference not found in store {}", pipelineReference), e);
         }
     }

@@ -67,8 +67,8 @@ class FsStore implements Store {
     }
 
     @Override
-    public Target openStreamTarget(final MetaProperties metaProperties) {
-        LOGGER.debug("openStreamTarget() " + metaProperties);
+    public Target openTarget(final MetaProperties metaProperties) {
+        LOGGER.debug("openTarget() " + metaProperties);
 
         final FsVolume volume = volumeService.getVolume();
         if (volume == null) {
@@ -92,9 +92,9 @@ class FsStore implements Store {
     }
 
     @Override
-    public Target openExistingStreamTarget(final Meta meta) throws DataException {
+    public Target openExistingTarget(final Meta meta) throws DataException {
         Objects.requireNonNull(meta, "Null meta");
-        LOGGER.debug("openExistingStreamTarget() " + meta);
+        LOGGER.debug("openExistingTarget() " + meta);
 
         // Lock the object
         final DataVolume dataVolume = streamVolumeService.findDataVolume(meta.getId());
@@ -177,7 +177,7 @@ class FsStore implements Store {
 //    }
 
     @Override
-    public Target deleteStreamTarget(final Target target) {
+    public Target deleteTarget(final Target target) {
         // Make sure the stream is closed.
         try {
             ((FsTarget)target).delete();
@@ -198,8 +198,8 @@ class FsStore implements Store {
      *                         existent.
      */
     @Override
-    public Source openStreamSource(final long streamId) throws DataException {
-        return openStreamSource(streamId, false);
+    public Source openSource(final long streamId) throws DataException {
+        return openSource(streamId, false);
     }
 
     /**
@@ -218,12 +218,12 @@ class FsStore implements Store {
      * @throws DataException Could be thrown if no volume
      */
     @Override
-    public Source openStreamSource(final long streamId, final boolean anyStatus) throws DataException {
+    public Source openSource(final long streamId, final boolean anyStatus) throws DataException {
         Source streamSource = null;
 
         final Meta meta = metaService.getMeta(streamId, anyStatus);
         if (meta != null) {
-            LOGGER.debug("openStreamSource() {}", meta.getId());
+            LOGGER.debug("openSource() {}", meta.getId());
 
             final DataVolume dataVolume = streamVolumeService.findDataVolume(meta.getId());
             if (dataVolume == null) {

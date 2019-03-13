@@ -41,7 +41,7 @@ import stroom.security.impl.db.jooq.tables.records.AppPermissionRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class AppPermission extends TableImpl<AppPermissionRecord> {
 
-    private static final long serialVersionUID = -1116776330;
+    private static final long serialVersionUID = 1062615395;
 
     /**
      * The reference instance of <code>stroom.app_permission</code>

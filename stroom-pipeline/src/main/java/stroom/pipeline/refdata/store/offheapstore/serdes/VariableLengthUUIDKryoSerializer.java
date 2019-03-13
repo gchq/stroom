@@ -3,7 +3,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.KryoSerializer;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import java.util.UUID;
 
@@ -24,7 +24,7 @@ class VariableLengthUUIDKryoSerializer implements KryoSerializer<String> {
         try {
             uuid = UUID.fromString(uuidStr);
         } catch (Exception e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("uuidStr [{}] is not a valid UUID", uuidStr), e);
+            throw new RuntimeException(LogUtil.message("uuidStr [{}] is not a valid UUID", uuidStr), e);
         }
         output.writeLong(uuid.getMostSignificantBits(), false);
         output.writeLong(uuid.getLeastSignificantBits(), false);

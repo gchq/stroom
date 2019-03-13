@@ -18,14 +18,14 @@ package stroom.dataprocess;
 
 import com.google.inject.AbstractModule;
 import stroom.pipeline.task.SupersededOutputHelper;
-import stroom.streamtask.StreamProcessorBinder;
+import stroom.processor.api.DataProcessorBinder;
 
 public class PipelineStreamTaskModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(SupersededOutputHelper.class).to(SupersededOutputHelperImpl.class);
 
-        StreamProcessorBinder.create(binder())
-                .bind("pipelineStreamProcessor", PipelineStreamProcessor.class);
+        DataProcessorBinder.create(binder())
+                .bind("pipelineStreamProcessor", PipelineDataProcessorTaskExecutor.class);
     }
 }

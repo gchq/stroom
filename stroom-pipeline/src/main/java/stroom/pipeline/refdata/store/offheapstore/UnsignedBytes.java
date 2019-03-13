@@ -17,7 +17,7 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
 
@@ -68,7 +68,7 @@ public class UnsignedBytes {
         final long max = maxValue(len);
         if (val > max) {
             throw new IllegalArgumentException(
-                    LambdaLogger.buildMessage(
+                    LogUtil.message(
                             "Value {} exceeds max value of {} that can be stored in {} bytes(s)",
                             val, max, len));
         }

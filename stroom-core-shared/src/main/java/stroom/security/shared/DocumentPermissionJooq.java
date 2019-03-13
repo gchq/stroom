@@ -8,17 +8,8 @@ import java.util.Objects;
 import java.util.Set;
 
 public class DocumentPermissionJooq {
-    private String docType;
     private String docUuid;
     private Map<String, Set<String>> permissions = new HashMap<>();
-
-    public String getDocType() {
-        return docType;
-    }
-
-    public void setDocType(String docType) {
-        this.docType = docType;
-    }
 
     public String getDocUuid() {
         return docUuid;
@@ -45,21 +36,19 @@ public class DocumentPermissionJooq {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DocumentPermissionJooq that = (DocumentPermissionJooq) o;
-        return Objects.equals(docType, that.docType) &&
-                Objects.equals(docUuid, that.docUuid) &&
+        return Objects.equals(docUuid, that.docUuid) &&
                 Objects.equals(permissions, that.permissions);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(docType, docUuid, permissions);
+        return Objects.hash(docUuid, permissions);
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("DocumentPermissionJooq{");
-        sb.append("docType='").append(docType).append('\'');
-        sb.append(", docUuid='").append(docUuid).append('\'');
+        sb.append("docUuid='").append(docUuid).append('\'');
         sb.append(", permissions='").append(permissions).append('\'');
         sb.append('}');
         return sb.toString();
@@ -75,11 +64,6 @@ public class DocumentPermissionJooq {
 
         public Builder() {
             this(new DocumentPermissionJooq());
-        }
-
-        public Builder docType(final String value) {
-            instance.setDocType(value);
-            return this;
         }
 
         public Builder docUuid(final String value) {

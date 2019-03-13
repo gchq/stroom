@@ -28,7 +28,7 @@ import stroom.util.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityAction;
-import stroom.util.shared.SummaryDataRow;
+import stroom.processor.shared.ProcessorTaskSummaryRow;
 import stroom.entity.util.AbstractSqlBuilder;
 import stroom.entity.util.EntityServiceLogUtil;
 import stroom.entity.util.HqlBuilder;
@@ -210,29 +210,29 @@ public class StroomEntityManagerImpl implements StroomEntityManager {
         });
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public BaseResultList<SummaryDataRow> executeNativeQuerySummaryDataResult(final SqlBuilder sql,
-                                                                              final int numberKeys) {
-        final ArrayList<SummaryDataRow> summaryData = new ArrayList<>();
-
-        final List<Object[]> list = executeNativeQueryResultList(sql);
-
-        for (final Object[] row : list) {
-            final SummaryDataRow summaryDataRow = new SummaryDataRow();
-            int pos = 0;
-            for (int i = 0; i < numberKeys; i++) {
-                final Object key = row[pos++];
-                final Object value = row[pos++];
-                summaryDataRow.getKey().add(((Number) key).longValue());
-                summaryDataRow.getLabel().add((String.valueOf(value)));
-            }
-            summaryDataRow.setCount(((Number) row[pos++]).longValue());
-            summaryData.add(summaryDataRow);
-        }
-
-        return BaseResultList.createUnboundedList(summaryData);
-    }
+//    @SuppressWarnings("unchecked")
+//    @Override
+//    public BaseResultList<ProcessorTaskSummaryRow> executeNativeQuerySummaryDataResult(final SqlBuilder sql,
+//                                                                                             final int numberKeys) {
+//        final ArrayList<ProcessorTaskSummaryRow> summaryData = new ArrayList<>();
+//
+//        final List<Object[]> list = executeNativeQueryResultList(sql);
+//
+//        for (final Object[] row : list) {
+//            final ProcessorTaskSummaryRow summaryDataRow = new ProcessorTaskSummaryRow();
+//            int pos = 0;
+//            for (int i = 0; i < numberKeys; i++) {
+//                final Object key = row[pos++];
+//                final Object value = row[pos++];
+//                summaryDataRow.getKey().add(((Number) key).longValue());
+//                summaryDataRow.getLabel().add((String.valueOf(value)));
+//            }
+//            summaryDataRow.setCount(((Number) row[pos++]).longValue());
+//            summaryData.add(summaryDataRow);
+//        }
+//
+//        return BaseResultList.createUnboundedList(summaryData);
+//    }
 
     @Override
     public <T extends Entity> Boolean deleteEntity(final T entity) {

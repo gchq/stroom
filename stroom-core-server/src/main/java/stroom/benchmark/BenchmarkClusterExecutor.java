@@ -24,7 +24,7 @@ import stroom.cluster.task.api.TargetType;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.entity.cluster.ClearServiceClusterTask;
-import stroom.job.shared.JobManager;
+import stroom.job.api.JobManager;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;
@@ -35,21 +35,21 @@ import stroom.node.api.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.pipeline.PipelineStore;
+import stroom.processor.api.JobNames;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.FindProcessorFilterCriteria;
+import stroom.processor.shared.FindProcessorCriteria;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
-import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.streamtask.StreamProcessorFilterService;
-import stroom.streamtask.StreamProcessorService;
-import stroom.streamtask.StreamProcessorTask;
-import stroom.streamtask.shared.FindStreamProcessorCriteria;
-import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
-import stroom.streamtask.shared.Processor;
-import stroom.streamtask.shared.ProcessorFilter;
 import stroom.task.api.AsyncExecutorHelper;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -73,15 +73,15 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private static final int TIME_OUT = 1000 * 60 * 20;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkClusterExecutor.class);
-    private static final String ROOT_TEST_NAME = "Benchmark-Cluster Test";
+//    private static final String ROOT_TEST_NAME = "Benchmark-Cluster Test";
     private static final String EPS = "EPS";
     private static final String ERROR = "Error";
     private static final String BENCHMARK_REFERENCE = "BENCHMARK-REFERENCE";
     private static final String BENCHMARK_EVENTS = "BENCHMARK-EVENTS";
 
     private final PipelineStore pipelineStore;
-    private final StreamProcessorFilterService streamProcessorFilterService;
-    private final StreamProcessorService streamProcessorService;
+    private final ProcessorFilterService processorFilterService;
+    private final ProcessorService streamProcessorService;
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final MetaService metaService;
     private final JobManager jobManager;
@@ -103,8 +103,8 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              final MetaService metaService,
                              final TaskContext taskContext,
                              final PipelineStore pipelineStore,
-                             final StreamProcessorFilterService streamProcessorFilterService,
-                             final StreamProcessorService streamProcessorService,
+                             final ProcessorFilterService processorFilterService,
+                             final ProcessorService streamProcessorService,
                              final ClusterDispatchAsyncHelper dispatchHelper,
                              final JobManager jobManager,
                              final NodeService nodeService,
@@ -113,7 +113,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              final BenchmarkClusterConfig benchmarkClusterConfig) {
         super(streamStore, metaService, taskContext);
         this.pipelineStore = pipelineStore;
-        this.streamProcessorFilterService = streamProcessorFilterService;
+        this.processorFilterService = processorFilterService;
         this.streamProcessorService = streamProcessorService;
         this.dispatchHelper = dispatchHelper;
         this.metaService = metaService;
@@ -142,12 +142,12 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         // // Remove all old benchmark data.
         // removeOldData(folder, null);
 
-        final boolean wasProcessing = jobManager.isJobEnabled(StreamProcessorTask.JOB_NAME);
+        final boolean wasProcessing = jobManager.isJobEnabled(JobNames.DATA_PROCESSOR);
 
         // Stop all translations and indexing so that data isn't translated
         // or indexed as soon as we
         // add it to the cluster.
-        jobManager.setJobEnabled(StreamProcessorTask.JOB_NAME, false);
+        jobManager.setJobEnabled(JobNames.DATA_PROCESSOR, false);
 
         // FIXME : MAKE SURE ALL TASKS HAVE STOPPED BEFORE WE EXECUTE THE
         // BENCHMARK.
@@ -176,7 +176,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         // }
 
         // Go back to the original job state.
-        jobManager.setJobEnabled(StreamProcessorTask.JOB_NAME, wasProcessing);
+        jobManager.setJobEnabled(JobNames.DATA_PROCESSOR, wasProcessing);
     }
 
     private void createBenchmark() {
@@ -238,17 +238,17 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     }
 
     private Processor initProcessor(final DocRef pipelineDoc) {
-        // Clear off any old processors
-        for (final ProcessorFilter streamProcessorFilter : streamProcessorFilterService
-                .find(new FindStreamProcessorFilterCriteria(pipelineDoc))) {
-            streamProcessorFilterService.delete(streamProcessorFilter);
+        // Clear off any old processor filters
+        for (final ProcessorFilter processorFilter : processorFilterService
+                .find(new FindProcessorFilterCriteria(pipelineDoc))) {
+            processorFilterService.delete(processorFilter.getId());
         }
-        Processor streamProcessor = streamProcessorService.find(new FindStreamProcessorCriteria(pipelineDoc))
+        Processor streamProcessor = streamProcessorService.find(new FindProcessorCriteria(pipelineDoc))
                 .getFirst();
         if (streamProcessor == null) {
             streamProcessor = new Processor(pipelineDoc);
             streamProcessor.setEnabled(true);
-            streamProcessor = streamProcessorService.save(streamProcessor);
+            streamProcessor = streamProcessorService.create(streamProcessor);
         }
         return streamProcessor;
     }
@@ -317,9 +317,9 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final QueryData rawCriteria = new QueryData();
                 rawCriteria.setExpression(rawExpression);
 
-                streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, rawCriteria);
+                processorFilterService.create(streamProcessor, rawCriteria, 1, true);
 
-                jobManager.setJobEnabled(StreamProcessorTask.JOB_NAME, true);
+                jobManager.setJobEnabled(JobNames.DATA_PROCESSOR, true);
 
                 // Wait for the cluster to stop processing.
                 final ExpressionOperator processedExpression = new ExpressionOperator.Builder(Op.AND)
@@ -368,7 +368,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                     recordTranslationStats(feedName, processPeriod);
                 }
 
-                jobManager.setJobEnabled(StreamProcessorTask.JOB_NAME, false);
+                jobManager.setJobEnabled(JobNames.DATA_PROCESSOR, false);
             }
         } catch (final InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
@@ -546,7 +546,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     //
     // final FindStreamCriteria criteria = new FindStreamCriteria();
     // criteria.getFeedIdSet().add(feed);
-    // //criteria.getPipelineSet().add(pipeline);
+    // //criteria.getPipelineUuidCriteria().add(pipeline);
     // //criteria.setReceivedPeriod(new Period(startTimeMs, null));
     //
     // //final List<Stream> completedTasks =

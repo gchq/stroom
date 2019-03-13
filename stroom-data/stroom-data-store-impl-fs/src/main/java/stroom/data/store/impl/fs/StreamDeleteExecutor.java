@@ -42,7 +42,7 @@ public class StreamDeleteExecutor {//extends AbstractBatchDeleteExecutor {
         // TODO : @66 MOVE THIS CODE INTO THE STREAM TASK SERVICE
 
 //        // Delete stream tasks.
-//        deleteWithJoin(ProcessorFilterTask.TABLE_NAME, "FK_STRM_ID", "stream tasks", total);
+//        deleteWithJoin(ProcessorTask.TABLE_NAME, "FK_STRM_ID", "stream tasks", total);
 
         // TODO : @66 MOVE THIS CODE INTO THE STREAM VOLUME SERVICE
 

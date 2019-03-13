@@ -97,7 +97,7 @@ class FetchFullMetaInfoHandler extends AbstractTaskHandler<FetchFullMetaInfoActi
         final Meta meta = action.getMeta();
         final List<Section> sections = new ArrayList<>();
 
-        try (final Source source = streamStore.openStreamSource(meta.getId())) {
+        try (final Source source = streamStore.openSource(meta.getId())) {
             final Map<String, String> attributeMap = source.getAttributes();
 
             if (attributeMap == null) {

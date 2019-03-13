@@ -93,10 +93,5 @@ public class V07_00_00_020__HBaseStatistics extends BaseJavaMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "RENAME TABLE STROOM_STATS_STORE TO OLD_STROOM_STATS_STORE")) {
-            preparedStatement.execute();
-        }
     }
 }

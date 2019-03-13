@@ -18,7 +18,7 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import com.google.common.base.Preconditions;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import java.util.Objects;
 
@@ -66,7 +66,7 @@ public class ValueStoreKey {
      */
     public ValueStoreKey nextKey() {
         if (uniqueId == MAX_UNIQUE_ID) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
+            throw new RuntimeException(LogUtil.message(
                     "Unable to create the next key as the max ID {} has been reached", MAX_UNIQUE_ID));
         }
         return new ValueStoreKey(valueHashCode, (short) (uniqueId + 1));

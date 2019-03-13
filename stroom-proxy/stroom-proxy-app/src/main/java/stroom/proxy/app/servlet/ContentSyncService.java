@@ -14,7 +14,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.proxy.app.guice.ContentSyncConfig;
 import stroom.util.HasHealthCheck;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -147,12 +147,12 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                 return String.valueOf(Status.OK.getStatusCode());
             } else {
                 LOGGER.error(response.getStatusInfo().getReasonPhrase());
-                return LambdaLogger.buildMessage("Error: [{}] [{}]",
+                return LogUtil.message("Error: [{}] [{}]",
                         response.getStatusInfo().getStatusCode(),
                         response.getStatusInfo().getReasonPhrase());
             }
         } catch (Exception e) {
-            return LambdaLogger.buildMessage("Error: [{}]", e.getMessage());
+            return LogUtil.message("Error: [{}]", e.getMessage());
         }
     }
 }

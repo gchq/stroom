@@ -73,6 +73,10 @@ dependencies {
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-node:stroom-node-impl')
     compile project(':stroom-pipeline')
+    compile project(':stroom-processor:stroom-processor-api')
+    compile project(':stroom-processor:stroom-processor-impl')
+    compile project(':stroom-processor:stroom-processor-impl-db')
+    compile project(':stroom-processor:stroom-processor-impl-db-jooq')
     compile project(':stroom-proxy:stroom-proxy-repo')
     compile project(':stroom-resource:stroom-resource-api')
     compile project(':stroom-resource:stroom-resource-impl')
@@ -89,24 +93,17 @@ dependencies {
     compile project(':stroom-task:stroom-task-impl')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
-
-    compile libs.stroomDocRef
-
-    compile libs.dropwizard_lifecycle
-    compile libs.guava
-    compile libs.guice4
-    compile libs.javax_inject
-    compile libs.jcommander
-
-    implementation(libs.dropwizard_assets) {
+    
+    compile(libs.dropwizard_assets) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
-    implementation(libs.dropwizard_core) {
+    compile(libs.dropwizard_core) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
     compile libs.jetty_servlet
     compile libs.dropwizard_jersey
     compile libs.dropwizard_jetty
+    compile libs.dropwizard_lifecycle
     compile libs.dropwizard_metrics_healthchecks
     compile libs.dropwizard_servlets
     compile libs.dropwizard_metrics_core
@@ -114,13 +111,16 @@ dependencies {
     compile libs.dropwizard_configuration
     compile libs.flyway_core
     compile libs.guava
+    compile libs.guice4
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.jaxb_api
+    compile libs.jcommander
     compile libs.jetty_server
     compile libs.jetty_servlets
     compile libs.logback_classic
     compile libs.slf4j_api
+    compile libs.stroomDocRef
     compile libs.ws_rs_api
 
     runtimeOnly libs.javax_el

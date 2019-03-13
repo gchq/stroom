@@ -19,7 +19,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
 
@@ -43,7 +43,7 @@ public class StringValueSerde implements RefDataValueSerde {
             StringValue stringValue = (StringValue) refDataValue;
             stringSerde.serialize(byteBuffer, stringValue.getValue());
         } catch (ClassCastException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Unable to cast {} to {}",
+            throw new RuntimeException(LogUtil.message("Unable to cast {} to {}",
                     refDataValue.getClass().getCanonicalName(), StringValue.class.getCanonicalName()), e);
         }
     }

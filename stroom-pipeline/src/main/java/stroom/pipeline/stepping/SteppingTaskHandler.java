@@ -302,7 +302,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
                 // Get the appropriate stream and source based on the type of
                 // translation.
-                try (final Source source = streamStore.openStreamSource(streamId)) {
+                try (final Source source = streamStore.openSource(streamId)) {
                     if (source != null) {
                         // Load the feed.
                         final String feedName = source.getMeta().getFeedName();
@@ -629,7 +629,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 //        String data = null;
 //        if (location != null && highlights != null && highlights.size() > 0) {
 //            try {
-//                final StreamSource streamSource = streamStore.openStreamSource(location.getMetaId());
+//                final StreamSource streamSource = streamStore.openSource(location.getMetaId());
 //                if (streamSource != null) {
 //                    final NestedInputStream inputStream = streamSource.getNestedInputStream();
 //

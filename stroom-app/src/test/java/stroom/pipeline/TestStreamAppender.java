@@ -50,7 +50,7 @@ class TestStreamAppender extends AbstractStreamAppenderTest {
 
         final List<Meta> list = dataMetaService.find(new FindMetaCriteria());
         final long id = list.get(0).getId();
-        try (final Source streamSource = streamStore.openStreamSource(id)) {
+        try (final Source streamSource = streamStore.openSource(id)) {
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
                 final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStreamProvider.get());
                 StreamUtil.streamToString(byteCountInputStream);

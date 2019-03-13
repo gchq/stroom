@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -90,7 +90,7 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
         try {
             return refDataValueProxyConsumer.consume(this);
         } catch (XPathException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
+            throw new RuntimeException(LogUtil.message(
                     "Error handing rerence data value: {}", e.getMessage()), e);
         }
     }

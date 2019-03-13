@@ -17,11 +17,15 @@
 package stroom.docstore.impl.db;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.Persistence;
+import stroom.util.shared.Clearable;
 
 public class DBPersistenceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(Persistence.class).to(DBPersistence.class);
+
+        Multibinder.newSetBinder(binder(), Clearable.class).addBinding().to(DBPersistence.class);
     }
 }

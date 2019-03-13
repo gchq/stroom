@@ -24,15 +24,16 @@ import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.offheapstore.UID;
+import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.MapDefinitionSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
+import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -61,7 +62,7 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
                 final CursorIterator.KeyVal<ByteBuffer> highestKeyVal = cursorIterator.next();
                 optHighestUid = Optional.of(highestKeyVal.key());
                 LAMBDA_LOGGER.trace(() ->
-                        LambdaLogger.buildMessage("highestKey: {}", ByteBufferUtils.byteBufferInfo(highestKeyVal.key())));
+                        LogUtil.message("highestKey: {}", ByteBufferUtils.byteBufferInfo(highestKeyVal.key())));
             }
         }
         return optHighestUid;
@@ -73,7 +74,7 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
 
         boolean didPutSuceed = put(writeTxn, uidKeyBuffer, mapDefinitionValueBuffer, false);
         if (!didPutSuceed) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Failed to put mapDefinition {}, uid {}",
+            throw new RuntimeException(LogUtil.message("Failed to put mapDefinition {}, uid {}",
                     ByteBufferUtils.byteBufferInfo(uidKeyBuffer),
                     ByteBufferUtils.byteBufferInfo(mapDefinitionValueBuffer)));
         }

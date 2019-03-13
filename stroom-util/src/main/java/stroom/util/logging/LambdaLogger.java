@@ -16,8 +16,6 @@
 
 package stroom.util.logging;
 
-import org.slf4j.helpers.MessageFormatter;
-
 import java.util.function.Supplier;
 
 public interface LambdaLogger {
@@ -41,10 +39,21 @@ public interface LambdaLogger {
 
     void error(Supplier<String> message, Throwable t);
 
+    boolean isTraceEnabled();
+
+    boolean isDebugEnabled();
+
+    boolean isInfoEnabled();
+
+    boolean isWarnEnabled();
+
+    boolean isErrorEnabled();
+
     /**
      * Performs timedWork and if TRACE is enabled, logs the time taken to do that work
-     * @param timedWork Work to perform and to time if required
-     * @param <T> The type of the result of the work
+     *
+     * @param timedWork       Work to perform and to time if required
+     * @param <T>             The type of the result of the work
      * @param workDescription The name of the work to be added to the log message
      * @return The result of the work
      */
@@ -55,8 +64,9 @@ public interface LambdaLogger {
     /**
      * Performs timedWork and if TRACE is enabled, logs the time taken to do that work. This cannot be used
      * where the work throws a checked exception.
-     * @param timedWork Work to perform and to time if required
-     * @param <T> The type of the result of the work
+     *
+     * @param timedWork               Work to perform and to time if required
+     * @param <T>                     The type of the result of the work
      * @param workDescriptionSupplier A supplier of the description of the work to be added to the log message
      * @return The result of the work
      */
@@ -65,9 +75,10 @@ public interface LambdaLogger {
     /**
      * Performs timedWork and if DEBUG is enabled, logs the time taken to do that work. This cannot be used
      * where the work throws a checked exception.
-     * @param timedWork Work to perform and to time if required
+     *
+     * @param timedWork       Work to perform and to time if required
      * @param workDescription The name of the work to be added to the log message
-     * @param <T> The type of the result of the work
+     * @param <T>             The type of the result of the work
      * @return The result of the work
      */
     default <T> T logDurationIfDebugEnabled(final Supplier<T> timedWork, final String workDescription) {
@@ -77,9 +88,10 @@ public interface LambdaLogger {
     /**
      * Performs timedWork and if DEBUG is enabled, logs the time taken to do that work. This cannot be used
      * where the work throws a checked exception.
-     * @param timedWork Work to perform and to time if required
+     *
+     * @param timedWork               Work to perform and to time if required
      * @param workDescriptionSupplier The name of the work to be added to the log message
-     * @param <T> The type of the result of the work
+     * @param <T>                     The type of the result of the work
      * @return The result of the work
      */
     <T> T logDurationIfDebugEnabled(final Supplier<T> timedWork, final Supplier<String> workDescriptionSupplier);
@@ -87,9 +99,10 @@ public interface LambdaLogger {
     /**
      * Performs timedWork and if INFO is enabled, logs the time taken to do that work. This cannot be used
      * where the work throws a checked exception.
-     * @param timedWork Work to perform and to time if required
+     *
+     * @param timedWork       Work to perform and to time if required
      * @param workDescription The name of the work to be added to the log message
-     * @param <T> The type of the result of the work
+     * @param <T>             The type of the result of the work
      * @return The result of the work
      */
     default <T> T logDurationIfInfoEnabled(final Supplier<T> timedWork, final String workDescription) {
@@ -99,9 +112,10 @@ public interface LambdaLogger {
     /**
      * Performs timedWork and if INFO is enabled, logs the time taken to do that work. This cannot be used
      * where the work throws a checked exception.
-     * @param timedWork Work to perform and to time if required
+     *
+     * @param timedWork               Work to perform and to time if required
      * @param workDescriptionSupplier The name of the work to be added to the log message
-     * @param <T> The type of the result of the work
+     * @param <T>                     The type of the result of the work
      * @return The result of the work
      */
     <T> T logDurationIfInfoEnabled(final Supplier<T> timedWork, final Supplier<String> workDescriptionSupplier);
@@ -109,7 +123,8 @@ public interface LambdaLogger {
     /**
      * Performs timedWork and if TRACE is enabled, logs the time taken to do that work. This cannot be used
      * where the work throws a checked exception.
-     * @param timedWork Work to perform and to time if required
+     *
+     * @param timedWork       Work to perform and to time if required
      * @param workDescription The name of the work to be added to the log message
      */
     default void logDurationIfTraceEnabled(final Runnable timedWork, final String workDescription) {
@@ -119,7 +134,8 @@ public interface LambdaLogger {
     /**
      * Performs timedWork and if TRACE is enabled, logs the time taken to do that work. This cannot be used
      * where the work throws a checked exception.
-     * @param timedWork Work to perform and to time if required
+     *
+     * @param timedWork               Work to perform and to time if required
      * @param workDescriptionSupplier The name of the work to be added to the log message
      */
     void logDurationIfTraceEnabled(final Runnable timedWork, final Supplier<String> workDescriptionSupplier);
@@ -127,7 +143,8 @@ public interface LambdaLogger {
     /**
      * Performs timedWork and if DEBUG is enabled, logs the time taken to do that work. This cannot be used
      * where the work throws a checked exception.
-     * @param timedWork Work to perform and to time if required
+     *
+     * @param timedWork       Work to perform and to time if required
      * @param workDescription The name of the work to be added to the log message
      */
     default void logDurationIfDebugEnabled(final Runnable timedWork, final String workDescription) {
@@ -137,7 +154,8 @@ public interface LambdaLogger {
     /**
      * Performs timedWork and if DEBUG is enabled, logs the time taken to do that work. This cannot be used
      * where the work throws a checked exception.
-     * @param timedWork Work to perform and to time if required
+     *
+     * @param timedWork               Work to perform and to time if required
      * @param workDescriptionSupplier The name of the work to be added to the log message
      */
     void logDurationIfDebugEnabled(final Runnable timedWork, final Supplier<String> workDescriptionSupplier);
@@ -145,7 +163,8 @@ public interface LambdaLogger {
     /**
      * Performs timedWork and if INFO is enabled, logs the time taken to do that work. This cannot be used
      * where the work throws a checked exception.
-     * @param timedWork Work to perform and to time if required
+     *
+     * @param timedWork       Work to perform and to time if required
      * @param workDescription The name of the work to be added to the log message
      */
     default void logDurationIfInfoEnabled(final Runnable timedWork, final String workDescription) {
@@ -155,38 +174,30 @@ public interface LambdaLogger {
     /**
      * Performs timedWork and if INFO is enabled, logs the time taken to do that work. This cannot be used
      * where the work throws a checked exception.
-     * @param timedWork Work to perform and to time if required
+     *
+     * @param timedWork               Work to perform and to time if required
      * @param workDescriptionSupplier The name of the work to be added to the log message
      */
     void logDurationIfInfoEnabled(final Runnable timedWork, final Supplier<String> workDescriptionSupplier);
 
     /**
      * Performs work only if TRACE is enabled.
+     *
      * @param work The work to perform.
      */
     void doIfTraceEnabled(final Runnable work);
 
     /**
      * Performs work only if DEBUG is enabled.
+     *
      * @param work The work to perform.
      */
     void doIfDebugEnabled(final Runnable work);
 
     /**
      * Performs work only if INFO is enabled.
+     *
      * @param work The work to perform.
      */
     void doIfInfoEnabled(final Runnable work);
-
-    /**
-     * Constructs a formatted message string using a format string that takes
-     * the same placeholders as SLF4J, e.g.
-     * "Function called with name {} and value {}"
-     * @param format SLF4J style format string
-     * @param args The values for any placeholders in the message format
-     * @return A formatted message
-     */
-    static String buildMessage(String format, Object... args) {
-        return MessageFormatter.arrayFormat(format, args).getMessage();
-    }
 }

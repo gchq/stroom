@@ -16,6 +16,7 @@
 
 package stroom.security.impl;
 
+import stroom.security.service.UserService;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;
 import stroom.security.Security;
@@ -53,9 +54,9 @@ class FetchUserRefHandler
                 UserRef userRef = findUserCriteria.getRelatedUser();
                 List<UserRef> list;
                 if (userRef.isGroup()) {
-                    list = userService.findUsersInGroup(userRef);
+                    list = userService.findUsersInGroup(userRef.getUuid());
                 } else {
-                    list = userService.findGroupsForUser(userRef);
+                    list = userService.findGroupsForUser(userRef.getUuid());
                 }
 
                 if (action.getCriteria().getName() != null) {

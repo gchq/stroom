@@ -36,8 +36,10 @@ import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.pipeline.refdata.util.PooledByteBufferPair;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -196,14 +198,14 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         try (PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
             keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
             ByteBuffer valueBuffer = lmdbDbi.get(txn, pooledKeyBuffer.getByteBuffer());
-            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Get returned value [{}] for key [{}]",
+            LAMBDA_LOGGER.trace(LambdaLogUtil.message("Get returned value [{}] for key [{}]",
                     ByteBufferUtils.byteBufferInfo(valueBuffer),
                     ByteBufferUtils.byteBufferInfo(pooledKeyBuffer.getByteBuffer())));
 
             return Optional.ofNullable(valueBuffer)
                     .map(valueSerde::deserialize);
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error getting key {}", key), e);
+            throw new RuntimeException(LogUtil.message("Error getting key {}", key), e);
         }
     }
 
@@ -231,13 +233,13 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
     public Optional<ByteBuffer> getAsBytes(Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
         try {
             final ByteBuffer valueBuffer = lmdbDbi.get(txn, keyBuffer);
-            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Get returned value [{}] for key [{}]",
+            LAMBDA_LOGGER.trace(LambdaLogUtil.message("Get returned value [{}] for key [{}]",
                     ByteBufferUtils.byteBufferInfo(valueBuffer),
                     ByteBufferUtils.byteBufferInfo(keyBuffer)));
 
             return Optional.ofNullable(valueBuffer);
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error getting value for key [{}]",
+            throw new RuntimeException(LogUtil.message("Error getting value for key [{}]",
                     ByteBufferUtils.byteBufferInfo(keyBuffer)), e);
         }
     }
@@ -362,7 +364,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             V value = valueSerde.deserialize(valueBuffer);
             return valueMapper.apply(value);
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error getting key {}", key), e);
+            throw new RuntimeException(LogUtil.message("Error getting key {}", key), e);
         }
     }
 
@@ -375,7 +377,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             V value = valueSerde.deserialize(valueBuffer);
             valueConsumer.accept(value);
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error getting key {}", key), e);
+            throw new RuntimeException(LogUtil.message("Error getting key {}", key), e);
         }
     }
 
@@ -387,7 +389,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             valueSerde.serialize(pooledValueBuffer.getByteBuffer(), value);
             return put(writeTxn, pooledKeyBuffer.getByteBuffer(), pooledValueBuffer.getByteBuffer(), overwriteExisting);
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error putting key {}, value {}", key, value), e);
+            throw new RuntimeException(LogUtil.message("Error putting key {}, value {}", key, value), e);
         }
     }
 
@@ -397,7 +399,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             writeTxn.commit();
             return didPutSucceed;
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error putting key {}, value {}", key, value), e);
+            throw new RuntimeException(LogUtil.message("Error putting key {}, value {}", key, value), e);
         }
     }
 
@@ -412,14 +414,14 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             } else {
                 didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer, PutFlags.MDB_NOOVERWRITE);
             }
-            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Put returned {} for key [{}], value [{}]",
+            LAMBDA_LOGGER.trace(LambdaLogUtil.message("Put returned {} for key [{}], value [{}]",
                     didPutSucceed,
                     ByteBufferUtils.byteBufferInfo(keyBuffer),
                     ByteBufferUtils.byteBufferInfo(valueBuffer)));
 
             return didPutSucceed;
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error putting key {}, value {}",
+            throw new RuntimeException(LogUtil.message("Error putting key {}, value {}",
                     ByteBufferUtils.byteBufferInfo(keyBuffer), ByteBufferUtils.byteBufferInfo(valueBuffer)), e);
         }
     }
@@ -434,12 +436,12 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                     valueSerde.serialize(pooledValueBuffer.getByteBuffer(), value);
                     lmdbDbi.put(txn, pooledKeyBuffer.getByteBuffer(), pooledValueBuffer.getByteBuffer());
                 } catch (Exception e) {
-                    throw new RuntimeException(LambdaLogger.buildMessage("Error putting key {}, value {}", key, value), e);
+                    throw new RuntimeException(LogUtil.message("Error putting key {}, value {}", key, value), e);
                 }
             });
             txn.commit();
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error putting {} entries", entries.size()), e);
+            throw new RuntimeException(LogUtil.message("Error putting {} entries", entries.size()), e);
         }
     }
 
@@ -474,7 +476,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
             boolean isFound = cursor.get(keyBuffer, GetOp.MDB_SET_KEY);
             if (!isFound) {
-                throw new RuntimeException(LambdaLogger.buildMessage(
+                throw new RuntimeException(LogUtil.message(
                         "Expecting to find entry for {}", ByteBufferUtils.byteBufferInfo(keyBuffer)));
             }
             final ByteBuffer valueBuf = cursor.val();
@@ -511,11 +513,11 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
             keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
             boolean result = lmdbDbi.delete(writeTxn, pooledKeyBuffer.getByteBuffer());
-            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("delete({}) returned {}", key, result));
+            LAMBDA_LOGGER.trace(LambdaLogUtil.message("delete({}) returned {}", key, result));
             writeTxn.commit();
             return result;
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error deleting key {}", key), e);
+            throw new RuntimeException(LogUtil.message("Error deleting key {}", key), e);
         }
     }
 
@@ -523,22 +525,22 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
             keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
             boolean result = lmdbDbi.delete(writeTxn, pooledKeyBuffer.getByteBuffer());
-            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("delete({}) returned {}", key, result));
+            LAMBDA_LOGGER.trace(LambdaLogUtil.message("delete({}) returned {}", key, result));
             return result;
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error deleting key {}", key), e);
+            throw new RuntimeException(LogUtil.message("Error deleting key {}", key), e);
         }
     }
 
     public boolean delete(final ByteBuffer keyBuffer) {
         try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
             boolean result = lmdbDbi.delete(writeTxn, keyBuffer);
-            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("delete({}) returned {}",
+            LAMBDA_LOGGER.trace(LambdaLogUtil.message("delete({}) returned {}",
                     ByteBufferUtils.byteBufferInfo(keyBuffer), result));
             writeTxn.commit();
             return result;
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error deleting key {}",
+            throw new RuntimeException(LogUtil.message("Error deleting key {}",
                     ByteBufferUtils.byteBufferInfo(keyBuffer)), e);
         }
     }
@@ -551,11 +553,11 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
     public boolean delete(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
         try {
             boolean result = lmdbDbi.delete(writeTxn, keyBuffer);
-            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("delete(txn, {}) returned {}",
+            LAMBDA_LOGGER.trace(LambdaLogUtil.message("delete(txn, {}) returned {}",
                     ByteBufferUtils.byteBufferInfo(keyBuffer), result));
             return result;
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error deleting key {}",
+            throw new RuntimeException(LogUtil.message("Error deleting key {}",
                     ByteBufferUtils.byteBufferInfo(keyBuffer)), e);
         }
     }
@@ -568,12 +570,12 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                     keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
                     lmdbDbi.delete(txn, pooledKeyBuffer.getByteBuffer());
                 } catch (Exception e) {
-                    throw new RuntimeException(LambdaLogger.buildMessage("Error deleting key {}", key), e);
+                    throw new RuntimeException(LogUtil.message("Error deleting key {}", key), e);
                 }
             });
             txn.commit();
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error deleting {} keys ", keys.size()), e);
+            throw new RuntimeException(LogUtil.message("Error deleting {} keys ", keys.size()), e);
         }
     }
 
@@ -582,7 +584,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         try {
             return env.openDbi(name, DbiFlags.MDB_CREATE);
         } catch (Exception e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error opening LMDB daatabase {}", name), e);
+            throw new RuntimeException(LogUtil.message("Error opening LMDB daatabase {}", name), e);
         }
     }
 

@@ -1,74 +1,91 @@
-/*
- * Copyright 2016 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package stroom.job.shared;
 
-import stroom.entity.shared.AuditedEntity;
+import stroom.docref.SharedObject;
+import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
-import stroom.entity.shared.SQLNameConstants;
-import stroom.node.shared.Node;
-import stroom.docref.HasDisplayValue;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
-import javax.validation.constraints.Min;
-//TODO: gh-1072 delete
-/**
- * This class records and manages all jobs across all nodes.
- */
-@Entity
-@Table(name = "JB_ND", uniqueConstraints = @UniqueConstraint(columnNames = {JobNode.NODE_NAME, "FK_JB_ID"}))
-public class JobNode extends AuditedEntity {
-    public static final String ENTITY_TYPE = "JobNode";
-    public static final String TABLE_NAME = SQLNameConstants.JOB + SEP + SQLNameConstants.NODE;
-    public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String NODE_NAME = SQLNameConstants.NODE + SEP + SQLNameConstants.NAME;
-    public static final String TASK_LIMIT = SQLNameConstants.TASK + SQLNameConstants.LIMIT_SUFFIX;
-    public static final String LOCK_TASK_LIMIT = SQLNameConstants.LOCK + SEP + SQLNameConstants.TASK
-            + SQLNameConstants.LIMIT_SUFFIX;
-    public static final String JOB_TYPE = SQLNameConstants.JOB + SQLNameConstants.TYPE_SUFFIX;
-    public static final String SCHEDULE = "SCHEDULE";
+import java.util.Objects;
 
-    private static final long serialVersionUID = 6581293484621389638L;
-
-    private String nodeName;
+public class JobNode implements HasAuditInfo, SharedObject {
+    private Integer id;
+    private Integer version;
+    private Long createTimeMs;
+    private String createUser;
+    private Long updateTimeMs;
+    private String updateUser;
     private Job job;
+    private byte jobType = JobType.UNKNOWN.getPrimitiveValue();
+    private String nodeName;
     private int taskLimit = 20;
-    private byte pJobType = JobType.UNKNOWN.getPrimitiveValue();
     private String schedule;
     private boolean enabled;
 
-    @Column(name = NODE_NAME, nullable = false)
-    public String getNodeName() {
-        return nodeName;
+    public JobNode() {
     }
 
-    public void setNodeName(final String nodeName) {
+    public JobNode(final Integer id, final String nodeName, final Job job, final int taskLimit, final JobType jobType, final String schedule, final boolean enabled) {
+        this.id = id;
         this.nodeName = nodeName;
+        this.job = job;
+        this.taskLimit = taskLimit;
+        this.jobType = jobType.primitiveValue;
+        this.schedule = schedule;
+        this.enabled = enabled;
     }
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = Job.FOREIGN_KEY)
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(final Integer id) {
+        this.id = id;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(final Integer version) {
+        this.version = version;
+    }
+
+    @Override
+    public Long getCreateTimeMs() {
+        return createTimeMs;
+    }
+
+    public void setCreateTimeMs(final Long createTimeMs) {
+        this.createTimeMs = createTimeMs;
+    }
+
+    @Override
+    public String getCreateUser() {
+        return createUser;
+    }
+
+    public void setCreateUser(final String createUser) {
+        this.createUser = createUser;
+    }
+
+    @Override
+    public Long getUpdateTimeMs() {
+        return updateTimeMs;
+    }
+
+    public void setUpdateTimeMs(final Long updateTimeMs) {
+        this.updateTimeMs = updateTimeMs;
+    }
+
+    @Override
+    public String getUpdateUser() {
+        return updateUser;
+    }
+
+    public void setUpdateUser(final String updateUser) {
+        this.updateUser = updateUser;
+    }
+
     public Job getJob() {
         return job;
     }
@@ -77,8 +94,22 @@ public class JobNode extends AuditedEntity {
         this.job = job;
     }
 
-    @Column(name = TASK_LIMIT, columnDefinition = INT_UNSIGNED, nullable = false)
-    @Min(value = 0)
+    public JobType getJobType() {
+        return JobType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(jobType);
+    }
+
+    public void setJobType(final JobType jobType) {
+        this.jobType = jobType.getPrimitiveValue();
+    }
+
+    public String getNodeName() {
+        return nodeName;
+    }
+
+    public void setNodeName(String nodeName) {
+        this.nodeName = nodeName;
+    }
+
     public int getTaskLimit() {
         return taskLimit;
     }
@@ -87,25 +118,6 @@ public class JobNode extends AuditedEntity {
         this.taskLimit = taskLimit;
     }
 
-    @Column(name = JOB_TYPE, nullable = false)
-    public byte getPJobType() {
-        return pJobType;
-    }
-
-    public void setPJobType(final byte pJobType) {
-        this.pJobType = pJobType;
-    }
-
-    @Transient
-    public JobType getJobType() {
-        return JobType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pJobType);
-    }
-
-    public void setJobType(final JobType jobType) {
-        this.pJobType = jobType.getPrimitiveValue();
-    }
-
-    @Column(name = SCHEDULE)
     public String getSchedule() {
         return schedule;
     }
@@ -114,7 +126,6 @@ public class JobNode extends AuditedEntity {
         this.schedule = schedule;
     }
 
-    @Column(name = SQLNameConstants.ENABLED, nullable = false)
     public boolean isEnabled() {
         return enabled;
     }
@@ -123,29 +134,7 @@ public class JobNode extends AuditedEntity {
         this.enabled = enabled;
     }
 
-    @Override
-    protected void toString(final StringBuilder sb) {
-        super.toString(sb);
-        // Job is lazy so just trace it's id
-        if (job != null) {
-            sb.append(", jobId=");
-            sb.append(job.getId());
-        }
-        sb.append(", jobType=");
-        sb.append(JobType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pJobType).getDisplayValue());
-        sb.append(", enabled=");
-        sb.append(Boolean.toString(enabled));
-        sb.append(", taskLimit=");
-        sb.append(getTaskLimit());
-    }
-
-    @Transient
-    @Override
-    public final String getType() {
-        return ENTITY_TYPE;
-    }
-
-    public enum JobType implements HasDisplayValue, HasPrimitiveValue {
+    public enum JobType implements HasPrimitiveValue {
         UNKNOWN("UNKNOWN", 0), CRON("Cron", 1), FREQUENCY("Fequency", 2), DISTRIBUTED("Distributed", 3);
 
         public static final PrimitiveValueConverter<JobType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
@@ -158,7 +147,6 @@ public class JobNode extends AuditedEntity {
             this.primitiveValue = (byte) primitiveValue;
         }
 
-        @Override
         public String getDisplayValue() {
             return displayValue;
         }
@@ -167,5 +155,36 @@ public class JobNode extends AuditedEntity {
         public byte getPrimitiveValue() {
             return primitiveValue;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "JobNode{" +
+                "id=" + id +
+                ", version=" + version +
+                ", createTimeMs=" + createTimeMs +
+                ", createUser='" + createUser + '\'' +
+                ", updateTimeMs=" + updateTimeMs +
+                ", updateUser='" + updateUser + '\'' +
+                ", job=" + job +
+                ", jobType=" + jobType +
+                ", nodeName='" + nodeName + '\'' +
+                ", taskLimit=" + taskLimit +
+                ", schedule='" + schedule + '\'' +
+                ", enabled=" + enabled +
+                '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final JobNode jobNode = (JobNode) o;
+        return Objects.equals(id, jobNode.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

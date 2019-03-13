@@ -41,7 +41,7 @@ import stroom.security.impl.db.jooq.tables.records.DocPermissionRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class DocPermission extends TableImpl<DocPermissionRecord> {
 
-    private static final long serialVersionUID = 1314492865;
+    private static final long serialVersionUID = 1673110760;
 
     /**
      * The reference instance of <code>stroom.doc_permission</code>
@@ -65,11 +65,6 @@ public class DocPermission extends TableImpl<DocPermissionRecord> {
      * The column <code>stroom.doc_permission.user_uuid</code>.
      */
     public final TableField<DocPermissionRecord, String> USER_UUID = createField("user_uuid", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
-
-    /**
-     * The column <code>stroom.doc_permission.doc_type</code>.
-     */
-    public final TableField<DocPermissionRecord, String> DOC_TYPE = createField("doc_type", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.doc_permission.doc_uuid</code>.

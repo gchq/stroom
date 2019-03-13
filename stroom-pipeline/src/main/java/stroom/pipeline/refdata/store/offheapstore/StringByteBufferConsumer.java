@@ -26,8 +26,10 @@ import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.RefDataValueByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringValueSerde;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -50,13 +52,13 @@ public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer 
         // we should only be consuming string type values
         final String str = stringValueSerde.extractValue(byteBuffer);
 
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("str {}, byteBuffer {}",
+        LAMBDA_LOGGER.trace(LambdaLogUtil.message("str {}, byteBuffer {}",
                 str, ByteBufferUtils.byteBufferInfo(byteBuffer)));
 
         try {
             receiver.characters(str, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
         } catch (XPathException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error passing string {} to receiver", str), e);
+            throw new RuntimeException(LogUtil.message("Error passing string {} to receiver", str), e);
         }
     }
 

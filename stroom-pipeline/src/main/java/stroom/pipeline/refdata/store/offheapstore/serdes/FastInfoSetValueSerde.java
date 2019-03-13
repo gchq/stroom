@@ -17,10 +17,10 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.RefDataValue;
-import stroom.util.logging.LambdaLogger;
+import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
 import java.util.function.Supplier;
@@ -41,7 +41,7 @@ public class FastInfoSetValueSerde implements RefDataValueSerde {
             ByteBufferUtils.copy(((FastInfosetValue) refDataValue).getByteBuffer(), byteBuffer);
 
         } catch (ClassCastException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Unable to cast {} to {}",
+            throw new RuntimeException(LogUtil.message("Unable to cast {} to {}",
                     refDataValue.getClass().getCanonicalName(), FastInfosetValue.class.getCanonicalName()), e);
         }
     }
@@ -55,7 +55,7 @@ public class FastInfoSetValueSerde implements RefDataValueSerde {
             // serialisation to do.
             return ((FastInfosetValue) refDataValue).getByteBuffer();
         } catch (ClassCastException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Unable to cast {} to {}",
+            throw new RuntimeException(LogUtil.message("Unable to cast {} to {}",
                     refDataValue.getClass().getCanonicalName(), FastInfosetValue.class.getCanonicalName()), e);
         }
     }

@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Stroom" type="Application" factoryName="Application">
     <option name="ALTERNATIVE_JRE_PATH" value="1.8" />
-    <option name="MAIN_CLASS_NAME" value="stroom.startup.App" />
+    <option name="MAIN_CLASS_NAME" value="stroom.app.App" />
     <module name="stroom.stroom-app.main" />
     <option name="PROGRAM_PARAMETERS" value="server ../local.yml" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/stroom-app" />

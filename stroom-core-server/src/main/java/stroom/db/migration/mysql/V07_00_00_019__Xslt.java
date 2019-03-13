@@ -77,10 +77,5 @@ public class V07_00_00_019__Xslt extends BaseJavaMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "RENAME TABLE XSLT TO OLD_XSLT")) {
-            preparedStatement.execute();
-        }
     }
 }

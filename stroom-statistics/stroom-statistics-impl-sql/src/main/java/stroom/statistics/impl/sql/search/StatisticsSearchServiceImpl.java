@@ -11,7 +11,6 @@ import stroom.dashboard.expression.v1.ValDouble;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.util.sql.PreparedStatementUtil;
 import stroom.statistics.impl.sql.ConnectionProvider;
 import stroom.statistics.impl.sql.SQLStatisticConstants;
 import stroom.statistics.impl.sql.SQLStatisticNames;
@@ -21,6 +20,7 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.sql.PreparedStatementUtil;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;

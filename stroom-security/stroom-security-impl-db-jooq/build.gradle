@@ -29,7 +29,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
             sample(sourceSets.main) {
                 jdbc {
                     driver = 'com.mysql.jdbc.Driver'
-                    url = 'jdbc:mysql://localhost:14450/stroom?useUnicode=yes&characterEncoding=UTF-8'
+                    url = 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8'
                     user = 'stroomuser'
                     password = 'stroompassword1'
                 }

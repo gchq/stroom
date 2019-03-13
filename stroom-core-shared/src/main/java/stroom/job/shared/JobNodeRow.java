@@ -16,15 +16,12 @@
 
 package stroom.job.shared;
 
-import stroom.entity.shared.EntityRow;
-import stroom.util.shared.Expander;
-import stroom.util.shared.TreeRow;
+import stroom.docref.SharedObject;
 
-public class JobNodeRow extends EntityRow<JobNode> implements TreeRow {
+public class JobNodeRow implements SharedObject {
     private static final long serialVersionUID = 3306590492924959915L;
 
-    private static final Expander EXPANDER = new Expander(2, false, true);
-
+    private JobNode jobNode;
     private JobNodeInfo jobNodeInfo;
 
     public JobNodeRow() {
@@ -32,16 +29,15 @@ public class JobNodeRow extends EntityRow<JobNode> implements TreeRow {
     }
 
     public JobNodeRow(final JobNode jobNode, final JobNodeInfo jobNodeInfo) {
-        super(jobNode);
+        this.jobNode = jobNode;
         this.jobNodeInfo = jobNodeInfo;
+    }
+
+    public JobNode getJobNode() {
+        return jobNode;
     }
 
     public JobNodeInfo getJobNodeInfo() {
         return jobNodeInfo;
-    }
-
-    @Override
-    public Expander getExpander() {
-        return EXPANDER;
     }
 }

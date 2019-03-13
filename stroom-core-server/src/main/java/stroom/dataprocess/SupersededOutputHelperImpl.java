@@ -2,18 +2,18 @@ package stroom.dataprocess;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaFieldNames;
-import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.pipeline.task.SupersededOutputHelper;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorTask;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamtask.shared.Processor;
-import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.util.pipeline.scope.PipelineScoped;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -27,7 +27,7 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
 
     private Meta sourceMeta;
     private Processor streamProcessor;
-    private ProcessorFilterTask streamTask;
+    private ProcessorTask streamTask;
     private long processStartTime;
 
     private boolean initialised;
@@ -111,12 +111,12 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
     }
 
     public void init(final Meta sourceMeta,
-                     final Processor streamProcessor,
-                     final ProcessorFilterTask streamTask,
+                     final Processor processor,
+                     final ProcessorTask processorTask,
                      final long processStartTime) {
         this.sourceMeta = sourceMeta;
-        this.streamProcessor = streamProcessor;
-        this.streamTask = streamTask;
+        this.streamProcessor = processor;
+        this.streamTask = processorTask;
         this.processStartTime = processStartTime;
 
         initialised = true;

@@ -28,9 +28,7 @@ import org.apache.lucene.store.NIOFSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.index.analyzer.AnalyzerFactory;
-
 import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;

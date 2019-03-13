@@ -140,7 +140,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
      */
     private void processFile(final int count, final int total, final Store streamStore, final long streamId,
                              final Path outputDir) {
-        try (final Source streamSource = streamStore.openStreamSource(streamId)) {
+        try (final Source streamSource = streamStore.openSource(streamId)) {
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
                 try (final InputStream inputStream = inputStreamProvider.get()) {
                     final Path outputFile = outputDir.resolve(streamId + ".dat");

@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import stroom.node.api.NodeInfo;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticsReceiver;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -178,11 +178,11 @@ class TestHeapHistogramStatisticsExecutor {
             if (exitCode != 0) {
                 String error = stdErr.toString(StandardCharsets.UTF_8);
                 throw new RuntimeException(
-                        LambdaLogger.buildMessage("Non zero exit code: {}, error: {}", exitCode, error));
+                        LogUtil.message("Non zero exit code: {}, error: {}", exitCode, error));
             }
             return stdOut.toString(StandardCharsets.UTF_8.name());
         } catch (Exception e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error executing command {}", (Object[]) cmdPlusArgs), e);
+            throw new RuntimeException(LogUtil.message("Error executing command {}", (Object[]) cmdPlusArgs), e);
         }
     }
 

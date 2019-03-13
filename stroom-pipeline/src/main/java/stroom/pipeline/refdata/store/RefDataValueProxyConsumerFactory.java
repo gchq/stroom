@@ -23,12 +23,11 @@ import net.sf.saxon.event.Receiver;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 
 public class RefDataValueProxyConsumerFactory {
-
     private final Receiver receiver;
     private final PipelineConfiguration pipelineConfiguration;
 
@@ -36,7 +35,6 @@ public class RefDataValueProxyConsumerFactory {
     private final OffHeapRefDataValueProxyConsumer.Factory offHeapRefDataValueProxyConsumerFactory;
     private OnHeapRefDataValueProxyConsumer onHeapRefDataValueProxyConsumer = null;
     private OffHeapRefDataValueProxyConsumer offHeapRefDataValueProxyConsumer = null;
-
 
     @Inject
     public RefDataValueProxyConsumerFactory(
@@ -69,7 +67,7 @@ public class RefDataValueProxyConsumerFactory {
             }
             refDataValueProxyConsumer = onHeapRefDataValueProxyConsumer;
         } else {
-            throw new IllegalArgumentException(LambdaLogger.buildMessage("Unexpected type {}", storageType));
+            throw new IllegalArgumentException(LogUtil.message("Unexpected type {}", storageType));
         }
         return refDataValueProxyConsumer;
     }

@@ -27,8 +27,10 @@ import stroom.db.util.JooqUtil;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -192,7 +194,7 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     @Override
     public ConfigProperty update(final ConfigProperty configProperty) {
         return security.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
-            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+            LAMBDA_LOGGER.debug(LambdaLogUtil.message(
                     "Saving property [{}] with new value [{}]",
                     configProperty.getName(), configProperty.getValue()));
 
@@ -247,7 +249,7 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     private void deleteFromDb(final String name) {
         JooqUtil.context(connectionProvider, context -> {
             LAMBDA_LOGGER.warn(() ->
-                    LambdaLogger.buildMessage("Deleting property {} as it is not valid " +
+                    LogUtil.message("Deleting property {} as it is not valid " +
                             "in the object model", name));
             context
                     .deleteFrom(CONFIG)

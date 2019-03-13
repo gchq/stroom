@@ -41,7 +41,7 @@ import stroom.activity.impl.db.jooq.tables.records.ActivityRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Activity extends TableImpl<ActivityRecord> {
 
-    private static final long serialVersionUID = 418178194;
+    private static final long serialVersionUID = 879677501;
 
     /**
      * The reference instance of <code>stroom.activity</code>

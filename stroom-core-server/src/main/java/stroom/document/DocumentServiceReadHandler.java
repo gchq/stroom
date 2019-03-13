@@ -44,29 +44,6 @@ class DocumentServiceReadHandler
     @Override
     public SharedObject exec(final DocumentServiceReadAction action) {
         return security.secureResult(() -> {
-//        BaseEntity result = null;
-//
-//        try {
-//            final DocRef docRef = action.getDocRef();
-//            if (docRef != null && docRef.getType() != null && docRef.getType().length() > 0) {
-//                if (docRef.getUuid() != null && docRef.getUuid().length() > 0) {
-//                    result = entityService.loadByUuid(docRef.getType(), docRef.getUuid(), action.getFetchSet());
-//                }
-//
-//                if (result == null && docRef.getId() != null) {
-//                    result = entityService.loadById(docRef.getType(), docRef.getId(), action.getFetchSet());
-//                }
-//            }
-//
-//            if (result != null) {
-//                documentEventLog.view(result);
-//            }
-//        } catch (final RuntimeException e) {
-//            throw e;
-//        }
-//
-//        return result;
-
             try {
                 final SharedObject doc = (SharedObject) documentService.readDocument(action.getDocRef());
                 documentEventLog.view(action.getDocRef(), null);

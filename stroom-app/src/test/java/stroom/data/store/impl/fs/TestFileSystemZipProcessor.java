@@ -29,8 +29,8 @@ import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.io.StreamUtil;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -266,7 +266,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         assertThat(foundFiles).as("Checking expected output files").isEqualTo(expectedFiles);
 
 //        // Test full content
-//        try (final Source source = streamStore.openStreamSource(handlerList.get(0).getStreamSet().iterator().next().getId())) {
+//        try (final Source source = streamStore.openSource(handlerList.get(0).getStreamSet().iterator().next().getId())) {
 //            try (final InputStreamProvider inputStreamProvider = source.get(0)) {
 //                for (final Entry<String, String> entry : expectedContent.entrySet()) {
 //                    final String key = entry.getKey();
@@ -281,7 +281,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 //        }
 
         // Test boundaries
-        try (final Source source = streamStore.openStreamSource(handlerList.get(0).getStreamSet().iterator().next().getId())) {
+        try (final Source source = streamStore.openSource(handlerList.get(0).getStreamSet().iterator().next().getId())) {
             int index = 0;
             for (final Map<String, String> map : expectedBoundaries) {
                 try (final InputStreamProvider inputStreamProvider = source.get(index)) {

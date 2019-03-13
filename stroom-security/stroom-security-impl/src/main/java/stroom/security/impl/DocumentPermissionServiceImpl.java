@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.dao.DocumentPermissionDao;
 import stroom.security.dao.UserDao;
+import stroom.security.service.DocumentPermissionService;
 import stroom.security.shared.DocumentPermissionJooq;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
@@ -51,16 +52,21 @@ class DocumentPermissionServiceImpl implements DocumentPermissionService {
     }
 
     @Override
-    public DocumentPermissions getPermissionsForDocument(final DocRef document) {
-        final Map<UserRef, Set<String>> userPermissions = new HashMap<>();
+    public Set<String> getPermissionsForDocumentForUser(final String docRefUuid,
+                                                        final String userUuid) {
+        return documentPermissionDao.getPermissionsForDocumentForUser(docRefUuid, userUuid);
+    }
+
+    @Override
+    public DocumentPermissions getPermissionsForDocument(final String docRefUuid) {
+        final Map<String, Set<String>> userPermissions = new HashMap<>();
 
         try {
-            final DocumentPermissionJooq documentPermission = documentPermissionDao.getPermissionsForDocument(document);
+            final DocumentPermissionJooq documentPermission = documentPermissionDao.getPermissionsForDocument(docRefUuid);
 
             documentPermission.getPermissions().forEach((userUuid, permissions) -> {
                 final User user = userDao.getByUuid(userUuid);
-                final UserRef userRef = UserRefFactory.create(user);
-                userPermissions.put(userRef, permissions);
+                userPermissions.put(user.getUuid(), permissions);
             });
 
 
@@ -69,27 +75,32 @@ class DocumentPermissionServiceImpl implements DocumentPermissionService {
             throw e;
         }
 
-        final String[] permissions = documentTypePermissions.getPermissions(document.getType());
-        return new DocumentPermissions(document, permissions, userPermissions);
+        return new DocumentPermissions(docRefUuid, userPermissions);
     }
 
     @Override
-    public void addPermission(final UserRef userRef, final DocRef document, final String permission) {
-        documentPermissionDao.addPermission(userRef.getUuid(), document, permission);
+    public void addPermission(final String docRefUuid,
+                              final String userUuid,
+                              final String permission) {
+        documentPermissionDao.addPermission(docRefUuid, userUuid, permission);
     }
 
     @Override
-    public void removePermission(final UserRef userRef, final DocRef document, final String permission) {
-        documentPermissionDao.removePermission(userRef.getUuid(), document, permission);
+    public void removePermission(final String docRefUuid,
+                                 final String userUuid,
+                                 final String permission) {
+        documentPermissionDao.removePermission(docRefUuid, userUuid, permission);
     }
 
     @Override
-    public void clearDocumentPermissions(final DocRef document) {
-        documentPermissionDao.clearDocumentPermissions(document);
+    public void clearDocumentPermissionsForUser(final String docRefUuid,
+                                                final String userUuid) {
+        documentPermissionDao.clearDocumentPermissionsForUser(docRefUuid, userUuid);
+
     }
 
     @Override
-    public void clearUserPermissions(final UserRef userRef) {
-        documentPermissionDao.clearUserPermissions(userRef.getUuid());
+    public void clearDocumentPermissions(final String docRefUuid) {
+        documentPermissionDao.clearDocumentPermissions(docRefUuid);
     }
 }

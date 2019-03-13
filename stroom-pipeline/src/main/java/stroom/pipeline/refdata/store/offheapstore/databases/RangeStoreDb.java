@@ -24,20 +24,22 @@ import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.Range;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.EntryConsumer;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
+import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
+import stroom.pipeline.refdata.store.offheapstore.lmdb.EntryConsumer;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
+import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.pipeline.refdata.util.PooledByteBuffer;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.Range;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -107,7 +109,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
                     if (LOGGER.isTraceEnabled()) {
                         RangeStoreKey rangeStoreKey = keySerde.deserialize(keyBuffer);
-                        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("rangeStoreKey {}, keyBuffer {}",
+                        LAMBDA_LOGGER.trace(LambdaLogUtil.message("rangeStoreKey {}, keyBuffer {}",
                                 rangeStoreKey,
                                 ByteBufferUtils.byteBufferInfo(keyBuffer)));
                     }
@@ -116,7 +118,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                         final UID uidOfFoundKey = UIDSerde.extractUid(keyBuffer);
                         // double check to be sure we have the right mapDefinitionUid
                         if (!uidOfFoundKey.equals(mapDefinitionUid)) {
-                            throw new RuntimeException(LambdaLogger.buildMessage(
+                            throw new RuntimeException(LogUtil.message(
                                     "Found a key with a different mapDefinitionUid, found: {}, expected {}",
                                     uidOfFoundKey, mapDefinitionUid));
                         }
@@ -223,7 +225,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                     if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
                         // prefixed with our UID
 
-                        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Found entry {} {}",
+                        LAMBDA_LOGGER.trace(LambdaLogUtil.message("Found entry {} {}",
                                 ByteBufferUtils.byteBufferInfo(keyVal.key()),
                                 ByteBufferUtils.byteBufferInfo(keyVal.val())));
 
@@ -252,7 +254,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
         UID nextMapUid = mapUid.nextUid();
         final RangeStoreKey endKeyExc = new RangeStoreKey(nextMapUid, dummyRange);
 
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Using range {} (inc) {} (exc)",
+        LAMBDA_LOGGER.trace(LambdaLogUtil.message("Using range {} (inc) {} (exc)",
                 ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),
                 ByteBufferUtils.byteBufferInfo(endKeyExcBuffer)));
 

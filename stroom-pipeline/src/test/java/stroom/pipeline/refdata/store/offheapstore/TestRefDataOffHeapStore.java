@@ -27,8 +27,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.Range;
-import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
@@ -49,8 +47,12 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.util.ByteSizeUnit;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.pipeline.scope.PipelineScopeModule;
+import stroom.util.shared.Range;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -351,7 +353,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                 optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i * 10) + 5));
                                 assertThat(optValue.isPresent());
                             });
-                }, () -> LambdaLogger.buildMessage("Getting {} entries, twice", recCount));
+                }, LambdaLogUtil.message("Getting {} entries, twice", recCount));
 
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -427,7 +429,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                 optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i * 10) + 5));
                                 assertThat(optValue.isPresent());
                             });
-                }, () -> LambdaLogger.buildMessage("Getting {} entries, twice", recCount));
+                }, LambdaLogUtil.message("Getting {} entries, twice", recCount));
 
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -954,7 +956,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
     private String buildRangeStoreValue(final String mapName, final int i, final Range<Long> range) {
         // pad the values out to make them more realistic in length to see impact on writes
-        return LambdaLogger.buildMessage("{}-{}-{}-value{}{}",
+        return LogUtil.message("{}-{}-{}-value{}{}",
                 mapName, range.getFrom(), range.getTo(), i, PADDING);
     }
 
@@ -962,7 +964,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             final RefStreamDefinition refStreamDefinition,
             final String type,
             final int i) {
-        return LambdaLogger.buildMessage("refStreamDef{}-{}map{}",
+        return LogUtil.message("refStreamDef{}-{}map{}",
                 refStreamDefinition.getStreamId(), type, i);
     }
 
@@ -970,7 +972,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             final RefStreamDefinition refStreamDefinition,
             final String type,
             final int i) {
-        return LambdaLogger.buildMessage("{}map{}",
+        return LogUtil.message("{}map{}",
                 type, i);
     }
 
@@ -978,7 +980,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                       final int i,
                                       final String key) {
         // pad the values out to make them more realistic in length to see impact on writes
-        return LambdaLogger.buildMessage("{}-{}-value{}{}", mapName, key, i, PADDING);
+        return LogUtil.message("{}-{}-value{}{}", mapName, key, i, PADDING);
     }
 
     private String buildKey(final int k) {

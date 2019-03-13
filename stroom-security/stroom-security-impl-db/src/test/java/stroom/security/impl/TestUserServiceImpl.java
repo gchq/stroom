@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
+import stroom.security.service.UserService;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
@@ -74,28 +75,28 @@ class TestUserServiceImpl {
         checkUsersInGroup(userGroup1);
         checkUsersInGroup(userGroup2);
 
-        userService.addUserToGroup(user1, userGroup1);
+        userService.addUserToGroup(user1.getUuid(), userGroup1.getUuid());
 
         checkGroupsForUser(user1, userGroup1);
         checkGroupsForUser(user2);
         checkUsersInGroup(userGroup1, user1);
         checkUsersInGroup(userGroup2);
 
-        userService.addUserToGroup(user1, userGroup2);
+        userService.addUserToGroup(user1.getUuid(), userGroup2.getUuid());
 
         checkGroupsForUser(user1, userGroup1, userGroup2);
         checkGroupsForUser(user2);
         checkUsersInGroup(userGroup1, user1);
         checkUsersInGroup(userGroup2, user1);
 
-        userService.addUserToGroup(user2, userGroup1);
+        userService.addUserToGroup(user2.getUuid(), userGroup1.getUuid());
 
         checkGroupsForUser(user1, userGroup1, userGroup2);
         checkGroupsForUser(user2, userGroup1);
         checkUsersInGroup(userGroup1, user1, user2);
         checkUsersInGroup(userGroup2, user1);
 
-        userService.removeUserFromGroup(user2, userGroup1);
+        userService.removeUserFromGroup(user2.getUuid(), userGroup1.getUuid());
 
         checkGroupsForUser(user1, userGroup1, userGroup2);
         checkGroupsForUser(user2);
@@ -104,7 +105,7 @@ class TestUserServiceImpl {
     }
 
     private void checkGroupsForUser(final UserRef user, final UserRef... groups) {
-        final List<UserRef> list = userService.findGroupsForUser(user);
+        final List<UserRef> list = userService.findGroupsForUser(user.getUuid());
         assertThat(list.size()).isEqualTo(groups.length);
         for (final UserRef group : groups) {
             assertThat(list.contains(group)).isTrue();
@@ -112,7 +113,7 @@ class TestUserServiceImpl {
     }
 
     private void checkUsersInGroup(final UserRef group, final UserRef... users) {
-        final List<UserRef> list = userService.findUsersInGroup(group);
+        final List<UserRef> list = userService.findUsersInGroup(group.getUuid());
         assertThat(list.size()).isEqualTo(users.length);
         for (final UserRef user : users) {
             assertThat(list.contains(user)).isTrue();

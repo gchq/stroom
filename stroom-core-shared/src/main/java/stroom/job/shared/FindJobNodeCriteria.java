@@ -16,9 +16,7 @@
 
 package stroom.job.shared;
 
-import stroom.entity.shared.EntityIdSet;
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.IdSet;
 import stroom.util.shared.StringCriteria;
 
 /**
@@ -27,23 +25,14 @@ import stroom.util.shared.StringCriteria;
 public class FindJobNodeCriteria extends BaseCriteria {
     private static final long serialVersionUID = 71512228011037748L;
 
-    private String jobName;
-    private EntityIdSet<Job> jobIdSet = new EntityIdSet<>();
-    private StringCriteria nodeCriteria = new StringCriteria();
+    private StringCriteria jobName = new StringCriteria();
+    private StringCriteria nodeName = new StringCriteria();
 
-    public StringCriteria getNodeCriteria() {
-        return nodeCriteria;
-    }
-
-    public EntityIdSet<Job> getJobIdSet() {
-        return jobIdSet;
-    }
-
-    public String getJobName() {
+    public StringCriteria getJobName() {
         return jobName;
     }
 
-    public void setJobName(String jobName) {
-        this.jobName = jobName;
+    public StringCriteria getNodeName() {
+        return nodeName;
     }
 }

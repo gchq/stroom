@@ -17,8 +17,8 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
-import stroom.util.logging.LambdaLogger;
 
 import java.util.Objects;
 
@@ -35,7 +35,7 @@ public class RangeStoreKey {
         this.mapUid = Objects.requireNonNull(mapUid);
         this.keyRange = Objects.requireNonNull(keyRange);
         if (!keyRange.isBounded()) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Only bounded ranges are supported, range: {}", keyRange));
+            throw new RuntimeException(LogUtil.message("Only bounded ranges are supported, range: {}", keyRange));
         }
     }
 

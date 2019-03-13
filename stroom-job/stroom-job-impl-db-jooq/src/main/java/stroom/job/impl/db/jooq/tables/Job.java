@@ -41,7 +41,7 @@ import stroom.job.impl.db.jooq.tables.records.JobRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Job extends TableImpl<JobRecord> {
 
-    private static final long serialVersionUID = -2527840;
+    private static final long serialVersionUID = -1938575807;
 
     /**
      * The reference instance of <code>stroom.job</code>
@@ -62,19 +62,39 @@ public class Job extends TableImpl<JobRecord> {
     public final TableField<JobRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
-     * The column <code>stroom.job.description</code>.
+     * The column <code>stroom.job.version</code>.
      */
-    public final TableField<JobRecord, String> DESCRIPTION = createField("description", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
+    public final TableField<JobRecord, Integer> VERSION = createField("version", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.job.create_time_ms</code>.
+     */
+    public final TableField<JobRecord, Long> CREATE_TIME_MS = createField("create_time_ms", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.job.create_user</code>.
+     */
+    public final TableField<JobRecord, String> CREATE_USER = createField("create_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.job.update_time_ms</code>.
+     */
+    public final TableField<JobRecord, Long> UPDATE_TIME_MS = createField("update_time_ms", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.job.update_user</code>.
+     */
+    public final TableField<JobRecord, String> UPDATE_USER = createField("update_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.job.name</code>.
+     */
+    public final TableField<JobRecord, String> NAME = createField("name", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.job.enabled</code>.
      */
     public final TableField<JobRecord, Boolean> ENABLED = createField("enabled", org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
-
-    /**
-     * The column <code>stroom.job.version</code>.
-     */
-    public final TableField<JobRecord, Integer> VERSION = createField("version", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * Create a <code>stroom.job</code> table reference
@@ -122,7 +142,7 @@ public class Job extends TableImpl<JobRecord> {
      */
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.JOB_PRIMARY);
+        return Arrays.<Index>asList(Indexes.JOB_NAME, Indexes.JOB_PRIMARY);
     }
 
     /**
@@ -146,7 +166,7 @@ public class Job extends TableImpl<JobRecord> {
      */
     @Override
     public List<UniqueKey<JobRecord>> getKeys() {
-        return Arrays.<UniqueKey<JobRecord>>asList(Keys.KEY_JOB_PRIMARY);
+        return Arrays.<UniqueKey<JobRecord>>asList(Keys.KEY_JOB_PRIMARY, Keys.KEY_JOB_NAME);
     }
 
     /**

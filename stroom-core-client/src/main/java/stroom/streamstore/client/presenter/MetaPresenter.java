@@ -32,33 +32,33 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.LocationManager;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.Status;
-import stroom.meta.shared.ExpressionUtil;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaFieldNames;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.util.shared.IdSet;
-import stroom.util.shared.ResultList;
 import stroom.explorer.shared.SharedDocRef;
 import stroom.feed.shared.FeedDoc;
+import stroom.meta.shared.ExpressionUtil;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
+import stroom.processor.shared.ReprocessDataAction;
+import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.shared.DownloadDataAction;
-import stroom.streamstore.shared.ReprocessDataInfo;
 import stroom.streamstore.shared.UpdateStatusAction;
-import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.IdSet;
+import stroom.util.shared.ResultList;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -424,9 +424,6 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
 //        pageRequest.setLength(PageRequest.DEFAULT_PAGE_SIZE);
 //        pageRequest.setOffset(0L);
 //
-//        criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
-//        criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
-//        criteria.getFetchSet().add(Processor.ENTITY_TYPE);
 //        criteria.setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
 //
 //        return criteria;
@@ -571,7 +568,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
 
             // TODO : Fix by making entity id sets docref sets.
 //            final EntityIdSet<PipelineEntity> entityIdSet = findMetaCriteria
-//                    .getPipelineSet();
+//                    .getPipelineUuidCriteria();
 //            if (entityIdSet != null) {
 //                if (entityIdSet.getSet().size() > 0) {
 //                    pipelineRef = DocRef.create(entityIdSet.getSet().iterator().next());

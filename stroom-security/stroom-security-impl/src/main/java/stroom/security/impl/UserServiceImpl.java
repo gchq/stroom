@@ -18,6 +18,7 @@ package stroom.security.impl;
 
 import stroom.security.Security;
 import stroom.security.dao.UserDao;
+import stroom.security.service.UserService;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
@@ -67,15 +68,15 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserRef> findUsersInGroup(final UserRef userGroup) {
-        return userDao.findUsersInGroup(userGroup.getUuid()).stream()
+    public List<UserRef> findUsersInGroup(final String groupUuid) {
+        return userDao.findUsersInGroup(groupUuid).stream()
                 .map(UserRefFactory::create)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<UserRef> findGroupsForUser(final UserRef user) {
-        return userDao.findGroupsForUser(user.getUuid()).stream()
+    public List<UserRef> findGroupsForUser(final String userUuid) {
+        return userDao.findGroupsForUser(userUuid).stream()
                 .map(UserRefFactory::create)
                 .collect(Collectors.toList());
     }
@@ -113,23 +114,23 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Boolean delete(User user) {
+    public Boolean delete(final String userUuid) {
         security.secure(PermissionNames.MANAGE_USERS_PERMISSION,
-                () -> userDao.deleteUser(user.getUuid()));
+                () -> userDao.deleteUser(userUuid));
         return true;
     }
 
     @Override
-    public void addUserToGroup(final UserRef user, final UserRef userGroup) {
+    public void addUserToGroup(final String userUuid, final String groupUuid) {
         security.secure(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            userDao.addUserToGroup(user.getUuid(), userGroup.getUuid());
+            userDao.addUserToGroup(userUuid, groupUuid);
         });
     }
 
     @Override
-    public void removeUserFromGroup(final UserRef user, final UserRef userGroup) {
+    public void removeUserFromGroup(final String userUuid, final String groupUuid) {
         security.secure(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            userDao.removeUserFromGroup(user.getUuid(), userGroup.getUuid());
+            userDao.removeUserFromGroup(userUuid, groupUuid);
         });
     }
 

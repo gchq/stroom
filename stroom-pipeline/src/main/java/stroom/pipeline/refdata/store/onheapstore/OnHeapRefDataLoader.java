@@ -2,7 +2,6 @@ package stroom.pipeline.refdata.store.onheapstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.Range;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
@@ -10,8 +9,11 @@ import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.Range;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -137,7 +139,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
 
         boolean wasValuePut;
         LAMBDA_LOGGER.trace(() ->
-                LambdaLogger.buildMessage("containsKey == {}", keyValueMap.containsKey(mapKey)));
+                LogUtil.message("containsKey == {}", keyValueMap.containsKey(mapKey)));
         if (overwriteExisting) {
             keyValueMap.put(mapKey, refDataValue);
             wasValuePut = true;
@@ -146,7 +148,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
             wasValuePut = prevValue == null;
         }
         recordPut(mapDefinition, wasValuePut);
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("put completed for {} {} {}, size now {}",
+        LAMBDA_LOGGER.trace(LambdaLogUtil.message("put completed for {} {} {}, size now {}",
                 mapDefinition, key, refDataValue, keyValueMap.size()));
         return wasValuePut;
     }
@@ -171,7 +173,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
             wasValuePut = prevValue == null;
         }
         recordPut(mapDefinition, wasValuePut);
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("put completed for {} {} {}, size now {}",
+        LAMBDA_LOGGER.trace(LambdaLogUtil.message("put completed for {} {} {}, size now {}",
                 mapDefinition, keyRange, refDataValue,
                 Optional.ofNullable(rangeValueNestedMap.get(mapDefinition))
                         .map(NavigableMap::size)
@@ -203,7 +205,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
                         newProcessingState, touchLastAccessedTime);
                 return newRefDataProcessingInfo;
             } else {
-                throw new RuntimeException(LambdaLogger.buildMessage(
+                throw new RuntimeException(LogUtil.message(
                         "No processing info entry found for {}", refStreamDefinition));
             }
         });
@@ -232,7 +234,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
             }
         }
         if (!isCurrentStateValid) {
-            throw new IllegalStateException(LambdaLogger.buildMessage("Current loader state: {}, valid states: {}",
+            throw new IllegalStateException(LogUtil.message("Current loader state: {}, valid states: {}",
                     currentLoaderState, Arrays.toString(validStates)));
         }
     }
