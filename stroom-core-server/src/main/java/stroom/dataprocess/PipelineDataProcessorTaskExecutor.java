@@ -62,9 +62,9 @@ import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.pipeline.task.SupersededOutputHelper;
+import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
-import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
@@ -88,8 +88,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class PipelineStreamProcessor implements DataProcessorTaskExecutor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PipelineStreamProcessor.class);
+public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecutor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PipelineDataProcessorTaskExecutor.class);
     private static final String PROCESSING = "Processing:";
     private static final String FINISHED = "Finished:";
     private static final int PREVIEW_SIZE = 100;
@@ -127,30 +127,30 @@ public class PipelineStreamProcessor implements DataProcessorTaskExecutor {
     private long startTime;
 
     @Inject
-    PipelineStreamProcessor(final PipelineFactory pipelineFactory,
-                            final Store streamStore,
-                            final PipelineStore pipelineStore,
-                            final TaskContext taskContext,
-                            final PipelineHolder pipelineHolder,
-                            final FeedHolder feedHolder,
-                            final FeedProperties feedProperties,
-                            final MetaDataHolder metaDataHolder,
-                            final MetaHolder metaHolder,
-                            final SearchIdHolder searchIdHolder,
-                            final LocationFactoryProxy locationFactory,
-                            final StreamProcessorHolder streamProcessorHolder,
-                            final ErrorReceiverProxy errorReceiverProxy,
-                            final ErrorWriterProxy errorWriterProxy,
-                            final MetaData metaData,
-                            final RecordCount recordCount,
-                            final StreamCloser streamCloser,
-                            final RecordErrorReceiver recordErrorReceiver,
-                            final NodeInfo nodeInfo,
-                            final PipelineDataCache pipelineDataCache,
-                            final InternalStatisticsReceiver internalStatisticsReceiver,
-                            final SupersededOutputHelperImpl supersededOutputHelper) {
+    PipelineDataProcessorTaskExecutor(final PipelineFactory pipelineFactory,
+                                      final Store store,
+                                      final PipelineStore pipelineStore,
+                                      final TaskContext taskContext,
+                                      final PipelineHolder pipelineHolder,
+                                      final FeedHolder feedHolder,
+                                      final FeedProperties feedProperties,
+                                      final MetaDataHolder metaDataHolder,
+                                      final MetaHolder metaHolder,
+                                      final SearchIdHolder searchIdHolder,
+                                      final LocationFactoryProxy locationFactory,
+                                      final StreamProcessorHolder streamProcessorHolder,
+                                      final ErrorReceiverProxy errorReceiverProxy,
+                                      final ErrorWriterProxy errorWriterProxy,
+                                      final MetaData metaData,
+                                      final RecordCount recordCount,
+                                      final StreamCloser streamCloser,
+                                      final RecordErrorReceiver recordErrorReceiver,
+                                      final NodeInfo nodeInfo,
+                                      final PipelineDataCache pipelineDataCache,
+                                      final InternalStatisticsReceiver internalStatisticsReceiver,
+                                      final SupersededOutputHelperImpl supersededOutputHelper) {
         this.pipelineFactory = pipelineFactory;
-        this.streamStore = streamStore;
+        this.streamStore = store;
         this.pipelineStore = pipelineStore;
         this.taskContext = taskContext;
         this.pipelineHolder = pipelineHolder;

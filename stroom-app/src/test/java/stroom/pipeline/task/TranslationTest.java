@@ -361,13 +361,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private List<DataProcessorTask> getTasks() {
         List<DataProcessorTask> dataProcessorTasks = Collections.emptyList();
 
-        List<ProcessorTask> processorTasks = processorTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+        List<ProcessorTask> processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
         while (processorTasks.size() > 0) {
             dataProcessorTasks = new ArrayList<>(processorTasks.size());
             for (final ProcessorTask processorTask : processorTasks) {
                 dataProcessorTasks.add(new DataProcessorTask(processorTask));
             }
-            processorTasks = processorTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+            processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
         }
 
         return dataProcessorTasks;

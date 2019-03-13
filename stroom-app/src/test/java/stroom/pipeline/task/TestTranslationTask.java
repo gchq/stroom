@@ -18,12 +18,12 @@ package stroom.pipeline.task;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.meta.shared.Meta;
-import stroom.meta.impl.mock.MockMetaService;
 import stroom.data.store.impl.mock.MockStore;
-import stroom.dataprocess.PipelineStreamProcessor;
-import stroom.streamstore.shared.StreamTypeNames;
+import stroom.dataprocess.PipelineDataProcessorTaskExecutor;
+import stroom.meta.impl.mock.MockMetaService;
+import stroom.meta.shared.Meta;
 import stroom.processor.api.DataProcessorTaskExecutor;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.common.ComparisonHelper;
@@ -64,7 +64,7 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
         final List<DataProcessorTaskExecutor> results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(N4);
         for (final DataProcessorTaskExecutor result : results) {
-            final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
+            final PipelineDataProcessorTaskExecutor processor = (PipelineDataProcessorTaskExecutor) result;
             assertThat(processor.getWritten() > 0).as(result.toString()).isTrue();
             assertThat(processor.getRead() <= processor.getWritten()).as(result.toString()).isTrue();
             assertThat(processor.getMarkerCount(Severity.SEVERITIES)).as(result.toString()).isEqualTo(0);
@@ -91,7 +91,7 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
         }
 
         // Make sure 26 records were written.
-        assertThat(((PipelineStreamProcessor) results.get(N3)).getWritten()).isEqualTo(26);
+        assertThat(((PipelineDataProcessorTaskExecutor) results.get(N3)).getWritten()).isEqualTo(26);
     }
 
     /**
@@ -107,6 +107,6 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
         assertThat(results.size()).isEqualTo(N4);
 
         // Make sure no records were written.
-        assertThat(((PipelineStreamProcessor) results.get(N3)).getWritten()).isEqualTo(0);
+        assertThat(((PipelineDataProcessorTaskExecutor) results.get(N3)).getWritten()).isEqualTo(0);
     }
 }

@@ -48,10 +48,9 @@ public class ProcessorModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), DistributedTaskFactory.class)
                 .addBinding(DataProcessorTaskFactory.class);
 
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ProcessorCache.class);
-
-//        GuiceUtil.buildMultiBinder(binder(), FindService.class)
-//                .addBinding(StreamTaskServiceImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(ProcessorCache.class)
+                .addBinding(ProcessorFilterCache.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(StreamTaskResource.class);

@@ -26,6 +26,6 @@ public class PipelineStreamTaskModule extends AbstractModule {
         bind(SupersededOutputHelper.class).to(SupersededOutputHelperImpl.class);
 
         DataProcessorBinder.create(binder())
-                .bind("pipelineStreamProcessor", PipelineStreamProcessor.class);
+                .bind("pipelineStreamProcessor", PipelineDataProcessorTaskExecutor.class);
     }
 }

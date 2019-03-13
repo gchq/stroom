@@ -73,7 +73,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -194,7 +193,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
      * the task to the node asking for the job
      */
     @Override
-    public List<ProcessorTask> assignStreamTasks(final String nodeName, final int count) {
+    public List<ProcessorTask> assignTasks(final String nodeName, final int count) {
         List<ProcessorTask> assignedStreamTasks = Collections.emptyList();
 
         try {
@@ -246,7 +245,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     }
 
     @Override
-    public void abandonStreamTasks(final String nodeName, final List<ProcessorTask> tasks) {
+    public void abandonTasks(final String nodeName, final List<ProcessorTask> tasks) {
         // Output some trace logging so we can see where tasks go.
         taskStatusTraceLog.abandonTasks(ProcessorTaskManagerImpl.class, tasks, nodeName);
 
@@ -295,7 +294,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     }
 
     @Override
-    public int getStreamTaskQueueSize() {
+    public int getTaskQueueSize() {
         int size = 0;
         for (final StreamTaskQueue queue : queueMap.values()) {
             if (queue != null) {
@@ -351,7 +350,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         final long timeNowMs = System.currentTimeMillis();
         if (timeNowMs > nextPollMs.get()) {
             if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("isScheduled() - Yes as time has past (queueSize={})", getStreamTaskQueueSize());
+                LOGGER.trace("isScheduled() - Yes as time has past (queueSize={})", getTaskQueueSize());
             }
             return true;
         }
@@ -948,7 +947,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         try {
             // Avoid writing loads of same value stats So write every min while
             // it changes Under little load the queue size will be 0
-            final int queueSize = getStreamTaskQueueSize();
+            final int queueSize = getTaskQueueSize();
             if (queueSize != lastQueueSizeForStats) {
                 try {
                     final InternalStatisticsReceiver internalStatisticsReceiver = internalStatisticsReceiverProvider.get();

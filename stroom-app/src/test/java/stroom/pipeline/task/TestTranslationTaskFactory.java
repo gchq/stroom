@@ -21,7 +21,7 @@ package stroom.pipeline.task;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.data.store.api.Store;
-import stroom.dataprocess.PipelineStreamProcessor;
+import stroom.dataprocess.PipelineDataProcessorTaskExecutor;
 import stroom.docref.DocRef;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -125,7 +125,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
 
         // Check none failed.
         for (final DataProcessorTaskExecutor result : results) {
-            assertThat(((PipelineStreamProcessor) result).getMarkerCount(Severity.SEVERITIES)).isEqualTo(0);
+            assertThat(((PipelineDataProcessorTaskExecutor) result).getMarkerCount(Severity.SEVERITIES)).isEqualTo(0);
         }
     }
 
@@ -136,14 +136,14 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      */
     private List<DataProcessorTaskExecutor> processAll() {
         final List<DataProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorTask> streamTasks = processorTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+        List<ProcessorTask> streamTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
             for (final ProcessorTask streamTask : streamTasks) {
                 final DataProcessorTask task = new DataProcessorTask(streamTask);
                 taskManager.exec(task);
                 results.add(task.getDataProcessorTaskExecutor());
             }
-            streamTasks = processorTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+            streamTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
         }
         return results;
     }
@@ -210,7 +210,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         // Make sure there were errors.
         int errors = 0;
         for (final DataProcessorTaskExecutor result : results) {
-            final PipelineStreamProcessor pipelineStreamProcessor = (PipelineStreamProcessor) result;
+            final PipelineDataProcessorTaskExecutor pipelineStreamProcessor = (PipelineDataProcessorTaskExecutor) result;
             errors += pipelineStreamProcessor.getMarkerCount(Severity.ERROR, Severity.FATAL_ERROR);
         }
         assertThat(errors).isEqualTo(10);
@@ -242,7 +242,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         // Make sure there were no errors.
         int errors = 0;
         for (final DataProcessorTaskExecutor result : results) {
-            errors += ((PipelineStreamProcessor) result).getMarkerCount(Severity.ERROR);
+            errors += ((PipelineDataProcessorTaskExecutor) result).getMarkerCount(Severity.ERROR);
         }
         assertThat(errors).isEqualTo(0);
     }
@@ -274,7 +274,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
 
         int errors = 0;
         for (final DataProcessorTaskExecutor result : results) {
-            final PipelineStreamProcessor pipelineStreamProcessor = (PipelineStreamProcessor) result;
+            final PipelineDataProcessorTaskExecutor pipelineStreamProcessor = (PipelineDataProcessorTaskExecutor) result;
             errors += pipelineStreamProcessor.getMarkerCount(Severity.ERROR, Severity.FATAL_ERROR);
         }
         assertThat(errors).isEqualTo(10);

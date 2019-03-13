@@ -23,13 +23,13 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 public interface ProcessorTaskManager {
-    List<ProcessorTask> assignStreamTasks(String nodeName, int count);
+    List<ProcessorTask> assignTasks(String nodeName, int count);
 
-    void abandonStreamTasks(String nodeName, List<ProcessorTask> tasks);
+    void abandonTasks(String nodeName, List<ProcessorTask> tasks);
 
     void createTasks(final TaskContext taskContext);
 
-    int getStreamTaskQueueSize();
+    int getTaskQueueSize();
 
     void writeQueueStatistics();
 

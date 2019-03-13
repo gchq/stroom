@@ -56,7 +56,7 @@ public class MockProcessorTaskManager implements ProcessorTaskManager, Clearable
     }
 
     @Override
-    public List<ProcessorTask> assignStreamTasks(final String nodeName, final int count) {
+    public List<ProcessorTask> assignTasks(final String nodeName, final int count) {
         List<ProcessorTask> taskList = Collections.emptyList();
         final FindProcessorFilterCriteria criteria = new FindProcessorFilterCriteria();
         final BaseResultList<ProcessorFilter> processorFilters = processorFilterService
@@ -122,12 +122,12 @@ public class MockProcessorTaskManager implements ProcessorTaskManager, Clearable
     }
 
     @Override
-    public int getStreamTaskQueueSize() {
+    public int getTaskQueueSize() {
         return 0;
     }
 
     @Override
-    public void abandonStreamTasks(final String nodeName, final List<ProcessorTask> tasks) {
+    public void abandonTasks(final String nodeName, final List<ProcessorTask> tasks) {
         // NA
     }
 }

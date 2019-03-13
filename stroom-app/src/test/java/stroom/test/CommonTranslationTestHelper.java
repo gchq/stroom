@@ -97,14 +97,14 @@ public class CommonTranslationTestHelper {
         processorTaskManager.createTasks(new SimpleTaskContext());
 
         final List<DataProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorTask> streamTasks = processorTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
-        while (streamTasks.size() > 0) {
-            for (final ProcessorTask streamTask : streamTasks) {
-                final DataProcessorTask task = new DataProcessorTask(streamTask);
+        List<ProcessorTask> processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
+        while (processorTasks.size() > 0) {
+            for (final ProcessorTask processorTask : processorTasks) {
+                final DataProcessorTask task = new DataProcessorTask(processorTask);
                 taskManager.exec(task);
                 results.add(task.getDataProcessorTaskExecutor());
             }
-            streamTasks = processorTaskManager.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+            processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
         }
 
         return results;

@@ -17,7 +17,6 @@
 package stroom.processor.impl;
 
 import com.google.inject.AbstractModule;
-import stroom.pipeline.refdata.EffectiveStreamCache;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.task.api.TaskHandlerBinder;
@@ -40,6 +39,8 @@ public class MockProcessorModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(MockProcessorDao.class)
                 .addBinding(MockProcessorFilterDao.class)
-                .addBinding(MockProcessorTaskDao.class);
+                .addBinding(MockProcessorTaskDao.class)
+                .addBinding(ProcessorCache.class)
+                .addBinding(ProcessorFilterCache.class);
     }
 }

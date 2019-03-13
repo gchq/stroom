@@ -141,13 +141,13 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         // assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isTrue();
 
         assertThat(getTaskCount()).isEqualTo(1000);
-        List<ProcessorTask> tasks = processorTaskManager.assignStreamTasks(nodeName, 1000);
+        List<ProcessorTask> tasks = processorTaskManager.assignTasks(nodeName, 1000);
         assertThat(tasks.size()).isEqualTo(1000);
 
         processorTaskManager.createTasks(new SimpleTaskContext());
 //        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isTrue();
         assertThat(getTaskCount()).isEqualTo(2000);
-        tasks = processorTaskManager.assignStreamTasks(nodeName, 1000);
+        tasks = processorTaskManager.assignTasks(nodeName, 1000);
         assertThat(tasks.size()).isEqualTo(1000);
 
         processorConfig.setQueueSize(initialQueueSize);
@@ -169,22 +169,22 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName);
 
-        assertThat(processorTaskManager.getStreamTaskQueueSize()).isEqualTo(0);
+        assertThat(processorTaskManager.getTaskQueueSize()).isEqualTo(0);
 
         processorTaskManager.createTasks(new SimpleTaskContext());
 
         assertThat(getTaskCount()).isEqualTo(1);
-        assertThat(processorTaskManager.getStreamTaskQueueSize()).isEqualTo(1);
+        assertThat(processorTaskManager.getTaskQueueSize()).isEqualTo(1);
 
         processorTaskManager.shutdown();
 
         assertThat(getTaskCount()).isEqualTo(1);
-        assertThat(processorTaskManager.getStreamTaskQueueSize()).isEqualTo(0);
+        assertThat(processorTaskManager.getTaskQueueSize()).isEqualTo(0);
 
         processorTaskManager.startup();
-        assertThat(processorTaskManager.getStreamTaskQueueSize()).isEqualTo(0);
+        assertThat(processorTaskManager.getTaskQueueSize()).isEqualTo(0);
 
         processorTaskManager.createTasks(new SimpleTaskContext());
-        assertThat(processorTaskManager.getStreamTaskQueueSize()).isEqualTo(1);
+        assertThat(processorTaskManager.getTaskQueueSize()).isEqualTo(1);
     }
 }

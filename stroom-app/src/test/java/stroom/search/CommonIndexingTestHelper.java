@@ -17,7 +17,7 @@
 package stroom.search;
 
 
-import stroom.dataprocess.PipelineStreamProcessor;
+import stroom.dataprocess.PipelineDataProcessorTaskExecutor;
 import stroom.docref.DocRef;
 import stroom.index.IndexShardManager;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -88,7 +88,7 @@ public class CommonIndexingTestHelper {
 
         assertThat(results.size()).isEqualTo(expectedTaskCount);
         for (final DataProcessorTaskExecutor result : results) {
-            final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
+            final PipelineDataProcessorTaskExecutor processor = (PipelineDataProcessorTaskExecutor) result;
             assertThat(processor.getWritten() > 0).as(result.toString()).isTrue();
             assertThat(processor.getRead() <= processor.getWritten()).as(result.toString()).isTrue();
             assertThat(processor.getMarkerCount(Severity.SEVERITIES)).as(result.toString()).isEqualTo(0);
@@ -100,7 +100,7 @@ public class CommonIndexingTestHelper {
         results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(N1);
         for (final DataProcessorTaskExecutor result : results) {
-            final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
+            final PipelineDataProcessorTaskExecutor processor = (PipelineDataProcessorTaskExecutor) result;
             assertThat(processor.getWritten() > 0).as(result.toString()).isTrue();
             assertThat(processor.getRead() <= processor.getWritten()).as(result.toString()).isTrue();
             assertThat(processor.getMarkerCount(Severity.SEVERITIES)).as(result.toString()).isEqualTo(0);

@@ -38,14 +38,14 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory<DataProc
 
     @Override
     public List<DataProcessorTask> fetch(final String nodeName, final int count) {
-        final List<ProcessorTask> streamTasks = processorTaskManager.assignStreamTasks(nodeName, count);
+        final List<ProcessorTask> streamTasks = processorTaskManager.assignTasks(nodeName, count);
         return wrap(streamTasks);
     }
 
     @Override
     public void abandon(final String nodeName, final List<DataProcessorTask> tasks) {
         final List<ProcessorTask> streamTasks = unwrap(tasks);
-        processorTaskManager.abandonStreamTasks(nodeName, streamTasks);
+        processorTaskManager.abandonTasks(nodeName, streamTasks);
     }
 
     /**
