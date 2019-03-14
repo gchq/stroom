@@ -21,14 +21,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import stroom.util.shared.Range;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.filter.AbstractXMLFilter;
-import stroom.pipeline.shared.ElementIcons;
-import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefDataLoader;
@@ -36,9 +32,15 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
+import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.CharBuffer;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.Range;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -176,7 +178,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         if (!didInitSucceed) {
             RefStreamDefinition refStreamDefinition = refDataLoaderHolder.getRefDataLoader().getRefStreamDefinition();
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                    LambdaLogger.buildMessage(
+                    LogUtil.message(
                             "A processing info entry already exists for this reference pipeline {}, " +
                                     "version {}, streamId {}",
                             refStreamDefinition.getPipelineDocRef(),
@@ -384,7 +386,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                             .put(mapDefinition, key, refDataValue);
                     if (!didPutSucceed) {
                         errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                                LambdaLogger.buildMessage(
+                                LogUtil.message(
                                         "Unable to load entry for key [{}] as an entry already exists in the store",
                                         key), null);
 
@@ -399,7 +401,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                         // negative values cause problems for the ordering of data in LMDB so prevent their use
                         // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
                         errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                                LambdaLogger.buildMessage(
+                                LogUtil.message(
                                         "Only non-negative numbers are supported (from: {}, to: {})",
                                         rangeFrom, rangeTo), null);
 
@@ -412,7 +414,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                                 .put(mapDefinition, range, refDataValue);
                         if (!didPutSucceed) {
                             errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                                    LambdaLogger.buildMessage(
+                                    LogUtil.message(
                                             "Unable to load entry for range [{}] to [{}] as an entry already exists in the store",
                                             rangeFrom, rangeTo), null);
                         }
@@ -482,10 +484,10 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
         if (insideValueElement && haveSeenXmlInValueElement) {
 
-            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
+            LAMBDA_LOGGER.trace(LambdaLogUtil.message(
                     "characters(\"{}\")", new String(ch, start, length).trim()));
             if (insideElement || !isAllWhitespace(ch, start, length)) {
-                LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
+                LAMBDA_LOGGER.trace(LambdaLogUtil.message(
                         "saxDocumentSerializer - characters(\"{}\")", new String(ch, start, length).trim()));
                 saxDocumentSerializer.characters(ch, start, length);
             }

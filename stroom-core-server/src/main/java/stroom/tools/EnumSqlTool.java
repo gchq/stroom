@@ -17,9 +17,9 @@
 package stroom.tools;
 
 import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.util.shared.HasPrimitiveValue;
 import stroom.job.shared.JobNode.JobType;
-import stroom.streamtask.shared.TaskStatus;
+import stroom.processor.shared.TaskStatus;
+import stroom.util.shared.HasPrimitiveValue;
 
 public class EnumSqlTool {
     public static void process(final String name, final HasPrimitiveValue[] list) {

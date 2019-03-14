@@ -99,7 +99,7 @@
     <inherits name="stroom.pipeline.Pipeline" />
     <inherits name="stroom.pipeline.structure.Structure" />
     <inherits name="stroom.pipeline.stepping.PipelineStepping" />
-    <inherits name="stroom.process.Process"/>
+    <inherits name="stroom.processor.Processor"/>
     <inherits name="stroom.xmlschema.XMLSchema" />
     <inherits name="stroom.pool.Pool" />
     <inherits name="stroom.cache.Cache" />

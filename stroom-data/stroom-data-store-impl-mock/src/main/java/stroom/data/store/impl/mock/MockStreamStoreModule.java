@@ -26,9 +26,9 @@ import stroom.util.shared.Clearable;
 public class MockStreamStoreModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(Store.class).to(MockStreamStore.class);
+        bind(Store.class).to(MockStore.class);
         bind(StreamCloser.class).to(SteamStoreStreamCloserImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(MockStreamStore.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(MockStore.class);
     }
 }

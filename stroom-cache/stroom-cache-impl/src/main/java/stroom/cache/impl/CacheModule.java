@@ -18,11 +18,16 @@ package stroom.cache.impl;
 
 import com.google.inject.AbstractModule;
 import stroom.cache.api.CacheManager;
+import stroom.util.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 public class CacheModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(CacheManager.class).to(CacheManagerImpl.class);
         bind(CacheManagerService.class).to(CacheManagerServiceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(CacheManagerServiceImpl.class);
     }
 }

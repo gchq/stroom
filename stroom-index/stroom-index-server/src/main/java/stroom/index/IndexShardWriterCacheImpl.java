@@ -19,7 +19,6 @@ package stroom.index;
 import org.apache.lucene.store.LockObtainFailedException;
 import stroom.docref.DocRef;
 import stroom.index.service.IndexShardService;
-
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexException;
@@ -27,11 +26,10 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.api.NodeInfo;
-import stroom.node.shared.Node;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.shared.ThreadPoolImpl;
 import stroom.task.api.TaskContext;
 import stroom.task.shared.ThreadPool;
+import stroom.task.shared.ThreadPoolImpl;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -137,8 +135,6 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         // Get all index shards that are owned by this node.
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
-        criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
-        criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.getIndexUuidSet().add(indexShardKey.getIndexUuid());
         criteria.getPartition().setString(indexShardKey.getPartition());
         final List<IndexShard> list = indexShardService.find(criteria);

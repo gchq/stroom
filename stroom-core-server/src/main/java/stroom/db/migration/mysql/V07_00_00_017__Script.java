@@ -92,10 +92,5 @@ public class V07_00_00_017__Script extends BaseJavaMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = connection.prepareStatement(
-                "RENAME TABLE SCRIPT TO OLD_SCRIPT")) {
-            preparedStatement.execute();
-        }
     }
 }

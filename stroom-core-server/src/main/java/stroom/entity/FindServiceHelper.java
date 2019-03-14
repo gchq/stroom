@@ -22,6 +22,7 @@ import stroom.entity.shared.Entity;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 
+import java.util.Collections;
 import java.util.List;
 
 public class FindServiceHelper<E extends Entity, C extends BaseCriteria> {
@@ -54,7 +55,7 @@ public class FindServiceHelper<E extends Entity, C extends BaseCriteria> {
         sql.append(" AS ");
         sql.append(alias);
 
-        queryAppender.appendBasicJoin(sql, alias, criteria.getFetchSet());
+        queryAppender.appendBasicJoin(sql, alias, Collections.emptySet());
 
         sql.append(" WHERE 1=1");
 

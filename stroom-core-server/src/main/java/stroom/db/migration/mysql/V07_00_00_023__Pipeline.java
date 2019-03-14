@@ -79,10 +79,5 @@ public class V07_00_00_023__Pipeline extends BaseJavaMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "RENAME TABLE PIPE TO OLD_PIPE")) {
-            preparedStatement.execute();
-        }
     }
 }

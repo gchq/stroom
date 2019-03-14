@@ -25,7 +25,7 @@ import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.process.client.presenter.ProcessorPresenter;
+import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.docref.DocRef;
 import stroom.security.shared.PermissionNames;
 import stroom.security.client.api.ClientSecurityContext;

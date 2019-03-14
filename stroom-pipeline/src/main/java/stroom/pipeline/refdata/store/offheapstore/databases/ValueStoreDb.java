@@ -25,18 +25,20 @@ import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.EntryConsumer;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
+import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
+import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
-import stroom.pipeline.refdata.store.RefDataValue;
-import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
-import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
-import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -169,7 +171,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
             final ByteBuffer valueBuffer = valueSerde.serialize(pooledValueBuffer::getByteBuffer, refDataValue);
 
             LAMBDA_LOGGER.trace(() ->
-                    LambdaLogger.buildMessage("valueBuffer: {}", ByteBufferUtils.byteBufferInfo(valueBuffer)));
+                    LogUtil.message("valueBuffer: {}", ByteBufferUtils.byteBufferInfo(valueBuffer)));
 
             // Use atomics so they can be mutated and then used in lambdas
             final AtomicBoolean isValueInDb = new AtomicBoolean(false);
@@ -204,7 +206,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                     // new key/value.
                     if (firstUnusedKeyId == -1 && lastKeyId != -1) {
                         if (thisKeyId <= lastKeyId) {
-                            throw new RuntimeException(LambdaLogger.buildMessage(
+                            throw new RuntimeException(LogUtil.message(
                                     "thisKeyId [{}] should be greater than lastId [{}]", thisKeyId, lastKeyId));
                         }
                         if ((thisKeyId - lastKeyId) > 1) {
@@ -213,7 +215,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                     }
                     lastKeyId = thisKeyId;
 
-                    LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Our value {}, db value {}",
+                    LAMBDA_LOGGER.trace(LambdaLogUtil.message("Our value {}, db value {}",
                             LmdbUtils.byteBufferToHex(valueBuffer),
                             LmdbUtils.byteBufferToHex(valueFromDbBuf)));
 
@@ -245,7 +247,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 }
             }
 
-            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("isValueInMap: {}, valuesCount {}",
+            LAMBDA_LOGGER.trace(LambdaLogUtil.message("isValueInMap: {}, valuesCount {}",
                     isValueInDb.get(),
                     valuesCount.get()));
 
@@ -280,7 +282,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 onNewEntryAction.accept(writeTxn, keyBuffer, valueBuffer);
 
                 if (!didPutSucceed) {
-                    throw new RuntimeException(LambdaLogger.buildMessage("Put failed for key: {}, value {}",
+                    throw new RuntimeException(LogUtil.message("Put failed for key: {}, value {}",
                             ByteBufferUtils.byteBufferInfo(keyBuffer),
                             ByteBufferUtils.byteBufferInfo(valueBuffer)));
                 }

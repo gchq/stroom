@@ -19,13 +19,12 @@ package stroom.util.entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.util.shared.MarshallableEntity;
 import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
-public abstract class AbstractEntityMarshaller<T_Entity extends MarshallableEntity, T_Object> implements Marshaller<T_Entity, T_Object> {
+public abstract class AbstractEntityMarshaller<T_Entity, T_Object> implements Marshaller<T_Entity, T_Object> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEntityMarshaller.class);
 
@@ -55,9 +54,8 @@ public abstract class AbstractEntityMarshaller<T_Entity extends MarshallableEnti
             final String data = XMLMarshallerUtil.marshal(jaxbContext, object);
             setData(entity, data);
         } catch (final RuntimeException e) {
-            LOGGER.debug("Problem marshaling {} {}", new Object[]{entity.getClass(), entity.getId()}, e);
-            LOGGER.warn("Problem marshaling {} {} - {} (enable debug for full trace)", new Object[]{entity.getClass(),
-                    entity.getId(), String.valueOf(e)});
+            LOGGER.debug("Problem marshaling {} {}", new Object[]{entity.getClass(), entity}, e);
+            LOGGER.warn("Problem marshaling {} {} - {} (enable debug for full trace)", entity.getClass(), entity, String.valueOf(e));
         }
         return entity;
     }

@@ -75,10 +75,5 @@ public class V07_00_00_016__Dashboard extends BaseJavaMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "RENAME TABLE DASH TO OLD_DASH")) {
-            preparedStatement.execute();
-        }
     }
 }

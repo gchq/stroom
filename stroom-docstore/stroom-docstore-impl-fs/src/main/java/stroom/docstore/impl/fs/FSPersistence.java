@@ -1,24 +1,34 @@
 package stroom.docstore.impl.fs;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.docstore.api.Persistence;
 import stroom.docstore.api.RWLockFactory;
-import stroom.docref.DocRef;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Singleton
-public class FSPersistence implements Persistence {
+public class FSPersistence implements Persistence, Clearable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FSPersistence.class);
+
     private static final String META = "meta";
 
     private final RWLockFactory lockFactory = new StripedLockFactory();
@@ -149,5 +159,41 @@ public class FSPersistence implements Persistence {
             throw new UncheckedIOException(e);
         }
         return path;
+    }
+
+    @Override
+    public void clear() {
+        recursiveDelete(dir);
+    }
+
+    private void recursiveDelete(final Path path) {
+        try {
+            FileVisitor<Path> visitor = new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                    Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    if (!dir.equals(path)) {
+                        Files.delete(dir);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            };
+            Files.walkFileTree(path, visitor);
+        } catch (final NotDirectoryException e) {
+            // Ignore.
+        } catch (final IOException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
     }
 }

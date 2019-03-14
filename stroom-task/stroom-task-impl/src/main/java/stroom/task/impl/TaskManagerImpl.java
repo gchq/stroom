@@ -19,9 +19,7 @@ package stroom.task.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.util.shared.BaseResultList;
 import stroom.node.api.NodeInfo;
-import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.security.Security;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.TaskCallback;
@@ -37,6 +35,9 @@ import stroom.task.shared.TaskProgress;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.shared.BaseResultList;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
@@ -422,7 +423,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
     private void doTerminated(final boolean kill, final long timeNowMs, final List<TaskProgress> taskProgressList,
                               final List<TaskThread> itemsToKill) {
         LAMBDA_LOGGER.trace(() ->
-                LambdaLogger.buildMessage("doTerminated() - itemsToKill.size() {}", itemsToKill.size()));
+                LogUtil.message("doTerminated() - itemsToKill.size() {}", itemsToKill.size()));
 
         for (final TaskThread taskThread : itemsToKill) {
             final Task<?> task = taskThread.getTask();
@@ -435,7 +436,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
             // If we are forced to kill then kill the associated thread.
             if (kill) {
                 LAMBDA_LOGGER.trace(() ->
-                        LambdaLogger.buildMessage("killing task {} on thread {}", task, taskThread.getThreadName()));
+                        LogUtil.message("killing task {} on thread {}", task, taskThread.getThreadName()));
                 taskThread.kill();
             }
             final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskThread, taskThread.getTask());

@@ -53,7 +53,9 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.ui.config.client.UiConfigCache;
+import stroom.processor.shared.CreateProcessorFilterAction;
+import stroom.processor.shared.Limits;
+import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
@@ -61,11 +63,9 @@ import stroom.query.client.ExpressionUiHandlers;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.shared.Limits;
-import stroom.streamstore.shared.QueryData;
-import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.button.client.ButtonView;
@@ -404,7 +404,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void openEditor(final QueryData queryData, final DocRef pipeline) {
         // Now create the processor filter using the find stream criteria.
-        dispatcher.exec(new CreateProcessorAction(pipeline, queryData, true, 1)).onSuccess(streamProcessorFilter -> CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter));
+        dispatcher.exec(new CreateProcessorFilterAction(pipeline, queryData, true, 1))
+                .onSuccess(processorFilter -> CreateProcessorEvent.fire(QueryPresenter.this, processorFilter));
     }
 
     private void showWarnings() {

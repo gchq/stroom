@@ -539,12 +539,8 @@ class MetaServiceImpl implements MetaService {
             findDataCriteria.copyFrom(criteria);
             findDataCriteria.setSort(MetaFieldNames.CREATE_TIME, Direction.DESCENDING, false);
 
-//            final boolean includeRelations = findDataCriteria.getFetchSet().contains(StreamEntity.ENTITY_TYPE);
 //            findDataCriteria.setFetchSet(new HashSet<>());
-//            if (includeRelations) {
-//                findDataCriteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
-//            }
-//            findDataCriteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
+
             // Share the page criteria
             final BaseResultList<Meta> list = find(findDataCriteria);
 

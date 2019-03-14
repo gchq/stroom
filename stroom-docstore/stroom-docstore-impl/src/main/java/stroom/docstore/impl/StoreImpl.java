@@ -20,20 +20,20 @@ package stroom.docstore.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Persistence;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.docref.DocRefInfo;
-import stroom.util.shared.PermissionException;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Message;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -414,7 +414,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
                 throw new UncheckedIOException(
-                        LambdaLogger.buildMessage("Error reading doc {} from store {}, {}",
+                        LogUtil.message("Error reading doc {} from store {}, {}",
                                 uuid, persistence.getClass().getSimpleName(), e.getMessage()), e);
             }
         });
@@ -424,7 +424,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
             throw new UncheckedIOException(
-                    LambdaLogger.buildMessage("Error deserialising doc {} from store {}, {}",
+                    LogUtil.message("Error deserialising doc {} from store {}, {}",
                             uuid, persistence.getClass().getSimpleName(), e.getMessage()), e);
         }
     }

@@ -1,8 +1,8 @@
 package stroom.storedquery.impl.db;
 
 import org.jooq.Condition;
+import org.jooq.Field;
 import org.jooq.OrderField;
-import org.jooq.TableField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
@@ -29,7 +29,7 @@ import static stroom.storedquery.impl.db.jooq.Tables.QUERY;
 class StoredQueryDao implements StoredQueryService, HasIntCrud<StoredQuery> {
     private static final Logger LOGGER = LoggerFactory.getLogger(StoredQueryDao.class);
 
-    private static final Map<String, TableField> TABLE_FIELD_MAP = Map.of(
+    private static final Map<String, Field> FIELD_MAP = Map.of(
             FindStoredQueryCriteria.FIELD_ID, QUERY.ID,
             FindStoredQueryCriteria.FIELD_NAME, QUERY.NAME,
             FindStoredQueryCriteria.FIELD_TIME, QUERY.CREATE_TIME_MS);
@@ -93,7 +93,7 @@ class StoredQueryDao implements StoredQueryService, HasIntCrud<StoredQuery> {
                 conditions.add(QUERY.FAVOURITE.eq(criteria.getFavourite()));
             }
 
-            final OrderField[] orderFields = JooqUtil.getOrderFields(TABLE_FIELD_MAP, criteria);
+            final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
             return context
                     .select()

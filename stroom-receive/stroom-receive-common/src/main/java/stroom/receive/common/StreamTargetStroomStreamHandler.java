@@ -291,7 +291,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     }
 
     public void closeDelete() {
-        targetMap.values().forEach(streamStore::deleteStreamTarget);
+        targetMap.values().forEach(streamStore::deleteTarget);
         targetMap.clear();
     }
 
@@ -354,7 +354,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
                     .effectiveMs(effectiveMs)
                     .build();
 
-            final Target streamTarget = streamStore.openStreamTarget(metaProperties);
+            final Target streamTarget = streamStore.openTarget(metaProperties);
             streamSet.add(streamTarget.getMeta());
 
             return streamTarget;
@@ -390,7 +390,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 //                    .effectiveMs(effectiveMs)
 //                    .build();
 //
-//            final StreamTarget streamTarget = streamStore.openStreamTarget(metaProperties);
+//            final StreamTarget streamTarget = streamStore.openTarget(metaProperties);
 //            feedStreamTarget.put(currentFeedName, streamTarget);
 //            streamSet.add(streamTarget.getMeta());
 //            outputStreamProvider = streamTarget.getOutputStreamProvider();

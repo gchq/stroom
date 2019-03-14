@@ -26,7 +26,7 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter;
-import stroom.process.client.presenter.ProcessorPresenter;
+import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;

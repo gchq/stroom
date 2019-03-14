@@ -18,6 +18,7 @@ dependencies {
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-pipeline')
+    compile project(':stroom-processor:stroom-processor-api')
     compile project(':stroom-proxy:stroom-proxy-repo')
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-resource:stroom-resource-api')
@@ -72,38 +73,37 @@ dependencies {
     compile libs.ws_rs_api
     compile libs.xml_apis
 
-    runtimeOnly libs.jackson_annotations
-    runtimeOnly libs.jackson_core
-    runtimeOnly libs.jaxb_runtime
-    runtimeOnly libs.hibernate_entitymanager
     runtimeOnly libs.aopalliance
+    runtimeOnly libs.hibernate_entitymanager
     // dropwizard 1.0.6 uses hibernate-validator 5.2.4.Final
     // dropwizard 1.1.0 uses hibernate-validator 5.3.4.Final
     // so be consistent with dropwizard to avoid problems with different versions of javax.el
     runtimeOnly libs.hibernate_validator
-    runtimeOnly libs.mysql_connector_java
-    runtimeOnly libs.lucene_core
-    runtimeOnly libs.lucene_backward_codecs
+    runtimeOnly libs.jackson_annotations
+    runtimeOnly libs.jackson_core
+    runtimeOnly libs.jaxb_runtime
     runtimeOnly libs.lucene_analyzers_common
+    runtimeOnly libs.lucene_backward_codecs
+    runtimeOnly libs.lucene_core
     runtimeOnly libs.lucene_queryparser
+    runtimeOnly libs.mysql_connector_java
 
     testCompile project(':stroom-node:stroom-node-impl-mock')
     testCompile project(':stroom-security:stroom-security-impl-mock')
     testCompile project(':stroom-test-common')
     
     testCompile libs.assertj_core
+    testCompile libs.junit_jupiter_api
     testCompile libs.mockito_core
     testCompile libs.mockito_junit_jupiter
-
-    testCompile libs.junit_jupiter_api
     
     // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
     testRuntimeOnly libs.jcl_over_slf4j
     testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.junit_jupiter_engine
     testRuntimeOnly libs.log4j_over_slf4j
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
-    testRuntimeOnly libs.jaxb_runtime
-    testRuntimeOnly libs.javax_activation
 }

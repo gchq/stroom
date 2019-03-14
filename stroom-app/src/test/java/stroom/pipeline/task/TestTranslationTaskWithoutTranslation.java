@@ -18,20 +18,20 @@ package stroom.pipeline.task;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.meta.shared.Meta;
+import stroom.data.store.impl.mock.MockStore;
+import stroom.dataprocess.PipelineDataProcessorTaskExecutor;
 import stroom.meta.impl.mock.MockMetaService;
-import stroom.data.store.impl.mock.MockStreamStore;
-import stroom.dataprocess.PipelineStreamProcessor;
+import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
+import stroom.processor.api.DataProcessorTaskExecutor;
+import stroom.processor.impl.DataProcessorTask;
+import stroom.processor.impl.ProcessorTaskManager;
+import stroom.processor.shared.ProcessorTask;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.streamtask.StreamProcessorTask;
-import stroom.streamtask.StreamProcessorTaskExecutor;
-import stroom.streamtask.StreamTaskCreator;
-import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.common.ComparisonHelper;
 import stroom.test.StoreCreationTool;
+import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
@@ -51,13 +51,13 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
     private static final Path RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "TestTask.out");
 
     @Inject
-    private MockStreamStore streamStore;
+    private MockStore streamStore;
     @Inject
     private MockMetaService metaService;
     @Inject
     private NodeInfo nodeInfo;
     @Inject
-    private StreamTaskCreator streamTaskCreator;
+    private ProcessorTaskManager processorTaskManager;
     @Inject
     private StoreCreationTool storeCreationTool;
     @Inject
@@ -73,11 +73,11 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
         setup(FEED_NAME, RESOURCE_NAME);
         assertThat(metaService.getLockCount()).isEqualTo(0);
 
-        final List<StreamProcessorTaskExecutor> results = processAll();
+        final List<DataProcessorTaskExecutor> results = processAll();
         assertThat(results.size()).isEqualTo(1);
 
-        for (final StreamProcessorTaskExecutor result : results) {
-            final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
+        for (final DataProcessorTaskExecutor result : results) {
+            final PipelineDataProcessorTaskExecutor processor = (PipelineDataProcessorTaskExecutor) result;
             final String message = "Count = " + processor.getRead() + "," + processor.getWritten() + ","
                     + processor.getMarkerCount(Severity.SEVERITIES);
 
@@ -106,7 +106,7 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
         }
 
         // Make sure 10 records were written.
-        assertThat(((PipelineStreamProcessor) results.get(0)).getWritten()).isEqualTo(10);
+        assertThat(((PipelineDataProcessorTaskExecutor) results.get(0)).getWritten()).isEqualTo(10);
     }
 
     /**
@@ -114,16 +114,16 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
      *
      * @return The next task or null if there are currently no more tasks.
      */
-    private List<StreamProcessorTaskExecutor> processAll() {
-        final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+    private List<DataProcessorTaskExecutor> processAll() {
+        final List<DataProcessorTaskExecutor> results = new ArrayList<>();
+        List<ProcessorTask> streamTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
-            for (final ProcessorFilterTask streamTask : streamTasks) {
-                final StreamProcessorTask task = new StreamProcessorTask(streamTask);
+            for (final ProcessorTask streamTask : streamTasks) {
+                final DataProcessorTask task = new DataProcessorTask(streamTask);
                 taskManager.exec(task);
-                results.add(task.getStreamProcessorTaskExecutor());
+                results.add(task.getDataProcessorTaskExecutor());
             }
-            streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
+            streamTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
         }
         return results;
     }

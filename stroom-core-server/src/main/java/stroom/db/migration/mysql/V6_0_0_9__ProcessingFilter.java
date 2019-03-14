@@ -5,15 +5,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.util.shared.IdRange;
-import stroom.util.shared.Range;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.stream.OldFindStreamCriteria;
-import stroom.streamstore.shared.QueryData;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.IdRange;
+import stroom.util.shared.Range;
 import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;

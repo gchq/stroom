@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.impl.db.ConfigMapper;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import java.sql.Connection;
 import java.util.Comparator;
@@ -295,7 +295,7 @@ public class V07_00_00_02__property_rename implements JdbcMigration {
                             LOGGER.info("Renaming DB property {} to {}", from, to);
                             boolean isToPathValid = configMapper.validatePropertyPath(to);
                             if (!isToPathValid) {
-                                throw new RuntimeException(LambdaLogger.buildMessage(
+                                throw new RuntimeException(LogUtil.message(
                                         "Property name {} is not valid in the object model",
                                         to));
                             }

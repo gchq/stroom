@@ -23,7 +23,6 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.api.NodeInfo;
-import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.GenericServerTask;
@@ -40,10 +39,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -108,8 +105,6 @@ public class IndexShardManagerImpl implements IndexShardManager {
 
                     final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
                     criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
-                    criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
-                    criteria.getFetchSet().add(Node.ENTITY_TYPE);
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
                     final List<IndexShard> shards = indexShardService.find(criteria);
 
@@ -257,8 +252,6 @@ public class IndexShardManagerImpl implements IndexShardManager {
         security.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
             criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
-            criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
-            criteria.getFetchSet().add(Node.ENTITY_TYPE);
             final List<IndexShard> shards = indexShardService.find(criteria);
             for (final IndexShard shard : shards) {
                 checkRetention(shard);

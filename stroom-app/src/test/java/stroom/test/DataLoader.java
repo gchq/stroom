@@ -114,7 +114,7 @@ public class DataLoader {
                     .effectiveMs(effectiveMs)
                     .build();
 
-            try (final Target streamTarget = streamStore.openStreamTarget(metaProperties)) {
+            try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
                 try (final OutputStreamProvider outputStreamProvider = streamTarget.next()) {
                     try (final SegmentOutputStream outputStream = outputStreamProvider.get()) {
                         StreamUtil.streamToStream(inputStream, outputStream);

@@ -17,7 +17,7 @@
 
 package stroom.pipeline.refdata.util;
 
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
 
@@ -41,14 +41,14 @@ public class PooledByteBufferPair implements AutoCloseable {
 
     public ByteBuffer getKeyBuffer() {
         if (keyBuffer == null) {
-            throw new RuntimeException(LambdaLogger.buildMessage("The keyBuffer has been returned to the pool"));
+            throw new RuntimeException(LogUtil.message("The keyBuffer has been returned to the pool"));
         }
         return keyBuffer;
     }
 
     public ByteBuffer getValueBuffer() {
         if (valueBuffer == null) {
-            throw new RuntimeException(LambdaLogger.buildMessage("The valueBuffer has been returned to the pool"));
+            throw new RuntimeException(LogUtil.message("The valueBuffer has been returned to the pool"));
         }
         return valueBuffer;
     }

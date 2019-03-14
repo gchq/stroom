@@ -1,9 +1,11 @@
 package stroom.db.util;
 
+import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.UpdatableRecord;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasCrud;
@@ -44,39 +46,51 @@ public class GenericDao<RecordType extends UpdatableRecord, ObjectType, IdType>
     }
 
     public ObjectType create(@Nonnull final ObjectType object) {
-        return JooqUtil.contextResult(connectionProvider, context -> {
-            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Creating a {}", table.getName()));
-            final RecordType record = objectToRecordMapper.apply(object, context.newRecord(table));
-            record.store();
-            return recordToObjectMapper.apply(record);
-        });
-    }
-
-    public ObjectType update(@Nonnull final ObjectType object) {
-        return JooqUtil.contextWithOptimisticLocking(connectionProvider, context -> {
-            final RecordType record = objectToRecordMapper.apply(object, context.newRecord(table));
-            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Updating a {} with id {}", table.getName(), record.get(idField)));
-            record.update();
-            return recordToObjectMapper.apply(record);
-        });
-    }
-
-    public boolean delete(@Nonnull final IdType id) {
-        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
-                "Deleting a {} with id {}", table.getName(), id));
-        return JooqUtil.contextResult(connectionProvider, context -> context
-                .deleteFrom(table)
-                .where(idField.eq(id))
-                .execute() > 0);
+        return JooqUtil.contextResult(connectionProvider, context -> create(context, object));
     }
 
     public Optional<ObjectType> fetch(@Nonnull final IdType id) {
-        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+        return JooqUtil.contextResult(connectionProvider, context -> fetch(context, id));
+    }
+
+    public ObjectType update(@Nonnull final ObjectType object) {
+        return JooqUtil.contextWithOptimisticLocking(connectionProvider, context -> update(context, object));
+    }
+
+    public boolean delete(@Nonnull final IdType id) {
+        return JooqUtil.contextResult(connectionProvider, context -> delete(context, id));
+    }
+
+    public ObjectType create(final DSLContext context, @Nonnull final ObjectType object) {
+        LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", table.getName()));
+        final RecordType record = objectToRecordMapper.apply(object, context.newRecord(table));
+        record.store();
+        return recordToObjectMapper.apply(record);
+    }
+
+    public Optional<ObjectType> fetch(final DSLContext context, @Nonnull final IdType id) {
+        LAMBDA_LOGGER.debug(LambdaLogUtil.message(
                 "Fetching {} with id {}", table.getName(), id));
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return context
                 .selectFrom(table)
                 .where(idField.eq(id))
-                .fetchOptional(record -> recordToObjectMapper.apply(record)));
+                .fetchOptional(record -> recordToObjectMapper.apply(record));
+    }
+
+    public ObjectType update(final DSLContext context, @Nonnull final ObjectType object) {
+            final RecordType record = objectToRecordMapper.apply(object, context.newRecord(table));
+        LAMBDA_LOGGER.debug(LambdaLogUtil.message("Updating a {} with id {}", table.getName(), record.get(idField)));
+            record.update();
+            return recordToObjectMapper.apply(record);
+    }
+
+    public boolean delete(final DSLContext context, @Nonnull final IdType id) {
+        LAMBDA_LOGGER.debug(LambdaLogUtil.message(
+                "Deleting a {} with id {}", table.getName(), id));
+        return context
+                .deleteFrom(table)
+                .where(idField.eq(id))
+                .execute() > 0;
     }
 
     public GenericDao<RecordType, ObjectType, IdType> setObjectToRecordMapper(final BiFunction<ObjectType, RecordType, RecordType> objectToRecordMapper) {

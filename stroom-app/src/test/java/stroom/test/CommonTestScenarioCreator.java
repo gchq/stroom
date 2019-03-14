@@ -18,29 +18,29 @@
 package stroom.test;
 
 
-import stroom.index.service.IndexVolumeGroupService;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFields;
-import stroom.index.shared.IndexVolume;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
-import stroom.meta.shared.StandardHeaderArguments;
 import stroom.index.IndexStore;
+import stroom.index.service.IndexVolumeGroupService;
 import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFields;
+import stroom.index.shared.IndexVolume;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.node.api.NodeInfo;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.streamtask.StreamProcessorFilterService;
-import stroom.streamtask.StreamProcessorService;
-import stroom.streamtask.shared.Processor;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -55,8 +55,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class CommonTestScenarioCreator {
     private final Store streamStore;
-    private final StreamProcessorService streamProcessorService;
-    private final StreamProcessorFilterService streamProcessorFilterService;
+    private final ProcessorService streamProcessorService;
+    private final ProcessorFilterService processorFilterService;
     private final IndexStore indexStore;
     private final IndexVolumeService indexVolumeService;
     private final IndexVolumeGroupService indexVolumeGroupService;
@@ -64,15 +64,15 @@ public class CommonTestScenarioCreator {
 
     @Inject
     CommonTestScenarioCreator(final Store streamStore,
-                              final StreamProcessorService streamProcessorService,
-                              final StreamProcessorFilterService streamProcessorFilterService,
+                              final ProcessorService streamProcessorService,
+                              final ProcessorFilterService processorFilterService,
                               final IndexStore indexStore,
                               final IndexVolumeService indexVolumeService,
                               final IndexVolumeGroupService indexVolumeGroupService,
                               final NodeInfo nodeInfo) {
         this.streamStore = streamStore;
         this.streamProcessorService = streamProcessorService;
-        this.streamProcessorFilterService = streamProcessorFilterService;
+        this.processorFilterService = processorFilterService;
         this.indexStore = indexStore;
         this.indexVolumeService = indexVolumeService;
         this.indexVolumeGroupService = indexVolumeGroupService;
@@ -88,15 +88,16 @@ public class CommonTestScenarioCreator {
                         .build())
                 .build();
 
-        createStreamProcessor(findStreamQueryData);
+        createProcessor(findStreamQueryData);
     }
 
-    public void createStreamProcessor(final QueryData queryData) {
-        Processor streamProcessor = new Processor();
-        streamProcessor.setEnabled(true);
-        streamProcessor = streamProcessorService.save(streamProcessor);
+    public void createProcessor(final QueryData queryData) {
+        Processor processor = new Processor();
+        processor.setPipelineUuid(UUID.randomUUID().toString());
+        processor.setEnabled(true);
+        processor = streamProcessorService.create(processor);
 
-        streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, queryData);
+        processorFilterService.create(processor, queryData, 1, true);
     }
 
     public DocRef createIndex(final String name) {
@@ -145,7 +146,7 @@ public class CommonTestScenarioCreator {
                 .feedName(feed)
                 .typeName(streamType)
                 .build();
-        try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+        try (final Target target = streamStore.openTarget(metaProperties)) {
             TargetUtil.write(target, "line1\nline2");
             target.getAttributes().put(StandardHeaderArguments.FEED, feed);
             return target.getMeta();
@@ -169,7 +170,7 @@ public class CommonTestScenarioCreator {
                 + "xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\" "
                 + "Version=\"3.0.0\"/>";
 
-        try (final Target target = streamStore.openStreamTarget(metaProperties)) {
+        try (final Target target = streamStore.openTarget(metaProperties)) {
             TargetUtil.write(target, data);
             return target.getMeta();
         } catch (final IOException e) {

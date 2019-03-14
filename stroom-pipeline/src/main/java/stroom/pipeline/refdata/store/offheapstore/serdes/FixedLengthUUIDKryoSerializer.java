@@ -21,7 +21,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import java.util.UUID;
 
@@ -39,7 +39,7 @@ class FixedLengthUUIDKryoSerializer extends Serializer<String> {
         try {
             uuid = UUID.fromString(uuidStr);
         } catch (Exception e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("uuidStr [{}] is not a valid UUID", uuidStr), e);
+            throw new RuntimeException(LogUtil.message("uuidStr [{}] is not a valid UUID", uuidStr), e);
         }
         output.writeLong(uuid.getMostSignificantBits());
         output.writeLong(uuid.getLeastSignificantBits());

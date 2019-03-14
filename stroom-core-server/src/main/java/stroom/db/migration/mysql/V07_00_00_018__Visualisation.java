@@ -86,10 +86,5 @@ public class V07_00_00_018__Visualisation extends BaseJavaMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "RENAME TABLE VIS TO OLD_VIS")) {
-            preparedStatement.execute();
-        }
     }
 }

@@ -87,7 +87,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
                 .build();
 
         final String nodeName = nodeInfo.getThisNodeName();
-        final Target streamTarget = streamStore.openStreamTarget(metaProperties);
+        final Target streamTarget = streamStore.openTarget(metaProperties);
         return new RollingStreamDestination(key,
                 getFrequency(),
                 getSchedule(),

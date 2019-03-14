@@ -32,6 +32,7 @@ import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import javax.xml.bind.DatatypeConverter;
 import java.nio.BufferOverflowException;
@@ -62,7 +63,7 @@ public class LmdbUtils {
         try (final Txn<ByteBuffer> txn = env.txnRead()) {
             return work.apply(txn);
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error performing work in read transaction: {}",
+            throw new RuntimeException(LogUtil.message("Error performing work in read transaction: {}",
                     e.getMessage()), e);
         }
     }
@@ -77,7 +78,7 @@ public class LmdbUtils {
             return byteBufferPool.getWithBuffer(env.getMaxKeySize(), keyBuffer ->
                     work.apply(txn, keyBuffer));
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error performing work in read transaction: {}",
+            throw new RuntimeException(LogUtil.message("Error performing work in read transaction: {}",
                     e.getMessage()), e);
         }
     }
@@ -89,7 +90,7 @@ public class LmdbUtils {
         try (final Txn<ByteBuffer> txn = env.txnRead()) {
             work.accept(txn);
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error performing work in read transaction: {}",
+            throw new RuntimeException(LogUtil.message("Error performing work in read transaction: {}",
                     e.getMessage()), e);
         }
     }
@@ -103,7 +104,7 @@ public class LmdbUtils {
             txn.commit();
             return result;
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error performing work in write transaction: {}",
+            throw new RuntimeException(LogUtil.message("Error performing work in write transaction: {}",
                     e.getMessage()), e);
         }
     }
@@ -117,7 +118,7 @@ public class LmdbUtils {
             work.accept(txn);
             txn.commit();
         } catch (RuntimeException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error performing work in write transaction: {}",
+            throw new RuntimeException(LogUtil.message("Error performing work in write transaction: {}",
                     e.getMessage()), e);
         }
     }
@@ -237,7 +238,7 @@ public class LmdbUtils {
         try {
             return buildDbBuffer(keyObject, keySerde, lmdbEnv.getMaxKeySize());
         } catch (BufferOverflowException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
+            throw new RuntimeException(LogUtil.message(
                     "The serialised form of keyObject {} is too big for an LMDB key, max bytes is {}",
                     keyObject, lmdbEnv.getMaxKeySize()), e);
         }
@@ -270,14 +271,14 @@ public class LmdbUtils {
                                            final Consumer<String> logEntryConsumer) {
 
         final StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(LambdaLogger.buildMessage("Dumping {} entries for database [{}]",
+        stringBuilder.append(LogUtil.message("Dumping {} entries for database [{}]",
                 getEntryCount(env, txn, dbi), new String(dbi.getName())));
 
         // loop over all DB entries
         try (CursorIterator<ByteBuffer> cursorIterator = dbi.iterate(txn, KeyRange.all())) {
             while (cursorIterator.hasNext()) {
                 final CursorIterator.KeyVal<ByteBuffer> keyVal = cursorIterator.next();
-                stringBuilder.append(LambdaLogger.buildMessage("\n  key: [{}] - value [{}]",
+                stringBuilder.append(LogUtil.message("\n  key: [{}] - value [{}]",
                         keyToStringFunc.apply(keyVal.key()),
                         valueToStringFunc.apply(keyVal.val())));
             }
@@ -335,7 +336,7 @@ public class LmdbUtils {
                                           final Consumer<String> logEntryConsumer) {
 
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(LambdaLogger.buildMessage("Dumping entries in range {} [[{}] to [{}]] for database [{}]",
+        stringBuilder.append(LogUtil.message("Dumping entries in range {} [[{}] to [{}]] for database [{}]",
                 keyRange.getType().toString(),
                 ByteBufferUtils.byteBufferToHex(keyRange.getStart()),
                 ByteBufferUtils.byteBufferToHex(keyRange.getStop()),
@@ -343,7 +344,7 @@ public class LmdbUtils {
 
         try (CursorIterator<ByteBuffer> cursorIterator = dbi.iterate(txn, keyRange)) {
             for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
-                stringBuilder.append(LambdaLogger.buildMessage("\n  key: [{}] - value [{}]",
+                stringBuilder.append(LogUtil.message("\n  key: [{}] - value [{}]",
                         keyToStringFunc.apply(keyVal.key()),
                         valueToStringFunc.apply(keyVal.val())));
             }

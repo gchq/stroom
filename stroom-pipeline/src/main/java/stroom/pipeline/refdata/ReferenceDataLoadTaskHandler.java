@@ -130,7 +130,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
             LOGGER.debug("Loading reference data: {}", refStreamDefinition);
 
             // Open the stream source.
-            try (final Source source = streamStore.openStreamSource(refStreamDefinition.getStreamId())) {
+            try (final Source source = streamStore.openSource(refStreamDefinition.getStreamId())) {
                 if (source != null) {
                     final Meta meta = source.getMeta();
                     try {

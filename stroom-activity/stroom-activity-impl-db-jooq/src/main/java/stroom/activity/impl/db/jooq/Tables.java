@@ -25,5 +25,5 @@ public class Tables {
     /**
      * The table <code>stroom.activity</code>.
      */
-    public static final Activity ACTIVITY = Activity.ACTIVITY;
+    public static final Activity ACTIVITY = stroom.activity.impl.db.jooq.tables.Activity.ACTIVITY;
 }
