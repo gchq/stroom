@@ -52,7 +52,7 @@ import static stroom.streamtask.resource.SearchKeywords.addFiltering;
 import static stroom.util.shared.Sort.Direction.ASCENDING;
 
 @Api(value = "stream task - /v1")
-@Path("/streamtasks/v1")
+@Path("s/streamtasks/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class StreamTaskResource implements RestResource {
     private static final String FIELD_PROGRESS = "progress";
