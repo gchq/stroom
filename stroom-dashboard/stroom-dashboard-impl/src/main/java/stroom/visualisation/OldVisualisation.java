@@ -20,7 +20,6 @@ import stroom.docref.DocRef;
 import stroom.importexport.shared.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 
-import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
 /**
@@ -70,7 +69,6 @@ public class OldVisualisation extends DocumentEntity {
         this.scriptRefXML = scriptRefXML;
     }
 
-    @Transient
     @XmlTransient
     public DocRef getScriptRef() {
         return scriptRef;
@@ -80,12 +78,10 @@ public class OldVisualisation extends DocumentEntity {
         this.scriptRef = scriptRef;
     }
 
-    @Transient
     public String getDisplayValue() {
         return String.valueOf(getName());
     }
 
-    @Transient
     public final String getType() {
         return ENTITY_TYPE;
     }

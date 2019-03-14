@@ -17,24 +17,10 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.SharedObject;
-import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.SQLNameConstants;
-import stroom.importexport.shared.ExternalFile;
 import stroom.query.api.v2.Query;
 import stroom.util.shared.HasAuditInfo;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-import javax.xml.bind.annotation.XmlTransient;
-
 public class StoredQuery implements HasAuditInfo, SharedObject {
-//    public static final String ENTITY_TYPE = "Query";
-//
-//    private static final long serialVersionUID = 3598996730392094523L;
-
     private Integer id;
     private Integer version;
     private Long createTimeMs;
@@ -152,18 +138,4 @@ public class StoredQuery implements HasAuditInfo, SharedObject {
     public void setQuery(final Query query) {
         this.query = query;
     }
-
-//    @Override
-//    protected void toString(final StringBuilder sb) {
-//        super.toString(sb);
-//        if (data != null) {
-//            sb.append(data);
-//        }
-//    }
-//
-//    @Transient
-//    @Override
-//    public final String getType() {
-//        return ENTITY_TYPE;
-//    }
 }

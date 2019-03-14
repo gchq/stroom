@@ -20,7 +20,6 @@ import stroom.dashboard.shared.DashboardConfig;
 import stroom.importexport.shared.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 
-import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
 /**
@@ -46,7 +45,6 @@ public class OldDashboard extends DocumentEntity {
         this.data = data;
     }
 
-    @Transient
     @XmlTransient
     public DashboardConfig getDashboardData() {
         return dashboardData;
@@ -56,7 +54,6 @@ public class OldDashboard extends DocumentEntity {
         this.dashboardData = dashboardData;
     }
 
-    @Transient
     public final String getType() {
         return ENTITY_TYPE;
     }

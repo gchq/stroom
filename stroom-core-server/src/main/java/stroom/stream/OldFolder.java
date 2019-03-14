@@ -19,8 +19,6 @@ package stroom.stream;
 
 import stroom.entity.shared.DocumentEntity;
 
-import javax.persistence.Transient;
-
 @Deprecated
 public class OldFolder extends DocumentEntity {
     public static final String ENTITY_TYPE = "Folder";
@@ -52,7 +50,6 @@ public class OldFolder extends DocumentEntity {
         this.folder = folder;
     }
 
-    @Transient
     @Override
     public final String getType() {
         return ENTITY_TYPE;

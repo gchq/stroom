@@ -19,7 +19,6 @@ package stroom.document;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
-import stroom.entity.DocumentActionHandlerRegistry;
 import stroom.util.shared.EntityServiceException;
 import stroom.event.logging.api.DocumentEventLog;
 

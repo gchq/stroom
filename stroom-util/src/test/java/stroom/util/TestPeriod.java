@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.entity.util;
+package stroom.util;
 
-public class MalformedSqlException extends RuntimeException {
-    private static final long serialVersionUID = -7394917648742281613L;
 
-    public MalformedSqlException(final String message) {
-        super(message);
+import org.junit.jupiter.api.Test;
+import stroom.util.shared.Period;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestPeriod {
+    @Test
+    void testPrecision() {
+        assertThat(new Period(0L, 1000L).getPrecision(1)).isEqualTo(3);
+
+        assertThat(PeriodUtil.createYearPeriod(2013).getPrecision(1000)).isEqualTo(7);
     }
+
 }

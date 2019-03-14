@@ -50,20 +50,12 @@ public final class DocRefUtil {
             uuid = String.valueOf(id);
         }
 
-        try {
-            if (entity instanceof HasUuid) {
-                uuid = ((HasUuid) entity).getUuid();
-            }
-        } catch (final RuntimeException e) {
-            // Ignore, we might get an exception getting some fields on lazy hibernate objects.
+        if (entity instanceof HasUuid) {
+            uuid = ((HasUuid) entity).getUuid();
         }
 
-        try {
-            if (entity instanceof HasName) {
-                name = ((HasName) entity).getName();
-            }
-        } catch (final RuntimeException e) {
-            // Ignore, we might get an exception getting some fields on lazy hibernate objects.
+        if (entity instanceof HasName) {
+            name = ((HasName) entity).getName();
         }
 
         return new DocRef(type, uuid, name);

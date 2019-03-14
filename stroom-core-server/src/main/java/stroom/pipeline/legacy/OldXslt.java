@@ -22,14 +22,6 @@ import stroom.importexport.shared.ExternalFile;
 import stroom.util.shared.HasData;
 import stroom.entity.shared.SQLNameConstants;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-
-@Entity
-@Table(name = "XSLT")
 public class OldXslt extends DocumentEntity implements Copyable<OldXslt>, HasData {
     public static final String TABLE_NAME = SQLNameConstants.XSLT;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
@@ -41,8 +33,6 @@ public class OldXslt extends DocumentEntity implements Copyable<OldXslt>, HasDat
     private String description;
     private String data;
 
-    @Column(name = SQLNameConstants.DESCRIPTION)
-    @Lob
     public String getDescription() {
         return description;
     }
@@ -51,8 +41,6 @@ public class OldXslt extends DocumentEntity implements Copyable<OldXslt>, HasDat
         this.description = description;
     }
 
-    @Column(name = DATA, length = Integer.MAX_VALUE)
-    @Lob
     @ExternalFile("xsl")
     @Override
     public String getData() {
@@ -67,7 +55,6 @@ public class OldXslt extends DocumentEntity implements Copyable<OldXslt>, HasDat
     /**
      * @return generic UI drop down value
      */
-    @Transient
     @Override
     public String getDisplayValue() {
         return String.valueOf(getName());
@@ -81,7 +68,6 @@ public class OldXslt extends DocumentEntity implements Copyable<OldXslt>, HasDat
         super.copyFrom(other);
     }
 
-    @Transient
     @Override
     public final String getType() {
         return ENTITY_TYPE;

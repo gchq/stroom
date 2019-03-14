@@ -31,7 +31,6 @@ dependencies {
     compile libs.dropwizard_metrics_annotation
     compile libs.flyway_core
     compile libs.guice4
-    compile libs.hibernate_jpa_api
     compile libs.hikari
     compile libs.jackson_annotations
     compile libs.javax_inject

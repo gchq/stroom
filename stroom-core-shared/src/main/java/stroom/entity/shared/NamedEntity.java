@@ -18,22 +18,13 @@ package stroom.entity.shared;
 
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasName;
-import stroom.util.shared.LengthConstants;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
-import javax.validation.constraints.Size;
-
-@MappedSuperclass
 public abstract class NamedEntity extends AuditedEntity implements HasName, HasDisplayValue {
     public static final String NAME = SQLNameConstants.NAME;
     private static final long serialVersionUID = -6752797140242673318L;
     private String name;
 
     @Override
-    @Column(name = NAME, nullable = false)
-    @Size(min = LengthConstants.MIN_NAME_LENGTH)
     public String getName() {
         return name;
     }
@@ -43,7 +34,6 @@ public abstract class NamedEntity extends AuditedEntity implements HasName, HasD
         this.name = name;
     }
 
-    @Transient
     @Override
     public String getDisplayValue() {
         return String.valueOf(getName());

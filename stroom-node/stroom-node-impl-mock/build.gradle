@@ -18,7 +18,6 @@ dependencies {
     compile libs.commons_exec
     compile libs.guice4
     compile libs.hessian
-    compile libs.hibernate_jpa_api
     compile libs.jackson_annotations
     compile libs.jackson_databind
     compile libs.javax_inject

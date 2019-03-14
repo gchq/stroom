@@ -22,14 +22,6 @@ import stroom.db.migration._V07_00_00.entity.shared._V07_00_00_ExternalFile;
 import stroom.db.migration._V07_00_00.entity.shared._V07_00_00_HasData;
 import stroom.db.migration._V07_00_00.entity.shared._V07_00_00_SQLNameConstants;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-
-@Entity
-@Table(name = "XSLT")
 public class _V07_00_00_OldXslt
         extends _V07_00_00_DocumentEntity
         implements _V07_00_00_Copyable<_V07_00_00_OldXslt>, _V07_00_00_HasData {
@@ -43,8 +35,6 @@ public class _V07_00_00_OldXslt
     private String description;
     private String data;
 
-    @Column(name = _V07_00_00_SQLNameConstants.DESCRIPTION)
-    @Lob
     public String getDescription() {
         return description;
     }
@@ -53,8 +43,6 @@ public class _V07_00_00_OldXslt
         this.description = description;
     }
 
-    @Column(name = DATA, length = Integer.MAX_VALUE)
-    @Lob
     @_V07_00_00_ExternalFile("xsl")
     @Override
     public String getData() {
@@ -69,7 +57,6 @@ public class _V07_00_00_OldXslt
     /**
      * @return generic UI drop down value
      */
-    @Transient
     @Override
     public String getDisplayValue() {
         return String.valueOf(getName());
@@ -83,7 +70,6 @@ public class _V07_00_00_OldXslt
         super.copyFrom(other);
     }
 
-    @Transient
     @Override
     public final String getType() {
         return ENTITY_TYPE;

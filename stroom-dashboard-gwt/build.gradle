@@ -29,7 +29,6 @@ dependencies {
     compile libs.gwt_dev
     compile libs.gwt_user
     compile libs.gwtp_mvp_client
-    compile libs.hibernate_jpa_api
     compile libs.jackson_annotations
     compile libs.jaxb_api
     compile libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations

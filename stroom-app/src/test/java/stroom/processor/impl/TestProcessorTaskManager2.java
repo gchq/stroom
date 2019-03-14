@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.util.SqlBuilder;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;
@@ -41,7 +40,6 @@ import javax.inject.Inject;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -187,8 +185,6 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
 //            }
 //        }
 //
-//        LOGGER.info("Finished {} hibernate multi inserts in {}", qryCnt, Duration.between(startTime, Instant.now()));
-//
 //        String header3 = "insert into insert_test3 (id, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11) values ";
 //        qryCnt = 0;
 //        StringBuilder stringBuilder = null;
@@ -240,14 +236,14 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
 //        LOGGER.info("Finished {} direct multi inserts in {}", qryCnt, Duration.between(startTime, Instant.now()));
     }
 
-    private void dumpSqlBuilder(final SqlBuilder sqlBuilder) {
-
-        String argsStr = StreamSupport.stream(sqlBuilder.getArgs().spliterator(), false)
-                .map(Object::toString)
-                .map(str -> "\"" + str + "\"")
-                .collect(Collectors.joining(","));
-        LOGGER.info("SQL: [{}], args [{}]", sqlBuilder.toString(), argsStr);
-    }
+//    private void dumpSqlBuilder(final SqlBuilder sqlBuilder) {
+//
+//        String argsStr = StreamSupport.stream(sqlBuilder.getArgs().spliterator(), false)
+//                .map(Object::toString)
+//                .map(str -> "\"" + str + "\"")
+//                .collect(Collectors.joining(","));
+//        LOGGER.info("SQL: [{}], args [{}]", sqlBuilder.toString(), argsStr);
+//    }
 
     private void dumpStringBuilder(final StringBuilder stringBuilder, List<Object> args) {
 

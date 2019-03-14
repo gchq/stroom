@@ -33,7 +33,6 @@ import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PATCH;
@@ -109,7 +108,7 @@ public class StreamTaskResource implements RestResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response fetch(
-            @NotNull @QueryParam("offset") Integer offset,
+            @QueryParam("offset") Integer offset,
             @QueryParam("pageSize") Integer pageSize,
             @QueryParam("sortBy") String sortBy,
             @QueryParam("sortDirection") String sortDirection,

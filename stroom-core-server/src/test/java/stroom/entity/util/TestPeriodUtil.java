@@ -18,6 +18,7 @@ package stroom.entity.util;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.util.PeriodUtil;
 import stroom.util.shared.Period;
 import stroom.test.common.util.test.StroomUnitTest;
 

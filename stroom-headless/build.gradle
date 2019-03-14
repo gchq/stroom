@@ -37,7 +37,6 @@ dependencies {
     compile libs.stroomDocRef
 
     compile libs.guice4
-    compile libs.hibernate_jpa_api
     compile libs.javax_inject
     compile libs.jaxb_api
     compile libs.slf4j_api

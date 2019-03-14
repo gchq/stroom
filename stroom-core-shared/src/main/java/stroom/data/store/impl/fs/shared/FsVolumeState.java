@@ -18,8 +18,6 @@ package stroom.data.store.impl.fs.shared;
 
 import stroom.util.shared.ModelStringUtil;
 
-import javax.persistence.Transient;
-
 /**
  * State of a volume.
  */
@@ -102,7 +100,6 @@ public class FsVolumeState {
         this.updateTimeMs = updateTimeMs;
     }
 
-    @Transient
     public Long getPercentUsed() {
         Long percent = null;
         if (bytesUsed != null && bytesTotal != null) {

@@ -25,14 +25,6 @@ import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-
-@Entity
-@Table(name = "TXT_CONV")
 public class OldTextConverter extends DocumentEntity implements Copyable<OldTextConverter>, HasData {
     public static final String TABLE_NAME = SQLNameConstants.TEXT + SEP + SQLNameConstants.CONVERTER;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
@@ -46,8 +38,6 @@ public class OldTextConverter extends DocumentEntity implements Copyable<OldText
     private String data;
     private byte pConverterType = TextConverterType.NONE.getPrimitiveValue();
 
-    @Column(name = SQLNameConstants.DESCRIPTION)
-    @Lob
     public String getDescription() {
         return description;
     }
@@ -56,8 +46,6 @@ public class OldTextConverter extends DocumentEntity implements Copyable<OldText
         this.description = description;
     }
 
-    @Column(name = DATA, length = Integer.MAX_VALUE)
-    @Lob
     @ExternalFile(extensionProvider = OldTextConverterExtensionProvider.class)
     @Override
     public String getData() {
@@ -69,7 +57,6 @@ public class OldTextConverter extends DocumentEntity implements Copyable<OldText
         this.data = data;
     }
 
-    @Column(name = CONVERTER_TYPE, nullable = false)
     public byte getPConverterType() {
         return pConverterType;
     }
@@ -78,7 +65,6 @@ public class OldTextConverter extends DocumentEntity implements Copyable<OldText
         this.pConverterType = pConverterType;
     }
 
-    @Transient
     public TextConverterType getConverterType() {
         return TextConverterType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pConverterType);
     }
@@ -90,7 +76,6 @@ public class OldTextConverter extends DocumentEntity implements Copyable<OldText
     /**
      * @return generic UI drop down value
      */
-    @Transient
     @Override
     public String getDisplayValue() {
         return String.valueOf(getName());
@@ -105,7 +90,6 @@ public class OldTextConverter extends DocumentEntity implements Copyable<OldText
         super.copyFrom(textConverter);
     }
 
-    @Transient
     @Override
     public final String getType() {
         return ENTITY_TYPE;

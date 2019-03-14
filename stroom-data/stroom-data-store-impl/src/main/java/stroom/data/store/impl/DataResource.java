@@ -39,7 +39,6 @@ import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -88,7 +87,7 @@ public class DataResource implements RestResource {
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response fetchData(
-            final @NotNull @QueryParam("streamId") Long streamId,
+            final @QueryParam("streamId") Long streamId,
             final @QueryParam("streamsOffset") Long streamsOffset,
             final @QueryParam("streamsLength") Long streamsLength,
             final @QueryParam("pageOffset") Long pageOffset,

@@ -2,21 +2,33 @@ package stroom.explorer.impl;
 
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
-import stroom.explorer.shared.PermissionInheritance;
-import stroom.explorer.api.ExplorerService;
-import stroom.explorer.shared.*;
 import stroom.docref.DocRefInfo;
+import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.BulkActionResult;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.explorer.shared.HasNodeState;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.explorer.shared.HasNodeState;
 import stroom.util.RestResource;
 
 import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Api(value = "explorer - /v1")
@@ -40,7 +52,7 @@ public class ExplorerResource implements RestResource {
     @GET
     @Path("/search")
     public Response search(
-            final @NotNull @QueryParam("searchTerm") String searchTerm,
+            final @QueryParam("searchTerm") String searchTerm,
             final @QueryParam("pageOffset") Long pageOffset,
             final @QueryParam("pageSize") Long pageSize) {
         // For now, just do this every time the whole tree is fetched

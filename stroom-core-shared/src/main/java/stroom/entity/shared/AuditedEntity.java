@@ -16,14 +16,11 @@
 
 package stroom.entity.shared;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-@MappedSuperclass
 public abstract class AuditedEntity extends BaseEntitySmall {
     public static final String CREATE_TIME = "CRT_MS";
     public static final String CREATE_USER = "CRT_USER";
@@ -43,7 +40,6 @@ public abstract class AuditedEntity extends BaseEntitySmall {
         super.clearPersistence();
     }
 
-    @Column(name = CREATE_TIME, columnDefinition = BIGINT_UNSIGNED)
     public Long getCreateTime() {
         return createTime;
     }
@@ -52,7 +48,6 @@ public abstract class AuditedEntity extends BaseEntitySmall {
         this.createTime = createTime;
     }
 
-    @Column(name = UPDATE_TIME, columnDefinition = BIGINT_UNSIGNED)
     public Long getUpdateTime() {
         return updateTime;
     }
@@ -61,7 +56,6 @@ public abstract class AuditedEntity extends BaseEntitySmall {
         this.updateTime = updateTime;
     }
 
-    @Column(name = CREATE_USER)
     public String getCreateUser() {
         return createUser;
     }
@@ -70,7 +64,6 @@ public abstract class AuditedEntity extends BaseEntitySmall {
         this.createUser = createUser;
     }
 
-    @Column(name = UPDATE_USER)
     public String getUpdateUser() {
         return updateUser;
     }

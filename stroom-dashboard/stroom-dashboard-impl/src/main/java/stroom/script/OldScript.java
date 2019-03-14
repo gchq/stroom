@@ -20,7 +20,6 @@ import stroom.util.shared.DocRefs;
 import stroom.importexport.shared.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 
-import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
 /**
@@ -60,7 +59,6 @@ public class OldScript extends DocumentEntity {
         this.dependenciesXML = dependenciesXML;
     }
 
-    @Transient
     @XmlTransient
     public DocRefs getDependencies() {
         return dependencies;
@@ -70,12 +68,10 @@ public class OldScript extends DocumentEntity {
         this.dependencies = dependencies;
     }
 
-    @Transient
     public String getDisplayValue() {
         return String.valueOf(getName());
     }
 
-    @Transient
     public final String getType() {
         return ENTITY_TYPE;
     }

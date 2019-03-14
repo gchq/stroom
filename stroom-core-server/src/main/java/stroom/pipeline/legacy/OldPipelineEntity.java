@@ -22,18 +22,11 @@ import stroom.entity.shared.SQLNameConstants;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.docref.DocRef;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
-import javax.persistence.Table;
-import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * This entity is used to persist pipeline configuration.
  */
-@Entity
-@Table(name = "PIPE")
 public class OldPipelineEntity extends DocumentEntity {
     public static final String TABLE_NAME = SQLNameConstants.PIPELINE;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
@@ -55,8 +48,6 @@ public class OldPipelineEntity extends DocumentEntity {
     public OldPipelineEntity() {
     }
 
-    @Column(name = SQLNameConstants.DESCRIPTION)
-    @Lob
     public String getDescription() {
         return description;
     }
@@ -65,8 +56,6 @@ public class OldPipelineEntity extends DocumentEntity {
         this.description = description;
     }
 
-    @Column(name = PARENT_PIPELINE)
-    @Lob
     public String getParentPipelineXML() {
         return parentPipelineXML;
     }
@@ -75,7 +64,6 @@ public class OldPipelineEntity extends DocumentEntity {
         this.parentPipelineXML = parentPipelineXML;
     }
 
-    @Transient
     @XmlTransient
     public DocRef getParentPipeline() {
         return parentPipeline;
@@ -85,8 +73,6 @@ public class OldPipelineEntity extends DocumentEntity {
         this.parentPipeline = parentPipeline;
     }
 
-    @Column(name = DATA, length = Integer.MAX_VALUE)
-    @Lob
     @ExternalFile
     public String getData() {
         return data;
@@ -96,7 +82,6 @@ public class OldPipelineEntity extends DocumentEntity {
         this.data = data;
     }
 
-    @Transient
     @XmlTransient
     public PipelineData getPipelineData() {
         return pipelineData;
@@ -109,13 +94,11 @@ public class OldPipelineEntity extends DocumentEntity {
     /**
      * @return generic UI drop down value
      */
-    @Transient
     @Override
     public String getDisplayValue() {
         return String.valueOf(getName());
     }
 
-    @Transient
     @Override
     public final String getType() {
         return ENTITY_TYPE;

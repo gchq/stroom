@@ -14,7 +14,6 @@ import stroom.db.util.JooqUtil;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
-import stroom.persist.CoreConfig;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.impl.CreatedTasks;
@@ -24,9 +23,9 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskSummaryRow;
-import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.TaskStatus;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
@@ -35,7 +34,6 @@ import stroom.util.shared.BaseResultList;
 import stroom.util.shared.CriteriaSet;
 
 import javax.inject.Inject;
-import javax.persistence.EntityNotFoundException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -52,9 +50,9 @@ import java.util.stream.Collectors;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
-import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER;
 import static stroom.processor.impl.db.jooq.tables.ProcessorNode.PROCESSOR_NODE;
+import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorTaskDaoImpl.class);
@@ -913,8 +911,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     modify(processorTask, nodeName, status, now, startTime, endTime);
                     result = update(context, processorTask);
 
-                } catch (final EntityNotFoundException e) {
-                    LOGGER.warn(LambdaLogUtil.message("changeTaskStatus() - Task cannot be found {}", processorTask));
                 } catch (final RuntimeException e) {
                     // Try this operation a few times.
                     boolean success = false;
@@ -941,8 +937,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                 modify(loaded, nodeName, status, now, startTime, endTime);
                                 result = update(context, loaded);
                             }
-                        } catch (final EntityNotFoundException e2) {
-                            LOGGER.warn(LambdaLogUtil.message("changeTaskStatus() - Failed to reload task as it cannot be found {}", processorTask));
                         } catch (final RuntimeException e2) {
                             success = false;
                             lastError = e2;

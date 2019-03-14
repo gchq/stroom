@@ -21,16 +21,8 @@ import stroom.entity.shared.NamedEntity;
 import stroom.util.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
-
 /** Used for legacy migration **/
 @Deprecated
-@Entity
-@Table(name = "STRM_TP", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
 public class StreamType extends NamedEntity implements HasPrimitiveValue {
     public static final String TABLE_NAME = SQLNameConstants.STREAM + SQLNameConstants.TYPE_SUFFIX;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
@@ -123,7 +115,6 @@ public class StreamType extends NamedEntity implements HasPrimitiveValue {
         return streamType;
     }
 
-    @Column(name = EXTENSION, nullable = false)
     public String getExtension() {
         return extension;
     }
@@ -132,7 +123,6 @@ public class StreamType extends NamedEntity implements HasPrimitiveValue {
         this.extension = extension;
     }
 
-    @Column(name = PATH, nullable = false)
     public String getPath() {
         return path;
     }
@@ -142,12 +132,10 @@ public class StreamType extends NamedEntity implements HasPrimitiveValue {
     }
 
     @Override
-    @Transient
     public byte getPrimitiveValue() {
         return (byte) getId();
     }
 
-    @Column(name = SQLNameConstants.PURPOSE, nullable = false)
     public byte getPpurpose() {
         return ppurpose;
     }
@@ -156,7 +144,6 @@ public class StreamType extends NamedEntity implements HasPrimitiveValue {
         this.ppurpose = ppurpose;
     }
 
-    @Transient
     public Purpose getPurpose() {
         return Purpose.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(ppurpose);
     }
@@ -165,13 +152,11 @@ public class StreamType extends NamedEntity implements HasPrimitiveValue {
         this.ppurpose = purpose.getPrimitiveValue();
     }
 
-    @Transient
     @Override
     public final String getType() {
         return ENTITY_TYPE;
     }
 
-    @Transient
     public boolean isStreamTypeLazy() {
         if (getId() == SEGMENT_INDEX.getId()) {
             return true;
@@ -180,7 +165,6 @@ public class StreamType extends NamedEntity implements HasPrimitiveValue {
 
     }
 
-    @Transient
     public boolean isStreamTypeSegment() {
         if (getId() == SEGMENT_INDEX.getId()) {
             return true;
@@ -188,7 +172,6 @@ public class StreamType extends NamedEntity implements HasPrimitiveValue {
         return getId() == BOUNDARY_INDEX.getId();
     }
 
-    @Transient
     public boolean isStreamTypeChild() {
         if (getId() == SEGMENT_INDEX.getId()) {
             return true;
@@ -205,22 +188,18 @@ public class StreamType extends NamedEntity implements HasPrimitiveValue {
         return getId() == CONTEXT.getId();
     }
 
-    @Transient
     public boolean isStreamTypeRaw() {
         return Purpose.RAW.equals(getPurpose());
     }
 
-    @Transient
     public boolean isStreamTypeProcessed() {
         return Purpose.PROCESSED.equals(getPurpose());
     }
 
-    @Transient
     public boolean isStreamTypeError() {
         return Purpose.ERROR.equals(getPurpose());
     }
 
-    @Transient
     public FileStoreType getFileStoreType() {
         if (getId() == SEGMENT_INDEX.getId()) {
             return FileStoreType.dat;

@@ -23,8 +23,6 @@ import stroom.entity.shared.SQLNameConstants;
 import stroom.importexport.shared.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 
-import javax.persistence.Transient;
-
 /**
  * Used for legacy migration
  **/
@@ -62,7 +60,6 @@ public class OldTextConverter extends DocumentEntity {
         this.pConverterType = pConverterType;
     }
 
-    @Transient
     public TextConverterType getConverterType() {
         return TextConverterType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pConverterType);
     }

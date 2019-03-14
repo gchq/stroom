@@ -16,15 +16,11 @@
 
 package stroom.entity.shared;
 
+import stroom.docref.SharedObject;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasType;
-import stroom.docref.SharedObject;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
-import javax.persistence.Version;
 import javax.xml.bind.annotation.XmlTransient;
 
 /**
@@ -33,7 +29,6 @@ import javax.xml.bind.annotation.XmlTransient;
  * id's audit fields (createDate etc) optimistic locking in a standard way.
  * </p>
  */
-@MappedSuperclass
 public abstract class BaseEntity extends Entity implements HasType, HasId, SharedObject, Comparable<BaseEntity> {
     private static final long serialVersionUID = 2405151110726276049L;
 
@@ -58,7 +53,6 @@ public abstract class BaseEntity extends Entity implements HasType, HasId, Share
     private boolean stub;
 
     @Override
-    @Transient
     @XmlTransient
     public abstract long getId();
 
@@ -69,13 +63,11 @@ public abstract class BaseEntity extends Entity implements HasType, HasId, Share
      *
      * @return yes if we have
      */
-    @Transient
     @Override
     public final boolean isPersistent() {
         return getId() != UNDEFINED_ID;
     }
 
-    @Transient
     @Override
     public final Object getPrimaryKey() {
         if (!isPersistent()) {
@@ -98,14 +90,11 @@ public abstract class BaseEntity extends Entity implements HasType, HasId, Share
      * Reset the entity id and version to its undefined state so that it is non
      * persistent. This is often useful when copying an entity using copy.
      */
-    @Transient
     public void clearPersistence() {
         setId(UNDEFINED_ID);
         version = -1;
     }
 
-    @Version
-    @Column(name = VERSION, columnDefinition = TINYINT_UNSIGNED, nullable = false)
     @XmlTransient
     public byte getVersion() {
         return version;
@@ -115,7 +104,6 @@ public abstract class BaseEntity extends Entity implements HasType, HasId, Share
         this.version = version;
     }
 
-    @Transient
     @XmlTransient
     public boolean isStub() {
         return stub;

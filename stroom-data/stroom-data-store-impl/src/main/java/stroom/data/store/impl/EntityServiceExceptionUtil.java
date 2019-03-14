@@ -21,8 +21,6 @@ import org.slf4j.LoggerFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.io.StreamUtil;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
@@ -49,46 +47,6 @@ public class EntityServiceExceptionUtil {
      * Unwrap an exception and log it if required.
      */
     public static String unwrapMessage(final Throwable rootEx, final Throwable e) {
-//        if (e instanceof EntityExistsException) {
-//            return "Unable to create record as it matches an existing record";
-//        }
-//        if (e instanceof OptimisticLockException) {
-//            return "Unable to save record state as it has been updated by another transaction.";
-//        }
-//        if (e instanceof PersistenceException) {
-//            final PersistenceException psEx = (PersistenceException) e;
-//
-//            if (psEx.getCause() != null) {
-//                return unwrapMessage(rootEx, psEx.getCause());
-//            }
-//            // Unknown type of error
-//            return getDefaultMessage(psEx, rootEx);
-//        }
-//        if (e instanceof PropertyValueException) {
-//            final PropertyValueException pEx = (PropertyValueException) e;
-//            final StringBuilder msg = new StringBuilder();
-//            msg.append("Unable to save record state.  ");
-//            msg.append(pEx.getPropertyName());
-//            msg.append(": ");
-//            if (pEx.getMessage().contains("not-null")) {
-//                msg.append("mandatory");
-//            } else {
-//                msg.append(pEx.getMessage());
-//            }
-//            return msg.toString();
-//        }
-        if (e instanceof ConstraintViolationException) {
-            final ConstraintViolationException constraintViolationException = (ConstraintViolationException) e;
-            final StringBuilder msg = new StringBuilder();
-            msg.append("Unable to save record state.  ");
-            for (final ConstraintViolation<?> violation : constraintViolationException.getConstraintViolations()) {
-                msg.append(violation.getPropertyPath().toString());
-                msg.append(": ");
-                msg.append(violation.getMessage());
-                msg.append(". ");
-            }
-            return msg.toString();
-        }
         if (e instanceof java.sql.SQLException) {
             return "Unable to save record state: " + e.getMessage();
         }
@@ -132,18 +90,6 @@ public class EntityServiceExceptionUtil {
         if (thEx instanceof EntityServiceException) {
             return (EntityServiceException) thEx;
         }
-//        if (thEx instanceof HessianException) {
-//            return new EntityServiceException(thEx.getMessage(), thEx.getClass().getName(), true);
-//        }
-//        if (thEx instanceof org.hibernate.exception.ConstraintViolationException) {
-//            final org.hibernate.exception.ConstraintViolationException cvEx = (org.hibernate.exception.ConstraintViolationException) thEx;
-//            final EntityServiceException entityServiceException = new EntityServiceException(
-//                    "Unable to save due to constraint ");
-//            entityServiceException.setDetail(appendDetail(cvEx.getMessage()) +
-//                    appendDetail(cvEx.getSQLException().getMessage()) +
-//                    appendDetail(cvEx.getConstraintName()));
-//            return entityServiceException;
-//        }
         if (thEx instanceof UnknownHostException) {
             return new EntityServiceException("Unknown host: " + thEx.getMessage(), thEx.getClass().getName(), true);
         }

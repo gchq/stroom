@@ -19,8 +19,6 @@ package stroom.pipeline.xmlschema.migration;
 import stroom.importexport.shared.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 
-import javax.persistence.Transient;
-
 /** Used for legacy migration **/
 @Deprecated
 public class OldXMLSchema extends DocumentEntity {
@@ -82,7 +80,6 @@ public class OldXMLSchema extends DocumentEntity {
         this.schemaGroup = schemaGroup;
     }
 
-    @Transient
     public final String getType() {
         return ENTITY_TYPE;
     }

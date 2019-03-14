@@ -1189,19 +1189,6 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
     }
 
     /**
-     * An iterator over DOM elements.
-     */
-    interface ElementIterator extends Iterator<Element> {
-        /**
-         * Set the selection state of the current element.
-         *
-         * @param selected the selection state
-         * @throws IllegalStateException if {@link #next()} has not been called
-         */
-        void setSelected(boolean selected) throws IllegalStateException;
-    }
-
-    /**
      * The view that this presenter presents.
      *
      * @param <T> the data type

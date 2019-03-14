@@ -19,10 +19,6 @@ package stroom.db.migration._V07_00_00.entity.shared;
 import stroom.db.migration._V07_00_00.docref._V07_00_00_SharedObject;
 import stroom.db.migration._V07_00_00.util.shared._V07_00_00_HasType;
 
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
-
-@MappedSuperclass
 public abstract class _V07_00_00_Entity implements _V07_00_00_HasType, _V07_00_00_SharedObject {
     // Standard data types. Unfortunately HSQLDB doesn't have unsigned data
     // types so we do not set these to unsigned here.
@@ -40,9 +36,7 @@ public abstract class _V07_00_00_Entity implements _V07_00_00_HasType, _V07_00_0
     protected static final String SEP = "_";
     private static final long serialVersionUID = 2405151110726276049L;
 
-    @Transient
     public abstract boolean isPersistent();
 
-    @Transient
     public abstract Object getPrimaryKey();
 }

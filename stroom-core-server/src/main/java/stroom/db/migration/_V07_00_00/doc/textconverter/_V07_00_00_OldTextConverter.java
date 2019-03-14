@@ -26,14 +26,6 @@ import stroom.db.migration._V07_00_00.entity.shared._V07_00_00_HasPrimitiveValue
 import stroom.db.migration._V07_00_00.entity.shared._V07_00_00_PrimitiveValueConverter;
 import stroom.db.migration._V07_00_00.entity.shared._V07_00_00_SQLNameConstants;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-
-@Entity
-@Table(name = "TXT_CONV")
 public class _V07_00_00_OldTextConverter
         extends _V07_00_00_DocumentEntity
         implements _V07_00_00_Copyable<_V07_00_00_OldTextConverter>, _V07_00_00_HasData {
@@ -50,8 +42,6 @@ public class _V07_00_00_OldTextConverter
     private String data;
     private byte pConverterType = _V07_00_00_TextConverterType.NONE.getPrimitiveValue();
 
-    @Column(name = _V07_00_00_SQLNameConstants.DESCRIPTION)
-    @Lob
     public String getDescription() {
         return description;
     }
@@ -60,8 +50,6 @@ public class _V07_00_00_OldTextConverter
         this.description = description;
     }
 
-    @Column(name = DATA, length = Integer.MAX_VALUE)
-    @Lob
     @_V07_00_00_ExternalFile(extensionProvider = _V07_00_00_OldTextConverterExtensionProvider.class)
     @Override
     public String getData() {
@@ -73,7 +61,6 @@ public class _V07_00_00_OldTextConverter
         this.data = data;
     }
 
-    @Column(name = CONVERTER_TYPE, nullable = false)
     public byte getPConverterType() {
         return pConverterType;
     }
@@ -82,7 +69,6 @@ public class _V07_00_00_OldTextConverter
         this.pConverterType = pConverterType;
     }
 
-    @Transient
     public _V07_00_00_TextConverterType getConverterType() {
         return _V07_00_00_TextConverterType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pConverterType);
     }
@@ -94,7 +80,6 @@ public class _V07_00_00_OldTextConverter
     /**
      * @return generic UI drop down value
      */
-    @Transient
     @Override
     public String getDisplayValue() {
         return String.valueOf(getName());
@@ -109,7 +94,6 @@ public class _V07_00_00_OldTextConverter
         super.copyFrom(textConverter);
     }
 
-    @Transient
     @Override
     public final String getType() {
         return ENTITY_TYPE;

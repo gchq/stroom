@@ -21,10 +21,6 @@ import stroom.db.migration._V07_00_00.util.shared._V07_00_00_EqualsBuilder;
 import stroom.db.migration._V07_00_00.util.shared._V07_00_00_HasId;
 import stroom.db.migration._V07_00_00.util.shared._V07_00_00_HasType;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
-import javax.persistence.Version;
 import javax.xml.bind.annotation.XmlTransient;
 
 /**
@@ -33,7 +29,6 @@ import javax.xml.bind.annotation.XmlTransient;
  * id's audit fields (createDate etc) optimistic locking in a standard way.
  * </p>
  */
-@MappedSuperclass
 public abstract class _V07_00_00_BaseEntity
         extends _V07_00_00_Entity
         implements _V07_00_00_HasType, _V07_00_00_HasId, _V07_00_00_SharedObject, Comparable<_V07_00_00_BaseEntity> {
@@ -60,7 +55,6 @@ public abstract class _V07_00_00_BaseEntity
     private boolean stub;
 
     @Override
-    @Transient
     @XmlTransient
     public abstract long getId();
 
@@ -71,13 +65,11 @@ public abstract class _V07_00_00_BaseEntity
      *
      * @return yes if we have
      */
-    @Transient
     @Override
     public final boolean isPersistent() {
         return getId() != UNDEFINED_ID;
     }
 
-    @Transient
     @Override
     public final Object getPrimaryKey() {
         if (!isPersistent()) {
@@ -100,14 +92,11 @@ public abstract class _V07_00_00_BaseEntity
      * Reset the entity id and version to its undefined state so that it is non
      * persistent. This is often useful when copying an entity using copy.
      */
-    @Transient
     public void clearPersistence() {
         setId(UNDEFINED_ID);
         version = -1;
     }
 
-    @Version
-    @Column(name = VERSION, columnDefinition = TINYINT_UNSIGNED, nullable = false)
     @XmlTransient
     public byte getVersion() {
         return version;
@@ -117,7 +106,6 @@ public abstract class _V07_00_00_BaseEntity
         this.version = version;
     }
 
-    @Transient
     @XmlTransient
     public boolean isStub() {
         return stub;

@@ -18,20 +18,12 @@ package stroom.db.migration._V07_00_00.entity.shared;
 
 import stroom.db.migration._V07_00_00.docref._V07_00_00_HasDisplayValue;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
-import javax.validation.constraints.Size;
-
-@MappedSuperclass
 public abstract class _V07_00_00_NamedEntity extends _V07_00_00_AuditedEntity implements _V07_00_00_HasName, _V07_00_00_HasDisplayValue {
     public static final String NAME = _V07_00_00_SQLNameConstants.NAME;
     private static final long serialVersionUID = -6752797140242673318L;
     private String name;
 
     @Override
-    @Column(name = NAME, nullable = false)
-    @Size(min = _V07_00_00_LengthConstants.MIN_NAME_LENGTH)
     public String getName() {
         return name;
     }
@@ -41,7 +33,6 @@ public abstract class _V07_00_00_NamedEntity extends _V07_00_00_AuditedEntity im
         this.name = name;
     }
 
-    @Transient
     @Override
     public String getDisplayValue() {
         return String.valueOf(getName());

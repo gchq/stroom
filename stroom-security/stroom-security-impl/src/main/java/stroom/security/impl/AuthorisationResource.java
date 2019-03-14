@@ -12,7 +12,6 @@ import stroom.security.shared.UserRef;
 import stroom.util.RestResource;
 
 import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -113,7 +112,7 @@ public class AuthorisationResource implements RestResource {
     @Path("hasAppPermission")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response hasAppPermission(@NotNull UserPermissionRequest userPermissionRequest) {
+    public Response hasAppPermission(final UserPermissionRequest userPermissionRequest) {
         if (Strings.isNullOrEmpty(userPermissionRequest.getPermission())) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Please supply a permission.").build();
         }

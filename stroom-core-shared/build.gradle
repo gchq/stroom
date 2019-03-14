@@ -7,7 +7,6 @@ dependencies {
     compile libs.stroomQueryApi
 
     compile libs.gwt_servlet
-    compile libs.hibernate_jpa_api
     compile libs.jackson_annotations
     compile libs.javax_inject;
     compile libs.jaxb_api

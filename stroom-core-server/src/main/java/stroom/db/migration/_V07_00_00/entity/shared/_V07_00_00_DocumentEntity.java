@@ -19,10 +19,6 @@ package stroom.db.migration._V07_00_00.entity.shared;
 
 import stroom.db.migration._V07_00_00.util.shared._V07_00_00_Document;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-
-@MappedSuperclass
 public abstract class _V07_00_00_DocumentEntity extends _V07_00_00_NamedEntity implements _V07_00_00_Document {
     public static final String UUID = _V07_00_00_SQLNameConstants.UUID;
 
@@ -31,7 +27,6 @@ public abstract class _V07_00_00_DocumentEntity extends _V07_00_00_NamedEntity i
     private String uuid;
 
     @Override
-    @Column(name = UUID, unique = true, nullable = false)
     public String getUuid() {
         return uuid;
     }

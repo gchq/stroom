@@ -22,7 +22,6 @@ import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 import stroom.util.shared.HasAuditInfo;
 
-import javax.persistence.Transient;
 import java.util.Objects;
 
 /**
@@ -148,7 +147,6 @@ public class FsVolume implements HasAuditInfo, SharedObject {
         this.volumeState = volumeState;
     }
 
-    @Transient
     public boolean isFull() {
         // If we haven't established how many bytes are used on a volume then
         // assume it is not full (could be dangerous but worst case we will get

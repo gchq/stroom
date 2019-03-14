@@ -21,18 +21,11 @@ import stroom.db.migration._V07_00_00.entity.shared._V07_00_00_DocumentEntity;
 import stroom.db.migration._V07_00_00.entity.shared._V07_00_00_ExternalFile;
 import stroom.db.migration._V07_00_00.entity.shared._V07_00_00_SQLNameConstants;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
-import javax.persistence.Table;
-import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * This entity is used to persist pipeline configuration.
  */
-@Entity
-@Table(name = "PIPE")
 public class _V07_00_00_OldPipelineEntity extends _V07_00_00_DocumentEntity {
     public static final String TABLE_NAME = _V07_00_00_SQLNameConstants.PIPELINE;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
@@ -54,8 +47,6 @@ public class _V07_00_00_OldPipelineEntity extends _V07_00_00_DocumentEntity {
     public _V07_00_00_OldPipelineEntity() {
     }
 
-    @Column(name = _V07_00_00_SQLNameConstants.DESCRIPTION)
-    @Lob
     public String getDescription() {
         return description;
     }
@@ -64,8 +55,6 @@ public class _V07_00_00_OldPipelineEntity extends _V07_00_00_DocumentEntity {
         this.description = description;
     }
 
-    @Column(name = PARENT_PIPELINE)
-    @Lob
     public String getParentPipelineXML() {
         return parentPipelineXML;
     }
@@ -74,7 +63,6 @@ public class _V07_00_00_OldPipelineEntity extends _V07_00_00_DocumentEntity {
         this.parentPipelineXML = parentPipelineXML;
     }
 
-    @Transient
     @XmlTransient
     public _V07_00_00_DocRef getParentPipeline() {
         return parentPipeline;
@@ -84,8 +72,6 @@ public class _V07_00_00_OldPipelineEntity extends _V07_00_00_DocumentEntity {
         this.parentPipeline = parentPipeline;
     }
 
-    @Column(name = DATA, length = Integer.MAX_VALUE)
-    @Lob
     @_V07_00_00_ExternalFile
     public String getData() {
         return data;
@@ -95,7 +81,6 @@ public class _V07_00_00_OldPipelineEntity extends _V07_00_00_DocumentEntity {
         this.data = data;
     }
 
-    @Transient
     @XmlTransient
     public _V07_00_00_PipelineData getPipelineData() {
         return pipelineData;
@@ -108,13 +93,11 @@ public class _V07_00_00_OldPipelineEntity extends _V07_00_00_DocumentEntity {
     /**
      * @return generic UI drop down value
      */
-    @Transient
     @Override
     public String getDisplayValue() {
         return String.valueOf(getName());
     }
 
-    @Transient
     @Override
     public final String getType() {
         return ENTITY_TYPE;

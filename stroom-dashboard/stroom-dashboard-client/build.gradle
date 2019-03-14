@@ -20,7 +20,6 @@ dependencies {
     compile libs.guice3
     compile libs.gwt_user
     compile libs.gwtp_mvp_client
-    compile libs.hibernate_jpa_api
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.jaxb_api

@@ -18,10 +18,6 @@ package stroom.entity.shared;
 
 import stroom.util.shared.Document;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-
-@MappedSuperclass
 public abstract class DocumentEntity extends NamedEntity implements Document {
     public static final String UUID = SQLNameConstants.UUID;
 
@@ -30,7 +26,6 @@ public abstract class DocumentEntity extends NamedEntity implements Document {
     private String uuid;
 
     @Override
-    @Column(name = UUID, unique = true, nullable = false)
     public String getUuid() {
         return uuid;
     }

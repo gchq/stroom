@@ -24,7 +24,6 @@ dependencies {
     compile libs.flyway_core
     compile libs.guava
     compile libs.guice4
-    compile libs.hibernate_jpa_api
     compile libs.hikari
     compile libs.jackson_annotations
     compile libs.javax_inject

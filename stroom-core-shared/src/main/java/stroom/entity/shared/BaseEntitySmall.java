@@ -16,20 +16,11 @@
 
 package stroom.entity.shared;
 
-import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
 import javax.xml.bind.annotation.XmlTransient;
 
-@MappedSuperclass
 public abstract class BaseEntitySmall extends BaseEntity {
     private static final long serialVersionUID = -2776331251851326084L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = ID, columnDefinition = NORMAL_KEY_DEF)
     @XmlTransient
     @Override
     public long getId() {

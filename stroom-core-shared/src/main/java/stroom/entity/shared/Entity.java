@@ -19,10 +19,6 @@ package stroom.entity.shared;
 import stroom.util.shared.HasType;
 import stroom.docref.SharedObject;
 
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
-
-@MappedSuperclass
 public abstract class Entity implements HasType, SharedObject {
     // Standard data types. Unfortunately HSQLDB doesn't have unsigned data
     // types so we do not set these to unsigned here.
@@ -40,9 +36,7 @@ public abstract class Entity implements HasType, SharedObject {
     protected static final String SEP = "_";
     private static final long serialVersionUID = 2405151110726276049L;
 
-    @Transient
     public abstract boolean isPersistent();
 
-    @Transient
     public abstract Object getPrimaryKey();
 }

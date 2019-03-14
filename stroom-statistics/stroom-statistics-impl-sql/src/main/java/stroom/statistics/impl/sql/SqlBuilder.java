@@ -16,11 +16,6 @@
 
 package stroom.statistics.impl.sql;
 
-import stroom.docref.DocRef;
-import stroom.entity.shared.EntityIdSet;
-import stroom.util.shared.CriteriaSet;
-import stroom.util.shared.HasPrimitiveValue;
-
 public class SqlBuilder extends AbstractSqlBuilder {
     public SqlBuilder() {
         super();
@@ -28,94 +23,5 @@ public class SqlBuilder extends AbstractSqlBuilder {
 
     public SqlBuilder(final String prepared, final Object... args) {
         super(prepared, args);
-    }
-
-    @Override
-    void appendCriteriaSet(final String fieldOrEntity, final CriteriaSet<Long> set) {
-        append(fieldOrEntity);
-        append(" IN (");
-
-        boolean added = false;
-        for (final Long item : set) {
-            if (item != null) {
-                arg(item);
-                append(",");
-                added = true;
-            }
-        }
-
-        if (added) {
-            // Remove the last comma.
-            setLength(length() - 1);
-        }
-
-        append(")");
-    }
-
-    @Override
-    <T extends HasPrimitiveValue> void appendPrimitiveValueSet(final String fieldOrEntity, final CriteriaSet<T> set) {
-        append(fieldOrEntity);
-        append(" IN (");
-
-        boolean added = false;
-        for (final HasPrimitiveValue item : set) {
-            if (item != null) {
-                arg(item.getPrimitiveValue());
-                append(",");
-                added = true;
-            }
-        }
-
-        if (added) {
-            // Remove the last comma.
-            setLength(length() - 1);
-        }
-
-        append(")");
-    }
-
-
-    @Override
-    void appendEntityIdSet(final String fieldOrEntity, final EntityIdSet<?> set) {
-        append(fieldOrEntity);
-        append(" IN (");
-
-        boolean added = false;
-        for (final Long item : set) {
-            if (item != null) {
-                arg(item);
-                append(",");
-                added = true;
-            }
-        }
-
-        if (added) {
-            // Remove the last comma.
-            setLength(length() - 1);
-        }
-
-        append(")");
-    }
-
-    @Override
-    void appendDocRefSet(final String fieldOrEntity, final CriteriaSet<DocRef> set) {
-        append(fieldOrEntity);
-        append(" IN (");
-
-        boolean added = false;
-        for (final DocRef item : set) {
-            if (item != null) {
-                arg(item.getUuid());
-                append(",");
-                added = true;
-            }
-        }
-
-        if (added) {
-            // Remove the last comma.
-            setLength(length() - 1);
-        }
-
-        append(")");
     }
 }

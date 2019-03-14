@@ -21,15 +21,7 @@ import stroom.db.migration._V07_00_00.entity.shared._V07_00_00_NamedEntity;
 import stroom.db.migration._V07_00_00.entity.shared._V07_00_00_PrimitiveValueConverter;
 import stroom.db.migration._V07_00_00.entity.shared._V07_00_00_SQLNameConstants;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
-
 /** Used for legacy migration **/
-@Entity
-@Table(name = "STRM_TP", uniqueConstraints = @UniqueConstraint(columnNames = {_V07_00_00_SQLNameConstants.NAME}))
 public class _V07_00_00_StreamType extends _V07_00_00_NamedEntity implements _V07_00_00_HasPrimitiveValue {
     public static final String TABLE_NAME = _V07_00_00_SQLNameConstants.STREAM + _V07_00_00_SQLNameConstants.TYPE_SUFFIX;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
@@ -122,7 +114,6 @@ public class _V07_00_00_StreamType extends _V07_00_00_NamedEntity implements _V0
         return streamType;
     }
 
-    @Column(name = EXTENSION, nullable = false)
     public String getExtension() {
         return extension;
     }
@@ -131,7 +122,6 @@ public class _V07_00_00_StreamType extends _V07_00_00_NamedEntity implements _V0
         this.extension = extension;
     }
 
-    @Column(name = PATH, nullable = false)
     public String getPath() {
         return path;
     }
@@ -141,12 +131,10 @@ public class _V07_00_00_StreamType extends _V07_00_00_NamedEntity implements _V0
     }
 
     @Override
-    @Transient
     public byte getPrimitiveValue() {
         return (byte) getId();
     }
 
-    @Column(name = _V07_00_00_SQLNameConstants.PURPOSE, nullable = false)
     public byte getPpurpose() {
         return ppurpose;
     }
@@ -155,7 +143,6 @@ public class _V07_00_00_StreamType extends _V07_00_00_NamedEntity implements _V0
         this.ppurpose = ppurpose;
     }
 
-    @Transient
     public Purpose getPurpose() {
         return Purpose.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(ppurpose);
     }
@@ -164,13 +151,11 @@ public class _V07_00_00_StreamType extends _V07_00_00_NamedEntity implements _V0
         this.ppurpose = purpose.getPrimitiveValue();
     }
 
-    @Transient
     @Override
     public final String getType() {
         return ENTITY_TYPE;
     }
 
-    @Transient
     public boolean isStreamTypeLazy() {
         if (getId() == SEGMENT_INDEX.getId()) {
             return true;
@@ -179,7 +164,6 @@ public class _V07_00_00_StreamType extends _V07_00_00_NamedEntity implements _V0
 
     }
 
-    @Transient
     public boolean isStreamTypeSegment() {
         if (getId() == SEGMENT_INDEX.getId()) {
             return true;
@@ -187,7 +171,6 @@ public class _V07_00_00_StreamType extends _V07_00_00_NamedEntity implements _V0
         return getId() == BOUNDARY_INDEX.getId();
     }
 
-    @Transient
     public boolean isStreamTypeChild() {
         if (getId() == SEGMENT_INDEX.getId()) {
             return true;
@@ -204,22 +187,18 @@ public class _V07_00_00_StreamType extends _V07_00_00_NamedEntity implements _V0
         return getId() == CONTEXT.getId();
     }
 
-    @Transient
     public boolean isStreamTypeRaw() {
         return Purpose.RAW.equals(getPurpose());
     }
 
-    @Transient
     public boolean isStreamTypeProcessed() {
         return Purpose.PROCESSED.equals(getPurpose());
     }
 
-    @Transient
     public boolean isStreamTypeError() {
         return Purpose.ERROR.equals(getPurpose());
     }
 
-    @Transient
     public FileStoreType getFileStoreType() {
         if (getId() == SEGMENT_INDEX.getId()) {
             return FileStoreType.dat;

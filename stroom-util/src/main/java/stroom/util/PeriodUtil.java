@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.entity.util;
+package stroom.util;
 
 import stroom.util.shared.Period;
 

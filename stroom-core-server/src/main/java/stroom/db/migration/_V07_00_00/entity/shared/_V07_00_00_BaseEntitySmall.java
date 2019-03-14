@@ -16,20 +16,11 @@
 
 package stroom.db.migration._V07_00_00.entity.shared;
 
-import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
 import javax.xml.bind.annotation.XmlTransient;
 
-@MappedSuperclass
 public abstract class _V07_00_00_BaseEntitySmall extends _V07_00_00_BaseEntity {
     private static final long serialVersionUID = -2776331251851326084L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = ID, columnDefinition = NORMAL_KEY_DEF)
     @XmlTransient
     @Override
     public long getId() {

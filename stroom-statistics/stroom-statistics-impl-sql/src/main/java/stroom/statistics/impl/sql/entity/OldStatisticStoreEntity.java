@@ -25,7 +25,6 @@ import stroom.statistics.impl.sql.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 
-import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -92,7 +91,6 @@ public class OldStatisticStoreEntity extends DocumentEntity {
         this.description = description;
     }
 
-    @Transient
     public String getType() {
         return ENTITY_TYPE;
     }
@@ -105,7 +103,6 @@ public class OldStatisticStoreEntity extends DocumentEntity {
         this.pStatisticType = pStatisticType;
     }
 
-    @Transient
     public StatisticType getStatisticType() {
         return StatisticType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pStatisticType);
     }
@@ -122,7 +119,6 @@ public class OldStatisticStoreEntity extends DocumentEntity {
         this.pRollUpType = pRollUpType;
     }
 
-    @Transient
     public StatisticRollUpType getRollUpType() {
         return StatisticRollUpType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pRollUpType);
     }
@@ -156,7 +152,6 @@ public class OldStatisticStoreEntity extends DocumentEntity {
         this.data = data;
     }
 
-    @Transient
     @XmlTransient
     public StatisticsDataSourceData getStatisticDataSourceDataObject() {
         return statisticsDataSourceDataObject;
@@ -170,7 +165,6 @@ public class OldStatisticStoreEntity extends DocumentEntity {
         this.statisticsDataSourceDataObject = statisticDataSourceDataObject;
     }
 
-    @Transient
     public boolean isValidField(final String fieldName) {
         if (statisticsDataSourceDataObject == null) {
             return false;
@@ -183,7 +177,6 @@ public class OldStatisticStoreEntity extends DocumentEntity {
         }
     }
 
-    @Transient
     public boolean isRollUpCombinationSupported(final Set<String> rolledUpFieldNames) {
         if (rolledUpFieldNames == null || rolledUpFieldNames.isEmpty()) {
             return true;
@@ -207,12 +200,10 @@ public class OldStatisticStoreEntity extends DocumentEntity {
         return statisticsDataSourceDataObject.isRollUpCombinationSupported(rolledUpFieldNames);
     }
 
-    @Transient
     public Integer getPositionInFieldList(final String fieldName) {
         return statisticsDataSourceDataObject.getFieldPositionInList(fieldName);
     }
 
-    @Transient
     public List<String> getFieldNames() {
         if (statisticsDataSourceDataObject != null) {
             final List<String> fieldNames = new ArrayList<>();
@@ -225,19 +216,16 @@ public class OldStatisticStoreEntity extends DocumentEntity {
         }
     }
 
-    @Transient
     public List<String> getAllFieldNames() {
         List<String> allFieldNames = new ArrayList<>(STATIC_FIELDS_MAP.get(getStatisticType()));
         allFieldNames.addAll(getFieldNames());
         return allFieldNames;
     }
 
-    @Transient
     public int getStatisticFieldCount() {
         return statisticsDataSourceDataObject == null ? 0 : statisticsDataSourceDataObject.getStatisticFields().size();
     }
 
-    @Transient
     public List<StatisticField> getStatisticFields() {
         if (statisticsDataSourceDataObject != null) {
             return statisticsDataSourceDataObject.getStatisticFields();
@@ -246,7 +234,6 @@ public class OldStatisticStoreEntity extends DocumentEntity {
         }
     }
 
-    @Transient
     public Set<CustomRollUpMask> getCustomRollUpMasks() {
         if (statisticsDataSourceDataObject != null) {
             return statisticsDataSourceDataObject.getCustomRollUpMasks();

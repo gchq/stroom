@@ -49,20 +49,12 @@ public final class _V07_00_00_DocRefUtil {
             uuid = String.valueOf(id);
         }
 
-        try {
-            if (entity instanceof _V07_00_00_HasUuid) {
-                uuid = ((_V07_00_00_HasUuid) entity).getUuid();
-            }
-        } catch (final RuntimeException e) {
-            // Ignore, we might get an exception getting some fields on lazy hibernate objects.
+        if (entity instanceof _V07_00_00_HasUuid) {
+            uuid = ((_V07_00_00_HasUuid) entity).getUuid();
         }
 
-        try {
-            if (entity instanceof _V07_00_00_HasName) {
-                name = ((_V07_00_00_HasName) entity).getName();
-            }
-        } catch (final RuntimeException e) {
-            // Ignore, we might get an exception getting some fields on lazy hibernate objects.
+        if (entity instanceof _V07_00_00_HasName) {
+            name = ((_V07_00_00_HasName) entity).getName();
         }
 
         return new _V07_00_00_DocRef(type, uuid, name);
