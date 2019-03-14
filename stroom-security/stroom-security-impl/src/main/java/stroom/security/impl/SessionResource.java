@@ -3,7 +3,7 @@ package stroom.security.impl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import stroom.security.shared.UserRef;
-import stroom.servlet.SessionListListener;
+import stroom.core.servlet.SessionListListener;
 import stroom.util.RestResource;
 
 import javax.inject.Inject;

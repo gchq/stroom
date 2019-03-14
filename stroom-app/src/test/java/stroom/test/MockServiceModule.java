@@ -7,7 +7,7 @@ import stroom.data.store.impl.mock.MockStreamStoreModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.MockFeedModule;
 import stroom.meta.impl.mock.MockMetaModule;
-import stroom.dataprocess.PipelineStreamTaskModule;
+import stroom.core.dataprocess.PipelineStreamTaskModule;
 import stroom.dictionary.impl.MockDictionaryModule;
 import stroom.importexport.impl.ImportExportModule;
 import stroom.node.impl.mock.MockNodeServiceModule;

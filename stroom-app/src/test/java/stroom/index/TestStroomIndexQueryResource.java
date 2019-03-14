@@ -20,8 +20,8 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
-import stroom.servicediscovery.RegisteredService;
-import stroom.servicediscovery.ResourcePaths;
+import stroom.core.servicediscovery.RegisteredService;
+import stroom.core.servicediscovery.ResourcePaths;
 import stroom.app.App;
 import stroom.app.Config;
 

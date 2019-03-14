@@ -21,7 +21,7 @@ package stroom.pipeline.task;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.data.store.api.Store;
-import stroom.dataprocess.PipelineDataProcessorTaskExecutor;
+import stroom.core.dataprocess.PipelineDataProcessorTaskExecutor;
 import stroom.docref.DocRef;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;

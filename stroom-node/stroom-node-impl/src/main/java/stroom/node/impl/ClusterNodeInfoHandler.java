@@ -20,7 +20,7 @@ package stroom.node.impl;
 import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ClusterNodeManager;
-import stroom.entity.util.EntityServiceExceptionUtil;
+import stroom.core.entity.util.EntityServiceExceptionUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.ClusterNodeInfoAction;

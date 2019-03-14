@@ -20,7 +20,7 @@ package stroom.pipeline;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.persist.CoreConfig;
+import stroom.core.persist.CoreConfig;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Pipeline;

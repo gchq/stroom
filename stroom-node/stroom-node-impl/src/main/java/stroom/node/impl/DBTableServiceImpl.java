@@ -23,7 +23,7 @@ import stroom.util.shared.Sort.Direction;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
-import stroom.persist.DataSourceProvider;
+import stroom.core.persist.DataSourceProvider;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.CompareUtil;

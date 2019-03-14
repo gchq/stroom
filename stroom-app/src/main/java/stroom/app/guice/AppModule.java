@@ -4,6 +4,7 @@ import com.google.inject.AbstractModule;
 import io.dropwizard.setup.Environment;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfigModule;
+import stroom.core.dispatch.DispatchModule;
 import stroom.lifecycle.impl.LifecycleServiceModule;
 import stroom.meta.statistics.impl.MetaStatisticsModule;
 import stroom.resource.impl.SessionResourceModule;
@@ -37,7 +38,7 @@ public class AppModule extends AbstractModule {
         install(new MetaStatisticsModule());
 
         install(new stroom.statistics.impl.sql.search.SQLStatisticSearchModule());
-        install(new stroom.dispatch.DispatchModule());
+        install(new DispatchModule());
         install(new SessionResourceModule());
 //        install(new stroom.test.DatabaseTestControlModule());
     }

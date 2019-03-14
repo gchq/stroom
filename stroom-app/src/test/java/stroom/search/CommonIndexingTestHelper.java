@@ -17,7 +17,7 @@
 package stroom.search;
 
 
-import stroom.dataprocess.PipelineDataProcessorTaskExecutor;
+import stroom.core.dataprocess.PipelineDataProcessorTaskExecutor;
 import stroom.docref.DocRef;
 import stroom.index.IndexShardManager;
 import stroom.index.shared.FindIndexShardCriteria;

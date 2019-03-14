@@ -16,6 +16,8 @@
 
 package stroom.search;
 
+import stroom.core.search.EventRef;
+import stroom.core.search.EventRefs;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexConstants;

@@ -23,7 +23,7 @@ import stroom.cluster.task.api.ClusterCallEntry;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.DefaultClusterResultCollector;
 import stroom.cluster.task.api.TargetType;
-import stroom.entity.util.EntityServiceExceptionUtil;
+import stroom.core.entity.util.EntityServiceExceptionUtil;
 import stroom.node.shared.FetchNodeStatusAction;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;

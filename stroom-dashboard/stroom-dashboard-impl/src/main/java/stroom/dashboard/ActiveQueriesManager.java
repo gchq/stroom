@@ -20,7 +20,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
-import stroom.datasource.DataSourceProviderRegistry;
+import stroom.core.datasource.DataSourceProviderRegistry;
 import stroom.util.shared.Clearable;
 import stroom.security.Security;
 import stroom.security.SecurityContext;

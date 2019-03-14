@@ -1,10 +1,11 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
-import stroom.benchmark.BenchmarkJobsModule;
+import stroom.core.benchmark.BenchmarkJobsModule;
 import stroom.cache.impl.CacheJobsModule;
 import stroom.cluster.lock.impl.db.ClusterLockJobsModule;
 import stroom.config.global.impl.db.GlobalConfigJobsModule;
+import stroom.core.receive.ProxyAggregationJobsModule;
 import stroom.data.retention.impl.DataRetentionJobsModule;
 import stroom.data.store.impl.DataRetentionJobModule;
 import stroom.data.store.impl.fs.FsDataStoreJobsModule;
@@ -45,7 +46,7 @@ public class JobsModule extends AbstractModule {
         install(new stroom.meta.impl.db.MetaDbJobsModule());
         install(new stroom.node.impl.NodeJobsModule());
         install(new ProcessorTaskJobsModule());
-        install(new stroom.receive.ProxyAggregationJobsModule());
+        install(new ProxyAggregationJobsModule());
         install(new VolumeJobsModule());
     }
 }

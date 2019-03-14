@@ -18,6 +18,7 @@ package stroom.data.store.util;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import stroom.core.persist.DataSourceModule;
 import stroom.data.store.impl.fs.FsDataStoreModule;
 import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.EntityEvent;
@@ -28,7 +29,7 @@ public class ToolModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new stroom.cache.impl.CacheModule());
-        install(new stroom.persist.DataSourceModule());
+        install(new DataSourceModule());
         install(new stroom.activity.impl.mock.MockActivityModule());
         install(new stroom.cluster.lock.impl.mock.MockClusterLockModule());
         install(new stroom.meta.impl.db.MetaDbModule());

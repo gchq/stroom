@@ -19,6 +19,9 @@ package stroom.search;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.core.search.EventRef;
+import stroom.core.search.EventRefs;
+import stroom.core.search.EventSearchTask;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;

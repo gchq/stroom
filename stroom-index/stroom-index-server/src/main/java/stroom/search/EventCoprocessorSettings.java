@@ -16,6 +16,7 @@
 
 package stroom.search;
 
+import stroom.core.search.EventRef;
 import stroom.docref.DocRef;
 import stroom.query.common.v2.CoprocessorSettings;
 

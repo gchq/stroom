@@ -18,6 +18,8 @@ package stroom.receive;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.core.receive.ProxyAggregationExecutor;
+import stroom.core.receive.ProxyFileProcessorImpl;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;

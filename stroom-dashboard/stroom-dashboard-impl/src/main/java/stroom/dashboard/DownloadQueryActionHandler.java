@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.DownloadQueryAction;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.util.shared.EntityServiceException;
-import stroom.entity.util.EntityServiceExceptionUtil;
+import stroom.core.entity.util.EntityServiceExceptionUtil;
 import stroom.query.api.v2.ResultRequest;
 import stroom.resource.api.ResourceStore;
 import stroom.security.Security;
