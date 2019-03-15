@@ -31,6 +31,7 @@ import stroom.security.UserTokenUtil;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
+import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -52,11 +53,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -110,19 +108,12 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                         final CustomThreadFactory taskThreadFactory = new CustomThreadFactory(
                                 threadPool.getName() + " #", poolThreadGroup, threadPool.getPriority());
 
-                        //Use a LinkedBlockingQueue for any bounded pools (where bounded is any
-                        //thread count below Integer.MAX_VALUE)
-                        final BlockingQueue<Runnable> executorQueue = threadPool.getMaxPoolSize() == Integer.MAX_VALUE
-                                ? new SynchronousQueue<>()
-                                : new LinkedBlockingQueue<>();
-
                         // Create the new thread pool for this priority
-                        executor = new ThreadPoolExecutor(
+                        executor = ScalingThreadPoolExecutor.newScalingThreadPool(
                                 threadPool.getCorePoolSize(),
                                 threadPool.getMaxPoolSize(),
                                 60L,
                                 TimeUnit.SECONDS,
-                                executorQueue,
                                 taskThreadFactory);
 
                         threadPoolMap.put(threadPool, executor);
