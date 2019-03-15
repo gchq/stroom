@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Remove full path from file in sha256 hash file release artifact.
+
 
 ## [v6.0-beta.29] - 2019-03-13
 
