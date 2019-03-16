@@ -33,17 +33,18 @@ import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.server.ExecutorProvider;
+import stroom.task.server.TaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.DummyTask;
-import stroom.util.task.TaskMonitor;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
 
 import javax.annotation.Resource;
+import javax.inject.Provider;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -67,17 +68,26 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Resource
     private MetaDataStatistic metaDataStatistic;
     @Resource
-    private TaskMonitor taskMonitor;
+    private TaskContext taskContext;
     @Resource
     private ExecutorProvider executorProvider;
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
+    @Resource
+    private Provider<FilePackProcessor> filePackProcessorProvider;
 
     private void aggregate(final String proxyDir,
                            final int maxAggregation,
                            final long maxStreamSize) {
-        final ProxyFileProcessorImpl proxyFileProcessor = new ProxyFileProcessorImpl(streamStore, feedService, metaDataStatistic, maxAggregation, maxStreamSize);
-        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(proxyFileProcessor, taskMonitor, executorProvider, proxyDir, 10, maxAggregation, 10000, maxStreamSize);
+        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
+                taskContext,
+                executorProvider,
+                filePackProcessorProvider,
+                proxyDir,
+                10,
+                maxAggregation,
+                10000,
+                maxStreamSize);
         proxyAggregationExecutor.exec(new DummyTask());
     }
 
