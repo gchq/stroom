@@ -74,7 +74,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Resource
-    private Provider<FilePackProcessor> filePackProcessorProvider;
+    private Provider<FileSetProcessor> filePackProcessorProvider;
 
     private void aggregate(final String proxyDir,
                            final int maxAggregation,

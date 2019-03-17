@@ -38,6 +38,7 @@ import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -53,8 +54,8 @@ import java.util.List;
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public final class FilePackProcessorImpl implements FilePackProcessor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FilePackProcessorImpl.class);
+public final class FileSetProcessorImpl implements FileSetProcessor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSetProcessorImpl.class);
 
     private final ProxyFileHandler feedFileProcessorHelper = new ProxyFileHandler();
 
@@ -66,10 +67,10 @@ public final class FilePackProcessorImpl implements FilePackProcessor {
     private final TaskContext taskContext;
 
     @Inject
-    public FilePackProcessorImpl(final StreamStore streamStore,
-                                 @Named("cachedFeedService") final FeedService feedService,
-                                 final MetaDataStatistic metaDataStatistic,
-                                 final TaskContext taskContext) {
+    public FileSetProcessorImpl(final StreamStore streamStore,
+                                @Named("cachedFeedService") final FeedService feedService,
+                                final MetaDataStatistic metaDataStatistic,
+                                final TaskContext taskContext) {
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.metaDataStatistic = metaDataStatistic;
@@ -77,22 +78,24 @@ public final class FilePackProcessorImpl implements FilePackProcessor {
     }
 
     @Override
-    public void process(final StroomZipRepository stroomZipRepository, final FilePack filePack) {
-        final String feedName = filePack.getFeed();
-        final Feed feed = feedService.loadByName(feedName);
-
-        taskContext.setName("Processing pack - " + filePack.getFeed());
-
+    public void process(final StroomZipRepository stroomZipRepository, final FileSet fileSet) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        LOGGER.info("processFeedFiles() - Started {} ({} Files)", feedName, filePack.getFiles().size());
 
+        final String feedName = fileSet.getFeed();
+        taskContext.setName("Processing set - " + feedName);
+        LOGGER.info("processFeedFiles() - Started {} ({} Files)", feedName, fileSet.getFiles().size());
+
+        final Feed feed = feedService.loadByName(feedName);
         if (feed == null) {
             LOGGER.error("processFeedFiles() - " + feedName + " Failed to find feed");
             return;
         }
 
+        // Sort the files in the file set so there is some consistency to processing.
+        fileSet.getFiles().sort(Comparator.comparing(p -> p.getFileName().toString()));
+
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("processFeedFiles() - " + feedName + " " + filePack.getFiles());
+            LOGGER.debug("processFeedFiles() - " + feedName + " " + fileSet.getFiles());
         }
 
         // We don't want to aggregate reference feeds.
@@ -106,9 +109,9 @@ public final class FilePackProcessorImpl implements FilePackProcessor {
 
         final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor("ProxyAggregationTask");
 
-        for (final Path file : filePack.getFiles()) {
+        for (final Path file : fileSet.getFiles()) {
             count++;
-            taskContext.info("File " + count + " of " + filePack.getFiles().size());
+            taskContext.info("File " + count + " of " + fileSet.getFiles().size());
 
             if (taskContext.isTerminated()) {
                 break;

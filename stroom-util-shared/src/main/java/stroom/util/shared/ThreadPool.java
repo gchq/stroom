@@ -24,4 +24,6 @@ public interface ThreadPool {
     int getCorePoolSize();
 
     int getMaxPoolSize();
+
+    int getMaxQueueSize();
 }

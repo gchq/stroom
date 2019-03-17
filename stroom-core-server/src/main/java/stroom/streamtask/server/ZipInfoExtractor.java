@@ -3,6 +3,7 @@ package stroom.streamtask.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
+import stroom.feed.StroomHeaderArguments;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.util.io.FileUtil;
@@ -30,9 +31,12 @@ class ZipInfoExtractor {
 
         MetaMap metaMap = null;
         long totalUncompressedSize = 0;
+        int zipEntryCount = 0;
 
         try (final StroomZipFile stroomZipFile = new StroomZipFile(path)) {
             final Set<String> baseNameSet = stroomZipFile.getStroomZipNameSet().getBaseNameSet();
+            zipEntryCount = baseNameSet.size();
+
             if (baseNameSet.isEmpty()) {
                 errorReceiver.onError(path, "Unable to find any entry?");
             } else {
@@ -73,7 +77,23 @@ class ZipInfoExtractor {
             LOGGER.error(e.getMessage(), e);
         }
 
-        final ZipInfo zipInfo = new ZipInfo(path, metaMap, totalUncompressedSize, totalCompressedSize, attrs.lastModifiedTime().toMillis());
+        String feedName = null;
+
+        if (metaMap == null) {
+            errorReceiver.onError(path, "Unable to find meta data");
+        } else {
+            feedName = metaMap.get(StroomHeaderArguments.FEED);
+            if (feedName == null || feedName.length() == 0) {
+                errorReceiver.onError(path, "Unable to find feed in header??");
+            }
+        }
+
+        final ZipInfo zipInfo = new ZipInfo(path,
+                feedName,
+                totalUncompressedSize,
+                totalCompressedSize,
+                attrs.lastModifiedTime().toMillis(),
+                zipEntryCount);
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Zip info for  '" + FileUtil.getCanonicalPath(path) + "' is " + zipInfo);

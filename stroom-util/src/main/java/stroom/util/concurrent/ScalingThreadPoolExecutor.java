@@ -34,6 +34,7 @@ public class ScalingThreadPoolExecutor extends ThreadPoolExecutor {
 
     public static ScalingThreadPoolExecutor newScalingThreadPool(final int corePoolSize,
                                                                  final int maximumPoolSize,
+                                                                 final int maxQueueSize,
                                                                  final long keepAliveTime,
                                                                  final TimeUnit unit) {
         if (corePoolSize < 0 ||
@@ -43,7 +44,7 @@ public class ScalingThreadPoolExecutor extends ThreadPoolExecutor {
             throw new IllegalArgumentException();
         }
 
-        final ScalingQueue<Runnable> queue = new ScalingQueue<>(2 * maximumPoolSize);
+        final ScalingQueue<Runnable> queue = new ScalingQueue<>(maxQueueSize);
         final ScalingThreadPoolExecutor executor = new ScalingThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, unit, queue);
         executor.setRejectedExecutionHandler(new ForceQueuePolicy());
         queue.setThreadPoolExecutor(executor);
@@ -52,6 +53,7 @@ public class ScalingThreadPoolExecutor extends ThreadPoolExecutor {
 
     public static ScalingThreadPoolExecutor newScalingThreadPool(final int corePoolSize,
                                                                  final int maximumPoolSize,
+                                                                 final int maxQueueSize,
                                                                  final long keepAliveTime,
                                                                  final TimeUnit unit,
                                                                  final ThreadFactory threadFactory) {
@@ -62,7 +64,7 @@ public class ScalingThreadPoolExecutor extends ThreadPoolExecutor {
             throw new IllegalArgumentException();
         }
 
-        final ScalingQueue<Runnable> queue = new ScalingQueue<>(2 * maximumPoolSize);
+        final ScalingQueue<Runnable> queue = new ScalingQueue<>(maxQueueSize);
         final ScalingThreadPoolExecutor executor = new ScalingThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, unit, queue, threadFactory);
         executor.setRejectedExecutionHandler(new ForceQueuePolicy());
         queue.setThreadPoolExecutor(executor);

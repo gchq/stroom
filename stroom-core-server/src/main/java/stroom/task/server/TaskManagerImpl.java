@@ -112,6 +112,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                         executor = ScalingThreadPoolExecutor.newScalingThreadPool(
                                 threadPool.getCorePoolSize(),
                                 threadPool.getMaxPoolSize(),
+                                threadPool.getMaxQueueSize(),
                                 60L,
                                 TimeUnit.SECONDS,
                                 taskThreadFactory);

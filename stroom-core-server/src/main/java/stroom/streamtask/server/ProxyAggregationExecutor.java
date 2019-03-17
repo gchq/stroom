@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.feed.StroomHeaderArguments;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipRepository;
@@ -48,7 +47,6 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -75,7 +73,7 @@ public class ProxyAggregationExecutor {
 
     private final TaskContext taskContext;
     private final ExecutorProvider executorProvider;
-    private final Provider<FilePackProcessor> filePackProcessorProvider;
+    private final Provider<FileSetProcessor> fileSetProcessorProvider;
 
     private final int threadCount;
     private final int maxFilesPerAggregate;
@@ -87,7 +85,7 @@ public class ProxyAggregationExecutor {
     @Inject
     public ProxyAggregationExecutor(final TaskContext taskContext,
                                     final ExecutorProvider executorProvider,
-                                    final Provider<FilePackProcessor> filePackProcessorProvider,
+                                    final Provider<FileSetProcessor> fileSetProcessorProvider,
                                     @Value("#{propertyConfigurer.getProperty('stroom.proxyDir')}") final String proxyDir,
                                     @Value("#{propertyConfigurer.getProperty('stroom.proxyThreads')}") final String threadCount,
                                     @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxFilesPerAggregate,
@@ -96,7 +94,7 @@ public class ProxyAggregationExecutor {
         this(
                 taskContext,
                 executorProvider,
-                filePackProcessorProvider,
+                fileSetProcessorProvider,
                 proxyDir,
                 PropertyUtil.toInt(threadCount, 10),
                 PropertyUtil.toInt(maxFilesPerAggregate, DEFAULT_MAX_AGGREGATION),
@@ -107,7 +105,7 @@ public class ProxyAggregationExecutor {
 
     ProxyAggregationExecutor(final TaskContext taskContext,
                              final ExecutorProvider executorProvider,
-                             final Provider<FilePackProcessor> filePackProcessorProvider,
+                             final Provider<FileSetProcessor> fileSetProcessorProvider,
                              final String proxyDir,
                              final int threadCount,
                              final int maxFilesPerAggregate,
@@ -115,7 +113,7 @@ public class ProxyAggregationExecutor {
                              final long maxUncompressedFileSize) {
         this.taskContext = taskContext;
         this.executorProvider = executorProvider;
-        this.filePackProcessorProvider = filePackProcessorProvider;
+        this.fileSetProcessorProvider = fileSetProcessorProvider;
         this.threadCount = threadCount;
         this.maxFilesPerAggregate = maxFilesPerAggregate;
         this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
@@ -166,7 +164,7 @@ public class ProxyAggregationExecutor {
                     maxConcurrentMappedFiles,
                     maxUncompressedFileSize,
                     errorReceiver,
-                    filePackProcessorProvider,
+                    fileSetProcessorProvider,
                     executorProvider,
                     threadCount);
             final ZipInfoExtractor zipInfoExtractor = new ZipInfoExtractor(errorReceiver);
@@ -182,7 +180,7 @@ public class ProxyAggregationExecutor {
             // Wait for the file processor to complete.
             fileProcessor.await();
 
-            // Complete processing remaining file packs.
+            // Complete processing remaining file sets.
             zipInfoConsumer.complete();
 
             LOGGER.debug("Completed");
@@ -222,10 +220,10 @@ public class ProxyAggregationExecutor {
         private final int maxConcurrentMappedFiles;
         private final long maxUncompressedFileSize;
         private final ErrorReceiver errorReceiver;
-        private final Provider<FilePackProcessor> filePackProcessorProvider;
+        private final Provider<FileSetProcessor> fileSetProcessorProvider;
         private final Executor executor;
 
-        private final Map<String, FilePack> filePackMap = new HashMap<>();
+        private final Map<String, FileSet> fileSetMap = new ConcurrentHashMap<>();
         private final Set<CompletableFuture> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
         private int totalMappedFiles;
@@ -235,7 +233,7 @@ public class ProxyAggregationExecutor {
                         final int maxConcurrentMappedFiles,
                         final long maxUncompressedFileSize,
                         final ErrorReceiver errorReceiver,
-                        final Provider<FilePackProcessor> filePackProcessorProvider,
+                        final Provider<FileSetProcessor> fileSetProcessorProvider,
                         final ExecutorProvider executorProvider,
                         final int threadCount) {
             this.stroomZipRepository = stroomZipRepository;
@@ -243,76 +241,77 @@ public class ProxyAggregationExecutor {
             this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
             this.maxUncompressedFileSize = maxUncompressedFileSize;
             this.errorReceiver = errorReceiver;
-            this.filePackProcessorProvider = filePackProcessorProvider;
+            this.fileSetProcessorProvider = fileSetProcessorProvider;
 
-            final ThreadPool fileInspectorThreadPool = new ThreadPoolImpl("File Pack Processor", 5, 0, threadCount);
-            executor = executorProvider.getExecutor(fileInspectorThreadPool);
+            final ThreadPool threadPool = new ThreadPoolImpl("File Set Processor", 5, 0, threadCount, 2 * threadCount);
+            executor = executorProvider.getExecutor(threadPool);
         }
 
         @Override
-        public void accept(final ZipInfo zipInfo) {
-            final String feedName = zipInfo.getMetaMap().get(StroomHeaderArguments.FEED);
+        public synchronized void accept(final ZipInfo zipInfo) {
+            final String feedName = zipInfo.getFeedName();
             if (feedName == null || feedName.length() == 0) {
                 errorReceiver.onError(zipInfo.getPath(), "Unable to find feed in header??");
 
             } else {
                 LOGGER.debug("{} belongs to feed {}", zipInfo.getPath(), feedName);
 
-                FilePack filePack = filePackMap.computeIfAbsent(feedName, k -> new FilePack(feedName));
+                FileSet fileSet = fileSetMap.computeIfAbsent(feedName, k -> new FileSet(feedName));
 
-                // See if the file pack will be full if we add this file.
-                if (filePack.getFiles().size() > 0 &&
-                        (filePack.getTotalUncompressedFileSize() + zipInfo.getUncompressedSize() > maxUncompressedFileSize ||
-                                filePack.getFiles().size() >= maxFilesPerAggregate)) {
+                // See if the file set will overflow if we add this file.
+                if (fileSet.getFiles().size() > 0 &&
+                        (fileSet.getTotalUncompressedFileSize() + zipInfo.getUncompressedSize() > maxUncompressedFileSize ||
+                                fileSet.getTotalZipEntryCount() + zipInfo.getZipEntryCount() > maxFilesPerAggregate)) {
 
-                    // Send the file pack for processing.
-                    processFilePack(filePack);
+                    // Send the file set for processing.
+                    processFileSet(fileSet);
 
-                    // Create a new file pack.
-                    filePack = filePackMap.computeIfAbsent(feedName, k -> new FilePack(feedName));
+                    // Create a new file set.
+                    fileSet = fileSetMap.computeIfAbsent(feedName, k -> new FileSet(feedName));
                 }
 
-                // The file pack is not full so add the file.
-                filePack.add(zipInfo);
+                // The file set is not full so add the file.
+                fileSet.add(zipInfo);
                 totalMappedFiles++;
 
-                // If the file pack is now full send it for processing.
-                if (filePack.getFiles().size() >= maxFilesPerAggregate) {
+                // If the file set is now full send it for processing.
+                if (fileSet.getTotalUncompressedFileSize() >= maxUncompressedFileSize ||
+                        fileSet.getTotalZipEntryCount() >= maxFilesPerAggregate) {
 
-                    // Send the file pack for processing.
-                    processFilePack(filePack);
+                    // Send the file set for processing.
+                    processFileSet(fileSet);
 
                 } else {
 
-                    // If we have reached the maximum number of concurrent mapped files then we need to send the largest pack for processing.
+                    // If we have reached the maximum number of concurrent mapped files then we need to send the largest set for processing.
                     if (totalMappedFiles >= maxConcurrentMappedFiles) {
-                        final List<FilePack> sortedList = filePackMap
+                        final List<FileSet> sortedList = fileSetMap
                                 .values()
                                 .stream()
-                                .sorted(Comparator.comparing(FilePack::getTotalUncompressedFileSize).reversed())
+                                .sorted(Comparator.comparing(FileSet::getTotalUncompressedFileSize).reversed())
                                 .collect(Collectors.toList());
 
-                        // Remove the biggest file pack from the map.
-                        final FilePack biggestFilePack = sortedList.get(0);
+                        // Remove the biggest file set from the map.
+                        final FileSet biggestFileSet = sortedList.get(0);
 
-                        // Send the file pack for processing.
-                        processFilePack(biggestFilePack);
+                        // Send the file set for processing.
+                        processFileSet(biggestFileSet);
                     }
                 }
             }
         }
 
-        private void processFilePack(final FilePack filePack) {
-            // Remove the full file pack.
-            filePackMap.remove(filePack.getFeed());
+        private synchronized void processFileSet(final FileSet fileSet) {
+            // Remove the full file set.
+            fileSetMap.remove(fileSet.getFeed());
 
             // Reduce the total number of files we have mapped.
-            totalMappedFiles -= filePack.getFiles().size();
+            totalMappedFiles -= fileSet.getFiles().size();
 
             try {
                 final Runnable runnable = () -> {
-                    final FilePackProcessor filePackProcessor = filePackProcessorProvider.get();
-                    filePackProcessor.process(stroomZipRepository, filePack);
+                    final FileSetProcessor fileSetProcessor = fileSetProcessorProvider.get();
+                    fileSetProcessor.process(stroomZipRepository, fileSet);
                 };
                 final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
                 completableFuture.thenAccept(r -> futures.remove(completableFuture));
@@ -322,9 +321,9 @@ public class ProxyAggregationExecutor {
             }
         }
 
-        public void complete() {
-            // Send all remaining file packs for processing.
-            filePackMap.values().forEach(this::processFilePack);
+        public synchronized void complete() {
+            // Send all remaining file sets for processing.
+            fileSetMap.values().forEach(this::processFileSet);
 
             try {
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
@@ -351,7 +350,7 @@ public class ProxyAggregationExecutor {
             this.zipInfoConsumer = zipInfoConsumer;
             this.taskContext = taskContext;
 
-            final ThreadPool fileInspectorThreadPool = new ThreadPoolImpl("Proxy File Inspection", 5, 0, threadCount);
+            final ThreadPool fileInspectorThreadPool = new ThreadPoolImpl("Proxy File Inspection", 5, 0, threadCount, 2 * threadCount);
             executor = executorProvider.getExecutor(fileInspectorThreadPool);
         }
 
@@ -386,7 +385,7 @@ public class ProxyAggregationExecutor {
          *
          * @param zipInfo The zip info to process.
          */
-        private synchronized void processZipInfo(final ZipInfo zipInfo) {
+        private void processZipInfo(final ZipInfo zipInfo) {
             zipInfoConsumer.accept(zipInfo);
         }
 

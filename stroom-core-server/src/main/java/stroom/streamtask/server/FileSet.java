@@ -4,12 +4,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FilePack {
+public class FileSet {
     private final String feed;
     private long totalUncompressedFileSize;
+    private long totalZipEntryCount;
     private final List<Path> files;
 
-    FilePack(final String feed) {
+    FileSet(final String feed) {
         this.feed = feed;
         this.files = new ArrayList<>();
     }
@@ -17,6 +18,7 @@ public class FilePack {
     void add(ZipInfo zipInfo) {
         files.add(zipInfo.getPath());
         totalUncompressedFileSize += zipInfo.getUncompressedSize();
+        totalZipEntryCount += zipInfo.getZipEntryCount();
     }
 
     public String getFeed() {
@@ -25,6 +27,10 @@ public class FilePack {
 
     public long getTotalUncompressedFileSize() {
         return totalUncompressedFileSize;
+    }
+
+    public long getTotalZipEntryCount() {
+        return totalZipEntryCount;
     }
 
     public List<Path> getFiles() {
