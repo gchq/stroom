@@ -176,7 +176,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         Files.createDirectory(proxyDir);
 
         final Path testFile1 = proxyDir.resolve("001.zip");
-        writeTestFileWithManyEntries(testFile1, eventFeed1, 10);
+        writeTestFileWithManyEntries(testFile1, eventFeed1, 5);
 
         final Path testFile2 = proxyDir.resolve("002.zip");
         writeTestFileWithManyEntries(testFile2, eventFeed1, 5);
@@ -185,14 +185,14 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         writeTestFileWithManyEntries(testFile3, eventFeed1, 5);
 
         final Path testFile4 = proxyDir.resolve("004.zip");
-        writeTestFileWithManyEntries(testFile4, eventFeed1, 10);
+        writeTestFileWithManyEntries(testFile4, eventFeed1, 5);
 
         aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(ExpressionUtil.createFeedExpression(eventFeed1));
         final List<Stream> list = streamStore.find(criteria);
-        Assert.assertEquals(3, list.size());
+        Assert.assertEquals(2, list.size());
 
         StreamSource source = streamStore.openStreamSource(list.get(0).getId());
 
