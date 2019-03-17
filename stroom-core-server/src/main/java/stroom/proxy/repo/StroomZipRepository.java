@@ -47,7 +47,7 @@ import java.util.function.BiConsumer;
  */
 public class StroomZipRepository {
     final static String LOCK_EXTENSION = ".lock";
-    final static String ZIP_EXTENSION = ".zip";
+    public final static String ZIP_EXTENSION = ".zip";
     private final static String ERROR_EXTENSION = ".err";
     final static String BAD_EXTENSION = ".bad";
 
@@ -319,7 +319,7 @@ public class StroomZipRepository {
     }
 
     @SuppressWarnings(value = "DM_DEFAULT_ENCODING")
-    void addErrorMessage(final StroomZipFile zipFile, final String msg, final boolean bad) {
+    public void addErrorMessage(final StroomZipFile zipFile, final String msg, final boolean bad) {
         final Path file = zipFile.getFile();
 
         try {

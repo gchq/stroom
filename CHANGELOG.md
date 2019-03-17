@@ -6,8 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Remove full path from file in sha256 hash file release artifact.
+* Issue **#1116** : Better implementation of proxy aggregation.
 
+* Issue **#1116** : Changed the way tasks are executed to ensure thread pools expand to the maximum number of threads specified rather than just queueing all tasks and only providing core threads.
+
+* Remove full path from file in sha256 hash file release artifact.
 
 ## [v6.0-beta.29] - 2019-03-13
 

@@ -18,7 +18,6 @@ package stroom.streamtask.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.MetaMap;
@@ -27,13 +26,11 @@ import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.internalstatistics.MetaDataStatistic;
 import stroom.proxy.repo.ProxyFileHandler;
-import stroom.proxy.repo.ProxyFileProcessor;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.streamstore.server.StreamStore;
-import stroom.util.config.PropertyUtil;
+import stroom.task.server.TaskContext;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
@@ -41,6 +38,7 @@ import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -56,64 +54,48 @@ import java.util.List;
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyFileProcessorImpl.class);
+public final class FileSetProcessorImpl implements FileSetProcessor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSetProcessorImpl.class);
 
     private final ProxyFileHandler feedFileProcessorHelper = new ProxyFileHandler();
-
-    private final static int DEFAULT_MAX_AGGREGATION = 10000;
-    final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
 
     private final StreamStore streamStore;
     private final FeedService feedService;
     private final MetaDataStatistic metaDataStatistic;
-    private final int maxAggregation;
-    private final long maxStreamSize;
     private final boolean aggregate = true;
     private final ProxyFileHandler proxyFileHandler = new ProxyFileHandler();
-    private volatile boolean stop = false;
+    private final TaskContext taskContext;
 
     @Inject
-    public ProxyFileProcessorImpl(final StreamStore streamStore,
-                                  @Named("cachedFeedService") final FeedService feedService,
-                                  final MetaDataStatistic metaDataStatistic,
-                                  @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxAggregation,
-                                  @Value("#{propertyConfigurer.getProperty('stroom.maxStreamSize')}") final String maxStreamSize) {
-        this(
-                streamStore,
-                feedService,
-                metaDataStatistic,
-                PropertyUtil.toInt(maxAggregation, DEFAULT_MAX_AGGREGATION),
-                getByteSize(maxStreamSize, DEFAULT_MAX_STREAM_SIZE)
-        );
-    }
-
-    ProxyFileProcessorImpl(final StreamStore streamStore,
-                           final FeedService feedService,
-                           final MetaDataStatistic metaDataStatistic,
-                           final int maxAggregation,
-                           final long maxStreamSize) {
+    public FileSetProcessorImpl(final StreamStore streamStore,
+                                @Named("cachedFeedService") final FeedService feedService,
+                                final MetaDataStatistic metaDataStatistic,
+                                final TaskContext taskContext) {
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.metaDataStatistic = metaDataStatistic;
-        this.maxAggregation = maxAggregation;
-        this.maxStreamSize = maxStreamSize;
+        this.taskContext = taskContext;
     }
 
     @Override
-    public void processFeedFiles(final StroomZipRepository stroomZipRepository, final String feedName, final List<Path> fileList) {
-        final Feed feed = feedService.loadByName(feedName);
-
+    public void process(final StroomZipRepository stroomZipRepository, final FileSet fileSet) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        LOGGER.info("processFeedFiles() - Started {} ({} Files)", feedName, fileList.size());
 
+        final String feedName = fileSet.getFeed();
+        taskContext.setName("Processing set - " + feedName);
+        LOGGER.info("processFeedFiles() - Started {} ({} Files)", feedName, fileSet.getFiles().size());
+
+        final Feed feed = feedService.loadByName(feedName);
         if (feed == null) {
             LOGGER.error("processFeedFiles() - " + feedName + " Failed to find feed");
             return;
         }
 
+        // Sort the files in the file set so there is some consistency to processing.
+        fileSet.getFiles().sort(Comparator.comparing(p -> p.getFileName().toString()));
+
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("processFeedFiles() - " + feedName + " " + fileList);
+            LOGGER.debug("processFeedFiles() - " + feedName + " " + fileSet.getFiles());
         }
 
         // We don't want to aggregate reference feeds.
@@ -123,33 +105,19 @@ public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
         List<Path> deleteFileList = new ArrayList<>();
 
         long sequence = 1;
-        long maxAggregation = this.maxAggregation;
-        if (oneByOne) {
-            maxAggregation = 1;
-        }
-
-        Long nextBatchBreak = this.maxStreamSize;
+        long count = 0;
 
         final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor("ProxyAggregationTask");
 
-        for (final Path file : fileList) {
-            if (stop) {
+        for (final Path file : fileSet.getFiles()) {
+            count++;
+            taskContext.info("File " + count + " of " + fileSet.getFiles().size());
+
+            if (taskContext.isTerminated()) {
                 break;
             }
             try {
-                if (sequence > maxAggregation
-                        || (streamProgressMonitor.getTotalBytes() > nextBatchBreak)) {
-                    LOGGER.info("processFeedFiles() - Breaking Batch {} as limit is ({} > {}) or ({} > {})",
-                            feedName,
-                            sequence,
-                            maxAggregation,
-                            streamProgressMonitor.getTotalBytes(),
-                            nextBatchBreak
-                    );
-
-                    // Recalculate the next batch break
-                    nextBatchBreak = streamProgressMonitor.getTotalBytes() + maxStreamSize;
-
+                if (sequence > 1 && oneByOne) {
                     // Close off this unit
                     handlers = closeStreamHandlers(handlers);
 
@@ -161,6 +129,7 @@ public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
                     handlers = openStreamHandlers(feed);
                     sequence = 1;
                 }
+
                 sequence = feedFileProcessorHelper.processFeedFile(handlers, stroomZipRepository, file, streamProgressMonitor, sequence);
                 deleteFileList.add(file);
 
@@ -211,27 +180,5 @@ public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
             handlers.forEach(StreamTargetStroomStreamHandler::closeDelete);
         }
         return null;
-    }
-
-    static long getByteSize(final String propertyValue, final long defaultValue) {
-        Long value = null;
-        try {
-            value = ModelStringUtil.parseIECByteSizeString(propertyValue);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
-        if (value == null) {
-            value = defaultValue;
-        }
-
-        return value;
-    }
-
-    /**
-     * Stops the task as soon as possible.
-     */
-    public void stop() {
-        stop = true;
     }
 }
