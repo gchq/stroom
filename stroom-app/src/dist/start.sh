@@ -83,6 +83,7 @@ start_stroom() {
 
   info "Starting ${GREEN}Stroom${NC}"
   ensure_file_exists "${path_to_start_log}" 
+  ensure_file_exists "${PATH_TO_APP_LOG}" 
 
   # stroom and proxy both use this script and the same jar so use absolute
   # paths to distinguish the two processes when using the 'ps' command.
@@ -91,9 +92,6 @@ start_stroom() {
   absolute_path_to_config="$(realpath "${PATH_TO_CONFIG}")"
   local absoulte_path_to_jar
   absoulte_path_to_jar="$(realpath "${PATH_TO_JAR}")"
-  local absolute_path_to_app_log
-  absolute_path_to_app_log="$(realpath "${PATH_TO_APP_LOG}")"
-  ensure_file_exists "${absolute_path_to_app_log}" 
 
   # We need word splitting on JAVA_OPTS so we need to disable SC2086
   # shellcheck disable=SC2086
@@ -102,7 +100,7 @@ start_stroom() {
     -jar "${absoulte_path_to_jar}" \
     server \
     "${absolute_path_to_config}" \
-    &> "${absolute_path_to_app_log}" &
+    &> "${PATH_TO_APP_LOG}" &
 
   local stroom_pid="$!"
   info "Started ${GREEN}Stroom${NC} with PID ${BLUE}${stroom_pid}${NC}"
