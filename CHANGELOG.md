@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#382** : Large zip files are now broken apart prior to proxy aggregation.
+
 ## [v6.0-beta.30] - 2019-03-17
 
 * Issue **#1116** : Better implementation of proxy aggregation.
