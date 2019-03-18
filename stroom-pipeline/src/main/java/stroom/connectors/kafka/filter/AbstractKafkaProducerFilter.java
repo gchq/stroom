@@ -56,6 +56,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
 
     @Override
     public void startProcessing() {
+        super.startProcessing();
         if (Strings.isNullOrEmpty(getTopic())) {
             String msg = "A Kafka topic has not been set";
             log(Severity.FATAL_ERROR, msg, null);

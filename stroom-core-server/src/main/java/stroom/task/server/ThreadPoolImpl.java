@@ -25,12 +25,22 @@ public class ThreadPoolImpl implements ThreadPool {
     private final int priority;
     private final int corePoolSize;
     private final int maxPoolSize;
+    private final int maxQueueSize;
 
     public ThreadPoolImpl(final String name, final int priority, final int corePoolSize, final int maxPoolSize) {
         this.name = name;
         this.priority = priority;
         this.corePoolSize = corePoolSize;
         this.maxPoolSize = maxPoolSize;
+        this.maxQueueSize = Integer.MAX_VALUE;
+    }
+
+    public ThreadPoolImpl(final String name, final int priority, final int corePoolSize, final int maxPoolSize, final int maxQueueSize) {
+        this.name = name;
+        this.priority = priority;
+        this.corePoolSize = corePoolSize;
+        this.maxPoolSize = maxPoolSize;
+        this.maxQueueSize = maxQueueSize;
     }
 
     @Override
@@ -51,6 +61,11 @@ public class ThreadPoolImpl implements ThreadPool {
     @Override
     public int getMaxPoolSize() {
         return maxPoolSize;
+    }
+
+    @Override
+    public int getMaxQueueSize() {
+        return maxQueueSize;
     }
 
     @Override

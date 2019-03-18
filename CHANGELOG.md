@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Change start script to use absolute paths for jar, config and logs to distinguish stroom and proxy instances.
 
+
+## [v6.0-beta.30] - 2019-03-17
+
+* Issue **#1116** : Better implementation of proxy aggregation.
+
+* Issue **#1116** : Changed the way tasks are executed to ensure thread pools expand to the maximum number of threads specified rather than just queueing all tasks and only providing core threads.
+
+* Remove full path from file in sha256 hash file release artifact.
+
+## [v6.0-beta.29] - 2019-03-13
+
+* Issue **#1115** : Add missing super.startProcessing to AbstractKafkaProducerFilter.
+
+* Improve exception handling and logging in RemoteDataSourceProvider. Now the full url is included in dashboard connection errors.
+
 * Change Travis build to generate sha256 hashes for release zip/jars.
 
 * Uplift the visualisations content pack to v3.2.1
@@ -1501,7 +1516,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.28...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.30...6.0
+[v6.0-beta.30]: https://github.com/gchq/stroom/compare/v6.0-beta.29...v6.0-beta.30
+[v6.0-beta.29]: https://github.com/gchq/stroom/compare/v6.0-beta.28...v6.0-beta.29
 [v6.0-beta.28]: https://github.com/gchq/stroom/compare/v6.0-beta.27...v6.0-beta.28
 [v6.0-beta.27]: https://github.com/gchq/stroom/compare/v6.0-beta.26...v6.0-beta.27
 [v6.0-beta.26]: https://github.com/gchq/stroom/compare/v6.0-beta.25...v6.0-beta.26

@@ -33,17 +33,18 @@ import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.server.ExecutorProvider;
+import stroom.task.server.TaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.DummyTask;
-import stroom.util.task.TaskMonitor;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
 
 import javax.annotation.Resource;
+import javax.inject.Provider;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -67,17 +68,26 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Resource
     private MetaDataStatistic metaDataStatistic;
     @Resource
-    private TaskMonitor taskMonitor;
+    private TaskContext taskContext;
     @Resource
     private ExecutorProvider executorProvider;
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
+    @Resource
+    private Provider<FileSetProcessor> filePackProcessorProvider;
 
     private void aggregate(final String proxyDir,
                            final int maxAggregation,
                            final long maxStreamSize) {
-        final ProxyFileProcessorImpl proxyFileProcessor = new ProxyFileProcessorImpl(streamStore, feedService, metaDataStatistic, maxAggregation, maxStreamSize);
-        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(proxyFileProcessor, taskMonitor, executorProvider, proxyDir, 10, maxAggregation, 10000, maxStreamSize);
+        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
+                taskContext,
+                executorProvider,
+                filePackProcessorProvider,
+                proxyDir,
+                10,
+                maxAggregation,
+                10000,
+                maxStreamSize);
         proxyAggregationExecutor.exec(new DummyTask());
     }
 
@@ -166,7 +176,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         Files.createDirectory(proxyDir);
 
         final Path testFile1 = proxyDir.resolve("001.zip");
-        writeTestFileWithManyEntries(testFile1, eventFeed1, 10);
+        writeTestFileWithManyEntries(testFile1, eventFeed1, 5);
 
         final Path testFile2 = proxyDir.resolve("002.zip");
         writeTestFileWithManyEntries(testFile2, eventFeed1, 5);
@@ -175,14 +185,14 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         writeTestFileWithManyEntries(testFile3, eventFeed1, 5);
 
         final Path testFile4 = proxyDir.resolve("004.zip");
-        writeTestFileWithManyEntries(testFile4, eventFeed1, 10);
+        writeTestFileWithManyEntries(testFile4, eventFeed1, 5);
 
         aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(ExpressionUtil.createFeedExpression(eventFeed1));
         final List<Stream> list = streamStore.find(criteria);
-        Assert.assertEquals(3, list.size());
+        Assert.assertEquals(2, list.size());
 
         StreamSource source = streamStore.openStreamSource(list.get(0).getId());
 

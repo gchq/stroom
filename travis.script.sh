@@ -38,7 +38,11 @@ create_file_hash() {
     local -r hash_file="${file}.sha256"
 
     echo -e "Creating a SHA-256 hash for file ${GREEN}${file}${NC}"
+    # Go to the dir where the file is so the hash file doesn't contain the full
+    # path
+    pushd "$(dirname "${file}")" > /dev/null
     sha256sum "${file}" > "${hash_file}"
+    popd > /dev/null
     echo -e "Created hash file ${GREEN}${hash_file}${NC}"
 }
 
