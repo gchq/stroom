@@ -25,6 +25,8 @@ import stroom.feed.StroomHeaderArguments;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.internalstatistics.MetaDataStatistic;
+import stroom.proxy.repo.FileSet;
+import stroom.proxy.repo.FileSetProcessor;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.streamstore.server.StreamStore;

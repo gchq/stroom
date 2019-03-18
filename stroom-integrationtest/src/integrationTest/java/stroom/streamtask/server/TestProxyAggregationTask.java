@@ -23,6 +23,7 @@ import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.internalstatistics.MetaDataStatistic;
 import stroom.io.SeekableInputStream;
+import stroom.proxy.repo.FileSetProcessor;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;

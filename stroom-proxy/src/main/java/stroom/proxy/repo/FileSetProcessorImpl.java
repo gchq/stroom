@@ -22,6 +22,7 @@ import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.proxy.handler.StreamHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
+import stroom.task.server.TaskContext;
 import stroom.util.io.StreamProgressMonitor;
 
 import java.io.IOException;
@@ -29,7 +30,6 @@ import java.net.InetAddress;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -43,38 +43,32 @@ import java.util.concurrent.atomic.AtomicLong;
  * into its own repo with its own lifecycle and a clearly defined API,
  * then both stroom-proxy and stroom can use it.
  */
-public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyFileProcessorImpl.class);
+public final class FileSetProcessorImpl implements FileSetProcessor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSetProcessorImpl.class);
 
     private static final String PROXY_FORWARD_ID = "ProxyForwardId";
 
     private final AtomicLong proxyForwardId = new AtomicLong(0);
 
-    private final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
     private final StreamHandlerFactory handlerFactory;
-    private final AtomicBoolean finish;
+    private final TaskContext taskContext;
     private final ProxyFileHandler proxyFileHandler = new ProxyFileHandler();
 
     private volatile String hostName = null;
 
-    public ProxyFileProcessorImpl(final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig,
-                                  final StreamHandlerFactory handlerFactory,
-                                  final AtomicBoolean finish) {
-        this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
+    public FileSetProcessorImpl(final StreamHandlerFactory handlerFactory,
+                                final TaskContext taskContext) {
         this.handlerFactory = handlerFactory;
-        this.finish = finish;
+        this.taskContext = taskContext;
     }
 
-    /**
-     * Send a load of files for the same feed
-     */
     @Override
-    public void processFeedFiles(final StroomZipRepository stroomZipRepository, final String feed,
-                                 final List<Path> fileList) {
+    public void process(final StroomZipRepository stroomZipRepository, final FileSet fileSet) {
+        final String feed = fileSet.getFeed();
         final long thisPostId = proxyForwardId.incrementAndGet();
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("processFeedFiles() - proxyForwardId " + thisPostId + " " + feed + " file count "
-                    + fileList.size());
+                    + fileSet.getFiles().size());
         }
 
         final MetaMap metaMap = new MetaMap();
@@ -95,40 +89,14 @@ public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
             }
 
             long sequenceId = 1;
-            long batch = 1;
-
             final StreamProgressMonitor streamProgress = new StreamProgressMonitor("ProxyRepositoryReader " + feed);
             final List<Path> deleteList = new ArrayList<>();
 
-            Long nextBatchBreak = proxyRepositoryReaderConfig.getMaxStreamSize();
-
-            for (final Path file : fileList) {
+            for (final Path file : fileSet.getFiles()) {
                 // Send no more if told to finish
-                if (finish.get()) {
+                if (taskContext.isTerminated()) {
                     LOGGER.info("processFeedFiles() - Quitting early as we have been told to stop");
                     break;
-                }
-                if (sequenceId > proxyRepositoryReaderConfig.getMaxAggregation()
-                        || (streamProgress.getTotalBytes() > nextBatchBreak)) {
-                    batch++;
-                    LOGGER.info("processFeedFiles() - Starting new batch {} as sequence {} > {} or size {} > {}", batch,
-                            sequenceId, proxyRepositoryReaderConfig.getMaxAggregation(), streamProgress.getTotalBytes(), nextBatchBreak);
-
-                    sequenceId = 1;
-                    nextBatchBreak = streamProgress.getTotalBytes() + proxyRepositoryReaderConfig.getMaxStreamSize();
-
-                    // Start a new batch
-                    for (final StreamHandler streamHandler : handlers) {
-                        streamHandler.handleFooter();
-                    }
-                    proxyFileHandler.deleteFiles(stroomZipRepository, deleteList);
-                    deleteList.clear();
-
-                    // Start the post
-                    for (final StreamHandler streamHandler : handlers) {
-                        streamHandler.setMetaMap(metaMap);
-                        streamHandler.handleHeader();
-                    }
                 }
 
                 sequenceId = proxyFileHandler.processFeedFile(handlers, stroomZipRepository, file, streamProgress, sequenceId);
@@ -143,7 +111,7 @@ public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
             proxyFileHandler.deleteFiles(stroomZipRepository, deleteList);
 
         } catch (final IOException ex) {
-            LOGGER.warn("processFeedFiles() - Failed to send to feed " + feed + " ( " + String.valueOf(ex) + ")");
+            LOGGER.warn("processFeedFiles() - Failed to send to feed " + feed + " ( " + ex + ")");
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("processFeedFiles() - Debug trace " + feed, ex);
             }

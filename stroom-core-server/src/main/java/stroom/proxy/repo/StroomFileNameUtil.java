@@ -33,7 +33,7 @@ public final class StroomFileNameUtil {
         return clean(path);
     }
 
-    static String idToString(long id) {
+    public static String idToString(long id) {
         final StringBuilder sb = new StringBuilder();
         sb.append(id);
         // Pad out e.g. 10100 -> 010100
