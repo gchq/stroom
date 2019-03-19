@@ -19,6 +19,7 @@ package stroom.security.impl;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import stroom.security.service.UserAppPermissionService;
 import stroom.util.shared.Clearable;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;

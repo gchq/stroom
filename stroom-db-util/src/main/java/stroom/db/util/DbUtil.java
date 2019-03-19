@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -56,7 +56,7 @@ public class DbUtil {
         try {
             Class.forName(driverClass);
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
+            throw new RuntimeException(LogUtil.message(
                     "Invalid JDBC driver class name {}", driverClass), e);
         }
 
@@ -75,7 +75,7 @@ public class DbUtil {
                         (e.getMessage() != null && e.getMessage().startsWith("Unsupported"))) {
 
                     // These errors are not due to the DB not being up, so throw it
-                    throw new RuntimeException(LambdaLogger.buildMessage(
+                    throw new RuntimeException(LogUtil.message(
                             "Error connecting to {} with username {}", jdbcUrl, username), e);
                 }
                 final Throwable cause = e.getCause();

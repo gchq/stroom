@@ -7,15 +7,16 @@ import java.util.Set;
 
 public interface DocumentPermissionDao {
 
-    Set<String> getPermissionsForDocumentForUser(DocRef document, String userUuid);
+    Set<String> getPermissionsForDocumentForUser(String docRefUuid, String userUuid);
 
-    DocumentPermissionJooq getPermissionsForDocument(DocRef document);
+    DocumentPermissionJooq getPermissionsForDocument(String docRefUuid);
 
-    void addPermission(String userUuid, DocRef document, String permission);
+    void addPermission(String docRefUuid, String userUuid, String permission);
 
-    void removePermission(String userUuid, DocRef document, String permission);
+    void removePermission(String docRefUuid, String userUuid, String permission);
 
-    void clearDocumentPermissions(DocRef document);
+    void clearDocumentPermissionsForUser(String docRefUuid, String userUuid);
 
-    void clearUserPermissions(String userUuid);
+    void clearDocumentPermissions(String docRefUuid);
+
 }

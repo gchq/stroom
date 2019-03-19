@@ -22,6 +22,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
@@ -29,9 +30,8 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.process.client.presenter.ProcessorPresenter;
-import stroom.docref.DocRef;
-import stroom.streamtask.shared.Processor;
+import stroom.processor.client.presenter.ProcessorPresenter;
+import stroom.processor.shared.Processor;
 
 public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     private final Provider<PipelinePresenter> editorProvider;
@@ -51,8 +51,8 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
         super.onBind();
 
         registerHandler(getEventBus().addHandler(CreateProcessorEvent.getType(), event -> {
-            final Processor streamProcessor = event.getStreamProcessorFilter().getStreamProcessor();
-            final String pipelineUuid = streamProcessor.getPipelineUuid();
+            final Processor processor = event.getProcessorFilter().getProcessor();
+            final String pipelineUuid = processor.getPipelineUuid();
             final DocRef docRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid);
             // Open the item in the content pane.
             final PipelinePresenter pipelinePresenter = (PipelinePresenter) open(docRef, true);
@@ -60,7 +60,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
             //            highlight(docRef);
 
             pipelinePresenter.selectTab(PipelinePresenter.PROCESSORS);
-            pipelinePresenter.getContent(PipelinePresenter.PROCESSORS, content -> ((ProcessorPresenter) content).refresh(event.getStreamProcessorFilter()));
+            pipelinePresenter.getContent(PipelinePresenter.PROCESSORS, content -> ((ProcessorPresenter) content).refresh(event.getProcessorFilter()));
         }));
     }
 

@@ -163,7 +163,7 @@ class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTask, Data
         long id = startId;
 
         // Export Source
-        try (final Source source = streamStore.openStreamSource(streamId)) {
+        try (final Source source = streamStore.openSource(streamId)) {
             id++;
 
             final long count = source.count();

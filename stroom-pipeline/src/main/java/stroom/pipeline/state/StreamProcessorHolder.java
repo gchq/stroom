@@ -16,24 +16,24 @@
 
 package stroom.pipeline.state;
 
-import stroom.streamtask.shared.Processor;
-import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorTask;
 import stroom.util.pipeline.scope.PipelineScoped;
 
 @PipelineScoped
 public class StreamProcessorHolder implements Holder {
     private Processor streamProcessor;
-    private ProcessorFilterTask streamTask;
+    private ProcessorTask streamTask;
 
     public Processor getStreamProcessor() {
         return streamProcessor;
     }
 
-    public ProcessorFilterTask getStreamTask() {
+    public ProcessorTask getStreamTask() {
         return streamTask;
     }
 
-    public void setStreamProcessor(final Processor streamProcessor, final ProcessorFilterTask streamTask) {
+    public void setStreamProcessor(final Processor streamProcessor, final ProcessorTask streamTask) {
         this.streamProcessor = streamProcessor;
         this.streamTask = streamTask;
     }

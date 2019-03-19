@@ -133,7 +133,7 @@ public final class SendStreamDataClient {
         connection.addRequestProperty(COMPRESSION, GZIP);
         connection.addRequestProperty(FEED, feed.getName());
 
-        try (final Source streamSource = streamStore.openStreamSource(streamId)) {
+        try (final Source streamSource = streamStore.openSource(streamId)) {
             final Meta meta = streamSource.getMeta();
 
             if (meta.getEffectiveMs() != null) {

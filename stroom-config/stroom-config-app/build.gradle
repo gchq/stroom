@@ -20,6 +20,7 @@ dependencies {
     compile project(':stroom-security:stroom-security-impl-db')
     compile project(':stroom-job:stroom-job-impl')
     compile project(':stroom-job:stroom-job-impl-db')
+    compile project(':stroom-processor:stroom-processor-impl')
     compile project(':stroom-statistics:stroom-statistics-impl')
     compile project(':stroom-statistics:stroom-statistics-impl-hbase')
     compile project(':stroom-statistics:stroom-statistics-impl-sql')
@@ -41,8 +42,8 @@ dependencies {
     testCompile libs.junit_jupiter_api
     
     // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.jaxb_runtime
     testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
     testRuntimeOnly libs.jcl_over_slf4j
     testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.junit_jupiter_engine

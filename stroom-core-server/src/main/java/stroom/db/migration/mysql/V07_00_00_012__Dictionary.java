@@ -101,9 +101,5 @@ public class V07_00_00_012__Dictionary extends BaseJavaMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement("RENAME TABLE DICT TO OLD_DICT")) {
-            preparedStatement.execute();
-        }
     }
 }

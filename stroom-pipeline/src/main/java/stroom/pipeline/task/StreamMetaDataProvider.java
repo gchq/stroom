@@ -155,7 +155,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 //            }
 
             if (meta != null && meta.getPipelineUuid() != null) {
-//                final StreamProcessor streamProcessor = streamProcessorService.load(stream.getStreamProcessor(), FETCH_SET);
+//                final StreamProcessor streamProcessor = streamProcessorService.load(stream.getProcessor(), FETCH_SET);
 //                if (streamProcessor != null && streamProcessor.getPipelineUuid() != null) {
                 final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, meta.getPipelineUuid()));
                 if (pipelineDoc != null) {

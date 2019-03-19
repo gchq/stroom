@@ -91,7 +91,7 @@ public abstract class AbstractBenchmark {
                 .typeName(streamTypeName)
                 .build();
 
-        try (final Target dataTarget = streamStore.openStreamTarget(metaProperties)) {
+        try (final Target dataTarget = streamStore.openTarget(metaProperties)) {
             TargetUtil.write(dataTarget, data);
             return dataTarget.getMeta();
         } catch (final IOException e) {
@@ -101,7 +101,7 @@ public abstract class AbstractBenchmark {
 
     protected String readData(final long streamId) throws IOException {
         String data = null;
-        try (final Source source = streamStore.openStreamSource(streamId)) {
+        try (final Source source = streamStore.openSource(streamId)) {
             data = SourceUtil.readString(source);
         }
         return data;
@@ -145,7 +145,7 @@ public abstract class AbstractBenchmark {
         final Meta targetMeta = list.getFirst();
 
         // Get back translated result.
-        try (final Source source = streamStore.openStreamSource(targetMeta.getId())) {
+        try (final Source source = streamStore.openSource(targetMeta.getId())) {
             String xml = SourceUtil.readString(source);
 
             // Pretty print the xml.

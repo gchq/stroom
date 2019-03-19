@@ -2,14 +2,14 @@ package stroom.docstore.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.docstore.api.Persistence;
 import stroom.docstore.api.RWLockFactory;
-import stroom.docref.DocRef;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 @Singleton
-public class DBPersistence implements Persistence {
+public class DBPersistence implements Persistence, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBPersistence.class);
 
     private static final RWLockFactory LOCK_FACTORY = new NoLockFactory();
@@ -44,7 +44,7 @@ public class DBPersistence implements Persistence {
     }
 
     @Override
-    public Map<String, byte[]> read(final DocRef docRef) throws IOException {
+    public Map<String, byte[]> read(final DocRef docRef) {
         final Map<String, byte[]> data = new HashMap<>();
         try (final Connection connection = dataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT ext, data FROM doc WHERE type = ? AND uuid = ?")) {
@@ -70,7 +70,7 @@ public class DBPersistence implements Persistence {
     }
 
     @Override
-    public void write(final DocRef docRef, final boolean update, final Map<String, byte[]> data) throws IOException {
+    public void write(final DocRef docRef, final boolean update, final Map<String, byte[]> data) {
         try (final Connection connection = dataSource.getConnection()) {
             // Get the auto commit status.
             final boolean autoCommit = connection.getAutoCommit();
@@ -226,6 +226,21 @@ public class DBPersistence implements Persistence {
             preparedStatement.setLong(6, id);
 
             preparedStatement.execute();
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void clear() {
+        try (final Connection connection = dataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement("TRUNCATE TABLE doc")) {
+                preparedStatement.execute();
+            } catch (final SQLException e) {
+                LOGGER.debug(e.getMessage(), e);
+                throw new RuntimeException(e.getMessage(), e);
+            }
         } catch (final SQLException e) {
             LOGGER.debug(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);

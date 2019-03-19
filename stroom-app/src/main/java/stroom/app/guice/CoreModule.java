@@ -4,6 +4,7 @@ import com.google.inject.AbstractModule;
 import stroom.data.store.impl.fs.FsDataStoreModule;
 import stroom.data.store.impl.fs.FsDataStoreTaskHandlerModule;
 import stroom.meta.impl.db.StreamAttributeMapResourceModule;
+import stroom.processor.impl.ProcessorModule;
 import stroom.statistics.impl.InternalStatisticsModule;
 import stroom.statistics.impl.sql.SQLStatisticsModule;
 import stroom.storedquery.impl.db.StoredQueryDbModule;
@@ -86,7 +87,9 @@ public class CoreModule extends AbstractModule {
         install(new stroom.data.store.impl.DataStoreHandlerModule());
         install(new FsDataStoreModule());
         install(new FsDataStoreTaskHandlerModule());
-        install(new stroom.streamtask.StreamTaskModule());
+        install(new stroom.processor.impl.StreamTaskLifecycleModule());
+        install(new ProcessorModule());
+        install(new stroom.processor.impl.db.ProcessorDbModule());
         install(new stroom.task.impl.TaskModule());
         install(new stroom.cluster.task.impl.ClusterTaskModule());
         install(new stroom.ui.config.server.UiConfigModule());

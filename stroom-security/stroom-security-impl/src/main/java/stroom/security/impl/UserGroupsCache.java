@@ -22,6 +22,7 @@ import com.google.common.cache.LoadingCache;
 import stroom.docref.DocRef;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventBus;
+import stroom.security.service.UserService;
 import stroom.util.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.security.shared.UserRef;
@@ -40,7 +41,7 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final Provider<EntityEventBus> eventBusProvider;
-    private final LoadingCache<UserRef, List> cache;
+    private final LoadingCache<String, List> cache;
 
     @Inject
     @SuppressWarnings("unchecked")
@@ -48,7 +49,7 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
                     final UserService userService,
                     final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
-        final CacheLoader<UserRef, List> cacheLoader = CacheLoader.from(userService::findGroupsForUser);
+        final CacheLoader<String, List> cacheLoader = CacheLoader.from(userService::findGroupsForUser);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
                 .expireAfterAccess(30, TimeUnit.MINUTES);
@@ -57,8 +58,8 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
     }
 
     @SuppressWarnings("unchecked")
-    List<UserRef> get(final UserRef key) {
-        return cache.getUnchecked(key);
+    List<UserRef> get(final String userUuid) {
+        return cache.getUnchecked(userUuid);
     }
 
     void remove(final UserRef userRef) {

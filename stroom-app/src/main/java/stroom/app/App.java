@@ -112,7 +112,7 @@ public class App extends Application<Config> {
                 startApp(configuration, environment);
 //                break;
 //            default:
-//                throw new RuntimeException(LambdaLogger.buildMessage(
+//                throw new RuntimeException(LogUtil.message(
 //                        "Unexpected mode {}", configuration.getMode()));
 //        }
     }

@@ -19,14 +19,14 @@ package stroom.pipeline.writer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaFieldNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.WrappedSegmentOutputStream;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaProperties;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
@@ -37,13 +37,13 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
-import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.pipeline.task.SupersededOutputHelper;
-import stroom.streamtask.shared.Processor;
+import stroom.processor.shared.Processor;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -127,7 +127,7 @@ public class StreamAppender extends AbstractAppender {
                 .processorTaskId(streamTaskId)
                 .build();
 
-        streamTarget = streamStore.openStreamTarget(metaProperties);
+        streamTarget = streamStore.openTarget(metaProperties);
 
         wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.next().get()) {
             @Override
@@ -198,7 +198,7 @@ public class StreamAppender extends AbstractAppender {
             // Close the stream target.
             try {
                 if (supersededOutputHelper.isSuperseded()) {
-                    streamStore.deleteStreamTarget(streamTarget);
+                    streamStore.deleteTarget(streamTarget);
                 } else {
                     streamTarget.close();
                 }

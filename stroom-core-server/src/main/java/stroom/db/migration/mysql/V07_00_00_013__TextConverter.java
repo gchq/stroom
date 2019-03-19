@@ -86,10 +86,5 @@ public class V07_00_00_013__TextConverter extends BaseJavaMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "RENAME TABLE TXT_CONV TO OLD_TXT_CONV")) {
-            preparedStatement.execute();
-        }
     }
 }

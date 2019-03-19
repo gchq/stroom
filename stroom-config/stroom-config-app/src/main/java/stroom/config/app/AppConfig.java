@@ -5,30 +5,30 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.benchmark.BenchmarkClusterConfig;
 import stroom.cluster.api.ClusterConfig;
-import stroom.data.retention.impl.DataRetentionConfig;
 import stroom.datasource.DataSourceUrlConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
 import stroom.index.IndexConfig;
 import stroom.index.impl.db.IndexDbConfig;
+import stroom.index.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.persist.CoreConfig;
 import stroom.pipeline.PipelineConfig;
+import stroom.processor.impl.ProcessorConfig;
+import stroom.receive.ProxyAggregationConfig;
 import stroom.receive.ReceiveDataConfig;
 import stroom.search.SearchConfig;
 import stroom.security.impl.SecurityConfig;
 import stroom.security.impl.db.SecurityDbConfig;
 import stroom.servicediscovery.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.db.StoredQueryHistoryConfig;
-import stroom.streamtask.ProcessConfig;
-import stroom.streamtask.ProxyAggregationConfig;
+import stroom.ui.config.shared.ProcessConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.shared.IsConfig;
-import stroom.index.selection.VolumeConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -41,7 +41,6 @@ public class AppConfig implements IsConfig {
     private ContentPackImportConfig contentPackImportConfig;
     private CoreConfig coreConfig;
     private DataConfig dataConfig;
-    private ReceiveDataConfig dataFeedConfig;
     private DataSourceUrlConfig dataSourceUrlConfig;
     private ExplorerConfig explorerConfig;
     private ExportConfig exportConfig;
@@ -52,10 +51,10 @@ public class AppConfig implements IsConfig {
     private NodeConfig nodeConfig;
     private PathConfig pathConfig;
     private PipelineConfig pipelineConfig;
-    private DataRetentionConfig policyConfig;
-    private ProcessConfig processConfig;
+    private ProcessorConfig processorConfig;
     private PropertyServiceConfig propertyServiceConfig;
     private ProxyAggregationConfig proxyAggregationConfig;
+    private ReceiveDataConfig receiveDataConfig;
     private StoredQueryHistoryConfig storedQueryHistoryConfig;
     private SearchConfig searchConfig;
     private SecurityConfig securityConfig;
@@ -72,7 +71,6 @@ public class AppConfig implements IsConfig {
         this.contentPackImportConfig = new ContentPackImportConfig();
         this.coreConfig = new CoreConfig();
         this.dataConfig = new DataConfig();
-        this.dataFeedConfig = new ReceiveDataConfig();
         this.dataSourceUrlConfig = new DataSourceUrlConfig();
         this.explorerConfig = new ExplorerConfig();
         this.exportConfig = new ExportConfig();
@@ -83,10 +81,10 @@ public class AppConfig implements IsConfig {
         this.pipelineConfig = new PipelineConfig();
         this.nodeConfig = new NodeConfig();
         this.pathConfig = new PathConfig();
-        this.policyConfig = new DataRetentionConfig();
-        this.processConfig = new ProcessConfig();
+        this.processorConfig = new ProcessorConfig();
         this.propertyServiceConfig = new PropertyServiceConfig();
         this.proxyAggregationConfig = new ProxyAggregationConfig();
+        this.receiveDataConfig = new ReceiveDataConfig();
         this.storedQueryHistoryConfig = new StoredQueryHistoryConfig();
         this.searchConfig = new SearchConfig();
         this.securityConfig = new SecurityConfig();
@@ -104,7 +102,6 @@ public class AppConfig implements IsConfig {
               final ContentPackImportConfig contentPackImportConfig,
               final CoreConfig coreConfig,
               final DataConfig dataConfig,
-              final ReceiveDataConfig dataFeedConfig,
               final DataSourceUrlConfig dataSourceUrlConfig,
               final ExplorerConfig explorerConfig,
               final ExportConfig exportConfig,
@@ -114,11 +111,11 @@ public class AppConfig implements IsConfig {
               final LifecycleConfig lifecycleConfig,
               final PipelineConfig pipelineConfig,
               final NodeConfig nodeConfig,
+              final ProcessorConfig processorConfig,
               final PathConfig pathConfig,
-              final DataRetentionConfig policyConfig,
-              final ProcessConfig processConfig,
               final PropertyServiceConfig propertyServiceConfig,
               final ProxyAggregationConfig proxyAggregationConfig,
+              final ReceiveDataConfig receiveDataConfig,
               final StoredQueryHistoryConfig storedQueryHistoryConfig,
               final SearchConfig searchConfig,
               final SecurityConfig securityConfig,
@@ -133,7 +130,6 @@ public class AppConfig implements IsConfig {
         this.contentPackImportConfig = contentPackImportConfig;
         this.coreConfig = coreConfig;
         this.dataConfig = dataConfig;
-        this.dataFeedConfig = dataFeedConfig;
         this.dataSourceUrlConfig = dataSourceUrlConfig;
         this.explorerConfig = explorerConfig;
         this.exportConfig = exportConfig;
@@ -144,10 +140,10 @@ public class AppConfig implements IsConfig {
         this.pipelineConfig = pipelineConfig;
         this.nodeConfig = nodeConfig;
         this.pathConfig = pathConfig;
-        this.policyConfig = policyConfig;
-        this.processConfig = processConfig;
+        this.processorConfig = processorConfig;
         this.propertyServiceConfig = propertyServiceConfig;
         this.proxyAggregationConfig = proxyAggregationConfig;
+        this.receiveDataConfig = receiveDataConfig;
         this.storedQueryHistoryConfig = storedQueryHistoryConfig;
         this.searchConfig = searchConfig;
         this.securityConfig = securityConfig;
@@ -212,15 +208,6 @@ public class AppConfig implements IsConfig {
 
     public void setDataConfig(final DataConfig dataConfig) {
         this.dataConfig = dataConfig;
-    }
-
-    @JsonProperty("feed")
-    public ReceiveDataConfig getDataFeedConfig() {
-        return dataFeedConfig;
-    }
-
-    public void setDataFeedConfig(final ReceiveDataConfig dataFeedConfig) {
-        this.dataFeedConfig = dataFeedConfig;
     }
 
     @JsonProperty("dataSourceUrl")
@@ -313,22 +300,13 @@ public class AppConfig implements IsConfig {
         this.pipelineConfig = pipelineConfig;
     }
 
-    @JsonProperty("policy")
-    public DataRetentionConfig getPolicyConfig() {
-        return policyConfig;
+    @JsonProperty("processor")
+    public ProcessorConfig getProcessorConfig() {
+        return processorConfig;
     }
 
-    public void setPolicyConfig(final DataRetentionConfig policyConfig) {
-        this.policyConfig = policyConfig;
-    }
-
-    @JsonProperty("process")
-    public ProcessConfig getProcessConfig() {
-        return processConfig;
-    }
-
-    public void setProcessConfig(final ProcessConfig processConfig) {
-        this.processConfig = processConfig;
+    public void setProcessorConfig(final ProcessorConfig processorConfig) {
+        this.processorConfig = processorConfig;
     }
 
     @JsonProperty("properties")
@@ -357,6 +335,15 @@ public class AppConfig implements IsConfig {
 
     public void setStoredQueryHistoryConfig(final StoredQueryHistoryConfig storedQueryHistoryConfig) {
         this.storedQueryHistoryConfig = storedQueryHistoryConfig;
+    }
+
+    @JsonProperty("feed")
+    public ReceiveDataConfig getReceiveDataConfig() {
+        return receiveDataConfig;
+    }
+
+    public void setReceiveDataConfig(final ReceiveDataConfig receiveDataConfig) {
+        this.receiveDataConfig = receiveDataConfig;
     }
 
     @JsonProperty("search")

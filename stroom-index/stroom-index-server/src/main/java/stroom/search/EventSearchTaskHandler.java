@@ -27,7 +27,7 @@ import stroom.query.common.v2.Sizes;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -119,7 +119,7 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
                 //Don't want to reset interrupt status as this thread will go back into
                 //the executor's pool. Throwing an exception will terminate the task
                 throw new RuntimeException(
-                        LambdaLogger.buildMessage("Thread {} interrupted executing task {}",
+                        LogUtil.message("Thread {} interrupted executing task {}",
                                 Thread.currentThread().getName(), task));
             } finally {
                 searchResultCollector.destroy();

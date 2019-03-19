@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.impl.exception.AuthenticationException;
+import stroom.security.service.DocumentPermissionService;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.PermissionNames;
@@ -190,7 +191,7 @@ class SecurityContextImpl implements SecurityContext {
 
         // See if the user belongs to a group that has permission.
         if (!result) {
-            final List<UserRef> userGroups = userGroupsCache.get(userRef);
+            final List<UserRef> userGroups = userGroupsCache.get(userRef.getUuid());
             result = hasUserGroupsAppPermission(userGroups, permission);
         }
 
@@ -251,7 +252,7 @@ class SecurityContextImpl implements SecurityContext {
 
         // See if the user belongs to a group that has permission.
         if (!result) {
-            final List<UserRef> userGroups = userGroupsCache.get(userRef);
+            final List<UserRef> userGroups = userGroupsCache.get(userRef.getUuid());
             result = hasUserGroupsDocumentPermission(userGroups, docRef, permission);
         }
 
@@ -270,10 +271,12 @@ class SecurityContextImpl implements SecurityContext {
         return false;
     }
 
-    private boolean hasUserDocumentPermission(final UserRef userRef, final DocRef docRef, final String permission) {
-        final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
+    private boolean hasUserDocumentPermission(final UserRef userRef,
+                                              final DocRef docRef,
+                                              final String permission) {
+        final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef.getUuid());
         if (documentPermissions != null) {
-            final Set<String> permissions = documentPermissions.getPermissionsForUser(userRef);
+            final Set<String> permissions = documentPermissions.getPermissionsForUser(userRef.getUuid());
             if (permissions != null) {
                 String perm = permission;
                 while (perm != null) {
@@ -298,10 +301,10 @@ class SecurityContextImpl implements SecurityContext {
         if (userRef != null) {
             if (hasDocumentPermission(documentType, documentUuid, DocumentPermissionNames.OWNER)) {
                 final DocRef docRef = new DocRef(documentType, documentUuid);
-                documentPermissionService.clearDocumentPermissions(docRef);
+                documentPermissionService.clearDocumentPermissions(documentUuid);
 
                 // Make sure cache updates for the document.
-                documentPermissionsCache.remove(docRef);
+                documentPermissionsCache.remove(docRef.getUuid());
             }
         }
     }
@@ -319,7 +322,9 @@ class SecurityContextImpl implements SecurityContext {
                 if (owner) {
                     // Make the current user the owner of the new document.
                     try {
-                        documentPermissionService.addPermission(userRef, docRef, DocumentPermissionNames.OWNER);
+                        documentPermissionService.addPermission(docRef.getUuid(),
+                                userRef.getUuid(),
+                                DocumentPermissionNames.OWNER);
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
                     }
@@ -330,7 +335,7 @@ class SecurityContextImpl implements SecurityContext {
                 copyPermissions(sourceType, sourceUuid, documentType, documentUuid);
 
                 // Make sure cache updates for the document.
-                documentPermissionsCache.remove(docRef);
+                documentPermissionsCache.remove(docRef.getUuid());
             }
         }
     }
@@ -339,21 +344,23 @@ class SecurityContextImpl implements SecurityContext {
         if (sourceType != null && sourceUuid != null) {
             final DocRef sourceDocRef = new DocRef(sourceType, sourceUuid);
 
-            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(sourceDocRef);
+            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(sourceDocRef.getUuid());
             if (documentPermissions != null) {
-                final Map<UserRef, Set<String>> userPermissions = documentPermissions.getUserPermissions();
+                final Map<String, Set<String>> userPermissions = documentPermissions.getUserPermissions();
                 if (userPermissions != null && userPermissions.size() > 0) {
                     final DocRef destDocRef = new DocRef(destType, destUuid);
                     final String[] allowedPermissions = documentTypePermissions.getPermissions(destDocRef.getType());
 
-                    for (final Map.Entry<UserRef, Set<String>> entry : userPermissions.entrySet()) {
-                        final UserRef userRef = entry.getKey();
+                    for (final Map.Entry<String, Set<String>> entry : userPermissions.entrySet()) {
+                        final String userUuid = entry.getKey();
                         final Set<String> permissions = entry.getValue();
 
                         for (final String allowedPermission : allowedPermissions) {
                             if (permissions.contains(allowedPermission)) {
                                 try {
-                                    documentPermissionService.addPermission(userRef, destDocRef, allowedPermission);
+                                    documentPermissionService.addPermission(destDocRef.getUuid(),
+                                            userUuid,
+                                            allowedPermission);
                                 } catch (final RuntimeException e) {
                                     LOGGER.error(e.getMessage(), e);
                                 }

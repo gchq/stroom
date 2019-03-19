@@ -28,10 +28,10 @@ dependencies {
     
     compile libs.stroomDocRef
 
-    implementation(libs.dropwizard_assets) {
+    compile(libs.dropwizard_assets) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
-    implementation(libs.dropwizard_core) {
+    compile(libs.dropwizard_core) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
     compile libs.dropwizard_jersey

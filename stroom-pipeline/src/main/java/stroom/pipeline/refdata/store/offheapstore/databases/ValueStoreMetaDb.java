@@ -25,18 +25,20 @@ import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.EntryConsumer;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
+import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
+import stroom.pipeline.refdata.store.offheapstore.lmdb.EntryConsumer;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreMetaSerde;
+import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.pipeline.refdata.util.PooledByteBuffer;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -112,7 +114,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
             boolean didPutSucceed = put(txn, keyBuffer, valueBuffer, false);
 
             if (!didPutSucceed) {
-                throw new RuntimeException(LambdaLogger.buildMessage(
+                throw new RuntimeException(LogUtil.message(
                         "Put failed for key [{}], value [{}], may be an entry already",
                         ByteBufferUtils.byteBufferInfo(keyBuffer),
                         refDataValue));
@@ -133,7 +135,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
                                       final int referenceCountDelta) {
 
         final ByteBuffer currValueBuffer = getAsBytes(writeTxn, keyBuffer)
-                .orElseThrow(() -> new RuntimeException(LambdaLogger.buildMessage(
+                .orElseThrow(() -> new RuntimeException(LogUtil.message(
                         "keyBuffer {} not found in DB",
                         ByteBufferUtils.byteBufferInfo(keyBuffer))));
 
@@ -142,7 +144,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
             valueSerde.cloneAndUpdateRefCount(currValueBuffer, newValueBuffer, referenceCountDelta);
             boolean didPutSucceed = put(writeTxn, keyBuffer, newValueBuffer, true);
             if (!didPutSucceed) {
-                throw new RuntimeException(LambdaLogger.buildMessage("Put failed for keyBuffer {}",
+                throw new RuntimeException(LogUtil.message("Put failed for keyBuffer {}",
                         ByteBufferUtils.byteBufferInfo(keyBuffer)));
             }
         }
@@ -157,14 +159,14 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
     public boolean deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn,
                                             final ByteBuffer keyBuffer,
                                             final EntryConsumer onDeleteAction) {
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("deReferenceValue({}, {})",
+        LAMBDA_LOGGER.trace(LambdaLogUtil.message("deReferenceValue({}, {})",
                 writeTxn, ByteBufferUtils.byteBufferInfo(keyBuffer)));
 
         try (Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
 
             boolean isFound = cursor.get(keyBuffer, GetOp.MDB_SET_KEY);
             if (!isFound) {
-                throw new RuntimeException(LambdaLogger.buildMessage(
+                throw new RuntimeException(LogUtil.message(
                         "Expecting to find entry for {}", ByteBufferUtils.byteBufferInfo(keyBuffer)));
             }
             final ByteBuffer valueBuffer = cursor.val();
@@ -178,7 +180,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
 
             if (currRefCount <= 1) {
                 // we had the last ref to this value so we can delete it
-                LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
+                LAMBDA_LOGGER.trace(LambdaLogUtil.message(
                         "Ref count is zero, deleting entry for key {}",
                         ByteBufferUtils.byteBufferInfo(keyBuffer)));
                 cursor.delete();
@@ -195,7 +197,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
                             valueBuffer,
                             newValueBuf,
                             -1);
-                    LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
+                    LAMBDA_LOGGER.trace(LambdaLogUtil.message(
                             "Updating entry with new ref count {} for key {}",
                             newRefCount,
                             ByteBufferUtils.byteBufferInfo(keyBuffer)));

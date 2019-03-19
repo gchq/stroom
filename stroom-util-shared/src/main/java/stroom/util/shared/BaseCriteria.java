@@ -16,8 +16,8 @@
 
 package stroom.util.shared;
 
-import stroom.util.shared.Sort.Direction;
 import stroom.docref.SharedObject;
+import stroom.util.shared.Sort.Direction;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -31,7 +31,6 @@ public abstract class BaseCriteria implements SharedObject {
     public static final String FIELD_ID = "Id";
     private static final long serialVersionUID = 779306892977183446L;
     private PageRequest pageRequest = null;
-    private Set<String> fetchSet = new HashSet<>();
     private List<Sort> sortList;
 
     public PageRequest getPageRequest() {
@@ -68,17 +67,7 @@ public abstract class BaseCriteria implements SharedObject {
             } else {
                 this.sortList = new ArrayList<>(other.sortList);
             }
-            this.fetchSet.clear();
-            this.fetchSet.addAll(other.fetchSet);
         }
-    }
-
-    public Set<String> getFetchSet() {
-        return fetchSet;
-    }
-
-    public void setFetchSet(Set<String> fetchSet) {
-        this.fetchSet = fetchSet;
     }
 
     public void setSort(final String field) {
@@ -127,7 +116,6 @@ public abstract class BaseCriteria implements SharedObject {
         final BaseCriteria that = (BaseCriteria) o;
 
         if (pageRequest != null ? !pageRequest.equals(that.pageRequest) : that.pageRequest != null) return false;
-        if (fetchSet != null ? !fetchSet.equals(that.fetchSet) : that.fetchSet != null) return false;
         return sortList != null ? sortList.equals(that.sortList) : that.sortList == null;
     }
 
@@ -160,7 +148,6 @@ public abstract class BaseCriteria implements SharedObject {
     @Override
     public int hashCode() {
         int result = pageRequest != null ? pageRequest.hashCode() : 0;
-        result = 31 * result + (fetchSet != null ? fetchSet.hashCode() : 0);
         result = 31 * result + (sortList != null ? sortList.hashCode() : 0);
         return result;
     }

@@ -27,7 +27,7 @@ import org.jooq.impl.CatalogImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class DefaultCatalog extends CatalogImpl {
 
-    private static final long serialVersionUID = 448856354;
+    private static final long serialVersionUID = -1223919724;
 
     /**
      * The reference instance of <code></code>
@@ -37,7 +37,7 @@ public class DefaultCatalog extends CatalogImpl {
     /**
      * The schema <code>stroom</code>.
      */
-    public final Stroom STROOM = Stroom.STROOM;
+    public final Stroom STROOM = stroom.activity.impl.db.jooq.Stroom.STROOM;
 
     /**
      * No further instances allowed

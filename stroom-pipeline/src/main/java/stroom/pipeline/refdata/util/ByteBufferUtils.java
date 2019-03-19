@@ -20,8 +20,10 @@ package stroom.pipeline.refdata.util;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import javax.xml.bind.DatatypeConverter;
 import java.nio.ByteBuffer;
@@ -73,7 +75,7 @@ public class ByteBufferUtils {
         }
 
         final String value = byteBufferToHexAll(byteBuffer);
-        return LambdaLogger.buildMessage("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}], asStr [{}]",
+        return LogUtil.message("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}], asStr [{}]",
                 byteBuffer.capacity(),
                 byteBuffer.position(),
                 byteBuffer.limit(),
@@ -91,7 +93,7 @@ public class ByteBufferUtils {
                 left, left.position(), left.remaining(),
                 right, right.position(), right.remaining());
 
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("compare({}, {}) returned {}",
+        LAMBDA_LOGGER.trace(LambdaLogUtil.message("compare({}, {}) returned {}",
                 ByteBufferUtils.byteBufferInfo(left),
                 ByteBufferUtils.byteBufferInfo(right),
                 cmpResult));
@@ -160,7 +162,7 @@ public class ByteBufferUtils {
             }
         }
         boolean result2 = result;
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("containsPrefix({} {}) returns {}",
+        LAMBDA_LOGGER.trace(LambdaLogUtil.message("containsPrefix({} {}) returns {}",
                 ByteBufferUtils.byteBufferInfo(buffer), ByteBufferUtils.byteBufferInfo(prefixBuffer), result2));
         return result;
     }
@@ -202,7 +204,7 @@ public class ByteBufferUtils {
                     : right.get(iRight) - left.get(iLeft);
         }
 //        final int cmp2 = cmp;
-//        LAMBDA_LOGGER.info(() -> LambdaLogger.buildMessage("Comparing {}, {}, {}, {} - {}",
+//        LAMBDA_LOGGER.info(LambdaLogUtil.message("Comparing {}, {}, {}, {} - {}",
 //                byteBufferInfo(left), leftPos,
 //                byteBufferInfo(right), rightPos,
 //                cmp2));

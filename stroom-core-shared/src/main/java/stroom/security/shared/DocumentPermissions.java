@@ -16,7 +16,6 @@
 
 package stroom.security.shared;
 
-import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
 
 import java.util.Collections;
@@ -26,39 +25,33 @@ import java.util.Set;
 public class DocumentPermissions implements SharedObject {
     private static final long serialVersionUID = 5230917643321418827L;
 
-    private DocRef document;
-    private String[] allPermissions;
-    private Map<UserRef, Set<String>> userPermissions;
+    private String docRefUuid;
+    private Map<String, Set<String>> userPermissions;
 
     public DocumentPermissions() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public DocumentPermissions(final DocRef document, final String[] allPermissions,
-                               final Map<UserRef, Set<String>> userPermissions) {
-        this.document = document;
-        this.allPermissions = allPermissions;
+    public DocumentPermissions(final String docRefUuid,
+                               final Map<String, Set<String>> userPermissions) {
+        this.docRefUuid = docRefUuid;
         this.userPermissions = userPermissions;
     }
 
-    public DocRef getDocument() {
-        return document;
+    public String getDocRefUuid() {
+        return docRefUuid;
     }
 
-    public void setDocument(final DocRef document) {
-        this.document = document;
+    public void setDocRefUuid(String docRefUuid) {
+        this.docRefUuid = docRefUuid;
     }
 
-    public String[] getAllPermissions() {
-        return allPermissions;
-    }
-
-    public Map<UserRef, Set<String>> getUserPermissions() {
+    public Map<String, Set<String>> getUserPermissions() {
         return userPermissions;
     }
 
-    public Set<String> getPermissionsForUser(final UserRef userRef) {
-        final Set<String> permissions = userPermissions.get(userRef);
+    public Set<String> getPermissionsForUser(final String userUuid) {
+        final Set<String> permissions = userPermissions.get(userUuid);
         if (permissions != null) {
             return permissions;
         }

@@ -10,7 +10,6 @@ import stroom.security.SecurityContext;
 import javax.inject.Inject;
 
 public class StoreFactoryImpl implements StoreFactory {
-
     private final SecurityContext securityContext;
     private final Persistence persistence;
 

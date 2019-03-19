@@ -41,7 +41,7 @@ import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Config extends TableImpl<ConfigRecord> {
 
-    private static final long serialVersionUID = -1675324527;
+    private static final long serialVersionUID = 1499835072;
 
     /**
      * The reference instance of <code>stroom.config</code>

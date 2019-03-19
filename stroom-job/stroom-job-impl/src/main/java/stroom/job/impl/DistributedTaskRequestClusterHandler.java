@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import stroom.job.api.DistributedTask;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.shared.JobNode;
-import stroom.streamtask.TaskStatusTraceLog;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskHandler;
 

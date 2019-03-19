@@ -163,7 +163,7 @@ public class DataFetcher {
             Meta meta = null;
 
             // Get the stream source.
-            try (final Source source = streamStore.openStreamSource(streamId, true)) {
+            try (final Source source = streamStore.openSource(streamId, true)) {
                 meta = source.getMeta();
 
                 // If we have no stream then let the client know it has been

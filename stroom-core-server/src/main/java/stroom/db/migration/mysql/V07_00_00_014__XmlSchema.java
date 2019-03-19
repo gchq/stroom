@@ -85,10 +85,5 @@ public class V07_00_00_014__XmlSchema extends BaseJavaMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "RENAME TABLE XML_SCHEMA TO OLD_XML_SCHEMA")) {
-            preparedStatement.execute();
-        }
     }
 }

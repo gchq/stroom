@@ -19,12 +19,12 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.Range;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
+import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Range;
 
 import java.nio.ByteBuffer;
 

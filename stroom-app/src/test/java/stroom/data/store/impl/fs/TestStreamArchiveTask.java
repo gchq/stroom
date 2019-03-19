@@ -75,7 +75,7 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     @Inject
     private NodeService nodeService;
     //    @Inject
-//    private StreamTaskCreatorImpl streamTaskCreator;
+//    private ProcessorTaskManagerImpl processorTaskManager;
     @Inject
     private DataRetentionExecutor streamRetentionExecutor;
     @Inject
@@ -120,13 +120,13 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
                 .build();
 
         Meta oldFileMeta;
-        try (final Target oldFileTarget = streamStore.openStreamTarget(oldFile)) {
+        try (final Target oldFileTarget = streamStore.openTarget(oldFile)) {
             oldFileMeta = oldFileTarget.getMeta();
             TargetUtil.write(oldFileTarget, "MyTest");
         }
 
         Meta newFileMeta;
-        try (final Target newFileTarget = streamStore.openStreamTarget(newFile)) {
+        try (final Target newFileTarget = streamStore.openTarget(newFile)) {
             newFileMeta = newFileTarget.getMeta();
             TargetUtil.write(newFileTarget, "MyTest");
         }
@@ -137,7 +137,7 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
 //        // deleted if they exist, however currently streams are only deleted if
 //        // their associated task exists which would prevent us from deleting
 //        // streams that have no task associated with them.
-//        streamTaskCreator.createTasks(new SimpleTaskContext());
+//        processorTaskManager.createTasks(new SimpleTaskContext());
 
         List<DataVolume> oldVolumeList = streamVolumeService
                 .find(FindDataVolumeCriteria.create(oldFileMeta));

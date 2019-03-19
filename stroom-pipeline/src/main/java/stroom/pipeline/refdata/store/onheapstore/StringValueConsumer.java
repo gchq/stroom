@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 public class StringValueConsumer implements RefDataValueConsumer {
 
@@ -46,7 +46,7 @@ public class StringValueConsumer implements RefDataValueConsumer {
         try {
             receiver.characters(value, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
         } catch (XPathException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error passing string {} to receiver", value), e);
+            throw new RuntimeException(LogUtil.message("Error passing string {} to receiver", value), e);
         }
     }
 

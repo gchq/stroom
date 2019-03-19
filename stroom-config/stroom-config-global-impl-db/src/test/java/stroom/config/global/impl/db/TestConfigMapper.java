@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.api.ConfigProperty;
 import stroom.docref.DocRef;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsConfig;
 
 import java.io.IOException;
@@ -51,7 +51,7 @@ class TestConfigMapper {
         String txt = configProperties.stream()
                 .sorted(Comparator.comparing(ConfigProperty::getName))
                 .map(configProperty ->
-                        LambdaLogger.buildMessage("{} - [{}] - [{}] - [{}] - [{}]",
+                        LogUtil.message("{} - [{}] - [{}] - [{}] - [{}]",
                                 configProperty.getName(),
                                 configProperty.getValue(),
                                 configProperty.getDefaultValue(),

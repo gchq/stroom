@@ -20,7 +20,7 @@ package stroom.pipeline.refdata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import java.util.Objects;
 
@@ -60,7 +60,7 @@ public class LookupIdentifier {
             this.primaryMapName = map.substring(0, splitPos);
             this.secondaryMapName = map.substring(splitPos + NEST_SEPARATOR.length());
             if (primaryMapName.isEmpty() || secondaryMapName.isEmpty()) {
-                throw new RuntimeException(LambdaLogger.buildMessage("map [{}] is badly formatted, unable to split", map));
+                throw new RuntimeException(LogUtil.message("map [{}] is badly formatted, unable to split", map));
             }
         } else {
             this.primaryMapName = map;
@@ -109,7 +109,7 @@ public class LookupIdentifier {
 
     public LookupIdentifier getNestedLookupIdentifier(final String newKey) {
         if (!isMapNested()) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Identifier {} is not nested", this));
+            throw new RuntimeException(LogUtil.message("Identifier {} is not nested", this));
         }
         return new LookupIdentifier(secondaryMapName, newKey, eventTime);
     }

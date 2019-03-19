@@ -81,13 +81,7 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
 
     @Override
     public boolean isConstrained() {
-        if (string == null) {
-            return false;
-        }
-        if (matchStyle == null) {
-            return true;
-        }
-        return string.length() != 0;
+        return (string != null && (matchStyle == null || string.length() != 0)) || Boolean.TRUE.equals(matchNull);
     }
 
     public boolean isMatch(String test) {
