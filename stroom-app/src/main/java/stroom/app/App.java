@@ -23,6 +23,7 @@ import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
+import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -69,6 +70,8 @@ public class App extends Application<Config> {
     private SessionListeners sessionListeners;
     @Inject
     private RestResources restResources;
+    @Inject
+    private LifecycleService lifecycleService;
 
 //
 //    private static String configPath;
@@ -253,7 +256,7 @@ public class App extends Application<Config> {
         environment.jersey().register(PermissionExceptionMapper.class);
 
         // Listen to the lifecycle of the Dropwizard app.
-        GuiceUtil.manage(environment.lifecycle(), injector, LifecycleService.class);
+        environment.lifecycle().manage(lifecycleService);
     }
 
     private static void configureCors(io.dropwizard.setup.Environment environment) {

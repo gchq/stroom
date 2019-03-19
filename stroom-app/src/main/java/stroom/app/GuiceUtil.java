@@ -33,12 +33,12 @@ public class GuiceUtil {
 //        final HasHealthCheck hasHealthCheck = injector.getInstance(clazz);
 //        addHealthCheck(healthCheckRegistry, hasHealthCheck);
 //    }
-
-    public static void addHealthCheck(final HealthCheckRegistry healthCheckRegistry, HasHealthCheck hasHealthCheck) {
-        String name = hasHealthCheck.getClass().getName() + HEALTH_CHECK_SUFFIX;
-        LOGGER.info("Registering health check {}", name);
-        healthCheckRegistry.register(name, hasHealthCheck.getHealthCheck());
-    }
+//
+//    public static void addHealthCheck(final HealthCheckRegistry healthCheckRegistry, HasHealthCheck hasHealthCheck) {
+//        String name = hasHealthCheck.getClass().getName() + HEALTH_CHECK_SUFFIX;
+//        LOGGER.info("Registering health check {}", name);
+//        healthCheckRegistry.register(name, hasHealthCheck.getHealthCheck());
+//    }
 
     public static FilterHolder addFilter(final ServletContextHandler servletContextHandler,
                                          final Injector injector,
@@ -169,14 +169,14 @@ public class GuiceUtil {
 //
 //        restResources.forEach(jersey::register);
 //    }
-
-    static void manage(final LifecycleEnvironment lifecycleEnvironment,
-                              final Injector injector,
-                              final Class<? extends Managed> clazz) {
-        final Managed managed = injector.getInstance(clazz);
-        lifecycleEnvironment.manage(managed);
-    }
-
+//
+//    static void manage(final LifecycleEnvironment lifecycleEnvironment,
+//                              final Injector injector,
+//                              final Class<? extends Managed> clazz) {
+//        final Managed managed = injector.getInstance(clazz);
+//        lifecycleEnvironment.manage(managed);
+//    }
+//
 //    private static class FilterProxy implements Filter {
 //        private final Provider<Filter> provider;
 //
