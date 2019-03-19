@@ -38,10 +38,13 @@ import stroom.util.spring.StroomScope;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Class that reads a nested directory tree of stroom zip files.
@@ -56,8 +59,8 @@ import java.util.List;
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public final class FileSetProcessorImpl implements FileSetProcessor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FileSetProcessorImpl.class);
+public final class StreamStoreFileSetProcessor implements FileSetProcessor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamStoreFileSetProcessor.class);
 
     private final ProxyFileHandler feedFileProcessorHelper = new ProxyFileHandler();
 
@@ -69,10 +72,10 @@ public final class FileSetProcessorImpl implements FileSetProcessor {
     private final TaskContext taskContext;
 
     @Inject
-    public FileSetProcessorImpl(final StreamStore streamStore,
-                                @Named("cachedFeedService") final FeedService feedService,
-                                final MetaDataStatistic metaDataStatistic,
-                                final TaskContext taskContext) {
+    public StreamStoreFileSetProcessor(final StreamStore streamStore,
+                                       @Named("cachedFeedService") final FeedService feedService,
+                                       final MetaDataStatistic metaDataStatistic,
+                                       final TaskContext taskContext) {
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.metaDataStatistic = metaDataStatistic;
@@ -81,67 +84,68 @@ public final class FileSetProcessorImpl implements FileSetProcessor {
 
     @Override
     public void process(final StroomZipRepository stroomZipRepository, final FileSet fileSet) {
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+        if (fileSet.getFiles().size() > 0) {
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-        final String feedName = fileSet.getFeed();
-        taskContext.setName("Processing set - " + feedName);
-        LOGGER.info("processFeedFiles() - Started {} ({} Files)", feedName, fileSet.getFiles().size());
+            final String feedName = fileSet.getFeed();
+            taskContext.setName("Processing set - " + feedName);
+            LOGGER.info("processFeedFiles() - Started {} ({} Files)", feedName, fileSet.getFiles().size());
 
-        final Feed feed = feedService.loadByName(feedName);
-        if (feed == null) {
-            LOGGER.error("processFeedFiles() - " + feedName + " Failed to find feed");
-            return;
-        }
-
-        // Sort the files in the file set so there is some consistency to processing.
-        fileSet.getFiles().sort(Comparator.comparing(p -> p.getFileName().toString()));
-
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("processFeedFiles() - " + feedName + " " + fileSet.getFiles());
-        }
-
-        // We don't want to aggregate reference feeds.
-        final boolean oneByOne = feed.isReference() || !aggregate;
-
-        List<StreamTargetStroomStreamHandler> handlers = openStreamHandlers(feed);
-        List<Path> deleteFileList = new ArrayList<>();
-
-        long sequence = 1;
-        long count = 0;
-
-        final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor("ProxyAggregationTask");
-
-        for (final Path file : fileSet.getFiles()) {
-            count++;
-            taskContext.info("File " + count + " of " + fileSet.getFiles().size());
-
-            if (taskContext.isTerminated()) {
-                break;
+            final Feed feed = feedService.loadByName(feedName);
+            if (feed == null) {
+                LOGGER.error("processFeedFiles() - " + feedName + " Failed to find feed");
+                return;
             }
-            try {
-                if (sequence > 1 && oneByOne) {
-                    // Close off this unit
-                    handlers = closeStreamHandlers(handlers);
 
-                    // Delete the done files
-                    proxyFileHandler.deleteFiles(stroomZipRepository, deleteFileList);
+            // Sort the files in the file set so there is some consistency to processing.
+            fileSet.getFiles().sort(Comparator.comparing(p -> p.getFileName().toString()));
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("process() - " + feedName + " " + fileSet.getFiles());
+            }
 
-                    // Start new batch
-                    deleteFileList = new ArrayList<>();
-                    handlers = openStreamHandlers(feed);
-                    sequence = 1;
+            // We don't want to aggregate reference feeds.
+            final boolean oneByOne = feed.isReference() || !aggregate;
+
+            List<StreamTargetStroomStreamHandler> handlers = openStreamHandlers(feed);
+            List<Path> deleteFileList = new ArrayList<>();
+
+            long sequence = 1;
+            long count = 0;
+
+            final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor("ProxyAggregationTask");
+
+            for (final Path file : fileSet.getFiles()) {
+                count++;
+                taskContext.info("File " + count + " of " + fileSet.getFiles().size());
+
+                if (taskContext.isTerminated()) {
+                    break;
                 }
+                try {
+                    if (sequence > 1 && oneByOne) {
+                        // Close off this unit
+                        handlers = closeStreamHandlers(handlers);
 
-                sequence = feedFileProcessorHelper.processFeedFile(handlers, stroomZipRepository, file, streamProgressMonitor, sequence);
-                deleteFileList.add(file);
+                        // Delete the done files
+                        cleanup(stroomZipRepository, deleteFileList);
 
-            } catch (final Throwable t) {
-                handlers = closeDeleteStreamHandlers(handlers);
+                        // Start new batch
+                        deleteFileList = new ArrayList<>();
+                        handlers = openStreamHandlers(feed);
+                        sequence = 1;
+                    }
+
+                    sequence = feedFileProcessorHelper.processFeedFile(handlers, stroomZipRepository, file, streamProgressMonitor, sequence);
+                    deleteFileList.add(file);
+
+                } catch (final Throwable t) {
+                    handlers = closeDeleteStreamHandlers(handlers);
+                }
             }
+            closeStreamHandlers(handlers);
+            cleanup(stroomZipRepository, deleteFileList);
+            LOGGER.info("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime);
         }
-        closeStreamHandlers(handlers);
-        proxyFileHandler.deleteFiles(stroomZipRepository, deleteFileList);
-        LOGGER.info("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime);
     }
 
     private List<StreamTargetStroomStreamHandler> openStreamHandlers(final Feed feed) {
@@ -182,5 +186,19 @@ public final class FileSetProcessorImpl implements FileSetProcessor {
             handlers.forEach(StreamTargetStroomStreamHandler::closeDelete);
         }
         return null;
+    }
+
+    private void cleanup(final StroomZipRepository stroomZipRepository, final List<Path> deleteList) {
+        proxyFileHandler.deleteFiles(stroomZipRepository, deleteList);
+
+        // Delete any parent directories if we can.
+        final Set<Path> parentDirs = deleteList.stream().map(Path::getParent).collect(Collectors.toSet());
+        parentDirs.forEach(p -> {
+            try {
+                Files.deleteIfExists(p);
+            } catch (final IOException e) {
+                LOGGER.debug(e.getMessage(), e);
+            }
+        });
     }
 }

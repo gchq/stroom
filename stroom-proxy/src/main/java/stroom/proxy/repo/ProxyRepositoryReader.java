@@ -7,6 +7,7 @@ import stroom.proxy.handler.StreamHandlerFactory;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
 import stroom.task.server.ThreadPoolImpl;
+import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.scheduler.Scheduler;
@@ -23,8 +24,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -108,7 +107,12 @@ public final class ProxyRepositoryReader {
 
             @Override
             public Executor getExecutor(final ThreadPool threadPool) {
-                return executorServiceMap.computeIfAbsent(threadPool, k -> new ThreadPoolExecutor(threadPool.getCorePoolSize(), threadPool.getMaxPoolSize(), 60, TimeUnit.SECONDS, new SynchronousQueue<>()));
+                return executorServiceMap.computeIfAbsent(threadPool, k -> ScalingThreadPoolExecutor.newScalingThreadPool(
+                        threadPool.getCorePoolSize(),
+                        threadPool.getMaxPoolSize(),
+                        threadPool.getMaxQueueSize(),
+                        60L,
+                        TimeUnit.SECONDS));
             }
         };
     }
@@ -208,7 +212,7 @@ public final class ProxyRepositoryReader {
             // Only process the thing if we have some outgoing handlers.
             final List<StreamHandler> handlers = handlerFactory.addSendHandlers(new ArrayList<>());
             if (handlers.size() > 0) {
-                final Provider<FileSetProcessor> fileSetProcessorProvider = () -> new FileSetProcessorImpl(handlerFactory, taskContext);
+                final Provider<FileSetProcessor> fileSetProcessorProvider = () -> new ProxyForwardingFileSetProcessor(handlerFactory, taskContext);
                 final RepositoryProcessor repositoryProcessor = new RepositoryProcessor(
                         taskContext,
                         executorProvider,

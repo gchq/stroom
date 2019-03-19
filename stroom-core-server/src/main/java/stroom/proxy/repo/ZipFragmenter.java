@@ -86,7 +86,7 @@ class ZipFragmenter {
             if (inputStream != null) {
                 final String outputEntryName = new StroomZipEntry(null, baseName, type).getFullName();
                 try (final OutputStream outputStream = output.addEntry(outputEntryName)) {
-                    StreamUtil.streamToStream(inputStream, outputStream);
+                    StreamUtil.streamToStream(inputStream, outputStream, false);
                 } catch (final IOException e) {
                     LOGGER.debug(e.getMessage(), e);
                 }

@@ -1,11 +1,11 @@
 package stroom.feed;
 
-import java.io.BufferedReader;
+import stroom.util.io.StreamUtil;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -25,17 +25,19 @@ public class MetaMap extends CIStringHashMap {
     private static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
 
     public void read(final InputStream inputStream, final boolean close) throws IOException {
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, DEFAULT_CHARSET));
-
-        String line;
-        while ((line = reader.readLine()) != null) {
-            final int splitPos = line.indexOf(HEADER_DELIMITER);
-            if (splitPos != -1) {
-                final String key = line.substring(0, splitPos);
-                final String value = line.substring(splitPos + 1);
-                put(key, value);
-            } else {
-                put(line.trim(), null);
+        final String data = StreamUtil.streamToString(inputStream, DEFAULT_CHARSET, close);
+        final String[] lines = data.split("\n");
+        for (String line : lines) {
+            line = line.trim();
+            if (line.length() > 0) {
+                final int splitPos = line.indexOf(HEADER_DELIMITER);
+                if (splitPos != -1) {
+                    final String key = line.substring(0, splitPos);
+                    final String value = line.substring(splitPos + 1);
+                    put(key.trim(), value.trim());
+                } else {
+                    put(line, null);
+                }
             }
         }
 

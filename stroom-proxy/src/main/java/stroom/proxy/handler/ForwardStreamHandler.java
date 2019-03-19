@@ -120,7 +120,6 @@ public class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
                 connection = null;
             }
         }
-
     }
 
     @Override
