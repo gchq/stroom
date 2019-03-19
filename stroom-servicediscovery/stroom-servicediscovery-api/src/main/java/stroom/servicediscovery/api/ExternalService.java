@@ -1,4 +1,4 @@
-package stroom.core.servicediscovery;
+package stroom.servicediscovery.api;
 
 import com.google.common.base.Preconditions;
 import org.apache.curator.x.discovery.ProviderStrategy;

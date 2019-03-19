@@ -1,4 +1,4 @@
-package stroom.core.datasource;
+package stroom.dashboard.datasource;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.shared.IsConfig;

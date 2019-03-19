@@ -1,4 +1,4 @@
-package stroom.core.servicediscovery;
+package stroom.servicediscovery.api;
 
 import org.apache.curator.x.discovery.ServiceInstance;
 import stroom.util.HasHealthCheck;
@@ -9,7 +9,6 @@ import java.util.Optional;
  * Interface for obtaining instances of discoverable services that have been defined in {@link ExternalService}
  */
 public interface ServiceDiscoverer extends HasHealthCheck {
-
     /**
      * Get a {@link ServiceInstance} object for the passed {@link ExternalService} definition. The instance of the service
      * provider chosen will depend on the strategy defined in {@link ExternalService}. The instance will not be marked
@@ -21,4 +20,6 @@ public interface ServiceDiscoverer extends HasHealthCheck {
      * hold onto this object, use it to call the service then throw it away.
      */
     Optional<ServiceInstance<String>> getServiceInstance(final ExternalService externalService);
+
+    boolean isEnabled();
 }

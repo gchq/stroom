@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.core.datasource;
+package stroom.dashboard.datasource;
 
 import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
-import stroom.core.servicediscovery.ExternalService;
-import stroom.core.servicediscovery.ServiceDiscoverer;
+import stroom.servicediscovery.api.ExternalService;
+import stroom.servicediscovery.api.ServiceDiscoverer;
 
 import java.util.Optional;
 

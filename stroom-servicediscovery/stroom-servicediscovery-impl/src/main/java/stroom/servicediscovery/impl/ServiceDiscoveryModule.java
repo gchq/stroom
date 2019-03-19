@@ -1,7 +1,8 @@
-package stroom.core.servicediscovery;
+package stroom.servicediscovery.impl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.servicediscovery.api.ServiceDiscoverer;
 import stroom.util.HasHealthCheck;
 
 public class ServiceDiscoveryModule extends AbstractModule {

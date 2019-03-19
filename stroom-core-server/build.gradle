@@ -42,12 +42,9 @@ dependencies {
 //    compile libs.commons_exec
     compile libs.commons_io
     compile libs.commons_lang
-    compile libs.curator_client
-    compile libs.curator_framework
-    compile libs.curator_x_discovery
     compile libs.dropwizard_lifecycle
     compile libs.dropwizard_metrics_annotation
-    compile libs.dropwizard_metrics_healthchecks
+//    compile libs.dropwizard_metrics_healthchecks
     compile libs.flyway_core
     compile libs.guava
     compile libs.guice4
@@ -61,13 +58,13 @@ dependencies {
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.jaxb_api
-    compile libs.jersey_client
-    compile libs.jersey_common
+//    compile libs.jersey_client
+//    compile libs.jersey_common
     compile libs.saxon_he
     compile libs.slf4j_api
     compile libs.swagger_annotations
     compile libs.validation_api
-    compile libs.vavr
+//    compile libs.vavr
     compile libs.ws_rs_api
     compile libs.xml_apis
 

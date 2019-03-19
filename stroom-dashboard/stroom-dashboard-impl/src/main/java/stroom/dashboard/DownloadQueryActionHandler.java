@@ -20,13 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.DownloadQueryAction;
 import stroom.dashboard.shared.SearchRequest;
-import stroom.util.shared.EntityServiceException;
-import stroom.core.entity.util.EntityServiceExceptionUtil;
 import stroom.query.api.v2.ResultRequest;
 import stroom.resource.api.ResourceStore;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 

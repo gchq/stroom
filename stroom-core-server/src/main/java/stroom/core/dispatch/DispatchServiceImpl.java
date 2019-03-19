@@ -21,7 +21,7 @@ import com.google.gwt.user.server.rpc.SerializationPolicy;
 import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.core.entity.util.EntityServiceExceptionUtil;
+import stroom.util.EntityServiceExceptionUtil;
 import stroom.core.servlet.SessionListListener;
 import stroom.dispatch.shared.DispatchService;
 import stroom.docref.SharedObject;

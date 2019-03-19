@@ -1,4 +1,4 @@
-package stroom.core.servicediscovery;
+package stroom.servicediscovery.impl;
 
 import stroom.lifecycle.api.AbstractLifecycleModule;
 import stroom.lifecycle.api.RunnableWrapper;

@@ -1,4 +1,4 @@
-package stroom.core.servicediscovery;
+package stroom.servicediscovery.api;
 
 public interface ResourcePaths {
     String ROOT_PATH = "/stroom";

@@ -1,4 +1,4 @@
-package stroom.core.servicediscovery;
+package stroom.servicediscovery.impl;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheck.Result;
@@ -9,6 +9,8 @@ import org.apache.curator.x.discovery.ServiceType;
 import org.apache.curator.x.discovery.UriSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.servicediscovery.api.RegisteredService;
+import stroom.servicediscovery.api.ResourcePaths;
 import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;

@@ -14,7 +14,7 @@ import stroom.pipeline.destination.RollingDestinationsLifecycleModule;
 import stroom.processor.impl.StreamTaskLifecycleModule;
 import stroom.resource.impl.ResourceLifecycleModule;
 import stroom.search.SearchLifecycleModule;
-import stroom.core.servicediscovery.ServiceDiscoveryLifecycleModule;
+import stroom.servicediscovery.impl.ServiceDiscoveryLifecycleModule;
 import stroom.statistics.impl.InternalStatisticsLifecycleModule;
 import stroom.statistics.impl.sql.SQLStatisticsLifecycleModule;
 import stroom.task.impl.TaskManagerLifecycleModule;

@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.core.entity.util;
+package stroom.util;
 
-import com.caucho.hessian.HessianException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.StreamUtil;
@@ -90,9 +89,6 @@ public class EntityServiceExceptionUtil {
     private static EntityServiceException unwrap(final Throwable rootEx, final Throwable thEx, final int depth) {
         if (thEx instanceof EntityServiceException) {
             return (EntityServiceException) thEx;
-        }
-        if (thEx instanceof HessianException) {
-            return new EntityServiceException(thEx.getMessage(), thEx.getClass().getName(), true);
         }
         if (thEx instanceof UnknownHostException) {
             return new EntityServiceException("Unknown host: " + thEx.getMessage(), thEx.getClass().getName(), true);

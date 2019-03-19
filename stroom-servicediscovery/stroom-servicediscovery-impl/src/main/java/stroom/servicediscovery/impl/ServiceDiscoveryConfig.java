@@ -1,4 +1,4 @@
-package stroom.core.servicediscovery;
+package stroom.servicediscovery.impl;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.shared.IsConfig;

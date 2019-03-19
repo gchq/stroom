@@ -1,4 +1,4 @@
-package stroom.core.servicediscovery;
+package stroom.servicediscovery.impl;
 
 import com.google.common.base.Preconditions;
 import org.apache.curator.RetryPolicy;
@@ -40,7 +40,6 @@ public class ServiceDiscoveryManager {
     ServiceDiscoveryManager(final ServiceDiscoveryConfig serviceDiscoveryConfig) {
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         this.zookeeperUrl = serviceDiscoveryConfig.getZookeeperUrl();
-
 
         boolean isServiceDiscoveryEnabled = serviceDiscoveryConfig.isEnabled();
 

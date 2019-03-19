@@ -33,16 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.app.guice.AppModule;
 import stroom.cluster.impl.ClusterCallServiceRPC;
-import stroom.data.store.impl.ImportFileServlet;
-import stroom.dispatch.shared.DispatchService;
 import stroom.core.feed.RemoteFeedServiceRPC;
-import stroom.lifecycle.impl.LifecycleService;
-import stroom.receive.common.DebugServlet;
-import stroom.receive.common.ReceiveDataServlet;
-import stroom.resource.impl.SessionResourceStoreImpl;
-import stroom.script.ScriptServlet;
-import stroom.security.impl.SecurityFilter;
-import stroom.core.servicediscovery.ResourcePaths;
 import stroom.core.servlet.CacheControlFilter;
 import stroom.core.servlet.DashboardServlet;
 import stroom.core.servlet.DynamicCSSServlet;
@@ -53,6 +44,15 @@ import stroom.core.servlet.SessionListListener;
 import stroom.core.servlet.SessionListServlet;
 import stroom.core.servlet.StatusServlet;
 import stroom.core.servlet.StroomServlet;
+import stroom.data.store.impl.ImportFileServlet;
+import stroom.dispatch.shared.DispatchService;
+import stroom.lifecycle.impl.LifecycleService;
+import stroom.receive.common.DebugServlet;
+import stroom.receive.common.ReceiveDataServlet;
+import stroom.resource.impl.SessionResourceStoreImpl;
+import stroom.script.ScriptServlet;
+import stroom.security.impl.SecurityFilter;
+import stroom.servicediscovery.api.ResourcePaths;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
@@ -60,6 +60,8 @@ import java.util.EnumSet;
 
 public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+
+    private static final String ROOT_PATH = "/stroom";
 //
 //    private static String configPath;
 

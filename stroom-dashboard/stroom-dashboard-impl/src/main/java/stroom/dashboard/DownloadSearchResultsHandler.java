@@ -16,6 +16,8 @@
 
 package stroom.dashboard;
 
+import stroom.dashboard.datasource.DataSourceProvider;
+import stroom.dashboard.datasource.DataSourceProviderRegistry;
 import stroom.dashboard.download.DelimitedTarget;
 import stroom.dashboard.download.ExcelTarget;
 import stroom.dashboard.download.SearchResultWriter;
@@ -26,17 +28,15 @@ import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsAction;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
-import stroom.core.datasource.DataSourceProvider;
-import stroom.core.datasource.DataSourceProviderRegistry;
 import stroom.docref.DocRef;
-import stroom.util.shared.EntityServiceException;
-import stroom.core.entity.util.EntityServiceExceptionUtil;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.Row;
 import stroom.resource.api.ResourceStore;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.EntityServiceExceptionUtil;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
@@ -48,7 +48,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-
 
 class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchResultsAction, ResourceGeneration> {
     private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");

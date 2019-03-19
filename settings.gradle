@@ -177,6 +177,10 @@ include 'stroom-security:stroom-security-impl'
 include 'stroom-security:stroom-security-impl-db'
 include 'stroom-security:stroom-security-impl-db-jooq'
 
+// Service discovery
+include 'stroom-servicediscovery:stroom-servicediscovery-api'
+include 'stroom-servicediscovery:stroom-servicediscovery-impl'
+
 // Statistics
 include 'stroom-statistics:stroom-statistics-api'
 include 'stroom-statistics:stroom-statistics-client'

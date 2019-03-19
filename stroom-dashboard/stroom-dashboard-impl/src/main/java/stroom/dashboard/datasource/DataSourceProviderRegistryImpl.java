@@ -1,11 +1,10 @@
-package stroom.core.datasource;
+package stroom.dashboard.datasource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
-import stroom.core.servicediscovery.ServiceDiscoverer;
-import stroom.core.servicediscovery.ServiceDiscoveryConfig;
+import stroom.servicediscovery.api.ServiceDiscoverer;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -22,12 +21,10 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
     @SuppressWarnings("unused")
     @Inject
     DataSourceProviderRegistryImpl(final SecurityContext securityContext,
-                                   final ServiceDiscoveryConfig serviceDiscoveryConfig,
                                    final Provider<ServiceDiscoverer> serviceDiscovererProvider,
                                    final DataSourceUrlConfig dataSourceUrlConfig) {
-        final boolean isServiceDiscoveryEnabled = serviceDiscoveryConfig.isEnabled();
-        if (isServiceDiscoveryEnabled) {
-            ServiceDiscoverer serviceDiscoverer = serviceDiscovererProvider.get();
+        final ServiceDiscoverer serviceDiscoverer = serviceDiscovererProvider.get();
+        if (serviceDiscoverer.isEnabled()) {
             LOGGER.debug("Using service discovery for service lookup");
             delegateDataSourceProviderRegistry = new ServiceDiscoveryDataSourceProviderRegistry(
                     securityContext,

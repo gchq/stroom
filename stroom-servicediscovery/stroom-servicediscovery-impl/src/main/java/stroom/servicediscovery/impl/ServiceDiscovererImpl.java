@@ -1,4 +1,4 @@
-package stroom.core.servicediscovery;
+package stroom.servicediscovery.impl;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheck.Result;
@@ -8,6 +8,8 @@ import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.servicediscovery.api.ExternalService;
+import stroom.servicediscovery.api.ServiceDiscoverer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 public class ServiceDiscovererImpl implements ServiceDiscoverer {
     private final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
 
+    private final ServiceDiscoveryConfig serviceDiscoveryConfig;
+
     /*
     Note: When using Curator 2.x (Zookeeper 3.4.x) it's essential that service provider objects are cached by your
     application and reused. Since the internal NamespaceWatcher objects added by the service provider cannot be
@@ -34,8 +38,10 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
     private final Map<ExternalService, ServiceProvider<String>> serviceProviders = new HashMap<>();
 
     @Inject
-    ServiceDiscovererImpl(final ServiceDiscoveryManager serviceDiscoveryManager) {
+    ServiceDiscovererImpl(final ServiceDiscoveryConfig serviceDiscoveryConfig,
+                          final ServiceDiscoveryManager serviceDiscoveryManager) {
         //create the service providers once service discovery has started up
+        this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         serviceDiscoveryManager.registerStartupListener(this::initProviders);
     }
 
@@ -50,6 +56,11 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
                         throw new RuntimeException(e);
                     }
                 });
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return serviceDiscoveryConfig.isEnabled();
     }
 
     private void initProviders(final ServiceDiscovery<String> serviceDiscovery) {
