@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change start script to use absolute paths for jar, config and logs to distinguish stroom and proxy instances.
+
+
 ## [v6.0-beta.30] - 2019-03-17
 
 * Issue **#1116** : Better implementation of proxy aggregation.
