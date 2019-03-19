@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#exit script on any error
+# exit script on any error
 set -e
 
 STROOM_DOCKER_REPO="gchq/stroom"
@@ -15,15 +15,15 @@ VERSION_FIXED_TAG=""
 SNAPSHOT_FLOATING_TAG=""
 MAJOR_VER_FLOATING_TAG=""
 MINOR_VER_FLOATING_TAG=""
-#This is a whitelist of branches to produce docker builds for
+# This is a whitelist of branches to produce docker builds for
 BRANCH_WHITELIST_REGEX='(^dev$|^master$|^[0-9]+\.[0-9]+$)'
 RELEASE_VERSION_REGEX='^v[0-9]+\.[0-9]+\.[0-9].*$'
 CRON_TAG_SUFFIX="DAILY"
 LATEST_SUFFIX="-LATEST"
 doDockerBuild=false
 
-#Shell Colour constants for use in 'echo -e'
-#e.g.  echo -e "My message ${GREEN}with just this text in green${NC}"
+# Shell Colour constants for use in 'echo -e'
+# e.g.  echo -e "My message ${GREEN}with just this text in green${NC}"
 # shellcheck disable=SC2034
 {
     RED='\033[1;31m'
@@ -61,28 +61,38 @@ createGitTag() {
     git config --global user.email "builds@travis-ci.com"
     git config --global user.name "Travis CI"
 
-    echo -e "Tagging commit [${GREEN}${TRAVIS_COMMIT}${NC}] with tag [${GREEN}${tagName}${NC}]"
-    git tag -a "${tagName}" "${TRAVIS_COMMIT}" -m "Automated Travis build $TRAVIS_BUILD_NUMBER" >/dev/null 2>&1
-    #TAGPERM is a travis encrypted github token, see 'env' section in .travis.yml
-    git push -q "https://${TAGPERM}@github.com/${GITHUB_REPO}" "${tagName}" >/dev/null 2>&1
+    echo -e "Tagging commit [${GREEN}${TRAVIS_COMMIT}${NC}] with" \
+      "tag [${GREEN}${tagName}${NC}]"
+    git tag \
+      -a \
+      "${tagName}" \
+      "${TRAVIS_COMMIT}" \
+      -m "Automated Travis build $TRAVIS_BUILD_NUMBER" >/dev/null 2>&1
+    # TAGPERM is a travis encrypted github token, see 'env' section in .travis.yml
+    git push \
+      -q \
+      "https://${TAGPERM}@github.com/${GITHUB_REPO}" \
+      "${tagName}" >/dev/null 2>&1
 }
 
 isCronBuildRequired() {
-    #GH_USER_AND_TOKEN is set in env section of .travis.yml
+    # GH_USER_AND_TOKEN is set in env section of .travis.yml
     local authArgs=()
     if [ -n "${GH_USER_AND_TOKEN}" ]; then 
         echo "Using authentication with curl"
         authArgs+=("--user" "${GH_USER_AND_TOKEN}")
     fi
-    #query the github api for the latest cron release tag name
-    #redirect stderr to dev/null to protect api token
+    # query the github api for the latest cron release tag name
+    # redirect stderr to dev/null to protect api token
     local latestTagName
     latestTagName=$(curl -s "${authArgs[@]}" ${GITHUB_API_URL} | \
-        jq -r "[.[] | select(.tag_name | test(\"${TRAVIS_BRANCH}.*${CRON_TAG_SUFFIX}\"))][0].tag_name" 2>/dev/null)
-    echo -e "Latest release ${CRON_TAG_SUFFIX} tag: [${GREEN}${latestTagName}${NC}]"
+        jq -r "[.[] | select(.tag_name | test(\"${TRAVIS_BRANCH}.*${CRON_TAG_SUFFIX}\"))][0].tag_name" \
+        2>/dev/null)
+    echo -e "Latest release ${CRON_TAG_SUFFIX}" \
+      "tag: [${GREEN}${latestTagName}${NC}]"
 
     if [ "${latestTagName}x" != "x" ]; then 
-        #Get the commit sha that this tag applies to (not the commit of the tag itself)
+        # Get the commit sha that this tag applies to (not the commit of the tag itself)
         local shaForTag
         shaForTag=$(git rev-list -n 1 "${latestTagName}")
         echo -e "SHA hash for tag ${latestTagName}: [${GREEN}${shaForTag}${NC}]"
@@ -91,23 +101,25 @@ isCronBuildRequired() {
             exit 1
         else
             if [ "${shaForTag}x" = "${TRAVIS_COMMIT}x" ]; then
-                echo -e "${RED}The commit of the build matches the latest ${CRON_TAG_SUFFIX} release.${NC}"
-                echo -e "${RED}Git will not be tagged and no release will be made.${NC}"
-                #The latest release has the same commit sha as the commit travis is building
-                #so don't bother creating a new tag as we don't want a new release
+                echo -e "${RED}The commit of the build matches the latest" \
+                  "${CRON_TAG_SUFFIX} release.${NC}"
+                echo -e "${RED}Git will not be tagged and no release will be" \
+                  "made.${NC}"
+                # The latest release has the same commit sha as the commit travis is building
+                # so don't bother creating a new tag as we don't want a new release
                 false
             fi
         fi
     else
-        #no release found so return true so a build happens
+        # no release found so return true so a build happens
         true
     fi
     return
 }
 
-#args: dockerRepo contextRoot tag1VersionPart tag2VersionPart ... tagNVersionPart
+# args: dockerRepo contextRoot tag1VersionPart tag2VersionPart ... tagNVersionPart
 releaseToDockerHub() {
-    #echo "releaseToDockerHub called with args [$@]"
+    # echo "releaseToDockerHub called with args [$@]"
 
     if [ $# -lt 3 ]; then
         echo "Incorrect args, expecting at least 3"
@@ -115,14 +127,15 @@ releaseToDockerHub() {
     fi
     dockerRepo="$1"
     contextRoot="$2"
-    #shift the the args so we can loop round the open ended list of tags, $1 is now the first tag
+    # shift the the args so we can loop round the open ended list of tags,
+    # $1 is now the first tag
     shift 2
 
     local allTagArgs=()
 
     for tagVersionPart in "$@"; do
         if [ "x${tagVersionPart}" != "x" ]; then
-            #echo -e "Adding docker tag [${GREEN}${tagVersionPart}${NC}]"
+            # echo -e "Adding docker tag [${GREEN}${tagVersionPart}${NC}]"
             allTagArgs+=("--tag=${dockerRepo}:${tagVersionPart}")
         fi
     done
@@ -140,27 +153,28 @@ releaseToDockerHub() {
 
     echo -e "Logging in to Docker"
 
-    #The username and password are configured in the travis gui
+    # The username and password are configured in the travis gui
     echo "$DOCKER_PASSWORD" \
       | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
 
-    echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with tags: ${GREEN}${allTagArgs[*]}${NC}"
+    echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with" \
+      "tags: ${GREEN}${allTagArgs[*]}${NC}"
     docker push "${dockerRepo}" >/dev/null 2>&1
 
     echo -e "Logging out of Docker"
     docker logout >/dev/null 2>&1
 }
 
-#establish what version of stroom we are building
+# establish what version of stroom we are building
 if [ -n "$TRAVIS_TAG" ]; then
-    #Tagged commit so use that as our stroom version, e.g. v6.0.0
+    # Tagged commit so use that as our stroom version, e.g. v6.0.0
     STROOM_VERSION="${TRAVIS_TAG}"
 else
-    #No tag so use the branch name as the version, e.g. dev
+    # No tag so use the branch name as the version, e.g. dev
     STROOM_VERSION="${TRAVIS_BRANCH}"
 fi
 
-#Dump all the travis env vars to the console for debugging
+# Dump all the travis env vars to the console for debugging
 echo -e "TRAVIS_BUILD_NUMBER: [${GREEN}${TRAVIS_BUILD_NUMBER}${NC}]"
 echo -e "TRAVIS_COMMIT:       [${GREEN}${TRAVIS_COMMIT}${NC}]"
 echo -e "TRAVIS_BRANCH:       [${GREEN}${TRAVIS_BRANCH}${NC}]"
@@ -175,40 +189,41 @@ if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
 
     if isCronBuildRequired; then
         echo "The release build will happen when travis picks up the tagged commit"
-        #This is a cron triggered build so tag as -DAILY and push a tag to git
+        # This is a cron triggered build so tag as -DAILY and push a tag to git
         DATE_ONLY="$(date +%Y%m%d)"
         gitTag="${STROOM_VERSION}-${DATE_ONLY}-${CRON_TAG_SUFFIX}"
 
         createGitTag "${gitTag}"
     fi
 else
-    #Normal commit/PR/tag build
+    # Normal commit/PR/tag build
     extraBuildArgs=()
 
     if [ -n "$TRAVIS_TAG" ]; then
         doDockerBuild=true
 
-        #This is a tagged commit, so create a docker image with that tag
+        # This is a tagged commit, so create a docker image with that tag
         VERSION_FIXED_TAG="${TRAVIS_TAG}"
 
-        #Extract the major version part for a floating tag
+        # Extract the major version part for a floating tag
         majorVer=$(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+")
         if [ -n "${majorVer}" ]; then
             MAJOR_VER_FLOATING_TAG="${majorVer}${LATEST_SUFFIX}"
         fi
 
-        #Extract the minor version part for a floating tag
+        # Extract the minor version part for a floating tag
         minorVer=$(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+\.[0-9]+")
         if [ -n "${minorVer}" ]; then
             MINOR_VER_FLOATING_TAG="${minorVer}${LATEST_SUFFIX}"
         fi
 
         if [[ "$TRAVIS_BRANCH" =~ ${RELEASE_VERSION_REGEX} ]]; then
-            echo "This is a release version so add gradle arg for publishing libs to Bintray"
+            echo "This is a release version so add gradle arg for publishing" \
+              "libs to Bintray"
             extraBuildArgs+=("bintrayUpload")
         fi
     elif [[ "$TRAVIS_BRANCH" =~ $BRANCH_WHITELIST_REGEX ]]; then
-        #This is a branch we want to create a floating snapshot docker image for
+        # This is a branch we want to create a floating snapshot docker image for
         SNAPSHOT_FLOATING_TAG="${STROOM_VERSION}-SNAPSHOT"
         doDockerBuild=true
     fi
@@ -220,8 +235,9 @@ else
     echo -e "doDockerBuild:                 [${GREEN}${doDockerBuild}${NC}]"
     echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs[*]}${NC}]"
 
-    #Do the gradle build
-    # Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
+    # Do the gradle build
+    # Use 1 local worker to avoid using too much memory as each worker will
+    # chew up ~500Mb ram
     ./gradlew \
       -PdumpFailedTestXml=true \
       -Pversion="${TRAVIS_TAG}" \
@@ -235,11 +251,13 @@ else
 
     generate_file_hashes
 
-    #Don't do a docker build for pull requests
+    # Don't do a docker build for pull requests
     if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
-        #TODO - the major and minor floating tags assume that the release builds are all done in strict sequence
-        #If say the build for v6.0.1 is re-run after the build for v6.0.2 has run then v6.0-LATEST will point to v6.0.1
-        #which is incorrect, hopefully this course of events is unlikely to happen
+        # TODO - the major and minor floating tags assume that the release
+        # builds are all done in strict sequence If say the build for v6.0.1 is
+        # re-run after the build for v6.0.2 has run then v6.0-LATEST will point
+        # to v6.0.1 which is incorrect, hopefully this course of events is
+        # unlikely to happen
         allDockerTags=( \
             "${VERSION_FIXED_TAG}" \
             "${SNAPSHOT_FLOATING_TAG}" \
@@ -247,27 +265,42 @@ else
             "${MINOR_VER_FLOATING_TAG}" \
         )
 
-        #build and release stroom image to dockerhub
-        releaseToDockerHub "${STROOM_DOCKER_REPO}" "${STROOM_DOCKER_CONTEXT_ROOT}" "${allDockerTags[@]}"
+        # build and release stroom image to dockerhub
+        releaseToDockerHub \
+          "${STROOM_DOCKER_REPO}" \
+          "${STROOM_DOCKER_CONTEXT_ROOT}" \
+          "${allDockerTags[@]}"
 
-        #build and release stroom-proxy image to dockerhub
-        releaseToDockerHub "${STROOM_PROXY_DOCKER_REPO}" "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" "${allDockerTags[@]}"
+        # build and release stroom-proxy image to dockerhub
+        releaseToDockerHub \
+          "${STROOM_PROXY_DOCKER_REPO}" \
+          "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
+          "${allDockerTags[@]}"
     fi
 
-    #Deploy the generated swagger specs and swagger UI (obtained from github) to gh-pages
+    # Deploy the generated swagger specs and swagger UI (obtained from github)
+    # to gh-pages
     if [ "$TRAVIS_BRANCH" = "master" ]; then
         echo "Deploying swagger-ui to gh-pages"
         ghPagesDir=$TRAVIS_BUILD_DIR/gh-pages
         swaggerUiCloneDir=$TRAVIS_BUILD_DIR/swagger-ui
         mkdir -p "${ghPagesDir}"
-        #copy our generated swagger specs to gh-pages
-        cp "${TRAVIS_BUILD_DIR}"/stroom-app/src/main/resources/ui/swagger/swagger.* "${ghPagesDir}/"
-        #clone swagger-ui repo so we can get the ui html/js/etc
-        git clone --depth 1 https://github.com/swagger-api/swagger-ui.git "${swaggerUiCloneDir}"
-        #copy the bits of swagger-ui that we need
+        # copy our generated swagger specs to gh-pages
+        cp \
+          "${TRAVIS_BUILD_DIR}"/stroom-app/src/main/resources/ui/swagger/swagger.* \
+          "${ghPagesDir}/"
+        # clone swagger-ui repo so we can get the ui html/js/etc
+        git clone \
+          --depth 1 \
+          https://github.com/swagger-api/swagger-ui.git \
+          "${swaggerUiCloneDir}"
+        # copy the bits of swagger-ui that we need
         cp -r "${swaggerUiCloneDir}"/dist/* "${ghPagesDir}"/
-        #repalce the default swagger spec url in swagger UI
-        sed -i 's#url: ".*"#url: "https://gchq.github.io/stroom/swagger.json"#g' "${ghPagesDir}/index.html"
+        # repalce the default swagger spec url in swagger UI
+        sed \
+          -i \
+          's#url: ".*"#url: "https://gchq.github.io/stroom/swagger.json"#g' \
+          "${ghPagesDir}/index.html"
     fi
 fi
 
