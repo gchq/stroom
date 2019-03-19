@@ -70,7 +70,7 @@ public class StroomZipRepository {
     /**
      * Name of the repository while open
      */
-    private final Path baseLockDir;
+    private Path currentDir;
 
     /**
      * Final name once finished (may be null)
@@ -122,19 +122,19 @@ public class StroomZipRepository {
 
         this.lockDeleteAgeMs = lockDeleteAgeMs;
         if (lock) {
-            baseLockDir = Paths.get(dir + LOCK_EXTENSION);
+            currentDir = Paths.get(dir + LOCK_EXTENSION);
             baseResultantDir = Paths.get(dir);
             if (Files.isDirectory(baseResultantDir)) {
                 throw new RuntimeException("Rolled directory already exists " + baseResultantDir);
             }
         } else {
-            baseLockDir = Paths.get(dir);
+            currentDir = Paths.get(dir);
         }
 
         // Create the root directory
-        if (!Files.isDirectory(baseLockDir)) {
+        if (!Files.isDirectory(currentDir)) {
             try {
-                Files.createDirectories(baseLockDir);
+                Files.createDirectories(currentDir);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -147,7 +147,7 @@ public class StroomZipRepository {
             fileCount.set(max);
         });
 
-        LOGGER.debug("() - Opened REPO {} lastId = {}", baseLockDir, fileCount.get());
+        LOGGER.debug("() - Opened REPO {} lastId = {}", currentDir, fileCount.get());
     }
 
     /**
@@ -268,7 +268,7 @@ public class StroomZipRepository {
         if (baseResultantDir != null) {
             return baseResultantDir;
         }
-        return baseLockDir;
+        return currentDir;
     }
 
     synchronized void finish() {
@@ -289,7 +289,7 @@ public class StroomZipRepository {
         }
         final String filename = StroomFileNameUtil.constructFilename(fileCount.incrementAndGet(), repositoryFormat,
                 metaMap, ZIP_EXTENSION);
-        final Path file = baseLockDir.resolve(filename);
+        final Path file = currentDir.resolve(filename);
 
 
         StroomZipOutputStreamImpl outputStream;
@@ -352,8 +352,8 @@ public class StroomZipRepository {
     }
 
     void clean() {
-        LOGGER.info("clean() " + baseLockDir);
-        clean(baseLockDir);
+        LOGGER.info("clean() " + currentDir);
+        clean(currentDir);
     }
 
     private void clean(final Path path) {
@@ -419,17 +419,18 @@ public class StroomZipRepository {
     private void removeLock() {
         if (baseResultantDir != null) {
             try {
-                Files.move(baseLockDir, baseResultantDir);
+                Files.move(currentDir, baseResultantDir);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
+            currentDir = baseResultantDir;
             baseResultantDir = null;
         }
     }
 
     boolean deleteIfEmpty() {
-        if (deleteEmptyDir(baseLockDir)) {
-            LOGGER.debug("deleteIfEmpty() - Removed " + baseLockDir);
+        if (deleteEmptyDir(currentDir)) {
+            LOGGER.debug("deleteIfEmpty() - Removed " + currentDir);
 
             return baseResultantDir == null || deleteEmptyDir(baseResultantDir);
         }

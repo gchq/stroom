@@ -135,7 +135,7 @@ public class ProxyRepositoryManager {
                                 long millis = -1;
                                 try {
                                     // Is this directory name an ISO 8601 compliant date?
-                                    millis = DateUtil.parseNormalDateTimeString(baseName);
+                                    millis = DateUtil.parseFileDateTimeString(baseName);
                                 } catch (final Exception e) {
                                     LOGGER.warn("Failed to parse directory that looked like it should be rolled repository: " + file);
                                 }

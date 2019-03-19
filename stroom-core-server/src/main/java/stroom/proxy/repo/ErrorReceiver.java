@@ -1,4 +1,4 @@
-package stroom.streamtask.server;
+package stroom.proxy.repo;
 
 import java.nio.file.Path;
 
