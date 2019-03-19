@@ -18,18 +18,16 @@ package stroom.node.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.Sort;
-import stroom.util.shared.Sort.Direction;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
-import stroom.core.persist.DataSourceProvider;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.Sort;
+import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,17 +35,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class DBTableServiceImpl implements DBTableService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBTableServiceImpl.class);
 
-    private final Provider<DataSourceProvider> dataSourceProviderProvider;
+    private final Set<DataSource> dataSources;
     private final Security security;
 
     @Inject
-    DBTableServiceImpl(final Provider<DataSourceProvider> dataSourceProviderProvider,
+    DBTableServiceImpl(final Set<DataSource> dataSources,
                        final Security security) {
-        this.dataSourceProviderProvider = dataSourceProviderProvider;
+        this.dataSources = dataSources;
         this.security = security;
     }
 
@@ -56,14 +55,8 @@ public class DBTableServiceImpl implements DBTableService {
         return security.secureResult(PermissionNames.MANAGE_DB_PERMISSION, () -> {
             final List<DBTableStatus> rtnList = new ArrayList<>();
 
-            if (dataSourceProviderProvider != null) {
-                final DataSourceProvider dataSourceProvider = dataSourceProviderProvider.get();
-                // TODO : @66 Reinstate DB table status for all DBs
-
-//                final Object statisticsDataSource = beanStore.getInstance("statisticsDataSource");
-
-                addTableStatus(dataSourceProvider, rtnList);
-//                addTableStatus(statisticsDataSource, rtnList);
+            if (dataSources != null) {
+                dataSources.forEach(dataSource -> addTableStatus(dataSource, rtnList));
             }
 
             rtnList.sort((o1, o2) -> {
@@ -106,9 +99,7 @@ public class DBTableServiceImpl implements DBTableService {
         });
     }
 
-
-    private void addTableStatus(final DataSourceProvider dataSourceProvider, final List<DBTableStatus> rtnList) {
-        final DataSource dataSource = dataSourceProvider.get();
+    private void addTableStatus(final DataSource dataSource, final List<DBTableStatus> rtnList) {
         try (final Connection connection = dataSource.getConnection()) {
             connection.setReadOnly(true);
 

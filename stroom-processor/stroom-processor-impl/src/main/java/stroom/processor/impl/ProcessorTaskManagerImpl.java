@@ -19,6 +19,9 @@ package stroom.processor.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.index.EventRef;
+import stroom.index.EventRefs;
+import stroom.index.EventSearch;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;
@@ -31,17 +34,14 @@ import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.Limits;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
-import stroom.core.search.EventRef;
-import stroom.core.search.EventRefs;
-import stroom.core.search.EventSearchTask;
 import stroom.security.Security;
 import stroom.security.util.UserTokenUtil;
 import stroom.statistics.api.InternalStatisticEvent;
@@ -95,6 +95,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private final ProcessorConfig processorConfig;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
     private final MetaService metaService;
+    private final EventSearch eventSearch;
     private final Security security;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
@@ -138,14 +139,15 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
     @Inject
     ProcessorTaskManagerImpl(final ProcessorFilterService processorFilterService,
-                                   final ProcessorFilterTrackerDao processorFilterTrackerDao,
-                                   final ProcessorTaskDao processorTaskDao,
-                                   final TaskManager taskManager,
-                                   final NodeInfo nodeInfo,
-                                   final ProcessorConfig processorConfig,
-                                   final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
-                                   final MetaService metaService,
-                                   final Security security) {
+                             final ProcessorFilterTrackerDao processorFilterTrackerDao,
+                             final ProcessorTaskDao processorTaskDao,
+                             final TaskManager taskManager,
+                             final NodeInfo nodeInfo,
+                             final ProcessorConfig processorConfig,
+                             final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
+                             final MetaService metaService,
+                             final EventSearch eventSearch,
+                             final Security security) {
 
         this.processorFilterService = processorFilterService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
@@ -155,6 +157,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         this.processorConfig = processorConfig;
         this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
         this.metaService = metaService;
+        this.eventSearch = eventSearch;
         this.security = security;
     }
 
@@ -749,52 +752,63 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         tracker.setStatus("Searching...");
         final ProcessorFilterTracker updatedTracker = processorFilterTrackerDao.update(tracker);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.create(filter.getUpdateUser(), null), query,
-                minEvent, maxEvent, maxStreams, maxEvents, maxEventsPerStream, POLL_INTERVAL_MS);
         final Long maxMetaId = metaService.getMaxId();
-        taskManager.execAsync(eventSearchTask, new TaskCallbackAdaptor<>() {
-            @Override
-            public void onSuccess(final EventRefs result) {
-                int resultSize = 0;
-                boolean reachedLimit = false;
-                if (result != null) {
-                    resultSize = result.size();
-                    reachedLimit = result.isReachedLimit();
-                }
-                final boolean exhausted = resultSize == 0 || reachedLimit;
+        eventSearch.search(filter.getUpdateUser(),
+                query,
+                minEvent,
+                maxEvent,
+                maxStreams,
+                maxEvents,
+                maxEventsPerStream,
+                POLL_INTERVAL_MS,
+                eventRefs -> createTasksFromEventRefs(filter, streamQueryTime, nodeName, query, requiredTasks, queue, maxMetaId, updatedTracker, eventRefs));
+    }
 
-                // Update the tracker status message.
-                ProcessorFilterTracker tracker = updatedTracker;
-                tracker.setStatus("Creating...");
-                tracker = processorFilterTrackerDao.update(tracker);
+    private void createTasksFromEventRefs(final ProcessorFilter filter,
+                                          final long streamQueryTime,
+                                          final String nodeName,
+                                          final Query query,
+                                          final int requiredTasks,
+                                          final StreamTaskQueue queue,
+                                          final Long maxMetaId,
+                                          final ProcessorFilterTracker updatedTracker,
+                                          final EventRefs eventRefs) {
+        if (eventRefs == null) {
+            queue.setFilling(false);
+        } else {
 
-                // Create a task for each stream reference.
-                final Map<Meta, InclusiveRanges> map = createStreamMap(result);
-                processorTaskDao.createNewTasks(
-                        filter,
-                        tracker,
-                        streamQueryTime,
-                        map,
-                        nodeName,
-                        maxMetaId,
-                        reachedLimit,
-                        createdTasks -> {
-                            // Transfer the newly created (and available) tasks to the
-                            // queue.
-                            createdTasks.getAvailableTaskList().forEach(queue::add);
-                            LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}", createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString());
+            int resultSize;
+            boolean reachedLimit;
+            resultSize = eventRefs.size();
+            reachedLimit = eventRefs.isReachedLimit();
+            final boolean exhausted = resultSize == 0 || reachedLimit;
 
-                            exhaustedFilterMap.put(filter.getId(), exhausted);
+            // Update the tracker status message.
+            ProcessorFilterTracker tracker = updatedTracker;
+            tracker.setStatus("Creating...");
+            tracker = processorFilterTrackerDao.update(tracker);
 
-                            queue.setFilling(false);
-                        });
-            }
+            // Create a task for each stream reference.
+            final Map<Meta, InclusiveRanges> map = createStreamMap(eventRefs);
+            processorTaskDao.createNewTasks(
+                    filter,
+                    tracker,
+                    streamQueryTime,
+                    map,
+                    nodeName,
+                    maxMetaId,
+                    reachedLimit,
+                    createdTasks -> {
+                        // Transfer the newly created (and available) tasks to the
+                        // queue.
+                        createdTasks.getAvailableTaskList().forEach(queue::add);
+                        LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}", createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString());
 
-            @Override
-            public void onFailure(final Throwable t) {
-                queue.setFilling(false);
-            }
-        });
+                        exhaustedFilterMap.put(filter.getId(), exhausted);
+
+                        queue.setFilling(false);
+                    });
+        }
     }
 
     private void createTasksFromCriteria(final ProcessorFilter filter,

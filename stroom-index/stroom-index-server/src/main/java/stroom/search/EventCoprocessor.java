@@ -16,17 +16,17 @@
 
 package stroom.search;
 
-import stroom.core.search.EventRef;
-import stroom.core.search.EventRefs;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
+import stroom.index.EventRef;
+import stroom.index.EventRefs;
 import stroom.index.shared.IndexConstants;
 import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.Payload;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-public class EventCoprocessor implements Coprocessor {
+class EventCoprocessor implements Coprocessor {
     private final EventRef minEvent;
     private final long maxStreams;
     private final long maxEvents;
@@ -36,8 +36,8 @@ public class EventCoprocessor implements Coprocessor {
     private volatile EventRef maxEvent;
     private volatile EventRefs eventRefs;
 
-    public EventCoprocessor(final EventCoprocessorSettings settings,
-                            final FieldIndexMap fieldIndexMap) {
+    EventCoprocessor(final EventCoprocessorSettings settings,
+                     final FieldIndexMap fieldIndexMap) {
         this.minEvent = settings.getMinEvent();
         this.maxEvent = settings.getMaxEvent();
         this.maxStreams = settings.getMaxStreams();

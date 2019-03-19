@@ -2,7 +2,6 @@ ext.moduleName = 'stroom.storedquery-api'
 
 dependencies {
 //    compile project(':stroom-cache:stroom-cache-api')
-//    compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
 //    compile project(':stroom-dashboard:stroom-storedquery-api')
 //    compile project(':stroom-dictionary:stroom-dictionary-api')

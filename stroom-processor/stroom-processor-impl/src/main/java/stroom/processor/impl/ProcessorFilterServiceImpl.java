@@ -16,7 +16,6 @@
 
 package stroom.processor.impl;
 
-
 import stroom.db.util.AuditUtil;
 import stroom.docref.DocRef;
 import stroom.processor.api.ProcessorFilterService;

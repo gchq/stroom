@@ -40,7 +40,6 @@ import stroom.core.servlet.DynamicCSSServlet;
 import stroom.core.servlet.EchoServlet;
 import stroom.core.servlet.HttpServletRequestFilter;
 import stroom.core.servlet.RejectPostFilter;
-import stroom.core.servlet.SessionListListener;
 import stroom.core.servlet.SessionListServlet;
 import stroom.core.servlet.StatusServlet;
 import stroom.core.servlet.StroomServlet;
@@ -54,6 +53,7 @@ import stroom.script.ScriptServlet;
 import stroom.security.impl.SecurityFilter;
 import stroom.servicediscovery.api.ResourcePaths;
 
+import javax.inject.Inject;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import java.util.EnumSet;
@@ -62,6 +62,14 @@ public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     private static final String ROOT_PATH = "/stroom";
+
+    @Inject
+    private HealthChecks healthChecks;
+    @Inject
+    private SessionListeners sessionListeners;
+    @Inject
+    private RestResources restResources;
+
 //
 //    private static String configPath;
 
@@ -204,12 +212,13 @@ public class App extends Application<Config> {
 
         final AppModule appModule = new AppModule(configuration, environment);
         final Injector injector = Guice.createInjector(appModule);
+        injector.injectMembers(this);
 
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
         // Add health checks
         final HealthCheckRegistry healthCheckRegistry = environment.healthChecks();
-        injector.getInstance(HealthChecks.class).register();
+        healthChecks.register();
 
         // Add filters
         GuiceUtil.addFilter(servletContextHandler, injector, HttpServletRequestFilter.class, "/*");
@@ -235,10 +244,10 @@ public class App extends Application<Config> {
         GuiceUtil.addServlet(servletContextHandler, injector, ReceiveDataServlet.class, ResourcePaths.ROOT_PATH + "/datafeed/*", healthCheckRegistry);
 
         // Add session listeners.
-        GuiceUtil.addServletListener(environment.servlets(), injector, SessionListListener.class);
+        sessionListeners.register();
 
         // Add all injectable rest resources.
-        injector.getInstance(RestResources.class).register(environment.jersey());
+        restResources.register();
 
         // Map exceptions to helpful HTTP responses
         environment.jersey().register(PermissionExceptionMapper.class);

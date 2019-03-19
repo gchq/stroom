@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.core.search;
+package stroom.search;
 
+import stroom.index.EventRef;
+import stroom.index.EventRefs;
 import stroom.query.api.v2.Query;
 
 public class EventSearchTask extends AbstractSearchTask<EventRefs> {
@@ -27,7 +29,7 @@ public class EventSearchTask extends AbstractSearchTask<EventRefs> {
 
     private final int resultSendFrequency;
 
-    public EventSearchTask(final String userToken,
+    EventSearchTask(final String userToken,
                            final Query query, final EventRef minEvent, final EventRef maxEvent, final long maxStreams,
                            final long maxEvents, final long maxEventsPerStream, final int resultSendFrequency) {
         super(null, userToken, query);

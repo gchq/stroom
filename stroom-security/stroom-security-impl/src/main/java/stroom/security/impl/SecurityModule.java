@@ -38,6 +38,8 @@ import stroom.util.HasHealthCheck;
 import stroom.util.RestResource;
 import stroom.util.shared.Clearable;
 
+import javax.servlet.http.HttpSessionListener;
+
 public class SecurityModule extends AbstractModule {
     @Override
     protected void configure() {
@@ -53,6 +55,9 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(UserAppPermissionsCache.class)
                 .addBinding(UserGroupsCache.class)
                 .addBinding(UserCache.class);
+
+        GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
+                .addBinding(SessionMap.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(ChangeDocumentPermissionsAction.class, ChangeDocumentPermissionsHandler.class)

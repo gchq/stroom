@@ -18,8 +18,7 @@ package stroom.search;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.core.search.EventRefs;
-import stroom.core.search.EventSearchTask;
+import stroom.index.EventRefs;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CompletionState;

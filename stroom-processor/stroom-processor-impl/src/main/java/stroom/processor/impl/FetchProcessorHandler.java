@@ -29,8 +29,8 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.FetchProcessorAction;
-import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.FindProcessorCriteria;
+import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterRow;
@@ -53,7 +53,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 
 public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, ResultList<SharedObject>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(FetchProcessorHandler.class);

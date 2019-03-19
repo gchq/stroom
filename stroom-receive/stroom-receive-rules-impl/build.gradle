@@ -2,7 +2,6 @@ ext.moduleName = 'stroom.receive.rules.impl'
 
 dependencies {
     compile project(':stroom-core-shared')
-    compile project(':stroom-core-server')
     compile project(':stroom-dictionary:stroom-dictionary-api')
     compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-explorer:stroom-explorer-api')

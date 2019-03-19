@@ -3,7 +3,6 @@ ext.moduleName = 'stroom.node.impl.mock'
 dependencies {
     compile project(':stroom-cluster:stroom-cluster-task-api')
     compile project(':stroom-config:stroom-config-common')
-    compile project(':stroom-core-server') // TODO : @66 remove
     compile project(':stroom-core-shared')
     compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-node:stroom-node-api')

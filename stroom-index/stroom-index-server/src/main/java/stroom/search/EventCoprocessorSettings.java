@@ -16,11 +16,11 @@
 
 package stroom.search;
 
-import stroom.core.search.EventRef;
 import stroom.docref.DocRef;
+import stroom.index.EventRef;
 import stroom.query.common.v2.CoprocessorSettings;
 
-public class EventCoprocessorSettings implements CoprocessorSettings {
+class EventCoprocessorSettings implements CoprocessorSettings {
     private static final long serialVersionUID = -4916050910828000494L;
 
     private EventRef minEvent;
@@ -29,11 +29,11 @@ public class EventCoprocessorSettings implements CoprocessorSettings {
     private long maxEvents;
     private long maxEventsPerStream;
 
-    public EventCoprocessorSettings() {
+    EventCoprocessorSettings() {
     }
 
-    public EventCoprocessorSettings(final EventRef minEvent, final EventRef maxEvent, final long maxStreams,
-                                    final long maxEvents, final long maxEventsPerStream) {
+    EventCoprocessorSettings(final EventRef minEvent, final EventRef maxEvent, final long maxStreams,
+                             final long maxEvents, final long maxEventsPerStream) {
         this.minEvent = minEvent;
         this.maxEvent = maxEvent;
         this.maxStreams = maxStreams;
@@ -41,23 +41,23 @@ public class EventCoprocessorSettings implements CoprocessorSettings {
         this.maxEventsPerStream = maxEventsPerStream;
     }
 
-    public EventRef getMinEvent() {
+    EventRef getMinEvent() {
         return minEvent;
     }
 
-    public EventRef getMaxEvent() {
+    EventRef getMaxEvent() {
         return maxEvent;
     }
 
-    public long getMaxStreams() {
+    long getMaxStreams() {
         return maxStreams;
     }
 
-    public long getMaxEvents() {
+    long getMaxEvents() {
         return maxEvents;
     }
 
-    public long getMaxEventsPerStream() {
+    long getMaxEventsPerStream() {
         return maxEventsPerStream;
     }
 

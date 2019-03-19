@@ -17,7 +17,7 @@
 package stroom.search;
 
 import com.google.inject.AbstractModule;
-import stroom.core.search.EventSearchTask;
+import stroom.index.EventSearch;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.GuiceUtil;
 import stroom.util.shared.Clearable;
@@ -26,6 +26,8 @@ public class SearchModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new SearchElementModule());
+
+        bind(EventSearch.class).to(EventSearchImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(LuceneSearchResponseCreatorManager.class);
 

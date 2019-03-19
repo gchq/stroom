@@ -16,7 +16,7 @@
 
 package stroom.search;
 
-import stroom.core.search.EventRefs;
+import stroom.index.EventRefs;
 import stroom.query.common.v2.Payload;
 
 public class EventRefsPayload implements Payload {
@@ -27,11 +27,11 @@ public class EventRefsPayload implements Payload {
     public EventRefsPayload() {
     }
 
-    public EventRefsPayload(final EventRefs eventRefs) {
+    EventRefsPayload(final EventRefs eventRefs) {
         this.eventRefs = eventRefs;
     }
 
-    public EventRefs getEventRefs() {
+    EventRefs getEventRefs() {
         return eventRefs;
     }
 }

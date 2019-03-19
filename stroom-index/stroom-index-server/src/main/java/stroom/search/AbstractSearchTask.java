@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.core.search;
+package stroom.search;
 
 import stroom.query.api.v2.Query;
 import stroom.task.shared.Task;
 import stroom.task.api.ServerTask;
 
-public abstract class AbstractSearchTask<R> extends ServerTask<R> {
+abstract class AbstractSearchTask<R> extends ServerTask<R> {
     private final Query query;
 
-    public AbstractSearchTask(final Task<?> parentTask, final String userToken, final Query query) {
+    AbstractSearchTask(final Task<?> parentTask, final String userToken, final Query query) {
         super(null, userToken);
         this.query = query;
     }

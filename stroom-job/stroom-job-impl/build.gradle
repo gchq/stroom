@@ -3,8 +3,8 @@ ext.moduleName = 'stroom.job.impl'
 dependencies {
     compile project(':stroom-cluster:stroom-cluster-lock-api')
     compile project(':stroom-cluster:stroom-cluster-task-api')
-    compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
+    compile project(':stroom-event-logging:stroom-event-logging-api')
     compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-node:stroom-node-api')

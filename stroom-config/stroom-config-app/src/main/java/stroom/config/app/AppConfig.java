@@ -54,12 +54,12 @@ public class AppConfig implements IsConfig {
     private PropertyServiceConfig propertyServiceConfig;
     private ProxyAggregationConfig proxyAggregationConfig;
     private ReceiveDataConfig receiveDataConfig;
-    private StoredQueryHistoryConfig storedQueryHistoryConfig;
     private SearchConfig searchConfig;
     private SecurityConfig securityConfig;
     private SecurityDbConfig securityDbConfig;
     private ServiceDiscoveryConfig serviceDiscoveryConfig;
     private StatisticsConfig statisticsConfig;
+    private StoredQueryHistoryConfig storedQueryHistoryConfig;
     private UiConfig uiConfig;
     private VolumeConfig volumeConfig;
 
@@ -77,19 +77,19 @@ public class AppConfig implements IsConfig {
         this.indexDbConfig = new IndexDbConfig();
         this.jobSystemConfig = new JobSystemConfig();
         this.lifecycleConfig = new LifecycleConfig();
-        this.pipelineConfig = new PipelineConfig();
         this.nodeConfig = new NodeConfig();
         this.pathConfig = new PathConfig();
+        this.pipelineConfig = new PipelineConfig();
         this.processorConfig = new ProcessorConfig();
         this.propertyServiceConfig = new PropertyServiceConfig();
         this.proxyAggregationConfig = new ProxyAggregationConfig();
         this.receiveDataConfig = new ReceiveDataConfig();
-        this.storedQueryHistoryConfig = new StoredQueryHistoryConfig();
         this.searchConfig = new SearchConfig();
         this.securityConfig = new SecurityConfig();
         this.securityDbConfig = new SecurityDbConfig();
         this.serviceDiscoveryConfig = new ServiceDiscoveryConfig();
         this.statisticsConfig = new StatisticsConfig();
+        this.storedQueryHistoryConfig = new StoredQueryHistoryConfig();
         this.uiConfig = new UiConfig();
         this.volumeConfig = new VolumeConfig();
     }
@@ -108,19 +108,19 @@ public class AppConfig implements IsConfig {
               final IndexDbConfig indexDbConfig,
               final JobSystemConfig jobSystemConfig,
               final LifecycleConfig lifecycleConfig,
-              final PipelineConfig pipelineConfig,
               final NodeConfig nodeConfig,
-              final ProcessorConfig processorConfig,
               final PathConfig pathConfig,
+              final PipelineConfig pipelineConfig,
+              final ProcessorConfig processorConfig,
               final PropertyServiceConfig propertyServiceConfig,
               final ProxyAggregationConfig proxyAggregationConfig,
               final ReceiveDataConfig receiveDataConfig,
-              final StoredQueryHistoryConfig storedQueryHistoryConfig,
               final SearchConfig searchConfig,
               final SecurityConfig securityConfig,
               final SecurityDbConfig securityDbConfig,
               final ServiceDiscoveryConfig serviceDiscoveryConfig,
               final StatisticsConfig statisticsConfig,
+              final StoredQueryHistoryConfig storedQueryHistoryConfig,
               final UiConfig uiConfig,
               final VolumeConfig volumeConfig) {
         this.activityConfig = activityConfig;
@@ -136,19 +136,19 @@ public class AppConfig implements IsConfig {
         this.indexDbConfig = indexDbConfig;
         this.jobSystemConfig = jobSystemConfig;
         this.lifecycleConfig = lifecycleConfig;
-        this.pipelineConfig = pipelineConfig;
         this.nodeConfig = nodeConfig;
         this.pathConfig = pathConfig;
+        this.pipelineConfig = pipelineConfig;
         this.processorConfig = processorConfig;
         this.propertyServiceConfig = propertyServiceConfig;
         this.proxyAggregationConfig = proxyAggregationConfig;
         this.receiveDataConfig = receiveDataConfig;
-        this.storedQueryHistoryConfig = storedQueryHistoryConfig;
         this.searchConfig = searchConfig;
         this.securityConfig = securityConfig;
         this.securityDbConfig = securityDbConfig;
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         this.statisticsConfig = statisticsConfig;
+        this.storedQueryHistoryConfig = storedQueryHistoryConfig;
         this.uiConfig = uiConfig;
         this.volumeConfig = volumeConfig;
     }

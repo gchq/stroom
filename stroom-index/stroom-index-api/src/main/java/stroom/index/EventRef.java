@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.core.search;
+package stroom.index;
 
 import java.io.Serializable;
 

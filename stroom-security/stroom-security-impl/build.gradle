@@ -3,7 +3,6 @@ ext.moduleName = 'stroom.security.impl'
 dependencies {
     compile project(':stroom-cache:stroom-cache-api')
     compile project(':stroom-config:stroom-config-common')
-    compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
