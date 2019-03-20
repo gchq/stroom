@@ -24,6 +24,8 @@ import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterServiceBinder;
 import stroom.entity.shared.EntityEvent;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.guice.ResourcePaths;
+import stroom.util.guice.ServletBinder;
 
 public class ClusterModule extends AbstractModule {
     @Override
@@ -31,6 +33,9 @@ public class ClusterModule extends AbstractModule {
         bind(ClusterCallServiceLocal.class).to(ClusterCallServiceLocalImpl.class);
         bind(ClusterCallServiceRemote.class).to(ClusterCallServiceRemoteImpl.class);
         bind(ClusterNodeManager.class).to(ClusterNodeManagerImpl.class);
+
+        ServletBinder.create(binder())
+                .bind(ResourcePaths.ROOT_PATH + "/clustercall.rpc", ClusterCallServiceRPC.class);
 
         ClusterServiceBinder.create(binder())
                 .bind(ClusterNodeManager.SERVICE_NAME, ClusterNodeManagerImpl.class);

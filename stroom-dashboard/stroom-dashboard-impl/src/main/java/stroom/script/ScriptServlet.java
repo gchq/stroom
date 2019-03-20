@@ -37,7 +37,7 @@ import java.util.Map;
  * SERVLET that reports status of Stroom for scripting purposes.
  * </p>
  */
-public class ScriptServlet extends HttpServlet {
+class ScriptServlet extends HttpServlet {
     private static final long serialVersionUID = 2912973031600581055L;
 
     private final ScriptStore scriptStore;

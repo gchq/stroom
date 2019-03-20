@@ -1,4 +1,4 @@
-package stroom.proxy.app.servlet;
+package stroom.proxy.app;
 
 import com.codahale.metrics.health.HealthCheck;
 import io.dropwizard.lifecycle.Managed;
@@ -12,10 +12,10 @@ import stroom.importexport.api.DocumentData;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.proxy.app.guice.ContentSyncConfig;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LogUtil;
 
+import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -27,6 +27,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -37,12 +38,13 @@ public class ContentSyncService implements Managed, HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentSyncService.class);
 
     private final ContentSyncConfig contentSyncConfig;
-    private final Map<String, ImportExportActionHandler> importExportActionHandlers;
+    private final Set<ImportExportActionHandler> importExportActionHandlers;
 
     private volatile ScheduledExecutorService scheduledExecutorService;
 
+    @Inject
     public ContentSyncService(final ContentSyncConfig contentSyncConfig,
-                              final Map<String, ImportExportActionHandler> importExportActionHandlers) {
+                              final Set<ImportExportActionHandler> importExportActionHandlers) {
         this.contentSyncConfig = contentSyncConfig;
         this.importExportActionHandlers = importExportActionHandlers;
         contentSyncConfig.validateConfiguration();
@@ -50,22 +52,27 @@ public class ContentSyncService implements Managed, HasHealthCheck {
 
     @Override
     public synchronized void start() {
-        if (scheduledExecutorService == null) {
-            scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-            scheduledExecutorService.scheduleWithFixedDelay(this::sync, 0, contentSyncConfig.getSyncFrequency(), TimeUnit.MILLISECONDS);
+        if (contentSyncConfig.isContentSyncEnabled()) {
+            if (scheduledExecutorService == null) {
+                scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+                scheduledExecutorService.scheduleWithFixedDelay(this::sync, 0, contentSyncConfig.getSyncFrequency(), TimeUnit.MILLISECONDS);
+            }
         }
     }
 
     @Override
     public synchronized void stop() {
-        if (scheduledExecutorService != null) {
-            scheduledExecutorService.shutdown();
-            scheduledExecutorService = null;
+        if (contentSyncConfig.isContentSyncEnabled()) {
+            if (scheduledExecutorService != null) {
+                scheduledExecutorService.shutdown();
+                scheduledExecutorService = null;
+            }
         }
     }
 
-    public void sync() {
-        importExportActionHandlers.forEach((type, importExportActionHandler) -> {
+    private void sync() {
+        importExportActionHandlers.forEach(importExportActionHandler -> {
+            final String type = importExportActionHandler.getType();
             try {
                 final String url = contentSyncConfig.getUpstreamUrl().get(type);
                 if (url != null) {

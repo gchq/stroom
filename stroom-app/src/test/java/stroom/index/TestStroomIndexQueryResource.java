@@ -23,7 +23,7 @@ import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.servicediscovery.api.RegisteredService;
-import stroom.servicediscovery.api.ResourcePaths;
+import stroom.util.guice.ResourcePaths;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;

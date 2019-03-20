@@ -17,6 +17,7 @@ import stroom.dashboard.shared.UpdateStoredQueryAction;
 import stroom.db.util.HikariUtil;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -38,6 +39,10 @@ public class StoredQueryDbModule extends AbstractModule {
                 .bind(DeleteStoredQueryAction.class, DeleteStoredQueryHandler.class)
                 .bind(FetchStoredQueryAction.class, FetchStoredQueryHandler.class)
                 .bind(FindStoredQueryAction.class, FindStoredQueryHandler.class);
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ConnectionProvider.class);
     }
 
     @Provides

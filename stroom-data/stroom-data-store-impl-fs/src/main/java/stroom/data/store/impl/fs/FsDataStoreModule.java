@@ -29,7 +29,7 @@ import stroom.data.store.api.Store;
 import stroom.data.store.impl.DataStoreMaintenanceService;
 import stroom.data.store.impl.SteamStoreStreamCloserImpl;
 import stroom.db.util.HikariUtil;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.io.StreamCloser;
 import stroom.util.shared.Clearable;
 
@@ -53,6 +53,10 @@ public class FsDataStoreModule extends AbstractModule {
         bind(FsVolumeService.class).to(FsVolumeServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(FsVolumeServiceImpl.class);
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ConnectionProvider.class);
     }
 
     @Provides

@@ -25,7 +25,7 @@ import stroom.node.api.NodeService;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.UpdateNodeAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 public class NodeModule extends AbstractModule {

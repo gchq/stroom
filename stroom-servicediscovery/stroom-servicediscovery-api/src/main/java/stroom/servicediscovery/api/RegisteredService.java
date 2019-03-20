@@ -1,6 +1,7 @@
 package stroom.servicediscovery.api;
 
 import com.google.common.base.Preconditions;
+import stroom.util.guice.ResourcePaths;
 
 /**
  * Defines the versioned services that stroom will present externally

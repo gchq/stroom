@@ -44,7 +44,7 @@ logging:
 
   appenders:
   - type: console
-    logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger{5} - %X{code} %msg %n"
+    logFormat: "%highlight(%-5level) [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%thread] %-20logger{0} %gray(%msg) %n"
     timeZone: UTC
   - type: file
     currentLogFilename: ${HOME}/.stroom/logs/app.log
@@ -213,9 +213,6 @@ appConfig:
     bufferSize: 8192
     unknownClassification: "UNKNOWN CLASSIFICATION"
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
-  queryHistory:
-    itemsRetention: 100
-    daysRetention: 365
   search:
     maxStoredDataQueueSize: 1000
     maxBooleanClauseCount: 1024
@@ -361,6 +358,9 @@ appConfig:
       - type: "StroomStatsStore"
         uuid: "bdd933a4-4309-47fd-98f6-1bc2eb555f20"
         name: "Heap Histogram Instances"
+  queryHistory:
+    itemsRetention: 100
+    daysRetention: 365
   ui:
     welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
       \ systems.</p>"

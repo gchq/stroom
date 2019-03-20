@@ -1,4 +1,4 @@
-package stroom.app;
+package stroom.dropwizard.common;
 
 import stroom.util.shared.PermissionException;
 

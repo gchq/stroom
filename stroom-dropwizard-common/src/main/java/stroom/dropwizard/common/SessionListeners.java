@@ -1,4 +1,4 @@
-package stroom.app;
+package stroom.dropwizard.common;
 
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
@@ -8,7 +8,7 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpSessionListener;
 import java.util.Set;
 
-class SessionListeners {
+public class SessionListeners {
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionListeners.class);
 
     private final Environment environment;
@@ -22,10 +22,10 @@ class SessionListeners {
 
     public void register() {
         LOGGER.info("Adding session listeners:");
-        for (HttpSessionListener sessionListener : sessionListeners) {
+        sessionListeners.forEach(sessionListener -> {
             final String name = sessionListener.getClass().getName();
             LOGGER.info("\t{}", name);
             environment.servlets().addServletListeners(sessionListener);
-        }
+        });
     }
 }

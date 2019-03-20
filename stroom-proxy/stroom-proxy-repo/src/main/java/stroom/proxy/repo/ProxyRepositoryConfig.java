@@ -1,15 +1,37 @@
 package stroom.proxy.repo;
 
-public interface ProxyRepositoryConfig {
-    /**
-     * @return True if the proxy should store received data in its repository
-     */
-    boolean isStoringEnabled();
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import javax.inject.Singleton;
+
+@Singleton
+public class ProxyRepositoryConfig {
+    private boolean isStoringEnabled = false;
+    private String repoDir;
+    private String format = "${pathId}/${id}";
+    private String rollCron;
+
+    @JsonProperty
+    public boolean isStoringEnabled() {
+        return isStoringEnabled;
+    }
+
+    public void setStoringEnabled(final boolean storingEnabled) {
+        isStoringEnabled = storingEnabled;
+    }
 
     /**
      * Optional Repository DIR. If set any incoming request will be written to the file system.
      */
-    String getDir();
+    @JsonProperty
+    public String getDir() {
+        return repoDir;
+    }
+
+    @JsonProperty
+    public void setRepoDir(final String repoDir) {
+        this.repoDir = repoDir;
+    }
 
     /**
      * Optionally supply a template for naming the files in the repository. This can be specified using multiple replacement variables.
@@ -24,10 +46,26 @@ public interface ProxyRepositoryConfig {
      * Replacement variables that cannot be resolved will be output as '_'.
      * Please ensure that all templates include the '${id}' replacement variable at the start of the file name, failure to do this will result in an invalid repository.
      */
-    String getFormat();
+    @JsonProperty
+    public String getFormat() {
+        return format;
+    }
+
+    @JsonProperty
+    public void setFormat(final String format) {
+        this.format = format;
+    }
 
     /**
      * Interval to roll any writing repositories.
      */
-    String getRollCron();
+    @JsonProperty
+    public String getRollCron() {
+        return rollCron;
+    }
+
+    @JsonProperty
+    public void setRollCron(final String rollCron) {
+        this.rollCron = rollCron;
+    }
 }

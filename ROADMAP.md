@@ -52,7 +52,7 @@ New pipeline elements for writing XML or text data to a Kafka topic. This provid
 Reference data uses a memory mapped disk based store rather than direct memory to reduce the memory overhead associated with storing reference data. Reference data is also enhanced to cope with changes (additions and removals) of state information rather than always relying on complete snapshots.
 
 ## Modularisation
-Separation of Stroom components into discreet modules that have clear APIs and separate persistence where requried to reduce coupling.
+Separation of Stroom components into discreet modules that have clear APIs and separate persistence where required to reduce coupling.
 
 ## Modernisation of libraries
 Changing Stroom libraries to replace Spring with Guice and Hibernate with JOOQ.

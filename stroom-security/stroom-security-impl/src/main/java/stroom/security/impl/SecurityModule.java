@@ -33,14 +33,18 @@ import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.FetchUserRefAction;
 import stroom.security.shared.LogoutAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.GuiceUtil;
-import stroom.util.HasHealthCheck;
 import stroom.util.RestResource;
+import stroom.util.guice.FilterBinder;
+import stroom.util.guice.FilterInfo;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HealthCheckBinder;
 import stroom.util.shared.Clearable;
 
 import javax.servlet.http.HttpSessionListener;
 
 public class SecurityModule extends AbstractModule {
+    private static final String MATCH_ALL_PATHS = "/*";
+
     @Override
     protected void configure() {
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
@@ -48,6 +52,10 @@ public class SecurityModule extends AbstractModule {
         bind(AuthorisationService.class).to(AuthorisationServiceImpl.class);
         bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
+
+        FilterBinder.create(binder())
+                .bind(new FilterInfo(SecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
+                        SecurityFilter.class);
 
         // Provide object info to the logging service.
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
@@ -75,8 +83,8 @@ public class SecurityModule extends AbstractModule {
         entityEventHandlerBinder.addBinding().to(DocumentPermissionsCache.class);
         entityEventHandlerBinder.addBinding().to(UserGroupsCache.class);
 
-        final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
-        hasHealthCheckBinder.addBinding().to(JWTService.class);
+        HealthCheckBinder.create(binder())
+                .bind(JWTService.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(UserResourceImpl.class);

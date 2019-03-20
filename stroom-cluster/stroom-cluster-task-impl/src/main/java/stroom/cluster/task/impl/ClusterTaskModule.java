@@ -24,7 +24,7 @@ import stroom.cluster.task.api.ClusterResultCollectorCache;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.cluster.task.api.TerminateTaskClusterTask;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 public class ClusterTaskModule extends AbstractModule {

@@ -17,10 +17,15 @@
 package stroom.core.feed;
 
 import com.google.inject.AbstractModule;
+import stroom.util.guice.ResourcePaths;
+import stroom.util.guice.ServletBinder;
 
 public class RemoteFeedModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(RemoteFeedService.class).to(RemoteFeedServiceImpl.class);
+
+        ServletBinder.create(binder())
+                .bind(ResourcePaths.ROOT_PATH + "/remoting/remotefeedservice.rpc", RemoteFeedServiceRPC.class);
     }
 }

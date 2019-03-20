@@ -17,7 +17,7 @@
 package stroom.elastic.impl;
 
 import com.google.inject.AbstractModule;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 public class ElasticModule extends AbstractModule {

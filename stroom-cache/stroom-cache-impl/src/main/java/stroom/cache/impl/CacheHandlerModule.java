@@ -21,7 +21,7 @@ import stroom.cache.shared.CacheClearAction;
 import stroom.cache.shared.FetchCacheNodeRowAction;
 import stroom.cache.shared.FetchCacheRowAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 public class CacheHandlerModule extends AbstractModule {

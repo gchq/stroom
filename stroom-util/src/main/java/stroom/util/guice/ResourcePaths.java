@@ -1,4 +1,4 @@
-package stroom.servicediscovery.api;
+package stroom.util.guice;
 
 public interface ResourcePaths {
     String ROOT_PATH = "/stroom";

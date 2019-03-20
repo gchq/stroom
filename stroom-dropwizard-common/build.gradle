@@ -1,0 +1,11 @@
+ext.moduleName = 'stroom.dropwizard.common'
+
+dependencies {
+    compile project(':stroom-util')
+
+    compile(libs.dropwizard_core) {
+        exclude(group: "org.glassfish.web", module: "javax.el")
+    }
+    compile libs.jetty_servlet
+    compile libs.slf4j_api
+}

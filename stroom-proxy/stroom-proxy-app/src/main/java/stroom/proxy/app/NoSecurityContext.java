@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.guice;
+package stroom.proxy.app;
 
 import stroom.security.SecurityContext;
 

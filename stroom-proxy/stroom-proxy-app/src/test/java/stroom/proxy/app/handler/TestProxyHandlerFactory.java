@@ -2,7 +2,7 @@ package stroom.proxy.app.handler;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.proxy.repo.ProxyRepositoryConfigImpl;
+import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlerFactory;
@@ -60,7 +60,7 @@ class TestProxyHandlerFactory extends StroomUnitTest {
     private MasterStreamHandlerFactory getProxyHandlerFactory(final boolean isStoringEnabled,
                                                               final boolean isForwardingenabled) {
         final LogStreamConfig logRequestConfig = null;
-        final ProxyRepositoryConfigImpl proxyRepositoryConfig = new ProxyRepositoryConfigImpl();
+        final ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
         final ForwardStreamConfig forwardRequestConfig = new ForwardStreamConfig();
 
         proxyRepositoryConfig.setRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()));

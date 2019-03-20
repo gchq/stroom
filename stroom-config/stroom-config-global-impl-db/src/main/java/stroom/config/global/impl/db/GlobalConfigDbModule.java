@@ -11,6 +11,7 @@ import stroom.config.app.PropertyServiceConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
+import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -18,12 +19,17 @@ import javax.sql.DataSource;
 
 public class GlobalConfigDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigDbModule.class);
+    private static final String MODULE = "stroom-config";
     private static final String FLYWAY_LOCATIONS = "stroom/config/global/impl/db/migration";
     private static final String FLYWAY_TABLE = "config_schema_history";
 
     @Override
     protected void configure() {
         bind(GlobalConfigService.class).to(GlobalConfigServiceImpl.class);
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ConnectionProvider.class);
     }
 
     @Provides
@@ -44,14 +50,14 @@ public class GlobalConfigDbModule extends AbstractModule {
                 .table(FLYWAY_TABLE)
                 .baselineOnMigrate(true)
                 .load();
-        LOGGER.info("Applying Flyway migrations to stroom-config in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
+        LOGGER.info("Applying Flyway migrations to {} in {} from {}", MODULE, FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating stroom-config database", e);
+            LOGGER.error("Error migrating {} database", MODULE, e);
             throw e;
         }
-        LOGGER.info("Completed Flyway migrations for stroom-config in {}", FLYWAY_TABLE);
+        LOGGER.info("Completed Flyway migrations for {} in {}", MODULE, FLYWAY_TABLE);
         return flyway;
     }
 

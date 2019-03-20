@@ -23,7 +23,7 @@ import stroom.index.service.IndexShardService;
 import stroom.index.service.IndexVolumeGroupService;
 import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.util.shared.Clearable;
 

@@ -22,6 +22,7 @@ import com.zaxxer.hikari.HikariConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
+import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -36,6 +37,10 @@ public class DataSourceModule extends AbstractModule {
     protected void configure() {
         // Force creation of connection provider so that legacy migration code executes.
         bind(DataSource.class).toProvider(DataSourceProvider.class).asEagerSingleton();
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ConnectionProvider.class);
     }
 
     @Provides

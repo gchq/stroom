@@ -8,6 +8,7 @@ import stroom.security.util.UserTokenUtil;
 import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
 
+import javax.inject.Inject;
 import java.util.function.Consumer;
 
 class EventSearchImpl implements EventSearch {
@@ -15,6 +16,7 @@ class EventSearchImpl implements EventSearch {
 
     private final TaskManager taskManager;
 
+    @Inject
     public EventSearchImpl(final TaskManager taskManager) {
         this.taskManager = taskManager;
     }

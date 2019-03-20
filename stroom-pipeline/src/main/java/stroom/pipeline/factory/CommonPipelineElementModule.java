@@ -16,7 +16,7 @@
 
 package stroom.pipeline.factory;
 
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.RestResource;
 
 public class CommonPipelineElementModule extends PipelineElementModule {

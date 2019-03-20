@@ -18,7 +18,7 @@ package stroom.dictionary.impl;
 
 import com.google.inject.AbstractModule;
 import stroom.dictionary.api.DictionaryStore;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.RestResource;
 
 public class DictionaryModule extends AbstractModule {

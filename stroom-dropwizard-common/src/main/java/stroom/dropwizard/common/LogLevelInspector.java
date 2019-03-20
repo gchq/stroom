@@ -1,9 +1,11 @@
-package stroom.app;
+package stroom.dropwizard.common;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheck.Result;
 import org.slf4j.LoggerFactory;
+import stroom.util.HasHealthCheck;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -14,9 +16,9 @@ import java.util.stream.Collectors;
  * they are at run time. Log levels can be changed using 'httpie' like this:
  * http -f POST http://127.0.0.1:8080/admin/tasks/log-level logger=stroom.statistics.internal.MultiServiceInternalStatisticsReceiver level=TRACE
  */
-public class LogLevelInspector extends HealthCheck {
+public class LogLevelInspector implements HasHealthCheck {
     @Override
-    protected Result check() {
+    public Result getHealth() {
         LoggerContext loggerContext = ((LoggerContext) LoggerFactory.getILoggerFactory());
 
         if (loggerContext != null) {

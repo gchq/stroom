@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 public class MockProcessorModule extends AbstractModule {

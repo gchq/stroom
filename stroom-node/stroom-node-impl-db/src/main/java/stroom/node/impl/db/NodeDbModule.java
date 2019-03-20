@@ -11,6 +11,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
 import stroom.node.impl.NodeDao;
+import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -18,12 +19,17 @@ import javax.sql.DataSource;
 
 public class NodeDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeDbModule.class);
+    private static final String MODULE = "stroom-node";
     private static final String FLYWAY_LOCATIONS = "stroom/node/impl/db";
     private static final String FLYWAY_TABLE = "node_schema_history";
 
     @Override
     protected void configure() {
         bind(NodeDao.class).to(NodeDaoImpl.class);
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ConnectionProvider.class);
 
 //        bind(NodeDbService.class).to(NodeDbServiceImpl.class);
 //        bind(CurrentNodeDb.class).to(CurrentNodeDbImpl.class);
@@ -56,14 +62,14 @@ public class NodeDbModule extends AbstractModule {
                 .table(FLYWAY_TABLE)
                 .baselineOnMigrate(true)
                 .load();
-        LOGGER.info("Applying Flyway migrations to activity in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
+        LOGGER.info("Applying Flyway migrations to {} in {} from {}", MODULE, FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating activity database", e);
+            LOGGER.error("Error migrating {} database", MODULE, e);
             throw e;
         }
-        LOGGER.info("Completed Flyway migrations for activity in {}", FLYWAY_TABLE);
+        LOGGER.info("Completed Flyway migrations for {} in {}", MODULE, FLYWAY_TABLE);
         return flyway;
     }
 

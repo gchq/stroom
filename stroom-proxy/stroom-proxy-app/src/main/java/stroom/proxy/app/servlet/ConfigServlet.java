@@ -14,12 +14,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class ConfigServlet extends HttpServlet implements HasHealthCheck {
+    private static String PATH;
     private final String data;
 
-    public ConfigServlet(final String path) {
+    public ConfigServlet() {
         String data;
         try {
-            final byte[] bytes = Files.readAllBytes(Paths.get(path));
+            final byte[] bytes = Files.readAllBytes(Paths.get(PATH));
             data = new String(bytes, Charset.forName("UTF-8"));
         } catch (final IOException e) {
             data = "Unable to read config";
@@ -41,5 +42,9 @@ public class ConfigServlet extends HttpServlet implements HasHealthCheck {
                 .healthy()
                 .withDetail("path", super.getServletContext().getContextPath())
                 .build();
+    }
+
+    public static void setPath(final String PATH) {
+        ConfigServlet.PATH = PATH;
     }
 }

@@ -86,6 +86,9 @@ include 'stroom-docstore:stroom-docstore-impl-db'
 include 'stroom-docstore:stroom-docstore-impl-fs'
 include 'stroom-docstore:stroom-docstore-impl-memory'
 
+// Common dropwizard supporting code
+include 'stroom-dropwizard-common'
+
 // Data Meta projects
 include 'stroom-meta:stroom-meta-api'
 include 'stroom-meta:stroom-meta-impl-db'

@@ -164,9 +164,6 @@ feed:
   bufferSize: 8192
   unknownClassification: "UNKNOWN CLASSIFICATION"
   feedNamePattern: "^[A-Z0-9_-]{3,}$"
-queryHistory:
-  itemsRetention: 100
-  daysRetention: 365
 search:
   maxStoredDataQueueSize: 1000
   maxBooleanClauseCount: 1024
@@ -247,6 +244,9 @@ statistics:
     pipelineStreamProcessor: []
     streamTaskQueueSize: []
     volumes: []
+queryHistory:
+  itemsRetention: 100
+  daysRetention: 365
 ui:
   welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
     \ systems.</p>"

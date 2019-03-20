@@ -1,7 +1,6 @@
 package stroom.proxy.app;
 
 import io.dropwizard.Configuration;
-import stroom.proxy.app.guice.ProxyConfig;
 
 public class Config extends Configuration {
     private ProxyConfig proxyConfig;

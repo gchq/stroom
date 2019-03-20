@@ -16,8 +16,6 @@
 
 package stroom.proxy.app;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
@@ -27,49 +25,47 @@ import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.server.session.SessionHandler;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.api.DictionaryStore;
-import stroom.dictionary.impl.DictionaryResource;
-import stroom.dictionary.impl.DictionaryResource2;
-import stroom.dictionary.shared.DictionaryDoc;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.dropwizard.common.Filters;
+import stroom.dropwizard.common.HealthChecks;
+import stroom.dropwizard.common.ManagedServices;
+import stroom.dropwizard.common.PermissionExceptionMapper;
+import stroom.dropwizard.common.RestResources;
+import stroom.dropwizard.common.Servlets;
+import stroom.dropwizard.common.SessionListeners;
 import stroom.proxy.app.guice.ProxyModule;
 import stroom.proxy.app.servlet.ConfigServlet;
-import stroom.proxy.app.servlet.ContentSyncService;
-import stroom.proxy.app.servlet.ProxySecurityFilter;
-import stroom.proxy.app.servlet.ProxyStatusServlet;
-import stroom.proxy.app.servlet.ProxyWelcomeServlet;
-import stroom.proxy.repo.ProxyLifecycle;
-import stroom.receive.common.DebugServlet;
-import stroom.receive.common.ReceiveDataServlet;
-import stroom.receive.rules.impl.ReceiveDataRuleSetResource;
-import stroom.receive.rules.impl.ReceiveDataRuleSetResource2;
-import stroom.receive.rules.impl.ReceiveDataRuleSetService;
-import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.util.HealthCheckUtils;
+import stroom.util.guice.ResourcePaths;
 
+import javax.inject.Inject;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
 
 public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
-    private static String configPath;
+    @Inject
+    private HealthChecks healthChecks;
+    @Inject
+    private Filters filters;
+    @Inject
+    private Servlets servlets;
+    @Inject
+    private SessionListeners sessionListeners;
+    @Inject
+    private RestResources restResources;
+    @Inject
+    private ManagedServices managedServices;
 
     public static void main(final String[] args) throws Exception {
         if (args.length > 0) {
-            configPath = args[args.length - 1];
+            final String configPath = args[args.length - 1];
+            ConfigServlet.setPath(configPath);
         }
 
-        // Hibernate requires JBoss Logging. The SLF4J API jar wasn't being detected so this sets it manually.
-        System.setProperty("org.jboss.logging.provider", "slf4j");
         new App().run(args);
     }
 
@@ -86,101 +82,42 @@ public class App extends Application<Config> {
     public void run(final Config configuration, final Environment environment) {
         // Add useful logging setup.
         registerLogConfiguration(environment);
-        environment.healthChecks().register(LogLevelInspector.class.getName(), new LogLevelInspector());
 
         // We want Stroom to use the root path so we need to move Dropwizard's path.
         environment.jersey().setUrlPattern(ResourcePaths.API_PATH + "/*");
 
-        // Set up a session manager for Jetty
-        SessionHandler sessions = new SessionHandler();
-        environment.servlets().setSessionHandler(sessions);
+        // Set up a session handler for Jetty
+        environment.servlets().setSessionHandler(new SessionHandler());
 
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
 
-        LOGGER.info("Starting proxy");
-        startProxy(configuration, environment);
-    }
-
-    private void startProxy(final Config configuration, final Environment environment) {
         LOGGER.info("Starting Stroom Proxy");
 
         final ProxyModule proxyModule = new ProxyModule(configuration.getProxyConfig());
         final Injector injector = Guice.createInjector(proxyModule);
-
-        final ServletContextHandler servletContextHandler = environment.getApplicationContext();
+        injector.injectMembers(this);
 
         // Add health checks
-        final HealthCheckRegistry healthCheckRegistry = environment.healthChecks();
-        injector.getInstance(HealthChecks.class).register();
-
-//        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, ByteBufferPool.class);
-//        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource.class);
-//        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource2.class);
-//        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource.class);
-//        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource2.class);
-//        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ForwardStreamHandlerFactory.class);
-//        GuiceUtil.addHealthCheck(
-//                environment.healthChecks(),
-//                injector.getInstance(RefDataStoreFactory.class).getOffHeapStore());
-
-        healthCheckRegistry.register(configuration.getProxyConfig().getClass().getName(), new HealthCheck() {
-            @Override
-            protected Result check() {
-                Map<String, Object> detailMap = HealthCheckUtils.beanToMap(configuration.getProxyConfig());
-                return Result.builder()
-                        .healthy()
-                        .withDetail("values", detailMap)
-                        .build();
-            }
-        });
+        healthChecks.register();
 
         // Add filters
-        GuiceUtil.addFilter(servletContextHandler, injector, ProxySecurityFilter.class, "/*");
+        filters.register();
 
         // Add servlets
-        ConfigServlet configServlet = new ConfigServlet(configPath);
-        String configPathSpec = ResourcePaths.ROOT_PATH + "/config";
-        servletContextHandler.addServlet(new ServletHolder(configServlet), configPathSpec);
-        healthCheckRegistry.register(configServlet.getClass().getName(), new HealthCheck() {
-            @Override
-            protected Result check() {
-                return Result.builder()
-                        .healthy()
-                        .withDetail("path", configPathSpec)
-                        .build();
-            }
-        });
+        servlets.register();
 
-        GuiceUtil.addServlet(servletContextHandler, injector, ReceiveDataServlet.class, ResourcePaths.ROOT_PATH + "/datafeed", healthCheckRegistry);
-        GuiceUtil.addServlet(servletContextHandler, injector, ReceiveDataServlet.class, ResourcePaths.ROOT_PATH + "/datafeed/*", healthCheckRegistry);
-        GuiceUtil.addServlet(servletContextHandler, injector, ProxyWelcomeServlet.class, ResourcePaths.ROOT_PATH + "/ui", healthCheckRegistry);
-        GuiceUtil.addServlet(servletContextHandler, injector, ProxyStatusServlet.class, ResourcePaths.ROOT_PATH + "/status", healthCheckRegistry);
-        GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, ResourcePaths.ROOT_PATH + "/debug", healthCheckRegistry);
+        // Add session listeners.
+        sessionListeners.register();
 
-        // Add resources.
-        GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource2.class);
-        GuiceUtil.addResource(environment.jersey(), injector, ReceiveDataRuleSetResource.class);
-        GuiceUtil.addResource(environment.jersey(), injector, ReceiveDataRuleSetResource2.class);
+        // Add all injectable rest resources.
+        restResources.register();
+
+        // Map exceptions to helpful HTTP responses
+        environment.jersey().register(PermissionExceptionMapper.class);
 
         // Listen to the lifecycle of the Dropwizard app.
-        GuiceUtil.manage(environment.lifecycle(), injector, ProxyLifecycle.class);
-
-        // Sync content.
-        if (configuration.getProxyConfig() != null &&
-                configuration.getProxyConfig().getContentSyncConfig() != null &&
-                configuration.getProxyConfig().getContentSyncConfig().isContentSyncEnabled()) {
-            // Create a map of import handlers.
-            final Map<String, ImportExportActionHandler> importExportActionHandlers = new HashMap<>();
-            importExportActionHandlers.put(ReceiveDataRules.DOCUMENT_TYPE, injector.getInstance(ReceiveDataRuleSetService.class));
-            importExportActionHandlers.put(DictionaryDoc.ENTITY_TYPE, injector.getInstance(DictionaryStore.class));
-
-            final ContentSyncService contentSyncService = new ContentSyncService(
-                    configuration.getProxyConfig().getContentSyncConfig(), importExportActionHandlers);
-            environment.lifecycle().manage(contentSyncService);
-            GuiceUtil.addHealthCheck(healthCheckRegistry, contentSyncService);
-        }
+        managedServices.register();
     }
 
     private static void configureCors(io.dropwizard.setup.Environment environment) {

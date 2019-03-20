@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.RestResource;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 

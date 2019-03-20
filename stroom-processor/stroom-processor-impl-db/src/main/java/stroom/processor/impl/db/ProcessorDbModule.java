@@ -16,7 +16,7 @@ import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
 import stroom.processor.impl.ProcessorFilterTrackerDao;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Provider;
@@ -25,6 +25,7 @@ import javax.sql.DataSource;
 
 public class ProcessorDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorDbModule.class);
+    private static final String MODULE = "stroom-processor";
     private static final String FLYWAY_LOCATIONS = "stroom/processor/impl/db";
     private static final String FLYWAY_TABLE = "processor_schema_history";
 
@@ -38,6 +39,10 @@ public class ProcessorDbModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(ProcessorNodeCache.class);
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ConnectionProvider.class);
     }
 
     @Provides
@@ -58,14 +63,14 @@ public class ProcessorDbModule extends AbstractModule {
                 .table(FLYWAY_TABLE)
                 .baselineOnMigrate(true)
                 .load();
-        LOGGER.info("Applying Flyway migrations to processor in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
+        LOGGER.info("Applying Flyway migrations to {} in {} from {}", MODULE, FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating processor database", e);
+            LOGGER.error("Error migrating {} database", MODULE, e);
             throw e;
         }
-        LOGGER.info("Completed Flyway migrations for processor in {}", FLYWAY_TABLE);
+        LOGGER.info("Completed Flyway migrations for {} in {}", MODULE, FLYWAY_TABLE);
         return flyway;
     }
 

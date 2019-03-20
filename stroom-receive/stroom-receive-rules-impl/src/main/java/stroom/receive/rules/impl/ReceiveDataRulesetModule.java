@@ -21,7 +21,7 @@ import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.RestResource;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 

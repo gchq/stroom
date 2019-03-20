@@ -12,6 +12,7 @@ import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
 import stroom.job.impl.JobDao;
 import stroom.job.impl.JobNodeDao;
+import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -19,7 +20,7 @@ import javax.sql.DataSource;
 
 public class JobDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobDbModule.class);
-
+    private static final String MODULE = "stroom-job";
     private static final String FLYWAY_LOCATIONS = "stroom/job/impl/db";
     private static final String FLYWAY_TABLE = "job_schema_history";
 
@@ -27,6 +28,10 @@ public class JobDbModule extends AbstractModule {
     protected void configure() {
         bind(JobDao.class).to(JobDaoImpl.class);
         bind(JobNodeDao.class).to(JobNodeDaoImpl.class);
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ConnectionProvider.class);
     }
 
     @Provides
@@ -47,14 +52,14 @@ public class JobDbModule extends AbstractModule {
                 .table(FLYWAY_TABLE)
                 .baselineOnMigrate(true)
                 .load();
-        LOGGER.info("Applying Flyway migrations to stroom-job in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
+        LOGGER.info("Applying Flyway migrations to {} in {} from {}", MODULE, FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating stroom-job database",e);
+            LOGGER.error("Error migrating {} database", MODULE, e);
             throw e;
         }
-        LOGGER.info("Completed Flyway migrations for stroom-job in {}", FLYWAY_TABLE);
+        LOGGER.info("Completed Flyway migrations for {} in {}", MODULE, FLYWAY_TABLE);
         return flyway;
     }
 

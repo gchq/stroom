@@ -18,10 +18,15 @@ package stroom.core.dispatch;
 
 import com.google.inject.AbstractModule;
 import stroom.dispatch.shared.DispatchService;
+import stroom.util.guice.ResourcePaths;
+import stroom.util.guice.ServletBinder;
 
 public class DispatchModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DispatchService.class).to(DispatchServiceImpl.class);
+
+        ServletBinder.create(binder())
+                .bind(ResourcePaths.ROOT_PATH + "/dispatch.rpc", DispatchServiceImpl.class);
     }
 }

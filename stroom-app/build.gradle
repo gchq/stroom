@@ -49,6 +49,7 @@ dependencies {
     compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-docstore:stroom-docstore-impl-db')
+    compile project(':stroom-dropwizard-common')
     compile project(':stroom-elastic:stroom-elastic-impl')
     compile project(':stroom-elastic:stroom-elastic-impl-http')
     compile project(':stroom-event-logging:stroom-event-logging-impl')

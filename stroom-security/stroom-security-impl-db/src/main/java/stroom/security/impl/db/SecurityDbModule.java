@@ -13,6 +13,7 @@ import stroom.db.util.HikariUtil;
 import stroom.security.dao.AppPermissionDao;
 import stroom.security.dao.DocumentPermissionDao;
 import stroom.security.dao.UserDao;
+import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -20,7 +21,7 @@ import javax.sql.DataSource;
 
 public class SecurityDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityDbModule.class);
-
+    private static final String MODULE = "stroom-security";
     private static final String FLYWAY_LOCATIONS = "stroom/security/impl/db";
     private static final String FLYWAY_TABLE = "security_schema_history";
 
@@ -29,6 +30,10 @@ public class SecurityDbModule extends AbstractModule {
         bind(UserDao.class).to(UserDaoImpl.class);
         bind(DocumentPermissionDao.class).to(DocumentPermissionDaoImpl.class);
         bind(AppPermissionDao.class).to(AppPermissionDaoImpl.class);
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ConnectionProvider.class);
     }
 
     @Provides
@@ -49,14 +54,14 @@ public class SecurityDbModule extends AbstractModule {
                 .table(FLYWAY_TABLE)
                 .baselineOnMigrate(true)
                 .load();
-        LOGGER.info("Applying Flyway migrations to stroom-security in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
+        LOGGER.info("Applying Flyway migrations to {} in {} from {}", MODULE, FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating stroom-security database",e);
+            LOGGER.error("Error migrating {} database", MODULE, e);
             throw e;
         }
-        LOGGER.info("Completed Flyway migrations for stroom-security in {}", FLYWAY_TABLE);
+        LOGGER.info("Completed Flyway migrations for {} in {}", MODULE, FLYWAY_TABLE);
         return flyway;
     }
 

@@ -21,7 +21,7 @@ import com.google.inject.Provides;
 import stroom.security.DocumentPermissionCache;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;

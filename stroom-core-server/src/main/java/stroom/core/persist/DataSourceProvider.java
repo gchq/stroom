@@ -24,6 +24,9 @@ import java.sql.Statement;
 @Singleton
 public class DataSourceProvider implements Provider<DataSource> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceProvider.class);
+    private static final String MODULE = "stroom-corer";
+    private static final String FLYWAY_LOCATIONS = "stroom/core/migration/mysql";
+    private static final String FLYWAY_TABLE = "schema_version";
 
     private final Provider<CoreConfig> configProvider;
     private volatile DataSource dataSource;
@@ -43,8 +46,8 @@ public class DataSourceProvider implements Provider<DataSource> {
     private Flyway flyway(final DataSource dataSource) {
             final Flyway flyway = Flyway.configure()
                     .dataSource(dataSource)
-                    .locations("stroom/db/migration/mysql")
-                    .table("schema_version")
+                    .locations(FLYWAY_LOCATIONS)
+                    .table(FLYWAY_TABLE)
                     .baselineOnMigrate(true)
                     .load();
             Version version = null;
@@ -160,14 +163,14 @@ public class DataSourceProvider implements Provider<DataSource> {
     }
 
     private void migrateDatabase(final Flyway flyway) {
-        LOGGER.info("Applying Flyway migrations to stroom-config in {} from {}", flyway.getTable(), flyway.getLocations());
+        LOGGER.info("Applying Flyway migrations to {} in {} from {}", MODULE, FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating stroom-config database", e);
+            LOGGER.error("Error migrating {} database", MODULE, e);
             throw e;
         }
-        LOGGER.info("Completed Flyway migrations for stroom-config in {}", flyway.getTable());
+        LOGGER.info("Completed Flyway migrations for {} in {}", MODULE, FLYWAY_TABLE);
     }
 
     @Override

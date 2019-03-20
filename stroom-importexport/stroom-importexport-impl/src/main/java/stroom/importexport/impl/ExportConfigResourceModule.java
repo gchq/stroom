@@ -17,7 +17,7 @@
 package stroom.importexport.impl;
 
 import com.google.inject.AbstractModule;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.RestResource;
 
 public class ExportConfigResourceModule extends AbstractModule {

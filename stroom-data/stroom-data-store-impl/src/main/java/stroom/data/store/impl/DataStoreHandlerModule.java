@@ -23,8 +23,10 @@ import stroom.streamstore.shared.DownloadDataAction;
 import stroom.streamstore.shared.UpdateStatusAction;
 import stroom.streamstore.shared.UploadDataAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.GuiceUtil;
 import stroom.util.RestResource;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.ResourcePaths;
+import stroom.util.guice.ServletBinder;
 
 public class DataStoreHandlerModule extends AbstractModule {
     @Override
@@ -37,6 +39,9 @@ public class DataStoreHandlerModule extends AbstractModule {
                 .bind(DataDownloadTask.class, DataDownloadTaskHandler.class)
                 .bind(StreamUploadTask.class, StreamUploadTaskHandler.class)
                 .bind(UploadDataAction.class, UploadDataHandler.class);
+
+        ServletBinder.create(binder())
+                .bind(ResourcePaths.ROOT_PATH + "/importfile.rpc", ImportFileServlet.class);
 
         // TODO probably not the right place for this binding
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)

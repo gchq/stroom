@@ -23,7 +23,7 @@ import stroom.cluster.api.ServiceName;
 
 import javax.inject.Inject;
 
-public class ClusterCallServiceRPC extends HessianServlet implements ClusterCallService {
+class ClusterCallServiceRPC extends HessianServlet implements ClusterCallService {
     private final ClusterCallService clusterCallService;
 
     @Inject

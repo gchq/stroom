@@ -1,4 +1,4 @@
-package stroom.util;
+package stroom.util.guice;
 
 import com.google.inject.Binder;
 import com.google.inject.multibindings.Multibinder;

@@ -26,7 +26,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.textconverter.TextConverterModule;
 import stroom.pipeline.xmlschema.XmlSchemaModule;
 import stroom.pipeline.xslt.XsltModule;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.RestResource;
 
 public class PipelineModule extends AbstractModule {

@@ -14,7 +14,7 @@ import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaSecurityFilter;
 import stroom.meta.shared.MetaService;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Provider;
@@ -23,6 +23,7 @@ import javax.sql.DataSource;
 
 public class MetaDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaDbModule.class);
+    private static final String MODULE = "stroom-meta";
     private static final String FLYWAY_LOCATIONS = "stroom/meta/impl/db";
     private static final String FLYWAY_TABLE = "meta_schema_history";
 
@@ -41,6 +42,10 @@ public class MetaDbModule extends AbstractModule {
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
                 .bind(Meta.class, MetaObjectInfoProvider.class);
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ConnectionProvider.class);
     }
 
     @Provides
@@ -61,14 +66,14 @@ public class MetaDbModule extends AbstractModule {
                 .table(FLYWAY_TABLE)
                 .baselineOnMigrate(true)
                 .load();
-        LOGGER.info("Applying Flyway migrations to stroom-meta in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
+        LOGGER.info("Applying Flyway migrations to {} in {} from {}", MODULE, FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating stroom-meta database",e);
+            LOGGER.error("Error migrating {} database", MODULE, e);
             throw e;
         }
-        LOGGER.info("Completed Flyway migrations for stroom-meta in {}", FLYWAY_TABLE);
+        LOGGER.info("Completed Flyway migrations for {} in {}", MODULE, FLYWAY_TABLE);
         return flyway;
     }
 

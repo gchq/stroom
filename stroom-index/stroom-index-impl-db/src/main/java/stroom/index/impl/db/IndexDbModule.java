@@ -13,6 +13,7 @@ import stroom.db.util.DbUtil;
 import stroom.index.dao.IndexShardDao;
 import stroom.index.dao.IndexVolumeDao;
 import stroom.index.dao.IndexVolumeGroupDao;
+import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -20,7 +21,7 @@ import javax.sql.DataSource;
 
 public class IndexDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexDbModule.class);
-
+    private static final String MODULE = "stroom-index";
     private static final String FLYWAY_LOCATIONS = "stroom/index/impl/db";
     private static final String FLYWAY_TABLE = "index_schema_history";
 
@@ -29,6 +30,10 @@ public class IndexDbModule extends AbstractModule {
         bind(IndexShardDao.class).to(IndexShardDaoImpl.class);
         bind(IndexVolumeDao.class).to(IndexVolumeDaoImpl.class);
         bind(IndexVolumeGroupDao.class).to(IndexVolumeGroupDaoImpl.class);
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ConnectionProvider.class);
     }
 
     @Provides
@@ -63,19 +68,20 @@ public class IndexDbModule extends AbstractModule {
     }
 
     private Flyway flyway(final DataSource dataSource) {
-        final Flyway flyway = new Flyway();
-        flyway.setDataSource(dataSource);
-        flyway.setLocations(FLYWAY_LOCATIONS);
-        flyway.setTable(FLYWAY_TABLE);
-        LOGGER.info("Applying Flyway migrations to stroom-security in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
-        flyway.setBaselineOnMigrate(true);
+        final Flyway flyway = Flyway.configure()
+                .dataSource(dataSource)
+                .locations(FLYWAY_LOCATIONS)
+                .table(FLYWAY_TABLE)
+                .baselineOnMigrate(true)
+                .load();
+        LOGGER.info("Applying Flyway migrations to {} in {} from {}", MODULE, FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating stroom-security database",e);
+            LOGGER.error("Error migrating {} database", MODULE, e);
             throw e;
         }
-        LOGGER.info("Completed Flyway migrations for stroom-security in {}", FLYWAY_TABLE);
+        LOGGER.info("Completed Flyway migrations for {} in {}", MODULE, FLYWAY_TABLE);
         return flyway;
     }
 

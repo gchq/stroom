@@ -12,7 +12,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Provider;
@@ -21,6 +21,7 @@ import javax.sql.DataSource;
 
 public class ClusterLockDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockDbModule.class);
+    private static final String MODULE = "stroom-cluster-lock";
     private static final String FLYWAY_LOCATIONS = "stroom/cluster/lock/impl/db";
     private static final String FLYWAY_TABLE = "cluster_lock_schema_history";
 
@@ -33,6 +34,10 @@ public class ClusterLockDbModule extends AbstractModule {
         TaskHandlerBinder.create(binder())
                 .bind(ClusterLockClusterTask.class, ClusterLockClusterHandler.class)
                 .bind(ClusterLockTask.class, ClusterLockHandler.class);
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ConnectionProvider.class);
     }
 
     @Provides
@@ -53,14 +58,14 @@ public class ClusterLockDbModule extends AbstractModule {
                 .table(FLYWAY_TABLE)
                 .baselineOnMigrate(true)
                 .load();
-        LOGGER.info("Applying Flyway migrations to cluster-lock in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
+        LOGGER.info("Applying Flyway migrations to {} in {} from {}", MODULE, FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating cluster-lock database", e);
+            LOGGER.error("Error migrating {} database", MODULE, e);
             throw e;
         }
-        LOGGER.info("Completed Flyway migrations for cluster-lock in {}", FLYWAY_TABLE);
+        LOGGER.info("Completed Flyway migrations for {} in {}", MODULE, FLYWAY_TABLE);
         return flyway;
     }
 

@@ -2,14 +2,16 @@ package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.setup.Environment;
+import stroom.app.Config;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfigModule;
 import stroom.core.dispatch.DispatchModule;
+import stroom.dropwizard.common.LogLevelInspector;
 import stroom.lifecycle.impl.LifecycleServiceModule;
 import stroom.meta.statistics.impl.MetaStatisticsModule;
 import stroom.resource.impl.SessionResourceModule;
-import stroom.app.Config;
 import stroom.security.impl.SecurityContextModule;
+import stroom.util.guice.HealthCheckBinder;
 
 public class AppModule extends AbstractModule {
     private final Config configuration;
@@ -41,5 +43,8 @@ public class AppModule extends AbstractModule {
         install(new DispatchModule());
         install(new SessionResourceModule());
 //        install(new stroom.test.DatabaseTestControlModule());
+
+        HealthCheckBinder.create(binder())
+                .bind(LogLevelInspector.class);
     }
 }

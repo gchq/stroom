@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
+import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -17,13 +18,17 @@ import javax.sql.DataSource;
 
 public class ExplorerDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerDbModule.class);
-
+    private static final String MODULE = "stroom-explorer";
     private static final String FLYWAY_LOCATIONS = "stroom/explorer/impl/db";
     private static final String FLYWAY_TABLE = "explorer_schema_history";
 
     @Override
     protected void configure() {
         bind(ExplorerTreeDao.class).to(ExplorerTreeDaoImpl.class);
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ConnectionProvider.class);
     }
 
     @Provides
@@ -44,14 +49,14 @@ public class ExplorerDbModule extends AbstractModule {
                 .table(FLYWAY_TABLE)
                 .baselineOnMigrate(true)
                 .load();
-        LOGGER.info("Applying Flyway migrations to stroom-explorer in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
+        LOGGER.info("Applying Flyway migrations to {} in {} from {}", MODULE, FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating stroom-explorer database",e);
+            LOGGER.error("Error migrating {} database", MODULE, e);
             throw e;
         }
-        LOGGER.info("Completed Flyway migrations for stroom-explorer in {}", FLYWAY_TABLE);
+        LOGGER.info("Completed Flyway migrations for {} in {}", MODULE, FLYWAY_TABLE);
         return flyway;
     }
 

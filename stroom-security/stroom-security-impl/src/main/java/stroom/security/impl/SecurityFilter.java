@@ -55,7 +55,7 @@ import java.util.regex.Pattern;
  * </p>
  */
 @Singleton
-public class SecurityFilter implements Filter {
+class SecurityFilter implements Filter {
     private static final String IGNORE_URI_REGEX = "ignoreUri";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityFilter.class);
@@ -70,7 +70,7 @@ public class SecurityFilter implements Filter {
     private Pattern pattern = null;
 
     @Inject
-    public SecurityFilter(
+    SecurityFilter(
             final AuthenticationConfig config,
             final UiConfig uiConfig,
             final JWTService jwtService,

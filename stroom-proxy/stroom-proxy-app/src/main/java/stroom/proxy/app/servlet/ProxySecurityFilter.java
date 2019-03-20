@@ -18,7 +18,7 @@ package stroom.proxy.app.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.proxy.app.guice.ContentSyncConfig;
+import stroom.proxy.app.ContentSyncConfig;
 
 import javax.inject.Inject;
 import javax.servlet.Filter;

@@ -32,7 +32,7 @@ import stroom.explorer.shared.FetchDocumentTypesAction;
 import stroom.explorer.shared.FetchExplorerNodeAction;
 import stroom.explorer.shared.FetchExplorerPermissionsAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.RestResource;
 
 public class ExplorerModule extends AbstractModule {

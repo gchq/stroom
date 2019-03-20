@@ -26,6 +26,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.api.NodeInfo;
+import stroom.security.Security;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.shared.ThreadPool;
@@ -72,6 +73,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final Runner asyncRunner;
     private final Runner syncRunner;
     private final TaskContext taskContext;
+    private final Security security;
 
     private volatile Settings settings;
 
@@ -82,7 +84,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                                      final IndexStructureCache indexStructureCache,
                                      final IndexShardManager indexShardManager,
                                      final ExecutorProvider executorProvider,
-                                     final TaskContext taskContext) {
+                                     final TaskContext taskContext,
+                                     final Security security) {
         this.nodeInfo = nodeInfo;
         this.indexShardService = indexShardService;
         this.indexConfig = indexConfig;
@@ -95,6 +98,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         syncRunner = new SyncRunner();
 
         this.taskContext = taskContext;
+        this.security = security;
     }
 
     @Override
@@ -418,58 +422,62 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     }
 
     synchronized void startup() {
-        LOGGER.info(() -> "Index shard writer cache startup");
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+        security.asProcessingUser(() -> {
+            LOGGER.info(() -> "Index shard writer cache startup");
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-        // Make sure all open shards are marked as closed.
-        final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
-        criteria.getIndexShardStatusSet().add(IndexShardStatus.OPEN);
-        criteria.getIndexShardStatusSet().add(IndexShardStatus.OPENING);
-        criteria.getIndexShardStatusSet().add(IndexShardStatus.CLOSING);
-        final List<IndexShard> list = indexShardService.find(criteria);
-        for (final IndexShard indexShard : list) {
-            clean(indexShard);
-        }
+            // Make sure all open shards are marked as closed.
+            final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
+            criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
+            criteria.getIndexShardStatusSet().add(IndexShardStatus.OPEN);
+            criteria.getIndexShardStatusSet().add(IndexShardStatus.OPENING);
+            criteria.getIndexShardStatusSet().add(IndexShardStatus.CLOSING);
+            final List<IndexShard> list = indexShardService.find(criteria);
+            for (final IndexShard indexShard : list) {
+                clean(indexShard);
+            }
 
-        LOGGER.info(() -> "Index shard writer cache startup completed in " + logExecutionTime);
+            LOGGER.info(() -> "Index shard writer cache startup completed in " + logExecutionTime);
+        });
     }
 
     @Override
     public synchronized void shutdown() {
-        LOGGER.info(() -> "Index shard writer cache shutdown");
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+        security.asProcessingUser(() -> {
+            LOGGER.info(() -> "Index shard writer cache shutdown");
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-        ScheduledExecutorService executor = null;
+            ScheduledExecutorService executor = null;
 
-        try {
-            // Close any remaining writers.
-            openWritersByShardKey.values().forEach(indexShardWriter -> close(indexShardWriter, asyncRunner));
+            try {
+                // Close any remaining writers.
+                openWritersByShardKey.values().forEach(indexShardWriter -> close(indexShardWriter, asyncRunner));
 
-            // Report on closing progress.
-            if (closing.get() > 0) {
-                // Create a scheduled executor for us to continually log index shard writer action progress.
-                executor = Executors.newSingleThreadScheduledExecutor();
-                // Start logging action progress.
-                executor.scheduleAtFixedRate(() -> LOGGER.info(() -> "Waiting for " + closing.get() + " index shards to close"), 10, 10, TimeUnit.SECONDS);
+                // Report on closing progress.
+                if (closing.get() > 0) {
+                    // Create a scheduled executor for us to continually log index shard writer action progress.
+                    executor = Executors.newSingleThreadScheduledExecutor();
+                    // Start logging action progress.
+                    executor.scheduleAtFixedRate(() -> LOGGER.info(() -> "Waiting for " + closing.get() + " index shards to close"), 10, 10, TimeUnit.SECONDS);
 
-                while (closing.get() > 0) {
-                    Thread.sleep(500);
+                    while (closing.get() > 0) {
+                        Thread.sleep(500);
+                    }
+                }
+            } catch (final InterruptedException e) {
+                LOGGER.error(e::getMessage, e);
+
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
+            } finally {
+                if (executor != null) {
+                    // Shut down the progress logging executor.
+                    executor.shutdown();
                 }
             }
-        } catch (final InterruptedException e) {
-            LOGGER.error(e::getMessage, e);
 
-            // Continue to interrupt this thread.
-            Thread.currentThread().interrupt();
-        } finally {
-            if (executor != null) {
-                // Shut down the progress logging executor.
-                executor.shutdown();
-            }
-        }
-
-        LOGGER.info(() -> "Index shard writer cache shutdown completed in " + logExecutionTime);
+            LOGGER.info(() -> "Index shard writer cache shutdown completed in " + logExecutionTime);
+        });
     }
 
     private void clean(final IndexShard indexShard) {

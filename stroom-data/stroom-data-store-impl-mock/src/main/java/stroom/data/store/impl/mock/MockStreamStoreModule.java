@@ -19,7 +19,7 @@ package stroom.data.store.impl.mock;
 import com.google.inject.AbstractModule;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.SteamStoreStreamCloserImpl;
-import stroom.util.GuiceUtil;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.io.StreamCloser;
 import stroom.util.shared.Clearable;
 

@@ -28,6 +28,7 @@ import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.node.api.NodeInfo;
+import stroom.security.Security;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
@@ -47,6 +48,7 @@ class JobBootstrap {
     private final JobDao jobDao;
     private final JobNodeDao jobNodeDao;
     private final ClusterLockService clusterLockService;
+    private final Security security;
     private final NodeInfo nodeInfo;
     private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
     private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
@@ -55,12 +57,14 @@ class JobBootstrap {
     JobBootstrap(final JobDao jobDao,
                  final JobNodeDao jobNodeDao,
                  final ClusterLockService clusterLockService,
+                 final Security security,
                  final NodeInfo nodeInfo,
                  final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
                  final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
         this.jobDao = jobDao;
         this.jobNodeDao = jobNodeDao;
         this.clusterLockService = clusterLockService;
+        this.security = security;
         this.nodeInfo = nodeInfo;
         this.scheduledJobsMap = scheduledJobsMap;
         this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
@@ -71,7 +75,7 @@ class JobBootstrap {
 
         // Lock the cluster so only 1 node at a time can call the following code.
         LOGGER.trace("Locking the cluster");
-        clusterLockService.lock(LOCK_NAME, () -> {
+        security.asProcessingUser(() -> clusterLockService.lock(LOCK_NAME, () -> {
             final String nodeName = nodeInfo.getThisNodeName();
 
             final List<JobNode> existingJobList = findAllJobs(nodeName);
@@ -168,7 +172,7 @@ class JobBootstrap {
             if (deleteCount > 0) {
                 LOGGER.info("Removed {} orphan jobs", deleteCount);
             }
-        });
+        }));
     }
 
 

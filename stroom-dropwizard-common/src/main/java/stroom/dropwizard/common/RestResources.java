@@ -1,6 +1,5 @@
-package stroom.app;
+package stroom.dropwizard.common;
 
-import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +8,7 @@ import stroom.util.RestResource;
 import javax.inject.Inject;
 import java.util.Set;
 
-class RestResources {
+public class RestResources {
     private static final Logger LOGGER = LoggerFactory.getLogger(RestResources.class);
 
     private final Environment environment;
@@ -21,14 +20,12 @@ class RestResources {
         this.restResources = restResources;
     }
 
-    void register() {
-        final JerseyEnvironment jersey = environment.jersey();
-
-        LOGGER.info("Adding rest resources");
-        for (RestResource restResource : restResources) {
+    public void register() {
+        LOGGER.info("Adding REST resources:");
+        restResources.forEach(restResource -> {
             final String name = restResource.getClass().getName();
             LOGGER.info("\t{}", name);
-            jersey.register(restResource);
-        }
+            environment.jersey().register(restResource);
+        });
     }
 }
