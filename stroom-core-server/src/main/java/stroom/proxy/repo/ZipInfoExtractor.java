@@ -1,11 +1,9 @@
-package stroom.streamtask.server;
+package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.proxy.repo.StroomZipFile;
-import stroom.proxy.repo.StroomZipFileType;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;

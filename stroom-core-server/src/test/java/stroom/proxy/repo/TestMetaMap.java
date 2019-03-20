@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.feed.MetaMap;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -80,5 +81,46 @@ public class TestMetaMap {
 
         Assert.assertEquals("person2", metaMap.get("PERSON "));
         Assert.assertEquals("3", metaMap.get("FOOBAR"));
+    }
+
+    @Test
+    public void testZeroBytes() throws IOException {
+        final byte[] bytes = "b:2\na:1\nz\n".getBytes(CharsetConstants.DEFAULT_CHARSET);
+        final ByteArrayInputStream is = new ByteArrayInputStream(bytes) {
+            boolean firstRead = true;
+
+            @Override
+            public synchronized int read() {
+                if (firstRead) {
+                    firstRead = false;
+                    return 0;
+                }
+
+                return super.read();
+            }
+
+            @Override
+            public int read(final byte[] b) throws IOException {
+                if (firstRead) {
+                    firstRead = false;
+                    return 0;
+                }
+
+                return super.read(b);
+            }
+
+            @Override
+            public synchronized int read(final byte[] b, final int off, final int len) {
+                if (firstRead) {
+                    firstRead = false;
+                    return 0;
+                }
+
+                return super.read(b, off, len);
+            }
+        };
+
+        final MetaMap metaMap = new MetaMap();
+        metaMap.read(is, false);
     }
 }

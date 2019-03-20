@@ -1,6 +1,4 @@
-package stroom.streamtask.server;
-
-import stroom.proxy.repo.StroomZipRepository;
+package stroom.proxy.repo;
 
 public interface FileSetProcessor {
     void process(StroomZipRepository stroomZipRepository, FileSet fileSet);
