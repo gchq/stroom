@@ -25,10 +25,6 @@ import stroom.task.api.TaskManager;
  */
 public final class SetupSampleData {
     public static void main(final String[] args) {
-//        FileUtil.useDevTempDir();
-        System.setProperty("stroom.connectionTesterClassName",
-                "stroom.entity.util.StroomConnectionTesterOkOnException");
-
         final Injector injector = Guice.createInjector(new CoreTestModule());
 
         // Start task manager
