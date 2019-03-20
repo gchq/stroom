@@ -22,7 +22,6 @@ import stroom.entity.shared.EntityIdSet;
 import stroom.util.shared.IdRange;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
 import stroom.util.shared.Period;
-import stroom.streamstore.shared.StreamAttributeCondition;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
@@ -254,7 +253,7 @@ public class _V07_00_00_FindStreamCriteria extends BaseCriteria {
 //        this.attributeConditionList = attributeConditionList;
 //    }
 //
-    public List<StreamAttributeCondition> obtainAttributeConditionList() {
+    public List<_V07_00_00_StreamAttributeCondition> obtainAttributeConditionList() {
         throw new RuntimeException("Unexpected call to obtainAttributeConditionList");
     }
 //

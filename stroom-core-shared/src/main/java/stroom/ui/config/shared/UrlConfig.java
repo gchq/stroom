@@ -5,7 +5,6 @@ import stroom.docref.SharedObject;
 import stroom.util.shared.IsConfig;
 
 public class UrlConfig implements SharedObject, IsConfig {
-
     private String ui = null;
     private String authenticationService = "http://auth-service:8099/authentication/v1";
     private String users = "http://IP_ADDRESS/users";

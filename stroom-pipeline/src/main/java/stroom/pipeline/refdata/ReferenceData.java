@@ -37,7 +37,7 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.security.DocumentPermissionCache;
 import stroom.security.Security;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.streamstore.shared.StreamTypeNames;
+import stroom.data.store.impl.fs.shared.StreamTypeNames;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

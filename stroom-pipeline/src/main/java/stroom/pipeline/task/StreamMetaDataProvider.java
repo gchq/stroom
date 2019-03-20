@@ -27,7 +27,7 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.state.MetaDataProvider;
 import stroom.pipeline.state.MetaHolder;
-import stroom.streamstore.shared.StreamTypeNames;
+import stroom.data.store.impl.fs.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
 
 import java.io.IOException;

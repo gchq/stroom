@@ -71,7 +71,7 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
-import stroom.streamstore.shared.StreamTypeNames;
+import stroom.data.store.impl.fs.shared.StreamTypeNames;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.PreviewInputStream;

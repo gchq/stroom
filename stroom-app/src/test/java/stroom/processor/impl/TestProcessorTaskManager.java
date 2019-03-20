@@ -26,7 +26,7 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.shared.StreamTypeNames;
+import stroom.data.store.impl.fs.shared.StreamTypeNames;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;

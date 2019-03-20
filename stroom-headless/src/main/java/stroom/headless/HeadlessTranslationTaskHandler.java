@@ -47,7 +47,7 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
-import stroom.streamstore.shared.StreamTypeNames;
+import stroom.data.store.impl.fs.shared.StreamTypeNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;

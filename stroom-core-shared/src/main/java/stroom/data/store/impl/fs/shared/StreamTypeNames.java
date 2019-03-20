@@ -1,4 +1,4 @@
-package stroom.streamstore.shared;
+package stroom.data.store.impl.fs.shared;
 
 public class StreamTypeNames {
     /**

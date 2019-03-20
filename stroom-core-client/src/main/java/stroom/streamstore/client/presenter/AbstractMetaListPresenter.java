@@ -38,7 +38,7 @@ import stroom.util.shared.ResultList;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
-import stroom.streamstore.shared.FetchFullMetaInfoAction;
+import stroom.meta.shared.FetchFullMetaInfoAction;
 import stroom.meta.shared.MetaRow;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;

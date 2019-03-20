@@ -1,7 +1,6 @@
-package stroom.streamstore.shared;
+package stroom.meta.shared;
 
 import stroom.task.shared.Action;
-import stroom.meta.shared.Meta;
 
 public class FetchFullMetaInfoAction extends Action<FullMetaInfoResult> {
     private static final long serialVersionUID = -3560107233301674555L;

@@ -1,11 +1,14 @@
 package stroom.util.shared;
 
-public class BuildInfo implements IsConfig {
+import stroom.docref.SharedObject;
+
+public class BuildInfo implements SharedObject, IsConfig {
     private String upDate;
     private String buildDate = "TBD";
     private String buildVersion = "TBD";
 
     public BuildInfo() {
+        // Default constructor necessary for GWT serialisation.
     }
 
     public BuildInfo(final String upDate, final String buildVersion, final String buildDate) {

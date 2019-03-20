@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.shared;
+package stroom.data.store.impl.fs.shared;
 
 import stroom.task.shared.Action;
 import stroom.util.shared.ResourceKey;

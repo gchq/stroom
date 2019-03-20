@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.shared;
+package stroom.core.db.migration._V07_00_00.streamstore.shared;
 
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.EqualsBuilder;
@@ -23,19 +23,19 @@ import stroom.util.shared.HashCodeBuilder;
 import java.io.Serializable;
 
 @Deprecated
-public class StreamAttributeCondition implements Serializable {
+public class _V07_00_00_StreamAttributeCondition implements Serializable {
     private static final long serialVersionUID = -2063409357774838870L;
 
-    private StreamAttributeKey streamAttributeKey;
+    private _V07_00_00_StreamAttributeKey streamAttributeKey;
     private Condition condition;
     private String fieldValue;
 
-    public StreamAttributeCondition() {
+    public _V07_00_00_StreamAttributeCondition() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public StreamAttributeCondition(final StreamAttributeKey streamAttributeKey, final Condition condition,
-                                    final String fieldValue) {
+    public _V07_00_00_StreamAttributeCondition(final _V07_00_00_StreamAttributeKey streamAttributeKey, final Condition condition,
+                                               final String fieldValue) {
         this.streamAttributeKey = streamAttributeKey;
         this.condition = condition;
         this.fieldValue = fieldValue;
@@ -57,11 +57,11 @@ public class StreamAttributeCondition implements Serializable {
         this.fieldValue = fieldValue;
     }
 
-    public StreamAttributeKey getStreamAttributeKey() {
+    public _V07_00_00_StreamAttributeKey getStreamAttributeKey() {
         return streamAttributeKey;
     }
 
-    public void setStreamAttributeKey(final StreamAttributeKey streamAttributeKey) {
+    public void setStreamAttributeKey(final _V07_00_00_StreamAttributeKey streamAttributeKey) {
         this.streamAttributeKey = streamAttributeKey;
     }
 
@@ -78,11 +78,11 @@ public class StreamAttributeCondition implements Serializable {
     public boolean equals(final Object o) {
         if (o == this) {
             return true;
-        } else if (!(o instanceof StreamAttributeCondition)) {
+        } else if (!(o instanceof _V07_00_00_StreamAttributeCondition)) {
             return false;
         }
 
-        final StreamAttributeCondition streamAttributeCondition = (StreamAttributeCondition) o;
+        final _V07_00_00_StreamAttributeCondition streamAttributeCondition = (_V07_00_00_StreamAttributeCondition) o;
         final EqualsBuilder builder = new EqualsBuilder();
         builder.append(streamAttributeKey, streamAttributeCondition.streamAttributeKey);
         builder.append(condition, streamAttributeCondition.condition);

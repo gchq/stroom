@@ -29,7 +29,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
-import stroom.streamstore.shared.StreamTypeNames;
+import stroom.data.store.impl.fs.shared.StreamTypeNames;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 

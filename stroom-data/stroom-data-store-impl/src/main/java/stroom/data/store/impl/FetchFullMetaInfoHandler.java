@@ -20,10 +20,10 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.meta.shared.Meta;
 import stroom.security.Security;
-import stroom.streamstore.shared.FetchFullMetaInfoAction;
-import stroom.streamstore.shared.FullMetaInfoResult;
-import stroom.streamstore.shared.FullMetaInfoResult.Entry;
-import stroom.streamstore.shared.FullMetaInfoResult.Section;
+import stroom.meta.shared.FetchFullMetaInfoAction;
+import stroom.meta.shared.FullMetaInfoResult;
+import stroom.meta.shared.FullMetaInfoResult.Entry;
+import stroom.meta.shared.FullMetaInfoResult.Section;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.date.DateUtil;
 
@@ -34,7 +34,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 
 class FetchFullMetaInfoHandler extends AbstractTaskHandler<FetchFullMetaInfoAction, FullMetaInfoResult> {
     private final Store streamStore;

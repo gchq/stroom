@@ -27,7 +27,7 @@ import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.impl.DataProcessorTask;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.processor.shared.ProcessorTask;
-import stroom.streamstore.shared.StreamTypeNames;
+import stroom.data.store.impl.fs.shared.StreamTypeNames;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StoreCreationTool;

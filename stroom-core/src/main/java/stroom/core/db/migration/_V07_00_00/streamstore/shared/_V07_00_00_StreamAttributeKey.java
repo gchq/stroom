@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.shared;
+package stroom.core.db.migration._V07_00_00.streamstore.shared;
 
 /**
  * List of all known stream types within the system.
  */
 @Deprecated
-public class StreamAttributeKey {
+public class _V07_00_00_StreamAttributeKey {
     public String getName() {
         return null;
     }

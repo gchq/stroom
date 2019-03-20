@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.shared;
+package stroom.data.store.impl.fs.shared;
 
 import stroom.task.shared.Action;
-import stroom.util.shared.ResultList;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaRow;
+import stroom.util.shared.ResourceGeneration;
 
-public class FindStreamAction extends Action<ResultList<MetaRow>> {
+public class DownloadDataAction extends Action<ResourceGeneration> {
     private static final long serialVersionUID = -3560107233301674555L;
 
     private FindMetaCriteria criteria;
 
-    public FindStreamAction() {
+    public DownloadDataAction() {
     }
 
-    public FindStreamAction(final FindMetaCriteria criteria) {
+    public DownloadDataAction(final FindMetaCriteria criteria) {
         this.criteria = criteria;
     }
 
@@ -43,6 +42,6 @@ public class FindStreamAction extends Action<ResultList<MetaRow>> {
 
     @Override
     public String getTaskName() {
-        return "Find Stream Action";
+        return "Export";
     }
 }

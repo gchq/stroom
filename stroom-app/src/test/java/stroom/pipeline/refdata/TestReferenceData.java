@@ -46,7 +46,7 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.security.DocumentPermissionCache;
 import stroom.security.impl.mock.AllowAllMockSecurity;
-import stroom.streamstore.shared.StreamTypeNames;
+import stroom.data.store.impl.fs.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.ByteSizeUnit;
 import stroom.util.date.DateUtil;

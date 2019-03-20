@@ -16,28 +16,24 @@
 
 package stroom.data.store.impl;
 
+import stroom.meta.shared.FindMetaRowAction;
+import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.MetaService;
-import stroom.security.Security;
-import stroom.meta.shared.UpdateStatusAction;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.util.shared.SharedInteger;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 
-
-class UpdateStatusHandler extends AbstractTaskHandler<UpdateStatusAction, SharedInteger> {
+class FindMetaRowHandler extends AbstractTaskHandler<FindMetaRowAction, ResultList<MetaRow>> {
     private final MetaService metaService;
-    private final Security security;
 
     @Inject
-    UpdateStatusHandler(final MetaService metaService,
-                        final Security security) {
+    FindMetaRowHandler(final MetaService metaService) {
         this.metaService = metaService;
-        this.security = security;
     }
 
     @Override
-    public SharedInteger exec(final UpdateStatusAction task) {
-        return security.secureResult(() -> new SharedInteger(metaService.updateStatus(task.getCriteria(), task.getNewStatus())));
+    public ResultList<MetaRow> exec(final FindMetaRowAction action) {
+        return metaService.findRows(action.getCriteria());
     }
 }

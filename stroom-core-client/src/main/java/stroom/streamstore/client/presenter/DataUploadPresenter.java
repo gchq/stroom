@@ -29,7 +29,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.item.client.StringListBox;
 import stroom.streamstore.client.view.FileData;
 import stroom.streamstore.client.view.FileData.Status;
-import stroom.streamstore.shared.UploadDataAction;
+import stroom.data.store.impl.fs.shared.UploadDataAction;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;

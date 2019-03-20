@@ -13,7 +13,7 @@ import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestYamlUtil {
+class TeexpecstYamlUtil {
     @Test
     void test() throws IOException {
         String expected;

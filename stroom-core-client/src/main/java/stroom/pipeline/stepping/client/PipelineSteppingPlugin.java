@@ -33,7 +33,7 @@ import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.streamstore.shared.FindStreamAction;
+import stroom.meta.shared.FindMetaRowAction;
 import stroom.meta.shared.MetaRow;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
@@ -84,7 +84,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                 final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
                 findMetaCriteria.obtainSelectedIdSet().add(streamId);
 
-                dispatcher.exec(new FindStreamAction(findMetaCriteria)).onSuccess(result -> {
+                dispatcher.exec(new FindMetaRowAction(findMetaCriteria)).onSuccess(result -> {
                     if (result != null && result.size() == 1) {
                         final MetaRow row = result.get(0);
                         openEditor(pipeline, row.getMeta(), eventId, childStreamType);

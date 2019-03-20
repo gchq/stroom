@@ -1,4 +1,4 @@
-package stroom.streamstore.shared;
+package stroom.feed.impl;
 
 public class RawStreamTypes {
     /** Get rid of this when the stream type of received data can be set by the receiving pipeline */

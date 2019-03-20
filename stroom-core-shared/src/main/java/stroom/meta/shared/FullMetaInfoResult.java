@@ -1,4 +1,4 @@
-package stroom.streamstore.shared;
+package stroom.meta.shared;
 
 import stroom.docref.SharedObject;
 

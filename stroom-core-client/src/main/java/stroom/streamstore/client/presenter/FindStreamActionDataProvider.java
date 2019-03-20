@@ -24,13 +24,13 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.util.shared.ResultList;
 import stroom.util.shared.Sort.Direction;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.streamstore.shared.FindStreamAction;
+import stroom.meta.shared.FindMetaRowAction;
 import stroom.meta.shared.MetaRow;
 
 public class FindStreamActionDataProvider implements Refreshable, ColumnSortEvent.Handler {
     private final ClientDispatchAsync dispatcher;
     private final DataGridView<MetaRow> view;
-    private FindStreamAction findAction;
+    private FindMetaRowAction findAction;
     private ActionDataProvider<MetaRow> dataProvider;
     private Boolean allowNoConstraint = null;
 
@@ -49,7 +49,7 @@ public class FindStreamActionDataProvider implements Refreshable, ColumnSortEven
 
     public void setCriteria(final FindMetaCriteria criteria) {
         if (findAction == null) {
-            findAction = new FindStreamAction(criteria);
+            findAction = new FindMetaRowAction(criteria);
         } else {
             findAction.setCriteria(criteria);
         }

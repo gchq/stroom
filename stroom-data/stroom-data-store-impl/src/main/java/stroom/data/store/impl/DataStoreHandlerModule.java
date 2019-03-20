@@ -17,11 +17,13 @@
 package stroom.data.store.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.meta.shared.FetchFullMetaInfoAction;
+import stroom.meta.shared.FindMetaRowAction;
 import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
-import stroom.streamstore.shared.DownloadDataAction;
-import stroom.streamstore.shared.UpdateStatusAction;
-import stroom.streamstore.shared.UploadDataAction;
+import stroom.data.store.impl.fs.shared.DownloadDataAction;
+import stroom.meta.shared.UpdateStatusAction;
+import stroom.data.store.impl.fs.shared.UploadDataAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.RestResource;
 import stroom.util.guice.GuiceUtil;
@@ -34,6 +36,8 @@ public class DataStoreHandlerModule extends AbstractModule {
         TaskHandlerBinder.create(binder())
                 .bind(FetchDataAction.class, FetchDataHandler.class)
                 .bind(FetchDataWithPipelineAction.class, FetchDataWithPipelineHandler.class)
+                .bind(FetchFullMetaInfoAction.class, FetchFullMetaInfoHandler.class)
+                .bind(FindMetaRowAction.class, FindMetaRowHandler.class)
                 .bind(UpdateStatusAction.class, UpdateStatusHandler.class)
                 .bind(DownloadDataAction.class, DownloadDataHandler.class)
                 .bind(DataDownloadTask.class, DataDownloadTaskHandler.class)
