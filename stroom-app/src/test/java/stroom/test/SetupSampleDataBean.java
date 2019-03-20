@@ -19,7 +19,7 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.DashboardStore;
+import stroom.dashboard.impl.DashboardStore;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;

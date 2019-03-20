@@ -50,7 +50,7 @@ include 'stroom-config:stroom-config-global-impl-db-jooq'
 // Core
 include 'stroom-core-client'
 include 'stroom-core-client-widget'
-include 'stroom-core-server'
+include 'stroom-core'
 include 'stroom-core-shared'
 
 // Dashboard

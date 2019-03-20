@@ -2,6 +2,9 @@ package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
 import stroom.core.db.DataSourceModule;
+import stroom.dashboard.impl.DashboardModule;
+import stroom.dashboard.impl.script.ScriptModule;
+import stroom.dashboard.impl.visualisation.VisualisationModule;
 
 public class CoreModule extends AbstractModule {
     @Override
@@ -25,9 +28,9 @@ public class CoreModule extends AbstractModule {
         install(new stroom.core.receive.ReceiveDataModule());
         install(new stroom.core.servlet.ServletModule());
         install(new stroom.core.ui.config.UiConfigModule());
-        install(new stroom.dashboard.DashboardModule());
-        install(new stroom.dashboard.datasource.DatasourceModule());
-        install(new stroom.dashboard.logging.LoggingModule());
+        install(new DashboardModule());
+        install(new stroom.dashboard.impl.datasource.DatasourceModule());
+        install(new stroom.dashboard.impl.logging.LoggingModule());
         install(new stroom.data.retention.impl.DataRetentionModule());
         install(new stroom.data.store.impl.DataStoreHandlerModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
@@ -71,7 +74,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.processor.impl.ProcessorModule());
         install(new stroom.processor.impl.StreamTaskLifecycleModule());
         install(new stroom.receive.rules.impl.ReceiveDataRulesetModule());
-        install(new stroom.script.ScriptModule());
+        install(new ScriptModule());
         install(new stroom.search.SearchElementModule());
         install(new stroom.search.SearchModule());
         install(new stroom.search.shard.ShardModule());
@@ -91,6 +94,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.storedquery.impl.db.StoredQueryDbModule());
         install(new stroom.task.impl.TaskModule());
         install(new stroom.util.pipeline.scope.PipelineScopeModule());
-        install(new stroom.visualisation.VisualisationModule());
+        install(new VisualisationModule());
     }
 }

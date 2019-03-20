@@ -8,7 +8,7 @@ import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.db.DbConfig;
 import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
-import stroom.dashboard.datasource.DataSourceUrlConfig;
+import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;

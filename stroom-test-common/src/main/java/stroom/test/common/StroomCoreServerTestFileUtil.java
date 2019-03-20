@@ -37,7 +37,7 @@ public final class StroomCoreServerTestFileUtil {
 
     public static Path getProjectDir() {
         if (PROJECT_DIR == null) {
-            PROJECT_DIR = ProjectPathUtil.resolveDir("stroom-core-server");
+            PROJECT_DIR = ProjectPathUtil.resolveDir("stroom-core");
         }
         return PROJECT_DIR;
     }

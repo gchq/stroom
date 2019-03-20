@@ -207,6 +207,6 @@ The table below includes licences for all Maven dependencies. Not included in th
 
 \* The mysql-client-connector is distributed under a GPL license but has exceptions that allow it to be distributed with OSS without requiring the GPL license to be applied to the OSS. See [http://www.mysql.com/about/legal/licensing/foss-exception/](http://www.mysql.com/about/legal/licensing/foss-exception/) for details.
 
-The directory _stroom/stroom-core-server/src/test/resources/samples/config/Visualisations/_ contains a copy of the visualisations code taken from [stroom-visualisations-dev](https://github.com/gchq/stroom-visualisations-dev/). For the various licences used by that code see [NOTICE.md](https://github.com/gchq/stroom-visualisations-dev/blob/master/NOTICE.md) in that repository.
+The directory _stroom/stroom-core/src/test/resources/samples/config/Visualisations/_ contains a copy of the visualisations code taken from [stroom-visualisations-dev](https://github.com/gchq/stroom-visualisations-dev/). For the various licences used by that code see [NOTICE.md](https://github.com/gchq/stroom-visualisations-dev/blob/master/NOTICE.md) in that repository.
 
 The class _stroom-pipeline/src/main/java/stroom/xml/event/np/NPEventListNamePool.java_ is derived from the the class _net.sf.saxon.NamePool_ which is released under the Mozilla Public Licence Version 1.0.  As a result _NPEventListNamePool.java_ is also released under Mozilla Public Licence Version 1.0.

@@ -74,7 +74,7 @@ class TestHeadless {
         Files.createDirectories(inputDirPath);
         Files.createDirectories(outputDirPath);
 
-        final Path samplesPath = base.resolve("../../../../stroom-core-server/src/test/resources/samples").toAbsolutePath().normalize();
+        final Path samplesPath = base.resolve("../../../../stroom-core/src/test/resources/samples").toAbsolutePath().normalize();
         final Path outputFilePath = outputDirPath.resolve("output");
         final Path expectedOutputFilePath = testPath.resolve("expectedOutput");
 

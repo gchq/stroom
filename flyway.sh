@@ -26,5 +26,5 @@ fi
     -Pflyway.password=stroompassword1 \
     -Pflyway.url=jdbc:mysql://localhost:3307/stroom \
     -Pflyway.table=schema_version \
-    -Pflyway.locations=filesystem:stroom-core-server/src/main/resources/stroom/db/migration/mysql,classpath:stroom/db/migration/mysql \
+    -Pflyway.locations=filesystem:stroom-core/src/main/resources/stroom/db/migration/mysql,classpath:stroom/db/migration/mysql \
     :stroom-app:flyway$1

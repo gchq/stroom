@@ -6,7 +6,7 @@ import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.db.DbConfig;
 import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
-import stroom.dashboard.datasource.DataSourceUrlConfig;
+import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.data.retention.impl.DataRetentionConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.explorer.impl.db.ExplorerConfig;

@@ -59,7 +59,7 @@ class TestCli {
         Files.createDirectories(contentDirPath);
         Files.createDirectories(inputDirPath);
 
-//            final Path samplesPath = base.resolve("../../../../stroom-core-server/src/test/resources/samples").toAbsolutePath().normalize();
+//            final Path samplesPath = base.resolve("../../../../stroom-core/src/test/resources/samples").toAbsolutePath().normalize();
         final Path errorFilePath = outputPath.resolve("error.log");
         final Path expectedOutputFilePath = testPath.resolve("expectedOutput");
 

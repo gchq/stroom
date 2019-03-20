@@ -19,6 +19,7 @@ package stroom.script;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.dashboard.impl.script.ScriptStore;
 import stroom.docref.DocRef;
 import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;

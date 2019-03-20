@@ -20,7 +20,7 @@ stroom-dashboard-gwt/hs_err_pid*.log
 stroom-app-gwt/hs_err_pid*.log
 stroom-util-build.properties
 
-stroom-core-server/src/test/resources/transientContentPacks/
+stroom-core/src/test/resources/transientContentPacks/
 
 local.yml*
 !local.yml.sh

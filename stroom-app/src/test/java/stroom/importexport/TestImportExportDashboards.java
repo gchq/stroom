@@ -19,7 +19,7 @@ package stroom.importexport;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.dashboard.DashboardStore;
+import stroom.dashboard.impl.DashboardStore;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
@@ -47,12 +47,12 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.resource.api.ResourceStore;
-import stroom.script.ScriptStore;
+import stroom.dashboard.impl.script.ScriptStore;
 import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.shared.ResourceKey;
-import stroom.visualisation.VisualisationStore;
+import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.inject.Inject;
