@@ -172,16 +172,19 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
                 dispatchHelper.execAsync(new ClearServiceClusterTask(task, null), TargetType.ACTIVE);
 
-                final DocRef referencePipeline = pipelineStore.findByName(BENCHMARK_REFERENCE).get(0);
-                final DocRef eventsPipeline = pipelineStore.findByName(BENCHMARK_EVENTS).get(0);
+                final List<DocRef> referencePipelines = pipelineStore.findByName(BENCHMARK_REFERENCE);
+                final List<DocRef> eventsPipelines = pipelineStore.findByName(BENCHMARK_EVENTS);
 
                 // Not setup to run benchmark
-                if (referencePipeline == null || eventsPipeline == null) {
+                if (referencePipelines == null ||
+                        referencePipelines.size() == 0 ||
+                        eventsPipelines == null ||
+                        eventsPipelines.size() == 0) {
                     return;
                 }
 
-                final Processor referenceProcessor = initProcessor(referencePipeline);
-                final Processor eventsProcessor = initProcessor(eventsPipeline);
+                final Processor referenceProcessor = initProcessor(referencePipelines.get(0));
+                final Processor eventsProcessor = initProcessor(eventsPipelines.get(0));
 
                 // Create some data.
                 LOGGER.info("Creating data");

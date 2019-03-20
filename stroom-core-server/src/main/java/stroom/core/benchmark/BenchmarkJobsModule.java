@@ -14,6 +14,7 @@ public class BenchmarkJobsModule extends ScheduledJobsModule {
         bindJob()
                 .name("XX Benchmark System XX")
                 .description("Job to generate data in the system in order to benchmark it's performance (do not run in live!!)")
+                .enabled(false)
                 .schedule(CRON, "* * *")
                 .to(BenchmarkSystem.class);
     }
