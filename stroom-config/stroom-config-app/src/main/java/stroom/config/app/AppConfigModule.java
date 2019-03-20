@@ -3,7 +3,7 @@ package stroom.config.app;
 import com.google.inject.AbstractModule;
 import stroom.cluster.api.ClusterConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
-import stroom.core.persist.CoreConfig;
+import stroom.core.db.DbConfig;
 import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.datasource.DataSourceUrlConfig;
@@ -63,7 +63,7 @@ public class AppConfigModule extends AbstractModule {
         bind(BenchmarkClusterConfig.class).toInstance(appConfig.getBenchmarkClusterConfig());
         bind(ClusterConfig.class).toInstance(appConfig.getClusterConfig());
         bind(ContentPackImportConfig.class).toInstance(appConfig.getContentPackImportConfig());
-        bind(CoreConfig.class).toInstance(appConfig.getCoreConfig());
+        bind(DbConfig.class).toInstance(appConfig.getDbConfig());
         bind(DataConfig.class).toInstance(appConfig.getDataConfig());
         bind(ReceiveDataConfig.class).toInstance(appConfig.getReceiveDataConfig());
         bind(MetaServiceConfig.class).toInstance(appConfig.getDataConfig().getDataMetaServiceConfig());

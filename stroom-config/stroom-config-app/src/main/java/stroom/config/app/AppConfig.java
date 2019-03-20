@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
-import stroom.core.persist.CoreConfig;
+import stroom.core.db.DbConfig;
 import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.datasource.DataSourceUrlConfig;
@@ -38,7 +38,7 @@ public class AppConfig implements IsConfig {
     private BenchmarkClusterConfig benchmarkClusterConfig;
     private ClusterConfig clusterConfig;
     private ContentPackImportConfig contentPackImportConfig;
-    private CoreConfig coreConfig;
+    private DbConfig dbConfig;
     private DataConfig dataConfig;
     private DataSourceUrlConfig dataSourceUrlConfig;
     private ExplorerConfig explorerConfig;
@@ -68,7 +68,7 @@ public class AppConfig implements IsConfig {
         this.benchmarkClusterConfig = new BenchmarkClusterConfig();
         this.clusterConfig = new ClusterConfig();
         this.contentPackImportConfig = new ContentPackImportConfig();
-        this.coreConfig = new CoreConfig();
+        this.dbConfig = new DbConfig();
         this.dataConfig = new DataConfig();
         this.dataSourceUrlConfig = new DataSourceUrlConfig();
         this.explorerConfig = new ExplorerConfig();
@@ -99,7 +99,7 @@ public class AppConfig implements IsConfig {
               final BenchmarkClusterConfig benchmarkClusterConfig,
               final ClusterConfig clusterConfig,
               final ContentPackImportConfig contentPackImportConfig,
-              final CoreConfig coreConfig,
+              final DbConfig dbConfig,
               final DataConfig dataConfig,
               final DataSourceUrlConfig dataSourceUrlConfig,
               final ExplorerConfig explorerConfig,
@@ -127,7 +127,7 @@ public class AppConfig implements IsConfig {
         this.benchmarkClusterConfig = benchmarkClusterConfig;
         this.clusterConfig = clusterConfig;
         this.contentPackImportConfig = contentPackImportConfig;
-        this.coreConfig = coreConfig;
+        this.dbConfig = dbConfig;
         this.dataConfig = dataConfig;
         this.dataSourceUrlConfig = dataSourceUrlConfig;
         this.explorerConfig = explorerConfig;
@@ -191,12 +191,12 @@ public class AppConfig implements IsConfig {
 
     @JsonProperty("core")
     @JsonPropertyDescription("Configuration for the core stroom DB")
-    public CoreConfig getCoreConfig() {
-        return coreConfig;
+    public DbConfig getDbConfig() {
+        return dbConfig;
     }
 
-    public void setCoreConfig(final CoreConfig coreConfig) {
-        this.coreConfig = coreConfig;
+    public void setDbConfig(final DbConfig dbConfig) {
+        this.dbConfig = dbConfig;
     }
 
     @JsonProperty("data")

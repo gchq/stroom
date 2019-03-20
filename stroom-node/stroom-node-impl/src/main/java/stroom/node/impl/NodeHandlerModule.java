@@ -20,7 +20,6 @@ import com.google.inject.AbstractModule;
 import stroom.node.shared.ClusterNodeInfoAction;
 import stroom.node.shared.FetchNodeStatusAction;
 import stroom.node.shared.FindNodeAction;
-import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.task.api.TaskHandlerBinder;
 
 public class NodeHandlerModule extends AbstractModule {
@@ -29,7 +28,6 @@ public class NodeHandlerModule extends AbstractModule {
         TaskHandlerBinder.create(binder())
                 .bind(ClusterNodeInfoAction.class, ClusterNodeInfoHandler.class)
                 .bind(FetchNodeStatusAction.class, FetchNodeStatusHandler.class)
-                .bind(FindSystemTableStatusAction.class, FindSystemTableStatusHandler.class)
                 .bind(FindNodeAction.class, FindNodeHandler.class)
                 .bind(NodeStatusClusterTask.class, NodeStatusClusterHandler.class);
     }

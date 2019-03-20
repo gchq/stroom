@@ -22,7 +22,6 @@ import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEvent.Handler;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.node.shared.DBTableService;
 import stroom.node.shared.UpdateNodeAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
@@ -31,7 +30,6 @@ import stroom.util.shared.Clearable;
 public class NodeModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(DBTableService.class).to(DBTableServiceImpl.class);
         bind(NodeInfo.class).to(NodeInfoImpl.class);
         bind(NodeService.class).to(NodeServiceImpl.class);
 
