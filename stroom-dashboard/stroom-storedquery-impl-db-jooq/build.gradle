@@ -4,6 +4,7 @@ ext.moduleName = 'stroom.storedquery.impl.db.jooq'
 
 dependencies {
     compile libs.javax_annotation
+    permitUnusedDeclared libs.javax_annotation
     
     compile libs.jooq
 

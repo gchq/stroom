@@ -4,6 +4,7 @@ ext.moduleName = 'stroom.processor.impl.db.jooq'
 
 dependencies {
     compile libs.javax_annotation
+    permitUnusedDeclared libs.javax_annotation
     //permitUnusedDeclared libs.javax_annotation // Not obvious why it thinks it is not used.
     compile libs.jooq
 

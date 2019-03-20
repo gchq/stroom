@@ -13,7 +13,7 @@ dependencies {
     compile libs.guice4
     compile libs.hessian
     compile libs.javax_inject
-    compile libs.javax_servlet_api
+//    compile libs.javax_servlet_api
     compile libs.slf4j_api
-    compile libs.stroomDocRef
+//    compile libs.stroomDocRef
 }

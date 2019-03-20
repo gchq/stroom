@@ -1,13 +1,13 @@
 ext.moduleName = 'stroom.cluster.lock.api'
 
 dependencies {
-    compile project(':stroom-core-shared')
-    compile project(':stroom-util-shared')
-    compile project(':stroom-util')
-    compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-security:stroom-security-api')
+//    compile project(':stroom-core-shared')
+//    compile project(':stroom-util-shared')
+//    compile project(':stroom-util')
+//    compile project(':stroom-task:stroom-task-api')
+//    compile project(':stroom-security:stroom-security-api')
     
-    compile libs.stroomDocRef
-    compile libs.slf4j_api
-    compile libs.guice4
+//    compile libs.stroomDocRef
+//    compile libs.slf4j_api
+//    compile libs.guice4
 }

@@ -5,7 +5,7 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile libs.stroomDocRef
+//    compile libs.stroomDocRef
 
     compile libs.guice4
     compile libs.jackson_annotations
