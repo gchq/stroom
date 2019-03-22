@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.8] - 2019-03-22
+
 * Added debug to help diagnose search failures
 
 ## [v5.5.7] - 2019-01-04
@@ -982,7 +984,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.8...HEAD
+[v5.5.8]: https://github.com/gchq/stroom/compare/v5.5.7...v5.5.8
 [v5.5.7]: https://github.com/gchq/stroom/compare/v5.5.6...v5.5.7
 [v5.5.6]: https://github.com/gchq/stroom/compare/v5.5.5...v5.5.6
 [v5.5.5]: https://github.com/gchq/stroom/compare/v5.5.4...v5.5.5
