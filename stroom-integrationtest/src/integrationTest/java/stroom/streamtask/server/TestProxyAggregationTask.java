@@ -240,7 +240,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Ignore // manual only as takes too long
     @Test
     public void testBulkLoad_multiplFeeds() {
-        doBulkTest(20, 40, 500, 10);
+        doBulkTest(4, 4, 2000, 10);
     }
 
     @Test
@@ -265,7 +265,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
             final int maxEntriesPerOutputFile) {
         // commonTestControl.deleteAll();
 
-        assertThat(entriesPerInputFile).isGreaterThan(feedCount);
+        assertThat(entriesPerInputFile).isGreaterThanOrEqualTo(feedCount);
         // Makes life easier if all feeds have an equal number of entries
         assertThat(entriesPerInputFile % feedCount).isZero();
 
@@ -277,6 +277,16 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         // Generate the source zip files
         generateTestFiles(proxyDir, entriesPerInputFile, zipFileCount, eventFeeds);
 
+        aggregateAndAssert(feedCount, entriesPerInputFile, zipFileCount, maxEntriesPerOutputFile, proxyDir, eventFeeds);
+
+    }
+
+    private void aggregateAndAssert(final int feedCount,
+                                    final int entriesPerInputFile,
+                                    final int zipFileCount,
+                                    final int maxEntriesPerOutputFile,
+                                    final Path proxyDir,
+                                    final List<Feed> eventFeeds) {
         // Do the aggregation
         aggregate(FileUtil.getCanonicalPath(proxyDir), maxEntriesPerOutputFile);
 
