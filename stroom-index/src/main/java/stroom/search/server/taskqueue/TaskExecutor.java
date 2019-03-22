@@ -26,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
@@ -68,7 +69,24 @@ public class TaskExecutor {
                     try {
                         Runnable task = execNextTask();
                         if (task == null) {
-                            condition.await();
+                            final boolean didWait = condition.await(10, TimeUnit.SECONDS);
+
+                            // If we didn't get any new work to do after a minute then output some debug so we can check
+                            // the task producer signalling code is working correctly.
+                            if (LOGGER.isDebugEnabled()) {
+                                try {
+                                    if (!didWait) {
+                                        if (getRemainingTaskCount() > 0) {
+                                            LOGGER.debug(getDebugMessage());
+                                        } else if (LOGGER.isTraceEnabled()) {
+                                            LOGGER.trace(getDebugMessage());
+                                        }
+                                    }
+                                } catch (final RuntimeException e) {
+                                    LOGGER.trace(e.getMessage(), e);
+                                }
+                            }
+
                         }
                     } catch (final InterruptedException e) {
                         // Clear the interrupt state.
@@ -81,6 +99,36 @@ public class TaskExecutor {
                 }
             });
         }
+    }
+
+    private String getDebugMessage() {
+        final StringBuilder sb = new StringBuilder("Timeout waiting for:");
+
+        for (final TaskProducer producer : producers) {
+            if (producer != null) {
+                sb.append("\n\t");
+                sb.append(producer.getClass().getSimpleName());
+                sb.append(" (remaining=");
+                sb.append(producer.getRemainingTasks());
+                sb.append(", completed=");
+                sb.append(producer.getTasksCompleted());
+                sb.append(", total=");
+                sb.append(producer.getTasksTotal());
+                sb.append(")");
+            }
+        }
+
+        return sb.toString();
+    }
+
+    private int getRemainingTaskCount() {
+        int count = 0;
+        for (final TaskProducer producer : producers) {
+            if (producer != null) {
+                count += producer.getRemainingTasks();
+            }
+        }
+        return count;
     }
 
     private synchronized void stop() {
