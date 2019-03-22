@@ -125,7 +125,7 @@ public final class RepositoryProcessor {
         // Process only raw zip part files, i.e. files that have not already been created by the fragmenting process.
         final FileFilter filter = (file, attrs) -> {
             final String fileName = file.getFileName().toString();
-            return fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) && !fileName.contains("__part");
+            return fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) && !fileName.contains(PathConstants.PART);
         };
 
         final ZipFragmenterFileProcessor zipFragmenter = new ZipFragmenterFileProcessor(
@@ -145,7 +145,7 @@ public final class RepositoryProcessor {
         // Process only part files, i.e. files that have been created by the fragmenting process.
         final FileFilter filter = (file, attrs) -> {
             final String fileName = file.getFileName().toString();
-            return fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) && fileName.contains("__part");
+            return fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) && fileName.contains(PathConstants.PART);
         };
 
         final ZipInfoConsumer zipInfoConsumer = new ZipInfoConsumer(

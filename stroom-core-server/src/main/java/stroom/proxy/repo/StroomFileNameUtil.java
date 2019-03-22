@@ -43,7 +43,7 @@ public final class StroomFileNameUtil {
         return sb.toString();
     }
 
-    private static String idToPathId(final String id) {
+    public static String idToPathId(final String id) {
         final StringBuilder sb = new StringBuilder();
         if (id.length() > 3) {
             for (int i = 0; i < id.length() - 3; i += 3) {
