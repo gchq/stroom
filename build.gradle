@@ -123,7 +123,10 @@ ext.versions = [
         zzDUMMYzz         : 'makes sorting easier'
 ]
 
-//dependency strings for use in sub projects
+// Dependency strings for use in sub projects
+// If the dependency version is controlled by a BOM, e.g. dropwizard-core, then the 
+// dependency is specified with no version. Use of the BOMs is configured further down,
+// search for 'platform'.
 ext.libs = [
         //------Stroom-libs---------------
         eventLogging                   : "event-logging:event-logging:$versions.eventLogging",
@@ -323,10 +326,10 @@ subprojects {
     sourceCompatibility = JavaVersion.VERSION_1_10
     targetCompatibility = JavaVersion.VERSION_1_10
 
-    // Make all projects use these BOMs to constrain dependency versions
+    // This bit makes all sub projects have access to the BOMs for the dependency versions
     dependencies {
-        implementation platform(libs.dropwizard_bom)
-        implementation platform(libs.jersey_bom)
+        compile platform(libs.dropwizard_bom)
+        compile platform(libs.jersey_bom)
     }
 
     //println project.getConfigurations().getByName("implementation").getAllDependencies()
