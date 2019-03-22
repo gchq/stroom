@@ -87,7 +87,8 @@ public final class RepositoryProcessor {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.info("Started");
 
-        taskContext.info("Process started {}, maxFilesPerAggregate {}, maxConcurrentMappedFiles {}, maxUncompressedFileSize {}",
+        taskContext.info("Process started {}, maxFilesPerAggregate {}, " +
+                        "maxConcurrentMappedFiles {}, maxUncompressedFileSize {}",
                 DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
                 ModelStringUtil.formatCsv(maxFilesPerAggregate),
                 ModelStringUtil.formatCsv(maxConcurrentMappedFiles),
@@ -98,11 +99,12 @@ public final class RepositoryProcessor {
                 LOGGER.debug("Scanning " + stroomZipRepository.getRootDir());
             }
 
-            // Scan all of the zip files in the repository so that we can map zip files to feeds.
-            final ErrorReceiver errorReceiver = (path, message) -> addErrorMessage(path, message, true);
+            final ErrorReceiver errorReceiver = (path, message) ->
+                    addErrorMessage(path, message, true);
 
             // Break down the zip repository so that all zip files only contain a single stream.
-            // We do this so that we can form new aggregates that contain less files than the maximum number or are smaller than the maximum size
+            // We do this so that we can form new aggregates that contain less files than the
+            // maximum number or are smaller than the maximum size
             fragmentZipFiles(taskContext, executorProvider, threadCount, errorReceiver);
 
             // Aggregate the zip files.
@@ -126,7 +128,8 @@ public final class RepositoryProcessor {
             return fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) && !fileName.contains("__part");
         };
 
-        final ZipFragmenterFileProcessor zipFragmenter = new ZipFragmenterFileProcessor(taskContext, executorProvider, threadCount, errorReceiver);
+        final ZipFragmenterFileProcessor zipFragmenter = new ZipFragmenterFileProcessor(
+                taskContext, executorProvider, threadCount, errorReceiver);
 
         final FileWalker fileWalker = new FileWalker();
         fileWalker.walk(stroomZipRepository.getRootDir(), filter, zipFragmenter, taskContext);
@@ -210,7 +213,12 @@ public final class RepositoryProcessor {
             this.errorReceiver = errorReceiver;
             this.fileSetProcessorProvider = fileSetProcessorProvider;
 
-            final ThreadPool threadPool = new ThreadPoolImpl("File Set Processor", 5, 0, threadCount, 2 * threadCount);
+            final ThreadPool threadPool = new ThreadPoolImpl(
+                    "File Set Processor",
+                    5,
+                    0,
+                    threadCount,
+                    2 * threadCount);
             executor = executorProvider.getExecutor(threadPool);
         }
 
@@ -313,7 +321,12 @@ public final class RepositoryProcessor {
                                    final ErrorReceiver errorReceiver) {
             this.taskContext = taskContext;
 
-            final ThreadPool fileInspectorThreadPool = new ThreadPoolImpl("Proxy File Fragmenter", 5, 0, threadCount, 2 * threadCount);
+            final ThreadPool fileInspectorThreadPool = new ThreadPoolImpl(
+                    "Proxy File Fragmenter",
+                    5,
+                    0,
+                    threadCount,
+                    2 * threadCount);
             executor = executorProvider.getExecutor(fileInspectorThreadPool);
 
             zipFragmenter = new ZipFragmenter(errorReceiver);
