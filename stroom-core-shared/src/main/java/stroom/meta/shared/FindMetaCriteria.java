@@ -17,24 +17,19 @@
 package stroom.meta.shared;
 
 import stroom.docref.SharedObject;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.Copyable;
 import stroom.util.shared.HasIsConstrained;
 import stroom.util.shared.IdSet;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
-import stroom.util.shared.Sort.Direction;
-import stroom.query.api.v2.ExpressionOperator;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 
-public class FindMetaCriteria implements SharedObject, HasIsConstrained, Copyable<FindMetaCriteria> {
+public class FindMetaCriteria extends BaseCriteria implements SharedObject, HasIsConstrained, Copyable<FindMetaCriteria> {
     private static final long serialVersionUID = -4777723504698304778L;
 
     private ExpressionOperator expression;
     private IdSet selectedIdSet;
-    private PageRequest pageRequest = null;
-    private List<Sort> sortList;
 
     public FindMetaCriteria() {
     }
@@ -86,53 +81,6 @@ public class FindMetaCriteria implements SharedObject, HasIsConstrained, Copyabl
         return selectedIdSet;
     }
 
-    public PageRequest getPageRequest() {
-        return pageRequest;
-    }
-
-    public void setPageRequest(final PageRequest pageRequest) {
-        this.pageRequest = pageRequest;
-    }
-
-    public PageRequest obtainPageRequest() {
-        if (pageRequest == null) {
-            pageRequest = new PageRequest();
-        }
-        return pageRequest;
-    }
-
-    public void setSort(final String field) {
-        setSort(new Sort(field, Direction.ASCENDING, false));
-    }
-
-    public void setSort(final String field, final Direction direction, final boolean ignoreCase) {
-        setSort(new Sort(field, direction, ignoreCase));
-    }
-
-    public void setSort(final Sort sort) {
-        sortList = null;
-        addSort(sort);
-    }
-
-    public void addSort(final String field) {
-        addSort(new Sort(field, Direction.ASCENDING, false));
-    }
-
-    public void addSort(final String field, final Direction direction, final boolean ignoreCase) {
-        addSort(new Sort(field, direction, ignoreCase));
-    }
-
-    public void addSort(final Sort sort) {
-        if (sortList == null) {
-            sortList = new ArrayList<>();
-        }
-        sortList.add(sort);
-    }
-
-    public List<Sort> getSortList() {
-        return sortList;
-    }
-
     @Override
     public boolean isConstrained() {
         return (selectedIdSet != null && selectedIdSet.isConstrained()) || ExpressionUtil.termCount(expression) > 0;
@@ -140,39 +88,29 @@ public class FindMetaCriteria implements SharedObject, HasIsConstrained, Copyabl
 
     @Override
     public void copyFrom(final FindMetaCriteria other) {
-        if (other.pageRequest == null) {
-            this.pageRequest = null;
-        } else {
-            this.obtainPageRequest().copyFrom(other.pageRequest);
-        }
-        if (other.sortList == null) {
-            this.sortList = null;
-        } else {
-            this.sortList = new ArrayList<>(other.sortList);
-        }
-        this.expression = ExpressionUtil.copyOperator(other.expression);
-        if (other.selectedIdSet == null) {
-            this.selectedIdSet = null;
-        } else {
-            this.obtainSelectedIdSet().copyFrom(other.selectedIdSet);
+        super.copyFrom(other);
+        if (other != null) {
+            this.expression = ExpressionUtil.copyOperator(other.expression);
+            if (other.selectedIdSet == null) {
+                this.selectedIdSet = null;
+            } else {
+                this.obtainSelectedIdSet().copyFrom(other.selectedIdSet);
+            }
         }
     }
 
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof FindMetaCriteria)) return false;
-
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
         final FindMetaCriteria that = (FindMetaCriteria) o;
-
-        if (pageRequest != null ? !pageRequest.equals(that.pageRequest) : that.pageRequest != null) return false;
-        return sortList != null ? sortList.equals(that.sortList) : that.sortList == null;
+        return Objects.equals(expression, that.expression) &&
+                Objects.equals(selectedIdSet, that.selectedIdSet);
     }
 
     @Override
     public int hashCode() {
-        int result = pageRequest != null ? pageRequest.hashCode() : 0;
-        result = 31 * result + (sortList != null ? sortList.hashCode() : 0);
-        return result;
+        return Objects.hash(super.hashCode(), expression, selectedIdSet);
     }
 }

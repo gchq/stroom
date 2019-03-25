@@ -1,7 +1,5 @@
 package stroom.meta.impl.mock;
 
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.Clearable;
 import stroom.meta.api.ExpressionMatcher;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.EffectiveMetaDataCriteria;
@@ -12,6 +10,8 @@ import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ public class MockMetaService implements MetaService, Clearable {
         feeds.add(properties.getFeedName());
         types.add(properties.getTypeName());
 
-        final MockMeta.Builder builder = new MockMeta.Builder();
+        final Meta.Builder builder = new Meta.Builder();
         builder.parentDataId(properties.getParentId());
         builder.feedName(properties.getFeedName());
         builder.typeName(properties.getTypeName());
@@ -83,7 +83,7 @@ public class MockMetaService implements MetaService, Clearable {
     public Meta updateStatus(final Meta meta, final Status currentStatus, final Status newStatus) {
         Objects.requireNonNull(meta, "Null data");
 
-        final MockMeta result = (MockMeta) metaMap.get(meta.getId());
+        Meta result = metaMap.get(meta.getId());
         if (result != null) {
             if (currentStatus != result.getStatus()) {
                 throw new RuntimeException("Unexpected status " +
@@ -93,8 +93,10 @@ public class MockMetaService implements MetaService, Clearable {
                         ")");
             }
 
-            result.status = newStatus;
-            result.statusMs = System.currentTimeMillis();
+            result = new Meta.Builder(meta)
+                    .status(newStatus)
+                    .statusMs(System.currentTimeMillis())
+                    .build();
         }
         return result;
     }

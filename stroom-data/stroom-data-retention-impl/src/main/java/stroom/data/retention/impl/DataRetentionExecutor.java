@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.docref.DocRef;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaService;
@@ -42,6 +41,7 @@ import stroom.util.shared.Period;
 import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -53,9 +53,6 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -78,7 +75,7 @@ public class DataRetentionExecutor {
 
     private final TaskContext taskContext;
     private final ClusterLockService clusterLockService;
-    private final DataRetentionRulesService dataRetentionRulesService;
+    private final Provider<DataRetentionRules> dataRetentionRulesProvider;
     private final DataRetentionConfig policyConfig;
     private final MetaService metaService;
     private final AtomicBoolean running = new AtomicBoolean();
@@ -86,12 +83,12 @@ public class DataRetentionExecutor {
     @Inject
     DataRetentionExecutor(final TaskContext taskContext,
                           final ClusterLockService clusterLockService,
-                          final DataRetentionRulesService dataRetentionRulesService,
+                          final Provider<DataRetentionRules> dataRetentionRulesProvider,
                           final DataRetentionConfig policyConfig,
                           final MetaService metaService) {
         this.taskContext = taskContext;
         this.clusterLockService = clusterLockService;
-        this.dataRetentionRulesService = dataRetentionRulesService;
+        this.dataRetentionRulesProvider = dataRetentionRulesProvider;
         this.policyConfig = policyConfig;
         this.metaService = metaService;
     }
@@ -116,14 +113,9 @@ public class DataRetentionExecutor {
     }
 
     private synchronized void process() {
-        DataRetentionRules dataRetentionPolicy = null;
-        final Set<DocRef> set = dataRetentionRulesService.listDocuments();
-        if (set != null && set.size() == 1) {
-            dataRetentionPolicy = dataRetentionRulesService.readDocument(set.iterator().next());
-        }
-
-        if (dataRetentionPolicy != null) {
-            final List<DataRetentionRule> rules = dataRetentionPolicy.getRules();
+        final DataRetentionRules dataRetentionRules = dataRetentionRulesProvider.get();
+        if (dataRetentionRules != null) {
+            final List<DataRetentionRule> rules = dataRetentionRules.getRules();
             final List<DataRetentionRule> activeRules = new ArrayList<>();
 
             // Also make sure we create a list of rules that are enabled and have at least one enabled term.
@@ -151,8 +143,8 @@ public class DataRetentionExecutor {
 
                 // If the data retention policy has changed then we need to assume it has never been run before,
                 // i.e. all data must be considered for retention checking.
-                if (tracker == null || !tracker.rulesEquals(dataRetentionPolicy)) {
-                    tracker = new Tracker(null, dataRetentionPolicy);
+                if (tracker == null || !tracker.rulesEquals(dataRetentionRules)) {
+                    tracker = new Tracker(null, dataRetentionRules);
                 }
 
                 // Calculate the amount of time that has elapsed since we last ran.
@@ -162,7 +154,7 @@ public class DataRetentionExecutor {
                 }
 
                 // Create a new tracker to save at the end of the process.
-                tracker = new Tracker(nowMs, dataRetentionPolicy);
+                tracker = new Tracker(nowMs, dataRetentionRules);
 
                 // Create a map of unique periods with the set of rules that apply to them.
                 final Map<Period, Set<DataRetentionRule>> rulesByPeriod = getRulesByPeriod(activeRules, nowMs, elapsedTime);

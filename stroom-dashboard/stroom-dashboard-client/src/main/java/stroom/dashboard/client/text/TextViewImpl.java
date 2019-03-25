@@ -25,7 +25,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.dashboard.client.text.TextPresenter.TextView;
-import stroom.streamstore.client.view.ClassificationLabel;
+import stroom.data.client.view.ClassificationLabel;
 import stroom.widget.button.client.FabButton;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 

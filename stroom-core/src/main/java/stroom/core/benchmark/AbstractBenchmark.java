@@ -35,7 +35,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.data.store.impl.fs.shared.StreamTypeNames;
+import stroom.data.shared.StreamTypeNames;
 import stroom.task.api.TaskContext;
 import stroom.util.xml.XMLUtil;
 

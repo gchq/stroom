@@ -55,7 +55,7 @@ import stroom.pipeline.writer.OutputStreamAppender;
 import stroom.pipeline.writer.TextWriter;
 import stroom.pipeline.writer.XMLWriter;
 import stroom.security.Security;
-import stroom.data.store.impl.fs.shared.StreamTypeNames;
+import stroom.data.shared.StreamTypeNames;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
@@ -164,8 +164,6 @@ public class DataFetcher {
 
             // Get the stream source.
             try (final Source source = streamStore.openSource(streamId, true)) {
-                meta = source.getMeta();
-
                 // If we have no stream then let the client know it has been
                 // deleted.
                 if (source == null) {
@@ -181,7 +179,9 @@ public class DataFetcher {
                             "Stream has been deleted", showAsHtml);
                 }
 
-                streamTypeName = source.getMeta().getTypeName();
+                meta = source.getMeta();
+                feedName = meta.getFeedName();
+                streamTypeName = meta.getTypeName();
 
                 // Are we getting and are we able to get the child stream?
                 if (childStreamTypeName != null) {
@@ -195,10 +195,6 @@ public class DataFetcher {
 //                    streamCloser.add(streamSource);
                 }
 
-                // Get the feed name.
-                if (source.getMeta() != null && source.getMeta().getFeedName() != null) {
-                    feedName = source.getMeta().getFeedName();
-                }
 
 //                // Get the boundary and segment input streams.
 //                final CompoundInputStream compoundInputStream = streamSource.getCompoundInputStream();
@@ -214,9 +210,9 @@ public class DataFetcher {
                     // Find out which child stream types are available.
                     availableChildStreamTypes = getAvailableChildStreamTypes(inputStreamProvider);
 
-                    try (final SegmentInputStream segmentInputStream = inputStreamProvider.get(streamTypeName)) {
+                    try (final SegmentInputStream segmentInputStream = inputStreamProvider.get(childStreamTypeName)) {
                         // Get the event id.
-                        eventId = String.valueOf(source.getMeta().getId());
+                        eventId = String.valueOf(meta.getId());
                         if (count > 1) {
                             eventId += ":" + index;
                         }

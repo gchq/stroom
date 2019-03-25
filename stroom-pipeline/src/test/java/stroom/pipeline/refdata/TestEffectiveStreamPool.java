@@ -25,7 +25,7 @@ import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.security.impl.mock.AllowAllMockSecurity;
-import stroom.data.store.impl.fs.shared.StreamTypeNames;
+import stroom.data.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 

@@ -19,7 +19,7 @@ package stroom.data.store.impl;
 import stroom.resource.api.ResourceStore;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.data.store.impl.fs.shared.UploadDataAction;
+import stroom.data.shared.UploadDataAction;
 import stroom.task.api.TaskManager;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.ResourceKey;

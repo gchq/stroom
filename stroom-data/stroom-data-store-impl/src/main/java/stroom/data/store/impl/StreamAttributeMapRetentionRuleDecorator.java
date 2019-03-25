@@ -19,20 +19,24 @@ package stroom.data.store.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.meta.api.ExpressionMatcher;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;
-import stroom.dictionary.api.DictionaryStore;
-import stroom.data.retention.shared.DataRetentionRule;
 import stroom.util.date.DateUtil;
 
+import javax.inject.Inject;
+import javax.inject.Provider;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class StreamAttributeMapRetentionRuleDecorator {
+class StreamAttributeMapRetentionRuleDecorator {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapRetentionRuleDecorator.class);
 
     static final String RETENTION_AGE = "Age";
@@ -42,9 +46,17 @@ public class StreamAttributeMapRetentionRuleDecorator {
     private final List<DataRetentionRule> rules;
     private final ExpressionMatcher expressionMatcher;
 
-    public StreamAttributeMapRetentionRuleDecorator(final DictionaryStore dictionaryStore, final List<DataRetentionRule> rules) {
-        this.rules = rules;
+    @Inject
+    public StreamAttributeMapRetentionRuleDecorator(final DictionaryStore dictionaryStore,
+                                                    final Provider<DataRetentionRules> dataRetentionRulesProvider) {
         expressionMatcher = new ExpressionMatcher(MetaFieldNames.getFieldMap(), dictionaryStore);
+
+        final DataRetentionRules dataRetentionRules = dataRetentionRulesProvider.get();
+        if (dataRetentionRules != null) {
+            rules = dataRetentionRules.getRules();
+        } else {
+            rules = Collections.emptyList();
+        }
     }
 
     void addMatchingRetentionRuleInfo(final Meta meta, final Map<String, String> attributeMap) {

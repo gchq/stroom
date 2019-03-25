@@ -26,7 +26,7 @@ import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.TaskStatus;
-import stroom.data.store.impl.fs.shared.StreamTypeNames;
+import stroom.data.shared.StreamTypeNames;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;

@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:r="urn:import:stroom.widget.layout.client.view"
-             xmlns:l="urn:import:stroom.streamstore.client.view"
+             xmlns:l="urn:import:stroom.data.client.view"
              xmlns:button="urn:import:stroom.widget.button.client">
 
     <r:ResizeFlowPanel styleName="stroom-dashboard-text">

@@ -30,7 +30,7 @@ import stroom.util.shared.Sort.Direction;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.node.shared.FindSystemTableStatusAction;
-import stroom.streamstore.client.presenter.ActionDataProvider;
+import stroom.data.client.presenter.ActionDataProvider;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;

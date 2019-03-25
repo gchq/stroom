@@ -3,7 +3,6 @@ ext.moduleName = 'stroom.data.retention.impl'
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-cluster:stroom-cluster-lock-api')
-    compile project(':stroom-data:stroom-data-retention-api')
     compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-dictionary:stroom-dictionary-api')
     compile project(':stroom-meta:stroom-meta-api')

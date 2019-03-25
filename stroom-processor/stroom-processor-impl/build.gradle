@@ -35,7 +35,6 @@ dependencies {
     compile libs.hikari
     compile libs.jackson_databind
     compile libs.javax_inject
-    compile libs.javax_validation
     compile libs.jooq
     compile libs.slf4j_api
 

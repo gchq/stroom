@@ -31,7 +31,7 @@ import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.importexport.shared.FetchDependenciesAction;
 import stroom.docref.DocRef;
-import stroom.streamstore.client.presenter.ActionDataProvider;
+import stroom.data.client.presenter.ActionDataProvider;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 

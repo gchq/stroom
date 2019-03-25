@@ -38,7 +38,6 @@ dependencies {
     compile libs.jackson_annotations
     compile libs.jackson_core
     compile libs.javax_inject
-    compile libs.javax_validation
     compile libs.jaxb_api
     compile libs.jersey_client
     compile libs.jetty_http

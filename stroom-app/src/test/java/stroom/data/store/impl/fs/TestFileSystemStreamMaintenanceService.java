@@ -20,7 +20,7 @@ package stroom.data.store.impl.fs;
 import org.junit.jupiter.api.Test;
 import stroom.meta.shared.Meta;
 import stroom.job.impl.MockTask;
-import stroom.data.store.impl.fs.shared.StreamTypeNames;
+import stroom.data.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;

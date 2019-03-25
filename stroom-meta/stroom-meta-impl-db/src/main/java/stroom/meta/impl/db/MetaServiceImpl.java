@@ -12,7 +12,6 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.Sort.Direction;
 import stroom.meta.impl.db.ExpressionMapper.TermHandler;
 import stroom.meta.impl.db.MetaExpressionMapper.MetaTermHandler;
-import stroom.meta.impl.db.MetaImpl.Builder;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
@@ -182,13 +181,13 @@ class MetaServiceImpl implements MetaService {
                 .getId()
         );
 
-        return new Builder().id(id)
+        return new Meta.Builder().id(id)
                 .feedName(metaProperties.getFeedName())
                 .typeName(metaProperties.getTypeName())
                 .processorUuid(metaProperties.getProcessorUuid())
                 .pipelineUuid(metaProperties.getPipelineUuid())
                 .parentDataId(metaProperties.getParentId())
-                .processTaskId(metaProperties.getProcessorTaskId())
+                .processorTaskId(metaProperties.getProcessorTaskId())
                 .status(Status.LOCKED)
                 .statusMs(metaProperties.getStatusMs())
                 .createMs(metaProperties.getCreateMs())
@@ -218,7 +217,10 @@ class MetaServiceImpl implements MetaService {
         final long now = System.currentTimeMillis();
         final int result = updateStatus(meta.getId(), newStatus, currentStatus, now, DocumentPermissionNames.UPDATE);
         if (result > 0) {
-            return new Builder(meta).status(newStatus).statusMs(now).build();
+            return new Meta.Builder(meta)
+                    .status(newStatus)
+                    .statusMs(now)
+                    .build();
         } else {
             final Meta existingMeta = getMeta(meta.getId());
             if (existingMeta == null) {
@@ -270,7 +272,7 @@ class MetaServiceImpl implements MetaService {
 //                            .typeName(metaType.NAME.get(r))
 //                            .pipelineUuid(metaProcessor.PIPELINE_UUID.get(r))
 //                            .parentDataId(meta.PARNT_STRM_ID.get(r))
-//                            .processTaskId(meta.STRM_TASK_ID.get(r))
+//                            .processorTaskId(meta.STRM_TASK_ID.get(r))
 //                            .processorId(meta.FK_STRM_PROC_ID.get(r))
 //                            .status(StreamStatusId.getStatus(data.STAT.get(r)))
 //                            .statusMs(meta.STAT_MS.get(r))
@@ -396,14 +398,15 @@ class MetaServiceImpl implements MetaService {
                 .orderBy(meta.ID)
                 .limit(offset, numberOfRows)
                 .fetch()
-                .map(r -> new Builder().id(r.component1())
+                .map(r -> new Meta.Builder()
+                        .id(r.component1())
                         .feedName(r.component2())
                         .typeName(r.component3())
                         .processorUuid(r.component4())
                         .processorFilterUuid(r.component5())
                         .pipelineUuid(r.component6())
                         .parentDataId(r.component7())
-                        .processTaskId(r.component8())
+                        .processorTaskId(r.component8())
                         .status(MetaStatusId.getStatus(r.component9()))
                         .statusMs(r.component10())
                         .createMs(r.component11())
@@ -615,7 +618,7 @@ class MetaServiceImpl implements MetaService {
             } else {
                 // Add a dummy parent data as we don't seem to be able to get the real parent.
                 // This might be because it is deleted or the user does not have access permissions.
-                final Meta meta = new MetaImpl.Builder()
+                final Meta meta = new Meta.Builder()
                         .id(child.getParentMetaId())
                         .build();
                 result.add(meta);

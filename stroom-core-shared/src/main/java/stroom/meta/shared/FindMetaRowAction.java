@@ -17,11 +17,12 @@
 package stroom.meta.shared;
 
 import stroom.task.shared.Action;
+import stroom.util.shared.HasCriteria;
 import stroom.util.shared.ResultList;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaRow;
 
-public class FindMetaRowAction extends Action<ResultList<MetaRow>> {
+public class FindMetaRowAction extends Action<ResultList<MetaRow>> implements HasCriteria<FindMetaCriteria> {
     private static final long serialVersionUID = -3560107233301674555L;
 
     private FindMetaCriteria criteria;

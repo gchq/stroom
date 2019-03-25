@@ -40,7 +40,7 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.data.store.impl.fs.shared.StreamTypeNames;
+import stroom.data.shared.StreamTypeNames;
 
 import javax.inject.Inject;
 import java.io.IOException;

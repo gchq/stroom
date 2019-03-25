@@ -23,7 +23,7 @@ import stroom.core.dataprocess.PipelineDataProcessorTaskExecutor;
 import stroom.meta.impl.mock.MockMetaService;
 import stroom.meta.shared.Meta;
 import stroom.processor.api.DataProcessorTaskExecutor;
-import stroom.data.store.impl.fs.shared.StreamTypeNames;
+import stroom.data.shared.StreamTypeNames;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.common.ComparisonHelper;

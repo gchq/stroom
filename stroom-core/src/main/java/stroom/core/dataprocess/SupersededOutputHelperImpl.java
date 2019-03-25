@@ -71,14 +71,14 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
                 for (final Meta meta : streamList) {
                     // TODO : @66 REMOVE STREAM TASK ID FROM STREAM AND QUERY THE STREAM PROCESSOR SERVICE TO FIND THE LATEST TASK ID FOR THE CURRENT INPUT STREAM AND PROCESSOR
 
-                    if (meta.getProcessTaskId() != null && !Status.DELETED.equals(meta.getStatus())) {
+                    if (meta.getProcessorTaskId() != null && !Status.DELETED.equals(meta.getStatus())) {
                         if (meta.getCreateMs() > latestStreamCreationTime) {
                             latestStreamCreationTime = meta.getCreateMs();
-                            latestStreamTaskId = meta.getProcessTaskId();
+                            latestStreamTaskId = meta.getProcessorTaskId();
                         } else if (meta.getCreateMs() == latestStreamCreationTime
-                                && (latestStreamTaskId == null || meta.getProcessTaskId() > latestStreamTaskId)) {
+                                && (latestStreamTaskId == null || meta.getProcessorTaskId() > latestStreamTaskId)) {
                             latestStreamCreationTime = meta.getCreateMs();
-                            latestStreamTaskId = meta.getProcessTaskId();
+                            latestStreamTaskId = meta.getProcessorTaskId();
                         }
                     }
                 }
@@ -88,7 +88,7 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
                 for (final Meta meta : streamList) {
                     // If the stream is not associated with the latest stream task
                     // and is not already deleted then select it for deletion.
-                    if ((latestStreamTaskId == null || !latestStreamTaskId.equals(meta.getProcessTaskId()))
+                    if ((latestStreamTaskId == null || !latestStreamTaskId.equals(meta.getProcessorTaskId()))
                             && !Status.DELETED.equals(meta.getStatus())) {
                         findDeleteMetaCriteria.obtainSelectedIdSet().add(meta.getId());
                     }

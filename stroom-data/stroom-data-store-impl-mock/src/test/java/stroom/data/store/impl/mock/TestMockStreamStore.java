@@ -25,7 +25,7 @@ import stroom.meta.impl.mock.MockMetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
-import stroom.data.store.impl.fs.shared.StreamTypeNames;
+import stroom.data.shared.StreamTypeNames;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;

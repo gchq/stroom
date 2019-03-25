@@ -59,7 +59,7 @@ class FetchFullMetaInfoHandler extends AbstractTaskHandler<FetchFullMetaInfoActi
         entries.add(new Entry("Stream Id", String.valueOf(meta.getId())));
         entries.add(new Entry("Status", meta.getStatus().getDisplayValue()));
         entries.add(new Entry("Status Ms", getDateTimeString(meta.getStatusMs())));
-        entries.add(new Entry("Stream Task Id", String.valueOf(meta.getProcessTaskId())));
+        entries.add(new Entry("Stream Task Id", String.valueOf(meta.getProcessorTaskId())));
         entries.add(new Entry("Parent Data Id", String.valueOf(meta.getParentMetaId())));
         entries.add(new Entry("Created", getDateTimeString(meta.getCreateMs())));
         entries.add(new Entry("Effective", getDateTimeString(meta.getEffectiveMs())));

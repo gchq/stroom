@@ -13,7 +13,6 @@ dependencies {
     compile libs.eventLogging
     compile libs.guice4
     compile libs.javax_inject
-    compile libs.javax_validation
     compile libs.slf4j_api
     compile libs.stroomDocRef
     compile libs.swagger_annotations

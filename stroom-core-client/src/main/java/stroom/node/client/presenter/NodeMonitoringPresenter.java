@@ -40,7 +40,7 @@ import stroom.node.shared.FetchNodeStatusAction;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
 import stroom.node.shared.UpdateNodeAction;
-import stroom.streamstore.client.presenter.ActionDataProvider;
+import stroom.data.client.presenter.ActionDataProvider;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.BuildInfo;

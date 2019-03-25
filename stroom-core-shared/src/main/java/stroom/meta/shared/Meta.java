@@ -18,28 +18,175 @@ package stroom.meta.shared;
 
 import stroom.docref.SharedObject;
 
-public interface Meta extends SharedObject {
-    long getId();
+import java.util.Objects;
 
-    String getFeedName();
+public class Meta implements SharedObject {
+    private long id;
+    private String feedName;
+    private String typeName;
+    private String processorUuid;
+    private String processorFilterUuid;
+    private String pipelineUuid;
+    private Long parentDataId;
+    private Long processorTaskId;
+    private Status status;
+    private Long statusMs;
+    private long createMs;
+    private Long effectiveMs;
 
-    String getTypeName();
+    public Meta() {
+        // Default constructor necessary for GWT serialisation.
+    }
 
-    String getProcessorUuid();
+    public long getId() {
+        return id;
+    }
 
-    String getProcessorFilterUuid();
+    public String getFeedName() {
+        return feedName;
+    }
 
-    String getPipelineUuid();
+    public String getTypeName() {
+        return typeName;
+    }
 
-    Long getParentMetaId();
+    public String getProcessorUuid() {
+        return processorUuid;
+    }
 
-    Long getProcessTaskId();
+    public String getProcessorFilterUuid() {
+        return processorFilterUuid;
+    }
 
-    Status getStatus();
+    public String getPipelineUuid() {
+        return pipelineUuid;
+    }
 
-    Long getStatusMs();
+    public Long getParentMetaId() {
+        return parentDataId;
+    }
 
-    long getCreateMs();
+    public Long getProcessorTaskId() {
+        return processorTaskId;
+    }
 
-    Long getEffectiveMs();
+    public Status getStatus() {
+        return status;
+    }
+
+    public Long getStatusMs() {
+        return statusMs;
+    }
+
+    public long getCreateMs() {
+        return createMs;
+    }
+
+    public Long getEffectiveMs() {
+        return effectiveMs;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final Meta meta = (Meta) o;
+        return id == meta.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(id);
+    }
+
+    public static class Builder {
+        private final Meta meta = new Meta();
+
+        public Builder() {
+        }
+
+        public Builder(final Meta meta) {
+            id(meta.getId());
+            feedName(meta.getFeedName());
+            typeName(meta.getTypeName());
+            pipelineUuid(meta.getPipelineUuid());
+            processorUuid(meta.getProcessorUuid());
+            processorFilterUuid(meta.getProcessorFilterUuid());
+            parentDataId(meta.getParentMetaId());
+            processorTaskId(meta.getProcessorTaskId());
+            status(meta.getStatus());
+            statusMs(meta.getStatusMs());
+            createMs(meta.getCreateMs());
+            effectiveMs(meta.getEffectiveMs());
+        }
+
+        public Builder id(final long id) {
+            meta.id = id;
+            return this;
+        }
+
+        public Builder feedName(final String feedName) {
+            meta.feedName = feedName;
+            return this;
+        }
+
+        public Builder typeName(final String typeName) {
+            meta.typeName = typeName;
+            return this;
+        }
+
+        public Builder processorUuid(final String processorUuid) {
+            meta.processorUuid = processorUuid;
+            return this;
+        }
+
+        public Builder processorFilterUuid(final String processorFilterUuid) {
+            meta.processorFilterUuid = processorFilterUuid;
+            return this;
+        }
+
+        public Builder pipelineUuid(final String pipelineUuid) {
+            meta.pipelineUuid = pipelineUuid;
+            return this;
+        }
+
+        public Builder parentDataId(final Long parentDataId) {
+            meta.parentDataId = parentDataId;
+            return this;
+        }
+
+        public Builder processorTaskId(final Long processorTaskId) {
+            meta.processorTaskId = processorTaskId;
+            return this;
+        }
+
+        public Builder status(final Status status) {
+            meta.status = status;
+            return this;
+        }
+
+        public Builder statusMs(final Long statusMs) {
+            meta.statusMs = statusMs;
+            return this;
+        }
+
+        public Builder createMs(final long createMs) {
+            meta.createMs = createMs;
+            return this;
+        }
+
+        public Builder effectiveMs(final Long effectiveMs) {
+            meta.effectiveMs = effectiveMs;
+            return this;
+        }
+
+        public Meta build() {
+            return meta;
+        }
+    }
 }

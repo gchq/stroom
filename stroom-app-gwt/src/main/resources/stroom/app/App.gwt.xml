@@ -93,7 +93,7 @@
     <inherits name="stroom.docstore.DocStore"/>
     <inherits name="stroom.data.retention.DataRetention"/>
     <inherits name="stroom.receive.rules.RuleSet"/>
-    <inherits name="stroom.streamstore.StreamStore" />
+    <inherits name="stroom.data.Data" />
     <inherits name="stroom.streamtask.StreamTask" />
     <inherits name="stroom.task.Task" />
     <inherits name="stroom.pipeline.Pipeline" />

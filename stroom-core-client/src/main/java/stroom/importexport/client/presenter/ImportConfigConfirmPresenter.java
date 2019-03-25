@@ -40,7 +40,7 @@ import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ImportConfigAction;
 import stroom.importexport.shared.ImportState;
-import stroom.streamstore.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Message;

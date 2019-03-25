@@ -28,7 +28,7 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Period;
-import stroom.data.store.impl.fs.shared.StreamTypeNames;
+import stroom.data.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.test.common.util.test.FileSystemTestUtil;

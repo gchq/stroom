@@ -25,7 +25,7 @@ import stroom.util.shared.BaseCriteria;
 import stroom.entity.shared.FindAction;
 import stroom.util.shared.ResultList;
 import stroom.util.shared.Sort.Direction;
-import stroom.streamstore.client.presenter.ActionDataProvider;
+import stroom.data.client.presenter.ActionDataProvider;
 import stroom.docref.SharedObject;
 import stroom.task.shared.Action;
 

@@ -37,7 +37,7 @@ import stroom.feed.shared.FetchSupportedEncodingsAction;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
-import stroom.streamstore.client.presenter.DataTypeUiManager;
+import stroom.data.client.presenter.DataTypeUiManager;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.SharedString;
 import stroom.widget.tickbox.client.view.TickBox;

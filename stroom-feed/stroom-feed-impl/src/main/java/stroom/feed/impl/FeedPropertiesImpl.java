@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
-import stroom.data.store.impl.fs.shared.StreamTypeNames;
+import stroom.data.shared.StreamTypeNames;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;

@@ -28,8 +28,8 @@ import stroom.feed.shared.FeedDoc;
 import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.client.presenter.ClassificationWrappedMetaPresenter;
-import stroom.streamstore.client.presenter.ProcessorTaskPresenter;
+import stroom.data.client.presenter.ClassificationWrappedMetaPresenter;
+import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 

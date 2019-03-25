@@ -22,9 +22,9 @@ import stroom.feed.client.presenter.FeedPresenter;
 import stroom.feed.client.presenter.FeedSettingsPresenter;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
 import stroom.feed.client.view.FeedSettingsViewImpl;
-import stroom.streamstore.client.presenter.DataUploadPresenter;
-import stroom.streamstore.client.presenter.DataUploadPresenter.DataUploadView;
-import stroom.streamstore.client.view.StreamUploadViewImpl;
+import stroom.data.client.presenter.DataUploadPresenter;
+import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
+import stroom.data.client.view.StreamUploadViewImpl;
 
 public class FeedModule extends PluginModule {
     @Override

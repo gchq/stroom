@@ -24,7 +24,7 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.util.shared.ResultList;
-import stroom.streamstore.client.presenter.ActionDataProvider;
+import stroom.data.client.presenter.ActionDataProvider;
 
 public class FetchGlobalConfigActionDataProvider implements Refreshable, ColumnSortEvent.Handler {
     private final ClientDispatchAsync dispatcher;

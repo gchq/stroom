@@ -17,9 +17,16 @@
 package stroom.data.retention.impl;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FetchDataRetentionRulesAction;
 import stroom.data.retention.shared.SaveDataRetentionRulesAction;
+import stroom.docref.DocRef;
 import stroom.task.api.TaskHandlerBinder;
+
+import java.util.List;
+import java.util.Set;
 
 public class DataRetentionModule extends AbstractModule {
     @Override
@@ -29,5 +36,20 @@ public class DataRetentionModule extends AbstractModule {
         TaskHandlerBinder.create(binder())
                 .bind(FetchDataRetentionRulesAction.class, FetchDataRetentionPolicyHandler.class)
                 .bind(SaveDataRetentionRulesAction.class, SaveDataRetentionPolicyHandler.class);
+    }
+
+    @Provides
+    DataRetentionRules getRules(final DataRetentionRulesService dataRetentionRulesService) {
+        DataRetentionRules dataRetentionRules = null;
+        final Set<DocRef> set = dataRetentionRulesService.listDocuments();
+        if (set != null && set.size() == 1) {
+            dataRetentionRules = dataRetentionRulesService.readDocument(set.iterator().next());
+        }
+
+        if (dataRetentionRules != null) {
+            return dataRetentionRules;
+        }
+
+        return null;
     }
 }
