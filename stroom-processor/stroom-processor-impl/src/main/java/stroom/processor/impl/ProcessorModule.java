@@ -19,14 +19,16 @@ package stroom.processor.impl;
 import com.google.inject.AbstractModule;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.CreateProcessorFilterAction;
 import stroom.processor.shared.FetchProcessorAction;
+import stroom.processor.shared.FindProcessorTaskAction;
+import stroom.processor.shared.FindProcessorTaskSummaryAction;
 import stroom.processor.shared.ReprocessDataAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.RestResource;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 public class ProcessorModule extends AbstractModule {
@@ -36,12 +38,13 @@ public class ProcessorModule extends AbstractModule {
         bind(ProcessorFilterService.class).to(ProcessorFilterServiceImpl.class);
         bind(ProcessorService.class).to(ProcessorServiceImpl.class);
         bind(ProcessorTaskService.class).to(ProcessorTaskServiceImpl.class);
-//        bind(ProcessorTaskService.class).to(StreamTaskServiceImpl.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(CreateProcessorFilterAction.class, CreateProcessorHandler.class)
                 .bind(CreateStreamTasksTask.class, CreateStreamTasksTaskHandler.class)
                 .bind(FetchProcessorAction.class, FetchProcessorHandler.class)
+                .bind(FindProcessorTaskAction.class, FindProcessorTaskHandler.class)
+                .bind(FindProcessorTaskSummaryAction.class, FindProcessorTaskSummaryHandler.class)
                 .bind(ReprocessDataAction.class, ReprocessDataHandler.class)
                 .bind(DataProcessorTask.class, DataProcessorTaskHandler.class);
 
