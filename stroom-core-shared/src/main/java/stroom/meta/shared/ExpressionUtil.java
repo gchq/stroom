@@ -157,6 +157,7 @@ public final class ExpressionUtil {
         builder.condition(term.getCondition());
         builder.value(term.getValue());
         builder.dictionary(term.getDictionary());
+        builder.docRef(term.getDocRef());
         return builder.build();
     }
 }

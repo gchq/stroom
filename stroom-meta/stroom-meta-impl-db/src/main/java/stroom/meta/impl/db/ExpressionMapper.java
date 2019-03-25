@@ -126,6 +126,14 @@ class ExpressionMapper implements Function<ExpressionItem, Condition> {
                     final List<T> values = Arrays.stream(parts).map(converter::apply).collect(Collectors.toList());
                     return field.in(values);
                 }
+                case IS_DOC_REF: {
+                    if (term.getDocRef() == null || term.getDocRef().getUuid() == null) {
+                        return field.isNull();
+                    } else {
+                        return field.equal(converter.apply(term.getDocRef().getUuid()));
+                    }
+                }
+
 //                case IN_DICTIONARY: {
 //                    // TODO : @66 Not sure how to handle this yet
 //                }
@@ -136,6 +144,7 @@ class ExpressionMapper implements Function<ExpressionItem, Condition> {
             throw new RuntimeException("Unexpected condition: " + term.getCondition());
         }
     }
+
 //
 //    private class LongTermHandler implements TermHandler<Long> {
 //        private final Field<Long> field;
