@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.repo;
 
 import org.slf4j.Logger;
@@ -14,7 +30,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Set;
 
 class ZipFragmenter {
-    private final Logger LOGGER = LoggerFactory.getLogger(ZipFragmenter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZipFragmenter.class);
 
     private final ErrorReceiver errorReceiver;
 
@@ -32,19 +48,19 @@ class ZipFragmenter {
         final int index = fileName.lastIndexOf(".");
         if (index != -1) {
             final String stem = fileName.substring(0, index);
-            final Path outputDir = path.getParent().resolve(stem);
+            final Path outputDir = path.getParent().resolve(stem + PathConstants.PARTS);
 
             if (!Files.isDirectory(outputDir)) {
                 try {
                     Files.createDirectory(outputDir);
                 } catch (final IOException e) {
-                    errorReceiver.onError(path, "Unable to create directory '" + FileUtil.getCanonicalPath(outputDir) + "'");
+                    errorReceiver.onError(
+                            path,
+                            "Unable to create directory '" + FileUtil.getCanonicalPath(outputDir) + "'");
                 }
-            } else {
-                LOGGER.warn("Deleting previous contents of '" + FileUtil.getCanonicalPath(outputDir) + "'");
-                FileUtil.deleteContents(outputDir);
             }
 
+            Path currentDir = outputDir;
             if (Files.isDirectory(outputDir)) {
                 int i = 1;
                 boolean success = false;
@@ -56,7 +72,19 @@ class ZipFragmenter {
                         errorReceiver.onError(path, "Unable to find any entry?");
                     } else {
                         for (final String baseName : baseNameSet) {
-                            final Path outputFile = outputDir.resolve(stem + "__part" + StroomFileNameUtil.idToString(i) + ".zip");
+                            final String idString = StroomFileNameUtil.idToString(i);
+                            final String subPath = StroomFileNameUtil.idToPathId(idString);
+                            if (subPath.length() > 0) {
+                                final Path dir = outputDir.resolve(subPath);
+                                // Create sub directories if we have some and haven't tried before.
+                                if (!dir.equals(currentDir)) {
+                                    Files.createDirectories(dir);
+                                    currentDir = dir;
+                                }
+                            }
+
+                            final Path outputFile = currentDir.resolve(stem + PathConstants.PART + idString + ".zip");
+                            // If output file already exists then it ought to be overwritten automatically.
                             try (final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(outputFile)) {
                                 transferEntry(stroomZipFile, stroomZipOutputStream, baseName, StroomZipFileType.Meta);
                                 transferEntry(stroomZipFile, stroomZipOutputStream, baseName, StroomZipFileType.Context);
@@ -81,7 +109,11 @@ class ZipFragmenter {
         }
     }
 
-    private void transferEntry(final StroomZipFile input, final StroomZipOutputStream output, final String baseName, final StroomZipFileType type) {
+    private void transferEntry(
+            final StroomZipFile input,
+            final StroomZipOutputStream output,
+            final String baseName,
+            final StroomZipFileType type) {
         try (final InputStream inputStream = input.getInputStream(baseName, type)) {
             if (inputStream != null) {
                 final String outputEntryName = new StroomZipEntry(null, baseName, type).getFullName();
