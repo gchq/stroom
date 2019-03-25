@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Added debug to help diagnose search failures
+
 * Issue **#382** : Large zip files are now broken apart prior to proxy aggregation.
 
 * Change start script to use absolute paths for jar, config and logs to distinguish stroom and proxy instances.

@@ -87,19 +87,23 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
             }
         };
 
-        getTasksTotal().set(shards.size());
         for (final Long shard : shards) {
             final IndexShardSearchTask task = new IndexShardSearchTask(queryFactory, shard, fieldNames, resultReceiver, errorReceiver, hitCount);
             final IndexShardSearchRunnable runnable = new IndexShardSearchRunnable(task, handlerProvider);
             taskQueue.add(runnable);
         }
-        LOGGER.debug(() -> "Queued " + shards.size() + " index shard search tasks");
+        final int count = taskQueue.size();
+        LOGGER.debug(() -> String.format("Queued %s index shard search tasks", count));
 
         // Attach to the supplied executor.
         attach();
 
         // Tell the supplied executor that we are ready to deliver tasks.
         signalAvailable();
+
+        // Set the total number of index shards we are searching.
+        // We set this here so that any errors that might have occurred adding shard search tasks would prevent this producer having work to do.
+        getTasksTotal().set(count);
     }
 
     @Override

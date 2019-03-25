@@ -52,7 +52,7 @@ class ClusterCallServiceRemote implements ClusterCallService {
     private final Map<Node, ClusterCallService> proxyMap = new HashMap<>();
 
     private HessianProxyFactory proxyFactory = null;
-    private boolean ignoreSSLHostnameVerifier = true;
+    private boolean ignoreSSLHostnameVerifier;
 
     @Inject
     ClusterCallServiceRemote(final NodeCache nodeCache, final StroomBeanStore beanStore,
@@ -135,14 +135,16 @@ class ClusterCallServiceRemote implements ClusterCallService {
             try {
                 result = api.call(sourceNode, targetNode, beanName, methodName, parameterTypes, args);
             } catch (final HessianRuntimeException t) {
+                final String details = getCallDetails(sourceNode, targetNode, beanName, methodName, args);
                 if (t.getCause() != null && t.getCause() instanceof ConnectException) {
-                    LOGGER.error("Unable to connect to '" + targetNode.getClusterURL() + "' " + t.getCause().getMessage());
+                    LOGGER.error("Unable to connect to '" + targetNode.getClusterURL() + "' " + t.getCause().getMessage() + details);
                 } else {
-                    LOGGER.error(t.getMessage(), t);
+                    LOGGER.error(t.getMessage() + details, t);
                 }
                 throw t;
             } catch (final Throwable t) {
-                LOGGER.error(t.getMessage(), t);
+                final String details = getCallDetails(sourceNode, targetNode, beanName, methodName, args);
+                LOGGER.error(t.getMessage() + details, t);
                 throw t;
             }
         }
@@ -153,12 +155,64 @@ class ClusterCallServiceRemote implements ClusterCallService {
                 api = "remote";
             }
 
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(ClusterCallUtil.logString("call() - " + api, sourceNode, targetNode, beanName, methodName,
-                        logExecutionTime.getDuration()));
-            }
+            LOGGER.debug(ClusterCallUtil.logString("call() - " + api, sourceNode, targetNode, beanName, methodName,
+                    logExecutionTime.getDuration()));
         }
 
         return result;
+    }
+
+    private String getCallDetails(final Node sourceNode,
+                                  final Node targetNode,
+                                  final String beanName,
+                                  final String methodName,
+                                  final Object[] args) {
+        final StringBuilder sb = new StringBuilder();
+        try {
+            if (sourceNode != null) {
+                sb.append("\n\tsourceNode: ");
+                sb.append(sourceNode.getName());
+            }
+            if (targetNode != null) {
+                sb.append("\n\ttargetNode: ");
+                sb.append(targetNode.getName());
+            }
+            if (beanName != null) {
+                sb.append("\n\tbeanName: ");
+                sb.append(beanName);
+            }
+            if (methodName != null) {
+                sb.append("\n\tmethodName: ");
+                sb.append(methodName);
+            }
+            if (args != null) {
+                sb.append("\n\targs: ");
+                sb.append(getArgsString(args));
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return sb.toString();
+    }
+
+    private String getArgsString(final Object[] args) {
+        final StringBuilder sb = new StringBuilder();
+        for (final Object arg : args) {
+            if (arg == null) {
+                sb.append("null, ");
+            } else {
+                try {
+                    sb.append(arg.toString());
+                    sb.append(", ");
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Error appending arg for: " + arg.getClass().getSimpleName(), e);
+                }
+            }
+        }
+
+        if (sb.length() > 2) {
+            sb.setLength(sb.length() - 2);
+        }
+        return sb.toString();
     }
 }
