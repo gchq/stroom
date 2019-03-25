@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.31] - 2019-03-25
+
 * Added debug to help diagnose search failures
 
 * Issue **#382** : Large zip files are now broken apart prior to proxy aggregation.
@@ -1521,7 +1524,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.30...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.31...6.0
+[v6.0-beta.31]: https://github.com/gchq/stroom/compare/v6.0-beta.30...v6.0-beta.31
 [v6.0-beta.30]: https://github.com/gchq/stroom/compare/v6.0-beta.29...v6.0-beta.30
 [v6.0-beta.29]: https://github.com/gchq/stroom/compare/v6.0-beta.28...v6.0-beta.29
 [v6.0-beta.28]: https://github.com/gchq/stroom/compare/v6.0-beta.27...v6.0-beta.28
