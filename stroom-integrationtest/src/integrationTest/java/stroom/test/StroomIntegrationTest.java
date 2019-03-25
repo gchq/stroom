@@ -92,7 +92,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
         // Setup the database if this is the first test running for this test
         // class or if we always want to recreate the DB between tests.
-        if (TEAR_DOWN_DATABASE_BETWEEEN_TESTS || getTestCount() == 1) {
+        if (teardownEnabled() && (TEAR_DOWN_DATABASE_BETWEEEN_TESTS || getTestCount() == 1)) {
             if (!state.isDoneSetup()) {
                 LOGGER.info("before() - commonTestControl.setup()");
                 commonTestControl.teardown();
@@ -194,7 +194,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
         return FileUtil.getTempDir();
     }
 
-//    public Path getCurrentTestDir() {
-//        return FileUtil.getTempDir();
-//    }
+    protected boolean teardownEnabled() {
+        return true;
+    }
 }
