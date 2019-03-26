@@ -79,8 +79,8 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     public static final String STREAM_LIST = "STREAM_LIST";
 
     private final LocationManager locationManager;
-    private final MetaListPresenter streamListPresenter;
-    private final MetaRelationListPresenter streamRelationListPresenter;
+    private final MetaListPresenter metaListPresenter;
+    private final MetaRelationListPresenter metaRelationListPresenter;
     private final DataPresenter dataPresenter;
     private final Provider<DataUploadPresenter> streamUploadPresenter;
     private final Provider<ExpressionPresenter> streamListFilterPresenter;
@@ -102,58 +102,62 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     private boolean hasSetCriteria;
 
     @Inject
-    public MetaPresenter(final EventBus eventBus, final StreamView view, final LocationManager locationManager,
-                         final MetaListPresenter streamListPresenter,
-                         final MetaRelationListPresenter streamRelationListPresenter, final DataPresenter dataPresenter,
+    public MetaPresenter(final EventBus eventBus,
+                         final StreamView view,
+                         final LocationManager locationManager,
+                         final MetaListPresenter metaListPresenter,
+                         final MetaRelationListPresenter metaRelationListPresenter,
+                         final DataPresenter dataPresenter,
                          final Provider<ExpressionPresenter> streamListFilterPresenter,
                          final Provider<DataUploadPresenter> streamUploadPresenter,
-                         final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
+                         final ClientDispatchAsync dispatcher,
+                         final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.locationManager = locationManager;
-        this.streamListPresenter = streamListPresenter;
-        this.streamRelationListPresenter = streamRelationListPresenter;
+        this.metaListPresenter = metaListPresenter;
+        this.metaRelationListPresenter = metaRelationListPresenter;
         this.streamListFilterPresenter = streamListFilterPresenter;
         this.streamUploadPresenter = streamUploadPresenter;
         this.dataPresenter = dataPresenter;
         this.dispatcher = dispatcher;
 
-        setInSlot(STREAM_LIST, streamListPresenter);
-        setInSlot(STREAM_RELATION_LIST, streamRelationListPresenter);
+        setInSlot(STREAM_LIST, metaListPresenter);
+        setInSlot(STREAM_RELATION_LIST, metaRelationListPresenter);
         setInSlot(DATA, dataPresenter);
 
         dataPresenter.setBeginSteppingHandler(this);
 
         // Process
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
-            streamListProcess = streamListPresenter.add(SvgPresets.PROCESS);
-            streamRelationListProcess = streamRelationListPresenter.add(SvgPresets.PROCESS);
+            streamListProcess = metaListPresenter.add(SvgPresets.PROCESS);
+            streamRelationListProcess = metaRelationListPresenter.add(SvgPresets.PROCESS);
         }
 
         // Delete, Undelete, DE-duplicate
         if (securityContext.hasAppPermission(PermissionNames.DELETE_DATA_PERMISSION)) {
-            streamListDelete = streamListPresenter.add(SvgPresets.DELETE);
+            streamListDelete = metaListPresenter.add(SvgPresets.DELETE);
             streamListDelete.setEnabled(false);
-            streamRelationListDelete = streamRelationListPresenter.add(SvgPresets.DELETE);
+            streamRelationListDelete = metaRelationListPresenter.add(SvgPresets.DELETE);
             streamRelationListDelete.setEnabled(false);
-            streamListUndelete = streamListPresenter.add(SvgPresets.UNDO);
+            streamListUndelete = metaListPresenter.add(SvgPresets.UNDO);
             streamListUndelete.setTitle("Un-Delete");
-            streamRelationListUndelete = streamRelationListPresenter.add(SvgPresets.UNDO);
+            streamRelationListUndelete = metaRelationListPresenter.add(SvgPresets.UNDO);
             streamRelationListUndelete.setTitle("un-Delete");
         }
 
         // Download
         if (securityContext.hasAppPermission(PermissionNames.EXPORT_DATA_PERMISSION)) {
-            streamListDownload = streamListPresenter.add(SvgPresets.DOWNLOAD);
-            streamRelationListDownload = streamRelationListPresenter.add(SvgPresets.DOWNLOAD);
+            streamListDownload = metaListPresenter.add(SvgPresets.DOWNLOAD);
+            streamRelationListDownload = metaRelationListPresenter.add(SvgPresets.DOWNLOAD);
         }
 
         // Upload
         if (securityContext.hasAppPermission(PermissionNames.IMPORT_DATA_PERMISSION)) {
-            streamListUpload = streamListPresenter.add(SvgPresets.UPLOAD);
+            streamListUpload = metaListPresenter.add(SvgPresets.UPLOAD);
         }
 
         // Filter
-        streamListFilter = streamListPresenter.add(SvgPresets.FILTER);
+        streamListFilter = metaListPresenter.add(SvgPresets.FILTER);
 
         // Init the buttons
         setStreamListSelectableEnabled(null, Status.UNLOCKED);
@@ -211,15 +215,15 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     protected void onBind() {
         super.onBind();
 
-        registerHandler(streamListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            streamRelationListPresenter.setSelectedStream(streamListPresenter.getSelected(), true,
+        registerHandler(metaListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            metaRelationListPresenter.setSelectedStream(metaListPresenter.getSelected(), true,
                     !Status.UNLOCKED.equals(getSingleStatus(getCriteria())));
             showData();
         }));
-        registerHandler(streamListPresenter.addDataSelectionHandler(event -> setStreamListSelectableEnabled(event.getSelectedItem(),
+        registerHandler(metaListPresenter.addDataSelectionHandler(event -> setStreamListSelectableEnabled(event.getSelectedItem(),
                 getSingleStatus(findMetaCriteria))));
-        registerHandler(streamRelationListPresenter.getSelectionModel().addSelectionHandler(event -> showData()));
-        registerHandler(streamRelationListPresenter.addDataSelectionHandler(event -> setStreamRelationListSelectableEnabled(event.getSelectedItem(), getSingleStatus(findMetaCriteria))));
+        registerHandler(metaRelationListPresenter.getSelectionModel().addSelectionHandler(event -> showData()));
+        registerHandler(metaRelationListPresenter.addDataSelectionHandler(event -> setStreamRelationListSelectableEnabled(event.getSelectedItem(), getSingleStatus(findMetaCriteria))));
 
         registerHandler(streamListFilter.addClickHandler(event -> {
             final ExpressionPresenter presenter = streamListFilterPresenter.get();
@@ -268,11 +272,11 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
 
                     // Init the buttons
                     final Status status = getSingleStatus(findMetaCriteria);
-                    setStreamListSelectableEnabled(streamListPresenter.getSelectedEntityIdSet(), status);
+                    setStreamListSelectableEnabled(metaListPresenter.getSelectedEntityIdSet(), status);
 
                     // Clear the current selection and get a new list of streams.
-                    streamListPresenter.getSelectionModel().clear();
-                    streamListPresenter.refresh();
+                    metaListPresenter.getSelectionModel().clear();
+                    metaListPresenter.refresh();
                 }
             };
 
@@ -287,38 +291,38 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         }
         if (streamListDownload != null) {
             registerHandler(streamListDownload
-                    .addClickHandler(new DownloadStreamClickHandler(this, streamListPresenter, true, dispatcher, locationManager)));
+                    .addClickHandler(new DownloadStreamClickHandler(this, metaListPresenter, true, dispatcher, locationManager)));
         }
         if (streamRelationListDownload != null) {
             registerHandler(streamRelationListDownload.addClickHandler(
-                    new DownloadStreamClickHandler(this, streamRelationListPresenter, false, dispatcher, locationManager)));
+                    new DownloadStreamClickHandler(this, metaRelationListPresenter, false, dispatcher, locationManager)));
         }
         // Delete
         if (streamListDelete != null) {
             registerHandler(streamListDelete
-                    .addClickHandler(new UpdateStatusClickHandler(this, streamListPresenter, true, dispatcher, Status.DELETED)));
+                    .addClickHandler(new UpdateStatusClickHandler(this, metaListPresenter, true, dispatcher, Status.DELETED)));
         }
         if (streamRelationListDelete != null) {
             registerHandler(streamRelationListDelete.addClickHandler(
-                    new UpdateStatusClickHandler(this, streamRelationListPresenter, false, dispatcher, Status.DELETED)));
+                    new UpdateStatusClickHandler(this, metaRelationListPresenter, false, dispatcher, Status.DELETED)));
         }
         // UN-Delete
         if (streamListUndelete != null) {
             registerHandler(streamListUndelete
-                    .addClickHandler(new UpdateStatusClickHandler(this, streamListPresenter, true, dispatcher, Status.UNLOCKED)));
+                    .addClickHandler(new UpdateStatusClickHandler(this, metaListPresenter, true, dispatcher, Status.UNLOCKED)));
         }
         if (streamRelationListUndelete != null) {
             registerHandler(streamRelationListUndelete.addClickHandler(
-                    new UpdateStatusClickHandler(this, streamRelationListPresenter, false, dispatcher, Status.UNLOCKED)));
+                    new UpdateStatusClickHandler(this, metaRelationListPresenter, false, dispatcher, Status.UNLOCKED)));
         }
         // Process
         if (streamListProcess != null) {
             registerHandler(streamListProcess
-                    .addClickHandler(new ProcessStreamClickHandler(this, streamListPresenter, true, dispatcher)));
+                    .addClickHandler(new ProcessStreamClickHandler(this, metaListPresenter, true, dispatcher)));
         }
         if (streamRelationListProcess != null) {
             registerHandler(streamRelationListProcess.addClickHandler(
-                    new ProcessStreamClickHandler(this, streamRelationListPresenter, false, dispatcher)));
+                    new ProcessStreamClickHandler(this, metaRelationListPresenter, false, dispatcher)));
         }
     }
 
@@ -398,7 +402,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
 
     public void refresh() {
         // Get a new list of streams.
-        streamListPresenter.refresh();
+        metaListPresenter.refresh();
     }
 
     public FindMetaCriteria getCriteria() {
@@ -467,14 +471,14 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     }
 
     private void initCriteria() {
-        streamListPresenter.setCriteria(findMetaCriteria);
-        streamRelationListPresenter.setCriteria(null);
+        metaListPresenter.setCriteria(findMetaCriteria);
+        metaRelationListPresenter.setCriteria(null);
     }
 
     private Meta getSelected() {
-        MetaRow selected = streamListPresenter.getSelected();
-        if (streamRelationListPresenter.getSelected() != null) {
-            selected = streamRelationListPresenter.getSelected();
+        MetaRow selected = metaListPresenter.getSelected();
+        if (metaRelationListPresenter.getSelected() != null) {
+            selected = metaRelationListPresenter.getSelected();
         }
 
         if (selected != null) {
@@ -485,12 +489,12 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     }
 
 //    public IdSet getSelectedEntityIdSet() {
-//        return streamListPresenter.getSelectedEntityIdSet();
+//        return metaListPresenter.getSelectedEntityIdSet();
 //    }
 
     @Override
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<IdSet> handler) {
-        return streamListPresenter.addDataSelectionHandler(handler);
+        return metaListPresenter.addDataSelectionHandler(handler);
     }
 
     private void showStreamListButtons(final boolean visible) {
@@ -511,7 +515,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     }
 
     public void setStreamListSelectableEnabled(final IdSet streamIdSet, final Status streamStatus) {
-        final boolean someSelected = isSomeSelected(streamListPresenter, streamIdSet);
+        final boolean someSelected = isSomeSelected(metaListPresenter, streamIdSet);
 
         if (streamListDownload != null) {
             streamListDownload.setEnabled(someSelected);
@@ -520,7 +524,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
             streamListDelete
                     .setEnabled(someSelected);
             // && isSelectedAllOfStatus(getCriteria().obtainStatusSet().getSingleItem(),
-//                            streamListPresenter, streamIdSet, StreamStatus.LOCKED, StreamStatus.UNLOCKED));
+//                            metaListPresenter, streamIdSet, StreamStatus.LOCKED, StreamStatus.UNLOCKED));
         }
         if (streamListProcess != null) {
             streamListProcess.setEnabled(someSelected);
@@ -530,14 +534,14 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
             streamListUndelete.setVisible(!Status.UNLOCKED.equals(streamStatus));
             streamListUndelete
                     .setEnabled(someSelected && isSelectedAllOfStatus(getSingleStatus(getCriteria()),
-                            streamListPresenter, streamIdSet, Status.DELETED));
+                            metaListPresenter, streamIdSet, Status.DELETED));
         }
 
     }
 
     private void setStreamRelationListSelectableEnabled(final IdSet streamIdSet,
                                                         final Status streamStatus) {
-        final boolean someSelected = isSomeSelected(streamRelationListPresenter, streamIdSet);
+        final boolean someSelected = isSomeSelected(metaRelationListPresenter, streamIdSet);
 
         if (streamRelationListDownload != null) {
             streamRelationListDownload.setEnabled(someSelected);
@@ -545,14 +549,14 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         if (streamRelationListDelete != null) {
             streamRelationListDelete
                     .setEnabled(someSelected && isSelectedAllOfStatus(getSingleStatus(getCriteria()),
-                            streamRelationListPresenter, streamIdSet, Status.LOCKED, Status.UNLOCKED));
+                            metaRelationListPresenter, streamIdSet, Status.LOCKED, Status.UNLOCKED));
         }
         if (streamRelationListUndelete != null) {
             // Hide if we are normal view (Unlocked streams)
             streamRelationListUndelete.setVisible(!Status.UNLOCKED.equals(streamStatus));
             streamRelationListUndelete
                     .setEnabled(someSelected && isSelectedAllOfStatus(getSingleStatus(getCriteria()),
-                            streamRelationListPresenter, streamIdSet, Status.DELETED));
+                            metaRelationListPresenter, streamIdSet, Status.DELETED));
         }
         if (streamRelationListProcess != null) {
             streamRelationListProcess.setEnabled(someSelected);
@@ -580,7 +584,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
             // in the top screen and then chooses the raw stream in the middle
             // pane to step through.
             Long childStreamId = null;
-            final MetaRow map = streamListPresenter.getSelected();
+            final MetaRow map = metaListPresenter.getSelected();
             if (map != null && map.getMeta() != null) {
                 final Meta childMeta = map.getMeta();
                 // If the top list has a raw stream selected or isn't a child of
@@ -603,15 +607,15 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     }
 
     private static abstract class AbstractStreamClickHandler implements ClickHandler, HasHandlers {
-        private final MetaPresenter streamPresenter;
+        private final MetaPresenter metaPresenter;
         private final AbstractMetaListPresenter streamListPresenter;
         private final boolean useCriteria;
         private final ClientDispatchAsync dispatcher;
 
-        AbstractStreamClickHandler(final MetaPresenter streamPresenter,
+        AbstractStreamClickHandler(final MetaPresenter metaPresenter,
                                    final AbstractMetaListPresenter streamListPresenter, final boolean useCriteria,
                                    final ClientDispatchAsync dispatcher) {
-            this.streamPresenter = streamPresenter;
+            this.metaPresenter = metaPresenter;
             this.streamListPresenter = streamListPresenter;
             this.useCriteria = useCriteria;
             this.dispatcher = dispatcher;
@@ -630,7 +634,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
                 // Only use match all if we are allowed to use criteria.
                 if (useCriteria && Boolean.TRUE.equals(idSet.getMatchAll())) {
                     final FindMetaCriteria criteria = createFindMetaCriteria();
-                    criteria.copyFrom(streamPresenter.getCriteria());
+                    criteria.copyFrom(metaPresenter.getCriteria());
                     // Paging is NA
                     criteria.obtainPageRequest().setLength(null);
                     criteria.obtainPageRequest().setOffset(null);
@@ -641,7 +645,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
                     // only includes the selected streams.
                     final FindMetaCriteria criteria = createFindMetaCriteria();
                     // Copy the current filter status
-                    final Status status = getSingleStatus(streamPresenter.getCriteria());
+                    final Status status = getSingleStatus(metaPresenter.getCriteria());
                     if (status != null) {
                         criteria.setExpression(ExpressionUtil.createStatusExpression(status));
                     }
@@ -670,7 +674,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
 
         @Override
         public void fireEvent(final GwtEvent<?> event) {
-            streamPresenter.fireEvent(event);
+            metaPresenter.fireEvent(event);
         }
 
         protected void refreshList() {

@@ -23,19 +23,19 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.ResultList;
-import stroom.util.shared.Sort.Direction;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.Status;
-import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ResultList;
+import stroom.util.shared.Sort.Direction;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 import java.util.ArrayList;
@@ -72,6 +72,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
             final FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setExpression(builder.build());
             criteria.setSort(MetaFieldNames.CREATE_TIME, Direction.ASCENDING, false);
+            criteria.setFetchRelationships(true);
 
             setCriteria(criteria);
         }

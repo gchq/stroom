@@ -30,6 +30,7 @@ public class FindMetaCriteria extends BaseCriteria implements SharedObject, HasI
 
     private ExpressionOperator expression;
     private IdSet selectedIdSet;
+    private boolean fetchRelationships;
 
     public FindMetaCriteria() {
     }
@@ -81,6 +82,14 @@ public class FindMetaCriteria extends BaseCriteria implements SharedObject, HasI
         return selectedIdSet;
     }
 
+    public void setFetchRelationships(final boolean fetchRelationships) {
+        this.fetchRelationships = fetchRelationships;
+    }
+
+    public boolean isFetchRelationships() {
+        return fetchRelationships;
+    }
+
     @Override
     public boolean isConstrained() {
         return (selectedIdSet != null && selectedIdSet.isConstrained()) || ExpressionUtil.termCount(expression) > 0;
@@ -96,6 +105,7 @@ public class FindMetaCriteria extends BaseCriteria implements SharedObject, HasI
             } else {
                 this.obtainSelectedIdSet().copyFrom(other.selectedIdSet);
             }
+            this.fetchRelationships = other.fetchRelationships;
         }
     }
 

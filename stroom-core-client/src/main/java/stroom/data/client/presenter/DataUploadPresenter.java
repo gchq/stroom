@@ -41,7 +41,7 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.DataUploadView> {
     private String feedName;
-    private MetaPresenter streamPresenter;
+    private MetaPresenter metaPresenter;
 
     @Inject
     public DataUploadPresenter(final EventBus eventBus,
@@ -79,8 +79,8 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
                 dispatcher.exec(action)
                         .onSuccess(result -> {
                             hide();
-                            AlertEvent.fireInfo(DataUploadPresenter.this.streamPresenter, "Uploaded file", null);
-                            streamPresenter.refresh();
+                            AlertEvent.fireInfo(DataUploadPresenter.this.metaPresenter, "Uploaded file", null);
+                            metaPresenter.refresh();
                         })
                         .onFailure(caught -> error(caught.getMessage()));
             }
@@ -124,7 +124,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
     }
 
     public void show(final MetaPresenter streamPresenter, final String feedName) {
-        this.streamPresenter = streamPresenter;
+        this.metaPresenter = streamPresenter;
         this.feedName = feedName;
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {

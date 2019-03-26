@@ -6,6 +6,7 @@ import org.jooq.SelectConditionStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.db.util.JooqUtil;
+import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
@@ -46,6 +47,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.jooq.impl.DSL.max;
 import static org.jooq.impl.DSL.selectDistinct;
@@ -353,6 +355,12 @@ class MetaServiceImpl implements MetaService {
 
     @Override
     public BaseResultList<Meta> find(final FindMetaCriteria criteria) {
+        final boolean fetchRelationships = criteria.isFetchRelationships();
+        final PageRequest pageRequest = criteria.getPageRequest();
+        if (fetchRelationships) {
+            criteria.setPageRequest(null);
+        }
+
         final IdSet idSet = criteria.getSelectedIdSet();
         // If for some reason we have been asked to match nothing then return nothing.
         if (idSet != null && idSet.getMatchNull() != null && idSet.getMatchNull()) {
@@ -364,14 +372,59 @@ class MetaServiceImpl implements MetaService {
         int offset = 0;
         int numberOfRows = 1000000;
 
-        PageRequest pageRequest = criteria.getPageRequest();
         if (pageRequest != null) {
             offset = pageRequest.getOffset().intValue();
             numberOfRows = pageRequest.getLength();
         }
 
-        final List<Meta> results = find(condition, offset, numberOfRows);
-        return BaseResultList.createPageResultList(results, criteria.getPageRequest(), null);
+        List<Meta> results = find(condition, offset, numberOfRows);
+
+
+
+
+
+        // Only return back children or parents?
+        if (fetchRelationships) {
+            final List<Meta> workingList = results;
+            results = new ArrayList<>();
+
+            for (final Meta stream : workingList) {
+                Meta parent = stream;
+                Meta lastParent = parent;
+
+                // Walk up to the root of the tree
+                while (parent.getParentMetaId() != null && (parent = findParent(parent)) != null) {
+                    lastParent = parent;
+                }
+
+                // Add the match
+                results.add(lastParent);
+
+                // Add the children
+                List<Meta> children = findChildren(criteria, Collections.singletonList(lastParent));
+                while (children.size() > 0) {
+                    results.addAll(children);
+                    children = findChildren(criteria, children);
+                }
+            }
+
+            final long maxSize = results.size();
+            if (pageRequest != null && pageRequest.getOffset() != null) {
+                // Move by an offset?
+                if (pageRequest.getOffset() > 0) {
+                    results = results.subList(pageRequest.getOffset().intValue(), results.size());
+                }
+            }
+            if (pageRequest != null && pageRequest.getLength() != null) {
+                if (results.size() > pageRequest.getLength()) {
+                    results = results.subList(0, pageRequest.getLength() + 1);
+                }
+            }
+            criteria.setPageRequest(pageRequest);
+            return BaseResultList.createCriterialBasedList(results, criteria, maxSize);
+        } else {
+            return BaseResultList.createCriterialBasedList(results, criteria);
+        }
     }
 
     private List<Meta> find(final Condition condition, final int offset, final int numberOfRows) {
@@ -414,26 +467,67 @@ class MetaServiceImpl implements MetaService {
                         .build()));
     }
 
-//    @Override
-//    public int updateStatus(final FindStreamCriteria criteria) {
-//        return updateStatus(criteria, StreamStatus.DELETED);
-//
-////        final ExpressionOperator secureExpression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.DELETE);
-////        final Condition condition = expressionMapper.apply(secureExpression);
-////
-////        JooqUtil.context(connectionProvider, context -> context
-////
-////            return create
-////                    .deleteFrom(data)
-////                    .where(condition)
-////                    .execute();
-////
-////        } catch (final SQLException e) {
-////            LOGGER.error(e.getMessage(), e);
-////            throw new RuntimeException(e.getMessage(), e);
-////        }
-//    }
+    private List<Meta> findChildren(final FindMetaCriteria parentCriteria, final List<Meta> streamList) {
+        final Set<String> excludedFields = Set.of(MetaFieldNames.ID, MetaFieldNames.PARENT_ID);
+        final Builder builder = copyExpression(parentCriteria.getExpression(), excludedFields);
 
+        final String parentIds = streamList.stream()
+                .map(meta -> String.valueOf(meta.getId()))
+                .collect(Collectors.joining(","));
+        builder.addTerm(MetaFieldNames.PARENT_ID, ExpressionTerm.Condition.IN, parentIds);
+
+        return simpleFind(builder.build());
+    }
+
+
+    private Meta findParent(final Meta meta) {
+        final ExpressionOperator expression = new ExpressionOperator.Builder()
+                .addTerm(MetaFieldNames.ID, ExpressionTerm.Condition.EQUALS, String.valueOf(meta.getParentMetaId()))
+                .build();
+        final List<Meta> parentList = simpleFind(expression);
+        if (parentList != null && parentList.size() > 0) {
+            return parentList.get(0);
+        }
+        return new Meta.Builder()
+                .id(meta.getParentMetaId())
+                .build();
+    }
+
+
+
+    private List<Meta> simpleFind(final ExpressionOperator expression) {
+        final FindMetaCriteria criteria = new FindMetaCriteria(expression);
+        final Condition condition = createCondition(criteria, DocumentPermissionNames.READ);
+
+        int offset = 0;
+        int numberOfRows = 1000000;
+
+        PageRequest pageRequest = criteria.getPageRequest();
+        if (pageRequest != null) {
+            offset = pageRequest.getOffset().intValue();
+            numberOfRows = pageRequest.getLength();
+        }
+
+        return find(condition, offset, numberOfRows);
+    }
+
+    private Builder copyExpression(final ExpressionOperator expressionOperator, final Set<String> excludedFields) {
+        final Builder builder = new Builder(expressionOperator.getEnabled(), expressionOperator.getOp());
+        if (expressionOperator.getChildren() != null) {
+            expressionOperator.getChildren().forEach(expressionItem -> {
+                if (expressionItem instanceof ExpressionTerm) {
+                    final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
+                    if (!excludedFields.contains(expressionTerm.getField())) {
+                        builder.addTerm(expressionTerm);
+                    }
+                } else if (expressionItem instanceof ExpressionOperator) {
+                    final ExpressionOperator operator = (ExpressionOperator) expressionItem;
+                    builder.addOperator(copyExpression(operator, excludedFields).build());
+                }
+            });
+        }
+        return builder;
+    }
 
     public int delete(final FindMetaCriteria criteria) {
         final Condition condition = createCondition(criteria, DocumentPermissionNames.DELETE);
@@ -516,36 +610,20 @@ class MetaServiceImpl implements MetaService {
                 .orElse(0));
     }
 
-//    @Override
-//    public Period getCreatePeriod() {
-//        JooqUtil.context(connectionProvider, context -> context
-//            return context
-//                    .select(data.CRT_MS.min(), data.CRT_MS.max())
-//                    .from(data)
-//                    .fetchOptional()
-//                    .map(r -> new Period(r.value1(), r.value2()))
-//                    .orElse(null);
-//
-//        } catch (final SQLException e) {
-//            LOGGER.error(e.getMessage(), e);
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
-//    }
-
     @Override
     public BaseResultList<MetaRow> findRows(final FindMetaCriteria criteria) {
         return security.useAsReadResult(() -> {
             // Cache Call
 
 
-            final FindMetaCriteria findDataCriteria = new FindMetaCriteria();
-            findDataCriteria.copyFrom(criteria);
-            findDataCriteria.setSort(MetaFieldNames.CREATE_TIME, Direction.DESCENDING, false);
+            final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+            findMetaCriteria.copyFrom(criteria);
+            findMetaCriteria.setSort(MetaFieldNames.CREATE_TIME, Direction.DESCENDING, false);
 
 //            findDataCriteria.setFetchSet(new HashSet<>());
 
             // Share the page criteria
-            final BaseResultList<Meta> list = find(findDataCriteria);
+            final BaseResultList<Meta> list = find(findMetaCriteria);
 
             if (list.size() > 0) {
 //                // We need to decorate data with retention rules as a processing user.
