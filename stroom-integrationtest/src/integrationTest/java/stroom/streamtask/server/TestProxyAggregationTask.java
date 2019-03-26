@@ -248,16 +248,6 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         doBulkTest(2, 4, 6, 2);
     }
 
-    @Test
-    public void testFileGeneration() {
-        // Generate the feeds to use in the test
-        final List<Feed> eventFeeds = generateFeeds(2);
-
-        final Path proxyDir = createProxyDirectory();
-
-        generateTestFiles(proxyDir, 2, 3, eventFeeds);
-    }
-
     public void doBulkTest(
             final int feedCount,
             final int entriesPerInputFile,
