@@ -33,14 +33,14 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.ActionQueue;
 import stroom.entity.client.presenter.FindActionDataProvider;
 import stroom.job.shared.FindJobAction;
-import stroom.job.shared.UpdateJobAction;
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.ResultList;
 import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.Job;
+import stroom.job.shared.UpdateJobAction;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
@@ -60,7 +60,10 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
         getView().addColumn(new InfoHelpLinkColumn<Job>() {
             @Override
             public SvgPreset getValue(final Job row) {
-                return SvgPresets.HELP;
+                if (row != null) {
+                    return SvgPresets.HELP;
+                }
+                return null;
             }
 
             @Override
@@ -83,7 +86,10 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
         getView().addColumn(new Column<Job, String>(new TextCell()) {
             @Override
             public String getValue(final Job row) {
-                return row.getName();
+                if (row != null) {
+                    return row.getName();
+                }
+                return null;
             }
         }, "Job");
 
@@ -91,7 +97,10 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
         final Column<Job, TickBoxState> enabledColumn = new Column<Job, TickBoxState>(TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final Job row) {
-                return TickBoxState.fromBoolean(row.isEnabled());
+                if (row != null) {
+                    return TickBoxState.fromBoolean(row.isEnabled());
+                }
+                return null;
             }
         };
         enabledColumn.setFieldUpdater((index, row, value) -> {
@@ -104,7 +113,10 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
         getView().addColumn(new Column<Job, String>(new TextCell()) {
             @Override
             public String getValue(final Job row) {
-                return row.getDescription();
+                if (row != null) {
+                    return row.getDescription();
+                }
+                return null;
             }
         }, "Description", 800);
 
@@ -120,7 +132,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
                 for (int i = 0; i < data.size(); i++) {
                     rtnList.add(data.get(i));
                     if (data.get(i).isAdvanced() && !done) {
-                        rtnList.add(i, new Job());
+                        rtnList.add(i, null);
                         done = true;
                     }
                 }

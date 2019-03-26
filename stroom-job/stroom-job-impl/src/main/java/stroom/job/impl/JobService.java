@@ -22,14 +22,17 @@ import stroom.job.api.DistributedTaskFactoryDescription;
 import stroom.job.api.ScheduledJob;
 import stroom.job.api.TaskConsumer;
 import stroom.job.shared.FindJobCriteria;
+import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.security.api.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Sort;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -81,6 +84,14 @@ class JobService {
     BaseResultList<Job> find(final FindJobCriteria findJobCriteria) {
         final BaseResultList<Job> results = security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobDao.find(findJobCriteria));
         results.forEach(this::decorate);
+
+        if (findJobCriteria.getSortList().size() > 0) {
+            final Sort sort = findJobCriteria.getSortList().get(0);
+            if (sort.getField().equals(FindJobCriteria.FIELD_ADVANCED)) {
+                results.sort(Comparator.comparing(Job::isAdvanced).thenComparing(Job::getName));
+            }
+        }
+
         return results;
     }
 
