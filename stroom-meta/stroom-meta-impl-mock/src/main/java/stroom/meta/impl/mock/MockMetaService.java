@@ -97,6 +97,7 @@ public class MockMetaService implements MetaService, Clearable {
                     .status(newStatus)
                     .statusMs(System.currentTimeMillis())
                     .build();
+            metaMap.put(result.getId(), result);
         }
         return result;
     }
