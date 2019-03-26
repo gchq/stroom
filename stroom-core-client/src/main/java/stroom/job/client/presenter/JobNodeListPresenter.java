@@ -66,6 +66,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         initTable();
 
         dataProvider = new ActionDataProvider<>(dispatcher, action);
+        dataProvider.setAllowNoConstraint(false);
         dataProvider.addDataDisplay(getView().getDataDisplay());
 
         actionQueue = new ActionQueue<JobNode>(dispatcher) {
