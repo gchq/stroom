@@ -131,7 +131,7 @@ public class ManualProxyAggregationTest {
 
 
     @Test
-    public void testFileGeneration() {
+    public void generateInputFiles() {
         // Generate the feeds to use in the test
         final List<Feed> eventFeeds = createFeeds(FEED_COUNT);
 
@@ -141,7 +141,7 @@ public class ManualProxyAggregationTest {
     }
 
     @Test
-    public void manualAggregationTest() {
+    public void runProxyAggregation() {
         // Generate the feeds to use in the test
         final List<Feed> eventFeeds = getFeeds(FEED_COUNT);
 
