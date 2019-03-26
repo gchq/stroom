@@ -19,7 +19,7 @@ package stroom.security.impl;
 import stroom.security.service.UserService;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.security.shared.FetchUserRefAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;

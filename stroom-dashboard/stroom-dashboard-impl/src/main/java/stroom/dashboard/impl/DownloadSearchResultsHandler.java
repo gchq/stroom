@@ -32,7 +32,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.Row;
 import stroom.resource.api.ResourceStore;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.EntityServiceExceptionUtil;

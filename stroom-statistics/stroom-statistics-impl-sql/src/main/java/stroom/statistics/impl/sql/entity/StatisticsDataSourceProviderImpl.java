@@ -21,7 +21,7 @@ import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.statistics.impl.sql.shared.StatisticField;

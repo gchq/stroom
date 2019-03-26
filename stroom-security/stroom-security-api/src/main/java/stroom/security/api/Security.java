@@ -1,11 +1,13 @@
-package stroom.security;
+package stroom.security.api;
+
+import stroom.security.shared.UserToken;
 
 import java.util.function.Supplier;
 
 public interface Security {
-    <T> T asUserResult(String userToken, Supplier<T> supplier);
+    <T> T asUserResult(UserToken userToken, Supplier<T> supplier);
 
-    void asUser(String userToken, Runnable runnable);
+    void asUser(UserToken userToken, Runnable runnable);
 
     <T> T asProcessingUserResult(Supplier<T> supplier);
 

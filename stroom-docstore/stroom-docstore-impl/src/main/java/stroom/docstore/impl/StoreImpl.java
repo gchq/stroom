@@ -29,7 +29,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Message;

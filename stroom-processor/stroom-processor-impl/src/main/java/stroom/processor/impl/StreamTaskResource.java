@@ -25,7 +25,7 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.util.RestResource;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseResultList;

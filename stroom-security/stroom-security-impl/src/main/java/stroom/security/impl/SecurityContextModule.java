@@ -18,9 +18,9 @@ package stroom.security.impl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import stroom.security.DocumentPermissionCache;
-import stroom.security.Security;
-import stroom.security.SecurityContext;
+import stroom.security.api.DocumentPermissionCache;
+import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 

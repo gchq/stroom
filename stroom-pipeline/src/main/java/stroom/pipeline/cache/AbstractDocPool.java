@@ -17,10 +17,10 @@
 package stroom.pipeline.cache;
 
 import stroom.docstore.shared.Doc;
-import stroom.security.DocumentPermissionCache;
+import stroom.security.api.DocumentPermissionCache;
 import stroom.util.shared.PermissionException;
-import stroom.security.Security;
-import stroom.security.SecurityContext;
+import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.cache.api.CacheManager;
 

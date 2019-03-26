@@ -5,7 +5,7 @@ import stroom.util.shared.DocRefs;
 import stroom.util.shared.EntityServiceException;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.resource.api.ResourceStore;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.util.RestResource;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceKey;

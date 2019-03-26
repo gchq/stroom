@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.docref.DocRef;
-import stroom.security.Security;
+import stroom.security.api.Security;
 
 import javax.inject.Inject;
 

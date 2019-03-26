@@ -25,7 +25,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.SourcePipeline;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.SharedList;
 

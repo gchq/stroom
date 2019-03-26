@@ -3,7 +3,7 @@ package stroom.pipeline.xslt;
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.util.RestResource;
 
 import javax.inject.Inject;

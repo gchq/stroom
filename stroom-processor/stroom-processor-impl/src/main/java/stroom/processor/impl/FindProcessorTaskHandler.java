@@ -8,7 +8,7 @@ import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.FindProcessorTaskAction;
 import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorTask;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;

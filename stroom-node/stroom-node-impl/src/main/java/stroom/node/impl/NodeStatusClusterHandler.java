@@ -17,7 +17,7 @@
 package stroom.node.impl;
 
 import stroom.node.shared.NodeStatusResult;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

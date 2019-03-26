@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.security;
+package stroom.security.api;
+
+import stroom.security.shared.UserToken;
 
 public interface SecurityContext {
     /**
@@ -22,14 +24,14 @@ public interface SecurityContext {
      *
      * @param token The user token to push.
      */
-    void pushUser(String token);
+    void pushUser(UserToken token);
 
     /**
      * Remove a temporary user from the stack.
      *
      * @return The removed user.
      */
-    String popUser();
+    void popUser();
 
     /**
      * Get the id of the user associated with this security context.
@@ -37,6 +39,13 @@ public interface SecurityContext {
      * @return The id of the user associated with this security context.
      */
     String getUserId();
+
+    /**
+     * Get the current user token associated with this security context.
+     *
+     * @return The current user token associated with this security context.
+     */
+    UserToken getUserToken();
 
     /**
      * Gets an API token string for the current user.

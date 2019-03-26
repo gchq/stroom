@@ -14,7 +14,7 @@ import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.shared.Doc;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 
 @ExtendWith(MockitoExtension.class)
 class TestDocStoreModule {

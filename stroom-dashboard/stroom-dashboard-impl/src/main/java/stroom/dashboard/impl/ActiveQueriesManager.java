@@ -22,8 +22,8 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
 import stroom.util.shared.Clearable;
-import stroom.security.Security;
-import stroom.security.SecurityContext;
+import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
 

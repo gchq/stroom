@@ -42,7 +42,7 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.security.Security;
+import stroom.security.api.Security;
 
 import javax.inject.Inject;
 import java.util.List;

@@ -28,8 +28,8 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeRow;
-import stroom.security.Security;
-import stroom.security.SecurityContext;
+import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.BaseResultList;
@@ -92,7 +92,7 @@ class JobNodeService {
             }
 
             DefaultClusterResultCollector<SharedMap<JobNode, JobNodeInfo>> collector;
-            collector = dispatchHelper.execAsync(new JobNodeInfoClusterTask(securityContext.getUserId()), TargetType.ACTIVE);
+            collector = dispatchHelper.execAsync(new JobNodeInfoClusterTask(securityContext.getUserToken()), TargetType.ACTIVE);
 
             final List<JobNode> jobNodes = find(findJobNodeCriteria);
 

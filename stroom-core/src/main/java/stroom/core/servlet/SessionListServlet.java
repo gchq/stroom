@@ -16,7 +16,7 @@
 
 package stroom.core.servlet;
 
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.TaskIdFactory;
 import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;

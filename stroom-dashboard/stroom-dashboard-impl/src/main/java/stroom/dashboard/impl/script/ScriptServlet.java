@@ -19,7 +19,7 @@ package stroom.dashboard.impl.script;
 
 import stroom.docref.DocRef;
 import stroom.script.shared.ScriptDoc;
-import stroom.security.Security;
+import stroom.security.api.Security;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServlet;

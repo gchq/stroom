@@ -17,8 +17,8 @@
 package stroom.security.impl;
 
 import stroom.util.shared.EntityServiceException;
-import stroom.security.Security;
-import stroom.security.SecurityContext;
+import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsAction;

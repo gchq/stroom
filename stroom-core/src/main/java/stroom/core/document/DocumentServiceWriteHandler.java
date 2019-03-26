@@ -20,7 +20,7 @@ package stroom.core.document;
 import stroom.docref.SharedObject;
 import stroom.entity.shared.DocumentServiceWriteAction;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

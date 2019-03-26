@@ -1,6 +1,6 @@
 package stroom.security.impl.mock;
 
-import stroom.security.DocumentPermissionCache;
+import stroom.security.api.DocumentPermissionCache;
 
 public class MockDocumentPermissionCache implements DocumentPermissionCache {
     @Override

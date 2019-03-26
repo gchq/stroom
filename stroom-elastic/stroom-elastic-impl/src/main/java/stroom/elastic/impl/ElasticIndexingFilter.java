@@ -15,7 +15,7 @@ import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;

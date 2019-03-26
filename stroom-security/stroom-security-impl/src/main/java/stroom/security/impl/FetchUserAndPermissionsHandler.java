@@ -16,8 +16,8 @@
 
 package stroom.security.impl;
 
-import stroom.security.Security;
-import stroom.security.SecurityContext;
+import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.UserAndPermissions;
@@ -55,7 +55,7 @@ class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPer
 
             final boolean preventLogin = securityConfig.isPreventLogin();
             if (preventLogin) {
-                security.asUser(UserTokenUtil.create(userRef.getName(), null), () -> {
+                security.asUser(UserTokenUtil.create(userRef.getName()), () -> {
                     if (!securityContext.isAdmin()) {
                         throw new AuthenticationException("Stroom is down for maintenance. Please try again later.");
                     }

@@ -17,10 +17,8 @@
 package stroom.node.impl;
 
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.UpdateNodeAction;
-import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

@@ -19,6 +19,7 @@ package stroom.search;
 import stroom.index.EventRef;
 import stroom.index.EventRefs;
 import stroom.query.api.v2.Query;
+import stroom.security.shared.UserToken;
 
 public class EventSearchTask extends AbstractSearchTask<EventRefs> {
     private final EventRef minEvent;
@@ -29,7 +30,7 @@ public class EventSearchTask extends AbstractSearchTask<EventRefs> {
 
     private final int resultSendFrequency;
 
-    EventSearchTask(final String userToken,
+    EventSearchTask(final UserToken userToken,
                            final Query query, final EventRef minEvent, final EventRef maxEvent, final long maxStreams,
                            final long maxEvents, final long maxEventsPerStream, final int resultSendFrequency) {
         super(null, userToken, query);

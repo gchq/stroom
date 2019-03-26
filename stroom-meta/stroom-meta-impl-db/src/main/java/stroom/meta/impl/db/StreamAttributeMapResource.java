@@ -34,7 +34,7 @@ import stroom.util.shared.Sort;
 import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.util.RestResource;
 
 import javax.ws.rs.Consumes;

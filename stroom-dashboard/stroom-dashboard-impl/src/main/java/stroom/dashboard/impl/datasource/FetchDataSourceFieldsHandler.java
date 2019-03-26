@@ -18,7 +18,7 @@ package stroom.dashboard.impl.datasource;
 
 import stroom.datasource.shared.FetchDataSourceFieldsAction;
 import stroom.datasource.shared.DataSourceFields;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

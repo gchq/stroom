@@ -5,7 +5,7 @@ import stroom.docstore.api.Persistence;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.shared.Doc;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 

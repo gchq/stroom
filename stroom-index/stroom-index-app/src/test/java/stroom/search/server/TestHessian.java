@@ -32,6 +32,7 @@ import stroom.query.common.v2.TablePayload;
 import stroom.search.AsyncSearchTask;
 import stroom.search.ClusterSearchTask;
 import stroom.search.NodeResult;
+import stroom.security.util.UserTokenUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -85,7 +86,7 @@ class TestHessian {
 
         final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
                 null,
-                "test",
+                UserTokenUtil.create("test"),
                 "test",
                 query,
                 nodeName,
@@ -96,7 +97,7 @@ class TestHessian {
 
         final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
                 asyncSearchTask,
-                "test",
+                UserTokenUtil.create("test"),
                 "test",
                 query,
                 Arrays.asList(1L, 2L, 3L),

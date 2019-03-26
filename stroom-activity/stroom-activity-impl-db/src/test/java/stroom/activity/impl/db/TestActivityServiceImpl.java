@@ -29,8 +29,8 @@ import stroom.activity.shared.Activity.Prop;
 import stroom.activity.api.ActivityService;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.util.shared.BaseResultList;
-import stroom.security.Security;
-import stroom.security.SecurityContext;
+import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

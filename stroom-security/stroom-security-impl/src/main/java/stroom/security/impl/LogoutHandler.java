@@ -17,7 +17,7 @@
 package stroom.security.impl;
 
 import stroom.event.logging.api.HttpServletRequestHolder;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.security.shared.LogoutAction;
 import stroom.security.shared.UserRef;
 import stroom.task.api.AbstractTaskHandler;

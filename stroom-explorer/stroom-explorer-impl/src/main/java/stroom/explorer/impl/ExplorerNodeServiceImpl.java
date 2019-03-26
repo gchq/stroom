@@ -10,7 +10,7 @@ import stroom.explorer.impl.db.ExplorerTreeDao;
 import stroom.explorer.impl.db.ExplorerTreeNode;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 import java.util.Collections;

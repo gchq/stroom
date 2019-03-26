@@ -26,7 +26,7 @@ import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.docref.DocRefInfo;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.util.shared.Message;

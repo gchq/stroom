@@ -31,7 +31,7 @@ import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.task.api.AbstractTaskHandler;
 

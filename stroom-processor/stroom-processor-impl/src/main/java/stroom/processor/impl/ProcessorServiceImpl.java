@@ -22,13 +22,12 @@ import stroom.docref.DocRef;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.FindProcessorCriteria;
 import stroom.processor.shared.Processor;
-import stroom.security.Security;
-import stroom.security.SecurityContext;
+import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 

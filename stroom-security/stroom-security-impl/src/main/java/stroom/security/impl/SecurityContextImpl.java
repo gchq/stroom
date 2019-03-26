@@ -20,7 +20,7 @@ package stroom.security.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.service.DocumentPermissionService;
 import stroom.security.shared.DocumentPermissionNames;
@@ -28,6 +28,8 @@ import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
+import stroom.security.shared.UserToken;
+import stroom.security.util.UserTokenUtil;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -37,10 +39,9 @@ import java.util.Set;
 
 class SecurityContextImpl implements SecurityContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
-    private static final String INTERNAL = "INTERNAL";
-    private static final String SYSTEM = "system";
     private static final String USER = "user";
-    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef("User", "0", INTERNAL, false, true);
+    private static final UserToken INTERNAL_PROCESSING_USER_TOKEN = UserTokenUtil.processingUser();
+    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef("User", "0", INTERNAL_PROCESSING_USER_TOKEN.getUserId(), false, true);
 
     private final DocumentPermissionsCache documentPermissionsCache;
     private final UserGroupsCache userGroupsCache;
@@ -69,22 +70,15 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
-    public void pushUser(final String token) {
+    public void pushUser(final UserToken token) {
         UserRef userRef = null;
 
         if (token != null) {
-            final String[] parts = token.split("\\|", -1);
-            if (parts.length < 3) {
-                LOGGER.error("Unexpected token format '" + token + "'");
-                throw new AuthenticationException("Unexpected token format '" + token + "'");
-            }
+            final String type = token.getType();
+            final String name = token.getUserId();
 
-            final String type = parts[0];
-            final String name = parts[1];
-//            final String jSessionId = parts[2];
-
-            if (SYSTEM.equals(type)) {
-                if (INTERNAL.equals(name)) {
+            if (INTERNAL_PROCESSING_USER_TOKEN.getType().equals(type)) {
+                if (INTERNAL_PROCESSING_USER_TOKEN.getUserId().equals(name)) {
                     userRef = INTERNAL_PROCESSING_USER;
                 } else {
                     LOGGER.error("Unexpected system user '" + name + "'");
@@ -107,22 +101,21 @@ class SecurityContextImpl implements SecurityContext {
             }
         }
 
-        CurrentUserState.pushUserRef(userRef);
+        CurrentUserState.push(token, userRef);
     }
 
     @Override
-    public String popUser() {
-        final UserRef userRef = CurrentUserState.popUserRef();
-
-        if (userRef != null) {
-            return userRef.getName();
-        }
-
-        return null;
+    public void popUser() {
+        CurrentUserState.pop();
     }
 
     private UserRef getUserRef() {
         return CurrentUserState.currentUserRef();
+    }
+
+    @Override
+    public UserToken getUserToken() {
+        return CurrentUserState.currentUserToken();
     }
 
     @Override

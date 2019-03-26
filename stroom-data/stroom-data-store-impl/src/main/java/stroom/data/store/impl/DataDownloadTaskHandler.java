@@ -32,7 +32,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.data.shared.StreamTypeNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;

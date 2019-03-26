@@ -19,7 +19,7 @@ package stroom.dashboard.impl.datasource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 
 import java.util.HashMap;
 import java.util.Map;

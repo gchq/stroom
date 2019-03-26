@@ -32,7 +32,7 @@ import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.security.Security;
+import stroom.security.api.Security;
 
 import javax.inject.Inject;
 

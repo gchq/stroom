@@ -20,7 +20,7 @@ package stroom.core.servlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.api.NodeInfo;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.util.BuildInfoProvider;
 import stroom.util.shared.BuildInfo;
 

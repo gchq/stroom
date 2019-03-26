@@ -2,7 +2,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.DeleteFsVolumeAction;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 

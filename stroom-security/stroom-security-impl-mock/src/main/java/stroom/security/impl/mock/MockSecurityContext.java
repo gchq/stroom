@@ -16,23 +16,28 @@
 
 package stroom.security.impl.mock;
 
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.User;
+import stroom.security.shared.UserToken;
 
 public class MockSecurityContext implements SecurityContext {
     @Override
-    public void pushUser(final String name) {
+    public void pushUser(final UserToken name) {
         // Do nothing.
     }
 
     @Override
-    public String popUser() {
-        return null;
+    public void popUser() {
     }
 
     @Override
     public String getUserId() {
         return User.ADMIN_USER_NAME;
+    }
+
+    @Override
+    public UserToken getUserToken() {
+        return null;
     }
 
     @Override

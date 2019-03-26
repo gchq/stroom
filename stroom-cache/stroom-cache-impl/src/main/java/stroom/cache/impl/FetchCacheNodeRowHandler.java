@@ -25,7 +25,7 @@ import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;
 import stroom.util.shared.StringCriteria;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.cluster.task.api.ClusterCallEntry;

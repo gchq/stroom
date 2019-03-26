@@ -19,7 +19,7 @@ package stroom.core.entity.cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.shared.Clearable;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 

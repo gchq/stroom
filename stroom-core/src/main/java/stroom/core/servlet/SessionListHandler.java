@@ -18,7 +18,7 @@ package stroom.core.servlet;
 
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.cluster.task.api.ClusterCallEntry;
@@ -47,7 +47,7 @@ class SessionListHandler extends AbstractTaskHandler<SessionListAction, ResultLi
         return security.insecureResult(() -> {
             final DefaultClusterResultCollector<ResultList<SessionDetails>> collector = dispatchHelper
                     .execAsync(
-                            new SessionListClusterTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "Get session list"),
+                            new SessionListClusterTask(UserTokenUtil.processingUser(), "Get session list"),
                             TargetType.ACTIVE);
 
             final ArrayList<SessionDetails> rtnList = new ArrayList<>();

@@ -24,7 +24,7 @@ import stroom.cluster.api.ClusterState;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.FindNodeCriteria;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;

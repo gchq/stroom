@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.security;
+package stroom.security.api;
 
 public interface DocumentPermissionCache {
     boolean hasDocumentPermission(String documentType, String documentUuid, String permission);

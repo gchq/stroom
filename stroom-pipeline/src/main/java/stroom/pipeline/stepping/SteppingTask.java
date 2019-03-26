@@ -22,6 +22,7 @@ import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.meta.shared.FindMetaCriteria;
+import stroom.security.shared.UserToken;
 import stroom.task.api.ServerTask;
 
 import java.util.Map;
@@ -40,7 +41,7 @@ public class SteppingTask extends ServerTask<SteppingResult> {
     private DocRef pipeline;
     private Map<String, String> code;
 
-    public SteppingTask(final String userToken) {
+    public SteppingTask(final UserToken userToken) {
         super(null, userToken);
     }
 

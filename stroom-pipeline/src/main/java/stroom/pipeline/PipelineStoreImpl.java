@@ -28,7 +28,7 @@ import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.docref.DocRefInfo;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 import stroom.util.string.EncodingUtil;

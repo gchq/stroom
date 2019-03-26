@@ -18,7 +18,7 @@
 package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.FetchVisualisationAction;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.visualisation.shared.VisualisationDoc;

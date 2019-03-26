@@ -18,7 +18,6 @@ package stroom.task.shared;
 
 import stroom.docref.SharedObject;
 import stroom.util.shared.HasIsConstrained;
-import stroom.util.shared.UserTokenUtil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -73,7 +72,7 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
             }
         }
         if (sessionId != null) {
-            if (sessionId.equals(UserTokenUtil.getSessionId(task.getUserToken()))) {
+            if (sessionId.equals(task.getUserToken().getSessionId())) {
                 return true;
             }
         }

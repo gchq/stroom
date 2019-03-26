@@ -18,7 +18,7 @@ package stroom.job.impl;
 
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.shared.SharedMap;

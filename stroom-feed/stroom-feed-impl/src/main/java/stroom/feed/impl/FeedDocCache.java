@@ -25,7 +25,7 @@ import stroom.docref.DocRef;
 import stroom.util.shared.Clearable;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
-import stroom.security.Security;
+import stroom.security.api.Security;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

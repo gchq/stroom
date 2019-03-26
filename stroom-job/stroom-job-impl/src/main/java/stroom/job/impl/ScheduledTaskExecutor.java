@@ -22,7 +22,7 @@ import org.slf4j.MarkerFactory;
 import stroom.job.api.ScheduledJob;
 import stroom.job.api.TaskConsumer;
 import stroom.job.shared.JobNode;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.Task;
 import stroom.util.scheduler.FrequencyScheduler;

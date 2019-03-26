@@ -22,7 +22,7 @@ import stroom.dictionary.shared.DownloadDictionaryAction;
 import stroom.util.shared.EntityServiceException;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.resource.api.ResourceStore;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceGeneration;

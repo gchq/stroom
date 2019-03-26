@@ -20,7 +20,7 @@ import stroom.explorer.impl.db.ExplorerTreeDao;
 import stroom.explorer.impl.db.ExplorerTreeNode;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.util.concurrent.ModelCache;
 
 import javax.inject.Inject;

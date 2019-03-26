@@ -29,7 +29,7 @@ import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.search.IndexDataSourceFieldUtil;
 import stroom.search.LuceneSearchResponseCreatorManager;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.util.RestResource;
 
 import javax.inject.Inject;

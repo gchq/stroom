@@ -28,7 +28,7 @@ import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.node.api.NodeInfo;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;

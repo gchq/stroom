@@ -18,7 +18,7 @@ package stroom.pipeline.cache;
 
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventHandler;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.cache.api.CacheManager;
 import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.xmlschema.shared.XmlSchemaDoc;

@@ -42,7 +42,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.security.util.UserTokenUtil;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
@@ -478,7 +478,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             optionalProcessorFilter.ifPresent(loadedFilter -> {
 
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
-                security.asUser(UserTokenUtil.create(loadedFilter.getCreateUser(), null), () -> {
+                security.asUser(UserTokenUtil.create(loadedFilter.getCreateUser()), () -> {
                     LOGGER.debug("createTasksForFilter() - processorFilter {}", loadedFilter.toString());
 
                     // Only try and create tasks if the processor is enabled.

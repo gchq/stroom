@@ -20,7 +20,7 @@ package stroom.dashboard.impl.script;
 import stroom.docref.DocRef;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.ScriptDoc;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.SharedList;
 

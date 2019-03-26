@@ -10,7 +10,7 @@ import stroom.dashboard.shared.StoredQuery;
 import stroom.db.util.AuditUtil;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
 import stroom.util.shared.BaseResultList;

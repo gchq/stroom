@@ -16,10 +16,12 @@
 
 package stroom.security.util;
 
-public final class UserTokenUtil {
-    public static final String INTERNAL_PROCESSING_USER_TOKEN = createInternal();
+import stroom.security.shared.UserToken;
 
-    private static final String DELIMITER = "|";
+public final class UserTokenUtil {
+    private static final UserToken INTERNAL_PROCESSING_USER_TOKEN = createStaticInternal();
+
+    //    private static final String DELIMITER = "|";
     private static final String INTERNAL = "INTERNAL";
     private static final String USER = "user";
     private static final String SYSTEM = "system";
@@ -28,50 +30,60 @@ public final class UserTokenUtil {
         // Utility class.
     }
 
-    private static String createInternal() {
+    private static UserToken createStaticInternal() {
         return create(SYSTEM, INTERNAL, null);
     }
 
-    public static String create(final String userId, final String sessionId) {
+    public static UserToken processingUser() {
+        return INTERNAL_PROCESSING_USER_TOKEN;
+    }
+
+    public static UserToken create(final String userId) {
+        return create(USER, userId, null);
+    }
+
+    public static UserToken create(final String userId, final String sessionId) {
         return create(USER, userId, sessionId);
     }
 
-    private static String create(final String type, final String userId, final String sessionId) {
-        final StringBuilder sb = new StringBuilder();
-        if (type != null) {
-            sb.append(type);
-        }
-        sb.append(DELIMITER);
-        if (userId != null) {
-            sb.append(userId);
-        }
-        sb.append(DELIMITER);
-        if (sessionId != null) {
-            sb.append(sessionId);
-        }
-        return sb.toString();
+    private static UserToken create(final String type, final String userId, final String sessionId) {
+        return new UserToken(type, userId, sessionId);
+
+//        final StringBuilder sb = new StringBuilder();
+//        if (type != null) {
+//            sb.append(type);
+//        }
+//        sb.append(DELIMITER);
+//        if (userId != null) {
+//            sb.append(userId);
+//        }
+//        sb.append(DELIMITER);
+//        if (sessionId != null) {
+//            sb.append(sessionId);
+//        }
+//        return sb.toString();
     }
 
-    public static String getType(final String token) {
-        return getPart(token, 0);
-    }
-
-    public static String getUserId(final String token) {
-        return getPart(token, 1);
-    }
-
-    public static String getSessionId(final String token) {
-        return getPart(token, 2);
-    }
-
-    private static String getPart(final String token, final int index) {
-        if (token == null) {
-            return null;
-        }
-        final String[] parts = token.split("\\|", -1);
-        if (parts.length - 1 < index) {
-            return null;
-        }
-        return parts[index];
-    }
+//    public static String getType(final String token) {
+//        return getPart(token, 0);
+//    }
+//
+//    public static String getUserId(final String token) {
+//        return getPart(token, 1);
+//    }
+//
+//    public static String getSessionId(final String token) {
+//        return getPart(token, 2);
+//    }
+//
+//    private static String getPart(final String token, final int index) {
+//        if (token == null) {
+//            return null;
+//        }
+//        final String[] parts = token.split("\\|", -1);
+//        if (parts.length - 1 < index) {
+//            return null;
+//        }
+//        return parts[index];
+//    }
 }

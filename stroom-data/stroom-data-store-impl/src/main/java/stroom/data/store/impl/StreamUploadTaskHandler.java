@@ -34,7 +34,7 @@ import stroom.meta.shared.StandardHeaderArguments;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.receive.common.StroomStreamProcessor;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.data.shared.StreamTypeNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;

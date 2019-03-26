@@ -16,7 +16,7 @@
 
 package stroom.processor.impl;
 
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.util.shared.VoidResult;

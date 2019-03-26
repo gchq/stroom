@@ -34,7 +34,7 @@ import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.receive.common.StroomStatusCode;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
-import stroom.security.Security;
+import stroom.security.api.Security;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;

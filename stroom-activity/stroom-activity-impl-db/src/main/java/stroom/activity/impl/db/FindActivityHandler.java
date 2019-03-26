@@ -26,7 +26,7 @@ import stroom.activity.shared.FindActivityCriteria;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

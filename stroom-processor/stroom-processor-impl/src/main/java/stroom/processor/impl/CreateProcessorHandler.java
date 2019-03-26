@@ -20,7 +20,7 @@ package stroom.processor.impl;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.CreateProcessorFilterAction;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 

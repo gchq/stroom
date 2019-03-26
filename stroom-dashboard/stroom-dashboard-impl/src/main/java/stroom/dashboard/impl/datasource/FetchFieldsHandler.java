@@ -19,7 +19,7 @@ package stroom.dashboard.impl.datasource;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.datasource.shared.DataSourceFields;
 import stroom.datasource.shared.FetchFieldsAction;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

@@ -23,7 +23,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;

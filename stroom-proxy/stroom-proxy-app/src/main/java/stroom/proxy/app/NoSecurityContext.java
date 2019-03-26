@@ -16,22 +16,27 @@
 
 package stroom.proxy.app;
 
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.UserToken;
 
 public class NoSecurityContext implements SecurityContext {
     @Override
-    public void pushUser(final String name) {
+    public void pushUser(final UserToken userToken) {
         // Do nothing.
     }
 
     @Override
-    public String popUser() {
-        return null;
+    public void popUser() {
     }
 
     @Override
     public String getUserId() {
         return "admin";
+    }
+
+    @Override
+    public UserToken getUserToken() {
+        return null;
     }
 
     @Override

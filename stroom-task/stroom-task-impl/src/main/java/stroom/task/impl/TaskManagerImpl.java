@@ -20,8 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.node.api.NodeInfo;
-import stroom.security.Security;
-import stroom.security.util.UserTokenUtil;
+import stroom.security.api.Security;
+import stroom.security.shared.UserToken;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskHandler;
@@ -347,7 +347,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
 
         currentThread.setName(oldThreadName + " - " + task.getClass().getSimpleName());
         try {
-            String userToken = task.getUserToken();
+            UserToken userToken = task.getUserToken();
             if (userToken == null) {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Task has null user token: " + task.getClass().getSimpleName());
@@ -476,8 +476,8 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
         final TaskProgress taskProgress = new TaskProgress();
         taskProgress.setId(task.getId());
         taskProgress.setTaskName(taskThread.getName());
-        taskProgress.setSessionId(UserTokenUtil.getSessionId(task.getUserToken()));
-        taskProgress.setUserName(UserTokenUtil.getUserId(task.getUserToken()));
+        taskProgress.setSessionId(task.getUserToken().getSessionId());
+        taskProgress.setUserName(task.getUserToken().getUserId());
         taskProgress.setThreadName(taskThread.getThreadName());
         taskProgress.setTaskInfo(taskThread.getInfo());
         taskProgress.setSubmitTimeMs(taskThread.getSubmitTimeMs());

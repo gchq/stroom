@@ -1,6 +1,6 @@
 package stroom.security.impl;
 
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 

@@ -13,7 +13,7 @@ import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.HasIntCrud;
 

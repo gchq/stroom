@@ -42,7 +42,7 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.data.shared.StreamTypeNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.date.DateUtil;

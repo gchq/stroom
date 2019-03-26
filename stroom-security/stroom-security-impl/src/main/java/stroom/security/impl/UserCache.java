@@ -21,7 +21,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import stroom.security.service.UserService;
 import stroom.util.shared.Clearable;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.security.shared.UserRef;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;

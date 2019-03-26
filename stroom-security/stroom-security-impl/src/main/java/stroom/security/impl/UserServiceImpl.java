@@ -16,7 +16,7 @@
 
 package stroom.security.impl;
 
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.security.dao.UserDao;
 import stroom.security.service.UserService;
 import stroom.security.shared.FindUserCriteria;

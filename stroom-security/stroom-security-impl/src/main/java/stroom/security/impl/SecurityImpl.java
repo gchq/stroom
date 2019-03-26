@@ -1,8 +1,9 @@
 package stroom.security.impl;
 
-import stroom.security.Security;
-import stroom.security.SecurityContext;
+import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionException;
+import stroom.security.shared.UserToken;
 import stroom.security.util.UserTokenUtil;
 
 import javax.inject.Inject;
@@ -22,13 +23,17 @@ public class SecurityImpl implements Security {
      * Run the supplied code as the specified user.
      */
     @Override
-    public <T> T asUserResult(final String userToken, final Supplier<T> supplier) {
+    public <T> T asUserResult(final UserToken userToken, final Supplier<T> supplier) {
         T result;
+        boolean success = false;
         try {
             securityContext.pushUser(userToken);
+            success = true;
             result = supplier.get();
         } finally {
-            securityContext.popUser();
+            if (success) {
+                securityContext.popUser();
+            }
         }
         return result;
     }
@@ -37,12 +42,16 @@ public class SecurityImpl implements Security {
      * Run the supplied code as the specified user.
      */
     @Override
-    public void asUser(final String userToken, final Runnable runnable) {
+    public void asUser(final UserToken userToken, final Runnable runnable) {
+        boolean success = false;
         try {
             securityContext.pushUser(userToken);
+            success = true;
             runnable.run();
         } finally {
-            securityContext.popUser();
+            if (success) {
+                securityContext.popUser();
+            }
         }
     }
 
@@ -52,11 +61,15 @@ public class SecurityImpl implements Security {
     @Override
     public <T> T asProcessingUserResult(final Supplier<T> supplier) {
         T result;
+        boolean success = false;
         try {
-            securityContext.pushUser(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN);
+            securityContext.pushUser(UserTokenUtil.processingUser());
+            success = true;
             result = supplier.get();
         } finally {
-            securityContext.popUser();
+            if (success) {
+                securityContext.popUser();
+            }
         }
         return result;
     }
@@ -66,11 +79,15 @@ public class SecurityImpl implements Security {
      */
     @Override
     public void asProcessingUser(final Runnable runnable) {
+        boolean success = false;
         try {
-            securityContext.pushUser(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN);
+            securityContext.pushUser(UserTokenUtil.processingUser());
+            success = true;
             runnable.run();
         } finally {
-            securityContext.popUser();
+            if (success) {
+                securityContext.popUser();
+            }
         }
     }
 
@@ -80,11 +97,15 @@ public class SecurityImpl implements Security {
     @Override
     public <T> T useAsReadResult(final Supplier<T> supplier) {
         T result;
+        boolean success = false;
         try {
             securityContext.elevatePermissions();
+            success = true;
             result = supplier.get();
         } finally {
-            securityContext.restorePermissions();
+            if (success) {
+                securityContext.restorePermissions();
+            }
         }
         return result;
     }
@@ -94,11 +115,15 @@ public class SecurityImpl implements Security {
      */
     @Override
     public void useAsRead(final Runnable runnable) {
+        boolean success = false;
         try {
             securityContext.elevatePermissions();
+            success = true;
             runnable.run();
         } finally {
-            securityContext.restorePermissions();
+            if (success) {
+                securityContext.restorePermissions();
+            }
         }
     }
 

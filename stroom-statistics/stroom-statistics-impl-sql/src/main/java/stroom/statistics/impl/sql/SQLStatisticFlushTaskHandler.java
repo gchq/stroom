@@ -19,7 +19,7 @@ package stroom.statistics.impl.sql;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;

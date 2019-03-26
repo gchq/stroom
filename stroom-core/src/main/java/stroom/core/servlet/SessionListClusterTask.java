@@ -16,13 +16,14 @@
 
 package stroom.core.servlet;
 
+import stroom.security.shared.UserToken;
 import stroom.util.shared.ResultList;
 import stroom.cluster.task.api.ClusterTask;
 
 public class SessionListClusterTask extends ClusterTask<ResultList<SessionDetails>> {
     private static final long serialVersionUID = 7441063582135677305L;
 
-    public SessionListClusterTask(final String userToken,
+    public SessionListClusterTask(final UserToken userToken,
                                   final String taskName) {
         super(userToken, taskName);
     }

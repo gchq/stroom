@@ -16,9 +16,10 @@
 
 package stroom.cluster.task.api;
 
-import stroom.util.shared.BaseResultList;
+import stroom.security.shared.UserToken;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TaskProgress;
+import stroom.util.shared.BaseResultList;
 
 public class TerminateTaskClusterTask extends ClusterTask<BaseResultList<TaskProgress>> {
     private static final long serialVersionUID = 2759048534848720682L;
@@ -26,7 +27,7 @@ public class TerminateTaskClusterTask extends ClusterTask<BaseResultList<TaskPro
     private final FindTaskCriteria criteria;
     private final boolean kill;
 
-    public TerminateTaskClusterTask(final String userToken, final String taskName,
+    public TerminateTaskClusterTask(final UserToken userToken, final String taskName,
                                     final FindTaskCriteria criteria, final boolean kill) {
         super(userToken, taskName);
         this.criteria = criteria;

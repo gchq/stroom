@@ -30,7 +30,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.docref.DocRefInfo;
 import stroom.script.shared.ScriptDoc;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 

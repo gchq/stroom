@@ -16,6 +16,7 @@
 
 package stroom.task.impl;
 
+import stroom.security.shared.UserToken;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.GenericServerTask;
@@ -46,12 +47,12 @@ class ExecutorProviderImpl implements ExecutorProvider {
         return new TaskExecutor(taskManager, threadPool, parentTask, getUserToken(parentTask), threadPool.getName());
     }
 
-    private String getUserToken(final Task<?> parentTask) {
+    private UserToken getUserToken(final Task<?> parentTask) {
         if (parentTask != null && parentTask.getUserToken() != null) {
             return parentTask.getUserToken();
         }
 
-        return UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN;
+        return UserTokenUtil.processingUser();
     }
 
     private String getTaskName(final Task<?> parentTask, final String defaultName) {
@@ -66,10 +67,10 @@ class ExecutorProviderImpl implements ExecutorProvider {
         private final TaskManager taskManager;
         private final ThreadPool threadPool;
         private final Task<?> parentTask;
-        private final String userToken;
+        private final UserToken userToken;
         private final String taskName;
 
-        TaskExecutor(final TaskManager taskManager, final ThreadPool threadPool, final Task<?> parentTask, final String userToken, final String taskName) {
+        TaskExecutor(final TaskManager taskManager, final ThreadPool threadPool, final Task<?> parentTask, final UserToken userToken, final String taskName) {
             this.taskManager = taskManager;
             this.threadPool = threadPool;
             this.parentTask = parentTask;

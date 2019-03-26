@@ -32,7 +32,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
 import stroom.docref.DocRef;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.shared.Message;

@@ -23,7 +23,7 @@ class EventSearchImpl implements EventSearch {
 
     @Override
     public void search(final String user, final Query query, final EventRef minEvent, final EventRef maxEvent, final long maxStreams, final long maxEvents, final long maxEventsPerStream, final int resultSendFrequency, final Consumer<EventRefs> consumer) {
-        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.create(user, null), query,
+        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.create(user), query,
                 minEvent, maxEvent, maxStreams, maxEvents, maxEventsPerStream, POLL_INTERVAL_MS);
         taskManager.execAsync(eventSearchTask, new TaskCallbackAdaptor<>() {
             @Override

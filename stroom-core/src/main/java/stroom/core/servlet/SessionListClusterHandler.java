@@ -17,7 +17,7 @@
 package stroom.core.servlet;
 
 import stroom.util.shared.ResultList;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

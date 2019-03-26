@@ -23,9 +23,11 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.shared.UserRef;
+import stroom.security.shared.UserToken;
+import stroom.security.util.UserTokenUtil;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.StreamUtil;
 
@@ -143,7 +145,14 @@ class SecurityFilter implements Filter {
                 } else {
                     // Authenticate requests to the API.
                     final UserRef userRef = loginAPI(request, response);
-                    continueAsUser(request, response, chain, userRef);
+
+                    final String sessionId = Optional.ofNullable(request.getSession(false))
+                            .map(HttpSession::getId)
+                            .orElse(null);
+
+                    final UserToken userToken = UserTokenUtil.create(userRef.getName(), sessionId);
+
+                    continueAsUser(request, response, chain, userToken, userRef);
                 }
 
             } else if (isClusterCallRequest | isDatafeedRequest) {
@@ -154,7 +163,13 @@ class SecurityFilter implements Filter {
                 // Try and get an existing user ref from the session.
                 final UserRef userRef = UserRefSessionUtil.get(request.getSession(false));
                 if (userRef != null) {
-                    continueAsUser(request, response, chain, userRef);
+                    final String sessionId = Optional.ofNullable(request.getSession(false))
+                            .map(HttpSession::getId)
+                            .orElse(null);
+
+                    final UserToken userToken = UserTokenUtil.create(userRef.getName(), sessionId);
+
+                    continueAsUser(request, response, chain, userToken, userRef);
 
                 } else if (!config.isAuthenticationRequired()) {
                     bypassAuthentication(request, response, chain, true);
@@ -177,25 +192,40 @@ class SecurityFilter implements Filter {
         final AuthenticationToken token = new AuthenticationToken("admin", null);
         final UserRef userRef = security.asProcessingUserResult(() -> authenticationService.getUserRef(token));
         if (userRef != null) {
+            HttpSession session;
             if (useSession) {
+                session = request.getSession(true);
+
                 // Set the user ref in the session.
-                UserRefSessionUtil.set(request.getSession(true), userRef);
+                UserRefSessionUtil.set(session, userRef);
+
+            } else {
+                session = request.getSession(false);
             }
 
-            continueAsUser(request, response, chain, userRef);
+            final String sessionId = Optional.ofNullable(session)
+                    .map(HttpSession::getId)
+                    .orElse(null);
+
+            final UserToken userToken = UserTokenUtil.create(userRef.getName(), sessionId);
+            continueAsUser(request, response, chain, userToken, userRef);
         }
     }
 
-    private void continueAsUser(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain, final UserRef userRef)
+    private void continueAsUser(final HttpServletRequest request,
+                                final HttpServletResponse response,
+                                final FilterChain chain,
+                                final UserToken userToken,
+                                final UserRef userRef)
             throws IOException, ServletException {
         if (userRef != null) {
             // If the session already has a reference to a user then continue the chain as that user.
             try {
-                CurrentUserState.pushUserRef(userRef);
+                CurrentUserState.push(userToken, userRef);
 
                 chain.doFilter(request, response);
             } finally {
-                CurrentUserState.popUserRef();
+                CurrentUserState.pop();
             }
         }
     }

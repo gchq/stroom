@@ -16,12 +16,12 @@
 
 package stroom.search;
 
-import stroom.index.shared.FindIndexShardCriteria;
+import stroom.cluster.task.api.ClusterTask;
 import stroom.index.shared.IndexField;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.cluster.task.api.ClusterTask;
+import stroom.security.shared.UserToken;
 import stroom.task.shared.Task;
 
 import java.util.List;
@@ -41,7 +41,7 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
     private final long now;
 
     public ClusterSearchTask(final Task<?> parentTask,
-                             final String userToken,
+                             final UserToken userToken,
                              final String taskName,
                              final Query query,
                              final List<Long> shards,

@@ -18,6 +18,7 @@ package stroom.cache.impl;
 
 import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.cluster.task.api.ClusterTask;
+import stroom.security.shared.UserToken;
 import stroom.util.shared.VoidResult;
 
 class CacheClearClusterTask extends ClusterTask<VoidResult> {
@@ -25,7 +26,7 @@ class CacheClearClusterTask extends ClusterTask<VoidResult> {
 
     private FindCacheInfoCriteria criteria;
 
-    CacheClearClusterTask(final String userToken,
+    CacheClearClusterTask(final UserToken userToken,
                           final String taskName,
                           final FindCacheInfoCriteria criteria) {
         super(userToken, taskName);

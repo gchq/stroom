@@ -29,7 +29,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.SchemaFilter;
 import stroom.pipeline.state.PipelineContext;
 import stroom.security.impl.mock.MockSecurityContext;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.pipeline.xml.converter.ds3.DS3ParserFactory;
 import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.pipeline.xmlschema.XmlSchemaSerialiser;

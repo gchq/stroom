@@ -109,7 +109,7 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
             criteria.setSessionId(sessionId);
             final TerminateTaskProgressAction action = new TerminateTaskProgressAction(
                     "Terminate session: " + sessionId, criteria, false);
-            action.setUserToken(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN);
+            action.setUserToken(UserTokenUtil.processingUser());
             action.setId(TaskIdFactory.create());
 
             final TaskManager taskManager = getTaskManager();

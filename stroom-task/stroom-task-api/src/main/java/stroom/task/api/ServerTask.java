@@ -16,6 +16,7 @@
 
 package stroom.task.api;
 
+import stroom.security.shared.UserToken;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.shared.SimpleThreadPool;
 import stroom.task.shared.Task;
@@ -26,13 +27,13 @@ import stroom.util.shared.ModelStringUtil;
 public abstract class ServerTask<R> implements Task<R> {
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(2);
     private final TaskId id;
-    private final String userToken;
+    private final UserToken userToken;
     private final Task<?> parentTask;
     private volatile String taskName;
 
     public ServerTask() {
         this.id = TaskIdFactory.create();
-        this.userToken = UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN;
+        this.userToken = UserTokenUtil.processingUser();
         this.parentTask = null;
     }
 
@@ -40,7 +41,7 @@ public abstract class ServerTask<R> implements Task<R> {
         this(parentTask, parentTask.getUserToken());
     }
 
-    public ServerTask(final Task<?> parentTask, final String userToken) {
+    public ServerTask(final Task<?> parentTask, final UserToken userToken) {
         if (parentTask == null) {
             this.id = TaskIdFactory.create();
         } else {
@@ -94,7 +95,7 @@ public abstract class ServerTask<R> implements Task<R> {
     }
 
     @Override
-    public String getUserToken() {
+    public UserToken getUserToken() {
         return userToken;
     }
 

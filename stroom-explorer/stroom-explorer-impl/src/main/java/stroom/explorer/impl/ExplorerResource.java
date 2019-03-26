@@ -9,7 +9,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.HasNodeState;
 import stroom.explorer.shared.PermissionInheritance;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.RestResource;
 

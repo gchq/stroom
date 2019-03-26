@@ -19,7 +19,7 @@ package stroom.data.store.impl;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.meta.shared.Meta;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.meta.shared.FetchFullMetaInfoAction;
 import stroom.meta.shared.FullMetaInfoResult;
 import stroom.meta.shared.FullMetaInfoResult.Entry;

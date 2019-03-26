@@ -2,7 +2,7 @@ package stroom.index.service;
 
 import stroom.index.dao.IndexVolumeGroupDao;
 import stroom.index.shared.IndexVolumeGroup;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.security.shared.PermissionNames;
 
 import javax.inject.Inject;

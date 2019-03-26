@@ -17,7 +17,7 @@
 package stroom.task.impl;
 
 import stroom.util.shared.ResultList;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.task.shared.FindTaskProgressAction;

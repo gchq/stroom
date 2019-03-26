@@ -19,7 +19,7 @@ package stroom.importexport.impl;
 import stroom.util.shared.ResultList;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.FetchDependenciesAction;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

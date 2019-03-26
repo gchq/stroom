@@ -54,7 +54,7 @@ import stroom.pipeline.writer.AbstractWriter;
 import stroom.pipeline.writer.OutputStreamAppender;
 import stroom.pipeline.writer.TextWriter;
 import stroom.pipeline.writer.XMLWriter;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.data.shared.StreamTypeNames;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Marker;

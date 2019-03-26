@@ -34,7 +34,7 @@ import stroom.importexport.shared.ExportConfigAction;
 import stroom.importexport.shared.ImportConfigAction;
 import stroom.importexport.shared.ImportState;
 import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.security.Security;
+import stroom.security.api.Security;
 
 import javax.inject.Inject;
 import java.util.List;

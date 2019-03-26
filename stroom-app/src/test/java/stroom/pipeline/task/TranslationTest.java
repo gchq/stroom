@@ -398,7 +398,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         findMetaCriteria.setExpression(expression);
         findMetaCriteria.obtainSelectedIdSet().setMatchAll(Boolean.TRUE);
 
-        final SteppingTask action = new SteppingTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN);
+        final SteppingTask action = new SteppingTask(UserTokenUtil.processingUser());
         action.setPipeline(pipelineRef);
         action.setCriteria(findMetaCriteria);
 

@@ -19,7 +19,7 @@ package stroom.storedquery.impl.db;
 import stroom.dashboard.shared.FetchStoredQueryAction;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

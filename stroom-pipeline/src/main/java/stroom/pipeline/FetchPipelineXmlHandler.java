@@ -18,7 +18,7 @@ package stroom.pipeline;
 
 import stroom.pipeline.shared.FetchPipelineXmlAction;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.SharedString;
 

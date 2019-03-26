@@ -38,7 +38,7 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.HasId;

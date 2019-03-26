@@ -22,7 +22,7 @@ import stroom.cluster.api.ClusterCallServiceLocal;
 import stroom.cluster.api.ServiceName;
 import stroom.util.shared.EntityServiceException;
 import stroom.node.api.NodeInfo;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;

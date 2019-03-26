@@ -17,6 +17,7 @@
 package stroom.task.shared;
 
 import stroom.docref.SharedObject;
+import stroom.security.shared.UserToken;
 
 import java.io.Serializable;
 
@@ -26,7 +27,7 @@ public abstract class Action<R extends SharedObject> implements Task<R>, Seriali
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(4);
     private TaskId id;
     private String applicationInstanceId;
-    private String userToken;
+    private UserToken userToken;
 
     public String getApplicationInstanceId() {
         return applicationInstanceId;
@@ -37,11 +38,11 @@ public abstract class Action<R extends SharedObject> implements Task<R>, Seriali
     }
 
     @Override
-    public String getUserToken() {
+    public UserToken getUserToken() {
         return userToken;
     }
 
-    public void setUserToken(final String userToken) {
+    public void setUserToken(final UserToken userToken) {
         this.userToken = userToken;
     }
 

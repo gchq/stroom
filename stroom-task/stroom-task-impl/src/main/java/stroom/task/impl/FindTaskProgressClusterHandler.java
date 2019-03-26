@@ -18,7 +18,7 @@ package stroom.task.impl;
 
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskProgress;

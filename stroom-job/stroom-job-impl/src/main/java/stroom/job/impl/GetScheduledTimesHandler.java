@@ -18,7 +18,7 @@ package stroom.job.impl;
 
 import stroom.job.shared.GetScheduledTimesAction;
 import stroom.job.shared.ScheduledTimes;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

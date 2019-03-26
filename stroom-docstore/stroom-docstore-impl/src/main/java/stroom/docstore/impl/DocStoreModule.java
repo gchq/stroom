@@ -4,7 +4,7 @@ import com.google.inject.AbstractModule;
 import stroom.docstore.api.Persistence;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 
 public class DocStoreModule extends AbstractModule {
 

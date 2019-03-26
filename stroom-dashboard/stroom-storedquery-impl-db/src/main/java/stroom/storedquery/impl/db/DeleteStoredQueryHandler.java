@@ -19,7 +19,7 @@ package stroom.storedquery.impl.db;
 import stroom.dashboard.shared.DeleteStoredQueryAction;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 

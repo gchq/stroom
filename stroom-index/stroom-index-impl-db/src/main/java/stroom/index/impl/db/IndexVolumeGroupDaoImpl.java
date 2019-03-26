@@ -3,7 +3,7 @@ package stroom.index.impl.db;
 import stroom.db.util.JooqUtil;
 import stroom.index.dao.IndexVolumeGroupDao;
 import stroom.index.shared.IndexVolumeGroup;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 import java.util.List;

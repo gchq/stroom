@@ -19,7 +19,7 @@ package stroom.task.impl;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Sort.Direction;
 import stroom.event.logging.api.HttpServletRequestHolder;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindUserTaskProgressAction;

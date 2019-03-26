@@ -12,7 +12,7 @@ import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 import java.util.HashMap;

@@ -4,7 +4,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerServiceInfoAction;
 import stroom.explorer.shared.SharedDocRefInfo;
 import stroom.docref.DocRefInfo;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

@@ -26,7 +26,7 @@ import stroom.job.impl.JobDao;
 import stroom.job.impl.db.jooq.tables.records.JobRecord;
 import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.Job;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.HasIntCrud;
 

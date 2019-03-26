@@ -18,7 +18,7 @@ package stroom.core.db;
 
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindSystemTableStatusAction;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;

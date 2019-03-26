@@ -24,7 +24,7 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.db.util.AuditUtil;
 import stroom.db.util.JooqUtil;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.EntityServiceException;
 

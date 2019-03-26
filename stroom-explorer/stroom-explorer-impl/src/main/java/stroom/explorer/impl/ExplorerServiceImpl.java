@@ -32,7 +32,7 @@ import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.HasNodeState;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.docref.DocRefInfo;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 
 import javax.inject.Inject;

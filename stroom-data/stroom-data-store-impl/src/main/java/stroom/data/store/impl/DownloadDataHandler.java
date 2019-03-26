@@ -17,7 +17,7 @@
 package stroom.data.store.impl;
 
 import stroom.resource.api.ResourceStore;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.data.shared.DownloadDataAction;
 import stroom.task.api.AbstractTaskHandler;

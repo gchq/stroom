@@ -436,7 +436,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
 
         final CountDownLatch complete = new CountDownLatch(1);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, query,
+        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.processingUser(), query,
                 new EventRef(1, 1), new EventRef(Long.MAX_VALUE, Long.MAX_VALUE), 1000, 1000, 1000, 100);
         final AtomicReference<EventRefs> results = new AtomicReference<>();
         taskManager.execAsync(eventSearchTask, new TaskCallback<EventRefs>() {

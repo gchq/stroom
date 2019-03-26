@@ -26,7 +26,7 @@ import stroom.util.shared.PermissionException;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.client.Client;

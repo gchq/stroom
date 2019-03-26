@@ -21,7 +21,7 @@ import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskSummaryRow;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.BaseResultList;
 

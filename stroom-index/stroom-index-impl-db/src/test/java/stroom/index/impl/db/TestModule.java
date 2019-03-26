@@ -4,7 +4,7 @@ import com.google.inject.AbstractModule;
 import org.testcontainers.containers.MySQLContainer;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

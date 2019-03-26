@@ -34,14 +34,13 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.SimpleTaskContext;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Sort.Direction;
 
 import java.sql.SQLException;
 import java.util.Collections;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

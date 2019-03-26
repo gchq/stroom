@@ -21,14 +21,9 @@ import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.docref.DocRef;
-import stroom.util.entity.FindService;
-import stroom.util.shared.FindNamedEntityCriteria;
-import stroom.entity.shared.NamedEntity;
-import stroom.util.shared.StringCriteria;
-import stroom.util.shared.StringCriteria.MatchStyle;
 import stroom.pipeline.PipelineStore;
 import stroom.query.shared.FetchSuggestionsAction;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedString;
@@ -36,7 +31,6 @@ import stroom.util.shared.SharedString;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.stream.Collectors;
 
 

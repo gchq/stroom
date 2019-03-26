@@ -17,7 +17,7 @@
 package stroom.data.store.impl;
 
 import stroom.meta.shared.MetaService;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.meta.shared.UpdateStatusAction;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.SharedInteger;

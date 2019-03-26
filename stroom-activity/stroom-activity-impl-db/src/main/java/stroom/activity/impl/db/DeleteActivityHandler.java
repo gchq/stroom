@@ -20,7 +20,7 @@ import stroom.activity.shared.Activity;
 import stroom.activity.api.ActivityService;
 import stroom.activity.shared.DeleteActivityAction;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 

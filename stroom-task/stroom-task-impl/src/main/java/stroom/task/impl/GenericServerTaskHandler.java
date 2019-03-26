@@ -1,6 +1,6 @@
 package stroom.task.impl;
 
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskContext;

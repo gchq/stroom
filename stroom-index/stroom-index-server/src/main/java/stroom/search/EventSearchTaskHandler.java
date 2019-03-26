@@ -25,7 +25,7 @@ import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Sizes;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LogUtil;

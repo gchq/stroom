@@ -22,7 +22,7 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 
 public class EventLoggingModule extends AbstractModule {
     @Override

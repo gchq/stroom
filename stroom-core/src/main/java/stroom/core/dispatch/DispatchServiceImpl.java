@@ -26,7 +26,7 @@ import stroom.core.servlet.SessionListListener;
 import stroom.dispatch.shared.DispatchService;
 import stroom.docref.SharedObject;
 import stroom.event.logging.api.HttpServletRequestHolder;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.TaskHandler;
 import stroom.task.api.TaskIdFactory;

@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.data.store.impl.DataStoreMaintenanceService;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskContext;

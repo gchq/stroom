@@ -8,7 +8,7 @@ import stroom.elastic.api.ElasticIndexWriterFactory;
 import stroom.elastic.impl.ElasticIndexConfigCache;
 import stroom.elastic.impl.ElasticIndexConfigDoc;
 import stroom.pipeline.errorhandler.LoggedException;
-import stroom.security.Security;
+import stroom.security.api.Security;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

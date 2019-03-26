@@ -32,7 +32,7 @@ import stroom.activity.api.CurrentActivity;
 import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.security.SecurityContext;
+import stroom.security.api.SecurityContext;
 import stroom.util.BuildInfoProvider;
 
 import javax.inject.Inject;

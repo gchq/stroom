@@ -19,7 +19,7 @@ package stroom.cluster.task.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.shared.BaseResultList;
-import stroom.security.Security;
+import stroom.security.api.Security;
 import stroom.task.api.TaskManager;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.cluster.task.api.TerminateTaskClusterTask;
