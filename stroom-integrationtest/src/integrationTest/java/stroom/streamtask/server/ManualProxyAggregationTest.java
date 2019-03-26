@@ -1,6 +1,7 @@
 package stroom.streamtask.server;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -90,7 +91,12 @@ import static org.assertj.core.api.Assertions.assertThat;
         ServerConfiguration.class,
         StatisticsConfiguration.class,
         VisualisationConfiguration.class})
+@Ignore //Only meant to be run manually
 public class ManualProxyAggregationTest {
+
+    // The aim of this test class is to be able to run the proxy aggregation
+    // and manually kill it part way through and then run it again to ensure
+    // it recovers correctly.
 
     private final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
 
