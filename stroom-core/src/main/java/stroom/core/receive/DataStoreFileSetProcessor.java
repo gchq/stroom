@@ -16,8 +16,6 @@
 
 package stroom.core.receive;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.Store;
 import stroom.data.zip.StreamProgressMonitor;
 import stroom.feed.api.FeedProperties;
@@ -31,6 +29,9 @@ import stroom.proxy.repo.StroomZipRepository;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.task.api.TaskContext;
 import stroom.util.io.BufferFactory;
+import stroom.util.logging.LambdaLogUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
@@ -45,9 +46,7 @@ import java.util.stream.Collectors;
 
 /**
  * Class that reads a nested directory tree of stroom zip files.
- * <p>
- * <p>
- * TODO - This class is extended in ProxyAggregationExecutor in Stroom
+ *
  * so changes to the way files are stored in the zip repository
  * may have an impact on Stroom while it is using stroom.util.zip as opposed
  * to stroom-proxy-zip.  Need to pull all the zip repository stuff out
@@ -55,7 +54,7 @@ import java.util.stream.Collectors;
  * then both stroom-proxy and stroom can use it.
  */
 public final class DataStoreFileSetProcessor implements FileSetProcessor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataStoreFileSetProcessor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataStoreFileSetProcessor.class);
 
     private final Store store;
     private final FeedProperties feedProperties;
@@ -85,13 +84,11 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
 
             final String feedName = fileSet.getFeed();
             taskContext.setName("Processing set - " + feedName);
-            LOGGER.info("processFeedFiles() - Started {} ({} Files)", feedName, fileSet.getFiles().size());
+            LOGGER.info(LambdaLogUtil.message("processFeedFiles() - Started {} ({} Files)", feedName, fileSet.getFiles().size()));
 
             // Sort the files in the file set so there is some consistency to processing.
             fileSet.getFiles().sort(Comparator.comparing(p -> p.getFileName().toString()));
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("process() - " + feedName + " " + fileSet.getFiles());
-            }
+            LOGGER.debug(LambdaLogUtil.message("process() - {} {}", feedName, fileSet.getFiles()));
 
             // We don't want to aggregate reference feeds.
             final boolean oneByOne = feedProperties.isReference(feedName) || !aggregate;
@@ -128,13 +125,14 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
                     sequence = proxyFileHandler.processFeedFile(handlers, stroomZipRepository, file, streamProgressMonitor, sequence);
                     deleteFileList.add(file);
 
-                } catch (final Throwable t) {
+                } catch (final IOException | RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
                     handlers = closeDeleteStreamHandlers(handlers);
                 }
             }
             closeStreamHandlers(handlers);
             cleanup(stroomZipRepository, deleteFileList);
-            LOGGER.info("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime);
+            LOGGER.info(LambdaLogUtil.message("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime));
         }
     }
 
@@ -182,7 +180,7 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
             try {
                 Files.deleteIfExists(p);
             } catch (final IOException e) {
-                LOGGER.debug(e.getMessage(), e);
+                LOGGER.debug(e::getMessage, e);
             }
         });
     }

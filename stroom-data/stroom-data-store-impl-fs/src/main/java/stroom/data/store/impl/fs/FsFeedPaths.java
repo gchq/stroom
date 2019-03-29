@@ -1,8 +1,9 @@
 package stroom.data.store.impl.fs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.db.util.JooqUtil;
+import stroom.util.logging.LambdaLogUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -16,7 +17,7 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath.FS_FEED_PATH;
  */
 @Singleton
 class FsFeedPaths {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FsFeedPaths.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsFeedPaths.class);
 
     private final ConnectionProvider connectionProvider;
 
@@ -45,12 +46,13 @@ class FsFeedPaths {
     private void insert(final String feedName) {
         final String path = feedName.toUpperCase().replaceAll("\\W", "_");
         if (!path.equals(feedName)) {
-            LOGGER.warn("A non standard feed name was found when registering a file path '" + feedName + "'");
+            LOGGER.warn(LambdaLogUtil.message("A non standard feed name was found when registering a file path '{}'", feedName));
         }
 
         JooqUtil.context(connectionProvider, context -> context
                 .insertInto(FS_FEED_PATH, FS_FEED_PATH.NAME, FS_FEED_PATH.PATH)
                 .values(feedName, path)
+                .onDuplicateKeyIgnore()
                 .execute());
 
         refresh();

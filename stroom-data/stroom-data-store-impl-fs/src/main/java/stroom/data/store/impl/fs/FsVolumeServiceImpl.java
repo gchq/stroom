@@ -4,15 +4,12 @@ import com.google.common.collect.ImmutableMap;
 import org.jooq.Condition;
 import org.jooq.Record;
 import org.jooq.TableField;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeRecord;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
-import stroom.util.AuditUtil;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.entity.shared.EntityAction;
@@ -25,7 +22,11 @@ import stroom.security.shared.PermissionNames;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
+import stroom.util.AuditUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.CriteriaSet;
 import stroom.util.shared.Sort.Direction;
@@ -59,7 +60,7 @@ import static stroom.db.util.JooqUtil.contextWithOptimisticLocking;
 @Singleton
 @EntityEventHandler(type = FsVolumeServiceImpl.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
 public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataVolumeServiceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeServiceImpl.class);
 
     private static final String LOCK_NAME = "REFRESH_FS_VOLUMES";
     static final String ENTITY_TYPE = "FILE_SYSTEM_VOLUME";
@@ -97,7 +98,7 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
     private final AtomicReference<List<FsVolume>> currentVolumeState = new AtomicReference<>();
 
     private volatile boolean createdDefaultVolumes;
-    private boolean creatingDefaultVolumes;
+    private volatile boolean creatingDefaultVolumes;
 
     @Inject
     FsVolumeServiceImpl(final ConnectionProvider connectionProvider,
@@ -131,7 +132,7 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
                 if (pathString != null) {
                     Path path = Paths.get(pathString);
                     Files.createDirectories(path);
-                    LOGGER.info("Creating volume in {}", pathString);
+                    LOGGER.info(LambdaLogUtil.message("Creating volume in {}", pathString));
 
                     if (fileVolume.getByteLimit() == null) {
                         //set an arbitrary default limit size of 250MB on each volume to prevent the
@@ -153,7 +154,7 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
                 });
                 result.setVolumeState(fileVolume.getVolumeState());
             } catch (IOException e) {
-                LOGGER.error("Unable to create volume due to an error creating directory {}", pathString, e);
+                LOGGER.error(LambdaLogUtil.message("Unable to create volume due to an error creating directory {}", pathString), e);
             }
 
             fireChange(EntityAction.CREATE);
@@ -171,7 +172,7 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
                 volumeToRecord(fileVolume, record);
                 // This depends on there being a field named 'id' that is what we expect it to be.
                 // I'd rather this was implicit/opinionated than forced into place with an interface.
-                LOGGER.debug("Updating a {} with id {}", FS_VOLUME.getName(), record.getValue("id"));
+                LOGGER.debug(LambdaLogUtil.message("Updating a {} with id {}", FS_VOLUME.getName(), record.getValue("id")));
                 record.update();
                 return recordToVolume(record, fileVolume.getVolumeState());
             });
@@ -225,23 +226,26 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
     public BaseResultList<FsVolume> find(final FindFsVolumeCriteria criteria) {
         return security.insecureResult(() -> {
             ensureDefaultVolumes();
-
-            final Optional<Condition> volumeStatusCondition = volumeStatusCriteriaSetToCondition(FS_VOLUME.STATUS, criteria.getStatusSet());
-            final List<Condition> conditions = new ArrayList<>();
-            volumeStatusCondition.ifPresent(conditions::add);
-
-            final List<FsVolume> result = JooqUtil.contextResult(connectionProvider, context -> context
-                    .select()
-                    .from(FS_VOLUME)
-                    .join(FS_VOLUME_STATE)
-                    .on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
-                    .where(conditions)
-                    .limit(JooqUtil.getLimit(criteria.getPageRequest()))
-                    .offset(JooqUtil.getOffset(criteria.getPageRequest()))
-                    .fetch()
-                    .map(this::recordToVolume));
-            return BaseResultList.createCriterialBasedList(result, criteria);
+            return doFind(criteria);
         });
+    }
+
+    private BaseResultList<FsVolume> doFind(final FindFsVolumeCriteria criteria) {
+        final Optional<Condition> volumeStatusCondition = volumeStatusCriteriaSetToCondition(FS_VOLUME.STATUS, criteria.getStatusSet());
+        final List<Condition> conditions = new ArrayList<>();
+        volumeStatusCondition.ifPresent(conditions::add);
+
+        final List<FsVolume> result = JooqUtil.contextResult(connectionProvider, context -> context
+                .select()
+                .from(FS_VOLUME)
+                .join(FS_VOLUME_STATE)
+                .on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
+                .where(conditions)
+                .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                .offset(JooqUtil.getOffset(criteria.getPageRequest()))
+                .fetch()
+                .map(this::recordToVolume));
+        return BaseResultList.createCriterialBasedList(result, criteria);
     }
 
     private void volumeToRecord(final FsVolume fileVolume, final FsVolumeRecord record) {
@@ -357,7 +361,7 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
                 volumeSelector = volumeSelectorMap.get(value);
             }
         } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage());
+            LOGGER.debug(e::getMessage);
         }
 
         if (volumeSelector == null) {
@@ -382,7 +386,7 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
                     entityEventBus.fire(new EntityEvent(EVENT_DOCREF, action));
                 }
             } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error(e::getMessage, e);
             }
         }
     }
@@ -449,8 +453,8 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
                 addStatisticEvent(events, now, volume, "Total", volumeState.getBytesTotal());
                 statisticsReceiver.putEvents(events);
             } catch (final RuntimeException e) {
-                LOGGER.warn(e.getMessage());
-                LOGGER.debug(e.getMessage(), e);
+                LOGGER.warn(e::getMessage);
+                LOGGER.debug(e::getMessage, e);
             }
         }
     }
@@ -480,19 +484,19 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
 
         // Ensure the path exists
         if (Files.isDirectory(path)) {
-            LOGGER.debug("updateVolumeState() path exists: " + path);
+            LOGGER.debug(LambdaLogUtil.message("updateVolumeState() path exists: {}", path));
             setSizes(path, volumeState);
         } else {
             try {
                 Files.createDirectories(path);
-                LOGGER.debug("updateVolumeState() path created: " + path);
+                LOGGER.debug(LambdaLogUtil.message("updateVolumeState() path created: {}", path));
                 setSizes(path, volumeState);
             } catch (final IOException e) {
-                LOGGER.error("updateVolumeState() path not created: " + path);
+                LOGGER.error(LambdaLogUtil.message("updateVolumeState() path not created: {}", path));
             }
         }
 
-        LOGGER.debug("updateVolumeState() exit" + volume);
+        LOGGER.debug(LambdaLogUtil.message("updateVolumeState() exit {}", volume));
         return volumeState;
     }
 
@@ -507,7 +511,7 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
             volumeState.setBytesFree(usableSpace);
             volumeState.setBytesUsed(totalSpace - freeSpace);
         } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error(e::getMessage, e);
         }
     }
 
@@ -523,32 +527,36 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
 
     private synchronized void createDefaultVolumes() {
         if (!createdDefaultVolumes && !creatingDefaultVolumes) {
-            creatingDefaultVolumes = true;
-
-            security.insecure(() -> {
-                final boolean isEnabled = volumeConfig.isCreateDefaultOnStart();
-
-                if (isEnabled) {
-                    final List<FsVolume> existingVolumes = getCurrentState();
-                    if (existingVolumes.size() == 0) {
-                        final Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
-                        if (optDefaultVolumePath.isPresent()) {
-                            LOGGER.info("Creating default volumes");
-                            final Path streamVolPath = optDefaultVolumePath.get().resolve(DEFAULT_STREAM_VOLUME_SUBDIR);
-                            createVolume(streamVolPath);
+            try {
+                creatingDefaultVolumes = true;
+                security.insecure(() -> {
+                    final boolean isEnabled = volumeConfig.isCreateDefaultOnStart();
+                    if (isEnabled) {
+                        final FindFsVolumeCriteria findVolumeCriteria = new FindFsVolumeCriteria();
+                        findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
+                        final List<FsVolume> existingVolumes = doFind(findVolumeCriteria);
+                        if (existingVolumes.size() == 0) {
+                            final Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
+                            if (optDefaultVolumePath.isPresent()) {
+                                LOGGER.info(() -> "Creating default volumes");
+                                final Path streamVolPath = optDefaultVolumePath.get().resolve(DEFAULT_STREAM_VOLUME_SUBDIR);
+                                createVolume(streamVolPath);
+                            } else {
+                                LOGGER.warn(() -> "No suitable directory to create default volumes in");
+                            }
                         } else {
-                            LOGGER.warn("No suitable directory to create default volumes in");
+                            LOGGER.info(() -> "Existing volumes exist, won't create default volumes");
                         }
                     } else {
-                        LOGGER.info("Existing volumes exist, won't create default volumes");
+                        LOGGER.info(() -> "Creation of default volumes is currently disabled");
                     }
-                } else {
-                    LOGGER.info("Creation of default volumes is currently disabled");
-                }
-
+                });
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            } finally {
                 createdDefaultVolumes = true;
                 creatingDefaultVolumes = false;
-            });
+            }
         }
     }
 
@@ -599,7 +607,7 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
             // this.updateVolumeState()
             return OptionalLong.of((long) (totalBytes * 0.9));
         } catch (IOException e) {
-            LOGGER.warn("Unable to determine the total space on the filesystem for path: ", FileUtil.getCanonicalPath(path));
+            LOGGER.warn(LambdaLogUtil.message("Unable to determine the total space on the filesystem for path: {}", FileUtil.getCanonicalPath(path)));
             return OptionalLong.empty();
         }
     }
@@ -625,7 +633,7 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
                 return Optional.empty();
             }
         } catch (final RuntimeException e) {
-            LOGGER.warn("Unable to determine application jar directory due to: {}", e.getMessage());
+            LOGGER.warn(LambdaLogUtil.message("Unable to determine application jar directory due to: {}", e.getMessage()));
             return Optional.empty();
         }
     }

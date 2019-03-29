@@ -1,8 +1,9 @@
 package stroom.data.store.impl.fs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.db.util.JooqUtil;
+import stroom.util.logging.LambdaLogUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -16,7 +17,7 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FsTypePath.FS_TYPE_PATH;
  */
 @Singleton
 class FsTypePathsImpl implements FsTypePaths {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FsTypePathsImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsTypePathsImpl.class);
 
     private final ConnectionProvider connectionProvider;
 
@@ -56,12 +57,13 @@ class FsTypePathsImpl implements FsTypePaths {
     private void insert(final String typeName) {
         final String path = typeName.toUpperCase().replaceAll("\\W", "_");
         if (!path.equals(typeName)) {
-            LOGGER.warn("A non standard type name was found when registering a file path '" + typeName + "'");
+            LOGGER.warn(LambdaLogUtil.message("A non standard type name was found when registering a file path '{}'", typeName));
         }
 
         JooqUtil.context(connectionProvider, context -> context
                 .insertInto(FS_TYPE_PATH, FS_TYPE_PATH.NAME, FS_TYPE_PATH.PATH)
                 .values(typeName, path)
+                .onDuplicateKeyIgnore()
                 .execute());
 
         refresh();

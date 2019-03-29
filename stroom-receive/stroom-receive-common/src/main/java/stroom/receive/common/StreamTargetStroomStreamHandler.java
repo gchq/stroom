@@ -17,8 +17,7 @@
 
 package stroom.receive.common;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
@@ -32,8 +31,10 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.meta.statistics.api.MetaStatistics;
-import stroom.data.shared.StreamTypeNames;
 import stroom.util.io.CloseableUtil;
+import stroom.util.logging.LambdaLogUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -64,9 +65,9 @@ import java.util.Set;
  * to be different we must throw an exception.
  */
 public class StreamTargetStroomStreamHandler implements StroomStreamHandler, StroomHeaderStreamHandler, Closeable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamTargetStroomStreamHandler.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamTargetStroomStreamHandler.class);
 
-    private final Store streamStore;
+    private final Store store;
     private final FeedProperties feedProperties;
     private final MetaStatistics metaDataStatistics;
     private final HashSet<Meta> streamSet;
@@ -89,12 +90,12 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private OutputStream currentOutputStream;
     private Layer currentLayer;
 
-    public StreamTargetStroomStreamHandler(final Store streamStore,
+    public StreamTargetStroomStreamHandler(final Store store,
                                            final FeedProperties feedProperties,
                                            final MetaStatistics metaDataStatistics,
                                            final String feedName,
                                            final String streamTypeName) {
-        this.streamStore = streamStore;
+        this.store = store;
         this.feedProperties = feedProperties;
         this.metaDataStatistics = metaDataStatistics;
         this.currentFeedName = feedName;
@@ -135,9 +136,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 
     @Override
     public void handleEntryStart(final StroomZipEntry stroomZipEntry) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("handleEntryStart() - " + stroomZipEntry);
-        }
+        LOGGER.debug(LambdaLogUtil.message("handleEntryStart() - {}", stroomZipEntry));
 
         // Ensure we close the current output stream.
         closeCurrentOutput();
@@ -153,10 +152,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         if (singleEntry && currentStroomZipEntry != null && !nextEntry.equalsBaseName(currentStroomZipEntry)) {
             // Close it if we have opened it.
             if (targetMap.containsKey(currentFeedName)) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("handleEntryStart() - Closing due to singleEntry=" + singleEntry + " " + currentFeedName
-                            + " currentStroomZipEntry=" + currentStroomZipEntry + " nextEntry=" + nextEntry);
-                }
+                LOGGER.debug(LambdaLogUtil.message("handleEntryStart() - Closing due to singleEntry={} currentFeedName={} currentStroomZipEntry={} nextEntry={}", singleEntry, currentFeedName, currentStroomZipEntry, nextEntry));
                 closeCurrentFeed();
             }
         }
@@ -222,9 +218,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     public void handleEntryEnd() throws IOException {
 //        final String streamTypeName = convertType(currentFileType);
 
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("handleEntryEnd() - " + currentFileType);
-        }
+        LOGGER.debug(LambdaLogUtil.message("handleEntryEnd() - {}", currentFileType));
 
         if (StroomZipFileType.Meta.equals(currentFileType)) {
             final byte[] headerBytes = currentHeaderByteArrayOutputStream.toByteArray();
@@ -291,7 +285,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     }
 
     public void closeDelete() {
-        targetMap.values().forEach(streamStore::deleteTarget);
+        targetMap.values().forEach(store::deleteTarget);
         targetMap.clear();
     }
 
@@ -302,9 +296,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     }
 
     private void closeCurrentFeed() {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("closeCurrentFeed() - " + currentFeedName);
-        }
+        LOGGER.debug(LambdaLogUtil.message("closeCurrentFeed() - {}", currentFeedName));
         CloseableUtil.closeLogAndIgnoreException(targetMap.remove(currentFeedName));
     }
 
@@ -335,10 +327,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 
     private Target getTarget() {
         return targetMap.computeIfAbsent(currentFeedName, k -> {
-
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("getOutputStreamProvider() - open stream for " + currentFeedName);
-            }
+            LOGGER.debug(LambdaLogUtil.message("getOutputStreamProvider() - open stream for {}", currentFeedName));
 
             // Get the effective time if one has been provided.
             final Long effectiveMs = StreamFactory.getReferenceEffectiveTime(getCurrentAttributeMap(), true);
@@ -354,7 +343,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
                     .effectiveMs(effectiveMs)
                     .build();
 
-            final Target streamTarget = streamStore.openTarget(metaProperties);
+            final Target streamTarget = store.openTarget(metaProperties);
             streamSet.add(streamTarget.getMeta());
 
             return streamTarget;
@@ -390,7 +379,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 //                    .effectiveMs(effectiveMs)
 //                    .build();
 //
-//            final StreamTarget streamTarget = streamStore.openTarget(metaProperties);
+//            final StreamTarget streamTarget = store.openTarget(metaProperties);
 //            feedStreamTarget.put(currentFeedName, streamTarget);
 //            streamSet.add(streamTarget.getMeta());
 //            outputStreamProvider = streamTarget.getOutputStreamProvider();
