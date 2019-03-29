@@ -17,7 +17,7 @@
 package stroom.security.impl;
 
 import stroom.security.shared.UserAppPermissions;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 
 import javax.inject.Inject;
 import java.util.HashSet;
@@ -35,18 +35,18 @@ class UserAndPermissionsHelper {
         this.userAppPermissionsCache = userAppPermissionsCache;
     }
 
-    public Set<String> get(final UserRef userRef) {
+    public Set<String> get(final User userRef) {
         final Set<String> appPermissionSet = new HashSet<>();
 
         // Add app permissions set explicitly for this user first.
         addPermissions(appPermissionSet, userRef);
 
         // Get user groups for this user.
-        final List<UserRef> userGroups = userGroupsCache.get(userRef.getUuid());
+        final List<User> userGroups = userGroupsCache.get(userRef.getUuid());
 
         // Add app permissions set on groups this user belongs to.
         if (userGroups != null) {
-            for (final UserRef userGroup : userGroups) {
+            for (final User userGroup : userGroups) {
                 addPermissions(appPermissionSet, userGroup);
             }
         }
@@ -54,7 +54,7 @@ class UserAndPermissionsHelper {
         return appPermissionSet;
     }
 
-    private void addPermissions(final Set<String> appPermissionSet, final UserRef userRef) {
+    private void addPermissions(final Set<String> appPermissionSet, final User userRef) {
         final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
         if (userAppPermissions != null && userAppPermissions.getUserPermissons() != null) {
             appPermissionSet.addAll(userAppPermissions.getUserPermissons());

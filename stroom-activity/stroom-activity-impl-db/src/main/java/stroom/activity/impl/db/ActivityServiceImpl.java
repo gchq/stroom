@@ -22,7 +22,7 @@ import stroom.activity.api.ActivityService;
 import stroom.activity.impl.db.jooq.tables.records.ActivityRecord;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.FindActivityCriteria;
-import stroom.db.util.AuditUtil;
+import stroom.util.AuditUtil;
 import stroom.db.util.JooqUtil;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BaseResultList;

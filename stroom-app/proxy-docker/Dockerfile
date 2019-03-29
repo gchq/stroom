@@ -19,11 +19,9 @@
 # Intermediate build stage that is common to stroom and proxy to speed up
 # the build
 
-# We don't need the full JDK but as stroom does we may as well use it as 
-# it means proxy and stroom can share the same base layer. This makes things
-# quicker when you have both proxy and stroom on the same host, but if you
-# only have proxy then you take a 20Mb hit for the jdk bits you don't need.
-FROM openjdk:8u181-jdk-alpine3.8 as stroom-base-stage
+# The JDK (rather than JRE) is required for the diagnostic tools like
+# jstat/jmap/jcmd/etc.
+FROM openjdk:8u191-jdk-alpine3.9 as stroom-base-stage
 
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user

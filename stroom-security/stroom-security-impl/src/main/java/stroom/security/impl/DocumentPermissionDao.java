@@ -1,4 +1,4 @@
-package stroom.security.dao;
+package stroom.security.impl;
 
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionJooq;

@@ -2,8 +2,7 @@ package stroom.security.impl.db;
 
 import org.jooq.Record;
 import stroom.db.util.JooqUtil;
-import stroom.docref.DocRef;
-import stroom.security.dao.DocumentPermissionDao;
+import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.db.jooq.tables.records.DocPermissionRecord;
 import stroom.security.shared.DocumentPermissionJooq;
 

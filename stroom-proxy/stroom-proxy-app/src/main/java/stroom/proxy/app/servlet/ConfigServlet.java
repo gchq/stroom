@@ -3,13 +3,12 @@ package stroom.proxy.app.servlet;
 import com.codahale.metrics.health.HealthCheck;
 import stroom.util.HasHealthCheck;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Writer;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -21,7 +20,7 @@ public class ConfigServlet extends HttpServlet implements HasHealthCheck {
         String data;
         try {
             final byte[] bytes = Files.readAllBytes(Paths.get(PATH));
-            data = new String(bytes, Charset.forName("UTF-8"));
+            data = new String(bytes, StandardCharsets.UTF_8);
         } catch (final IOException e) {
             data = "Unable to read config";
         }
@@ -29,7 +28,7 @@ public class ConfigServlet extends HttpServlet implements HasHealthCheck {
     }
 
     @Override
-    protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
+    protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
         response.setContentType("text/plain");
         final Writer writer = response.getWriter();
         writer.write(data);

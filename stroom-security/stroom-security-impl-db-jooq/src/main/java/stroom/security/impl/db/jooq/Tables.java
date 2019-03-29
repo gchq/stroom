@@ -9,7 +9,7 @@ import javax.annotation.Generated;
 import stroom.security.impl.db.jooq.tables.AppPermission;
 import stroom.security.impl.db.jooq.tables.DocPermission;
 import stroom.security.impl.db.jooq.tables.StroomUser;
-import stroom.security.impl.db.jooq.tables.StroomUserGroups;
+import stroom.security.impl.db.jooq.tables.StroomUserGroup;
 
 
 /**
@@ -41,7 +41,7 @@ public class Tables {
     public static final StroomUser STROOM_USER = stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
 
     /**
-     * The table <code>stroom.stroom_user_groups</code>.
+     * The table <code>stroom.stroom_user_group</code>.
      */
-    public static final StroomUserGroups STROOM_USER_GROUPS = stroom.security.impl.db.jooq.tables.StroomUserGroups.STROOM_USER_GROUPS;
+    public static final StroomUserGroup STROOM_USER_GROUP = stroom.security.impl.db.jooq.tables.StroomUserGroup.STROOM_USER_GROUP;
 }

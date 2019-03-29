@@ -22,23 +22,23 @@ import stroom.util.shared.VoidResult;
 public class ChangeUserAction extends Action<VoidResult> {
     private static final long serialVersionUID = 800905016214418723L;
 
-    private UserRef userRef;
-    private ChangeSet<UserRef> changedLinkedUsers = new ChangeSet<>();
+    private User userRef;
+    private ChangeSet<User> changedLinkedUsers = new ChangeSet<>();
     private ChangeSet<String> changedAppPermissions = new ChangeSet<>();
 
     public ChangeUserAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public UserRef getUserRef() {
+    public User getUser() {
         return userRef;
     }
 
-    public void setUserRef(UserRef userRef) {
+    public void setUser(User userRef) {
         this.userRef = userRef;
     }
 
-    public ChangeSet<UserRef> getChangedLinkedUsers() {
+    public ChangeSet<User> getChangedLinkedUsers() {
         return changedLinkedUsers;
     }
 

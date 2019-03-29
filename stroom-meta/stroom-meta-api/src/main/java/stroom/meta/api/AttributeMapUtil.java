@@ -21,19 +21,19 @@ import org.slf4j.LoggerFactory;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.util.date.DateUtil;
+import stroom.util.io.StreamUtil;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -73,7 +73,7 @@ public class AttributeMapUtil {
             .toFormatter();
 
     private static final String HEADER_DELIMITER = ":";
-    static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
+    static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
     public static AttributeMap cloneAllowable(final AttributeMap in) {
         final AttributeMap attributeMap = new AttributeMap();
@@ -92,16 +92,19 @@ public class AttributeMapUtil {
     }
 
     public static void read(final InputStream inputStream, final AttributeMap attributeMap) throws IOException {
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, DEFAULT_CHARSET));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            final int splitPos = line.indexOf(HEADER_DELIMITER);
-            if (splitPos != -1) {
-                final String key = line.substring(0, splitPos);
-                final String value = line.substring(splitPos + 1);
-                attributeMap.put(key, value);
-            } else {
-                attributeMap.put(line.trim(), null);
+        final String data = StreamUtil.streamToString(inputStream, DEFAULT_CHARSET, false);
+        final String[] lines = data.split("\n");
+        for (String line : lines) {
+            line = line.trim();
+            if (line.length() > 0) {
+                final int splitPos = line.indexOf(HEADER_DELIMITER);
+                if (splitPos != -1) {
+                    final String key = line.substring(0, splitPos);
+                    final String value = line.substring(splitPos + 1);
+                    attributeMap.put(key.trim(), value.trim());
+                } else {
+                    attributeMap.put(line, null);
+                }
             }
         }
     }

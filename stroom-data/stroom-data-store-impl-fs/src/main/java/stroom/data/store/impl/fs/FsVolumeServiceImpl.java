@@ -12,7 +12,7 @@ import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
-import stroom.db.util.AuditUtil;
+import stroom.util.AuditUtil;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.entity.shared.EntityAction;

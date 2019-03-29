@@ -19,7 +19,7 @@ package stroom.security.impl;
 import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.security.api.Security;
 import stroom.security.shared.LogoutAction;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 
@@ -44,7 +44,7 @@ class LogoutHandler extends AbstractTaskHandler<LogoutAction, VoidResult> {
     public VoidResult exec(final LogoutAction task) {
         return security.insecureResult(() -> {
             final HttpSession session = httpServletRequestHolder.get().getSession();
-            final UserRef userRef = UserRefSessionUtil.get(session);
+            final User userRef = UserSessionUtil.get(session);
             if (session != null) {
                 // Invalidate the current user session
                 session.invalidate();

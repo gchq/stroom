@@ -143,7 +143,7 @@ public final class SetupSampleDataBean {
     public void run(final boolean shutdown) {
         // Ensure admin user exists.
 //        LOGGER.info("Creating admin user");
-//        authenticationService.getUserRef(new AuthenticationToken("admin", null));
+//        authenticationService.getUser(new AuthenticationToken("admin", null));
 
 //        createRandomExplorerNode(null, "", 0, 2);
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.security.service;
+package stroom.security.impl;
 
 import stroom.security.shared.DocumentPermissions;
 

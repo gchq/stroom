@@ -19,9 +19,6 @@ package stroom.security.impl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.EntityEvent;
-import stroom.security.service.DocumentPermissionService;
-import stroom.security.service.UserAppPermissionService;
-import stroom.security.service.UserService;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.CheckDocumentPermissionAction;
@@ -30,7 +27,7 @@ import stroom.security.shared.CreateUserAction;
 import stroom.security.shared.DeleteUserAction;
 import stroom.security.shared.FetchAllDocumentPermissionsAction;
 import stroom.security.shared.FetchUserAndPermissionsAction;
-import stroom.security.shared.FetchUserRefAction;
+import stroom.security.shared.FetchUserAction;
 import stroom.security.shared.LogoutAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.RestResource;
@@ -76,7 +73,7 @@ public class SecurityModule extends AbstractModule {
                 .bind(FetchAllDocumentPermissionsAction.class, FetchAllDocumentPermissionsHandler.class)
                 .bind(FetchUserAndPermissionsAction.class, FetchUserAndPermissionsHandler.class)
                 .bind(CopyPermissionsFromParentAction.class, CopyPermissionsFromParentHandler.class)
-                .bind(FetchUserRefAction.class, FetchUserRefHandler.class)
+                .bind(FetchUserAction.class, FetchUserHandler.class)
                 .bind(LogoutAction.class, LogoutHandler.class);
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);

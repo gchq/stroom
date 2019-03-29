@@ -1,17 +1,23 @@
 --
--- Create the explorer tables
+-- Create the permission tables
 --
 CREATE TABLE IF NOT EXISTS stroom_user (
-  id                    bigint(20) NOT NULL AUTO_INCREMENT,
+  id                    int(11) NOT NULL AUTO_INCREMENT,
+  version               int(11) NOT NULL,
+  create_time_ms        bigint(20) NOT NULL,
+  create_user           varchar(255) NOT NULL,
+  update_time_ms        bigint(20) NOT NULL,
+  update_user           varchar(255) NOT NULL,
   name                  varchar(255) NOT NULL,
   uuid                  varchar(255) NOT NULL,
   is_group              bit(1) NOT NULL,
+  enabled               bit(1) NOT NULL,
   PRIMARY KEY           (id),
   UNIQUE 			    (name, is_group),
-  CONSTRAINT            user_uk_uuid UNIQUE INDEX usr_uuid_index (uuid)
+  CONSTRAINT            stroom_user_uk_uuid UNIQUE INDEX stroom_user_uuid_index (uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE IF NOT EXISTS stroom_user_groups (
+CREATE TABLE IF NOT EXISTS stroom_user_group (
   id                    bigint(20) NOT NULL AUTO_INCREMENT,
   user_uuid             varchar(255) NOT NULL,
   group_uuid            varchar(255) NOT NULL,
@@ -38,36 +44,105 @@ CREATE TABLE IF NOT EXISTS doc_permission (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Copy data into the explorer table
+-- Copy data into the permissions tables
 --
 DROP PROCEDURE IF EXISTS copy_security;
 DELIMITER //
 CREATE PROCEDURE copy_security ()
 BEGIN
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'USR' > 0) THEN
-        INSERT INTO stroom_user (uuid, name, is_group )
-        SELECT uuid, name, grp
-        FROM USR;
-          -- TODO update auto-increment, see V7_0_0_1__config.sql as an example
-    END IF;
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'USR_GRP_USR' > 0) THEN
-        INSERT INTO stroom_user_groups (user_uuid, group_uuid)
-        SELECT grp_uuid, usr_uuid
-        FROM USR_GRP_USR;
-          -- TODO update auto-increment, see V7_0_0_1__config.sql as an example
-    END IF;
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'DOC_PERM' > 0) THEN
-        INSERT INTO doc_permission (user_uuid, doc_uuid, permission)
-        SELECT usr_uuid, doc_uuid, perm
-        FROM DOC_PERM;
-          -- TODO update auto-increment, see V7_0_0_1__config.sql as an example
-    END IF;
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'APP_PERM' > 0) THEN
-        INSERT INTO app_permission (user_uuid, permission)
-        SELECT usr_uuid, name
-        FROM APP_PERM INNER JOIN PERM on APP_PERM.FK_PERM_ID = PERM.ID;
-          -- TODO update auto-increment, see V7_0_0_1__config.sql as an example
-    END IF;
+
+  IF EXISTS (
+      SELECT TABLE_NAME
+      FROM INFORMATION_SCHEMA.TABLES
+      WHERE TABLE_NAME = 'USR') THEN
+
+    SET @insert_sql=''
+        ' INSERT INTO stroom_user (id, version, create_time_ms, create_user, update_time_ms, update_user, name, uuid, is_group, status)'
+        ' SELECT ID, 1, CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, GRP, STAT'
+        ' FROM USR'
+        ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM stroom_user)'
+        ' ORDER BY ID;';
+    PREPARE insert_stmt FROM @insert_sql;
+    EXECUTE insert_stmt;
+
+    -- Work out what to set our auto_increment start value to
+    SELECT CONCAT('ALTER TABLE stroom_user AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+    INTO @alter_table_sql
+    FROM stroom_user;
+
+    PREPARE alter_table_stmt FROM @alter_table_sql;
+    EXECUTE alter_table_stmt;
+  END IF;
+
+  IF EXISTS (
+      SELECT TABLE_NAME
+      FROM INFORMATION_SCHEMA.TABLES
+      WHERE TABLE_NAME = 'USR_GRP_USR') THEN
+
+    SET @insert_sql=''
+        ' INSERT INTO stroom_user_group (user_uuid, group_uuid)'
+        ' SELECT USR_UUID, GRP_UUID'
+        ' FROM USR_GRP_USR'
+        ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM stroom_user_group)'
+        ' ORDER BY ID;';
+    PREPARE insert_stmt FROM @insert_sql;
+    EXECUTE insert_stmt;
+
+    -- Work out what to set our auto_increment start value to
+    SELECT CONCAT('ALTER TABLE stroom_user_group AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+    INTO @alter_table_sql
+    FROM stroom_user_group;
+
+    PREPARE alter_table_stmt FROM @alter_table_sql;
+    EXECUTE alter_table_stmt;
+  END IF;
+
+  IF EXISTS (
+      SELECT TABLE_NAME
+      FROM INFORMATION_SCHEMA.TABLES
+      WHERE TABLE_NAME = 'DOC_PERM') THEN
+
+    SET @insert_sql=''
+        ' INSERT INTO doc_permission (user_uuid, doc_uuid, permission)'
+        ' SELECT USR_UUID, DOC_UUID, PERM'
+        ' FROM DOC_PERM'
+        ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM doc_permission)'
+        ' ORDER BY ID;';
+    PREPARE insert_stmt FROM @insert_sql;
+    EXECUTE insert_stmt;
+
+    -- Work out what to set our auto_increment start value to
+    SELECT CONCAT('ALTER TABLE doc_permission AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+    INTO @alter_table_sql
+    FROM doc_permission;
+
+    PREPARE alter_table_stmt FROM @alter_table_sql;
+    EXECUTE alter_table_stmt;
+  END IF;
+  
+  IF EXISTS (
+      SELECT TABLE_NAME
+      FROM INFORMATION_SCHEMA.TABLES
+      WHERE TABLE_NAME = 'APP_PERM') THEN
+
+    SET @insert_sql=''
+        ' INSERT INTO app_permission (user_uuid, permission)'
+        ' SELECT USR_UUID, NAME'
+        ' FROM APP_PERM'
+        ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM app_permission)'
+        ' ORDER BY ID;';
+    PREPARE insert_stmt FROM @insert_sql;
+    EXECUTE insert_stmt;
+
+    -- Work out what to set our auto_increment start value to
+    SELECT CONCAT('ALTER TABLE app_permission AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+    INTO @alter_table_sql
+    FROM app_permission;
+
+    PREPARE alter_table_stmt FROM @alter_table_sql;
+    EXECUTE alter_table_stmt;
+  END IF;
+
 END//
 DELIMITER ;
 CALL copy_security();

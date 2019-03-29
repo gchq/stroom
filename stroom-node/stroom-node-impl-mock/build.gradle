@@ -14,7 +14,6 @@ dependencies {
 
     compile libs.stroomDocRef
     
-    compile libs.commons_exec
     compile libs.guice4
     compile libs.hessian
     compile libs.jackson_annotations

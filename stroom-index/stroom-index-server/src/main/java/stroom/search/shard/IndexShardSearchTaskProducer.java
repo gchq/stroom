@@ -40,7 +40,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class IndexShardSearchTaskProducer extends AbstractTaskProducer implements TaskProducer, Comparable<IndexShardSearchTaskProducer> {
+public final class IndexShardSearchTaskProducer extends AbstractTaskProducer implements TaskProducer {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
 
     public static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
@@ -89,14 +89,18 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
             }
         };
 
-        tasksTotal = shards.size();
-        tasksRemaining.set(tasksTotal);
         for (final Long shard : shards) {
             final IndexShardSearchTask task = new IndexShardSearchTask(queryFactory, shard, fieldNames, resultReceiver, errorReceiver, hitCount);
             final IndexShardSearchRunnable runnable = new IndexShardSearchRunnable(task, handlerProvider);
             taskQueue.add(runnable);
         }
-        LAMBDA_LOGGER.debug(() -> String.format("Queued %s index shard search tasks", shards.size()));
+        final int count = taskQueue.size();
+        LAMBDA_LOGGER.debug(() -> String.format("Queued %s index shard search tasks", count));
+
+        // Set the total number of index shards we are searching.
+        // We set this here so that any errors that might have occurred adding shard search tasks would prevent this producer having work to do.
+        tasksTotal = count;
+        tasksRemaining.set(tasksTotal);
 
         // Attach to the supplied executor.
         attach();
@@ -146,8 +150,8 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
     }
 
     @Override
-    public int compareTo(final IndexShardSearchTaskProducer o) {
-        return Long.compare(now, o.now);
+    public int compareTo(final TaskProducer o) {
+        return Long.compare(now, ((IndexShardSearchTaskProducer) o).now);
     }
 
     /**
@@ -191,6 +195,19 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
 
     private void error(final String message, final Throwable t) {
         errorReceiver.log(Severity.ERROR, null, null, message, t);
+    }
+
+    @Override
+    public String toString() {
+        final int remaining = tasksRemaining.get();
+        return getClass().getSimpleName() +
+                " (remaining=" +
+                remaining +
+                ", completed=" +
+                (tasksTotal - remaining) +
+                ", total=" +
+                tasksTotal +
+                ")";
     }
 
     private static class IndexShardSearchRunnable implements Runnable {

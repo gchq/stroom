@@ -2,10 +2,12 @@ package stroom.meta.api;
 
 import org.junit.jupiter.api.Test;
 import stroom.meta.shared.AttributeMap;
-import stroom.meta.api.AttributeMapUtil;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,14 +21,14 @@ class TestAttributeMap {
         assertThat(attributeMap.get("person")).isEqualTo("person1");
         assertThat(attributeMap.get("PERSON")).isEqualTo("person1");
 
-        assertThat(attributeMap.keySet()).isEqualTo(new HashSet<>(Arrays.asList("person")));
+        assertThat(attributeMap.keySet()).isEqualTo(new HashSet<>(Collections.singletonList("person")));
 
         attributeMap.put("PERSON", "person2");
 
         assertThat(attributeMap.get("person")).isEqualTo("person2");
         assertThat(attributeMap.get("PERSON")).isEqualTo("person2");
 
-        assertThat(attributeMap.keySet()).isEqualTo(new HashSet<>(Arrays.asList("PERSON")));
+        assertThat(attributeMap.keySet()).isEqualTo(new HashSet<>(Collections.singletonList("PERSON")));
 
         AttributeMap attributeMap2 = new AttributeMap();
         attributeMap2.put("persOn", "person3");
@@ -81,5 +83,46 @@ class TestAttributeMap {
 
         assertThat(attributeMap.get("PERSON ")).isEqualTo("person2");
         assertThat(attributeMap.get("FOOBAR")).isEqualTo("3");
+    }
+
+    @Test
+    void testZeroBytes() throws IOException {
+        final byte[] bytes = "b:2\na:1\nz\n".getBytes(StandardCharsets.UTF_8);
+        final ByteArrayInputStream is = new ByteArrayInputStream(bytes) {
+            boolean firstRead = true;
+
+            @Override
+            public synchronized int read() {
+                if (firstRead) {
+                    firstRead = false;
+                    return 0;
+                }
+
+                return super.read();
+            }
+
+            @Override
+            public int read(final byte[] b) throws IOException {
+                if (firstRead) {
+                    firstRead = false;
+                    return 0;
+                }
+
+                return super.read(b);
+            }
+
+            @Override
+            public synchronized int read(final byte[] b, final int off, final int len) {
+                if (firstRead) {
+                    firstRead = false;
+                    return 0;
+                }
+
+                return super.read(b, off, len);
+            }
+        };
+
+        final AttributeMap attributeMap = new AttributeMap();
+        AttributeMapUtil.read(is, attributeMap);
     }
 }

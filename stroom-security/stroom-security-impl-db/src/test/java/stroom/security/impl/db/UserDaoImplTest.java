@@ -8,10 +8,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
-import stroom.security.dao.UserDao;
 import stroom.security.impl.TestModule;
+import stroom.security.impl.UserDao;
 import stroom.security.impl.db.jooq.Stroom;
 import stroom.security.shared.User;
+import stroom.util.AuditUtil;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,21 +48,21 @@ class UserDaoImplTest {
         final String userName = String.format("SomeTestPerson_%s", UUID.randomUUID());
 
         // When
-        final User userCreated = userDao.createUser(userName);
+        final User userCreated = createUser(userName, false);
         assertThat(userCreated).isNotNull();
         final User foundByUuid = userDao.getByUuid(userCreated.getUuid());
-        final User foundByName = userDao.getUserByName(userName);
+        final User foundByName = userDao.getByName(userName);
         final User foundById = userDao.getById(userCreated.getId());
 
         // Then
         assertThat(userCreated.getUuid()).isNotNull();
-        assertThat(userCreated.getIsGroup()).isFalse();
+        assertThat(userCreated.isGroup()).isFalse();
 
         Stream.of(foundByUuid, foundByName, foundById).forEach(u -> {
             assertThat(u).isNotNull();
             assertThat(u.getUuid()).isEqualTo(userCreated.getUuid());
             assertThat(u.getName()).isEqualTo(userName);
-            assertThat(u.getIsGroup()).isFalse();
+            assertThat(u.isGroup()).isFalse();
         });
     }
 
@@ -71,21 +72,21 @@ class UserDaoImplTest {
         final String userName = String.format("SomeTestPerson_%s", UUID.randomUUID());
 
         // When
-        final User userCreated = userDao.createUserGroup(userName);
+        final User userCreated = createUser(userName, true);
         assertThat(userCreated).isNotNull();
         final User foundByUuid = userDao.getByUuid(userCreated.getUuid());
-        final User foundByName = userDao.getUserByName(userName);
+        final User foundByName = userDao.getByName(userName);
         final User foundById = userDao.getById(userCreated.getId());
 
         // Then
         assertThat(userCreated.getUuid()).isNotNull();
-        assertThat(userCreated.getIsGroup()).isTrue();
+        assertThat(userCreated.isGroup()).isTrue();
 
         Stream.of(foundByUuid, foundByName, foundById).forEach(u -> {
             assertThat(u).isNotNull();
             assertThat(u.getUuid()).isEqualTo(userCreated.getUuid());
             assertThat(u.getName()).isEqualTo(userName);
-            assertThat(u.getIsGroup()).isTrue();
+            assertThat(u.isGroup()).isTrue();
         });
     }
 
@@ -95,9 +96,9 @@ class UserDaoImplTest {
         final String userName = String.format("SomeTestPerson_%s", UUID.randomUUID());
 
         // When
-        final User userCreated = userDao.createUser(userName);
+        final User userCreated = createUser(userName, false);
         final User userFoundBeforeDelete = userDao.getById(userCreated.getId());
-        userDao.deleteUser(userCreated.getUuid());
+        userDao.delete(userCreated.getUuid());
         final User userFoundAfterDelete = userDao.getById(userCreated.getId());
 
         // Then
@@ -115,9 +116,9 @@ class UserDaoImplTest {
         final String groupName = String.format("SomeGroup_%s", UUID.randomUUID());
 
         // When
-        final User group = userDao.createUserGroup(groupName);
+        final User group = createUser(groupName, true);
         final List<User> users = userNames.stream()
-                .map(userDao::createUser)
+                .map(name -> createUser(name, false))
                 .peek(u -> userDao.addUserToGroup(u.getUuid(), group.getUuid()))
                 .collect(Collectors.toList());
         final List<User> usersInGroup = userDao.findUsersInGroup(group.getUuid());
@@ -144,14 +145,14 @@ class UserDaoImplTest {
 
         // When
         final List<User> users = userNames.stream()
-                .map(userDao::createUser)
+                .map(name -> createUser(name, false))
                 .collect(Collectors.toList());
         final User userToTest = users.stream()
                 .filter(u -> userNameToTest.equals(u.getName()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Could not find user to test amongst created users"));
         final List<User> groups = groupNames.stream()
-                .map(userDao::createUserGroup)
+                .map(name -> createUser(name, true))
                 .peek(g -> users.forEach(
                         u -> userDao.addUserToGroup(u.getUuid(), g.getUuid())))
                 .collect(Collectors.toList());
@@ -168,5 +169,15 @@ class UserDaoImplTest {
         LOGGER.info(() -> "After All - Stop Database");
         Optional.ofNullable(dbContainer)
                 .ifPresent(MySQLContainer::stop);
+    }
+
+    private User createUser(final String name, boolean group) {
+        User user = new User.Builder()
+                .name(name)
+                .uuid(UUID.randomUUID().toString())
+                .group(group)
+                .build();
+        AuditUtil.stamp("test", user);
+        return userDao.create(user);
     }
 }

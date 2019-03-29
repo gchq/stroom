@@ -244,7 +244,7 @@ class JWTService implements HasHealthCheck {
         try {
             JwtClaims claims = verifyToken(this.apiKey);
             if (this.durationToWarnBeforeExpiry == null) {
-                resultBuilder.withDetail(KEY, "'stroom.security.apiToken.durationToWarnBeforeExpiry' is not defined! You will not be warned when Stroom's API key is about to //expire!");
+                resultBuilder.withDetail(KEY, "'stroom.security.apiToken.durationToWarnBeforeExpiry' is not defined! You will not be warned when Stroom's API key is about to expire!");
                 resultBuilder.unhealthy();
             } else {
                 NumericDate expiration = claims.getExpirationTime();

@@ -23,6 +23,7 @@ public class GuiceUtil {
             this.multibinder = Multibinder.newSetBinder(binder, interfaceType);
         }
 
+        @SuppressWarnings("unchecked")
         public MultiBinderBuilder<T_INTERFACE> addBinding(final Class<? extends T_INTERFACE> implementationType) {
             return addBindings(implementationType);
         }

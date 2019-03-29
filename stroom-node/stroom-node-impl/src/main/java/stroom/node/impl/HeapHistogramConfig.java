@@ -12,7 +12,7 @@ public class HeapHistogramConfig implements IsConfig {
     private String classNameReplacementRegex = "((?<=\\$Proxy)[0-9]+|(?<=\\$\\$)[0-9a-f]+|(?<=\\$\\$Lambda\\$)[0-9]+\\/[0-9]+)";
     private String jMapExecutable = "jmap";
 
-    @JsonPropertyDescription("A single regex that will be used to filter classes from the jmap histogram internal statistic based on their name. e.g '^(stroom\\..*)$'. If no value is supplied all classes will be included. If a value is supplied only those class names matching the regex will be included.")
+    @JsonPropertyDescription("A single regex that will be used to filter classes from the heap histogram internal statistic based on their name. e.g '^(stroom\\..*)$'. If no value is supplied all classes will be included. If a value is supplied only those class names matching the regex will be included.")
     public String getClassNameMatchRegex() {
         return classNameMatchRegex;
     }
@@ -28,14 +28,5 @@ public class HeapHistogramConfig implements IsConfig {
 
     public void setClassNameReplacementRegex(final String classNameReplacementRegex) {
         this.classNameReplacementRegex = classNameReplacementRegex;
-    }
-
-    @JsonPropertyDescription("The jmap executable name if it is available on the PATH or a fully qualified form")
-    public String getjMapExecutable() {
-        return jMapExecutable;
-    }
-
-    public void setjMapExecutable(final String jMapExecutable) {
-        this.jMapExecutable = jMapExecutable;
     }
 }

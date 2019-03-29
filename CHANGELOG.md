@@ -6,6 +6,39 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+* Added debug to help diagnose search failures
+
+* Issue **#382** : Large zip files are now broken apart prior to proxy aggregation.
+
+* Change start script to use absolute paths for jar, config and logs to distinguish stroom and proxy instances.
+
+* Issue **#1116** : Better implementation of proxy aggregation.
+
+* Issue **#1116** : Changed the way tasks are executed to ensure thread pools expand to the maximum number of threads specified rather than just queueing all tasks and only providing core threads.
+
+* Remove full path from file in sha256 hash file release artifact.
+
+* Issue **#1115** : Add missing super.startProcessing to AbstractKafkaProducerFilter.
+
+* Improve exception handling and logging in RemoteDataSourceProvider. Now the full url is included in dashboard connection errors.
+
+* Change Travis build to generate sha256 hashes for release zip/jars.
+
+* Uplift the visualisations content pack to v3.2.1
+
+* Issue **#1100** : Fix incorrect sort direction being sent to visualisations.
+
+* Add guard against race condition
+
+* Add migration script to remove property `stroom.node.status.heapHistogram.jMapExecutable`.
+
+* Uplift base docker image to openjdk:8u191-jdk-alpine3.9, reverting back to JDK for access to diagnostic tools.
+
+* Issue **#1084** : Change heap histogram statistics to java MBean approach rather than jmap binary. Remove stroom.node.status.heapHistogram.jMapExecutable property.
+
+* Improve resource for setting user's status
+
 * Issue **#1079** : Improved the logging of permission errors encountered during stream processing
 
 * Issue **#1058** : Added property `stroom.pipeline.parser.secureProcessing` to enable/disable the XML secure processing feature.
@@ -434,8 +467,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Fix background colour to white on activity pane.
 
-## [v6.0-beta.3] - 2018-09-18
-
 * Changed `splitWhenBiggerThan` property to `rollSize` and added the property to the rolling appenders for consistency.
 
 * Issue **#838** : Fix bug where calculation of written and read bytes was being accounted for twice due to the use of Java internal `FilterInputStream` and `FilterOutputStream` behaviour. This was leading to files being split at half od the expected size. Replaced Java internal classes with our own `WrappedInputStream` and `WrappedOutputStream` code.
@@ -589,6 +620,7 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 * Issue **#753** : Fixed script editing in UI.
 
 * Issue **#751** : Fix inability to query on a dashboard with only use+read rights.
+
 
 ## [v6.0-alpha.22]
 

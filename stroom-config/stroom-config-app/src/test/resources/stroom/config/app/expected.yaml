@@ -107,7 +107,6 @@ node:
       classNameMatchRegex: "^stroom\\..*$"
       classNameReplacementRegex: "((?<=\\$Proxy)[0-9]+|(?<=\\$\\$)[0-9a-f]+|(?<=\\\
         $\\$Lambda\\$)[0-9]+\\/[0-9]+)"
-      jMapExecutable: "jmap"
 path:
   temp: null
 pipeline:
@@ -156,9 +155,9 @@ properties:
 proxyAggregation:
   proxyDir: "${stroom.temp}/proxy"
   proxyThreads: 10
-  maxAggregation: 10000
-  maxAggregationScan: 100000
-  maxStreamSize: "1G"
+  maxFilesPerAggregate: 10000
+  maxConcurrentMappedFiles: 100000
+  maxUncompressedFileSize: "1G"
 feed:
   receiptPolicyUuid: null
   bufferSize: 8192

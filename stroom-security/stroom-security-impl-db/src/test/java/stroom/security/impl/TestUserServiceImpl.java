@@ -24,10 +24,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
-import stroom.security.service.UserService;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
-import stroom.security.shared.UserRef;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +39,7 @@ class TestUserServiceImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestUserServiceImpl.class);
 
     private static MySQLContainer dbContainer = new MySQLContainer()
-            .withDatabaseName(TestModule.DATABASE_NAME);//= null;//pu
+            .withDatabaseName(TestModule.DATABASE_NAME);
 
     private static Injector injector;
 
@@ -49,7 +47,7 @@ class TestUserServiceImpl {
 
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         LOGGER.info("Before All - Start Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
 
@@ -65,10 +63,10 @@ class TestUserServiceImpl {
 
     @Test
     void testSaveAndGetUserGroups() {
-        final UserRef user1 = createUser("saveGetUser1");
-        final UserRef user2 = createUser("saveGetUser2");
-        final UserRef userGroup1 = createUserGroup("saveGetGroup1");
-        final UserRef userGroup2 = createUserGroup("saveGetGroup2");
+        final User user1 = createUser("saveGetUser1");
+        final User user2 = createUser("saveGetUser2");
+        final User userGroup1 = createUserGroup("saveGetGroup1");
+        final User userGroup2 = createUserGroup("saveGetGroup2");
 
         checkGroupsForUser(user1);
         checkGroupsForUser(user2);
@@ -104,28 +102,28 @@ class TestUserServiceImpl {
         checkUsersInGroup(userGroup2, user1);
     }
 
-    private void checkGroupsForUser(final UserRef user, final UserRef... groups) {
-        final List<UserRef> list = userService.findGroupsForUser(user.getUuid());
+    private void checkGroupsForUser(final User user, final User... groups) {
+        final List<User> list = userService.findGroupsForUser(user.getUuid());
         assertThat(list.size()).isEqualTo(groups.length);
-        for (final UserRef group : groups) {
+        for (final User group : groups) {
             assertThat(list.contains(group)).isTrue();
         }
     }
 
-    private void checkUsersInGroup(final UserRef group, final UserRef... users) {
-        final List<UserRef> list = userService.findUsersInGroup(group.getUuid());
+    private void checkUsersInGroup(final User group, final User... users) {
+        final List<User> list = userService.findUsersInGroup(group.getUuid());
         assertThat(list.size()).isEqualTo(users.length);
-        for (final UserRef user : users) {
+        for (final User user : users) {
             assertThat(list.contains(user)).isTrue();
         }
     }
 
     @Test
     void testFindUsers() {
-        final UserRef user1 = createUser("findUser1");
-        final UserRef user2 = createUser("findUser2");
-        final UserRef userGroup1 = createUserGroup("findGroup1");
-        final UserRef userGroup2 = createUserGroup("findGroup2");
+        final User user1 = createUser("findUser1");
+        final User user2 = createUser("findUser2");
+        final User userGroup1 = createUserGroup("findGroup1");
+        final User userGroup2 = createUserGroup("findGroup2");
 
         assertThat(userService.find(new FindUserCriteria(user1.getName(), false)).size()).isEqualTo(1);
         assertThat(userService.find(new FindUserCriteria(user2.getName(), false)).size()).isEqualTo(1);
@@ -154,19 +152,19 @@ class TestUserServiceImpl {
 
     }
 
-    private UserRef createUser(final String baseName) {
-        UserRef userRef = userService.createUser(String.format("%s_%s", baseName, UUID.randomUUID()));
+    private User createUser(final String baseName) {
+        User userRef = userService.createUser(String.format("%s_%s", baseName, UUID.randomUUID()));
         assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
-        return UserRefFactory.create(user);
+        return user;
     }
 
-    private UserRef createUserGroup(final String baseName) {
-        UserRef userRef = userService.createUserGroup(String.format("%s_%s", baseName, UUID.randomUUID()));
+    private User createUserGroup(final String baseName) {
+        User userRef = userService.createUserGroup(String.format("%s_%s", baseName, UUID.randomUUID()));
         assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
-        return UserRefFactory.create(user);
+        return user;
     }
 }

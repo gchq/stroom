@@ -37,7 +37,7 @@ public final class StroomStreamHandlerUtil {
         };
     }
 
-    public static StroomStreamHandler createStroomStreamOrderCheck() {
+    static StroomStreamHandler createStroomStreamOrderCheck() {
         final StroomZipNameSet stroomZipNameSet = new StroomZipNameSet(true);
         return new StroomStreamHandler() {
             @Override

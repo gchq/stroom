@@ -41,7 +41,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         inputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'stroom_user|stroom_user_groups|app_permission|doc_permission'
+                        includes = 'stroom_user|stroom_user_group|app_permission|doc_permission'
 
                         // We don't want to include flyway versioning
                         excludes = 'security_schema_history'

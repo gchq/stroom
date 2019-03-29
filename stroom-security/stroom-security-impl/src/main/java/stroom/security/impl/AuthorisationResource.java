@@ -1,28 +1,27 @@
 package stroom.security.impl;
 
-import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.api.SecurityContext;
-import stroom.security.service.UserService;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 import stroom.util.RestResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.HashMap;
-import java.util.Map;
 
-@Api(value = "authorisation - /v1")
+@Api(
+        value = "authorisation - /v1",
+        description = "Stroom Authorisation API")
 @Path("/authorisation/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class AuthorisationResource implements RestResource {
@@ -30,16 +29,6 @@ public class AuthorisationResource implements RestResource {
 
     private final SecurityContext securityContext;
     private final UserService userService;
-
-    private static final Map<String, UserStatus> STATUS_MAPPINGS = new HashMap<String, UserStatus>() {
-        {
-            put("locked", UserStatus.LOCKED);
-            put("inactive", UserStatus.EXPIRED);
-            put("active", UserStatus.ENABLED);
-            put("disabled", UserStatus.DISABLED);
-        }
-
-    };
 
     @Inject
     public AuthorisationResource(final SecurityContext securityContext, UserService userService) {
@@ -94,31 +83,39 @@ public class AuthorisationResource implements RestResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response createUser(@QueryParam("id") String userId) {
         try {
-            UserRef existingUser = userService.getUserByName(userId);
+            User existingUser = userService.getUserByName(userId);
             if (existingUser == null) {
                 userService.createUser(userId);
             }
             return Response.ok().build();
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Unable to create user: {}", e.getMessage());
             return Response.serverError().build();
         }
     }
 
     /**
-     * Added alongside canManagerUsers so that this endpoint still keeps working.
+     * Updates the user's status
      */
-    @POST
-    @Path("hasAppPermission")
+    @GET
+    @Path("setUserStatus")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response hasAppPermission(final UserPermissionRequest userPermissionRequest) {
-        if (Strings.isNullOrEmpty(userPermissionRequest.getPermission())) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Please supply a permission.").build();
+    public Response setUserStatus(@QueryParam("userId") String userId, @QueryParam("status") String status) {
+        try {
+            User existingUser = userService.getUserByName(userId);
+            if (existingUser != null) {
+                User user = userService.loadByUuid(existingUser.getUuid());
+                // TODO : @66 Hack to maintain expected interface for identity service.
+                user.setEnabled(status.equalsIgnoreCase("enabled"));
+                userService.update(user);
+                return Response.ok().build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error("Unable to change user's status: {}", e.getMessage());
+            return Response.serverError().build();
         }
-        // TODO what happens if the permission is bad? What's the result of this method call and how should we handle it?
-        boolean result = securityContext.hasAppPermission(userPermissionRequest.getPermission());
-        // The user here will be the one logged in by the JWT.
-        return result ? Response.ok().build() : Response.status(Response.Status.UNAUTHORIZED).build();
     }
 }

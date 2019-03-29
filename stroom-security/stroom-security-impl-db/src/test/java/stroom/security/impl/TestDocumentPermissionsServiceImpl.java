@@ -26,12 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import stroom.docref.DocRef;
-import stroom.security.service.DocumentPermissionService;
-import stroom.security.service.UserService;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
 import java.util.HashSet;
@@ -68,9 +66,9 @@ class TestDocumentPermissionsServiceImpl {
 
     @Test
     void test() {
-        final UserRef userGroup1 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
-        final UserRef userGroup2 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
-        final UserRef userGroup3 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
+        final User userGroup1 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
+        final User userGroup2 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
+        final User userGroup3 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
 
         final DocRef docRef = createTestDocRef();
         final String[] permissions = DocumentPermissionNames.DOCUMENT_PERMISSIONS;
@@ -93,7 +91,7 @@ class TestDocumentPermissionsServiceImpl {
         checkDocumentPermissions(docRef.getUuid(), userGroup2, c1);
 
         // Check user permissions.
-        final UserRef user = createUser(FileSystemTestUtil.getUniqueTestString());
+        final User user = createUser(FileSystemTestUtil.getUniqueTestString());
         userService.addUserToGroup(user.getUuid(), userGroup1.getUuid());
         userService.addUserToGroup(user.getUuid(), userGroup3.getUuid());
         checkUserPermissions(docRef.getUuid(), user, c1, p1);
@@ -107,7 +105,7 @@ class TestDocumentPermissionsServiceImpl {
         checkUserPermissions(docRef.getUuid(), user, c1, p1);
     }
 
-    private void addPermissions(final String docRefUuid, final UserRef user, final String... permissions) {
+    private void addPermissions(final String docRefUuid, final User user, final String... permissions) {
         for (final String permission : permissions) {
             try {
                 documentPermissionService.addPermission(docRefUuid, user.getUuid(), permission);
@@ -117,13 +115,13 @@ class TestDocumentPermissionsServiceImpl {
         }
     }
 
-    private void removePermissions(final String docRefUuid, final UserRef user, final String... permissions) {
+    private void removePermissions(final String docRefUuid, final User user, final String... permissions) {
         for (final String permission : permissions) {
             documentPermissionService.removePermission(docRefUuid, user.getUuid(), permission);
         }
     }
 
-    private void checkDocumentPermissions(final String docRefUuid, final UserRef user, final String... permissions) {
+    private void checkDocumentPermissions(final String docRefUuid, final User user, final String... permissions) {
         final DocumentPermissions documentPermissions = documentPermissionService
                 .getPermissionsForDocument(docRefUuid);
         final Set<String> permissionSet = documentPermissions.getPermissionsForUser(user.getUuid());
@@ -136,14 +134,14 @@ class TestDocumentPermissionsServiceImpl {
     }
 
     private void checkUserPermissions(final String docRefUuid,
-                                      final UserRef user,
+                                      final User user,
                                       final String... permissions) {
-        final Set<UserRef> allUsers = new HashSet<>();
+        final Set<User> allUsers = new HashSet<>();
         allUsers.add(user);
         allUsers.addAll(userService.findGroupsForUser(user.getUuid()));
 
         final Set<String> combinedPermissions = new HashSet<>();
-        for (final UserRef userRef : allUsers) {
+        for (final User userRef : allUsers) {
             final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(docRefUuid);
             final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef.getUuid());
             combinedPermissions.addAll(userPermissions);
@@ -158,17 +156,17 @@ class TestDocumentPermissionsServiceImpl {
     }
 
     private void checkUserCachePermissions(final String docRefUuid,
-                                           final UserRef user,
+                                           final User user,
                                            final String... permissions) {
         userGroupsCache.clear();
         documentPermissionsCache.clear();
 
-        final Set<UserRef> allUsers = new HashSet<>();
+        final Set<User> allUsers = new HashSet<>();
         allUsers.add(user);
         allUsers.addAll(userGroupsCache.get(user.getUuid()));
 
         final Set<String> combinedPermissions = new HashSet<>();
-        for (final UserRef userRef : allUsers) {
+        for (final User userRef : allUsers) {
             final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRefUuid);
             final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef.getUuid());
             combinedPermissions.addAll(userPermissions);
@@ -180,20 +178,20 @@ class TestDocumentPermissionsServiceImpl {
         }
     }
 
-    private UserRef createUser(final String name) {
-        UserRef userRef = userService.createUser(name);
+    private User createUser(final String name) {
+        User userRef = userService.createUser(name);
         assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
-        return UserRefFactory.create(user);
+        return user;
     }
 
-    private UserRef createUserGroup(final String name) {
-        UserRef userRef = userService.createUserGroup(name);
+    private User createUserGroup(final String name) {
+        User userRef = userService.createUserGroup(name);
         assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
-        return UserRefFactory.create(user);
+        return user;
     }
 
     private DocRef createTestDocRef() {

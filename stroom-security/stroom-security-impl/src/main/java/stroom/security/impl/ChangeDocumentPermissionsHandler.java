@@ -20,7 +20,6 @@ package stroom.security.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.security.service.DocumentPermissionService;
 import stroom.util.shared.EntityServiceException;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.DocumentTypes;
@@ -151,7 +150,7 @@ class ChangeDocumentPermissionsHandler
         }
     }
 
-//    private void cascadeChanges(final DocRef docRef, final ChangeSet<UserPermission> changeSet, final Set<DocRef> affectedDocRefs, final Set<UserRef> affectedUserRefs, final ChangeDocumentPermissionsAction.Cascade cascade) {
+//    private void cascadeChanges(final DocRef docRef, final ChangeSet<UserPermission> changeSet, final Set<DocRef> affectedDocRefs, final Set<User> affectedUsers, final ChangeDocumentPermissionsAction.Cascade cascade) {
 //        final BaseEntity entity = genericEntityService.loadByUuid(docRef.getType(), docRef.getUuid());
 //        if (entity != null) {
 //            if (entity instanceof Folder) {
@@ -160,22 +159,22 @@ class ChangeDocumentPermissionsHandler
 //                switch (cascade) {
 //                    case CHANGES_ONLY:
 //                        // We are only cascading changes so just pass on the change set.
-//                        changeChildPermissions(DocRefUtil.create(folder), changeSet, affectedDocRefs, affectedUserRefs, false);
+//                        changeChildPermissions(DocRefUtil.create(folder), changeSet, affectedDocRefs, affectedUsers, false);
 //                        break;
 //
 //                    case ALL:
 //                        // We are replicating the permissions of the parent folder on all children so create a change set from the parent folder.
 //                        final DocumentPermissions parentPermissions = documentPermissionService.getPermissionsForDocument(DocRefUtil.create(folder));
 //                        final ChangeSet<UserPermission> fullChangeSet = new ChangeSet<>();
-//                        for (final Map.Entry<UserRef, Set<String>> entry : parentPermissions.getUserPermissions().entrySet()) {
-//                            final UserRef userRef = entry.getKey();
+//                        for (final Map.Entry<User, Set<String>> entry : parentPermissions.getUserPermissions().entrySet()) {
+//                            final User userRef = entry.getKey();
 //                            for (final String permission : entry.getValue()) {
 //                                fullChangeSet.add(new UserPermission(userRef, permission));
 //                            }
 //                        }
 //
 //                        // Set child permissions to that of the parent folder after clearing all permissions from child documents.
-//                        changeChildPermissions(DocRefUtil.create(folder), fullChangeSet, affectedDocRefs, affectedUserRefs, true);
+//                        changeChildPermissions(DocRefUtil.create(folder), fullChangeSet, affectedDocRefs, affectedUsers, true);
 //
 //                    break;
 //
@@ -186,17 +185,17 @@ class ChangeDocumentPermissionsHandler
 //        }
 //    }
 //
-//    private void changeChildPermissions(final DocRef folder, final ChangeSet<UserPermission> changeSet, final Set<DocRef> affectedDocRefs, final Set<UserRef> affectedUserRefs, final boolean clear) {
+//    private void changeChildPermissions(final DocRef folder, final ChangeSet<UserPermission> changeSet, final Set<DocRef> affectedDocRefs, final Set<User> affectedUsers, final boolean clear) {
 //        final List<String> types = getTypeList();
 //        for (final String type : types) {
 //            final List<DocumentEntity> children = genericEntityService.findByFolder(type, folder, null);
 //            if (children != null && children.size() > 0) {
 //                for (final DocumentEntity child : children) {
 //                    final DocRef childDocRef = DocRefUtil.create(child);
-//                    changeDocPermissions(childDocRef, changeSet, affectedDocRefs, affectedUserRefs, clear);
+//                    changeDocPermissions(childDocRef, changeSet, affectedDocRefs, affectedUsers, clear);
 //
 //                    if (child instanceof Folder) {
-//                        changeChildPermissions(childDocRef, changeSet, affectedDocRefs, affectedUserRefs, clear);
+//                        changeChildPermissions(childDocRef, changeSet, affectedDocRefs, affectedUsers, clear);
 //                    }
 //                }
 //            }

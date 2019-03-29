@@ -18,14 +18,11 @@
 
     <logger name="stroom" level="info" />
 
-    <logger name="stroom.statistics" level="info" />
+    <logger name="stroom.proxy" level="info" />
 
-    <!--
-    <logger name="stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer" level="trace" />
-    <logger name="stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer" level="trace" />
-    <logger name="stroom.pipeline.refdata.RefDataValueByteBufferConsumer" level="trace" />
-    <logger name="stroom.pipeline.refdata.store.GenericRefDataValueProxyConsumer" level="trace" />
-    -->
+    <logger name="stroom.statistics.internal.DoNothingInternalStatisticsReceiver" level="ERROR" />
+
+    <logger name="stroom.statistics" level="info" />
 
     <logger name="stroom.pipeline.writer.FileAppender" level="trace" />
 

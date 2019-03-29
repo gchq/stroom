@@ -16,43 +16,40 @@
 
 package stroom.security.impl;
 
-import stroom.security.service.UserService;
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.ResultList;
 import stroom.security.api.Security;
-import stroom.security.shared.FetchUserRefAction;
+import stroom.security.shared.FetchUserAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
-import stroom.security.shared.UserRef;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 
-class FetchUserRefHandler
-        extends AbstractTaskHandler<FetchUserRefAction, ResultList<UserRef>> {
+class FetchUserHandler
+        extends AbstractTaskHandler<FetchUserAction, ResultList<User>> {
     private final UserService userService;
     private final Security security;
 
     @Inject
-    FetchUserRefHandler(final UserService userService,
-                        final Security security) {
+    FetchUserHandler(final UserService userService,
+                     final Security security) {
         this.userService = userService;
         this.security = security;
     }
 
     @Override
-    public ResultList<UserRef> exec(final FetchUserRefAction action) {
+    public ResultList<User> exec(final FetchUserAction action) {
         return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             final FindUserCriteria findUserCriteria = action.getCriteria();
             findUserCriteria.setSort(FindUserCriteria.FIELD_NAME);
             if (findUserCriteria.getRelatedUser() != null) {
-                UserRef userRef = findUserCriteria.getRelatedUser();
-                List<UserRef> list;
+                User userRef = findUserCriteria.getRelatedUser();
+                List<User> list;
                 if (userRef.isGroup()) {
                     list = userService.findUsersInGroup(userRef.getUuid());
                 } else {
@@ -68,9 +65,7 @@ class FetchUserRefHandler
             }
 
             final List<User> users = userService.find(findUserCriteria);
-            final List<UserRef> userRefs = new ArrayList<>();
-            users.forEach(user -> userRefs.add(UserRefFactory.create(user)));
-            return new BaseResultList<>(userRefs, 0L, (long) users.size(), false);
+            return new BaseResultList<>(users, 0L, (long) users.size(), false);
         });
     }
 }

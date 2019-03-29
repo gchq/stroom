@@ -6,8 +6,8 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.api.NodeInfo;
-import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticEvent;
+import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 
 import javax.inject.Inject;
@@ -27,12 +27,9 @@ import java.util.stream.Collectors;
  * (i.e. stroomCoreServerPropertyContext
  */
 @SuppressWarnings("unused")
-public class HeapHistogramStatisticsExecutor {
-
+class HeapHistogramStatisticsExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(HeapHistogramStatisticsExecutor.class);
 
-    private static final String INTERNAL_STAT_KEY_HEAP_HISTOGRAM_INSTANCES = "heapHistogramInstances";
-    private static final String INTERNAL_STAT_KEY_HEAP_HISTOGRAM_BYTES = "heapHistogramBytes";
     private static final String TAG_NAME_NODE = "Node";
     static final String TAG_NAME_CLASS_NAME = "Class Name";
 

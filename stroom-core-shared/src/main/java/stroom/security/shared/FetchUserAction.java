@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,16 @@
 
 package stroom.security.shared;
 
-import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
+import stroom.entity.shared.FindAction;
 
-public class UserRef extends DocRef implements SharedObject {
-    private static final long serialVersionUID = 5883121212911541301L;
+public class FetchUserAction extends FindAction<FindUserCriteria, User> {
+    private static final long serialVersionUID = 800905016214418723L;
 
-    private boolean group;
-    private boolean enabled;
-
-    public UserRef() {
+    public FetchUserAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public UserRef(final String type, final String uuid, final String name,
-                   final boolean group, final boolean enabled) {
-        super(type, uuid, name);
-        this.group = group;
-        this.enabled = enabled;
-    }
-
-    public boolean isGroup() {
-        return group;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
+    public FetchUserAction(final FindUserCriteria criteria) {
+        super(criteria);
     }
 }

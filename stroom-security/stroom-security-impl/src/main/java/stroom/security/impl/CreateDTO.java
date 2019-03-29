@@ -1,4 +1,4 @@
-package stroom.security.rest;
+package stroom.security.impl;
 
 public class CreateDTO {
     private String name;
@@ -24,7 +24,7 @@ public class CreateDTO {
     public String toString() {
         final StringBuilder sb = new StringBuilder("CreateDTO{");
         sb.append("name='").append(name).append('\'');
-        sb.append(", isGroup=").append(isGroup);
+        sb.append(", group=").append(isGroup);
         sb.append('}');
         return sb.toString();
     }

@@ -4,7 +4,6 @@ package stroom.proxy.repo;
 import org.junit.jupiter.api.Test;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipOutputStream;
-import stroom.data.zip.StroomZipOutputStreamUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.test.common.util.test.StroomUnitTest;

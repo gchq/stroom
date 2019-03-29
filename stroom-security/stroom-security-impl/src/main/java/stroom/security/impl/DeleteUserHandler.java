@@ -17,7 +17,6 @@
 package stroom.security.impl;
 
 import stroom.security.api.Security;
-import stroom.security.service.UserService;
 import stroom.security.shared.DeleteUserAction;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
@@ -40,7 +39,7 @@ class DeleteUserHandler extends AbstractTaskHandler<DeleteUserAction, VoidResult
     @Override
     public VoidResult exec(final DeleteUserAction action) {
         return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            userService.delete(action.getUserRef().getUuid());
+            userService.delete(action.getUser().getUuid());
             return VoidResult.INSTANCE;
         });
     }

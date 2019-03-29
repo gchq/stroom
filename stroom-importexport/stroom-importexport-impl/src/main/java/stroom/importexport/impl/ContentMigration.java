@@ -23,7 +23,7 @@ import stroom.util.io.FileUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -143,7 +143,7 @@ public class ContentMigration {
                 parent = parent.getParent();
             }
 
-            final String xml = new String(Files.readAllBytes(path), Charset.forName("UTF-8"));
+            final String xml = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
             final String uuid = getValue(xml, "uuid");
             final String name = getValue(xml, "name");
 

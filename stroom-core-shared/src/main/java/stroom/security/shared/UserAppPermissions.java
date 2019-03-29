@@ -25,21 +25,21 @@ import java.util.stream.Collectors;
 public class UserAppPermissions implements SharedObject {
     private static final long serialVersionUID = 2374084842679322202L;
 
-    private UserRef user;
+    private User user;
     private Set<String> allPermissions;
     private Set<String> userPermissons;
 
     public UserAppPermissions() {
     }
 
-    public UserAppPermissions(final UserRef user, final Set<String> allPermissions,
+    public UserAppPermissions(final User user, final Set<String> allPermissions,
                               final Set<String> userPermissons) {
         this.user = user;
         this.allPermissions = new HashSet<>(allPermissions);
         this.userPermissons = userPermissons;
     }
 
-    public UserRef getUser() {
+    public User getUser() {
         return user;
     }
 

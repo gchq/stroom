@@ -1,4 +1,4 @@
-package stroom.security.rest;
+package stroom.security.impl;
 
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;

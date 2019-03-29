@@ -18,11 +18,7 @@ package stroom.security.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.dao.AppPermissionDao;
-import stroom.security.service.UserAppPermissionService;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.UserAppPermissions;
-import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

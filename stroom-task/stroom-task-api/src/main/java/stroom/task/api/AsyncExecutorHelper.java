@@ -18,7 +18,6 @@ package stroom.task.api;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.task.shared.Task;
 
 import java.util.ArrayList;
 import java.util.List;

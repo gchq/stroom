@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.global.api.ConfigProperty;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
-import stroom.db.util.AuditUtil;
+import stroom.util.AuditUtil;
 import stroom.db.util.JooqUtil;
 import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;

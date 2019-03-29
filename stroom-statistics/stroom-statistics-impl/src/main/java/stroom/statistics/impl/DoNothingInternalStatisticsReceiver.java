@@ -12,18 +12,26 @@ import java.util.List;
  * the system to function albeit with the loss of the stats.
  */
 class DoNothingInternalStatisticsReceiver implements InternalStatisticsReceiver {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(DoNothingInternalStatisticsReceiver.class);
+
+    private long lastLog = 0;
 
     @Override
     public void putEvent(final InternalStatisticEvent event) {
-        LOGGER.warn(
-                "putEvent called when internalStatisticsReceiver has not been initialised. The statistics will not be recorded");
+        logWarn("putEvent");
     }
 
     @Override
     public void putEvents(List<InternalStatisticEvent> events) {
-        LOGGER.warn(
-                "putEvents called when internalStatisticsReceiver has not been initialised. The statistics will not be recorded");
+        logWarn("putEvents");
+    }
+
+    private void logWarn(final String method) {
+        final long now = System.currentTimeMillis();
+        if (lastLog < now - 600000) {
+            lastLog = now;
+            LOGGER.warn(method +
+                    " called when internalStatisticsReceiver has not been initialised. The statistics will not be recorded");
+        }
     }
 }

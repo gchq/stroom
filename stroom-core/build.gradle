@@ -39,12 +39,10 @@ dependencies {
     compile libs.stroomDocRef
 
     compile libs.commons_compress
-//    compile libs.commons_exec
     compile libs.commons_io
     compile libs.commons_lang
     compile libs.dropwizard_lifecycle
     compile libs.dropwizard_metrics_annotation
-//    compile libs.dropwizard_metrics_healthchecks
     compile libs.flyway_core
     compile libs.guava
     compile libs.guice4

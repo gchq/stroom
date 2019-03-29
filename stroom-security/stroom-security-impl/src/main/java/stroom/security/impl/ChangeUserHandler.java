@@ -17,12 +17,10 @@
 package stroom.security.impl;
 
 import stroom.security.api.Security;
-import stroom.security.service.UserAppPermissionService;
-import stroom.security.service.UserService;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 
@@ -55,14 +53,14 @@ class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult
     @Override
     public VoidResult exec(final ChangeUserAction action) {
         return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            final UserRef userRef = action.getUserRef();
+            final User userRef = action.getUser();
             if (userRef != null) {
 
                 // Modify linked users and user groups
-                final ChangeSet<UserRef> linkedUsers = action.getChangedLinkedUsers();
+                final ChangeSet<User> linkedUsers = action.getChangedLinkedUsers();
                 if (linkedUsers != null) {
                     if (linkedUsers.getAddSet() != null && linkedUsers.getAddSet().size() > 0) {
-                        for (final UserRef add : linkedUsers.getAddSet()) {
+                        for (final User add : linkedUsers.getAddSet()) {
                             if (userRef.isGroup()) {
                                 if (!add.isGroup()) {
                                     addUserToGroup(add, userRef);
@@ -79,7 +77,7 @@ class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult
                     }
 
                     if (linkedUsers.getRemoveSet() != null && linkedUsers.getRemoveSet().size() > 0) {
-                        for (final UserRef remove : linkedUsers.getRemoveSet()) {
+                        for (final User remove : linkedUsers.getRemoveSet()) {
                             if (userRef.isGroup()) {
                                 if (!remove.isGroup()) {
                                     removeUserFromGroup(remove, userRef);
@@ -123,7 +121,7 @@ class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult
         });
     }
 
-    private void addUserToGroup(final UserRef user, final UserRef userGroup) {
+    private void addUserToGroup(final User user, final User userGroup) {
         try {
             userService.addUserToGroup(user.getUuid(), userGroup.getUuid());
             authorisationEventLog.addUserToGroup(user.getName(), userGroup.getName(), true, null);
@@ -132,7 +130,7 @@ class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult
         }
     }
 
-    private void removeUserFromGroup(final UserRef user, final UserRef userGroup) {
+    private void removeUserFromGroup(final User user, final User userGroup) {
         try {
             userService.removeUserFromGroup(user.getUuid(), userGroup.getUuid());
             authorisationEventLog.removeUserFromGroup(user.getName(), userGroup.getName(), true, null);
@@ -141,7 +139,7 @@ class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult
         }
     }
 
-    private void addPermission(UserRef userRef, String permission) {
+    private void addPermission(User userRef, String permission) {
         try {
             userAppPermissionService.addPermission(userRef.getUuid(), permission);
             authorisationEventLog.addUserToGroup(userRef.getName(), permission, true, null);
@@ -150,7 +148,7 @@ class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult
         }
     }
 
-    private void removePermission(UserRef userRef, String permission) {
+    private void removePermission(User userRef, String permission) {
         try {
             userAppPermissionService.removePermission(userRef.getUuid(), permission);
             authorisationEventLog.removeUserFromGroup(userRef.getName(), permission, true, null);

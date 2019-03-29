@@ -14,6 +14,7 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 class TestXmlWriter {
     @Test
@@ -42,7 +43,7 @@ class TestXmlWriter {
         th.endDocument();
 
         final byte[] bytes = baos.toByteArray();
-        final String string = new String(bytes, 0, bytes.length, Charset.forName("UTF-8"));
+        final String string = new String(bytes, 0, bytes.length, StandardCharsets.UTF_8);
 
         final XMLReader xmlReader = SAXParserFactoryFactory.newInstance().newSAXParser().getXMLReader();
         xmlReader.parse(new InputSource(new StringReader(string)));

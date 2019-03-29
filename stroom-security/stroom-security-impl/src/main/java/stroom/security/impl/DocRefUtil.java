@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-package stroom.security.shared;
+package stroom.security.impl;
 
-import stroom.entity.shared.FindAction;
+import stroom.docref.DocRef;
+import stroom.security.shared.User;
 
-public class FetchUserRefAction extends FindAction<FindUserCriteria, UserRef> {
-    private static final long serialVersionUID = 800905016214418723L;
+public final class DocRefUtil {
+    public static final String USER = "User";
 
-    public FetchUserRefAction() {
-        // Default constructor necessary for GWT serialisation.
+    private DocRefUtil() {
+        // Utility class.
     }
 
-    public FetchUserRefAction(final FindUserCriteria criteria) {
-        super(criteria);
+    public static DocRef create(final User user) {
+        if (user == null) {
+            return null;
+        }
+
+        return new DocRef(USER, user.getUuid(), user.getName());
     }
 }

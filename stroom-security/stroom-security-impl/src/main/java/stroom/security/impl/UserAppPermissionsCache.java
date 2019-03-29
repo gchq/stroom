@@ -19,10 +19,9 @@ package stroom.security.impl;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import stroom.security.service.UserAppPermissionService;
 import stroom.util.shared.Clearable;
 import stroom.security.shared.UserAppPermissions;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
 
@@ -35,13 +34,13 @@ import java.util.concurrent.TimeUnit;
 public class UserAppPermissionsCache implements Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
-    private final LoadingCache<UserRef, UserAppPermissions> cache;
+    private final LoadingCache<User, UserAppPermissions> cache;
 
     @Inject
     @SuppressWarnings("unchecked")
     UserAppPermissionsCache(final CacheManager cacheManager,
                             final UserAppPermissionService userAppPermissionService) {
-        final CacheLoader<UserRef, UserAppPermissions> cacheLoader = CacheLoader.from(userAppPermissionService::getPermissionsForUser);
+        final CacheLoader<User, UserAppPermissions> cacheLoader = CacheLoader.from(userAppPermissionService::getPermissionsForUser);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
                 .expireAfterAccess(30, TimeUnit.MINUTES);
@@ -49,11 +48,11 @@ public class UserAppPermissionsCache implements Clearable {
         cacheManager.registerCache("User App Permissions Cache", cacheBuilder, cache);
     }
 
-    UserAppPermissions get(final UserRef key) {
+    UserAppPermissions get(final User key) {
         return cache.getUnchecked(key);
     }
 
-    void remove(final UserRef userRef) {
+    void remove(final User userRef) {
         cache.invalidate(userRef);
     }
 

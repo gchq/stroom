@@ -1,0 +1,33 @@
+package stroom.security.impl;
+
+import stroom.security.shared.User;
+
+import java.util.List;
+
+public interface UserDao {
+    User create(User user);
+
+//    User createUser(String name);
+//
+//    User createUserGroup(String name);
+
+    User getById(int id);
+
+    User getByUuid(String uuid);
+
+    User getByName(String name);
+
+    User update(User user);
+
+    void delete(String uuid);
+
+    List<User> find(String name, Boolean userGroup);
+
+    List<User> findUsersInGroup(String groupUuid);
+
+    List<User> findGroupsForUser(String userUuid);
+
+    void addUserToGroup(String userUuid, String groupUuid);
+
+    void removeUserFromGroup(String userUuid, String groupUuid);
+}

@@ -19,6 +19,7 @@ package stroom.task.shared;
 public class SimpleThreadPool implements ThreadPool {
     private static final int CORE_POOL_SIZE = 10;
     private static final int MAX_POOL_SIZE = Integer.MAX_VALUE;
+    private static final int MAX_QUEUE_SIZE = Integer.MAX_VALUE;
 
     private final int priority;
     private final String name;
@@ -50,6 +51,11 @@ public class SimpleThreadPool implements ThreadPool {
     @Override
     public int getMaxPoolSize() {
         return MAX_POOL_SIZE;
+    }
+
+    @Override
+    public int getMaxQueueSize() {
+        return MAX_QUEUE_SIZE;
     }
 
     @Override

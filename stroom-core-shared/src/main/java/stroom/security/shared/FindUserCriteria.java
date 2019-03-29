@@ -34,7 +34,7 @@ public class FindUserCriteria extends FindDocumentEntityCriteria {
      */
     private Boolean group;
 
-    private UserRef relatedUser;
+    private User relatedUser;
 
     public FindUserCriteria() {
     }
@@ -48,7 +48,7 @@ public class FindUserCriteria extends FindDocumentEntityCriteria {
         this.group = group;
     }
 
-    public FindUserCriteria(final UserRef relatedUser) {
+    public FindUserCriteria(final User relatedUser) {
         this.relatedUser = relatedUser;
     }
 
@@ -60,11 +60,11 @@ public class FindUserCriteria extends FindDocumentEntityCriteria {
         this.group = group;
     }
 
-    public UserRef getRelatedUser() {
+    public User getRelatedUser() {
         return relatedUser;
     }
 
-    public void setRelatedUser(UserRef relatedUser) {
+    public void setRelatedUser(User relatedUser) {
         this.relatedUser = relatedUser;
     }
 }

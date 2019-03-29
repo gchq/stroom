@@ -21,7 +21,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.UserAndPermissions;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.AbstractTaskHandler;
 
@@ -48,7 +48,7 @@ class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPer
     @Override
     public UserAndPermissions exec(final FetchUserAndPermissionsAction task) {
         return security.insecureResult(() -> {
-            final UserRef userRef = CurrentUserState.currentUserRef();
+            final User userRef = CurrentUserState.currentUser();
             if (userRef == null) {
                 return null;
             }

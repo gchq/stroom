@@ -17,16 +17,15 @@
 package stroom.security.impl;
 
 import stroom.security.api.Security;
-import stroom.security.service.UserService;
 import stroom.security.shared.CreateUserAction;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 
 
-class CreateUserHandler extends AbstractTaskHandler<CreateUserAction, UserRef> {
+class CreateUserHandler extends AbstractTaskHandler<CreateUserAction, User> {
     private final UserService userService;
     private final Security security;
 
@@ -38,7 +37,7 @@ class CreateUserHandler extends AbstractTaskHandler<CreateUserAction, UserRef> {
     }
 
     @Override
-    public UserRef exec(final CreateUserAction action) {
+    public User exec(final CreateUserAction action) {
         return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             if (action.isGroup()) {
                 return userService.createUserGroup(action.getName());

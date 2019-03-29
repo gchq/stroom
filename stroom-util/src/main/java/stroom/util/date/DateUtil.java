@@ -87,6 +87,26 @@ public final class DateUtil {
         return dateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 
+    /**
+     * Parse a 'file' type date.
+     *
+     * @param date string date
+     * @return date as milliseconds since epoch
+     * @throws IllegalArgumentException if date does not parse
+     */
+    public static long parseFileDateTimeString(final String date) {
+        if (date == null) {
+            throw new IllegalArgumentException("Unable to parse null date");
+        }
+
+        if (date.length() != DATE_LENGTH) {
+            throw new IllegalArgumentException("Unable to parse date: \"" + date + '"');
+        }
+
+        final LocalDateTime dateTime = LocalDateTime.parse(date, FILE_TIME_STROOM_TIME_FORMATTER);
+        return dateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
+    }
+
     public static long parseUnknownString(final String date) {
         if (date == null) {
             throw new IllegalArgumentException("Unable to parse null date");

@@ -24,11 +24,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
-import stroom.security.service.UserAppPermissionService;
-import stroom.security.service.UserService;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
-import stroom.security.shared.UserRef;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
 import java.util.HashSet;
@@ -66,9 +63,9 @@ class TestAppPermissionServiceImpl {
 
     @Test
     void test() {
-        final UserRef userGroup1 = createUserGroup(String.format("Group_1_%s", UUID.randomUUID()));
-        final UserRef userGroup2 = createUserGroup(String.format("Group_2_%s", UUID.randomUUID()));
-        final UserRef userGroup3 = createUserGroup(String.format("Group_3_%s", UUID.randomUUID()));
+        final User userGroup1 = createUserGroup(String.format("Group_1_%s", UUID.randomUUID()));
+        final User userGroup2 = createUserGroup(String.format("Group_2_%s", UUID.randomUUID()));
+        final User userGroup3 = createUserGroup(String.format("Group_3_%s", UUID.randomUUID()));
 
         final String c1 = "C1";
         final String p1 = "P1";
@@ -86,7 +83,7 @@ class TestAppPermissionServiceImpl {
         checkPermissions(userGroup2, c1);
 
         // Check user permissions.
-        final UserRef user = createUser(FileSystemTestUtil.getUniqueTestString());
+        final User user = createUser(FileSystemTestUtil.getUniqueTestString());
         userService.addUserToGroup(user.getUuid(), userGroup1.getUuid());
         userService.addUserToGroup(user.getUuid(), userGroup3.getUuid());
         checkUserPermissions(user, c1, p1);
@@ -100,7 +97,7 @@ class TestAppPermissionServiceImpl {
         checkUserPermissions(user, c1, p1);
     }
 
-    private void addPermissions(final UserRef user, final String... permissions) {
+    private void addPermissions(final User user, final String... permissions) {
         for (final String permission : permissions) {
             try {
                 userAppPermissionService.addPermission(user.getUuid(), permission);
@@ -110,13 +107,13 @@ class TestAppPermissionServiceImpl {
         }
     }
 
-    private void removePermissions(final UserRef user, final String... permissions) {
+    private void removePermissions(final User user, final String... permissions) {
         for (final String permission : permissions) {
             userAppPermissionService.removePermission(user.getUuid(), permission);
         }
     }
 
-    private void checkPermissions(final UserRef user, final String... permissions) {
+    private void checkPermissions(final User user, final String... permissions) {
         final UserAppPermissions userAppPermissions = userAppPermissionService
                 .getPermissionsForUser(user);
         final Set<String> permissionSet = userAppPermissions.getUserPermissons();
@@ -128,13 +125,13 @@ class TestAppPermissionServiceImpl {
         checkUserPermissions(user, permissions);
     }
 
-    private void checkUserPermissions(final UserRef user, final String... permissions) {
-        final Set<UserRef> allUsers = new HashSet<>();
+    private void checkUserPermissions(final User user, final String... permissions) {
+        final Set<User> allUsers = new HashSet<>();
         allUsers.add(user);
         allUsers.addAll(userService.findGroupsForUser(user.getUuid()));
 
         final Set<String> combinedPermissions = new HashSet<>();
-        for (final UserRef userRef : allUsers) {
+        for (final User userRef : allUsers) {
             final UserAppPermissions userAppPermissions = userAppPermissionService.getPermissionsForUser(userRef);
             final Set<String> userPermissions = userAppPermissions.getUserPermissons();
             combinedPermissions.addAll(userPermissions);
@@ -148,16 +145,16 @@ class TestAppPermissionServiceImpl {
         checkUserCachePermissions(user, permissions);
     }
 
-    private void checkUserCachePermissions(final UserRef user, final String... permissions) {
+    private void checkUserCachePermissions(final User user, final String... permissions) {
         userGroupsCache.clear();
         userAppPermissionsCache.clear();
 
-        final Set<UserRef> allUsers = new HashSet<>();
+        final Set<User> allUsers = new HashSet<>();
         allUsers.add(user);
         allUsers.addAll(userGroupsCache.get(user.getUuid()));
 
         final Set<String> combinedPermissions = new HashSet<>();
-        for (final UserRef userRef : allUsers) {
+        for (final User userRef : allUsers) {
             final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
             final Set<String> userPermissions = userAppPermissions.getUserPermissons();
             combinedPermissions.addAll(userPermissions);
@@ -169,19 +166,19 @@ class TestAppPermissionServiceImpl {
         }
     }
 
-    private UserRef createUser(final String name) {
-        final UserRef userRef = userService.createUser(name);
+    private User createUser(final String name) {
+        final User userRef = userService.createUser(name);
         assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
-        return UserRefFactory.create(user);
+        return user;
     }
 
-    private UserRef createUserGroup(final String name) {
-        final UserRef userRef = userService.createUserGroup(name);
+    private User createUserGroup(final String name) {
+        final User userRef = userService.createUserGroup(name);
         assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
-        return UserRefFactory.create(user);
+        return user;
     }
 }

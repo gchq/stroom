@@ -17,6 +17,7 @@
 package stroom.core.receive;
 
 import com.google.inject.AbstractModule;
+import stroom.proxy.repo.FileSetProcessor;
 import stroom.util.io.BufferFactory;
 import stroom.receive.common.RequestHandler;
 
@@ -24,6 +25,7 @@ public class ReceiveDataModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(BufferFactory.class).to(BufferFactoryImpl.class);
+        bind(FileSetProcessor.class).to(DataStoreFileSetProcessor.class);
         bind(RequestHandler.class).to(ReceiveDataRequestHandler.class);
     }
 }

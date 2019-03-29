@@ -17,7 +17,7 @@
 
 package stroom.processor.impl;
 
-import stroom.db.util.AuditUtil;
+import stroom.util.AuditUtil;
 import stroom.docref.DocRef;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.FindProcessorCriteria;

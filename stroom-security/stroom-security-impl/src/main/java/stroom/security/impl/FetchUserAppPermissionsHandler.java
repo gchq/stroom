@@ -39,6 +39,6 @@ class FetchUserAppPermissionsHandler
 
     @Override
     public UserAppPermissions exec(final FetchUserAppPermissionsAction action) {
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> userAppPermissionsCache.get(action.getUserRef()));
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> userAppPermissionsCache.get(action.getUser()));
     }
 }

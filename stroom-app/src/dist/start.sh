@@ -47,7 +47,8 @@ kill_log_tailing() {
 
 wait_for_200_response() {
     if [[ $# -ne 1 ]]; then
-        echo -e "${RED}Invalid arguments to wait_for_200_response(), expecting a URL to wait for${NC}"
+        echo -e "${RED}Invalid arguments to wait_for_200_response(), expecting" \
+          "a URL to wait for${NC}"
         exit 1
     fi
 
@@ -72,7 +73,8 @@ wait_for_200_response() {
     #printf "\n"
 
     if [[ $n -ge ${maxWaitSecs} ]]; then
-        warn "Gave up wating for stroom to start up, this may be due to the database migration taking a long time."
+        warn "Gave up wating for stroom to start up, this may be due to the" \
+          "database migration taking a long time."
     fi
 }
 
@@ -82,10 +84,22 @@ start_stroom() {
   info "Starting ${GREEN}Stroom${NC}"
   ensure_file_exists "${path_to_start_log}" 
   ensure_file_exists "${PATH_TO_APP_LOG}" 
-  # We need word splitting so we need to disable SC2086
+
+  # stroom and proxy both use this script and the same jar so use absolute
+  # paths to distinguish the two processes when using the 'ps' command.
+  # Also makes it explicit about what files are being used.
+  local absolute_path_to_config
+  absolute_path_to_config="$(realpath "${PATH_TO_CONFIG}")"
+  local absoulte_path_to_jar
+  absoulte_path_to_jar="$(realpath "${PATH_TO_JAR}")"
+
+  # We need word splitting on JAVA_OPTS so we need to disable SC2086
   # shellcheck disable=SC2086
   nohup \
-    java ${JAVA_OPTS} -jar "${PATH_TO_JAR}" server "${PATH_TO_CONFIG}" \
+    java ${JAVA_OPTS} \
+    -jar "${absoulte_path_to_jar}" \
+    server \
+    "${absolute_path_to_config}" \
     &> "${PATH_TO_APP_LOG}" &
 
   local stroom_pid="$!"
@@ -94,7 +108,8 @@ start_stroom() {
   echo "${stroom_pid}" > "${STROOM_PID_FILE}"
 
   # tail the log in the background
-  info "Tailing log files ${BLUE}${path_to_start_log}${NC} and ${BLUE}${PATH_TO_APP_LOG}${NC}"
+  info "Tailing log files ${BLUE}${path_to_start_log}${NC} and" \
+    "${BLUE}${PATH_TO_APP_LOG}${NC}"
   tail -F "${path_to_start_log}" "${PATH_TO_APP_LOG}" 2>/dev/null &
   local tailing_pid="$!"
 
@@ -123,11 +138,14 @@ check_or_create_pid_file() {
     else 
       if ps -p "${PID}" > /dev/null # Check if the PID is a running process
       then
-        warn "Stroom is already running (pid: ${BLUE}$PID${NC}). Use ${BLUE}restart.sh${NC} if you want to start it."
+        warn "Stroom is already running (pid: ${BLUE}$PID${NC}). Use" \
+          "{BLUE}restart.sh${NC} if you want to start it."
         # echo -e "${RED}Warning:${NC} ${GREEN}Stroom${NC} is already running (pid: ${BLUE}$PID${NC}). Use ${BLUE}restart.sh${NC} if you want to start it."
       else 
         warn "There was an instance of Stroom running but it looks like"\
-          "it wasn't stopped gracefully. You might want to check the logs. If you are certain it is not running delete the file ${BLUE}${STROOM_PID_FILE}${NC}"
+          "it wasn't stopped gracefully. You might want to check the logs." \
+          "If you are certain it is not running delete the file" \
+          "${BLUE}${STROOM_PID_FILE}${NC}"
 
         read -n1 -r -p \
           " - Would you like to start a new instance? (y/n)" start_new_instance

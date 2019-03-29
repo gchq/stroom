@@ -52,7 +52,7 @@ import java.util.function.BiConsumer;
  */
 public class StroomZipRepository {
     final static String LOCK_EXTENSION = ".lock";
-    final static String ZIP_EXTENSION = ".zip";
+    public final static String ZIP_EXTENSION = ".zip";
     private final static String ERROR_EXTENSION = ".err";
     final static String BAD_EXTENSION = ".bad";
 
@@ -75,7 +75,7 @@ public class StroomZipRepository {
     /**
      * Name of the repository while open
      */
-    private final Path baseLockDir;
+    private Path currentDir;
 
     /**
      * Final name once finished (may be null)
@@ -127,19 +127,19 @@ public class StroomZipRepository {
 
         this.lockDeleteAgeMs = lockDeleteAgeMs;
         if (lock) {
-            baseLockDir = Paths.get(dir + LOCK_EXTENSION);
+            currentDir = Paths.get(dir + LOCK_EXTENSION);
             baseResultantDir = Paths.get(dir);
             if (Files.isDirectory(baseResultantDir)) {
                 throw new RuntimeException("Rolled directory already exists " + baseResultantDir);
             }
         } else {
-            baseLockDir = Paths.get(dir);
+            currentDir = Paths.get(dir);
         }
 
         // Create the root directory
-        if (!Files.isDirectory(baseLockDir)) {
+        if (!Files.isDirectory(currentDir)) {
             try {
-                Files.createDirectories(baseLockDir);
+                Files.createDirectories(currentDir);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -152,7 +152,7 @@ public class StroomZipRepository {
             fileCount.set(max);
         });
 
-        LOGGER.debug("() - Opened REPO {} lastId = {}", baseLockDir, fileCount.get());
+        LOGGER.debug("() - Opened REPO {} lastId = {}", currentDir, fileCount.get());
     }
 
     /**
@@ -273,7 +273,7 @@ public class StroomZipRepository {
         if (baseResultantDir != null) {
             return baseResultantDir;
         }
-        return baseLockDir;
+        return currentDir;
     }
 
     synchronized void finish() {
@@ -294,8 +294,11 @@ public class StroomZipRepository {
         }
         final String filename = StroomFileNameUtil.constructFilename(fileCount.incrementAndGet(), repositoryFormat,
                 attributeMap, ZIP_EXTENSION);
-        final Path file = baseLockDir.resolve(filename);
+        final Path file = currentDir.resolve(filename);
 
+        // Check that we aren't going to clash with the directories and files made by the zip fragmentation process that is part of proxy aggregation.
+        checkPath(filename, PathConstants.PART);
+        checkPath(filename, PathConstants.PARTS);
 
         StroomZipOutputStreamImpl outputStream;
 
@@ -312,6 +315,14 @@ public class StroomZipRepository {
         return outputStream;
     }
 
+    private void checkPath(final String filename, final String forbidden) throws IOException {
+        if (filename.contains(forbidden)) {
+            final String message = "Attempt to create a forbidden path that includes '" + forbidden + "'";
+            LOGGER.error(message);
+            throw new IOException(message);
+        }
+    }
+
     private Path getErrorFile(final StroomZipFile zipFile) {
         final Path file = zipFile.getFile();
         final String fileName = file.getFileName().toString();
@@ -324,7 +335,7 @@ public class StroomZipRepository {
     }
 
     @SuppressWarnings(value = "DM_DEFAULT_ENCODING")
-    void addErrorMessage(final StroomZipFile zipFile, final String msg, final boolean bad) {
+    public void addErrorMessage(final StroomZipFile zipFile, final String msg, final boolean bad) {
         final Path file = zipFile.getFile();
 
         try {
@@ -357,8 +368,8 @@ public class StroomZipRepository {
     }
 
     void clean() {
-        LOGGER.info("clean() " + baseLockDir);
-        clean(baseLockDir);
+        LOGGER.info("clean() " + currentDir);
+        clean(currentDir);
     }
 
     private void clean(final Path path) {
@@ -424,17 +435,18 @@ public class StroomZipRepository {
     private void removeLock() {
         if (baseResultantDir != null) {
             try {
-                Files.move(baseLockDir, baseResultantDir);
+                Files.move(currentDir, baseResultantDir);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
+            currentDir = baseResultantDir;
             baseResultantDir = null;
         }
     }
 
     boolean deleteIfEmpty() {
-        if (deleteEmptyDir(baseLockDir)) {
-            LOGGER.debug("deleteIfEmpty() - Removed " + baseLockDir);
+        if (deleteEmptyDir(currentDir)) {
+            LOGGER.debug("deleteIfEmpty() - Removed " + currentDir);
 
             return baseResultantDir == null || deleteEmptyDir(baseResultantDir);
         }

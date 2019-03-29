@@ -6,10 +6,10 @@ server:
     port: 8090
   - type: https
     port: 9443
-    keyStorePath: ${HOME}/git_work/stroom-resources/dev-resources/certs/server/server.jks
+    keyStorePath: ${HOME}/work/stroom-resources/dev-resources/certs/server/server.jks
     keyStorePassword: password
     keyStoreType: JKS
-    trustStorePath: ${HOME}/git_work/stroom-resources/dev-resources/certs/server/ca.jks
+    trustStorePath: ${HOME}/work/stroom-resources/dev-resources/certs/server/ca.jks
     trustStorePassword: password
     trustStoreType: JKS
     needClientAuth: true
@@ -92,7 +92,7 @@ proxyConfig:
     forwardingEnabled: true
     forwardUrl: "http://localhost:8080/stroom/datafeed"
   proxyRepositoryConfig:
-    storingEnabled: false
+    storingEnabled: true
     repoDir: "/tmp/stroom-proxy/repo"
     repositoryFormat: "${pathId}/${id}"
     rollCron: "* * *"

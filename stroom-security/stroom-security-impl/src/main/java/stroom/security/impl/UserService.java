@@ -15,33 +15,33 @@
  *
  */
 
-package stroom.security.service;
+package stroom.security.impl;
 
 import stroom.util.shared.ProvidesNamePattern;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 
 import java.util.List;
 
 public interface UserService extends ProvidesNamePattern {
-    UserRef getUserByName(String name);
+    User createUser(String name);
 
-    List<User> find(FindUserCriteria criteria);
+    User createUserGroup(String name);
 
-    List<UserRef> findUsersInGroup(String groupUuid);
-
-    List<UserRef> findGroupsForUser(String userUuid);
-
-    UserRef createUser(String name);
-
-    UserRef createUserGroup(String name);
+    User getUserByName(String name);
 
     User loadByUuid(String uuid);
 
-    User save(User user);
+    User update(User user);
 
     Boolean delete(String userUuid);
+
+    List<User> find(FindUserCriteria criteria);
+
+    List<User> findUsersInGroup(String groupUuid);
+
+    List<User> findGroupsForUser(String userUuid);
 
     void addUserToGroup(String userUuid, String groupUuid);
 

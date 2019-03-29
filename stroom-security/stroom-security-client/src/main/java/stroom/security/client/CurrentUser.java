@@ -33,7 +33,7 @@ import stroom.security.client.api.event.RequestLogoutEvent;
 import stroom.security.shared.CheckDocumentPermissionAction;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAndPermissions;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 
 import javax.inject.Singleton;
 import java.util.Set;
@@ -44,7 +44,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     private final Provider<ClientDispatchAsync> dispatcherProvider;
     private final Provider<SplashPresenter> splashPresenterProvider;
     private final CurrentActivity currentActivity;
-    private UserRef userRef;
+    private User userRef;
     private Set<String> permissions;
 
     @Inject
@@ -70,7 +70,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     public void setUserAndPermissions(final UserAndPermissions userAndPermissions, final boolean fireUserChangedEvent) {
         clear();
         if (userAndPermissions != null) {
-            this.userRef = userAndPermissions.getUserRef();
+            this.userRef = userAndPermissions.getUser();
             this.permissions = userAndPermissions.getAppPermissionSet();
         }
 
@@ -83,7 +83,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
         }
     }
 
-    public UserRef getUserRef() {
+    public User getUser() {
         return userRef;
     }
 

@@ -9,6 +9,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDBPersistence extends AbstractCoreIntegrationTest {
-    private static final Charset CHARSET = Charset.forName("UTF-8");
+    private static final Charset CHARSET = StandardCharsets.UTF_8;
 
     @Inject
     private Persistence persistence;

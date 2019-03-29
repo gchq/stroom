@@ -1,39 +1,79 @@
 package stroom.security.shared;
 
+import stroom.docref.SharedObject;
+import stroom.util.shared.HasAuditInfo;
+
 import java.util.Objects;
 
-/**
- * TODO: Rename this first opportunity, for now it's to distinguish it from the hibernate based user.
- */
-public class User {
+public class User implements HasAuditInfo, SharedObject {
     public static final String ADMIN_USER_NAME = "admin";
 
-    // Value of a long to represent an undefined id.
-    private static final long UNDEFINED_ID = -1;
-
-    /**
-     * This is a technical key (the primary key) You should consider your own
-     * business key (e.g. string name) if required. You should not reference
-     * this key in the application code or in any screen.
-     */
-    private long id = UNDEFINED_ID;
-
+    private Integer id;
+    private Integer version;
+    private Long createTimeMs;
+    private String createUser;
+    private Long updateTimeMs;
+    private String updateUser;
     private String name;
-
     private String uuid;
 
     /**
-     * Is this user a user group or a regular user? TODO : At some point split
-     * out logon and credential details into another entity.
+     * Is this user a user group or a regular user?
      */
-    private boolean isGroup;
+    private boolean group;
 
-    public long getId() {
+    private boolean enabled = true;
+
+    public Integer getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(final Integer id) {
         this.id = id;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(final Integer version) {
+        this.version = version;
+    }
+
+    @Override
+    public Long getCreateTimeMs() {
+        return createTimeMs;
+    }
+
+    public void setCreateTimeMs(final Long createTimeMs) {
+        this.createTimeMs = createTimeMs;
+    }
+
+    @Override
+    public String getCreateUser() {
+        return createUser;
+    }
+
+    public void setCreateUser(final String createUser) {
+        this.createUser = createUser;
+    }
+
+    @Override
+    public Long getUpdateTimeMs() {
+        return updateTimeMs;
+    }
+
+    public void setUpdateTimeMs(final Long updateTimeMs) {
+        this.updateTimeMs = updateTimeMs;
+    }
+
+    @Override
+    public String getUpdateUser() {
+        return updateUser;
+    }
+
+    public void setUpdateUser(final String updateUser) {
+        this.updateUser = updateUser;
     }
 
     public String getName() {
@@ -52,39 +92,49 @@ public class User {
         this.uuid = uuid;
     }
 
-    public boolean getIsGroup() {
-        return isGroup;
+    public boolean isGroup() {
+        return group;
     }
 
-    public void setIsGroup(boolean isGroup) {
-        this.isGroup = isGroup;
+    public void setGroup(boolean group) {
+        this.group = group;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return id == user.id &&
-                isGroup == user.isGroup &&
-                Objects.equals(name, user.name) &&
-                Objects.equals(uuid, user.uuid);
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, name, uuid, isGroup);
+    public void setEnabled(final boolean enabled) {
+        this.enabled = enabled;
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("User{");
-        sb.append("id=").append(id);
-        sb.append(", name='").append(name).append('\'');
-        sb.append(", uuid='").append(uuid).append('\'');
-        sb.append(", isGroup=").append(isGroup);
-        sb.append('}');
-        return sb.toString();
+        return "User{" +
+                "id=" + id +
+                ", version=" + version +
+                ", createTimeMs=" + createTimeMs +
+                ", createUser='" + createUser + '\'' +
+                ", updateTimeMs=" + updateTimeMs +
+                ", updateUser='" + updateUser + '\'' +
+                ", name='" + name + '\'' +
+                ", uuid='" + uuid + '\'' +
+                ", group=" + group +
+                ", enabled=" + enabled +
+                '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final User user = (User) o;
+        return Objects.equals(id, user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     public static class Builder {
@@ -98,7 +148,7 @@ public class User {
             this(new User());
         }
 
-        public Builder id(final long value) {
+        public Builder id(final int value) {
             instance.setId(value);
             return this;
         }
@@ -113,8 +163,13 @@ public class User {
             return this;
         }
 
-        public Builder isGroup(final Boolean value) {
-            instance.setIsGroup(value);
+        public Builder group(final boolean value) {
+            instance.setGroup(value);
+            return this;
+        }
+
+        public Builder enabled(final boolean enabled) {
+            instance.setEnabled(enabled);
             return this;
         }
 

@@ -62,7 +62,7 @@ showUsage() {
     echo -e "e.g:   ${BLUE}$0${GREEN} -u query-123456 -i -h http://some.domain:8080 ~/req.json /api/stroom-index/v2/search"
     echo -e "${GREEN}-g${NC}:           Replace key.uuid with an auto-generated uuid using ${BLUE}uuidgen${NC}"
     echo -e "${GREEN}-u UUID${NC}:      Replace key.uuid with the user supplied UUID string"
-    echo -e "${GREEN}-r${NC}:           Reuse the key.uuid used in the last request, useful when the first request used the ${GREEN}-g${NC} swicth"
+    echo -e "${GREEN}-r${NC}:           Reuse the key.uuid used in the last request, useful when the first request used the ${GREEN}-g${NC} switch"
     echo -e "${GREEN}${NC}              The last UUID value is written to ${BLUE}${UUID_TEMP_FILE}${NC}"
     echo -e "${GREEN}-i${NC}:           Show info (uuid used, request content, file name, etc)"
     echo -e "${GREEN}-h baseUrl${NC}:   Override base URL with supplied baseUrl (e.g. \"${BLUE}http://some.domain:8080${NC}\"), the default is \"${BLUE}${urlBase}${NC}\""

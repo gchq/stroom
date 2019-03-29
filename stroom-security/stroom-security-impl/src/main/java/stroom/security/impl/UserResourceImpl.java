@@ -1,20 +1,13 @@
 package stroom.security.impl;
 
-import stroom.security.dao.UserDao;
-import stroom.security.rest.CreateDTO;
-import stroom.security.rest.UserResource;
-import stroom.security.service.UserService;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 import stroom.util.shared.StringCriteria;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class UserResourceImpl implements UserResource {
 
@@ -47,20 +40,20 @@ public class UserResourceImpl implements UserResource {
 
     @Override
     public Response findUsersInGroup(final String groupUuid) {
-        final List<UserRef> users = userService.findUsersInGroup(groupUuid);
+        final List<User> users = userService.findUsersInGroup(groupUuid);
 
         return Response.ok(users).build();
     }
 
     @Override
     public Response findGroupsForUser(final String userUuid) {
-        final List<UserRef> groups = userService.findGroupsForUser(userUuid);
+        final List<User> groups = userService.findGroupsForUser(userUuid);
         return Response.ok(groups).build();
     }
 
     @Override
     public Response create(final CreateDTO createDTO) {
-        UserRef user;
+        User user;
 
         if (null != createDTO.getGroup() && createDTO.getGroup()) {
             user = userService.createUser(createDTO.getName());

@@ -146,7 +146,6 @@ ext.libs = [
         c3p0                           : "com.mchange:c3p0:0.9.5.2",
         commons_codec                  : "commons-codec:commons-codec:1.11",
         commons_compress               : "org.apache.commons:commons-compress:1.18",
-        commons_exec                   : "org.apache.commons:commons-exec:1.3",
         commons_fileupload             : "commons-fileupload:commons-fileupload:1.3.3",
         commons_io                     : "commons-io:commons-io:2.6",
         commons_lang                   : "org.apache.commons:commons-lang3", // version controlled by DW BOM
@@ -217,7 +216,7 @@ ext.libs = [
         jooq                           : "org.jooq:jooq:$versions.jooq",
         jooq_codegen                   : "org.jooq:jooq-codegen:$versions.jooq",
         jooq_meta                      : "org.jooq:jooq-meta:$versions.jooq",
-        jose4j                         : "org.bitbucket.b_c:jose4j:0.5.5",
+        jose4j                         : "org.bitbucket.b_c:jose4j:0.6.4",
         jsinterop_annotations          : "com.google.jsinterop:jsinterop-annotations:1.0.1",
         jsr173_api                     : "javax.xml.bind:jsr173_api:1.0",
         jul_to_slf4j                   : "org.slf4j:jul-to-slf4j", // version controlled by DW BOM
@@ -259,7 +258,7 @@ ext.contentPackDownloadDir = contentPackDownloadDir
 def contentPackImportDir = "${System.properties['user.home']}/.stroom/contentPackImport/"
 ext.contentPackImportDir = contentPackImportDir
 def contentReleasesUrl = "http://github.com/gchq/stroom-content/releases/download/"
-def visualisationsContentPackVer = "v3.1.0"
+def visualisationsContentPackVer = "v3.2.1"
 def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations-dev/releases/download/${visualisationsContentPackVer}/visualisations-production-${visualisationsContentPackVer}.zip"
 
 //A set of content packs to download in the task downloadStroomContent
@@ -355,7 +354,7 @@ subprojects {
 
                 dependencySubstitution {
                     //println "Slf4j version = $dropwizardBomSlf4jVersion"
-                    substitute module('log4j:log4j') with module("org.slf4j:log4j-over-slf4j:$dropwizardBomSlf4jVersion")
+                    substitute module('log4j:log4j') with module("org.slf4j:log4j-over-slf4j:1.7.25")
                 }
 
                 // Stop stroom libs from dragging in a different version of dropwizard

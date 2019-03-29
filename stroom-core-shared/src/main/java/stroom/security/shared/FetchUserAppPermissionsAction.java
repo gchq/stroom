@@ -21,17 +21,17 @@ import stroom.task.shared.Action;
 public class FetchUserAppPermissionsAction extends Action<UserAppPermissions> {
     private static final long serialVersionUID = -6740095230475597845L;
 
-    private UserRef userRef;
+    private User userRef;
 
     public FetchUserAppPermissionsAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchUserAppPermissionsAction(final UserRef userRef) {
+    public FetchUserAppPermissionsAction(final User userRef) {
         this.userRef = userRef;
     }
 
-    public UserRef getUserRef() {
+    public User getUser() {
         return userRef;
     }
 

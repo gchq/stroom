@@ -9,12 +9,13 @@ import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import stroom.docref.DocRef;
-import stroom.security.dao.DocumentPermissionDao;
-import stroom.security.dao.UserDao;
+import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.TestModule;
+import stroom.security.impl.UserDao;
 import stroom.security.impl.db.jooq.Stroom;
 import stroom.security.shared.DocumentPermissionJooq;
 import stroom.security.shared.User;
+import stroom.util.AuditUtil;
 
 import java.util.Optional;
 import java.util.Set;
@@ -58,6 +59,15 @@ class DocPermissionDaoImplTest {
         assertThrows(SecurityException.class, () -> documentPermissionDao.addPermission(docRef.getUuid(), userUuid, "USE"));
     }
 
+    private User createUser(final String name) {
+        User user = new User.Builder()
+                .name(name)
+                .uuid(UUID.randomUUID().toString())
+                .build();
+        AuditUtil.stamp("test", user);
+        return userDao.create(user);
+    }
+
     @Test
     void testDocPermissions() {
         final String userName1 = String.format("SomePerson_1_%s", UUID.randomUUID());
@@ -66,9 +76,9 @@ class DocPermissionDaoImplTest {
         final DocRef docRef1 = createTestDocRef();
         final DocRef docRef2 = createTestDocRef();
 
-        final User user1 = userDao.createUser(userName1);
-        final User user2 = userDao.createUser(userName2);
-        final User user3 = userDao.createUser(userName3);
+        final User user1 = createUser(userName1);
+        final User user2 = createUser(userName2);
+        final User user3 = createUser(userName3);
 
         // Create permissions for multiple documents to check that document selection is working correctly
         Stream.of(docRef1, docRef2).map(DocRef::getUuid).forEach(dUuid -> {
@@ -128,7 +138,7 @@ class DocPermissionDaoImplTest {
         final DocRef docRef1 = createTestDocRef();
         final DocRef docRef2 = createTestDocRef();
 
-        final User user1 = userDao.createUser(userName1);
+        final User user1 = createUser(userName1);
 
         // Create permissions for multiple documents to check that document selection is working correctly
         Stream.of(docRef1, docRef2).map(DocRef::getUuid).forEach(dUuid -> {

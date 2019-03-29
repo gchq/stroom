@@ -29,11 +29,6 @@ public class DocumentServiceWriteAction<D extends SharedObject> extends Abstract
         // Default constructor necessary for GWT serialisation.
     }
 
-    @SuppressWarnings("unchecked")
-    public DocumentServiceWriteAction(final Entity entity) {
-        this(DocRefUtil.create(entity), (D) entity);
-    }
-
     public DocumentServiceWriteAction(final DocRef docRef, final D document) {
         super(docRef, "Write: " + docRef);
         this.document = document;

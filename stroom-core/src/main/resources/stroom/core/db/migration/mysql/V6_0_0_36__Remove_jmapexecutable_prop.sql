@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,5 @@
  * limitations under the License.
  */
 
-package stroom.security.impl;
-
-import stroom.security.shared.User;
-import stroom.security.shared.UserRef;
-
-public final class UserRefFactory {
-    private UserRefFactory() {
-        // Factory class.
-    }
-
-    public static UserRef create(final User user) {
-        if (user == null) {
-            return null;
-        }
-
-        final String type = "User";
-        final String uuid = user.getUuid();
-        final String name = user.getName();
-
-        return new UserRef(type, uuid, name, user.getIsGroup(), true);
-    }
-}
+-- No longer use the jmap executable so this prop needs to be removed.
+DELETE FROM GLOB_PROP WHERE NAME = 'stroom.node.status.heapHistogram.jMapExecutable';

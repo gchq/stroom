@@ -2,7 +2,7 @@ package stroom.security.impl;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 import stroom.util.RestResource;
 
 import javax.inject.Inject;
@@ -46,7 +46,7 @@ public class SessionResource implements RestResource {
         // TODO : We need to lookup the auth session in our user sessions
 
         final HttpSession session = SessionMap.getSession(authSessionId);
-        final UserRef userRef = UserRefSessionUtil.get(session);
+        final User userRef = UserSessionUtil.get(session);
         if (session != null) {
             // Invalidate the current user session
             session.invalidate();

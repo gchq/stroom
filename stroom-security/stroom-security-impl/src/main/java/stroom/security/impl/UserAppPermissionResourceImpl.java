@@ -1,8 +1,5 @@
 package stroom.security.impl;
 
-import stroom.security.rest.UserAppPermissionResource;
-import stroom.security.service.UserAppPermissionService;
-
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.util.Set;

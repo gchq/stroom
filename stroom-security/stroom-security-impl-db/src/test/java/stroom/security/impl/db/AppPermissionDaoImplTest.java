@@ -8,11 +8,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
-import stroom.security.dao.AppPermissionDao;
-import stroom.security.dao.UserDao;
+import stroom.security.impl.AppPermissionDao;
+import stroom.security.impl.UserDao;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.db.jooq.Stroom;
 import stroom.security.shared.User;
+import stroom.util.AuditUtil;
 
 import java.util.Optional;
 import java.util.Set;
@@ -57,7 +58,7 @@ class AppPermissionDaoImplTest {
     void testPermissionStory() {
         final String userName = String.format("SomePerson_%s", UUID.randomUUID());
 
-        final User user = userDao.createUser(userName);
+        final User user = createUser(userName);
         appPermissionDao.addPermission(user.getUuid(), PERMISSION_NAME_1);
         appPermissionDao.addPermission(user.getUuid(), PERMISSION_NAME_2);
 
@@ -73,5 +74,14 @@ class AppPermissionDaoImplTest {
     static void afterAll() {
         LOGGER.info(() -> "After All - Stop Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::stop);
+    }
+
+    private User createUser(final String name) {
+        User user = new User.Builder()
+                .name(name)
+                .uuid(UUID.randomUUID().toString())
+                .build();
+        AuditUtil.stamp("test", user);
+        return userDao.create(user);
     }
 }

@@ -16,20 +16,29 @@
 
 package stroom.task.shared;
 
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
+import java.util.Objects;
 
 public class ThreadPoolImpl implements ThreadPool {
     private final String name;
     private final int priority;
     private final int corePoolSize;
     private final int maxPoolSize;
+    private final int maxQueueSize;
 
     public ThreadPoolImpl(final String name, final int priority, final int corePoolSize, final int maxPoolSize) {
         this.name = name;
         this.priority = priority;
         this.corePoolSize = corePoolSize;
         this.maxPoolSize = maxPoolSize;
+        this.maxQueueSize = Integer.MAX_VALUE;
+    }
+
+    public ThreadPoolImpl(final String name, final int priority, final int corePoolSize, final int maxPoolSize, final int maxQueueSize) {
+        this.name = name;
+        this.priority = priority;
+        this.corePoolSize = corePoolSize;
+        this.maxPoolSize = maxPoolSize;
+        this.maxQueueSize = maxQueueSize;
     }
 
     @Override
@@ -53,31 +62,25 @@ public class ThreadPoolImpl implements ThreadPool {
     }
 
     @Override
-    public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(name);
-        builder.append(priority);
-        builder.append(corePoolSize);
-        builder.append(maxPoolSize);
-        return builder.toHashCode();
+    public int getMaxQueueSize() {
+        return maxQueueSize;
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (!(obj instanceof ThreadPoolImpl)) {
-            return false;
-        }
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ThreadPoolImpl that = (ThreadPoolImpl) o;
+        return priority == that.priority &&
+                corePoolSize == that.corePoolSize &&
+                maxPoolSize == that.maxPoolSize &&
+                maxQueueSize == that.maxQueueSize &&
+                Objects.equals(name, that.name);
+    }
 
-        final ThreadPoolImpl threadPoolImpl = (ThreadPoolImpl) obj;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(threadPoolImpl.name, name);
-        builder.append(threadPoolImpl.priority, priority);
-        builder.append(threadPoolImpl.corePoolSize, corePoolSize);
-        builder.append(threadPoolImpl.maxPoolSize, maxPoolSize);
-        return builder.isEquals();
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, priority, corePoolSize, maxPoolSize, maxQueueSize);
     }
 
     @Override

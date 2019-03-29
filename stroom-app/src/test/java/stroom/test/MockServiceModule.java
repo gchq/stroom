@@ -3,21 +3,19 @@ package stroom.test;
 import com.google.inject.AbstractModule;
 import org.mockito.stubbing.Answer;
 import stroom.cache.impl.CacheModule;
+import stroom.core.dataprocess.PipelineStreamTaskModule;
 import stroom.data.store.impl.mock.MockStreamStoreModule;
+import stroom.dictionary.impl.MockDictionaryModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.MockFeedModule;
-import stroom.meta.impl.mock.MockMetaModule;
-import stroom.core.dataprocess.PipelineStreamTaskModule;
-import stroom.dictionary.impl.MockDictionaryModule;
 import stroom.importexport.impl.ImportExportModule;
+import stroom.meta.impl.mock.MockMetaModule;
 import stroom.node.impl.mock.MockNodeServiceModule;
 import stroom.pipeline.xmlschema.MockXmlSchemaModule;
 import stroom.processor.impl.MockProcessorModule;
 import stroom.resource.impl.MockResourceModule;
-import stroom.security.impl.UserRefFactory;
-import stroom.security.service.UserService;
+import stroom.security.impl.UserService;
 import stroom.security.shared.User;
-import stroom.security.shared.UserRef;
 import stroom.task.impl.MockTaskModule;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 
@@ -78,22 +76,22 @@ public class MockServiceModule extends AbstractModule {
             }
             return null;
         });
-        when(mockUserService.createUser(any())).then((Answer<UserRef>) invocation -> {
+        when(mockUserService.createUser(any())).then((Answer<User>) invocation -> {
             final String name = invocation.getArgument(0);
             final User user = new User.Builder()
                     .uuid(UUID.randomUUID().toString())
                     .name(name)
                     .build();
-            return UserRefFactory.create(mockUserService.save(user));
+            return mockUserService.update(user);
         });
-        when(mockUserService.createUserGroup(any())).then((Answer<UserRef>) invocation -> {
+        when(mockUserService.createUserGroup(any())).then((Answer<User>) invocation -> {
             final String name = invocation.getArgument(0);
             final User user = new User.Builder()
                     .uuid(UUID.randomUUID().toString())
                     .name(name)
-                    .isGroup(true)
+                    .group(true)
                     .build();
-            return UserRefFactory.create(mockUserService.save(user));
+            return mockUserService.update(user);
         });
         bind(UserService.class).toInstance(mockUserService);
     }

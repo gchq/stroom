@@ -74,7 +74,7 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
         if (proxyFactory == null) {
             // In Stroom when we talk to individual nodes in the cluster they present a certificate. For ease of
             // configuration with multiple nodes the certificate is often that of an alias. E.g. A server might
-            // present stroom.some.domain.co.uk. If the name of this alias is different from the actual host that
+            // present stroom.some.server.domain.co.uk. If the name of this alias is different from the actual host that
             // is talking to us we would need to ignore verification of host names against the certificate and just
             // check that the certificate is OK.
             //
@@ -147,14 +147,16 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
             try {
                 result = api.call(sourceNode, targetNode, serviceName, methodName, parameterTypes, args);
             } catch (final HessianRuntimeException e) {
+                final String details = getCallDetails(sourceNode, targetNode, serviceName, methodName, args);
                 if (e.getCause() != null && e.getCause() instanceof ConnectException) {
-                    LOGGER.error("Unable to connect to '" + nodeService.getClusterUrl(targetNode) + "' " + e.getCause().getMessage());
+                    LOGGER.error("Unable to connect to '" + targetNode + "' " + e.getCause().getMessage() + details);
                 } else {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.error(e.getMessage() + details, e);
                 }
                 throw e;
             } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
+                final String details = getCallDetails(sourceNode, targetNode, serviceName, methodName, args);
+                LOGGER.error(e.getMessage() + details, e);
                 throw e;
             }
         }
@@ -165,13 +167,64 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
                 api = "remote";
             }
 
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(ClusterCallUtil.logString("call() - " + api, sourceNode, targetNode, serviceName, methodName,
-                        logExecutionTime.getDuration()));
-            }
+            LOGGER.debug(ClusterCallUtil.logString("call() - " + api, sourceNode, targetNode, serviceName, methodName,
+                    logExecutionTime.getDuration()));
         }
 
         return result;
+    }
 
+    private String getCallDetails(final String sourceNodeName,
+                                  final String targetNodeName,
+                                  final ServiceName serviceName,
+                                  final String methodName,
+                                  final Object[] args) {
+        final StringBuilder sb = new StringBuilder();
+        try {
+            if (sourceNodeName != null) {
+                sb.append("\n\tsourceNode: ");
+                sb.append(sourceNodeName);
+            }
+            if (targetNodeName != null) {
+                sb.append("\n\ttargetNode: ");
+                sb.append(targetNodeName);
+            }
+            if (serviceName != null) {
+                sb.append("\n\tserviceName: ");
+                sb.append(serviceName);
+            }
+            if (methodName != null) {
+                sb.append("\n\tmethodName: ");
+                sb.append(methodName);
+            }
+            if (args != null) {
+                sb.append("\n\targs: ");
+                sb.append(getArgsString(args));
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return sb.toString();
+    }
+
+    private String getArgsString(final Object[] args) {
+        final StringBuilder sb = new StringBuilder();
+        for (final Object arg : args) {
+            if (arg == null) {
+                sb.append("null, ");
+            } else {
+                try {
+                    sb.append(arg.toString());
+                    sb.append(", ");
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Error appending arg for: " + arg.getClass().getSimpleName(), e);
+                }
+            }
+        }
+
+        if (sb.length() > 2) {
+            sb.setLength(sb.length() - 2);
+        }
+        return sb.toString();
     }
 }

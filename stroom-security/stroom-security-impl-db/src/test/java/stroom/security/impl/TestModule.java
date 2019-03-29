@@ -12,9 +12,6 @@ import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.db.SecurityDbConfig;
 import stroom.security.impl.db.SecurityDbModule;
-import stroom.security.service.DocumentPermissionService;
-import stroom.security.service.UserAppPermissionService;
-import stroom.security.service.UserService;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

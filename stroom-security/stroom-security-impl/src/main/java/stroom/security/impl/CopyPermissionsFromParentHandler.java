@@ -1,7 +1,6 @@
 package stroom.security.impl;
 
 import stroom.docref.DocRef;
-import stroom.security.service.DocumentPermissionService;
 import stroom.util.shared.EntityServiceException;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;

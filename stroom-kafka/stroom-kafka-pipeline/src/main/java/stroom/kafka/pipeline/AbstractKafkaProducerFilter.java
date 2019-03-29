@@ -57,6 +57,8 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
 
     @Override
     public void startProcessing() {
+        super.startProcessing();
+
         if (kafkaConfigRef == null) {
             throw new ProcessException("No Kafka config has been specified");
         }

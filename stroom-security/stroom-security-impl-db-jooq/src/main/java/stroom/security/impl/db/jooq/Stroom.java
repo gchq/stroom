@@ -17,7 +17,7 @@ import org.jooq.impl.SchemaImpl;
 import stroom.security.impl.db.jooq.tables.AppPermission;
 import stroom.security.impl.db.jooq.tables.DocPermission;
 import stroom.security.impl.db.jooq.tables.StroomUser;
-import stroom.security.impl.db.jooq.tables.StroomUserGroups;
+import stroom.security.impl.db.jooq.tables.StroomUserGroup;
 
 
 /**
@@ -33,7 +33,7 @@ import stroom.security.impl.db.jooq.tables.StroomUserGroups;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = 1989740948;
+    private static final long serialVersionUID = 709076052;
 
     /**
      * The reference instance of <code>stroom</code>
@@ -56,9 +56,9 @@ public class Stroom extends SchemaImpl {
     public final StroomUser STROOM_USER = stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
 
     /**
-     * The table <code>stroom.stroom_user_groups</code>.
+     * The table <code>stroom.stroom_user_group</code>.
      */
-    public final StroomUserGroups STROOM_USER_GROUPS = stroom.security.impl.db.jooq.tables.StroomUserGroups.STROOM_USER_GROUPS;
+    public final StroomUserGroup STROOM_USER_GROUP = stroom.security.impl.db.jooq.tables.StroomUserGroup.STROOM_USER_GROUP;
 
     /**
      * No further instances allowed
@@ -88,6 +88,6 @@ public class Stroom extends SchemaImpl {
             AppPermission.APP_PERMISSION,
             DocPermission.DOC_PERMISSION,
             StroomUser.STROOM_USER,
-            StroomUserGroups.STROOM_USER_GROUPS);
+            StroomUserGroup.STROOM_USER_GROUP);
     }
 }

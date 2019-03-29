@@ -49,7 +49,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ExtractionTaskProducer extends AbstractTaskProducer implements TaskProducer, Comparable<ExtractionTaskProducer> {
+public class ExtractionTaskProducer extends AbstractTaskProducer implements TaskProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskProducer.class);
 
     public static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
@@ -321,8 +321,22 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
     }
 
     @Override
-    public int compareTo(final ExtractionTaskProducer o) {
-        return Long.compare(now, o.now);
+    public int compareTo(final TaskProducer o) {
+        return Long.compare(now, ((ExtractionTaskProducer) o).now);
+    }
+
+    @Override
+    public String toString() {
+        final int total = tasksTotal.get();
+        final int completed = tasksCompleted.get();
+        return getClass().getSimpleName() +
+                " (remaining=" +
+                (total - completed) +
+                ", completed=" +
+                completed +
+                ", total=" +
+                total +
+                ")";
     }
 
     private static class ExtractionRunnable implements Runnable {

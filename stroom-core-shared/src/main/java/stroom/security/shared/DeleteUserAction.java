@@ -20,16 +20,16 @@ import stroom.task.shared.Action;
 import stroom.util.shared.VoidResult;
 
 public class DeleteUserAction extends Action<VoidResult> {
-    private UserRef userRef;
+    private User userRef;
 
     public DeleteUserAction() {
     }
 
-    public DeleteUserAction(final UserRef userRef) {
+    public DeleteUserAction(final User userRef) {
         this.userRef = userRef;
     }
 
-    public UserRef getUserRef() {
+    public User getUser() {
         return userRef;
     }
 

@@ -26,6 +26,7 @@ import stroom.dashboard.impl.vis.VisSettings.Control;
 import stroom.dashboard.impl.vis.VisSettings.Nest;
 import stroom.dashboard.impl.vis.VisSettings.Structure;
 import stroom.dashboard.impl.vis.VisSettings.Tab;
+import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DateTimeFormatSettings;
@@ -40,8 +41,8 @@ import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.TimeZone;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
-import stroom.query.api.v2.DateTimeFormat;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.DateTimeFormat;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.NumberFormat;
 import stroom.query.api.v2.Param;
@@ -53,7 +54,6 @@ import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.util.shared.OffsetRange;
-import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.inject.Inject;
@@ -538,18 +538,20 @@ public class SearchRequestMapper {
 
         Boolean enabled = settingResolver.resolveBoolean(sort.getEnabled());
         if (enabled != null && enabled) {
-            SortDirection direction = SortDirection.ASCENDING;
-
             String dir = settingResolver.resolveString(sort.getDirection());
+
             if (dir != null) {
-                if (dir.equalsIgnoreCase(SortDirection.DESCENDING.getDisplayValue())) {
+                final SortDirection direction;
+                if (dir.equalsIgnoreCase(SortDirection.ASCENDING.getDisplayValue())) {
+                    direction = SortDirection.ASCENDING;
+                } else if (dir.equalsIgnoreCase(SortDirection.DESCENDING.getDisplayValue())) {
                     direction = SortDirection.DESCENDING;
+                } else {
+                    return null;
                 }
+                return new stroom.query.api.v2.Sort(settingResolver.resolveInteger(sort.getPriority()), direction);
             }
-
-            return new stroom.query.api.v2.Sort(settingResolver.resolveInteger(sort.getPriority()), direction);
         }
-
         return null;
     }
 

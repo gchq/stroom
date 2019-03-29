@@ -1,4 +1,4 @@
-package stroom.security.rest;
+package stroom.security.impl;
 
 import io.swagger.annotations.Api;
 import stroom.util.RestResource;
@@ -22,7 +22,7 @@ import javax.ws.rs.core.Response;
 public interface UserResource extends RestResource {
     @GET
     Response get(@QueryParam("name") String name,
-                 @QueryParam("isGroup") Boolean isGroup,
+                 @QueryParam("group") Boolean isGroup,
                  @QueryParam("uuid") String uuid);
 
     @GET

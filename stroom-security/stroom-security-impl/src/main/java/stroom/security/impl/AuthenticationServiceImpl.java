@@ -19,11 +19,9 @@ package stroom.security.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.api.Security;
-import stroom.security.service.UserAppPermissionService;
-import stroom.security.service.UserService;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 import stroom.security.util.UserTokenUtil;
 
 import javax.inject.Inject;
@@ -52,7 +50,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public UserRef getUserRef(final AuthenticationToken token) {
+    public User getUser(final AuthenticationToken token) {
         if (token == null || token.getUserId() == null || token.getUserId().trim().length() == 0) {
             return null;
         }
@@ -61,7 +59,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
         // The first one will succeed, but the others may clash. So we retrieve/create the user
         // in a loop to allow the failures caused by the race to be absorbed without failure
         int attempts = 0;
-        UserRef userRef = null;
+        User userRef = null;
 
         while (userRef == null) {
             userRef = loadUserByUsername(token.getUserId());
@@ -91,8 +89,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
         return userRef;
     }
 
-    private UserRef loadUserByUsername(final String username) {
-        UserRef userRef;
+    private User loadUserByUsername(final String username) {
+        User userRef;
 
         try {
             userRef = userService.getUserByName(username);
@@ -111,13 +109,13 @@ class AuthenticationServiceImpl implements AuthenticationService {
         return userRef;
     }
 
-    private UserRef createOrRefreshUser(String name) {
+    private User createOrRefreshUser(String name) {
         return security.asProcessingUserResult(() -> {
-            UserRef userRef = userService.getUserByName(name);
+            User userRef = userService.getUserByName(name);
             if (userRef == null) {
                 userRef = userService.createUser(name);
 
-                final UserRef userGroup = createOrRefreshAdminUserGroup();
+                final User userGroup = createOrRefreshAdminUserGroup();
                 try {
                     userService.addUserToGroup(userRef.getUuid(), userGroup.getUuid());
                 } catch (final RuntimeException e) {
@@ -135,18 +133,18 @@ class AuthenticationServiceImpl implements AuthenticationService {
      *
      * @return the full admin user group
      */
-    private UserRef createOrRefreshAdminUserGroup() {
+    private User createOrRefreshAdminUserGroup() {
         return createOrRefreshAdminUserGroup(ADMINISTRATORS);
     }
 
-    private UserRef createOrRefreshAdminUserGroup(final String userGroupName) {
+    private User createOrRefreshAdminUserGroup(final String userGroupName) {
         return security.asProcessingUserResult(() -> {
-            final UserRef existing = userService.getUserByName(userGroupName);
+            final User existing = userService.getUserByName(userGroupName);
             if (existing != null) {
                 return existing;
             }
 
-            final UserRef newUserGroup = userService.createUserGroup(userGroupName);
+            final User newUserGroup = userService.createUserGroup(userGroupName);
             try {
                 userAppPermissionService.addPermission(newUserGroup.getUuid(), PermissionNames.ADMINISTRATOR);
             } catch (final RuntimeException e) {

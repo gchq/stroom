@@ -18,7 +18,7 @@ package stroom.security.shared;
 
 import stroom.task.shared.Action;
 
-public class CreateUserAction extends Action<UserRef> {
+public class CreateUserAction extends Action<User> {
     private String name;
     private boolean group;
 

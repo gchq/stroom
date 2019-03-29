@@ -41,7 +41,7 @@ import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class StroomUser extends TableImpl<StroomUserRecord> {
 
-    private static final long serialVersionUID = -741340484;
+    private static final long serialVersionUID = 1957137556;
 
     /**
      * The reference instance of <code>stroom.stroom_user</code>
@@ -59,7 +59,32 @@ public class StroomUser extends TableImpl<StroomUserRecord> {
     /**
      * The column <code>stroom.stroom_user.id</code>.
      */
-    public final TableField<StroomUserRecord, Long> ID = createField("id", org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<StroomUserRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+
+    /**
+     * The column <code>stroom.stroom_user.version</code>.
+     */
+    public final TableField<StroomUserRecord, Integer> VERSION = createField("version", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.stroom_user.create_time_ms</code>.
+     */
+    public final TableField<StroomUserRecord, Long> CREATE_TIME_MS = createField("create_time_ms", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.stroom_user.create_user</code>.
+     */
+    public final TableField<StroomUserRecord, String> CREATE_USER = createField("create_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.stroom_user.update_time_ms</code>.
+     */
+    public final TableField<StroomUserRecord, Long> UPDATE_TIME_MS = createField("update_time_ms", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.stroom_user.update_user</code>.
+     */
+    public final TableField<StroomUserRecord, String> UPDATE_USER = createField("update_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.stroom_user.name</code>.
@@ -75,6 +100,11 @@ public class StroomUser extends TableImpl<StroomUserRecord> {
      * The column <code>stroom.stroom_user.is_group</code>.
      */
     public final TableField<StroomUserRecord, Boolean> IS_GROUP = createField("is_group", org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.stroom_user.enabled</code>.
+     */
+    public final TableField<StroomUserRecord, Boolean> ENABLED = createField("enabled", org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
 
     /**
      * Create a <code>stroom.stroom_user</code> table reference
@@ -122,14 +152,14 @@ public class StroomUser extends TableImpl<StroomUserRecord> {
      */
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.STROOM_USER_NAME, Indexes.STROOM_USER_PRIMARY, Indexes.STROOM_USER_USR_UUID_INDEX);
+        return Arrays.<Index>asList(Indexes.STROOM_USER_NAME, Indexes.STROOM_USER_PRIMARY, Indexes.STROOM_USER_STROOM_USER_UUID_INDEX);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Identity<StroomUserRecord, Long> getIdentity() {
+    public Identity<StroomUserRecord, Integer> getIdentity() {
         return Keys.IDENTITY_STROOM_USER;
     }
 
@@ -146,7 +176,15 @@ public class StroomUser extends TableImpl<StroomUserRecord> {
      */
     @Override
     public List<UniqueKey<StroomUserRecord>> getKeys() {
-        return Arrays.<UniqueKey<StroomUserRecord>>asList(Keys.KEY_STROOM_USER_PRIMARY, Keys.KEY_STROOM_USER_NAME, Keys.KEY_STROOM_USER_USR_UUID_INDEX);
+        return Arrays.<UniqueKey<StroomUserRecord>>asList(Keys.KEY_STROOM_USER_PRIMARY, Keys.KEY_STROOM_USER_NAME, Keys.KEY_STROOM_USER_STROOM_USER_UUID_INDEX);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public TableField<StroomUserRecord, Integer> getRecordVersion() {
+        return VERSION;
     }
 
     /**

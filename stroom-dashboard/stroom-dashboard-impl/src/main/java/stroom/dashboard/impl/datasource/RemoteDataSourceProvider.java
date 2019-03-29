@@ -22,11 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
-import stroom.util.shared.PermissionException;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.PermissionException;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.client.Client;
@@ -84,7 +85,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
                        String path,
                        final Class<T> responseClass) {
         try {
-            LOGGER.trace("Sending request {} to {}", request, path);
+            LOGGER.trace("Sending request {} to {}/{}", request, url, path);
             Client client = ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
             WebTarget webTarget = client.target(url).path(path);
 
@@ -111,13 +112,17 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
                     }
                     throw new PermissionException(securityContext.getUserId(),msg.toString());
                 default:
-                    throw new RuntimeException(String.format("Error %s sending request %s to %s: %s",
-                            response.getStatus(), request, webTarget.getUri(), response.getStatusInfo().getReasonPhrase()));
+                    throw new RuntimeException(LogUtil.message("Error {} sending request {} to {}: {}",
+                            response.getStatus(),
+                            request,
+                            webTarget.getUri(),
+                            response.getStatusInfo().getReasonPhrase()));
             }
 
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(String.format("Error sending request %s to %s", request, path), e);
+            throw new RuntimeException(LogUtil.message("Error sending request {} to {}/{}",
+                    request, url, path), e);
         }
     }
 

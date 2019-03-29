@@ -18,13 +18,14 @@ package stroom.search.taskqueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.thread.StroomThreadGroup;
 import stroom.util.thread.CustomThreadFactory;
+import stroom.util.thread.StroomThreadGroup;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
@@ -67,7 +68,20 @@ public abstract class TaskExecutor {
                     try {
                         Runnable task = execNextTask();
                         if (task == null) {
-                            condition.await();
+                            final boolean didWait = condition.await(10, TimeUnit.SECONDS);
+
+                            // If we didn't get any new work to do after a minute then output some debug so we can check
+                            // the task producer signalling code is working correctly.
+                            if (LOGGER.isDebugEnabled()) {
+                                try {
+                                    if (!didWait) {
+                                        LOGGER.debug(getDebugMessage());
+                                    }
+                                } catch (final RuntimeException e) {
+                                    LOGGER.trace(e.getMessage(), e);
+                                }
+                            }
+
                         }
                     } catch (final InterruptedException e) {
                         // Clear the interrupt state.
@@ -80,6 +94,19 @@ public abstract class TaskExecutor {
                 }
             });
         }
+    }
+
+    private String getDebugMessage() {
+        final StringBuilder sb = new StringBuilder("Timeout waiting for:");
+
+        for (final TaskProducer producer : producers) {
+            if (producer != null) {
+                sb.append("\n\t");
+                sb.append(producer);
+            }
+        }
+
+        return sb.toString();
     }
 
     private synchronized void stop() {

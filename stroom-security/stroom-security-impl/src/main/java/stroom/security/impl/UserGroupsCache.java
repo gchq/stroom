@@ -19,15 +19,14 @@ package stroom.security.impl;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import stroom.docref.DocRef;
-import stroom.entity.shared.EntityEvent;
-import stroom.entity.shared.EntityEventBus;
-import stroom.security.service.UserService;
-import stroom.util.shared.Clearable;
-import stroom.entity.shared.EntityAction;
-import stroom.security.shared.UserRef;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
+import stroom.docref.DocRef;
+import stroom.entity.shared.EntityAction;
+import stroom.entity.shared.EntityEvent;
+import stroom.entity.shared.EntityEventBus;
+import stroom.security.shared.User;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -36,7 +35,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-// Should observe events
 class UserGroupsCache implements EntityEvent.Handler, Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
@@ -58,14 +56,14 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
     }
 
     @SuppressWarnings("unchecked")
-    List<UserRef> get(final String userUuid) {
+    List<User> get(final String userUuid) {
         return cache.getUnchecked(userUuid);
     }
 
-    void remove(final UserRef userRef) {
-        cache.invalidate(userRef);
+    void remove(final User user) {
+        cache.invalidate(user.getUuid());
         final EntityEventBus entityEventBus = eventBusProvider.get();
-        EntityEvent.fire(entityEventBus, userRef, EntityAction.CLEAR_CACHE);
+        EntityEvent.fire(entityEventBus, DocRefUtil.create(user), EntityAction.CLEAR_CACHE);
     }
 
     @Override
@@ -76,14 +74,8 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
     @Override
     public void onChange(final EntityEvent event) {
         final DocRef docRef = event.getDocRef();
-        if (docRef != null) {
-            if (docRef instanceof UserRef) {
-                UserRef userRef = (UserRef) docRef;
-                cache.invalidate(userRef);
-            } else {
-                final UserRef userRef = new UserRef(docRef.getType(), docRef.getUuid(), docRef.getName(), false, false);
-                cache.invalidate(userRef);
-            }
+        if (docRef != null && docRef.getType().equals(DocRefUtil.USER)) {
+            cache.invalidate(docRef.getUuid());
         }
     }
 }

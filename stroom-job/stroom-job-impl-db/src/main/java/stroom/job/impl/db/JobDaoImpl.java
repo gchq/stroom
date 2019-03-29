@@ -19,7 +19,7 @@ package stroom.job.impl.db;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
-import stroom.db.util.AuditUtil;
+import stroom.util.AuditUtil;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.job.impl.JobDao;

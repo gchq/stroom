@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
 import stroom.security.api.Security;
 import stroom.security.impl.exception.AuthenticationException;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 import stroom.security.shared.UserToken;
 import stroom.security.util.UserTokenUtil;
 import stroom.ui.config.shared.UiConfig;
@@ -138,13 +138,14 @@ class SecurityFilter implements Filter {
             final boolean isApiRequest = servletPath.contains("/api");
             final boolean isDatafeedRequest = servletPath.contains("/datafeed");
             final boolean isClusterCallRequest = servletPath.contains("clustercall.rpc");
+            final boolean isDispatchRequest = servletPath.contains("dispatch.rpc");
 
             if (isApiRequest) {
                 if (!config.isAuthenticationRequired()) {
                     bypassAuthentication(request, response, chain, false);
                 } else {
                     // Authenticate requests to the API.
-                    final UserRef userRef = loginAPI(request, response);
+                    final User userRef = loginAPI(request, response);
 
                     final String sessionId = Optional.ofNullable(request.getSession(false))
                             .map(HttpSession::getId)
@@ -161,7 +162,7 @@ class SecurityFilter implements Filter {
                 // Authenticate requests from the UI.
 
                 // Try and get an existing user ref from the session.
-                final UserRef userRef = UserRefSessionUtil.get(request.getSession(false));
+                final User userRef = UserSessionUtil.get(request.getSession(false));
                 if (userRef != null) {
                     final String sessionId = Optional.ofNullable(request.getSession(false))
                             .map(HttpSession::getId)
@@ -179,7 +180,13 @@ class SecurityFilter implements Filter {
                     final boolean loggedIn = loginUI(request, response);
 
                     // If we're not logged in we need to start an AuthenticationRequest flow.
-                    if (!loggedIn) {
+                    // If this is a dispatch request then we won't try and log in. This avoids a race-condition:
+                    //   1. User logs out and a new authentication flow is started
+                    //   2. Before the browser is redirected GWT makes a dispatch.rpc request
+                    //   3. This request, not being logged in, starts a new authentication flow
+                    //   4. This new authentication flow partially over-writes the relying party data in auth.
+                    // This would manifest as a bad redirect_url, one which contains 'dispatch.rpc'.
+                    if (!loggedIn && !isDispatchRequest) {
                         // We were unable to login so we're going to redirect with an AuthenticationRequest.
                         redirectToAuthService(request, response);
                     }
@@ -190,14 +197,14 @@ class SecurityFilter implements Filter {
 
     private void bypassAuthentication(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain, final boolean useSession) throws IOException, ServletException {
         final AuthenticationToken token = new AuthenticationToken("admin", null);
-        final UserRef userRef = security.asProcessingUserResult(() -> authenticationService.getUserRef(token));
+        final User userRef = security.asProcessingUserResult(() -> authenticationService.getUser(token));
         if (userRef != null) {
             HttpSession session;
             if (useSession) {
                 session = request.getSession(true);
 
                 // Set the user ref in the session.
-                UserRefSessionUtil.set(session, userRef);
+                UserSessionUtil.set(session, userRef);
 
             } else {
                 session = request.getSession(false);
@@ -216,7 +223,7 @@ class SecurityFilter implements Filter {
                                 final HttpServletResponse response,
                                 final FilterChain chain,
                                 final UserToken userToken,
-                                final UserRef userRef)
+                                final User userRef)
             throws IOException, ServletException {
         if (userRef != null) {
             // If the session already has a reference to a user then continue the chain as that user.
@@ -243,7 +250,7 @@ class SecurityFilter implements Filter {
             LOGGER.debug("We have the following state: {{}}", stateId);
 
             // Check the state is one we requested.
-            final AuthenticationState state = AuthenticationStateSessionUtil.pop(request);
+            final AuthenticationState state = AuthenticationStateSessionUtil.pop(request, stateId);
             if (state == null) {
                 LOGGER.warn("Unexpected state: " + stateId);
 
@@ -253,11 +260,11 @@ class SecurityFilter implements Filter {
                 if (accessCode != null) {
                     LOGGER.debug("We have the following access code: {{}}", accessCode);
                     final AuthenticationToken token = createUIToken(request, state, accessCode);
-                    final UserRef userRef = security.asProcessingUserResult(() -> authenticationService.getUserRef(token));
+                    final User userRef = security.asProcessingUserResult(() -> authenticationService.getUser(token));
 
                     if (userRef != null) {
                         // Set the user ref in the session.
-                        UserRefSessionUtil.set(request.getSession(true), userRef);
+                        UserSessionUtil.set(request.getSession(true), userRef);
 
                         loggedIn = true;
                     }
@@ -381,14 +388,14 @@ class SecurityFilter implements Filter {
         return token;
     }
 
-    private UserRef loginAPI(final HttpServletRequest request, final HttpServletResponse response) {
-        UserRef userRef = null;
+    private User loginAPI(final HttpServletRequest request, final HttpServletResponse response) {
+        User userRef = null;
 
         // Authenticate requests from an API client
         boolean isAuthenticatedApiRequest = jwtService.containsValidJws(request);
         if (isAuthenticatedApiRequest) {
             final AuthenticationToken token = createAPIToken(request);
-            userRef = security.asProcessingUserResult(() -> authenticationService.getUserRef(token));
+            userRef = security.asProcessingUserResult(() -> authenticationService.getUser(token));
         }
 
         if (userRef == null) {

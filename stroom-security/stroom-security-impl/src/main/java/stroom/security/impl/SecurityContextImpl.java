@@ -22,12 +22,11 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.exception.AuthenticationException;
-import stroom.security.service.DocumentPermissionService;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.PermissionNames;
+import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
-import stroom.security.shared.UserRef;
 import stroom.security.shared.UserToken;
 import stroom.security.util.UserTokenUtil;
 
@@ -41,7 +40,12 @@ class SecurityContextImpl implements SecurityContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
     private static final String USER = "user";
     private static final UserToken INTERNAL_PROCESSING_USER_TOKEN = UserTokenUtil.processingUser();
-    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef("User", "0", INTERNAL_PROCESSING_USER_TOKEN.getUserId(), false, true);
+    private static final User INTERNAL_PROCESSING_USER = new User.Builder()
+            .id(0)
+            .uuid("0")
+            .name(INTERNAL_PROCESSING_USER_TOKEN.getUserId())
+            .group(false)
+            .build();
 
     private final DocumentPermissionsCache documentPermissionsCache;
     private final UserGroupsCache userGroupsCache;
@@ -71,7 +75,7 @@ class SecurityContextImpl implements SecurityContext {
 
     @Override
     public void pushUser(final UserToken token) {
-        UserRef userRef = null;
+        User userRef = null;
 
         if (token != null) {
             final String type = token.getType();
@@ -86,7 +90,7 @@ class SecurityContextImpl implements SecurityContext {
                 }
             } else if (USER.equals(type)) {
                 if (name.length() > 0) {
-                    final Optional<UserRef> optional = userCache.get(name);
+                    final Optional<User> optional = userCache.get(name);
                     if (!optional.isPresent()) {
                         final String message = "Unable to push user '" + name + "' as user is unknown";
                         LOGGER.error(message);
@@ -109,8 +113,8 @@ class SecurityContextImpl implements SecurityContext {
         CurrentUserState.pop();
     }
 
-    private UserRef getUserRef() {
-        return CurrentUserState.currentUserRef();
+    private User getUser() {
+        return CurrentUserState.currentUser();
     }
 
     @Override
@@ -120,7 +124,7 @@ class SecurityContextImpl implements SecurityContext {
 
     @Override
     public String getUserId() {
-        final UserRef userRef = getUserRef();
+        final User userRef = getUser();
         if (userRef == null) {
             return null;
         }
@@ -134,7 +138,7 @@ class SecurityContextImpl implements SecurityContext {
 
     @Override
     public boolean isLoggedIn() {
-        return getUserRef() != null;
+        return getUser() != null;
     }
 
     @Override
@@ -155,7 +159,7 @@ class SecurityContextImpl implements SecurityContext {
     @Override
     public boolean hasAppPermission(final String permission) {
         // Get the current user.
-        final UserRef userRef = getUserRef();
+        final User userRef = getUser();
 
         // If there is no logged in user then throw an exception.
         if (userRef == null) {
@@ -178,22 +182,22 @@ class SecurityContextImpl implements SecurityContext {
         return result;
     }
 
-    private boolean hasAppPermission(final UserRef userRef, final String permission) {
+    private boolean hasAppPermission(final User userRef, final String permission) {
         // See if the user has an explicit permission.
         boolean result = hasUserAppPermission(userRef, permission);
 
         // See if the user belongs to a group that has permission.
         if (!result) {
-            final List<UserRef> userGroups = userGroupsCache.get(userRef.getUuid());
+            final List<User> userGroups = userGroupsCache.get(userRef.getUuid());
             result = hasUserGroupsAppPermission(userGroups, permission);
         }
 
         return result;
     }
 
-    private boolean hasUserGroupsAppPermission(final List<UserRef> userGroups, final String permission) {
+    private boolean hasUserGroupsAppPermission(final List<User> userGroups, final String permission) {
         if (userGroups != null) {
-            for (final UserRef userGroup : userGroups) {
+            for (final User userGroup : userGroups) {
                 final boolean result = hasUserAppPermission(userGroup, permission);
                 if (result) {
                     return true;
@@ -203,7 +207,7 @@ class SecurityContextImpl implements SecurityContext {
         return false;
     }
 
-    private boolean hasUserAppPermission(final UserRef userRef, final String permission) {
+    private boolean hasUserAppPermission(final User userRef, final String permission) {
         final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
         if (userAppPermissions != null) {
             return userAppPermissions.getUserPermissons().contains(permission);
@@ -219,7 +223,7 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         // Get the current user.
-        final UserRef userRef = getUserRef();
+        final User userRef = getUser();
 
         // If there is no logged in user then throw an exception.
         if (userRef == null) {
@@ -239,22 +243,22 @@ class SecurityContextImpl implements SecurityContext {
         return result;
     }
 
-    private boolean hasDocumentPermission(final UserRef userRef, final DocRef docRef, final String permission) {
+    private boolean hasDocumentPermission(final User userRef, final DocRef docRef, final String permission) {
         // See if the user has an explicit permission.
         boolean result = hasUserDocumentPermission(userRef, docRef, permission);
 
         // See if the user belongs to a group that has permission.
         if (!result) {
-            final List<UserRef> userGroups = userGroupsCache.get(userRef.getUuid());
+            final List<User> userGroups = userGroupsCache.get(userRef.getUuid());
             result = hasUserGroupsDocumentPermission(userGroups, docRef, permission);
         }
 
         return result;
     }
 
-    private boolean hasUserGroupsDocumentPermission(final List<UserRef> userGroups, final DocRef docRef, final String permission) {
+    private boolean hasUserGroupsDocumentPermission(final List<User> userGroups, final DocRef docRef, final String permission) {
         if (userGroups != null) {
-            for (final UserRef userGroup : userGroups) {
+            for (final User userGroup : userGroups) {
                 final boolean result = hasUserDocumentPermission(userGroup, docRef, permission);
                 if (result) {
                     return true;
@@ -264,7 +268,7 @@ class SecurityContextImpl implements SecurityContext {
         return false;
     }
 
-    private boolean hasUserDocumentPermission(final UserRef userRef,
+    private boolean hasUserDocumentPermission(final User userRef,
                                               final DocRef docRef,
                                               final String permission) {
         final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef.getUuid());
@@ -288,7 +292,7 @@ class SecurityContextImpl implements SecurityContext {
     @Override
     public void clearDocumentPermissions(final String documentType, final String documentUuid) {
         // Get the current user.
-        final UserRef userRef = getUserRef();
+        final User userRef = getUser();
 
         // If no user is present then don't create permissions.
         if (userRef != null) {
@@ -305,7 +309,7 @@ class SecurityContextImpl implements SecurityContext {
     @Override
     public void addDocumentPermissions(final String sourceType, final String sourceUuid, final String documentType, final String documentUuid, final boolean owner) {
         // Get the current user.
-        final UserRef userRef = getUserRef();
+        final User userRef = getUser();
 
         // If no user is present then don't create permissions.
         if (userRef != null) {

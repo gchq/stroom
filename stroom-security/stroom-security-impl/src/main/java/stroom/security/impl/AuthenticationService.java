@@ -16,8 +16,8 @@
 
 package stroom.security.impl;
 
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 
 public interface AuthenticationService {
-    UserRef getUserRef(AuthenticationToken token);
+    User getUser(AuthenticationToken token);
 }

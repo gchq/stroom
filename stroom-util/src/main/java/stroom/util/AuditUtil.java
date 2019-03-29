@@ -1,4 +1,4 @@
-package stroom.db.util;
+package stroom.util;
 
 import stroom.util.shared.HasAuditInfo;
 

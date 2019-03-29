@@ -18,7 +18,7 @@ package stroom.search.taskqueue;
 
 import java.util.concurrent.Executor;
 
-public interface TaskProducer {
+public interface TaskProducer extends Comparable<TaskProducer> {
     Executor getExecutor();
 
     Runnable next();

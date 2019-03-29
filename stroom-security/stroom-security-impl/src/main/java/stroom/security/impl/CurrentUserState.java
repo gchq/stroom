@@ -1,6 +1,6 @@
 package stroom.security.impl;
 
-import stroom.security.shared.UserRef;
+import stroom.security.shared.User;
 import stroom.security.shared.UserToken;
 
 import java.util.ArrayDeque;
@@ -13,7 +13,7 @@ final class CurrentUserState {
         // Utility.
     }
 
-    static void push(final UserToken userToken, final UserRef userRef) {
+    static void push(final UserToken userToken, final User userRef) {
         final Deque<State> deque = THREAD_LOCAL.get();
         final State state = deque.peek();
         if (state != null) {
@@ -32,7 +32,7 @@ final class CurrentUserState {
         final Deque<State> deque = THREAD_LOCAL.get();
         final State state = deque.peek();
         if (state != null) {
-            deque.push(new State(state.getUserToken(), state.getUserRef(), true));
+            deque.push(new State(state.getUserToken(), state.getUser(), true));
         } else {
             throw new IllegalStateException("Attempt to elevate permissions without a current user");
         }
@@ -53,11 +53,11 @@ final class CurrentUserState {
         return null;
     }
 
-    static UserRef currentUserRef() {
+    static User currentUser() {
         final Deque<State> deque = THREAD_LOCAL.get();
         final State state = deque.peek();
         if (state != null) {
-            return state.getUserRef();
+            return state.getUser();
         }
         return null;
     }
@@ -70,10 +70,10 @@ final class CurrentUserState {
 
     private static class State {
         private final UserToken userToken;
-        private final UserRef userRef;
+        private final User userRef;
         private final boolean elevatePermissions;
 
-        private State(final UserToken userToken, final UserRef userRef, final boolean elevatePermissions) {
+        private State(final UserToken userToken, final User userRef, final boolean elevatePermissions) {
             this.userToken = userToken;
             this.userRef = userRef;
             this.elevatePermissions = elevatePermissions;
@@ -83,7 +83,7 @@ final class CurrentUserState {
             return userToken;
         }
 
-        UserRef getUserRef() {
+        User getUser() {
             return userRef;
         }
 

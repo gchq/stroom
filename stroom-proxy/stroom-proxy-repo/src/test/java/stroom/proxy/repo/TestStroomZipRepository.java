@@ -10,7 +10,6 @@ import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.data.zip.StroomZipOutputStreamImpl;
-import stroom.data.zip.StroomZipOutputStreamUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.util.io.FileUtil;
 
@@ -28,8 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestStroomZipRepository {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestStroomZipRepository.class);
-
     @Test
     void testScan() throws IOException {
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo1"));

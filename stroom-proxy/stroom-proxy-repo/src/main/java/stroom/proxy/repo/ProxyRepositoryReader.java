@@ -2,19 +2,27 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.io.BufferFactory;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.task.shared.ThreadPool;
+import stroom.task.shared.ThreadPoolImpl;
+import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.date.DateUtil;
+import stroom.util.io.BufferFactory;
+import stroom.util.io.FileUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -27,7 +35,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public final class ProxyRepositoryReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryReader.class);
 
-
+    private final TaskContext taskContext;
+    private final BufferFactory bufferFactory;
     private final ProxyRepositoryManager proxyRepositoryManager;
 
     private final ReentrantLock lock = new ReentrantLock();
@@ -46,28 +55,42 @@ public final class ProxyRepositoryReader {
      */
     private final Scheduler scheduler;
 
-    /**
-     * Flag set to stop things
-     */
-    private final AtomicBoolean finish = new AtomicBoolean(false);
-
-    private final ExecutorService executorService;
-    private final RepositoryProcessor repositoryProcessor;
+    private final ExecutorProvider executorProvider;
+    private final ThreadPool threadPool;
+    private final Map<ThreadPool, ExecutorService> executorServiceMap = new ConcurrentHashMap<>();
+    private final AtomicBoolean finish = new AtomicBoolean();
 
     @Inject
     ProxyRepositoryReader(final TaskContext taskContext,
+                          final BufferFactory bufferFactory,
                           final ProxyRepositoryManager proxyRepositoryManager,
                           final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig,
-                          final StreamHandlerFactory handlerFactory,
-                          final BufferFactory bufferFactory) {
+                          final StreamHandlerFactory handlerFactory) {
+        this.taskContext = taskContext;
+        this.bufferFactory = bufferFactory;
         this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
         this.handlerFactory = handlerFactory;
         this.proxyRepositoryManager = proxyRepositoryManager;
         this.scheduler = createScheduler(proxyRepositoryReaderConfig.getReadCron());
 
-        this.executorService = Executors.newFixedThreadPool(proxyRepositoryReaderConfig.getForwardThreadCount());
-        final ProxyFileProcessor feedFileProcessor = new ProxyFileProcessorImpl(proxyRepositoryReaderConfig, handlerFactory, finish, bufferFactory);
-        repositoryProcessor = new RepositoryProcessor(feedFileProcessor, executorService, taskContext);
+        threadPool = new ThreadPoolImpl("Proxy Repository Reader", 5, 0, proxyRepositoryReaderConfig.getForwardThreadCount(), proxyRepositoryReaderConfig.getForwardThreadCount());
+
+        executorProvider = new ExecutorProvider() {
+            @Override
+            public Executor getExecutor() {
+                return getExecutor(threadPool);
+            }
+
+            @Override
+            public Executor getExecutor(final ThreadPool threadPool) {
+                return executorServiceMap.computeIfAbsent(threadPool, k -> ScalingThreadPoolExecutor.newScalingThreadPool(
+                        threadPool.getCorePoolSize(),
+                        threadPool.getMaxPoolSize(),
+                        threadPool.getMaxQueueSize(),
+                        60L,
+                        TimeUnit.SECONDS));
+            }
+        };
     }
 
     private static Scheduler createScheduler(final String simpleCron) {
@@ -88,7 +111,7 @@ public final class ProxyRepositoryReader {
 
     private synchronized void stopReading() {
         if (readerThread != null) {
-            finish.set(true);
+            terminate();
 
             lock.lock();
             try {
@@ -125,7 +148,7 @@ public final class ProxyRepositoryReader {
     private void process() {
         lock.lock();
         try {
-            while (!finish.get()) {
+            while (!isTerminated()) {
                 try {
                     condition.await(1, TimeUnit.SECONDS);
                 } catch (final InterruptedException e) {
@@ -135,7 +158,7 @@ public final class ProxyRepositoryReader {
                     Thread.currentThread().interrupt();
                 }
 
-                if (!finish.get()) {
+                if (!isTerminated()) {
                     // Only do the work if we are not on a timer or our timer
                     // says we should fire.
                     if (scheduler != null && !scheduler.execute()) {
@@ -167,14 +190,25 @@ public final class ProxyRepositoryReader {
         final List<StroomZipRepository> readyToProcessList = proxyRepositoryManager.getReadableRepository();
 
         for (final StroomZipRepository readyToProcess : readyToProcessList) {
-            if (finish.get()) {
+            if (!isTerminated()) {
                 return;
             }
 
             // Only process the thing if we have some outgoing handlers.
             final List<StreamHandler> handlers = handlerFactory.addSendHandlers(new ArrayList<>());
             if (handlers.size() > 0) {
-                repositoryProcessor.process(readyToProcess);
+                final Provider<FileSetProcessor> fileSetProcessorProvider = () -> new ProxyForwardingFileSetProcessor(handlerFactory, bufferFactory);
+                final RepositoryProcessor repositoryProcessor = new RepositoryProcessor(
+                        taskContext,
+                        executorProvider,
+                        fileSetProcessorProvider,
+                        FileUtil.getCanonicalPath(readyToProcess.getRootDir()),
+                        proxyRepositoryReaderConfig.getForwardThreadCount(),
+                        proxyRepositoryReaderConfig.getMaxAggregation(),
+                        proxyRepositoryReaderConfig.getMaxFileScan(),
+                        proxyRepositoryReaderConfig.getMaxStreamSize());
+
+                repositoryProcessor.process();
             }
             // Otherwise just clean.
             readyToProcess.clean();
@@ -182,16 +216,31 @@ public final class ProxyRepositoryReader {
     }
 
     public void stop() {
-        finish.set(true);
-        LOGGER.info("stop() - Stopping Executor");
-        executorService.shutdownNow();
-        LOGGER.info("stop() - Stopped  Executor");
+        terminate();
         LOGGER.info("stop() - Stopping Reader Thread");
         stopReading();
         LOGGER.info("stop() - Stopped  Reader Thread");
+
+        LOGGER.info("stop() - Stopping Executors");
+        executorServiceMap.values().forEach(ExecutorService::shutdownNow);
+        executorServiceMap.clear();
+        LOGGER.info("stop() - Stopped  Executors");
     }
 
     public void start() {
         startReading();
+    }
+
+    private boolean isTerminated() {
+        if (finish.get() || Thread.currentThread().isInterrupted()) {
+            Thread.currentThread().interrupt();
+            return true;
+        }
+        return false;
+    }
+
+    private void terminate() {
+        finish.set(true);
+        Thread.currentThread().interrupt();
     }
 }
