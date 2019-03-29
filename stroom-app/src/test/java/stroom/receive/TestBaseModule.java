@@ -10,24 +10,28 @@ import stroom.docstore.impl.memory.MemoryPersistenceModule;
 import stroom.feed.impl.FeedModule;
 import stroom.meta.impl.mock.MockMetaModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
-import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.receive.rules.impl.ReceiveDataRulesetModule;
 import stroom.security.impl.mock.MockSecurityContextModule;
+import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.TaskContext;
+import stroom.util.pipeline.scope.PipelineScopeModule;
 
 public class TestBaseModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new CacheModule());
+        install(new DictionaryModule());
+        install(new DocStoreModule());
+        install(new FeedModule());
+        install(new MemoryPersistenceModule());
+        install(new MockMetaModule());
+        install(new MockMetaStatisticsModule());
+        install(new MockSecurityContextModule());
+        install(new MockStreamStoreModule());
         install(new PipelineScopeModule());
         install(new ReceiveDataModule());
-        install(new MockSecurityContextModule());
-        install(new FeedModule());
         install(new ReceiveDataRulesetModule());
-        install(new DocStoreModule());
-        install(new DictionaryModule());
-        install(new MemoryPersistenceModule());
-        install(new MockMetaStatisticsModule());
-        install(new MockMetaModule());
-        install(new MockStreamStoreModule());
+
+        bind(TaskContext.class).to(SimpleTaskContext.class);
     }
 }
