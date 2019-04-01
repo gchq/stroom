@@ -5,8 +5,8 @@ import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.impl.DSL;
 import stroom.db.util.JooqUtil;
-import stroom.index.IndexShardDao;
-import stroom.index.IndexVolumeDao;
+import stroom.index.impl.IndexShardDao;
+import stroom.index.impl.IndexVolumeDao;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
@@ -22,8 +22,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static stroom.index.impl.db.Tables.INDEX_SHARD;
-import static stroom.index.impl.db.tables.IndexVolume.INDEX_VOLUME;
+import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
+import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
 class IndexShardDaoImpl implements IndexShardDao {
     private final ConnectionProvider connectionProvider;

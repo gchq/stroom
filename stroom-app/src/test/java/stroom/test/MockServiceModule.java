@@ -9,6 +9,7 @@ import stroom.dictionary.impl.MockDictionaryModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.MockFeedModule;
 import stroom.importexport.impl.ImportExportModule;
+import stroom.index.impl.mock.MockIndexModule;
 import stroom.meta.impl.mock.MockMetaModule;
 import stroom.node.impl.mock.MockNodeServiceModule;
 import stroom.pipeline.xmlschema.MockXmlSchemaModule;
@@ -40,7 +41,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockExplorerModule());
         install(new MockFeedModule());
         install(new ImportExportModule());
-        install(new stroom.index.MockIndexModule());
+        install(new MockIndexModule());
         install(new MockNodeServiceModule());
         install(new stroom.pipeline.PipelineModule());
         install(new stroom.pipeline.cache.PipelineCacheModule());

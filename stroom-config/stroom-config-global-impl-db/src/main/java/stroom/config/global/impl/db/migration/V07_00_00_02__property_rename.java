@@ -146,8 +146,8 @@ public class V07_00_00_02__property_rename implements JdbcMigration {
         FROM_TO_MAP.put("stroom.rack", "stroom.node.rack");
 
         // Same name in 6 & master
-        // stroom.search.extraction.maxThreads
-        // stroom.search.extraction.maxThreadsPerTask
+        // stroom.search.impl.extraction.maxThreads
+        // stroom.search.impl.extraction.maxThreadsPerTask
         // stroom.search.maxBooleanClauseCount
         // stroom.search.maxStoredDataQueueSize
 
@@ -155,9 +155,9 @@ public class V07_00_00_02__property_rename implements JdbcMigration {
         FROM_TO_MAP.put("stroom.search.process.defaultTimeLimit", "stroom.ui.process.defaultTimeLimit");
 
         // Same name in 6 & master
-        // stroom.search.shard.maxDocIdQueueSize
-        // stroom.search.shard.maxThreads
-        // stroom.search.shard.maxThreadsPerTask
+        // stroom.search.impl.shard.maxDocIdQueueSize
+        // stroom.search.impl.shard.maxThreads
+        // stroom.search.impl.shard.maxThreadsPerTask
         // stroom.search.storeSize
 
         FROM_TO_MAP.put("stroom.security.apitoken", "stroom.security.authentication.apiToken");

@@ -5,6 +5,10 @@ import stroom.core.db.DataSourceModule;
 import stroom.dashboard.impl.DashboardModule;
 import stroom.dashboard.impl.script.ScriptModule;
 import stroom.dashboard.impl.visualisation.VisualisationModule;
+import stroom.index.impl.IndexElementModule;
+import stroom.index.impl.IndexModule;
+import stroom.search.impl.SearchElementModule;
+import stroom.search.impl.SearchModule;
 
 public class CoreModule extends AbstractModule {
     @Override
@@ -48,8 +52,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.importexport.impl.ExportConfigResourceModule());
         install(new stroom.importexport.impl.ImportExportHandlerModule());
         install(new stroom.importexport.impl.ImportExportModule());
-        install(new stroom.index.IndexElementModule());
-        install(new stroom.index.IndexModule());
+        install(new IndexElementModule());
+        install(new IndexModule());
         install(new stroom.index.impl.db.IndexDbModule());
         install(new stroom.job.impl.db.JobDbModule());
         install(new stroom.job.impl.JobSystemModule());
@@ -76,9 +80,9 @@ public class CoreModule extends AbstractModule {
         install(new stroom.processor.impl.StreamTaskLifecycleModule());
         install(new stroom.receive.rules.impl.ReceiveDataRulesetModule());
         install(new ScriptModule());
-        install(new stroom.search.SearchElementModule());
-        install(new stroom.search.SearchModule());
-        install(new stroom.search.shard.ShardModule());
+        install(new SearchElementModule());
+        install(new SearchModule());
+        install(new stroom.search.impl.shard.ShardModule());
         install(new stroom.security.impl.db.SecurityDbModule());
         install(new stroom.security.impl.SecurityModule());
         install(new stroom.servicediscovery.impl.ServiceDiscoveryModule());

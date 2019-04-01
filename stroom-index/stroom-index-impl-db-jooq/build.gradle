@@ -51,7 +51,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         recordVersionFields = 'version'
                     }
                     target {
-                        packageName = 'stroom.index.impl.db'
+                        packageName = 'stroom.index.impl.db.jooq'
                         directory = 'src/main/java'
                     }
                 }

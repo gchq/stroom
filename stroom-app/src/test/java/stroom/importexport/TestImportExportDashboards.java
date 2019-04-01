@@ -38,7 +38,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.impl.ImportExportService;
 import stroom.importexport.shared.ImportState;
-import stroom.index.IndexStore;
+import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;

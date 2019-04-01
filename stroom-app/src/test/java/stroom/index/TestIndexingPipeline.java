@@ -21,6 +21,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import stroom.index.impl.IndexShardWriter;
+import stroom.index.impl.IndexStore;
+import stroom.index.impl.mock.MockIndexShardWriter;
+import stroom.index.impl.mock.MockIndexShardWriterCache;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;

@@ -125,7 +125,6 @@ include 'stroom-importexport:stroom-importexport-migration'
 
 // Index
 include 'stroom-index:stroom-index-app'
-include 'stroom-index:stroom-index-api'
 include 'stroom-index:stroom-index-impl'
 include 'stroom-index:stroom-index-impl-mock'
 include 'stroom-index:stroom-index-impl-db'
@@ -168,6 +167,10 @@ include 'stroom-receive:stroom-receive-common'
 
 // Ruleset
 include 'stroom-receive:stroom-receive-rules-impl'
+
+// Search
+include 'stroom-search:stroom-search-api'
+include 'stroom-search:stroom-search-impl'
 
 // Security
 include 'stroom-security:stroom-security-api'

@@ -28,7 +28,7 @@ import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
-import stroom.index.selection.VolumeConfig;
+import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.MockTask;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;

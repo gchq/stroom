@@ -20,7 +20,7 @@ package stroom.search;
 
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.index.IndexStore;
+import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -84,8 +84,8 @@ class TestEventSearch extends AbstractSearchTest {
     private void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount, final List<String> componentIds,
                       final boolean extractValues) {
 //        // ADDED THIS SECTION TO TEST GUICE VALUE INJECTION.
-//        StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
-//        StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty("stroom.search.impl.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty("stroom.search.impl.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
 
         final DocRef indexRef = indexStore.list().get(0);
         final IndexDoc index = indexStore.readDocument(indexRef);

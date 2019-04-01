@@ -69,6 +69,7 @@ dependencies {
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-receive:stroom-receive-rules-impl')
     compile project(':stroom-resource:stroom-resource-impl')
+    compile project(':stroom-search:stroom-search-impl')
     compile project(':stroom-security:stroom-security-impl')
     compile project(':stroom-security:stroom-security-impl-db')
     compile project(':stroom-servicediscovery:stroom-servicediscovery-impl')

@@ -10,9 +10,9 @@ import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.DbUtil;
-import stroom.index.IndexShardDao;
-import stroom.index.IndexVolumeDao;
-import stroom.index.IndexVolumeGroupDao;
+import stroom.index.impl.IndexShardDao;
+import stroom.index.impl.IndexVolumeDao;
+import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
