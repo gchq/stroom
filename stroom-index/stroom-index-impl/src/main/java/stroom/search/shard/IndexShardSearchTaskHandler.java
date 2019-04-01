@@ -28,7 +28,7 @@ import stroom.dashboard.expression.v1.ValString;
 import stroom.index.IndexShardWriter;
 import stroom.index.IndexShardWriterCache;
 import stroom.index.LuceneVersionUtil;
-import stroom.index.service.IndexShardService;
+import stroom.index.IndexShardService;
 import stroom.index.shared.IndexShard;
 import stroom.search.SearchException;
 import stroom.task.api.ExecutorProvider;

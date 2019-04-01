@@ -1,4 +1,4 @@
-package stroom.index.rest;
+package stroom.index;
 
 
 import io.swagger.annotations.Api;

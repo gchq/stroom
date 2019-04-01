@@ -1,4 +1,4 @@
-package stroom.index.dao;
+package stroom.index;
 
 import stroom.index.shared.IndexVolume;
 

@@ -1,6 +1,6 @@
 package stroom.index.selection;
 
-import stroom.index.service.IndexVolumeService;
+import stroom.index.IndexVolumeService;
 import stroom.job.api.ScheduledJobsModule;
 import stroom.job.api.TaskConsumer;
 

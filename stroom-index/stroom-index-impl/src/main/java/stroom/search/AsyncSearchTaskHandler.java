@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.index.shared.IndexField;
 import stroom.util.shared.Sort.Direction;
 import stroom.index.IndexStore;
-import stroom.index.service.IndexShardService;
+import stroom.index.IndexShardService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;

@@ -16,8 +16,8 @@
 
 package stroom.search;
 
-import stroom.index.EventRef;
-import stroom.index.EventRefs;
+import stroom.index.api.EventRef;
+import stroom.index.api.EventRefs;
 import stroom.query.api.v2.Query;
 import stroom.security.shared.UserToken;
 

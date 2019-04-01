@@ -27,7 +27,7 @@ import stroom.feed.api.FeedStore;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.IndexStore;
-import stroom.index.service.IndexVolumeService;
+import stroom.index.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.pipeline.PipelineStore;

@@ -50,6 +50,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.importexport.impl.ImportExportModule());
         install(new stroom.index.IndexElementModule());
         install(new stroom.index.IndexModule());
+        install(new stroom.index.impl.db.IndexDbModule());
         install(new stroom.job.impl.db.JobDbModule());
         install(new stroom.job.impl.JobSystemModule());
         install(new stroom.kafka.impl.KafkaModule());

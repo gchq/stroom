@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.index.service;
+package stroom.index;
 
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;

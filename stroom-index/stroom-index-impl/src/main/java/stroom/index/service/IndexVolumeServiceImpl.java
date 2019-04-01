@@ -1,6 +1,7 @@
 package stroom.index.service;
 
-import stroom.index.dao.IndexVolumeDao;
+import stroom.index.IndexVolumeDao;
+import stroom.index.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
 import stroom.security.api.Security;
 import stroom.security.shared.PermissionNames;

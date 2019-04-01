@@ -17,7 +17,6 @@
 
 package stroom.index;
 
-import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
 
 import java.util.Collections;

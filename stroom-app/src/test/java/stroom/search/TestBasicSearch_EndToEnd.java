@@ -23,7 +23,7 @@ import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.docref.DocRef;
-import stroom.index.service.IndexShardService;
+import stroom.index.IndexShardService;
 import stroom.index.IndexShardUtil;
 import stroom.index.IndexStore;
 import stroom.index.shared.FindIndexShardCriteria;

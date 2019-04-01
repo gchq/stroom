@@ -25,7 +25,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
 import stroom.index.IndexShardWriter;
 import stroom.index.IndexShardWriterCache;
-import stroom.index.service.IndexShardService;
+import stroom.index.IndexShardService;
 import stroom.index.shared.IndexShard;
 import stroom.search.SearchException;
 import stroom.task.api.ExecutorProvider;

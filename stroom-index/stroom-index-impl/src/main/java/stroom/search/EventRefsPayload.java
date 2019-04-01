@@ -16,7 +16,7 @@
 
 package stroom.search;
 
-import stroom.index.EventRefs;
+import stroom.index.api.EventRefs;
 import stroom.query.common.v2.Payload;
 
 public class EventRefsPayload implements Payload {

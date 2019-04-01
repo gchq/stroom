@@ -1,4 +1,4 @@
-package stroom.index.service;
+package stroom.index;
 
 import stroom.index.shared.IndexVolumeGroup;
 

@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
 import stroom.index.VolumeCreator;
-import stroom.index.service.IndexVolumeService;
+import stroom.index.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.util.io.FileUtil;

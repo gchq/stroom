@@ -18,21 +18,17 @@ package stroom.index;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.entity.shared.EntityEvent;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.index.impl.db.IndexDbModule;
 import stroom.index.rest.StroomIndexQueryResourceImpl;
-import stroom.index.service.IndexShardService;
 import stroom.index.service.IndexShardServiceImpl;
-import stroom.index.service.IndexVolumeGroupService;
 import stroom.index.service.IndexVolumeGroupServiceImpl;
-import stroom.index.service.IndexVolumeService;
 import stroom.index.service.IndexVolumeServiceImpl;
 import stroom.index.shared.IndexDoc;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.RestResource;
-import stroom.docstore.api.DocumentActionHandlerBinder;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
 
@@ -40,7 +36,6 @@ public class IndexModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new IndexElementModule());
-        install(new IndexDbModule());
 
         bind(IndexShardManager.class).to(IndexShardManagerImpl.class);
         bind(IndexShardWriterCache.class).to(IndexShardWriterCacheImpl.class);

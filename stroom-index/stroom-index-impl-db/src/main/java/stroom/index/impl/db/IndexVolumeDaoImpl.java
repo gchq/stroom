@@ -1,7 +1,7 @@
 package stroom.index.impl.db;
 
 import stroom.db.util.JooqUtil;
-import stroom.index.dao.IndexVolumeDao;
+import stroom.index.IndexVolumeDao;
 import stroom.index.shared.IndexVolume;
 import stroom.security.api.SecurityContext;
 
@@ -11,17 +11,15 @@ import java.util.List;
 import static stroom.index.impl.db.Tables.INDEX_VOLUME_GROUP_LINK;
 import static stroom.index.impl.db.tables.IndexVolume.INDEX_VOLUME;
 
-
-public class IndexVolumeDaoImpl implements IndexVolumeDao {
-
+class IndexVolumeDaoImpl implements IndexVolumeDao {
     private final ConnectionProvider connectionProvider;
     private final SecurityContext securityContext;
 
     private static final Byte FIRST_VERSION = 1;
 
     @Inject
-    public IndexVolumeDaoImpl(final SecurityContext securityContext,
-                              final ConnectionProvider connectionProvider) {
+    IndexVolumeDaoImpl(final SecurityContext securityContext,
+                       final ConnectionProvider connectionProvider) {
         this.securityContext = securityContext;
         this.connectionProvider = connectionProvider;
     }

@@ -17,7 +17,6 @@
 package stroom.index;
 
 
-import stroom.index.service.IndexShardService;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 

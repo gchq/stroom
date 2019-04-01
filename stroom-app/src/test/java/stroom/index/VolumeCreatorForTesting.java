@@ -19,7 +19,6 @@ package stroom.index;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.index.service.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
 import stroom.node.impl.NodeConfig;
 import stroom.pipeline.writer.PathCreator;

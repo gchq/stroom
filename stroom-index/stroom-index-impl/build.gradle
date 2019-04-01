@@ -12,7 +12,6 @@ dependencies {
     compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-importexport:stroom-importexport-migration')
     compile project(':stroom-index:stroom-index-api')
-    compile project(':stroom-index:stroom-index-impl-db')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-pipeline')

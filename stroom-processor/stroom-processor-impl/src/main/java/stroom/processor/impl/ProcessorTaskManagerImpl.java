@@ -19,9 +19,9 @@ package stroom.processor.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.index.EventRef;
-import stroom.index.EventRefs;
-import stroom.index.EventSearch;
+import stroom.index.api.EventRef;
+import stroom.index.api.EventRefs;
+import stroom.index.api.EventSearch;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;

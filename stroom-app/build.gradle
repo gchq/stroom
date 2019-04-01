@@ -52,6 +52,7 @@ dependencies {
     compile project(':stroom-feed:stroom-feed-impl')
     compile project(':stroom-importexport:stroom-importexport-impl')
     compile project(':stroom-index:stroom-index-impl')
+    compile project(':stroom-index:stroom-index-impl-db')
     compile project(':stroom-job:stroom-job-impl')
     compile project(':stroom-job:stroom-job-impl-db')
     compile project(':stroom-kafka:stroom-kafka-impl')

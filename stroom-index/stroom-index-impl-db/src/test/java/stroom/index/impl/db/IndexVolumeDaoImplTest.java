@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
-import stroom.index.dao.IndexVolumeDao;
-import stroom.index.dao.IndexVolumeGroupDao;
+import stroom.index.IndexVolumeDao;
+import stroom.index.IndexVolumeGroupDao;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 

@@ -1,4 +1,4 @@
-package stroom.index.rest;
+package stroom.index;
 
 public class CreateVolumeDTO {
     private String nodeName;

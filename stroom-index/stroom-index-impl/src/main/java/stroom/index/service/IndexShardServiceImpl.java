@@ -19,10 +19,12 @@ package stroom.index.service;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.PermissionException;
+import stroom.index.IndexShardService;
 import stroom.index.IndexStructure;
 import stroom.index.IndexStructureCache;
+import stroom.index.IndexVolumeService;
 import stroom.index.LuceneVersionUtil;
-import stroom.index.dao.IndexShardDao;
+import stroom.index.IndexShardDao;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;

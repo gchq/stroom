@@ -1,6 +1,5 @@
 package stroom.index;
 
-import stroom.index.service.IndexVolumeGroupService;
 import stroom.index.shared.IndexVolumeGroup;
 
 import java.util.ArrayList;

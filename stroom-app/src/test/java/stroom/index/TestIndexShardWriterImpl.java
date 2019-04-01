@@ -22,7 +22,6 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.index.service.IndexShardService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexException;

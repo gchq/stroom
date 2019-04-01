@@ -20,12 +20,10 @@ package stroom.index;
 import stroom.docref.DocRef;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventHandler;
-import stroom.index.service.IndexShardService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.node.api.NodeInfo;
-import stroom.node.shared.Node;
 
 import javax.inject.Inject;
 import java.util.List;

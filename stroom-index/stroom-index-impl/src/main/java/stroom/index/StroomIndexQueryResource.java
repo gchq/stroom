@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.index.rest;
+package stroom.index;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

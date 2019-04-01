@@ -5,6 +5,7 @@ import stroom.docref.DocRef;
 import stroom.importexport.api.OldDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.index.IndexResource;
 import stroom.index.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.util.shared.DocRefs;

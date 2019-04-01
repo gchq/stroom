@@ -2,7 +2,7 @@ ext.moduleName = 'stroom.index.impl.db'
 
 dependencies {
     compile project(':stroom-config:stroom-config-common')
-    compile project(':stroom-index:stroom-index-api')
+    compile project(':stroom-index:stroom-index-impl')
     compile project(':stroom-index:stroom-index-impl-db-jooq')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-util')

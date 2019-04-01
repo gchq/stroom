@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.index.FieldFactory;
 import stroom.index.IndexShardKeyUtil;
-import stroom.index.service.IndexShardService;
+import stroom.index.IndexShardService;
 import stroom.index.IndexShardWriterCache;
 import stroom.index.IndexStore;
 import stroom.index.Indexer;
