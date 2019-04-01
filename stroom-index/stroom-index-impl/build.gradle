@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.index.server'
+ext.moduleName = 'stroom.index.impl'
 
 dependencies {
     compile project(':stroom-cache:stroom-cache-api')

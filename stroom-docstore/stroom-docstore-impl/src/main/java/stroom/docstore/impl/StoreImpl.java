@@ -528,5 +528,4 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 .sorted()
                 .collect(Collectors.toList());
     }
-
 }

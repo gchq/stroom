@@ -125,8 +125,8 @@ include 'stroom-importexport:stroom-importexport-migration'
 
 // Index
 include 'stroom-index:stroom-index-app'
-include 'stroom-index:stroom-index-server'
 include 'stroom-index:stroom-index-api'
+include 'stroom-index:stroom-index-impl'
 include 'stroom-index:stroom-index-impl-mock'
 include 'stroom-index:stroom-index-impl-db'
 include 'stroom-index:stroom-index-impl-db-jooq'

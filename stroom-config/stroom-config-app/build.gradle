@@ -12,7 +12,7 @@ dependencies {
     compile project(':stroom-data:stroom-data-store-impl-fs')
     compile project(':stroom-explorer:stroom-explorer-impl-db')
     compile project(':stroom-importexport:stroom-importexport-impl')
-    compile project(':stroom-index:stroom-index-server')
+    compile project(':stroom-index:stroom-index-impl')
     compile project(':stroom-index:stroom-index-impl-db')
     compile project(':stroom-lifecycle:stroom-lifecycle-impl')
     compile project(':stroom-node:stroom-node-impl')
