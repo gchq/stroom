@@ -1,4 +1,9 @@
 #!/bin/bash
+
+##################################################################
+#  Script to create one or more sub-module directory structures  #
+##################################################################
+
 set -e
 
 error() {
@@ -13,8 +18,7 @@ error_exit() {
 
 determine_repo_root() {
   if ! git rev-parse --show-toplevel > /dev/null 2>&1; then
-    error_exit "You are not in a git repository. This script should be run from" \
-      "the root of a repository."
+    error_exit "You are not in a git repository."
   fi
   repo_root_dir="$(git rev-parse --show-toplevel)"
 }
@@ -25,7 +29,6 @@ main() {
     echo "Error: Invalid arguments"
     echo "Usage: create_stroom_module.sh module_name suffix1 [suffix2 ... suffixN]"
     echo "e.g: create_stroom_module.sh stroom-processor api impl impl-db"
-    echo "Run from the root of the stroom repo"
     exit 1
   fi
 
