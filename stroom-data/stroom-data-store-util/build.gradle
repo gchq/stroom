@@ -14,8 +14,8 @@ dependencies {
     compile project(':stroom-db-util')
     compile project(':stroom-event-logging:stroom-event-logging-impl')
     compile project(':stroom-node:stroom-node-impl')
-    compile project(':stroom-security:stroom-security-impl-mock')
-    compile project(':stroom-statistics:stroom-statistics-impl-mock')
+    compile project(':stroom-security:stroom-security-mock')
+    compile project(':stroom-statistics:stroom-statistics-mock')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 

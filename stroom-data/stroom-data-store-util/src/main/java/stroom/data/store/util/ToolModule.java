@@ -24,6 +24,8 @@ import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEvent.Handler;
 import stroom.entity.shared.EntityEventBus;
+import stroom.security.mock.MockSecurityContextModule;
+import stroom.statistics.mock.MockInternalStatisticsModule;
 
 public class ToolModule extends AbstractModule {
     @Override
@@ -34,8 +36,8 @@ public class ToolModule extends AbstractModule {
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.meta.impl.db.MetaDbModule());
-        install(new stroom.security.impl.mock.MockSecurityContextModule());
-        install(new stroom.statistics.impl.mock.MockInternalStatisticsModule());
+        install(new MockSecurityContextModule());
+        install(new MockInternalStatisticsModule());
     }
 
     @Provides

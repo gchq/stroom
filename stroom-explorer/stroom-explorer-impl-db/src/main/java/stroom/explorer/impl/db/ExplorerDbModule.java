@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
+import stroom.explorer.impl.ExplorerModule;
+import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
@@ -24,6 +26,8 @@ public class ExplorerDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new ExplorerModule());
+
         bind(ExplorerTreeDao.class).to(ExplorerTreeDaoImpl.class);
 
         // MultiBind the connection provider so we can see status for all databases.

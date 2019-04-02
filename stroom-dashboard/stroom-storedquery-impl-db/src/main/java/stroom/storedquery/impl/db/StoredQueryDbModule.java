@@ -9,14 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
-import stroom.dashboard.shared.CreateStoredQueryAction;
-import stroom.dashboard.shared.DeleteStoredQueryAction;
-import stroom.dashboard.shared.FetchStoredQueryAction;
-import stroom.dashboard.shared.FindStoredQueryAction;
-import stroom.dashboard.shared.UpdateStoredQueryAction;
 import stroom.db.util.HikariUtil;
-import stroom.storedquery.api.StoredQueryService;
-import stroom.task.api.TaskHandlerBinder;
+import stroom.storedquery.impl.StoredQueryDao;
+import stroom.storedquery.impl.StoredQueryModule;
 import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
@@ -24,21 +19,14 @@ import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 public class StoredQueryDbModule extends AbstractModule {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StoredQueryDbModule.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StoredQueryModule.class);
     private static final String MODULE = "stroom-storedquery";
     private static final String FLYWAY_LOCATIONS = "stroom/storedquery/impl/db";
     private static final String FLYWAY_TABLE = "query_schema_history";
 
     @Override
     protected void configure() {
-        bind(StoredQueryService.class).to(StoredQueryDao.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(CreateStoredQueryAction.class, CreateStoredQueryHandler.class)
-                .bind(UpdateStoredQueryAction.class, UpdateStoredQueryHandler.class)
-                .bind(DeleteStoredQueryAction.class, DeleteStoredQueryHandler.class)
-                .bind(FetchStoredQueryAction.class, FetchStoredQueryHandler.class)
-                .bind(FindStoredQueryAction.class, FindStoredQueryHandler.class);
+        bind(StoredQueryDao.class).to(StoredQueryDaoImpl.class);
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)

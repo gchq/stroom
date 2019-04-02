@@ -19,7 +19,7 @@ package stroom.receive;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.store.impl.mock.MockStore;
+import stroom.data.store.mock.MockStore;
 import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFileType;
 import stroom.docref.DocRef;

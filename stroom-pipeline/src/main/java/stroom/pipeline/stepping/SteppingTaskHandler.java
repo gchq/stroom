@@ -54,7 +54,6 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.security.util.UserTokenUtil;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;

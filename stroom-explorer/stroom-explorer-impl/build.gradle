@@ -3,7 +3,6 @@ ext.moduleName = 'stroom.explorer.impl'
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-explorer:stroom-explorer-api')
-    compile project(':stroom-explorer:stroom-explorer-impl-db')
     compile project(':stroom-event-logging:stroom-event-logging-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')

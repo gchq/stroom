@@ -19,7 +19,6 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.Persistence;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.explorer.shared.DocumentType;
@@ -45,17 +44,14 @@ import java.util.UUID;
 public class IndexStoreImpl implements IndexStore {
     private final Store<IndexDoc> store;
     private final SecurityContext securityContext;
-    private final Persistence persistence;
     private final IndexSerialiser serialiser;
 
     @Inject
     IndexStoreImpl(final StoreFactory storeFactory,
                    final SecurityContext securityContext,
-                   final Persistence persistence,
                    final IndexSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, IndexDoc.DOCUMENT_TYPE, IndexDoc.class);
         this.securityContext = securityContext;
-        this.persistence = persistence;
         this.serialiser = serialiser;
     }
 
@@ -162,7 +158,7 @@ public class IndexStoreImpl implements IndexStore {
         if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {
             final String uuid = docRef.getUuid();
             try {
-                final boolean exists = persistence.exists(docRef);
+                final boolean exists = store.exists(docRef);
                 IndexDoc document;
                 if (exists) {
                     document = readDocument(docRef);

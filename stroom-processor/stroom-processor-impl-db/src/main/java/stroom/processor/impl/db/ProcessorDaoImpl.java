@@ -18,12 +18,12 @@ import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 
 class ProcessorDaoImpl implements ProcessorDao {
     private final ConnectionProvider connectionProvider;
-    private final GenericDao<ProcessorRecord, Processor, Integer> delegateDao;
+    private final GenericDao<ProcessorRecord, Processor, Integer> genericDao;
 
     @Inject
     public ProcessorDaoImpl(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
-        this.delegateDao = new GenericDao<>(PROCESSOR, PROCESSOR.ID, Processor.class, connectionProvider);
+        this.genericDao = new GenericDao<>(PROCESSOR, PROCESSOR.ID, Processor.class, connectionProvider);
     }
 
     @Override
@@ -71,17 +71,17 @@ class ProcessorDaoImpl implements ProcessorDao {
 
     @Override
     public Processor update(final Processor processor) {
-        return delegateDao.update(processor);
+        return genericDao.update(processor);
     }
 
     @Override
     public boolean delete(final int id) {
-        return delegateDao.delete(id);
+        return genericDao.delete(id);
     }
 
     @Override
     public Optional<Processor> fetch(final int id) {
-        return delegateDao.fetch(id);
+        return genericDao.fetch(id);
     }
 
     @Override

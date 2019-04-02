@@ -24,7 +24,7 @@ import stroom.search.impl.SearchConfig;
 import stroom.security.impl.SecurityConfig;
 import stroom.security.impl.db.SecurityDbConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
-import stroom.storedquery.impl.db.StoredQueryHistoryConfig;
+import stroom.storedquery.impl.StoredQueryHistoryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.shared.IsConfig;

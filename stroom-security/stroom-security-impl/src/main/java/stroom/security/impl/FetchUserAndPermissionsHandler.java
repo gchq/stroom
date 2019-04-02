@@ -22,7 +22,7 @@ import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.UserAndPermissions;
 import stroom.security.shared.User;
-import stroom.security.util.UserTokenUtil;
+import stroom.security.api.UserTokenUtil;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

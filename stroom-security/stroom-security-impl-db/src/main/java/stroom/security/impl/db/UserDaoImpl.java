@@ -49,24 +49,24 @@ public class UserDaoImpl implements UserDao {
     };
 
     private final ConnectionProvider connectionProvider;
-    private final GenericDao<StroomUserRecord, User, Integer> dao;
+    private final GenericDao<StroomUserRecord, User, Integer> genericDao;
 
     @Inject
     public UserDaoImpl(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
-        dao = new GenericDao<>(STROOM_USER, STROOM_USER.ID, User.class, connectionProvider);
-        dao.setObjectToRecordMapper(USER_TO_RECORD_MAPPER);
-        dao.setRecordToObjectMapper(RECORD_TO_USER_MAPPER);
+        genericDao = new GenericDao<>(STROOM_USER, STROOM_USER.ID, User.class, connectionProvider);
+        genericDao.setObjectToRecordMapper(USER_TO_RECORD_MAPPER);
+        genericDao.setRecordToObjectMapper(RECORD_TO_USER_MAPPER);
     }
 
     @Override
     public User create(final User user) {
-        return dao.create(user);
+        return genericDao.create(user);
     }
 
     @Override
     public User getById(final int id) {
-        return dao.fetch(id).orElse(null);
+        return genericDao.fetch(id).orElse(null);
     }
 
     @Override
@@ -91,7 +91,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public User update(final User user) {
-        return dao.update(user);
+        return genericDao.update(user);
     }
 
     @Override

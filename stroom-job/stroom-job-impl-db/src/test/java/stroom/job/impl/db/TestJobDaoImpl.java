@@ -14,7 +14,7 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.Job;
-import stroom.security.impl.mock.MockSecurityContextModule;
+import stroom.security.mock.MockSecurityContextModule;
 
 import java.util.List;
 import java.util.Optional;

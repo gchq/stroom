@@ -18,8 +18,8 @@ package stroom.explorer;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.explorer.impl.db.ExplorerTreeDao;
-import stroom.explorer.impl.db.ExplorerTreeNode;
+import stroom.explorer.impl.ExplorerTreeDao;
+import stroom.explorer.impl.ExplorerTreeNode;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;

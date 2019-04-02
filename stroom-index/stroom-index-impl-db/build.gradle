@@ -30,5 +30,5 @@ dependencies {
 
     testRuntimeOnly libs.junit_jupiter_engine
 
-    //testCompile project(':stroom-security:stroom-security-impl-mock')
+    //testCompile project(':stroom-security:stroom-security-mock')
 }

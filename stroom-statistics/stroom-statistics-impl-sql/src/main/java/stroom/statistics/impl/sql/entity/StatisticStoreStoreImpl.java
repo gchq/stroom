@@ -18,14 +18,13 @@
 package stroom.statistics.impl.sql.entity;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.Persistence;
+import stroom.docref.DocRefInfo;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRefInfo;
 import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
@@ -45,17 +44,14 @@ import java.util.UUID;
 public class StatisticStoreStoreImpl implements StatisticStoreStore {
     private final Store<StatisticStoreDoc> store;
     private final SecurityContext securityContext;
-    private final Persistence persistence;
     private final StatisticStoreSerialiser serialiser;
 
     @Inject
     public StatisticStoreStoreImpl(final StoreFactory storeFactory,
                                    final SecurityContext securityContext,
-                                   final Persistence persistence,
                                    final StatisticStoreSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, StatisticStoreDoc.DOCUMENT_TYPE, StatisticStoreDoc.class);
         this.securityContext = securityContext;
-        this.persistence = persistence;
         this.serialiser = serialiser;
     }
 
@@ -157,7 +153,7 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
         if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {
             final String uuid = docRef.getUuid();
             try {
-                final boolean exists = persistence.exists(docRef);
+                final boolean exists = store.exists(docRef);
                 StatisticStoreDoc document;
                 if (exists) {
                     document = readDocument(docRef);

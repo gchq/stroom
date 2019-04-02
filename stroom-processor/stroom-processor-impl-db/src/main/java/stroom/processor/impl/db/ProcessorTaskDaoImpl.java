@@ -125,7 +125,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private final ConnectionProvider connectionProvider;
     private final ProcessorFilterMarshaller marshaller;
 
-    private final GenericDao<ProcessorTaskRecord, ProcessorTask, Long> dao;
+    private final GenericDao<ProcessorTaskRecord, ProcessorTask, Long> genericDao;
 
     @Inject
     ProcessorTaskDaoImpl(final NodeInfo nodeInfo,
@@ -143,8 +143,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         this.connectionProvider = connectionProvider;
         this.marshaller = marshaller;
 
-        this.dao = new GenericDao<>(PROCESSOR_TASK, PROCESSOR_TASK.ID, ProcessorTask.class, connectionProvider);
-        this.dao.setObjectToRecordMapper((processorTask, record) -> {
+        this.genericDao = new GenericDao<>(PROCESSOR_TASK, PROCESSOR_TASK.ID, ProcessorTask.class, connectionProvider);
+        this.genericDao.setObjectToRecordMapper((processorTask, record) -> {
             record.from(processorTask);
             if (processorTask.getStatus() != null) {
                 record.set(PROCESSOR_TASK.STATUS, processorTask.getStatus().getPrimitiveValue());
@@ -153,9 +153,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             record.set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, processorNodeCache.getOrCreate(processorTask.getNodeName()));
             return record;
         });
-        this.dao.setRecordToObjectMapper(new RecordToProcessorTaskMapper());
+        this.genericDao.setRecordToObjectMapper(new RecordToProcessorTaskMapper());
 
-//        this.dao.setRecordToObjectMapper(record -> {
+//        this.genericDao.setRecordToObjectMapper(record -> {
 //            final ProcessorTask processorTask = new ProcessorTask();
 //            processorTask.setId(record.get(PROCESSOR_TASK.ID));
 //            processorTask.setVersion(record.get(PROCESSOR_TASK.VERSION));
@@ -776,11 +776,11 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
 
     private Optional<ProcessorTask> fetch(final DSLContext context, final ProcessorTask processorTask) {
-        return dao.fetch(context, processorTask.getId()).map(p -> decorate(p, processorTask));
+        return genericDao.fetch(context, processorTask.getId()).map(p -> decorate(p, processorTask));
     }
 
     private ProcessorTask update(final DSLContext context, final ProcessorTask processorTask) {
-        return decorate(dao.update(context, processorTask), processorTask);
+        return decorate(genericDao.update(context, processorTask), processorTask);
     }
 
     private ProcessorTask decorate(final ProcessorTask result, final ProcessorTask original) {

@@ -10,6 +10,7 @@ import stroom.config.app.YamlUtil;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.index.VolumeTestConfigModule;
 import stroom.resource.impl.ResourceModule;
+import stroom.security.mock.MockSecurityContextModule;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -57,7 +58,7 @@ public class CoreTestModule extends AbstractModule {
         install(new ResourceModule());
         install(new stroom.cluster.impl.MockClusterModule());
         install(new VolumeTestConfigModule());
-        install(new stroom.security.impl.mock.MockSecurityContextModule());
+        install(new MockSecurityContextModule());
         install(new MockMetaStatisticsModule());
         install(new stroom.test.DatabaseTestControlModule());
     }

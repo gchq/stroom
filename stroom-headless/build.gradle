@@ -27,7 +27,7 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-proxy:stroom-proxy-repo')
     compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-security:stroom-security-impl-mock')
+    compile project(':stroom-security:stroom-security-mock')
     compile project(':stroom-statistics:stroom-statistics-api')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-task:stroom-task-impl')

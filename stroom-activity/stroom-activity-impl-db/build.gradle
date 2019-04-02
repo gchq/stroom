@@ -14,7 +14,7 @@ dependencies {
 
     runtimeOnly libs.mysql_connector_java
 
-//    testCompile project(':stroom-security:stroom-security-impl-mock')
+//    testCompile project(':stroom-security:stroom-security-mock')
 
     testCompile libs.assertj_core
 //    testCompile libs.commons_io

@@ -43,7 +43,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.security.api.Security;
-import stroom.security.util.UserTokenUtil;
+import stroom.security.api.UserTokenUtil;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;

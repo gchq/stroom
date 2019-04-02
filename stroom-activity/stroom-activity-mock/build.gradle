@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.activity.impl.mock'
+ext.moduleName = 'stroom.activity.mock'
 
 dependencies {
     compile project(':stroom-activity:stroom-activity-api')

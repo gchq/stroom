@@ -4,7 +4,7 @@ import stroom.index.api.EventRef;
 import stroom.index.api.EventRefs;
 import stroom.index.api.EventSearch;
 import stroom.query.api.v2.Query;
-import stroom.security.util.UserTokenUtil;
+import stroom.security.api.UserTokenUtil;
 import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
 

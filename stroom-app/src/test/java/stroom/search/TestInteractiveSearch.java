@@ -35,7 +35,7 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.search.impl.EventSearchTask;
-import stroom.security.util.UserTokenUtil;
+import stroom.security.api.UserTokenUtil;
 import stroom.task.api.TaskManager;
 import stroom.task.api.TaskCallback;
 

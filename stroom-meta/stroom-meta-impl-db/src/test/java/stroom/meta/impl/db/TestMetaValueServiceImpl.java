@@ -29,7 +29,7 @@ import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.impl.mock.MockSecurityContextModule;
+import stroom.security.mock.MockSecurityContextModule;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;

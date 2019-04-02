@@ -33,7 +33,7 @@ import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.statistics.impl.InternalStatisticsConfig;
 import stroom.statistics.impl.hbase.internal.HBaseStatisticsConfig;
 import stroom.statistics.impl.sql.SQLStatisticsConfig;
-import stroom.storedquery.impl.db.StoredQueryHistoryConfig;
+import stroom.storedquery.impl.StoredQueryHistoryConfig;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.ui.config.shared.SplashConfig;

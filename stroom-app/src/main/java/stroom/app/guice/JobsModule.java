@@ -20,7 +20,7 @@ import stroom.search.impl.SearchJobsModule;
 import stroom.search.impl.shard.ShardJobsModule;
 import stroom.statistics.impl.sql.SQLStatisticsJobsModule;
 import stroom.statistics.impl.sql.search.SQLStatisticSearchJobsModule;
-import stroom.storedquery.impl.db.StoredQueryJobsModule;
+import stroom.storedquery.impl.StoredQueryJobsModule;
 
 public class JobsModule extends AbstractModule {
     @Override

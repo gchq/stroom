@@ -21,7 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.docref.DocRef;
-import stroom.docstore.api.Persistence;
+import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.memory.MemoryPersistence;
@@ -31,17 +31,17 @@ import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.util.ProcessorUtil;
 import stroom.security.api.SecurityContext;
-import stroom.security.impl.mock.MockSecurityContext;
-import stroom.statistics.impl.sql.shared.StatisticStore;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.statistics.impl.sql.shared.StatisticType;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
-import stroom.statistics.impl.sql.shared.StatisticField;
+import stroom.security.mock.MockSecurityContext;
 import stroom.statistics.impl.sql.StatisticEvent;
 import stroom.statistics.impl.sql.Statistics;
 import stroom.statistics.impl.sql.entity.StatisticStoreSerialiser;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.statistics.impl.sql.entity.StatisticStoreStoreImpl;
+import stroom.statistics.impl.sql.shared.StatisticField;
+import stroom.statistics.impl.sql.shared.StatisticStore;
+import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.statistics.impl.sql.shared.StatisticType;
+import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.util.date.DateUtil;
 
 import java.io.ByteArrayInputStream;
@@ -457,7 +457,6 @@ class TestStatisticsFilter implements Statistics {
         return new StatisticStoreStoreImpl(
                 new StoreFactoryImpl(securityContext, persistence),
                 securityContext,
-                persistence,
                 new StatisticStoreSerialiser(new Serialiser2FactoryImpl()));
     }
 }

@@ -43,13 +43,13 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     private final ConnectionProvider connectionProvider;
     private final ProcessorFilterMarshaller marshaller;
-    private final GenericDao<ProcessorFilterRecord, ProcessorFilter, Integer> dao;
+    private final GenericDao<ProcessorFilterRecord, ProcessorFilter, Integer> genericDao;
 
     @Inject
     ProcessorFilterDaoImpl(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
         this.marshaller = new ProcessorFilterMarshaller();
-        this.dao = new GenericDao<>(PROCESSOR_FILTER, PROCESSOR_FILTER.ID, ProcessorFilter.class, connectionProvider);
+        this.genericDao = new GenericDao<>(PROCESSOR_FILTER, PROCESSOR_FILTER.ID, ProcessorFilter.class, connectionProvider);
     }
 
     @Override
@@ -99,7 +99,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public boolean delete(final int id) {
-        return dao.delete(id);
+        return genericDao.delete(id);
     }
 
     @Override

@@ -17,7 +17,7 @@
 package stroom.pipeline.task;
 
 import org.junit.jupiter.api.Test;
-import stroom.data.store.impl.mock.MockStore;
+import stroom.data.store.mock.MockStore;
 import stroom.node.api.NodeInfo;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;

@@ -20,14 +20,13 @@ package stroom.dashboard.impl;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
-import stroom.docstore.api.Persistence;
+import stroom.docref.DocRefInfo;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRefInfo;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
@@ -48,7 +47,6 @@ import java.util.UUID;
 class DashboardStoreImpl implements DashboardStore {
     private final Store<DashboardDoc> store;
     private final SecurityContext securityContext;
-    private final Persistence persistence;
     private final DashboardSerialiser serialiser;
 
     private DashboardConfig template;
@@ -56,11 +54,9 @@ class DashboardStoreImpl implements DashboardStore {
     @Inject
     DashboardStoreImpl(final StoreFactory storeFactory,
                        final SecurityContext securityContext,
-                       final Persistence persistence,
                        final DashboardSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, DashboardDoc.DOCUMENT_TYPE, DashboardDoc.class);
         this.securityContext = securityContext;
-        this.persistence = persistence;
         this.serialiser = serialiser;
     }
 
@@ -183,7 +179,7 @@ class DashboardStoreImpl implements DashboardStore {
         if (dataMap.size() > 1 && !dataMap.containsKey("meta") && dataMap.containsKey("xml")) {
             final String uuid = docRef.getUuid();
             try {
-                final boolean exists = persistence.exists(docRef);
+                final boolean exists = store.exists(docRef);
                 DashboardDoc document;
                 if (exists) {
                     document = readDocument(docRef);

@@ -1,6 +1,7 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
+import stroom.storedquery.impl.StoredQueryModule;
 
 public class CoreModule extends AbstractModule {
     @Override
@@ -41,7 +42,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.elastic.impl.ElasticModule());
         install(new stroom.elastic.impl.http.HttpElasticModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
-        install(new stroom.explorer.impl.ExplorerModule());
+        install(new stroom.explorer.impl.db.ExplorerDbModule());
         install(new stroom.feed.impl.FeedModule());
         install(new stroom.importexport.impl.ExportConfigResourceModule());
         install(new stroom.importexport.impl.ImportExportHandlerModule());
@@ -89,7 +90,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.statistics.impl.sql.rollup.SQLStatisticRollupModule());
         install(new stroom.statistics.impl.sql.search.SQLStatisticSearchModule());
         install(new stroom.statistics.impl.sql.SQLStatisticsModule());
-        install(new stroom.storedquery.impl.db.StoredQueryDbModule());
+        install(new StoredQueryModule());
         install(new stroom.task.impl.TaskModule());
         install(new stroom.util.pipeline.scope.PipelineScopeModule());
     }

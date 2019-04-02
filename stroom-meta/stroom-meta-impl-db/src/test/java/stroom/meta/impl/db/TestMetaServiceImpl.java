@@ -14,7 +14,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.impl.mock.MockSecurityContextModule;
+import stroom.security.mock.MockSecurityContextModule;
 
 import javax.inject.Inject;
 

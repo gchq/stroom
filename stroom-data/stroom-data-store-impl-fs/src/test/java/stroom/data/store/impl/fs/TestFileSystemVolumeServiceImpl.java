@@ -28,8 +28,8 @@ import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
-import stroom.security.impl.mock.AllowAllMockSecurity;
-import stroom.security.impl.mock.MockSecurityContext;
+import stroom.security.mock.AllowAllMockSecurity;
+import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 

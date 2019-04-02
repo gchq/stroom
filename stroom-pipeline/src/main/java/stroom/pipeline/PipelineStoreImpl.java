@@ -18,7 +18,7 @@
 package stroom.pipeline;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.Persistence;
+import stroom.docref.DocRefInfo;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.explorer.shared.DocumentType;
@@ -27,7 +27,6 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.docref.DocRefInfo;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
@@ -46,17 +45,14 @@ import java.util.UUID;
 public class PipelineStoreImpl implements PipelineStore {
     private final Store<PipelineDoc> store;
     private final SecurityContext securityContext;
-    private final Persistence persistence;
     private final PipelineSerialiser serialiser;
 
     @Inject
     public PipelineStoreImpl(final StoreFactory storeFactory,
                              final SecurityContext securityContext,
-                             final Persistence persistence,
                              final PipelineSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, PipelineDoc.DOCUMENT_TYPE, PipelineDoc.class);
         this.securityContext = securityContext;
-        this.persistence = persistence;
         this.serialiser = serialiser;
     }
 
@@ -158,7 +154,7 @@ public class PipelineStoreImpl implements PipelineStore {
         if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {
             final String uuid = docRef.getUuid();
             try {
-                final boolean exists = persistence.exists(docRef);
+                final boolean exists = store.exists(docRef);
                 PipelineDoc document;
                 if (exists) {
                     document = readDocument(docRef);

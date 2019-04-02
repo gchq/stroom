@@ -20,7 +20,7 @@ import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.cluster.lock.mock.MockClusterLockModule;
-import stroom.security.impl.mock.MockSecurityContextModule;
+import stroom.security.mock.MockSecurityContextModule;
 
 import javax.inject.Inject;
 
