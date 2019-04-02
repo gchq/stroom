@@ -1,0 +1,5 @@
+ext.moduleName = 'stroom.config.api'
+
+dependencies {
+
+}
