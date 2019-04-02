@@ -3,7 +3,7 @@ package stroom.meta.impl.db;
 import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import stroom.cluster.lock.impl.mock.MockClusterLockModule;
+import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.util.shared.BaseResultList;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;

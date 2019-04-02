@@ -2,7 +2,7 @@ ext.moduleName = 'stroom.meta.impl.db'
 
 dependencies {
     compile project(':stroom-cluster:stroom-cluster-lock-api')
-    compile project(':stroom-cluster:stroom-cluster-lock-impl-mock')
+    compile project(':stroom-cluster:stroom-cluster-lock-mock')
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-core-shared')
     compile project(':stroom-meta:stroom-meta-impl-db-jooq')

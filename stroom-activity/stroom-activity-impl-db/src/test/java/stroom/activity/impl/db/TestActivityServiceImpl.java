@@ -24,13 +24,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import stroom.activity.api.ActivityService;
+import stroom.activity.impl.ActivityDao;
+import stroom.activity.impl.ActivityServiceImpl;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
-import stroom.activity.api.ActivityService;
 import stroom.activity.shared.FindActivityCriteria;
-import stroom.util.shared.BaseResultList;
 import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.BaseResultList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -51,7 +53,8 @@ class TestActivityServiceImpl {
 
         final ConnectionProvider connectionProvider = new ActivityDbModule().getConnectionProvider(ActivityConfig::new);
 
-        activityService = new ActivityServiceImpl(securityContext, connectionProvider);
+        final ActivityDao activityDao = new ActivityDaoImpl(connectionProvider);
+        activityService = new ActivityServiceImpl(securityContext, activityDao);
     }
 
     @Test

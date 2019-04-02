@@ -1,14 +1,6 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
-import stroom.core.db.DataSourceModule;
-import stroom.dashboard.impl.DashboardModule;
-import stroom.dashboard.impl.script.ScriptModule;
-import stroom.dashboard.impl.visualisation.VisualisationModule;
-import stroom.index.impl.IndexElementModule;
-import stroom.index.impl.IndexModule;
-import stroom.search.impl.SearchElementModule;
-import stroom.search.impl.SearchModule;
 
 public class CoreModule extends AbstractModule {
     @Override
@@ -19,22 +11,24 @@ public class CoreModule extends AbstractModule {
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
         install(new stroom.cluster.task.impl.ClusterTaskModule());
         install(new stroom.config.global.impl.db.GlobalConfigDbModule());
-        install(new stroom.config.global.impl.db.GlobalConfigModule());
+        install(new stroom.config.global.impl.GlobalConfigModule());
         install(new stroom.core.dataprocess.PipelineStreamTaskModule());
+        install(new stroom.core.db.DataSourceModule());
         install(new stroom.core.document.DocumentModule());
         install(new stroom.core.entity.cluster.EntityClusterModule());
         install(new stroom.core.entity.event.EntityClusterTaskModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new stroom.core.feed.RemoteFeedModule());
-        install(new DataSourceModule());
         install(new stroom.core.query.QueryModule());
         install(new stroom.core.receive.ReceiveDataModule());
         install(new stroom.core.servlet.ServletModule());
         install(new stroom.core.ui.config.UiConfigModule());
-        install(new DashboardModule());
+        install(new stroom.dashboard.impl.DashboardModule());
         install(new stroom.dashboard.impl.datasource.DatasourceModule());
         install(new stroom.dashboard.impl.logging.LoggingModule());
+        install(new stroom.dashboard.impl.script.ScriptModule());
+        install(new stroom.dashboard.impl.visualisation.VisualisationModule());
         install(new stroom.data.retention.impl.DataRetentionModule());
         install(new stroom.data.store.impl.DataStoreHandlerModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
@@ -52,9 +46,9 @@ public class CoreModule extends AbstractModule {
         install(new stroom.importexport.impl.ExportConfigResourceModule());
         install(new stroom.importexport.impl.ImportExportHandlerModule());
         install(new stroom.importexport.impl.ImportExportModule());
-        install(new IndexElementModule());
-        install(new IndexModule());
         install(new stroom.index.impl.db.IndexDbModule());
+        install(new stroom.index.impl.IndexElementModule());
+        install(new stroom.index.impl.IndexModule());
         install(new stroom.job.impl.db.JobDbModule());
         install(new stroom.job.impl.JobSystemModule());
         install(new stroom.kafka.impl.KafkaModule());
@@ -79,9 +73,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.processor.impl.ProcessorModule());
         install(new stroom.processor.impl.StreamTaskLifecycleModule());
         install(new stroom.receive.rules.impl.ReceiveDataRulesetModule());
-        install(new ScriptModule());
-        install(new SearchElementModule());
-        install(new SearchModule());
+        install(new stroom.search.impl.SearchElementModule());
+        install(new stroom.search.impl.SearchModule());
         install(new stroom.search.impl.shard.ShardModule());
         install(new stroom.security.impl.db.SecurityDbModule());
         install(new stroom.security.impl.SecurityModule());
@@ -99,6 +92,5 @@ public class CoreModule extends AbstractModule {
         install(new stroom.storedquery.impl.db.StoredQueryDbModule());
         install(new stroom.task.impl.TaskModule());
         install(new stroom.util.pipeline.scope.PipelineScopeModule());
-        install(new VisualisationModule());
     }
 }

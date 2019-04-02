@@ -19,9 +19,10 @@ rootProject.name = 'stroom'
 
 // Activity
 include 'stroom-activity:stroom-activity-api'
+include 'stroom-activity:stroom-activity-impl'
 include 'stroom-activity:stroom-activity-impl-db'
 include 'stroom-activity:stroom-activity-impl-db-jooq'
-include 'stroom-activity:stroom-activity-impl-mock'
+include 'stroom-activity:stroom-activity-mock'
 
 // App.
 include 'stroom-app'
@@ -37,13 +38,14 @@ include 'stroom-cluster:stroom-cluster-impl'
 include 'stroom-cluster:stroom-cluster-lock-api'
 include 'stroom-cluster:stroom-cluster-lock-impl-db'
 include 'stroom-cluster:stroom-cluster-lock-impl-db-jooq'
-include 'stroom-cluster:stroom-cluster-lock-impl-mock'
+include 'stroom-cluster:stroom-cluster-lock-mock'
 include 'stroom-cluster:stroom-cluster-task-api'
 include 'stroom-cluster:stroom-cluster-task-impl'
 
 // Config
 include 'stroom-config:stroom-config-app'
 include 'stroom-config:stroom-config-common'
+include 'stroom-config:stroom-config-global-impl'
 include 'stroom-config:stroom-config-global-impl-db'
 include 'stroom-config:stroom-config-global-impl-db-jooq'
 

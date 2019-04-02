@@ -25,8 +25,6 @@ public class GlobalConfigDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(GlobalConfigService.class).to(GlobalConfigServiceImpl.class);
-
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
                 .addBinding(ConnectionProvider.class);

@@ -9,6 +9,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.activity.api.ActivityService;
 import stroom.activity.api.CurrentActivity;
+import stroom.activity.impl.ActivityModule;
+import stroom.activity.impl.ActivityServiceImpl;
+import stroom.activity.impl.CreateActivityHandler;
+import stroom.activity.impl.CurrentActivityImpl;
+import stroom.activity.impl.DeleteActivityHandler;
+import stroom.activity.impl.FetchActivityHandler;
+import stroom.activity.impl.FindActivityHandler;
+import stroom.activity.impl.SetCurrentActivityHandler;
+import stroom.activity.impl.UpdateActivityHandler;
 import stroom.activity.shared.CreateActivityAction;
 import stroom.activity.shared.DeleteActivityAction;
 import stroom.activity.shared.FetchActivityAction;
@@ -33,16 +42,7 @@ public class ActivityDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ActivityService.class).to(ActivityServiceImpl.class);
-        bind(CurrentActivity.class).to(CurrentActivityImpl.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(CreateActivityAction.class, CreateActivityHandler.class)
-                .bind(UpdateActivityAction.class, UpdateActivityHandler.class)
-                .bind(DeleteActivityAction.class, DeleteActivityHandler.class)
-                .bind(FetchActivityAction.class, FetchActivityHandler.class)
-                .bind(FindActivityAction.class, FindActivityHandler.class)
-                .bind(SetCurrentActivityAction.class, SetCurrentActivityHandler.class);
+        install(new ActivityModule());
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)

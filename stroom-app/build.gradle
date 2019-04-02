@@ -31,6 +31,7 @@ dependencies {
     compile project(':stroom-cluster:stroom-cluster-lock-impl-db')
     compile project(':stroom-cluster:stroom-cluster-task-impl')
     compile project(':stroom-config:stroom-config-app')
+    compile project(':stroom-config:stroom-config-global-impl')
     compile project(':stroom-config:stroom-config-global-impl-db')
     compile project(':stroom-core')
     compile project(':stroom-core-shared')
@@ -116,7 +117,7 @@ dependencies {
     // Use default DB config.
 
     testCompile project(':stroom-activity:stroom-activity-api')
-    testCompile project(':stroom-activity:stroom-activity-impl-mock')
+    testCompile project(':stroom-activity:stroom-activity-mock')
     testCompile project(':stroom-config:stroom-config-app')
     testCompile project(':stroom-core')
     testCompile project(':stroom-core-shared')

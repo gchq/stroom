@@ -18,6 +18,7 @@ package stroom.headless;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import stroom.activity.mock.MockActivityModule;
 import stroom.cache.impl.CacheModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
@@ -28,7 +29,6 @@ import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.StreamCloser;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.node.api.NodeInfo;
-import stroom.node.shared.Node;
 import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.pipeline.scope.PipelineScoped;
@@ -46,7 +46,7 @@ import java.util.concurrent.Executors;
 public class CliModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new stroom.activity.impl.mock.MockActivityModule());
+        install(new MockActivityModule());
         install(new CacheModule());
         install(new PipelineCacheModule());
 //        install(new ClusterModule());

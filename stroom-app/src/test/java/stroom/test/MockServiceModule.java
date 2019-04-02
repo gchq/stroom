@@ -2,6 +2,7 @@ package stroom.test;
 
 import com.google.inject.AbstractModule;
 import org.mockito.stubbing.Answer;
+import stroom.activity.mock.MockActivityModule;
 import stroom.cache.impl.CacheModule;
 import stroom.core.dataprocess.PipelineStreamTaskModule;
 import stroom.data.store.impl.mock.MockStreamStoreModule;
@@ -30,7 +31,7 @@ import static org.mockito.Mockito.when;
 public class MockServiceModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new stroom.activity.impl.mock.MockActivityModule());
+        install(new MockActivityModule());
         install(new CacheModule());
         install(new MockMetaModule());
         install(new MockStreamStoreModule());

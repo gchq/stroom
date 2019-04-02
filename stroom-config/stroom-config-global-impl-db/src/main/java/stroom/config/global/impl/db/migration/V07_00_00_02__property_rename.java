@@ -7,7 +7,7 @@ import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
-import stroom.config.global.impl.db.ConfigMapper;
+import stroom.config.global.impl.ConfigMapper;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 import stroom.util.logging.LogUtil;
 
