@@ -205,7 +205,7 @@ ext.libs = [
         jaxb_runtime                   : "org.glassfish.jaxb:jaxb-runtime:2.4.0-b180830.0438",
         jcl_over_slf4j                 : "org.slf4j:jcl-over-slf4j", // version controlled by DW BOM
         jcommander                     : 'com.beust:jcommander:1.72',
-        jersey_bom                     : "org.glassfish.jersey:jersey-bom", // version controlled by DW BOM
+//        jersey_bom                     : "org.glassfish.jersey:jersey-bom", // version controlled by DW BOM
         jersey_client                  : "org.glassfish.jersey.core:jersey-client", // version controlled by DW BOM
         jersey_common                  : "org.glassfish.jersey.core:jersey-common", // version controlled by DW BOM
         jersey_server                  : "org.glassfish.jersey.core:jersey-server", // version controlled by DW BOM
@@ -321,7 +321,7 @@ subprojects {
     // This bit makes all sub projects have access to the BOMs for the dependency versions
     dependencies {
         compile platform(libs.dropwizard_bom)
-        compile platform(libs.jersey_bom)
+//        compile platform(libs.jersey_bom)
     }
 
     //println project.getConfigurations().getByName("implementation").getAllDependencies()

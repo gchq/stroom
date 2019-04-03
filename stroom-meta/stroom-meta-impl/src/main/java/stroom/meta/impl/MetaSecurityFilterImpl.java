@@ -1,4 +1,4 @@
-package stroom.meta.impl.db;
+package stroom.meta.impl;
 
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.meta.shared.MetaSecurityFilter;

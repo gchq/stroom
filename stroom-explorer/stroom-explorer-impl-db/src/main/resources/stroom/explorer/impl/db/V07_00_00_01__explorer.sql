@@ -15,10 +15,9 @@ CREATE TABLE IF NOT EXISTS explorer_path (
   ancestor              int(11) NOT NULL,
   descendant            int(11) NOT NULL,
   depth                 int(11) NOT NULL,
-  order_index            int(11) NOT NULL,
+  order_index           int(11) NOT NULL,
   PRIMARY KEY           (ancestor,descendant)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
 
 --
 -- Copy data into the explorer table

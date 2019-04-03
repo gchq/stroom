@@ -12,6 +12,7 @@ import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
 import stroom.job.impl.JobDao;
 import stroom.job.impl.JobNodeDao;
+import stroom.job.impl.JobSystemModule;
 import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
@@ -26,6 +27,8 @@ public class JobDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new JobSystemModule());
+
         bind(JobDao.class).to(JobDaoImpl.class);
         bind(JobNodeDao.class).to(JobNodeDaoImpl.class);
 

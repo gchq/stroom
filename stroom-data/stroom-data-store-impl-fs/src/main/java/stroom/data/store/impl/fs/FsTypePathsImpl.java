@@ -74,7 +74,7 @@ class FsTypePathsImpl implements FsTypePaths {
                 .select(FS_TYPE_PATH.NAME, FS_TYPE_PATH.PATH)
                 .from(FS_TYPE_PATH)
                 .fetch()
-                .forEach(r -> put(r.value1(), r.value2())));
+                .forEach(r -> put(r.get(FS_TYPE_PATH.NAME), r.get(FS_TYPE_PATH.PATH))));
     }
 
     private void put(final String name, final String path) {

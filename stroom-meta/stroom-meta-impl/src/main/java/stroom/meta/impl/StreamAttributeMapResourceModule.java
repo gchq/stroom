@@ -1,4 +1,4 @@
-package stroom.meta.impl.db;
+package stroom.meta.impl;
 
 import com.google.inject.AbstractModule;
 import stroom.util.guice.GuiceUtil;

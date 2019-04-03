@@ -1,4 +1,4 @@
-package stroom.meta.impl.db;
+package stroom.meta.impl;
 
 import stroom.job.api.ScheduledJobsModule;
 import stroom.job.api.TaskConsumer;
@@ -25,14 +25,14 @@ public class MetaDbJobsModule extends ScheduledJobsModule {
 
     private static class FlushDataMetaDb extends TaskConsumer {
         @Inject
-        FlushDataMetaDb(final MetaValueService metaValueService) {
+        FlushDataMetaDb(final MetaValueDao metaValueService) {
             super(task -> metaValueService.flush());
         }
     }
 
     private static class DataAttributesRetention extends TaskConsumer {
         @Inject
-        DataAttributesRetention(final MetaValueService metaValueService) {
+        DataAttributesRetention(final MetaValueDao metaValueService) {
             super(task -> metaValueService.deleteOldValues());
         }
     }

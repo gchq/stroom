@@ -13,6 +13,7 @@ import stroom.db.util.HikariUtil;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.ProcessorFilterDao;
+import stroom.processor.impl.ProcessorModule;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
 import stroom.processor.impl.ProcessorFilterTrackerDao;
@@ -31,6 +32,8 @@ public class ProcessorDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new ProcessorModule());
+
         bind(ProcessorDao.class).to(ProcessorDaoImpl.class);
         bind(ProcessorFilterDao.class).to(ProcessorFilterDaoImpl.class);
         bind(ProcessorTaskDao.class).to(ProcessorTaskDaoImpl.class);

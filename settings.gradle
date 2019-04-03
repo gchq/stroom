@@ -93,6 +93,7 @@ include 'stroom-dropwizard-common'
 
 // Data Meta projects
 include 'stroom-meta:stroom-meta-api'
+include 'stroom-meta:stroom-meta-impl'
 include 'stroom-meta:stroom-meta-impl-db'
 include 'stroom-meta:stroom-meta-impl-db-jooq'
 include 'stroom-meta:stroom-meta-mock'

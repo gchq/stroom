@@ -22,12 +22,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.cluster.lock.mock.MockClusterLockModule;
+import stroom.meta.impl.MetaServiceImpl;
 import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaProperties;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.util.date.DateUtil;
@@ -36,11 +37,13 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestMetaValueServiceImpl {
+class TestMetaValueDaoImpl {
     @Inject
-    private MetaServiceImpl dataMetaService;
+    private Cleanup cleanup;
     @Inject
-    private MetaValueServiceImpl metaValueService;
+    private MetaServiceImpl metaService;
+    @Inject
+    private MetaValueDaoImpl metaValueDao;
     @Inject
     private MetaValueConfig metaValueConfig;
 
@@ -48,6 +51,8 @@ class TestMetaValueServiceImpl {
     void setup() {
         Guice.createInjector(new MetaDbModule(), new MockClusterLockModule(), new MockSecurityContextModule()).injectMembers(this);
         metaValueConfig.setAddAsync(false);
+        // Delete everything
+        cleanup.clear();
     }
 
     @AfterEach
@@ -57,80 +62,72 @@ class TestMetaValueServiceImpl {
 
     @Test
     void testFind() {
-        // Delete everything
-        dataMetaService.deleteAll();
-        metaValueService.deleteAll();
+        final Meta meta = metaService.create(createProperties("FEED1"));
 
-        final Meta meta = dataMetaService.create(createProperties("FEED1"));
-
-        dataMetaService.addAttributes(meta, createAttributes());
+        metaService.addAttributes(meta, createAttributes());
 
         FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs())));
 
-        assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
+        assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
 
-        assertThat(dataMetaService.find(criteria).size()).isEqualTo(0);
+        assertThat(metaService.find(criteria).size()).isEqualTo(0);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.FILE_SIZE, Condition.GREATER_THAN, "0"));
 
-        assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
+        assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
-        assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
+        assertThat(metaService.find(criteria).size()).isEqualTo(1);
     }
 
     @Test
     void testDeleteOld() {
-        // Delete everything
-        dataMetaService.deleteAll();
-        metaValueService.deleteAll();
+        final Meta meta = metaService.create(createProperties("FEED1"));
 
-        final Meta meta = dataMetaService.create(createProperties("FEED1"));
-
-        dataMetaService.addAttributes(meta, createAttributes());
+        metaService.addAttributes(meta, createAttributes());
 
         FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs())));
 
-        assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
+        assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
 
-        assertThat(dataMetaService.find(criteria).size()).isEqualTo(0);
+        assertThat(metaService.find(criteria).size()).isEqualTo(0);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.FILE_SIZE, Condition.GREATER_THAN, "0"));
 
-        assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
+        assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
-        assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
+        assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
-        metaValueService.deleteOldValues();
+        metaValueDao.deleteOldValues();
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
         criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
-        assertThat(dataMetaService.find(criteria).size()).isEqualTo(0);
+        assertThat(metaService.find(criteria).size()).isEqualTo(0);
     }
 
     private MetaProperties createProperties(final String feedName) {
@@ -138,7 +135,6 @@ class TestMetaValueServiceImpl {
                 .createMs(1000L)
                 .feedName(feedName)
                 .processorUuid("12345")
-                .processorFilterUuid("12345")
                 .pipelineUuid("PIPELINE_UUID")
                 .typeName("TEST_STREAM_TYPE")
                 .build();

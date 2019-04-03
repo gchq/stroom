@@ -12,6 +12,7 @@ import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
 import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.DocumentPermissionDao;
+import stroom.security.impl.SecurityModule;
 import stroom.security.impl.UserDao;
 import stroom.util.guice.GuiceUtil;
 
@@ -27,6 +28,8 @@ public class SecurityDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new SecurityModule());
+
         bind(UserDao.class).to(UserDaoImpl.class);
         bind(DocumentPermissionDao.class).to(DocumentPermissionDaoImpl.class);
         bind(AppPermissionDao.class).to(AppPermissionDaoImpl.class);

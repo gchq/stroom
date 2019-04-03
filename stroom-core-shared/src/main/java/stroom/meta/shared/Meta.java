@@ -25,7 +25,6 @@ public class Meta implements SharedObject {
     private String feedName;
     private String typeName;
     private String processorUuid;
-    private String processorFilterUuid;
     private String pipelineUuid;
     private Long parentDataId;
     private Long processorTaskId;
@@ -52,10 +51,6 @@ public class Meta implements SharedObject {
 
     public String getProcessorUuid() {
         return processorUuid;
-    }
-
-    public String getProcessorFilterUuid() {
-        return processorFilterUuid;
     }
 
     public String getPipelineUuid() {
@@ -116,7 +111,6 @@ public class Meta implements SharedObject {
             typeName(meta.getTypeName());
             pipelineUuid(meta.getPipelineUuid());
             processorUuid(meta.getProcessorUuid());
-            processorFilterUuid(meta.getProcessorFilterUuid());
             parentDataId(meta.getParentMetaId());
             processorTaskId(meta.getProcessorTaskId());
             status(meta.getStatus());
@@ -142,11 +136,6 @@ public class Meta implements SharedObject {
 
         public Builder processorUuid(final String processorUuid) {
             meta.processorUuid = processorUuid;
-            return this;
-        }
-
-        public Builder processorFilterUuid(final String processorFilterUuid) {
-            meta.processorFilterUuid = processorFilterUuid;
             return this;
         }
 

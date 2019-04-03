@@ -30,7 +30,7 @@ import stroom.statistics.mock.MockInternalStatisticsModule;
 public class ToolModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new MockActivityModule());
+        install(new stroom.activity.mock.MockActivityModule());
         install(new stroom.cache.impl.CacheModule());
         install(new MockClusterLockModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());

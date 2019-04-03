@@ -63,7 +63,7 @@ class FsFeedPaths {
                 .select(FS_FEED_PATH.NAME, FS_FEED_PATH.PATH)
                 .from(FS_FEED_PATH)
                 .fetch()
-                .forEach(r -> put(r.value1(), r.value2())));
+                .forEach(r -> put(r.get(FS_FEED_PATH.NAME), r.get(FS_FEED_PATH.PATH))));
     }
 
     private void put(final String name, final String path) {

@@ -41,7 +41,7 @@ import stroom.meta.impl.db.jooq.tables.records.MetaProcessorRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaProcessor extends TableImpl<MetaProcessorRecord> {
 
-    private static final long serialVersionUID = -1078907836;
+    private static final long serialVersionUID = 1856503043;
 
     /**
      * The reference instance of <code>stroom.meta_processor</code>
@@ -65,11 +65,6 @@ public class MetaProcessor extends TableImpl<MetaProcessorRecord> {
      * The column <code>stroom.meta_processor.processor_uuid</code>.
      */
     public final TableField<MetaProcessorRecord, String> PROCESSOR_UUID = createField("processor_uuid", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
-
-    /**
-     * The column <code>stroom.meta_processor.processor_filter_uuid</code>.
-     */
-    public final TableField<MetaProcessorRecord, String> PROCESSOR_FILTER_UUID = createField("processor_filter_uuid", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
 
     /**
      * The column <code>stroom.meta_processor.pipeline_uuid</code>.

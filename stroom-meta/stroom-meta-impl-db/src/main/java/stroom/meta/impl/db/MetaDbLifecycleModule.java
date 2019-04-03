@@ -14,7 +14,7 @@ public class MetaDbLifecycleModule extends AbstractLifecycleModule {
 
     private static class MetaValueServiceFlush extends RunnableWrapper {
         @Inject
-        MetaValueServiceFlush(final MetaValueServiceImpl metaValueService) {
+        MetaValueServiceFlush(final MetaValueDaoImpl metaValueService) {
             super(metaValueService::flush);
         }
     }

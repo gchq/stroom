@@ -15,8 +15,14 @@
  *
  */
 
-package stroom.meta.impl.db;
+package stroom.meta.impl;
 
-interface MetaProcessorService {
-    Integer getOrCreate(String processorUuid, String processorFilterUuid, String pipelineUuid);
+import stroom.util.shared.Clearable;
+
+import java.util.List;
+
+public interface MetaFeedDao extends Clearable {
+    Integer getOrCreate(String name);
+
+    List<String> list();
 }

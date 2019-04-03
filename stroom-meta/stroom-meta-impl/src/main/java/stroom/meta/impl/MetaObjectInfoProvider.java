@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.meta.impl.db;
+package stroom.meta.impl;
 
 import event.logging.BaseObject;
 import event.logging.Object;

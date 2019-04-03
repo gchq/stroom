@@ -17,6 +17,7 @@
 package stroom.meta.impl.db;
 
 import stroom.db.util.JooqUtil;
+import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.shared.MetaFieldNames;
 
 import javax.inject.Inject;
@@ -28,7 +29,7 @@ import java.util.Optional;
 import static stroom.meta.impl.db.jooq.tables.MetaKey.META_KEY;
 
 @Singleton
-class MetaKeyServiceImpl implements MetaKeyService {
+class MetaKeyDaoImpl implements MetaKeyDao {
 //    private static final Map<String, MetaFieldUse> SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP;
 
     private static final String REC_READ = MetaFieldNames.REC_READ;
@@ -68,7 +69,7 @@ class MetaKeyServiceImpl implements MetaKeyService {
     private final Map<String, Integer> nameToIdCache = new HashMap<>();
 
     @Inject
-    MetaKeyServiceImpl(final ConnectionProvider connectionProvider) {
+    MetaKeyDaoImpl(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
         setup();
     }
@@ -105,36 +106,12 @@ class MetaKeyServiceImpl implements MetaKeyService {
                 .from(META_KEY)
                 .fetch()
                 .forEach(r -> {
-                    idToNameCache.put(r.value1(), r.value2());
-                    nameToIdCache.put(r.value2(), r.value1());
+                    final Integer id = r.get(META_KEY.ID);
+                    final String name = r.get(META_KEY.NAME);
+                    idToNameCache.put(id, name);
+                    nameToIdCache.put(name, id);
                 }));
     }
-//
-//    private Integer get(final String name) {
-//        Integer id = idToNameCache.get(name);
-//        if (id != null) {
-//            return id;
-//        }
-//
-//        JooqUtil.context(connectionProvider, context -> context
-//
-//            id = create
-//                    .select(STRM_TYPE.ID)
-//                    .from(STRM_TYPE)
-//                    .where(STRM_TYPE.NAME.eq(name))
-//                    .fetchOne(STRM_TYPE.ID);
-//
-//        } catch (final SQLException e) {
-//            LOGGER.error(e.getMessage(), e);
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
-//
-//        if (id != null) {
-//            idToNameCache.put(name, id);
-//        }
-//
-//        return id;
-//    }
 
     private void create(final String name, final MetaType type) {
         JooqUtil.context(connectionProvider, context -> context
@@ -143,98 +120,16 @@ class MetaKeyServiceImpl implements MetaKeyService {
                 .onDuplicateKeyIgnore()
                 .execute());
     }
-//
-//    @Override
-//    public void clear() {
-//        idToNameCache.clear();
-//    }
 
-
-//
-//
-//
-//
-//
-//
-//
-//    final BaseResultList<MetaKey> list = metaKeyService
-//            .find(new FindMetaKeyCriteria());
-//    final HashSet<String> existingItems = new HashSet<>();
-//        for (final MetaKey metaKey : list) {
-//        existingItems.add(metaKey.getName());
-//    }
-//        for (final String name : MetaConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.keySet()) {
-//        if (!existingItems.contains(name)) {
-//            try {
-//                metaKeyService.save(new MetaKey(name,
-//                        MetaConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.get(name)));
-//            } catch (final RuntimeException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-//
-//
-
-//        extends SystemEntityServiceImpl<MetaKey, FindMetaKeyCriteria>
-//        implements MetaKeyService, Clearable {
-//    private static final int MAX_CACHE_ENTRIES = 1000;
-//
-//    private final LoadingCache<String, BaseResultList<MetaKey>> idToNameCache;
-//
-//    @Inject
-//    @SuppressWarnings("unchecked")
-//    MetaKeyServiceImpl(final StroomEntityManager entityManager,
-//                                  final Security security,
-//                                  final CacheManager cacheManager) {
-//        super(entityManager, security);
-//        final CacheLoader<String, BaseResultList<MetaKey>> cacheLoader = CacheLoader.from(k -> find(new FindMetaKeyCriteria()));
-//        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-//                .maximumSize(MAX_CACHE_ENTRIES)
-//                .expireAfterAccess(10, TimeUnit.MINUTES);
-//        idToNameCache = cacheBuilder.build(cacheLoader);
-//        cacheManager.registerCache("Stream Attribute Key Cache", cacheBuilder, idToNameCache);
-//    }
-//
-//    @Override
-//    public Class<MetaKey> getEntityClass() {
-//        return MetaKey.class;
-//    }
-//
-//    @Override
-//    public BaseResultList<MetaKey> findAll() {
-//        return idToNameCache.getUnchecked("findAll");
-//    }
-//
-//    @Override
-//    public FindMetaKeyCriteria createCriteria() {
-//        return new FindMetaKeyCriteria();
-//    }
-//
-//    @Override
-//    protected FieldMap createFieldMap() {
-//        return super.createFieldMap()
-//                .add(FindMetaKeyCriteria.FIELD_NAME, MetaKey.NAME, "name");
-//    }
-//
-//    @Override
-//    public void clear() {
-//        CacheUtil.clear(idToNameCache);
-//    }
-//
-//    @Override
-//    protected String permission() {
-//        return null;
-//    }
-
-    void clear() {
+    @Override
+    public void clear() {
         idToNameCache.clear();
         nameToIdCache.clear();
         deleteAll();
         setup();
     }
 
-    int deleteAll() {
+    private int deleteAll() {
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .delete(META_KEY)
                 .execute());

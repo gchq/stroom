@@ -66,7 +66,7 @@ public class AppConfigModule extends AbstractModule {
         bind(DbConfig.class).toInstance(appConfig.getDbConfig());
         bind(DataConfig.class).toInstance(appConfig.getDataConfig());
         bind(ReceiveDataConfig.class).toInstance(appConfig.getReceiveDataConfig());
-        bind(MetaServiceConfig.class).toInstance(appConfig.getDataConfig().getDataMetaServiceConfig());
+        bind(MetaServiceConfig.class).toInstance(appConfig.getDataConfig().getMetaServiceConfig());
         bind(DataSourceUrlConfig.class).toInstance(appConfig.getDataSourceUrlConfig());
         bind(DataStoreServiceConfig.class).toInstance(appConfig.getDataConfig().getDataStoreServiceConfig());
         bind(ExplorerConfig.class).toInstance(appConfig.getExplorerConfig());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,21 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package stroom.meta.impl.db;
+package stroom.meta.impl;
 
-import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaRow;
-import stroom.util.shared.Flushable;
+import stroom.util.shared.Clearable;
 
-import java.util.List;
+import java.util.Optional;
 
-interface MetaValueService extends Flushable {
-    void addAttributes(Meta meta, AttributeMap attributes);
+public interface MetaKeyDao extends Clearable {
+    Optional<String> getNameForId(final int keyId);
 
-    List<MetaRow> decorateDataWithAttributes(List<Meta> list);
-
-    void deleteOldValues();
+    Optional<Integer> getIdForName(final String name);
 }

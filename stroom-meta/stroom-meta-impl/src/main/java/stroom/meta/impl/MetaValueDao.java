@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,15 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.meta.impl.db;
+package stroom.meta.impl;
+
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaRow;
+import stroom.util.shared.Clearable;
+import stroom.util.shared.Flushable;
 
 import java.util.List;
 
-interface MetaTypeService {
-    Integer getOrCreate(String name);
+public interface MetaValueDao extends Clearable, Flushable {
+    void addAttributes(Meta meta, AttributeMap attributes);
 
-    List<String> list();
+    List<MetaRow> decorateDataWithAttributes(List<Meta> list);
+
+    void deleteOldValues();
 }

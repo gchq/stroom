@@ -5,7 +5,6 @@ public class MetaProperties {
     private String typeName;
     private String feedName;
     private String processorUuid;
-    private String processorFilterUuid;
     private String pipelineUuid;
     private Long processorTaskId;
     private Long createMs;
@@ -26,10 +25,6 @@ public class MetaProperties {
 
     public String getProcessorUuid() {
         return processorUuid;
-    }
-
-    public String getProcessorFilterUuid() {
-        return processorFilterUuid;
     }
 
     public String getPipelineUuid() {
@@ -91,11 +86,6 @@ public class MetaProperties {
 
         public Builder typeName(final String typeName) {
             dp.typeName = typeName;
-            return this;
-        }
-
-        public Builder processorFilterUuid(final String processorFilterUuid) {
-            dp.processorFilterUuid = processorFilterUuid;
             return this;
         }
 

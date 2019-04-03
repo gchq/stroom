@@ -10,6 +10,7 @@ dependencies {
     compile project(':stroom-data:stroom-data-store-api')
     compile project(':stroom-data:stroom-data-store-impl-fs')
     compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-meta:stroom-meta-impl')
     compile project(':stroom-meta:stroom-meta-impl-db')
     compile project(':stroom-db-util')
     compile project(':stroom-event-logging:stroom-event-logging-impl')

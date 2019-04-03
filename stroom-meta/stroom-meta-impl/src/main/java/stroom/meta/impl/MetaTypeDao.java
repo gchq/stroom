@@ -15,11 +15,13 @@
  *
  */
 
-package stroom.meta.impl.db;
+package stroom.meta.impl;
+
+import stroom.util.shared.Clearable;
 
 import java.util.List;
 
-interface MetaFeedService {
+public interface MetaTypeDao extends Clearable {
     Integer getOrCreate(String name);
 
     List<String> list();

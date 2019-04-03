@@ -26,6 +26,8 @@ public class StoredQueryDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new StoredQueryModule());
+
         bind(StoredQueryDao.class).to(StoredQueryDaoImpl.class);
 
         // MultiBind the connection provider so we can see status for all databases.

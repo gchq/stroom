@@ -571,7 +571,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                         .typeName(StreamTypeNames.ERROR)
                         .parent(meta)
                         .processorUuid(processorUuid)
-                        .processorFilterUuid(processorFilterUuid)
                         .pipelineUuid(pipelineUuid)
                         .processorTaskId(processorTaskId)
                         .build();

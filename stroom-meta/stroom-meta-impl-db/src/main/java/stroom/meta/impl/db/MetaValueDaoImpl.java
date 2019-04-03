@@ -20,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.db.util.JooqUtil;
+import stroom.meta.impl.MetaKeyDao;
+import stroom.meta.impl.MetaValueDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaValRecord;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
@@ -41,23 +43,23 @@ import java.util.stream.Collectors;
 import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
-class MetaValueServiceImpl implements MetaValueService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetaValueServiceImpl.class);
+class MetaValueDaoImpl implements MetaValueDao {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetaValueDaoImpl.class);
 
     private static final String LOCK_NAME = "MetaDeleteExecutor";
 
     private final ConnectionProvider connectionProvider;
-    private final MetaKeyService metaKeyService;
+    private final MetaKeyDao metaKeyService;
     private final MetaValueConfig metaValueConfig;
     private final ClusterLockService clusterLockService;
 
     private final Queue<MetaValRecord> queue = new ConcurrentLinkedQueue<>();
 
     @Inject
-    MetaValueServiceImpl(final ConnectionProvider connectionProvider,
-                         final MetaKeyService metaKeyService,
-                         final MetaValueConfig metaValueConfig,
-                         final ClusterLockService clusterLockService) {
+    MetaValueDaoImpl(final ConnectionProvider connectionProvider,
+                     final MetaKeyDao metaKeyService,
+                     final MetaValueConfig metaValueConfig,
+                     final ClusterLockService clusterLockService) {
         this.connectionProvider = connectionProvider;
         this.metaKeyService = metaKeyService;
         this.metaValueConfig = metaValueConfig;
@@ -311,10 +313,10 @@ class MetaValueServiceImpl implements MetaValueService {
                 .where(META_VAL.META_ID.in(idList))
                 .fetch()
                 .forEach(r -> {
-                    final int keyId = r.component2();
+                    final int keyId = r.get(META_VAL.META_KEY_ID);
                     metaKeyService.getNameForId(keyId).ifPresent(name -> {
-                        final long dataId = r.component1();
-                        final String value = String.valueOf(r.component3());
+                        final long dataId = r.get(META_VAL.META_ID);
+                        final String value = String.valueOf(r.get(META_VAL.VAL));
                         rowMap.computeIfAbsent(dataId, k -> new MetaRow()).addAttribute(name, value);
                     });
                 })
@@ -375,12 +377,13 @@ class MetaValueServiceImpl implements MetaValueService {
 //        return result;
     }
 
-    void clear() {
+    @Override
+    public void clear() {
         queue.clear();
         deleteAll();
     }
 
-    int deleteAll() {
+    private int deleteAll() {
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .delete(META_VAL)
                 .execute());

@@ -23,51 +23,50 @@ import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.security.mock.MockSecurityContextModule;
 
 import javax.inject.Inject;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestMetaFeedServiceImpl {
+class TestMetaFeedDaoImpl {
     @Inject
-    private MetaServiceImpl dataMetaService;
+    private Cleanup cleanup;
     @Inject
-    private MetaFeedServiceImpl feedService;
+    private MetaFeedDaoImpl feedDao;
 
     @BeforeEach
     void setup() {
         Guice.createInjector(new MetaDbModule(), new MockClusterLockModule(), new MockSecurityContextModule()).injectMembers(this);
+        // Delete everything
+        cleanup.clear();
     }
 
     @Test
     void test() {
-        // Delete everything.
-        dataMetaService.deleteAll();
-        feedService.deleteAll();
-
         String feedName = "TEST";
-        Integer id1 = feedService.getOrCreate(feedName);
-        Integer id2 = feedService.getOrCreate(feedName);
+        Integer id1 = feedDao.getOrCreate(feedName);
+        Integer id2 = feedDao.getOrCreate(feedName);
 
         assertThat(id1).isEqualTo(id2);
 
         feedName = "TEST2";
-        id1 = feedService.getOrCreate(feedName);
-        id2 = feedService.getOrCreate(feedName);
+        id1 = feedDao.getOrCreate(feedName);
+        id2 = feedDao.getOrCreate(feedName);
 
         assertThat(id1).isEqualTo(id2);
 
-        assertThat(feedService.list().size()).isEqualTo(2);
+        assertThat(feedDao.list().size()).isEqualTo(2);
     }
 
     @Test
     void testDuplicateCreate() {
-        // Delete everything.
-        dataMetaService.deleteAll();
-        feedService.deleteAll();
-
         String feedName = "TEST";
-        Integer id1 = feedService.create(feedName);
-        Integer id2 = feedService.create(feedName);
+        Optional<Integer> id1 = feedDao.create(feedName);
+        Optional<Integer> id2 = feedDao.create(feedName);
 
+        assertThat(id1).isNotEmpty();
+        assertThat(id2).isEmpty();
+
+        id2 = Optional.ofNullable(feedDao.getOrCreate(feedName));
         assertThat(id1).isEqualTo(id2);
     }
 }

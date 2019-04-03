@@ -27,35 +27,33 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestMetaTypeServiceImpl {
+class TestMetaTypeDaoImpl {
     @Inject
-    private MetaServiceImpl dataMetaService;
+    private Cleanup cleanup;
     @Inject
-    private MetaTypeServiceImpl dataTypeService;
+    private MetaTypeDaoImpl metaTypeDao;
 
     @BeforeEach
     void setup() {
         Guice.createInjector(new MetaDbModule(), new MockClusterLockModule(), new MockSecurityContextModule()).injectMembers(this);
+        // Delete everything
+        cleanup.clear();
     }
 
     @Test
     void test() {
-        // Delete everything.
-        dataMetaService.deleteAll();
-        dataTypeService.deleteAll();
-
         String typeName = "TEST";
-        Integer id1 = dataTypeService.getOrCreate(typeName);
-        Integer id2 = dataTypeService.getOrCreate(typeName);
+        Integer id1 = metaTypeDao.getOrCreate(typeName);
+        Integer id2 = metaTypeDao.getOrCreate(typeName);
 
         assertThat(id1).isEqualTo(id2);
 
         typeName = "TEST2";
-        id1 = dataTypeService.getOrCreate(typeName);
-        id2 = dataTypeService.getOrCreate(typeName);
+        id1 = metaTypeDao.getOrCreate(typeName);
+        id2 = metaTypeDao.getOrCreate(typeName);
 
         assertThat(id1).isEqualTo(id2);
 
-        assertThat(dataTypeService.list().size()).isEqualTo(2);
+        assertThat(metaTypeDao.list().size()).isEqualTo(2);
     }
 }

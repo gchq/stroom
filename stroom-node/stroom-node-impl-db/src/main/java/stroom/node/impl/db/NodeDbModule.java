@@ -11,6 +11,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
 import stroom.node.impl.NodeDao;
+import stroom.node.impl.NodeModule;
 import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
@@ -25,6 +26,8 @@ public class NodeDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new NodeModule());
+
         bind(NodeDao.class).to(NodeDaoImpl.class);
 
         // MultiBind the connection provider so we can see status for all databases.

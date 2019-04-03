@@ -1,7 +1,6 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
-import stroom.storedquery.impl.StoredQueryModule;
 
 public class CoreModule extends AbstractModule {
     @Override
@@ -12,7 +11,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
         install(new stroom.cluster.task.impl.ClusterTaskModule());
         install(new stroom.config.global.impl.db.GlobalConfigDbModule());
-        install(new stroom.config.global.impl.GlobalConfigModule());
         install(new stroom.core.dataprocess.PipelineStreamTaskModule());
         install(new stroom.core.db.DataSourceModule());
         install(new stroom.core.document.DocumentModule());
@@ -51,14 +49,12 @@ public class CoreModule extends AbstractModule {
         install(new stroom.index.impl.IndexElementModule());
         install(new stroom.index.impl.IndexModule());
         install(new stroom.job.impl.db.JobDbModule());
-        install(new stroom.job.impl.JobSystemModule());
         install(new stroom.kafka.impl.KafkaModule());
         install(new stroom.kafka.pipeline.KafkaPipelineModule());
         install(new stroom.meta.impl.db.MetaDbModule());
-        install(new stroom.meta.impl.db.StreamAttributeMapResourceModule());
+        install(new stroom.meta.impl.StreamAttributeMapResourceModule());
         install(new stroom.node.impl.db.NodeDbModule());
         install(new stroom.node.impl.NodeHandlerModule());
-        install(new stroom.node.impl.NodeModule());
         install(new stroom.node.impl.NodeServiceModule());
         install(new stroom.pipeline.cache.PipelineCacheModule());
         install(new stroom.pipeline.factory.CommonPipelineElementModule());
@@ -71,14 +67,12 @@ public class CoreModule extends AbstractModule {
         install(new stroom.pipeline.xsltfunctions.CommonXsltFunctionModule());
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.processor.impl.db.ProcessorDbModule());
-        install(new stroom.processor.impl.ProcessorModule());
         install(new stroom.processor.impl.StreamTaskLifecycleModule());
         install(new stroom.receive.rules.impl.ReceiveDataRulesetModule());
         install(new stroom.search.impl.SearchElementModule());
         install(new stroom.search.impl.SearchModule());
         install(new stroom.search.impl.shard.ShardModule());
         install(new stroom.security.impl.db.SecurityDbModule());
-        install(new stroom.security.impl.SecurityModule());
         install(new stroom.servicediscovery.impl.ServiceDiscoveryModule());
         install(new stroom.statistics.impl.hbase.entity.StroomStatsStoreModule());
         install(new stroom.statistics.impl.hbase.internal.InternalModule());
@@ -90,7 +84,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.statistics.impl.sql.rollup.SQLStatisticRollupModule());
         install(new stroom.statistics.impl.sql.search.SQLStatisticSearchModule());
         install(new stroom.statistics.impl.sql.SQLStatisticsModule());
-        install(new StoredQueryModule());
+        install(new stroom.storedquery.impl.db.StoredQueryDbModule());
         install(new stroom.task.impl.TaskModule());
         install(new stroom.util.pipeline.scope.PipelineScopeModule());
     }

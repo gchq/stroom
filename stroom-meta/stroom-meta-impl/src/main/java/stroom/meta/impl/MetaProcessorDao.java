@@ -15,12 +15,10 @@
  *
  */
 
-package stroom.meta.impl.db;
+package stroom.meta.impl;
 
-import java.util.Optional;
+import stroom.util.shared.Clearable;
 
-public interface MetaKeyService {
-    Optional<String> getNameForId(final int keyId);
-
-    Optional<Integer> getIdForName(final String name);
+public interface MetaProcessorDao extends Clearable {
+    Integer getOrCreate(String processorUuid, String pipelineUuid);
 }

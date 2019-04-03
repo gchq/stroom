@@ -129,7 +129,7 @@ public class DataVolumeServiceImpl implements DataVolumeService {
                         .where(conditions)
                         .limit(getOffset(criteria.getPageRequest()), getNumberOfRows(criteria.getPageRequest()))
                         .fetch()
-                        .map(r -> new DataVolumeImpl(r.value1(), r.value2()));
+                        .map(r -> new DataVolumeImpl(r.get(FS_META_VOLUME.META_ID), r.get(FS_VOLUME.PATH)));
                 return BaseResultList.createCriterialBasedList(list, criteria);
             });
 
@@ -312,7 +312,7 @@ public class DataVolumeServiceImpl implements DataVolumeService {
                 .join(FS_VOLUME).on(FS_VOLUME.ID.eq(FS_META_VOLUME.FS_VOLUME_ID))
                 .where(FS_META_VOLUME.META_ID.eq(metaId))
                 .fetchOptional()
-                .map(r -> new DataVolumeImpl(r.value1(), r.value2()))
+                .map(r -> new DataVolumeImpl(r.get(FS_META_VOLUME.META_ID), r.get(FS_VOLUME.PATH)))
                 .orElse(null));
 
 

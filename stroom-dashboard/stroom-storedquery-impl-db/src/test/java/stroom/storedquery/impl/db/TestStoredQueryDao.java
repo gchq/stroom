@@ -39,6 +39,7 @@ import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.StoredQueryHistoryCleanExecutor;
 import stroom.storedquery.impl.StoredQueryHistoryConfig;
 import stroom.task.api.SimpleTaskContext;
+import stroom.util.AuditUtil;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Sort.Direction;
 
@@ -82,6 +83,7 @@ class TestStoredQueryDao {
         refQuery.setDashboardUuid(dashboardRef.getUuid());
         refQuery.setComponentId(QUERY_COMPONENT);
         refQuery.setQuery(new Query(indexRef, new ExpressionOperator(null, Op.AND, Collections.emptyList())));
+        AuditUtil.stamp(securityContext.getUserId(), refQuery);
         storedQueryDao.create(refQuery);
 
         final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.OR);
@@ -94,6 +96,7 @@ class TestStoredQueryDao {
         testQuery.setDashboardUuid(dashboardRef.getUuid());
         testQuery.setComponentId(QUERY_COMPONENT);
         testQuery.setQuery(new Query(indexRef, root.build()));
+        AuditUtil.stamp(securityContext.getUserId(), testQuery);
         testQuery = storedQueryDao.create(testQuery);
 
         LOGGER.info(testQuery.getQuery().toString());
@@ -164,6 +167,7 @@ class TestStoredQueryDao {
             newQuery.setFavourite(false);
             newQuery.setQuery(query.getQuery());
             newQuery.setData(query.getData());
+            AuditUtil.stamp(securityContext.getUserId(), newQuery);
             storedQueryDao.create(newQuery);
         }
 

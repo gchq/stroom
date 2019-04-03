@@ -16,7 +16,7 @@
  *
  */
 
-package stroom.meta.impl.db;
+package stroom.meta.impl;
 
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
