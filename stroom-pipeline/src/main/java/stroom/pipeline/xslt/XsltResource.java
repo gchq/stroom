@@ -38,12 +38,12 @@ public class XsltResource implements RestResource {
 
     @GET
     @Path("/{xsltId}")
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response fetch(@PathParam("xsltId") final String xsltId) {
         return security.secureResult(() -> {
             final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
 
-            return Response.ok(xsltDoc.getData()).build();
+            return Response.ok(xsltDoc).build();
         });
     }
 
