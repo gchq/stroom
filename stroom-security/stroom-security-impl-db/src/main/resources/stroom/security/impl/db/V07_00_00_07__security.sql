@@ -57,8 +57,8 @@ BEGIN
       WHERE TABLE_NAME = 'USR') THEN
 
     SET @insert_sql=''
-        ' INSERT INTO stroom_user (id, version, create_time_ms, create_user, update_time_ms, update_user, name, uuid, is_group, status)'
-        ' SELECT ID, 1, CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, GRP, STAT'
+        ' INSERT INTO stroom_user (id, version, create_time_ms, create_user, update_time_ms, update_user, name, uuid, is_group, enabled)'
+        ' SELECT ID, 1, CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, GRP, (CASE STAT WHEN 0 THEN true ELSE false END)'
         ' FROM USR'
         ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM stroom_user)'
         ' ORDER BY ID;';
@@ -127,10 +127,11 @@ BEGIN
 
     SET @insert_sql=''
         ' INSERT INTO app_permission (user_uuid, permission)'
-        ' SELECT USR_UUID, NAME'
-        ' FROM APP_PERM'
-        ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM app_permission)'
-        ' ORDER BY ID;';
+        ' SELECT ap.USR_UUID, p.NAME'
+        ' FROM APP_PERM ap'
+        ' JOIN PERM p ON (p.ID = ap.FK_PERM_ID)'
+        ' WHERE ap.ID > (SELECT COALESCE(MAX(id), 0) FROM app_permission)'
+        ' ORDER BY ap.ID;';
     PREPARE insert_stmt FROM @insert_sql;
     EXECUTE insert_stmt;
 
