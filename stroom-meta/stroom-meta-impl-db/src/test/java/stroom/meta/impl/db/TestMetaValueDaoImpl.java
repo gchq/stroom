@@ -22,6 +22,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.cluster.lock.mock.MockClusterLockModule;
+import stroom.meta.impl.MetaModule;
 import stroom.meta.impl.MetaServiceImpl;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.ExpressionUtil;
@@ -49,7 +50,7 @@ class TestMetaValueDaoImpl {
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(new MetaDbModule(), new MockClusterLockModule(), new MockSecurityContextModule()).injectMembers(this);
+        Guice.createInjector(new MetaModule(), new MetaDbModule(), new MockClusterLockModule(), new MockSecurityContextModule()).injectMembers(this);
         metaValueConfig.setAddAsync(false);
         // Delete everything
         cleanup.clear();

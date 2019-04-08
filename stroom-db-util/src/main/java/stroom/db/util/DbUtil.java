@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class DbUtil {
-    private static final String TABLE_SCHEMA = "stroom";
     private static final Logger LOGGER = LoggerFactory.getLogger(DbUtil.class);
+    private static final boolean USE_TEST_CONTAINERS = true;
     private static final long MAX_SLEEP_TIME_MS = 30_000;
     private static final int ACCESS_DENIED_BAD_UNAME_OR_PWORD = 1045;
     private static final int ACCESS_DENIED_BAD_DATABASE = 1044;
@@ -27,9 +27,44 @@ public class DbUtil {
     private DbUtil() {
     }
 
-    public static void waitForConnection(ConnectionConfig connectionConfig) {
-        waitForConnection(
-                connectionConfig.getJdbcDriverClassName(),
+    public static void decorateConnectionConfig(final ConnectionConfig connectionConfig) {
+        if (USE_TEST_CONTAINERS) {
+            try {
+                final Class<?> clazz = Class.forName("org.testcontainers.jdbc.ContainerDatabaseDriver");
+                if (clazz != null) {
+                    LOGGER.info("Using test container DB connection config");
+
+                    connectionConfig.setJdbcDriverClassName("com.mysql.jdbc.Driver");
+//                        .jdbcUrl("jdbc:tc:mysql:5.6.23://localhost:3306/stroom?user=test?password=test")
+                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.6.23://localhost:3306/test");
+                    connectionConfig.setJdbcDriverPassword("test");
+                    connectionConfig.setJdbcDriverUsername("test");
+
+                }
+            } catch (final ClassNotFoundException e) {
+                LOGGER.debug("Not using test container DB connection config");
+            }
+        } else {
+            LOGGER.debug("Not using test container DB connection config");
+        }
+    }
+
+    public static void validate(final ConnectionConfig connectionConfig) {
+        Preconditions.checkNotNull(connectionConfig.getJdbcDriverClassName(), "The JDBC driver class has not been supplied");
+        Preconditions.checkNotNull(connectionConfig.getJdbcDriverUrl(), "The JDBC URL has not been supplied");
+        Preconditions.checkNotNull(connectionConfig.getJdbcDriverUsername(), "The JDBC username has not been supplied");
+        Preconditions.checkNotNull(connectionConfig.getJdbcDriverPassword(), "The JDBC password has not been supplied");
+
+        try {
+            Class.forName(connectionConfig.getJdbcDriverClassName());
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Invalid JDBC driver class name {}", connectionConfig.getJdbcDriverClassName()), e);
+        }
+    }
+
+    public static Connection getSingleConnection(final ConnectionConfig connectionConfig) throws SQLException {
+        return DriverManager.getConnection(
                 connectionConfig.getJdbcDriverUrl(),
                 connectionConfig.getJdbcDriverUsername(),
                 connectionConfig.getJdbcDriverPassword());
@@ -42,31 +77,16 @@ public class DbUtil {
      * If the connection could not be established and the reason for the failure makes a
      * retry pointless, e.g. invalid password, then an exception will be thrown.
      */
-    public static void waitForConnection(
-            final String driverClass,
-            final String jdbcUrl,
-            final String username,
-            final String password) {
-
-        Preconditions.checkNotNull(driverClass, "The JDBC driver class has not been supplied");
-        Preconditions.checkNotNull(jdbcUrl, "The JDBC URL has not been supplied");
-        Preconditions.checkNotNull(username, "The JDBC username class has not been supplied");
-        Preconditions.checkNotNull(password, "The JDBC password class has not been supplied");
-
-        try {
-            Class.forName(driverClass);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(LogUtil.message(
-                    "Invalid JDBC driver class name {}", driverClass), e);
-        }
-
+    public static void waitForConnection(ConnectionConfig connectionConfig) {
+        final String jdbcUrl = connectionConfig.getJdbcDriverUrl();
+        final String username = connectionConfig.getJdbcDriverUsername();
         LOGGER.info("Ensuring database connection to {} with username {}", jdbcUrl, username);
 
         long sleepMs = 100;
         Throwable lastThrowable = null;
 
         while (true) {
-            try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
+            try (Connection connection = getSingleConnection(connectionConfig)) {
                 LOGGER.info("Successfully established connection to {} with username {}", jdbcUrl, username);
                 break;
             } catch (SQLException e) {
@@ -126,11 +146,14 @@ public class DbUtil {
     public static void clearAllTables(final Connection connection) {
         final List<String> tables = new ArrayList<>();
 
-        try (final PreparedStatement statement = connection.prepareStatement("SELECT table_name FROM information_schema.tables where table_schema='" + TABLE_SCHEMA + "';")) {
+        boolean seenInnodb = false;
+        try (final PreparedStatement statement = connection.prepareStatement("SELECT table_name FROM information_schema.tables;")) {
             try (final ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     final String name = resultSet.getString(1);
-                    if (!name.contains("schema")) {
+                    if (name.toLowerCase().contains("innodb")) {
+                        seenInnodb = true;
+                    } else if (seenInnodb && !name.contains("schema")) {
                         tables.add(name);
                     }
                 }

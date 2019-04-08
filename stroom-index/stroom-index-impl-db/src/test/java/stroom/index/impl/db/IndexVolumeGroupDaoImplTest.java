@@ -3,17 +3,12 @@ package stroom.index.impl.db;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.assertj.core.data.Offset;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.commons.logging.Logger;
-import org.junit.platform.commons.logging.LoggerFactory;
-import org.testcontainers.containers.MySQLContainer;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.shared.IndexVolumeGroup;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -23,28 +18,12 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class IndexVolumeGroupDaoImplTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(IndexVolumeGroupDaoImplTest.class);
-
-    private static MySQLContainer dbContainer = null;
-    // = new MySQLContainer().withDatabaseName(Stroom.STROOM.getName());
-    // = null;//
-
     private static IndexVolumeGroupDao indexVolumeGroupDao;
 
     @BeforeAll
     static void beforeAll() {
-        LOGGER.info(() -> "Before All - Start Database");
-        Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
-
-        final Injector injector = Guice.createInjector(new IndexDbModule(), new TestModule(dbContainer));
-
+        final Injector injector = Guice.createInjector(new IndexDbModule(), new TestModule());
         indexVolumeGroupDao = injector.getInstance(IndexVolumeGroupDao.class);
-    }
-
-    @AfterAll
-    static void afterAll() {
-        LOGGER.info(() -> "After All - Stop Database");
-        Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::stop);
     }
 
     @Test

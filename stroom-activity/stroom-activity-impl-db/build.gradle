@@ -14,16 +14,11 @@ dependencies {
 
     runtimeOnly libs.mysql_connector_java
 
-//    testCompile project(':stroom-security:stroom-security-mock')
-
     testCompile libs.assertj_core
-//    testCompile libs.commons_io
+    testCompile libs.junit_jupiter_api
     testCompile libs.mockito_core
     testCompile libs.mockito_junit_jupiter
     
-    testCompile libs.junit_jupiter_api
-    
-    // the following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jaxb_runtime
     testRuntimeOnly libs.javax_activation
     testRuntimeOnly libs.jcl_over_slf4j
@@ -32,4 +27,6 @@ dependencies {
     testRuntimeOnly libs.log4j_over_slf4j
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
+    testRuntimeOnly libs.test_containers
+    testRuntimeOnly libs.test_containers_mysql
 }

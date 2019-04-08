@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.util.sql;
+package stroom.statistics.impl.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,46 +34,6 @@ import java.util.stream.Collectors;
 
 public class ConnectionUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionUtil.class);
-
-//    public static final Connection getConnection() throws SQLException {
-//        final String driverClassname = StroomProperties.getProperty(JDBC_DRIVER_CLASS_NAME);
-//        final String driverUrl = StroomProperties.getProperty(JDBC_DRIVER_URL);
-//        final String driverUsername = StroomProperties.getProperty(JDBC_DRIVER_USERNAME);
-//        final String driverPassword = StroomProperties.getProperty(JDBC_DRIVER_PASSWORD);
-//
-//        if (driverClassname == null || driverUrl == null) {
-//            LOGGER.error(MarkerFactory.getMarker("FATAL"), "Properties are not set for DB connection");
-//            throw new RuntimeException("Properties are not set for DB connection");
-//        }
-//
-//        try {
-//            Class.forName(driverClassname);
-//        } catch (final ClassNotFoundException e) {
-//            throw new RuntimeException(e);
-//        }
-//
-//        LOGGER.info("Connecting to database using classname: {}, url: {}, username: {}", driverClassname, driverUrl, driverUsername);
-//
-//        return DriverManager.getConnection(driverUrl, driverUsername, driverPassword);
-//
-//    public static void close(final Connection connection) {
-//        if (connection != null) {
-//            try {
-//                connection.close();
-//            } catch (final SQLException ex) {
-//                LOGGER.error(ex, ex);
-//            }
-//        }
-//    }
-//
-//    public static boolean tableExists(final Connection connection, final String tableName) throws SQLException {
-//        boolean hasTable = false;
-//        final DatabaseMetaData databaseMetaData = connection.getMetaData();
-//        try (final ResultSet resultSet = databaseMetaData.getTables(null, null, tableName, new String[]{"TABLE"})) {
-//            hasTable = resultSet.next();
-//        }
-//        return hasTable;
-//    }
 
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static int executeUpdate(final Connection connection, final String sql, final List<Object> args)

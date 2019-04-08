@@ -16,7 +16,8 @@
 
 package stroom.core.db.migration.mysql;
 
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.core.db.migration.EntityReferenceReplacer;
@@ -26,11 +27,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
-public class V5_0_0_13__Dashboards implements JdbcMigration {
+public class V5_0_0_13__Dashboards extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_13__Dashboards.class);
 
     @Override
-    public void migrate(Connection connection) throws Exception {
+    public void migrate(final Context flywayContext) throws Exception {
+        migrate(flywayContext.getConnection());
+    }
+
+    private void migrate(final Connection connection) throws Exception {
         // Update dashboard data.
         updateDashboardData(connection);
     }

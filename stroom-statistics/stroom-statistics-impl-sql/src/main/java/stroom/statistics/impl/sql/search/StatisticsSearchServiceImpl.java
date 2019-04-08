@@ -20,7 +20,7 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.sql.PreparedStatementUtil;
+import stroom.statistics.impl.sql.PreparedStatementUtil;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;

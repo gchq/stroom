@@ -16,12 +16,13 @@
 
 package stroom.core.db.migration.mysql;
 
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.xml.XMLMarshallerUtil;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -31,7 +32,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.List;
 
-public class V5_0_0_44__PipelineProperties implements JdbcMigration {
+public class V5_0_0_44__PipelineProperties extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_44__PipelineProperties.class);
 
     private final JAXBContext jaxbContext;
@@ -46,7 +47,11 @@ public class V5_0_0_44__PipelineProperties implements JdbcMigration {
     }
 
     @Override
-    public void migrate(final Connection connection) throws Exception {
+    public void migrate(final Context flywayContext) throws Exception {
+        migrate(flywayContext.getConnection());
+    }
+
+    private void migrate(final Connection connection) throws Exception {
         try (final Statement statement = connection.createStatement()) {
             try (final ResultSet resultSet = statement.executeQuery("SELECT ID, NAME, DAT FROM PIPE;")) {
                 while (resultSet.next()) {

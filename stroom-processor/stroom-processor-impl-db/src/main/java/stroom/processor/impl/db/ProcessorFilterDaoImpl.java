@@ -5,7 +5,6 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
-import org.jooq.impl.DSL;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.processor.impl.ProcessorFilterDao;
@@ -57,14 +56,14 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
 
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
-        return marshaller.unmarshal(JooqUtil.contextResult(connectionProvider, context -> context.transactionResult(nested -> {
-            final ProcessorFilterTrackerRecord processorFilterTrackerRecord = DSL.using(nested).newRecord(PROCESSOR_FILTER_TRACKER, new ProcessorFilterTracker());
+        return marshaller.unmarshal(JooqUtil.transactionResult(connectionProvider, context -> {
+            final ProcessorFilterTrackerRecord processorFilterTrackerRecord = context.newRecord(PROCESSOR_FILTER_TRACKER, new ProcessorFilterTracker());
             processorFilterTrackerRecord.store();
             final ProcessorFilterTracker processorFilterTracker = processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
 
             marshalled.setProcessorFilterTracker(processorFilterTracker);
 
-            final ProcessorFilterRecord processorFilterRecord = DSL.using(nested).newRecord(PROCESSOR_FILTER, marshalled);
+            final ProcessorFilterRecord processorFilterRecord = context.newRecord(PROCESSOR_FILTER, marshalled);
 
             processorFilterRecord.setFkProcessorFilterTrackerId(marshalled.getProcessorFilterTracker().getId());
             processorFilterRecord.setFkProcessorId(marshalled.getProcessor().getId());
@@ -75,13 +74,13 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
             result.setProcessor(result.getProcessor());
 
             return result;
-        })));
+        }));
     }
 
     @Override
     public ProcessorFilter update(final ProcessorFilter processorFilter) {
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
-        return marshaller.unmarshal(JooqUtil.contextWithOptimisticLocking(connectionProvider, context -> {
+        return marshaller.unmarshal(JooqUtil.contextResultWithOptimisticLocking(connectionProvider, context -> {
             final ProcessorFilterRecord processorFilterRecord =
                     context.newRecord(PROCESSOR_FILTER, marshalled);
 

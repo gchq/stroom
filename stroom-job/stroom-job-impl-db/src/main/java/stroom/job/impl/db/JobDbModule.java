@@ -27,8 +27,6 @@ public class JobDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new JobSystemModule());
-
         bind(JobDao.class).to(JobDaoImpl.class);
         bind(JobNodeDao.class).to(JobNodeDaoImpl.class);
 

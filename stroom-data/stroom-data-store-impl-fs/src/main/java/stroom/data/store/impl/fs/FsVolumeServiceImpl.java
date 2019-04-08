@@ -55,7 +55,7 @@ import java.util.stream.Stream;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.FS_VOLUME_STATE;
-import static stroom.db.util.JooqUtil.contextWithOptimisticLocking;
+import static stroom.db.util.JooqUtil.contextResultWithOptimisticLocking;
 
 @Singleton
 @EntityEventHandler(type = FsVolumeServiceImpl.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
@@ -145,7 +145,7 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
                 final FsVolumeState fileVolumeState = fileSystemVolumeStateDao.create(new FsVolumeState());
                 fileVolume.setVolumeState(fileVolumeState);
 
-                result = contextWithOptimisticLocking(connectionProvider, (context) -> {
+                result = contextResultWithOptimisticLocking(connectionProvider, (context) -> {
                     AuditUtil.stamp(securityContext.getUserId(), fileVolume);
                     final FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
                     volumeToRecord(fileVolume, record);
@@ -166,7 +166,7 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
     @Override
     public FsVolume update(final FsVolume fileVolume) {
         return security.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
-            final FsVolume result = contextWithOptimisticLocking(connectionProvider, (context) -> {
+            final FsVolume result = contextResultWithOptimisticLocking(connectionProvider, (context) -> {
                 AuditUtil.stamp(securityContext.getUserId(), fileVolume);
                 final FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
                 volumeToRecord(fileVolume, record);
@@ -582,7 +582,7 @@ public class FsVolumeServiceImpl implements FsVolumeService, EntityEvent.Handler
 //            create(fileVolume);
 //
 //
-//            final FileVolume result = contextWithOptimisticLocking(connectionProvider, (context) -> {
+//            final FileVolume result = contextResultWithOptimisticLocking(connectionProvider, (context) -> {
 //                AuditUtil.stamp(securityContext.getUserId(), fileVolume);
 //                FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
 //                record.set(FS_VOLUME.STATUS, fileVolume.getStatus().getPrimitiveValue());

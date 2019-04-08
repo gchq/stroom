@@ -4,9 +4,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.commons.logging.Logger;
-import org.junit.platform.commons.logging.LoggerFactory;
-import org.testcontainers.containers.MySQLContainer;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
@@ -17,29 +14,19 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class IndexShardDaoImplTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardDaoImplTest.class);
-
-    private static MySQLContainer dbContainer = null;
-    // = new MySQLContainer().withDatabaseName(Stroom.STROOM.getName());
-    // = null;//
-
     private static IndexVolumeDao indexVolumeDao;
     private static IndexVolumeGroupDao indexVolumeGroupDao;
     private static IndexShardDao indexShardDao;
 
     @BeforeAll
     static void beforeAll() {
-        LOGGER.info(() -> "Before All - Start Database");
-        Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
-
-        final Injector injector = Guice.createInjector(new IndexDbModule(), new TestModule(dbContainer));
+        final Injector injector = Guice.createInjector(new IndexDbModule(), new TestModule());
 
         indexVolumeDao = injector.getInstance(IndexVolumeDao.class);
         indexVolumeGroupDao = injector.getInstance(IndexVolumeGroupDao.class);

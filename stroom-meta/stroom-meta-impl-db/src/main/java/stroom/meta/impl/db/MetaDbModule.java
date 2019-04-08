@@ -32,8 +32,6 @@ public class MetaDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new MetaModule());
-
         bind(MetaFeedDao.class).to(MetaFeedDaoImpl.class);
         bind(MetaTypeDao.class).to(MetaTypeDaoImpl.class);
         bind(MetaProcessorDao.class).to(MetaProcessorDaoImpl.class);

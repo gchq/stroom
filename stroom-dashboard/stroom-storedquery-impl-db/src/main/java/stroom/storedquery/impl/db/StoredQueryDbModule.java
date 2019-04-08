@@ -13,6 +13,7 @@ import stroom.db.util.HikariUtil;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.StoredQueryModule;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -26,13 +27,13 @@ public class StoredQueryDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new StoredQueryModule());
-
         bind(StoredQueryDao.class).to(StoredQueryDaoImpl.class);
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
                 .addBinding(ConnectionProvider.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(StoredQueryDaoImpl.class);
     }
 
     @Provides

@@ -73,6 +73,8 @@ class TestStoredQueryDao {
         DbUtil.clearAllTables(connectionProvider.getConnection());
 
         storedQueryDao = new StoredQueryDaoImpl(connectionProvider);
+        storedQueryDao.clear();
+
         queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(new SimpleTaskContext(), storedQueryDao, new StoredQueryHistoryConfig());
 
         dashboardRef = new DocRef("Dashboard", "8c1bc23c-f65c-413f-ba72-7538abf90b91", "Test Dashboard");

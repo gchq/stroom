@@ -4,6 +4,7 @@ import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.cluster.lock.mock.MockClusterLockModule;
+import stroom.meta.impl.MetaModule;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;
@@ -29,7 +30,7 @@ class TestMetaServiceImpl {
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(new MetaDbModule(), new MockClusterLockModule(), new MockSecurityContextModule()).injectMembers(this);
+        Guice.createInjector(new MetaModule(), new MetaDbModule(), new MockClusterLockModule(), new MockSecurityContextModule()).injectMembers(this);
         // Delete everything
         cleanup.clear();
     }

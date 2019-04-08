@@ -16,14 +16,15 @@
 
 package stroom.core.db.migration.mysql;
 
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.Statement;
 
-public class V5_0_0_1__CRT_MS implements JdbcMigration {
+public class V5_0_0_1__CRT_MS extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_1__CRT_MS.class);
 
     private static final String[] TABLES = {"SYS_GRP", "SYS_ROLE", "SYS_PERM", "SYS_USR", "RK", "ND", "VOL", "DICT",
@@ -31,7 +32,11 @@ public class V5_0_0_1__CRT_MS implements JdbcMigration {
             "STRM_PROC_FILT", "TXT_CONV", "XML_SCHEMA", "XSLT", "DASH", "RES", "SCRIPT", "VIS", "QUERY", "STAT_DAT_SRC"};
 
     @Override
-    public void migrate(Connection connection) throws Exception {
+    public void migrate(final Context flywayContext) throws Exception {
+        migrate(flywayContext.getConnection());
+    }
+
+    private void migrate(final Connection connection) throws Exception {
         // Update dashboard data.
         updateDashboardData(connection);
     }

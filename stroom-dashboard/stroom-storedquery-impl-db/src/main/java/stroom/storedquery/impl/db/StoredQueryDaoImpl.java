@@ -12,6 +12,7 @@ import stroom.db.util.JooqUtil;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
 import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Clearable;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -192,5 +193,12 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 //        }
 
         return optional.orElse(null);
+    }
+
+    @Override
+    public void clear() {
+        JooqUtil.context(connectionProvider, context -> context
+                .deleteFrom(QUERY)
+                .execute());
     }
 }

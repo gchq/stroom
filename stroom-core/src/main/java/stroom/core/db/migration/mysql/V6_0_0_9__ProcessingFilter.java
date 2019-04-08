@@ -1,6 +1,7 @@
 package stroom.core.db.migration.mysql;
 
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.core.db.migration._V07_00_00.streamstore.shared._V07_00_00_FindStreamCriteria;
@@ -37,7 +38,7 @@ import java.util.stream.Collectors;
 
 import static stroom.query.api.v2.ExpressionTerm.Condition.IN_CONDITION_DELIMITER;
 
-public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
+public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V6_0_0_9__ProcessingFilter.class);
 
     private JAXBContext findStreamCriteriaJaxb;
@@ -64,8 +65,11 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
     }
 
     @Override
-    public void migrate(final Connection connection) throws Exception {
+    public void migrate(final Context flywayContext) throws Exception {
+        migrate(flywayContext.getConnection());
+    }
 
+    void migrate(final Connection connection) throws Exception {
         // Get all the existing stream criteria
         final Map<Long, String> findStreamCriteriaStrById = new HashMap<>();
         final Map<Long, _V07_00_00_FindStreamCriteria> findStreamCriteriaById = new HashMap<>();

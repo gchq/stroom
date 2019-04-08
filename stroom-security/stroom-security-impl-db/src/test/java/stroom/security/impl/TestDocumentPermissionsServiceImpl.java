@@ -24,16 +24,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.MySQLContainer;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
-import stroom.security.shared.User;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -42,21 +39,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestDocumentPermissionsServiceImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDocumentPermissionsServiceImpl.class);
 
-    private static MySQLContainer dbContainer = null;//new MySQLContainer().withDatabaseName(TestModule.DATABASE_NAME);//= null;//pu
-
-    private static Injector injector;
-
     private static UserService userService;
     private static DocumentPermissionService documentPermissionService;
     private static UserGroupsCache userGroupsCache;
     private static DocumentPermissionsCache documentPermissionsCache;
 
     @BeforeAll
-    public static void beforeAll() {
-        LOGGER.info("Before All - Start Database");
-        Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
-
-        injector = Guice.createInjector(new TestModule(dbContainer));
+    static void beforeAll() {
+        final Injector injector = Guice.createInjector(new TestModule());
 
         userService = injector.getInstance(UserService.class);
         documentPermissionService = injector.getInstance(DocumentPermissionService.class);

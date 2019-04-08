@@ -20,11 +20,11 @@ package stroom.statistics.impl.sql;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import stroom.statistics.impl.sql.SQLSafe;
+import stroom.config.common.ConnectionConfig;
+import stroom.db.util.DbUtil;
 
 import java.nio.charset.Charset;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -53,18 +53,10 @@ class TestMySQLCharacterSets {
     }
 
     private static Connection getConnection() throws SQLException {
-        final String driverClassname = "com.mysql.jdbc.Driver";
-        final String driverUrl = "jdbc:mysql://localhost/stroom";
-        final String driverUsername = System.getProperty("user.name");
-        final String driverPassword = "password";
-
-        try {
-            Class.forName(driverClassname);
-        } catch (final ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
-        return DriverManager.getConnection(driverUrl, driverUsername, driverPassword);
+        final ConnectionConfig connectionConfig = new ConnectionConfig();
+        DbUtil.decorateConnectionConfig(connectionConfig);
+        DbUtil.validate(connectionConfig);
+        return DbUtil.getSingleConnection(connectionConfig);
     }
 
     @Test
