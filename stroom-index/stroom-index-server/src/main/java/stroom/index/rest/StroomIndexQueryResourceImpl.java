@@ -30,11 +30,10 @@ import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.search.IndexDataSourceFieldUtil;
 import stroom.search.LuceneSearchResponseCreatorManager;
 import stroom.security.api.Security;
-import stroom.util.RestResource;
 
 import javax.inject.Inject;
 
-public class StroomIndexQueryResourceImpl implements RestResource, StroomIndexQueryResource {
+public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
     private final SearchResponseCreatorManager searchResponseCreatorManager;
     private final IndexStore indexStore;
     private final Security security;

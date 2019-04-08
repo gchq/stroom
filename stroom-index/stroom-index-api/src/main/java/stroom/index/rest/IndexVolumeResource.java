@@ -2,6 +2,7 @@ package stroom.index.rest;
 
 
 import io.swagger.annotations.Api;
+import stroom.util.RestResource;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -15,7 +16,7 @@ import javax.ws.rs.core.Response;
 @Api(value = "stroom-index volumes - /v1")
 @Path("/stroom-index/volume/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public interface IndexVolumeResource {
+public interface IndexVolumeResource extends RestResource {
 
     /**
      * Retrieve all the Index Volumes in the system.
@@ -30,7 +31,7 @@ public interface IndexVolumeResource {
      * @return
      */
     @GET
-    @Path("{/{id}")
+    @Path("/{id}")
     Response getById(@PathParam("id") Long id);
 
     /**

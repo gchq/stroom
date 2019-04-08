@@ -43,7 +43,7 @@ public class IndexVolumeGroupResourceImpl implements IndexVolumeGroupResource {
 
     @Override
     public Response create(final String name) {
-        final IndexVolumeGroup group = indexVolumeGroupService.get(name);
+        final IndexVolumeGroup group = indexVolumeGroupService.create(name);
         return Response.ok(group).build();
     }
 

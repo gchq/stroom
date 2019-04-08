@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
 import stroom.importexport.api.OldDocumentData;
 import stroom.index.shared.IndexDoc;
+import stroom.util.RestResource;
 import stroom.util.shared.DocRefs;
 
 import javax.ws.rs.Consumes;
@@ -21,7 +22,7 @@ import java.util.Set;
 @Api(value = "index - /v1")
 @Path("/index/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public interface IndexResource {
+public interface IndexResource extends RestResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

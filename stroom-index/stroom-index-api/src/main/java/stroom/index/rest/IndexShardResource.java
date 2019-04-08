@@ -2,6 +2,7 @@ package stroom.index.rest;
 
 
 import io.swagger.annotations.Api;
+import stroom.util.RestResource;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -10,5 +11,5 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "stroom-index shard - /v1")
 @Path("/stroom-index/shard/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public interface IndexShardResource {
+public interface IndexShardResource extends RestResource {
 }
