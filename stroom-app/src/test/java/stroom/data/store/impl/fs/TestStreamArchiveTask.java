@@ -24,7 +24,7 @@ import stroom.data.retention.impl.DataRetentionExecutor;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
-import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
+import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
@@ -64,7 +64,7 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     @Inject
     private Store streamStore;
     @Inject
-    private DataVolumeService streamVolumeService;
+    private DataVolumeService dataVolumeService;
     @Inject
     private FeedStore feedStore;
     @Inject
@@ -136,11 +136,11 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
 //        // streams that have no task associated with them.
 //        processorTaskManager.createTasks(new SimpleTaskContext());
 
-        List<DataVolume> oldVolumeList = streamVolumeService
+        List<DataVolume> oldVolumeList = dataVolumeService
                 .find(FindDataVolumeCriteria.create(oldFileMeta));
         assertThat(oldVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
 
-        List<DataVolume> newVolumeList = streamVolumeService
+        List<DataVolume> newVolumeList = dataVolumeService
                 .find(FindDataVolumeCriteria.create(newFileMeta));
         assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
 
@@ -148,16 +148,16 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
 //        streamDeleteExecutor.delete(System.currentTimeMillis());
 
         // Test Again
-        oldVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(oldFileMeta));
+        oldVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(oldFileMeta));
         assertThat(oldVolumeList.size()).as("Expecting 0 stream volumes").isEqualTo(0);
 
-        newVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(newFileMeta));
+        newVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(newFileMeta));
         assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
 
         // Test they are
-        oldVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(oldFileMeta));
+        oldVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(oldFileMeta));
         assertThat(oldVolumeList.size()).as("Expecting 0 stream volumes").isEqualTo(0);
-        newVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(newFileMeta));
+        newVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(newFileMeta));
         assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
     }
 }

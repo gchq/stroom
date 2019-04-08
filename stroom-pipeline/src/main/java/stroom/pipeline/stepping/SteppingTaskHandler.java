@@ -26,7 +26,6 @@ import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.api.FeedProperties;
-import stroom.util.io.StreamCloser;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
@@ -72,7 +71,6 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
     private final Store streamStore;
     private final MetaService metaService;
-    private final StreamCloser streamCloser;
     private final FeedProperties feedProperties;
     private final TaskContext taskContext;
     private final FeedHolder feedHolder;
@@ -104,7 +102,6 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     @Inject
     SteppingTaskHandler(final Store streamStore,
                         final MetaService metaService,
-                        final StreamCloser streamCloser,
                         final FeedProperties feedProperties,
                         final TaskContext taskContext,
                         final FeedHolder feedHolder,
@@ -123,7 +120,6 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         final Security security) {
         this.streamStore = streamStore;
         this.metaService = metaService;
-        this.streamCloser = streamCloser;
         this.feedProperties = feedProperties;
         this.taskContext = taskContext;
         this.feedHolder = feedHolder;
@@ -311,13 +307,6 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
                         // Now process the data.
                         processStream(controller, feedName, streamTypeName, source);
-
-                        try {
-                            // Close all open streams.
-                            streamCloser.close();
-                        } catch (final IOException e) {
-                            error(e);
-                        }
 
                         if (controller.isFound()) {
                             // Set the offset in the task list where we will be able to find this task. This will enable us to show the right stream list page.

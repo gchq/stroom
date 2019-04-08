@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-class MockFsTypePaths implements FsTypePaths {
+class MockFsTypePaths implements FsTypePathDao {
     private static final Logger LOGGER = LoggerFactory.getLogger(MockFsTypePaths.class);
     private static final Map<String, String> PATH_MAP = new HashMap<>();
     private static final Map<String, String> TYPE_MAP = new HashMap<>();
@@ -32,7 +32,7 @@ class MockFsTypePaths implements FsTypePaths {
     }
 
     @Override
-    public String getPath(final String streamType) {
+    public String getOrCreatePath(final String streamType) {
         String path = PATH_MAP.get(streamType);
         if (path == null) {
             path = streamType.toUpperCase().replaceAll("\\W", "_");

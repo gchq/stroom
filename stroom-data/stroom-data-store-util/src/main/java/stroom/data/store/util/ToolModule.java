@@ -34,6 +34,7 @@ public class ToolModule extends AbstractModule {
         install(new stroom.cache.impl.CacheModule());
         install(new MockClusterLockModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
+        install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.meta.impl.db.MetaDbModule());
         install(new stroom.meta.impl.MetaModule());

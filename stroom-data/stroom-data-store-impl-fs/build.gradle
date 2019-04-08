@@ -4,11 +4,9 @@ dependencies {
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-core-shared')
     compile project(':stroom-meta:stroom-meta-api')
-    compile project(':stroom-db-util')
     compile project(':stroom-cluster:stroom-cluster-lock-api')
     compile project(':stroom-data:stroom-data-store-api')
     compile project(':stroom-data:stroom-data-store-impl')
-    compile project(':stroom-data:stroom-data-store-impl-fs-db-jooq')
     compile project(':stroom-event-logging:stroom-event-logging-api')
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-security:stroom-security-api')
@@ -21,20 +19,16 @@ dependencies {
     compile libs.stroomDocRef
     compile libs.eventLogging
 
-    compile libs.flyway_core
     compile libs.guava
     compile libs.guice4
     compile libs.hikari
     compile libs.jackson_annotations
     compile libs.javax_inject
-    compile libs.jooq
     compile libs.slf4j_api
-
-    runtimeOnly libs.mysql_connector_java
-
+    
     testCompile project(':stroom-security:stroom-security-mock')
     testCompile project(':stroom-test-common')
-    
+
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter_api
     testCompile libs.mockito_core
@@ -49,6 +43,4 @@ dependencies {
     testRuntimeOnly libs.log4j_over_slf4j
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
-    testRuntimeOnly libs.test_containers
-    testRuntimeOnly libs.test_containers_mysql
 }

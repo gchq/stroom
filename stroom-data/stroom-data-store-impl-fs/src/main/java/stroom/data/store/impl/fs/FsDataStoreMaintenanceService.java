@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.data.store.impl.DataStoreMaintenanceService;
-import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
+import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.CriteriaSet;
@@ -60,30 +60,30 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(FsDataStoreMaintenanceService.class);
 
     private final FsPathHelper fileSystemStreamPathHelper;
-    private final DataVolumeService streamVolumeService;
+    private final DataVolumeService dataVolumeService;
     private final MetaService metaService;
     private final Security security;
 
-    private final FsFeedPaths fileSystemFeedPaths;
-    private final FsTypePaths fileSystemTypePaths;
+    private final FsFeedPathDao fileSystemFeedPaths;
+    private final FsTypePathDao fileSystemTypePaths;
 
     @Inject
     public FsDataStoreMaintenanceService(final FsPathHelper fileSystemStreamPathHelper,
-                                         final FsFeedPaths fileSystemFeedPaths,
-                                         final FsTypePaths fileSystemTypePaths,
-                                         final DataVolumeService streamVolumeService,
+                                         final FsFeedPathDao fileSystemFeedPaths,
+                                         final FsTypePathDao fileSystemTypePaths,
+                                         final DataVolumeService dataVolumeService,
                                          final MetaService metaService,
                                          final Security security) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.fileSystemFeedPaths = fileSystemFeedPaths;
         this.fileSystemTypePaths = fileSystemTypePaths;
-        this.streamVolumeService = streamVolumeService;
+        this.dataVolumeService = dataVolumeService;
         this.metaService = metaService;
         this.security = security;
     }
 
     List<Path> findAllStreamFile(final Meta meta) {
-        final DataVolume streamVolume = streamVolumeService.findDataVolume(meta.getId());
+        final DataVolume streamVolume = dataVolumeService.findDataVolume(meta.getId());
         final List<Path> results = new ArrayList<>();
         final Path rootFile = fileSystemStreamPathHelper.getRootPath(streamVolume.getVolumePath(),
                 meta, meta.getTypeName());
@@ -182,7 +182,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
                 });
                 criteria.obtainVolumeIdSet().add(volume.getId());
 
-                final List<DataVolume> matches = streamVolumeService.find(criteria);
+                final List<DataVolume> matches = dataVolumeService.find(criteria);
 
                 for (final DataVolume streamVolume : matches) {
                     final Meta meta = streamMap.get(streamVolume.getStreamId());

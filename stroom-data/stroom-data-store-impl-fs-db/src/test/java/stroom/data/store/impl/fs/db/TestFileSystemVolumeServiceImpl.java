@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.db;
 
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,9 +23,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import stroom.data.store.impl.fs.DataStoreServiceConfig;
+import stroom.data.store.impl.fs.FsVolumeConfig;
+import stroom.data.store.impl.fs.FsVolumeDao;
+import stroom.data.store.impl.fs.FsVolumeService;
+import stroom.data.store.impl.fs.FsVolumeStateDao;
+import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
-import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.AllowAllMockSecurity;
@@ -45,8 +50,8 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
     private static final Path DEFAULT_STREAM_VOLUME_PATH;
 
     static {
-        DEFAULT_VOLUMES_PATH = FileUtil.getTempDir().resolve(FsVolumeServiceImpl.DEFAULT_VOLUMES_SUBDIR);
-        DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(FsVolumeServiceImpl.DEFAULT_STREAM_VOLUME_SUBDIR);
+        DEFAULT_VOLUMES_PATH = FileUtil.getTempDir().resolve(FsVolumeService.DEFAULT_VOLUMES_SUBDIR);
+        DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(FsVolumeService.DEFAULT_STREAM_VOLUME_SUBDIR);
     }
 
     private final FsVolume public1a = FsVolume.create(
@@ -78,13 +83,15 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
         final SecurityContext securityContext = new MockSecurityContext();
         final Security security = new AllowAllMockSecurity();
 
-        final ConnectionProvider connectionProvider = new FsDataStoreModule().getConnectionProvider(DataStoreServiceConfig::new);
-        volumeService = new FsVolumeServiceImpl(connectionProvider,
+        final ConnectionProvider connectionProvider = new FsDataStoreDbModule().getConnectionProvider(DataStoreServiceConfig::new);
+        final FsVolumeDao fsVolumeDao = new FsVolumeDaoImpl(connectionProvider);
+        final FsVolumeStateDao fsVolumeStateDao = new FsVolumeStateDaoImpl(connectionProvider);
+        volumeService = new FsVolumeService(fsVolumeDao,
+                fsVolumeStateDao,
                 security,
                 securityContext,
                 new FsVolumeConfig(),
                 null,
-                new FsVolumeStateDao(connectionProvider),
                 null,
                 null);
 
@@ -206,7 +213,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 //        assertThat(volumeService.saveCalled).isTrue();
 //        //make sure both paths have been saved
 //        assertThat(volumeService.savedVolumes.stream()
-//                .map(FileVolume::getPath)
+//                .map(FileVolume::getOrCreatePath)
 //                .filter(path -> path.equals(FileUtil.getCanonicalPath(DEFAULT_INDEX_VOLUME_PATH)) ||
 //                        path.equals(FileUtil.getCanonicalPath(DEFAULT_STREAM_VOLUME_PATH)))
 //                .count()).isEqualTo(2);

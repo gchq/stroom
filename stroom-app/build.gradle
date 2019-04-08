@@ -39,6 +39,7 @@ dependencies {
     compile project(':stroom-data:stroom-data-retention-impl')
     compile project(':stroom-data:stroom-data-store-impl')
     compile project(':stroom-data:stroom-data-store-impl-fs')
+    compile project(':stroom-data:stroom-data-store-impl-fs-db')
     compile project(':stroom-data:stroom-data-zip')
     compile project(':stroom-db-util')
     compile project(':stroom-dictionary:stroom-dictionary-impl')

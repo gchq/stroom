@@ -19,7 +19,6 @@ package stroom.pipeline;
 
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.util.io.StreamCloser;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
@@ -78,8 +77,6 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     private PipelineStore pipelineStore;
     @Inject
     private PipelineDataCache pipelineDataCache;
-    @Inject
-    private Provider<StreamCloser> streamCloserProvider;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
 
@@ -207,9 +204,6 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
                 }
 
                 pipeline.endProcessing();
-
-                // Close all streams that have been written.,
-                streamCloserProvider.get().close();
 
                 assertThat(recordCountProvider.get().getRead() > 0).isTrue();
                 assertThat(recordCountProvider.get().getWritten() > 0).isTrue();

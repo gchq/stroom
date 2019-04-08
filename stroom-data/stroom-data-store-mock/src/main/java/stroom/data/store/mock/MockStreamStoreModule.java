@@ -18,16 +18,13 @@ package stroom.data.store.mock;
 
 import com.google.inject.AbstractModule;
 import stroom.data.store.api.Store;
-import stroom.data.store.impl.SteamStoreStreamCloserImpl;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.io.StreamCloser;
 import stroom.util.shared.Clearable;
 
 public class MockStreamStoreModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(Store.class).to(MockStore.class);
-        bind(StreamCloser.class).to(SteamStoreStreamCloserImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(MockStore.class);
     }

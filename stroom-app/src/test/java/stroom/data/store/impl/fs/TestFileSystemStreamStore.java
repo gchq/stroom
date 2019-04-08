@@ -26,7 +26,7 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
-import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
+import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.meta.impl.db.MetaValueConfig;
 import stroom.meta.shared.EffectiveMetaDataCriteria;
@@ -81,7 +81,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Inject
     private MetaService metaService;
     @Inject
-    private DataVolumeService streamVolumeService;
+    private DataVolumeService dataVolumeService;
     @Inject
     private FsPathHelper fileSystemStreamPathHelper;
 
@@ -354,7 +354,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final FindDataVolumeCriteria volumeCriteria = new FindDataVolumeCriteria();
 //        volumeCriteria.obtainStreamStatusSet().add(StreamStatus.UNLOCKED);
         volumeCriteria.obtainMetaIdSet().add(exactMetaData.getId());
-        assertThat(streamVolumeService.find(volumeCriteria).size() >= 1).as("Expecting to find at least 1 with day old criteria").isTrue();
+        assertThat(dataVolumeService.find(volumeCriteria).size() >= 1).as("Expecting to find at least 1 with day old criteria").isTrue();
     }
 
     private void doTestDeleteSource(final DeleteTestStyle style) throws IOException {
@@ -684,7 +684,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             streamTarget.getAttributes().put(MetaFieldNames.REC_READ, "100");
         }
 
-        final DataVolume streamVolume = streamVolumeService.findDataVolume(meta.getId());
+        final DataVolume streamVolume = dataVolumeService.findDataVolume(meta.getId());
         final Path rootFile = fileSystemStreamPathHelper.getRootPath(streamVolume.getVolumePath(), meta, StreamTypeNames.RAW_EVENTS);
 
         assertThat(Files.isRegularFile(rootFile)).isTrue();
