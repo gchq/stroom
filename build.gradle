@@ -233,7 +233,7 @@ ext.libs = [
         lucene_queryparser             : "org.apache.lucene:lucene-queryparser:$versions.lucene",
         mockito_core                   : "org.mockito:mockito-core:$versions.mockito",
         mockito_junit_jupiter          : "org.mockito:mockito-junit-jupiter:$versions.mockito",
-        mysql_connector_java           : "mysql:mysql-connector-java:5.1.40",
+        mysql_connector_java           : "mysql:mysql-connector-java:8.0.15",
         objenesis                      : "org.objenesis:objenesis", // version controlled by DW BOM
         poi                            : "org.apache.poi:poi:3.17",
         poi_ooxml                      : "org.apache.poi:poi-ooxml:3.17",

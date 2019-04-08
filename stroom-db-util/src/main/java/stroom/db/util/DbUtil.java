@@ -34,9 +34,11 @@ public class DbUtil {
                 if (clazz != null) {
                     LOGGER.info("Using test container DB connection config");
 
-                    connectionConfig.setJdbcDriverClassName("com.mysql.jdbc.Driver");
-//                        .jdbcUrl("jdbc:tc:mysql:5.6.23://localhost:3306/stroom?user=test?password=test")
-                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.6.23://localhost:3306/test");
+                    connectionConfig.setJdbcDriverClassName("com.mysql.cj.jdbc.Driver");
+                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.5.52://localhost:3306/test");
+//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.6.43://localhost:3306/test");
+//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.7.25://localhost:3306/test");
+//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:8.0.15://localhost:3306/test");
                     connectionConfig.setJdbcDriverPassword("test");
                     connectionConfig.setJdbcDriverUsername("test");
 
