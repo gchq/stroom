@@ -18,7 +18,7 @@ package stroom.docstore.impl.fs;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.docstore.api.Persistence;
+import stroom.docstore.impl.Persistence;
 import stroom.util.shared.Clearable;
 
 public class FSPersistenceModule extends AbstractModule {

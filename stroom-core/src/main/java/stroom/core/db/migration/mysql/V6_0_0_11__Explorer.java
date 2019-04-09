@@ -16,12 +16,13 @@
 
 package stroom.core.db.migration.mysql;
 
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.docref.DocRef;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,13 +37,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class V6_0_0_11__Explorer implements JdbcMigration {
+public class V6_0_0_11__Explorer extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V6_0_0_21__Dictionary.class);
 
     private Map<Long, List<Long>> folderIdToAncestorIDMap = new HashMap<>();
 
     @Override
-    public void migrate(final Connection connection) throws Exception {
+    public void migrate(final Context flywayContext) throws Exception {
+        migrate(flywayContext.getConnection());
+    }
+
+    private void migrate(final Connection connection) throws Exception {
         // Create explorer tree data from existing child/parent node relationships.
         createExplorerTree(connection);
     }

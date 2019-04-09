@@ -1,0 +1,53 @@
+ext.moduleName = 'stroom.data.store.impl.fs.db'
+
+dependencies {
+//    compile project(':stroom-config:stroom-config-common')
+//    compile project(':stroom-core-shared')
+//    compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-db-util')
+//    compile project(':stroom-cluster:stroom-cluster-lock-api')
+    compile project(':stroom-data:stroom-data-store-impl-fs')
+    compile project(':stroom-data:stroom-data-store-impl-fs-db-jooq')
+//    compile project(':stroom-event-logging:stroom-event-logging-api')
+//    compile project(':stroom-node:stroom-node-api')
+//    compile project(':stroom-security:stroom-security-api')
+//    compile project(':stroom-statistics:stroom-statistics-api')
+//    compile project(':stroom-task:stroom-task-api')
+//    compile project(':stroom-job:stroom-job-api')
+//    compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
+//    compile project(':stroom-util-shared')
+
+    compile libs.stroomDocRef
+    compile libs.eventLogging
+
+    compile libs.flyway_core
+//    compile libs.guava
+    compile libs.guice4
+    compile libs.hikari
+//    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.jooq
+    compile libs.slf4j_api
+
+    runtimeOnly libs.mysql_connector_java
+
+    testCompile project(':stroom-security:stroom-security-mock')
+    testCompile project(':stroom-test-common')
+    
+    testCompile libs.assertj_core
+    testCompile libs.junit_jupiter_api
+    testCompile libs.mockito_core
+    testCompile libs.mockito_junit_jupiter
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+    testRuntimeOnly libs.test_containers
+    testRuntimeOnly libs.test_containers_mysql
+}

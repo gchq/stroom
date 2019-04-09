@@ -12,6 +12,7 @@ import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
 import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.DocumentPermissionDao;
+import stroom.security.impl.SecurityModule;
 import stroom.security.impl.UserDao;
 import stroom.util.guice.GuiceUtil;
 

@@ -29,30 +29,4 @@ public class JobDbConfig implements IsConfig {
     public void setConnectionPoolConfig(final ConnectionPoolConfig connectionPoolConfig) {
         this.connectionPoolConfig = connectionPoolConfig;
     }
-
-    public static class Builder {
-        private final JobDbConfig instance;
-
-        public Builder(final JobDbConfig instance) {
-            this.instance = instance;
-        }
-
-        public Builder() {
-            this(new JobDbConfig());
-        }
-
-        public Builder withConnectionConfig(final ConnectionConfig value) {
-            instance.setConnectionConfig(value);
-            return this;
-        }
-
-        public Builder withConnectionPoolConfig(final ConnectionPoolConfig value) {
-            instance.setConnectionPoolConfig(value);
-            return this;
-        }
-
-        public JobDbConfig build() {
-            return instance;
-        }
-    }
 }

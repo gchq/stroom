@@ -13,9 +13,9 @@ import stroom.db.util.HikariUtil;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.ProcessorFilterDao;
+import stroom.processor.impl.ProcessorFilterTrackerDao;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
-import stroom.processor.impl.ProcessorFilterTrackerDao;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 

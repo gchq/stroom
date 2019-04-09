@@ -23,11 +23,11 @@ import stroom.util.shared.BaseResultList;
 public interface ActivityService {
     Activity create();
 
+    Activity fetch(int id);
+
     Activity update(Activity activity);
 
-    int delete(int id);
-
-    Activity fetch(int id);
+    boolean delete(int id);
 
     BaseResultList<Activity> find(FindActivityCriteria criteria);
 }

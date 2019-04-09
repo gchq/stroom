@@ -55,7 +55,7 @@ public class GenericDao<RecordType extends UpdatableRecord, ObjectType, IdType>
     }
 
     public ObjectType update(final ObjectType object) {
-        return JooqUtil.contextWithOptimisticLocking(connectionProvider, context ->
+        return JooqUtil.contextResultWithOptimisticLocking(connectionProvider, context ->
                 update(context, object));
     }
 

@@ -29,30 +29,4 @@ public class IndexDbConfig implements IsConfig {
     public void setConnectionPoolConfig(final ConnectionPoolConfig connectionPoolConfig) {
         this.connectionPoolConfig = connectionPoolConfig;
     }
-
-    public static class Builder {
-        private final IndexDbConfig instance;
-
-        public Builder(final IndexDbConfig instance) {
-            this.instance = instance;
-        }
-
-        public Builder() {
-            this(new IndexDbConfig());
-        }
-
-        public Builder withConnectionConfig(final ConnectionConfig value) {
-            instance.setConnectionConfig(value);
-            return this;
-        }
-
-        public Builder withConnectionPoolConfig(final ConnectionPoolConfig value) {
-            instance.setConnectionPoolConfig(value);
-            return this;
-        }
-
-        public IndexDbConfig build() {
-            return instance;
-        }
-    }
 }

@@ -3,7 +3,7 @@ package stroom.docstore.impl.db;
 
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.docstore.api.Persistence;
+import stroom.docstore.impl.Persistence;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;

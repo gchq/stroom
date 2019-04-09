@@ -20,17 +20,16 @@ package stroom.dashboard.impl.script;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.docstore.api.Persistence;
+import stroom.docref.DocRefInfo;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
-import stroom.util.shared.DocRefs;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRefInfo;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -53,17 +52,14 @@ class ScriptStoreImpl implements ScriptStore {
 
     private final Store<ScriptDoc> store;
     private final SecurityContext securityContext;
-    private final Persistence persistence;
     private final ScriptSerialiser serialiser;
 
     @Inject
     ScriptStoreImpl(final StoreFactory storeFactory,
                     final SecurityContext securityContext,
-                    final Persistence persistence,
                     final ScriptSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, ScriptDoc.DOCUMENT_TYPE, ScriptDoc.class);
         this.securityContext = securityContext;
-        this.persistence = persistence;
         this.serialiser = serialiser;
     }
 
@@ -185,7 +181,7 @@ class ScriptStoreImpl implements ScriptStore {
         if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {
             final String uuid = docRef.getUuid();
             try {
-                final boolean exists = persistence.exists(docRef);
+                final boolean exists = store.exists(docRef);
                 ScriptDoc document;
                 if (exists) {
                     document = readDocument(docRef);

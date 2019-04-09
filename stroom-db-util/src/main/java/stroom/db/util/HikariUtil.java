@@ -16,12 +16,17 @@ public class HikariUtil {
     }
 
     public static HikariConfig createConfig(final ConnectionConfig connectionConfig, final ConnectionPoolConfig connectionPoolConfig) {
+        // Add test connection details if needed.
+        DbUtil.decorateConnectionConfig(connectionConfig);
         // Validate the connection details.
-        connectionConfig.validate();
-
+        DbUtil.validate(connectionConfig);
         // Keep waiting until we can establish a DB connection to allow for the DB to start after the app
         DbUtil.waitForConnection(connectionConfig);
 
+        return create(connectionConfig, connectionPoolConfig);
+    }
+
+    private static HikariConfig create(final ConnectionConfig connectionConfig, final ConnectionPoolConfig connectionPoolConfig) {
         final HikariConfig config = new HikariConfig();
         config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
         config.setUsername(connectionConfig.getJdbcDriverUsername());

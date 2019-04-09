@@ -1,5 +1,4 @@
-// TODO should probably be stroom.docstore.impl
-ext.moduleName = 'stroom.docstore.server'
+ext.moduleName = 'stroom.docstore.impl'
 
 dependencies {
     compile project(':stroom-core-shared')

@@ -5,35 +5,35 @@ import stroom.util.shared.Clearable;
 import javax.inject.Inject;
 
 public class Cleanup implements Clearable {
-    private final MetaValueServiceImpl metaValueService;
-    private final MetaKeyServiceImpl metaKeyService;
-    private final MetaServiceImpl dataMetaService;
-    private final MetaProcessorServiceImpl processorService;
-    private final MetaTypeServiceImpl dataTypeService;
-    private final MetaFeedServiceImpl feedService;
+    private final MetaValueDaoImpl metaValueDao;
+    private final MetaKeyDaoImpl metaKeyDao;
+    private final MetaDaoImpl metaDao;
+    private final MetaProcessorDaoImpl metaProcessorDao;
+    private final MetaTypeDaoImpl metaTypeDao;
+    private final MetaFeedDaoImpl metaFeedDao;
 
     @Inject
-    Cleanup(final MetaValueServiceImpl metaValueService,
-            final MetaKeyServiceImpl metaKeyService,
-            final MetaServiceImpl dataMetaService,
-            final MetaProcessorServiceImpl processorService,
-            final MetaTypeServiceImpl dataTypeService,
-            final MetaFeedServiceImpl feedService) {
-        this.metaValueService = metaValueService;
-        this.metaKeyService = metaKeyService;
-        this.dataMetaService = dataMetaService;
-        this.processorService = processorService;
-        this.dataTypeService = dataTypeService;
-        this.feedService = feedService;
+    Cleanup(final MetaValueDaoImpl metaValueDao,
+            final MetaKeyDaoImpl metaKeyDao,
+            final MetaDaoImpl metaDao,
+            final MetaProcessorDaoImpl metaProcessorDao,
+            final MetaTypeDaoImpl metaTypeDao,
+            final MetaFeedDaoImpl metaFeedDao) {
+        this.metaValueDao = metaValueDao;
+        this.metaKeyDao = metaKeyDao;
+        this.metaDao = metaDao;
+        this.metaProcessorDao = metaProcessorDao;
+        this.metaTypeDao = metaTypeDao;
+        this.metaFeedDao = metaFeedDao;
     }
 
     @Override
     public void clear() {
-        metaValueService.clear();
-        metaKeyService.clear();
-        dataMetaService.clear();
-        processorService.clear();
-        dataTypeService.clear();
-        feedService.clear();
+        metaValueDao.clear();
+        metaKeyDao.clear();
+        metaDao.clear();
+        metaProcessorDao.clear();
+        metaTypeDao.clear();
+        metaFeedDao.clear();
     }
 }

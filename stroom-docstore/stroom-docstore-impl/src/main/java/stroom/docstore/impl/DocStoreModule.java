@@ -1,7 +1,6 @@
 package stroom.docstore.impl;
 
 import com.google.inject.AbstractModule;
-import stroom.docstore.api.Persistence;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
 import stroom.security.api.SecurityContext;

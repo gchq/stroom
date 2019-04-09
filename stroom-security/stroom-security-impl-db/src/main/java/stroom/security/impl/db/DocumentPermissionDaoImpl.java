@@ -13,7 +13,6 @@ import static stroom.security.impl.db.jooq.tables.DocPermission.DOC_PERMISSION;
 import static stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
 
 public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
-
     private final ConnectionProvider connectionProvider;
 
     @Inject

@@ -16,11 +16,12 @@
 
 package stroom.core.db.migration.mysql;
 
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.core.db.migration._V07_00_00.entity.util._V07_00_00_ObjectMarshaller;
 import stroom.core.db.migration.EntityReferenceReplacer;
+import stroom.core.db.migration._V07_00_00.entity.util._V07_00_00_ObjectMarshaller;
 import stroom.docref.DocRef;
 
 import java.sql.Connection;
@@ -28,13 +29,17 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
-public class V5_0_0_10__Pipeline implements JdbcMigration {
+public class V5_0_0_10__Pipeline extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_10__Pipeline.class);
 
 //    private static final String[] TABLES = {"FOLDER","TXT_CONV","XSLT","XML_SCHEMA","PIPE","FD","IDX","STAT_DAT_SRC","ANAL_OUT_DAT_SRC","DASH","SCRIPT","VIS","DICT","QUERY"};
 
     @Override
-    public void migrate(Connection connection) throws Exception {
+    public void migrate(final Context flywayContext) throws Exception {
+        migrate(flywayContext.getConnection());
+    }
+
+    private void migrate(final Connection connection) throws Exception {
 //        for (final String table : TABLES) {
 //            final List<Long> idList = new ArrayList<>();
 //            try (final Statement statement = connection.createStatement(); final ResultSet resultSet = statement.executeQuery("SELECT ID FROM " + table)) {

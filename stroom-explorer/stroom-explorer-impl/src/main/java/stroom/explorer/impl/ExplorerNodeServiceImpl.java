@@ -3,13 +3,11 @@ package stroom.explorer.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.shared.DocumentTypes;
-import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.api.ExplorerNodeService;
-import stroom.explorer.impl.db.ExplorerTreeDao;
-import stroom.explorer.impl.db.ExplorerTreeNode;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;

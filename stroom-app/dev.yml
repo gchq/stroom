@@ -60,7 +60,7 @@ logging:
 appConfig:
   activity:
     connection:
-      jdbcDriverClassName: com.mysql.jdbc.Driver
+      jdbcDriverClassName: com.mysql.cj.jdbc.Driver
       jdbcDriverUrl: jdbc:mysql://${STROOM_HOST:-localhost}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
       jdbcDriverUsername: stroomuser
       jdbcDriverPassword: stroompassword1
@@ -81,7 +81,7 @@ appConfig:
     enabled: false
   core:
     connection:
-      jdbcDriverClassName: com.mysql.jdbc.Driver
+      jdbcDriverClassName: com.mysql.cj.jdbc.Driver
       jdbcDriverUrl: jdbc:mysql://${STROOM_HOST:-localhost}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
       jdbcDriverUsername: stroomuser
       jdbcDriverPassword: stroompassword1
@@ -93,7 +93,7 @@ appConfig:
     meta:
       metaValueConfig: null
       connection:
-        jdbcDriverClassName: com.mysql.jdbc.Driver
+        jdbcDriverClassName: com.mysql.cj.jdbc.Driver
         jdbcDriverUrl: jdbc:mysql://${STROOM_HOST:-localhost}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
         jdbcDriverUsername: stroomuser
         jdbcDriverPassword: stroompassword1
@@ -110,7 +110,7 @@ appConfig:
       fileSystemCleanDeleteOut: false
       fileSystemCleanOldAge: "1d"
       connection:
-        jdbcDriverClassName: com.mysql.jdbc.Driver
+        jdbcDriverClassName: com.mysql.cj.jdbc.Driver
         jdbcDriverUrl: jdbc:mysql://${STROOM_HOST:-localhost}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
         jdbcDriverUsername: stroomuser
         jdbcDriverPassword: stroompassword1
@@ -125,7 +125,7 @@ appConfig:
     elasticIndex: "http://${STROOM_HOST:-localhost}/queryElasticService/queryApi/v1"
   explorer:
     connection:
-      jdbcDriverClassName: com.mysql.jdbc.Driver
+      jdbcDriverClassName: com.mysql.cj.jdbc.Driver
       jdbcDriverUrl: jdbc:mysql://${STROOM_HOST:-localhost}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
       jdbcDriverUsername: stroomuser
       jdbcDriverPassword: stroompassword1
@@ -146,7 +146,7 @@ appConfig:
         maxItems: 100
   indexDb:
     connection:
-      jdbcDriverClassName: "com.mysql.jdbc.Driver"
+      jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
       jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
       jdbcDriverUsername: "stroomuser"
       jdbcDriverPassword: "stroompassword1"
@@ -183,7 +183,7 @@ appConfig:
     queueSize: 1000
     databaseMultiInsertMaxBatchSize: 500
     connection:
-      jdbcDriverClassName: com.mysql.jdbc.Driver
+      jdbcDriverClassName: com.mysql.cj.jdbc.Driver
       jdbcDriverUrl: jdbc:mysql://${STROOM_HOST:-localhost}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
       jdbcDriverUsername: stroomuser
       jdbcDriverPassword: stroompassword1
@@ -193,7 +193,7 @@ appConfig:
       prepStmtCacheSqlLimit: 2048
   properties:
     connection:
-      jdbcDriverClassName: com.mysql.jdbc.Driver
+      jdbcDriverClassName: com.mysql.cj.jdbc.Driver
       jdbcDriverUrl: jdbc:mysql://${STROOM_HOST:-localhost}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
       jdbcDriverUsername: stroomuser
       jdbcDriverPassword: stroompassword1
@@ -236,7 +236,7 @@ appConfig:
         enableTokenRevocationCheck: true
   securityDb:
     connection:
-      jdbcDriverClassName: com.mysql.jdbc.Driver
+      jdbcDriverClassName: com.mysql.cj.jdbc.Driver
       jdbcDriverUrl: jdbc:mysql://${STROOM_HOST:-localhost}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
       jdbcDriverUsername: stroomuser
       jdbcDriverPassword: stroompassword1
@@ -259,7 +259,7 @@ appConfig:
       statisticAggregationBatchSize: 1000000
       maxProcessingAge: null
       connection:
-        jdbcDriverClassName: com.mysql.jdbc.Driver
+        jdbcDriverClassName: com.mysql.cj.jdbc.Driver
         jdbcDriverUrl: jdbc:mysql://${STROOM_HOST:-localhost}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
         jdbcDriverUsername: stroomuser
         jdbcDriverPassword: stroompassword1

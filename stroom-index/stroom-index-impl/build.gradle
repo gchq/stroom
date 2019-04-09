@@ -1,0 +1,57 @@
+ext.moduleName = 'stroom.index.impl'
+
+dependencies {
+    compile project(':stroom-cache:stroom-cache-api')
+    compile project(':stroom-cluster:stroom-cluster-task-api')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-data:stroom-data-store-api')
+    compile project(':stroom-dictionary:stroom-dictionary-api')
+    compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-importexport:stroom-importexport-api')
+    compile project(':stroom-importexport:stroom-importexport-migration')
+    compile project(':stroom-lifecycle:stroom-lifecycle-api')
+    compile project(':stroom-node:stroom-node-api')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-job:stroom-job-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_metrics_healthchecks
+    compile libs.eventLogging
+    compile libs.guava
+    compile libs.guice4
+    compile libs.hessian
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.jaxb_api
+    compile libs.lucene_analyzers_common
+    compile libs.lucene_core
+    compile libs.lucene_queryparser
+    compile libs.slf4j_api
+    compile libs.stroomDocRef
+    compile libs.stroomExpression
+    compile libs.stroomQueryCommon
+    compile libs.swagger_annotations
+    compile libs.ws_rs_api
+    compile libs.xml_apis
+
+    testCompile project(':stroom-test-common')
+
+    testCompile libs.assertj_core
+    testCompile libs.junit_jupiter_api
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}

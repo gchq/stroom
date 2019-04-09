@@ -18,12 +18,11 @@ package stroom.data.store.impl;
 
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
-import stroom.meta.shared.Meta;
-import stroom.security.api.Security;
 import stroom.meta.shared.FetchFullMetaInfoAction;
 import stroom.meta.shared.FullMetaInfoResult;
 import stroom.meta.shared.FullMetaInfoResult.Entry;
 import stroom.meta.shared.FullMetaInfoResult.Section;
+import stroom.meta.shared.Meta;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.date.DateUtil;
 
@@ -38,15 +37,12 @@ import java.util.stream.Collectors;
 class FetchFullMetaInfoHandler extends AbstractTaskHandler<FetchFullMetaInfoAction, FullMetaInfoResult> {
     private final Store streamStore;
     private final StreamAttributeMapRetentionRuleDecorator ruleDecorator;
-    private final Security security;
 
     @Inject
     FetchFullMetaInfoHandler(final Store streamStore,
-                             final StreamAttributeMapRetentionRuleDecorator ruleDecorator,
-                             final Security security) {
+                             final StreamAttributeMapRetentionRuleDecorator ruleDecorator) {
         this.streamStore = streamStore;
         this.ruleDecorator = ruleDecorator;
-        this.security = security;
     }
 
     private String getDateTimeString(final long ms) {
@@ -68,9 +64,6 @@ class FetchFullMetaInfoHandler extends AbstractTaskHandler<FetchFullMetaInfoActi
 
         if (meta.getProcessorUuid() != null) {
             entries.add(new Entry("Processor", meta.getProcessorUuid()));
-        }
-        if (meta.getProcessorFilterUuid() != null) {
-            entries.add(new Entry("Processor Filter", meta.getProcessorFilterUuid()));
         }
         if (meta.getPipelineUuid() != null) {
             entries.add(new Entry("Processor Pipeline", meta.getPipelineUuid()));

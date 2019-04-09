@@ -20,18 +20,17 @@ package stroom.pipeline.xmlschema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentSerialiser2;
-import stroom.docstore.api.Persistence;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
-import stroom.util.shared.BaseResultList;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.xmlschema.migration.OldXMLSchema;
-import stroom.docref.DocRefInfo;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
@@ -53,18 +52,15 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
 
     private final Store<XmlSchemaDoc> store;
     private final SecurityContext securityContext;
-    private final Persistence persistence;
     private final DocumentSerialiser2<XmlSchemaDoc> serialiser;
 
     @Inject
     public XmlSchemaStoreImpl(final StoreFactory storeFactory,
                               final SecurityContext securityContext,
-                              final Persistence persistence,
                               final XmlSchemaSerialiser serialiser) {
         this.serialiser = serialiser;
         this.store = storeFactory.createStore(serialiser, XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaDoc.class);
         this.securityContext = securityContext;
-        this.persistence = persistence;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -165,7 +161,7 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
         if (dataMap.size() > 1 && !dataMap.containsKey("meta") && dataMap.containsKey("xml")) {
             final String uuid = docRef.getUuid();
             try {
-                final boolean exists = persistence.exists(docRef);
+                final boolean exists = store.exists(docRef);
                 XmlSchemaDoc document;
                 if (exists) {
                     document = readDocument(docRef);

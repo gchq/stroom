@@ -30,7 +30,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
             edition = 'OSS'
             sample(sourceSets.main) {
                 jdbc {
-                    driver = 'com.mysql.jdbc.Driver'
+                    driver = 'com.mysql.cj.jdbc.Driver'
                     url = 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8'
                     user = 'stroomuser'
                     password = 'stroompassword1'
@@ -51,7 +51,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         recordVersionFields = 'version'
                     }
                     target {
-                        packageName = 'stroom.index.impl.db'
+                        packageName = 'stroom.index.impl.db.jooq'
                         directory = 'src/main/java'
                     }
                 }

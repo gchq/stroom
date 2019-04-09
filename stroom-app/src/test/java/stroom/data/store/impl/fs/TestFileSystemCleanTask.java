@@ -55,7 +55,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     @Inject
     private FsDataStoreMaintenanceService streamMaintenanceService;
     @Inject
-    private DataVolumeService streamVolumeService;
+    private DataVolumeService dataVolumeService;
     @Inject
     private FsCleanExecutor fileSystemCleanTaskExecutor;
     @Inject
@@ -85,64 +85,62 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         // FILE1 LOCKED
         //
         // Write some data
-        final Target lockstreamTarget1 = streamStore.openTarget(lockfile1);
-        TargetUtil.write(lockstreamTarget1, "MyTest");
-        // Close the file but not the stream (you should use the closeStream
-        // API)
-        lockstreamTarget1.close();
-        final Collection<Path> lockedFiles = streamMaintenanceService.findAllStreamFile(lockstreamTarget1.getMeta());
-        FileSystemUtil.updateLastModified(lockedFiles, oldDate.toInstant().toEpochMilli());
-        streamVolumeService.find(FindDataVolumeCriteria.create(lockstreamTarget1.getMeta()));
-        // // Hack making the last access time quite old
-        // for (StreamVolume volume : volumeList) {
-        // volume.setLastAccessMs(oldDate.toDate().getTime());
-        // streamMaintenanceService.save(volume);
-        // }
+        try (final Target lockstreamTarget1 = streamStore.openTarget(lockfile1)) {
+            TargetUtil.write(lockstreamTarget1, "MyTest");
 
-        //
-        // FILE2 UNLOCKED
-        //
-        Meta meta;
-        try (final Target nolockstreamTarget1 = streamStore.openTarget(nolockfile1)) {
-            meta = nolockstreamTarget1.getMeta();
-            TargetUtil.write(nolockstreamTarget1, "MyTest");
+            final Collection<Path> lockedFiles = streamMaintenanceService.findAllStreamFile(lockstreamTarget1.getMeta());
+            FileSystemUtil.updateLastModified(lockedFiles, oldDate.toInstant().toEpochMilli());
+            dataVolumeService.find(FindDataVolumeCriteria.create(lockstreamTarget1.getMeta()));
+            // // Hack making the last access time quite old
+            // for (StreamVolume volume : volumeList) {
+            // volume.setLastAccessMs(oldDate.toDate().getTime());
+            // streamMaintenanceService.save(volume);
+            // }
+
+            //
+            // FILE2 UNLOCKED
+            //
+            Meta meta;
+            try (final Target nolockstreamTarget1 = streamStore.openTarget(nolockfile1)) {
+                meta = nolockstreamTarget1.getMeta();
+                TargetUtil.write(nolockstreamTarget1, "MyTest");
+            }
+            final Collection<Path> unlockedFiles = streamMaintenanceService
+                    .findAllStreamFile(meta);
+            final Path directory = unlockedFiles.iterator().next().getParent();
+            // Create some other files on the file system
+
+            // Copy something that is quite old into the same directory.
+            final Path oldfile = directory.resolve("oldfile.txt");
+            Files.createFile(oldfile);
+            FileUtil.setLastModified(oldfile, oldDate.toInstant().toEpochMilli());
+
+            // Create a old sub directory;
+            final Path olddir = directory.resolve("olddir");
+            FileUtil.mkdirs(olddir);
+            FileUtil.setLastModified(olddir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
+
+            final Path newdir = directory.resolve("newdir");
+            FileUtil.mkdirs(newdir);
+            FileUtil.setLastModified(newdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
+
+            final Path oldfileinnewdir = newdir.resolve("oldfileinnewdir.txt");
+            Files.createFile(oldfileinnewdir);
+            FileUtil.setLastModified(oldfileinnewdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_FOUR).toInstant().toEpochMilli());
+
+            // Run the clean
+            fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
+
+            waitForTaskManagerToComplete();
+
+            assertThat(FileSystemUtil.isAllFile(lockedFiles)).as("Locked files should still exist").isTrue();
+            assertThat(FileSystemUtil.isAllFile(unlockedFiles)).as("Unlocked files should still exist").isTrue();
+
+            assertThat(Files.isRegularFile(oldfile)).as("expected deleted " + oldfile).isFalse();
+            assertThat(Files.isDirectory(olddir)).as("deleted deleted " + olddir).isFalse();
+            assertThat(Files.isDirectory(newdir)).as("not deleted new dir").isTrue();
+            assertThat(Files.isRegularFile(oldfileinnewdir)).as("deleted old file in new dir").isFalse();
         }
-        final Collection<Path> unlockedFiles = streamMaintenanceService
-                .findAllStreamFile(meta);
-        final Path directory = unlockedFiles.iterator().next().getParent();
-        // Create some other files on the file system
-
-        // Copy something that is quite old into the same directory.
-        final Path oldfile = directory.resolve("oldfile.txt");
-        Files.createFile(oldfile);
-        FileUtil.setLastModified(oldfile, oldDate.toInstant().toEpochMilli());
-
-        // Create a old sub directory;
-        final Path olddir = directory.resolve("olddir");
-        FileUtil.mkdirs(olddir);
-        FileUtil.setLastModified(olddir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
-
-        final Path newdir = directory.resolve("newdir");
-        FileUtil.mkdirs(newdir);
-        FileUtil.setLastModified(newdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
-
-        final Path oldfileinnewdir = newdir.resolve("oldfileinnewdir.txt");
-        Files.createFile(oldfileinnewdir);
-        FileUtil.setLastModified(oldfileinnewdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_FOUR).toInstant().toEpochMilli());
-
-        // Run the clean
-        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
-
-        waitForTaskManagerToComplete();
-
-        assertThat(FileSystemUtil.isAllFile(lockedFiles)).as("Locked files should still exist").isTrue();
-        assertThat(FileSystemUtil.isAllFile(unlockedFiles)).as("Unlocked files should still exist").isTrue();
-
-        assertThat(Files.isRegularFile(oldfile)).as("expected deleted " + oldfile).isFalse();
-        assertThat(Files.isDirectory(olddir)).as("deleted deleted " + olddir).isFalse();
-        assertThat(Files.isDirectory(newdir)).as("not deleted new dir").isTrue();
-        assertThat(Files.isRegularFile(oldfileinnewdir)).as("deleted old file in new dir").isFalse();
-
     }
 
     @Test
@@ -160,7 +158,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         final FindDataVolumeCriteria streamVolumeCriteria = new FindDataVolumeCriteria();
         streamVolumeCriteria.obtainMetaIdSet().add(meta.getId());
 
-        assertThat(streamVolumeService.find(streamVolumeCriteria).size() >= 1).as("Must be saved to at least one volume").isTrue();
+        assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1).as("Must be saved to at least one volume").isTrue();
 
         fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
@@ -168,7 +166,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         assertThat(files.size()).as("Files have been deleted above").isEqualTo(0);
 
-        assertThat(streamVolumeService.find(streamVolumeCriteria).size() >= 1).as("Volumes should still exist as they are new").isTrue();
+        assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1).as("Volumes should still exist as they are new").isTrue();
 
         fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 

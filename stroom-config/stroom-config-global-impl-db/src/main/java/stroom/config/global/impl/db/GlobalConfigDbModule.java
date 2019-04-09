@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import stroom.config.app.PropertyServiceConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
+import stroom.config.global.impl.ConfigPropertyDao;
+import stroom.config.global.impl.GlobalConfigModule;
 import stroom.db.util.HikariUtil;
 import stroom.util.guice.GuiceUtil;
 
@@ -25,7 +27,9 @@ public class GlobalConfigDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(GlobalConfigService.class).to(GlobalConfigServiceImpl.class);
+        install(new GlobalConfigModule());
+
+        bind(ConfigPropertyDao.class).to(ConfigPropertyDaoImpl.class);
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)

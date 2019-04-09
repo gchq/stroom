@@ -18,17 +18,18 @@ package stroom.headless;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import stroom.activity.mock.MockActivityModule;
 import stroom.cache.impl.CacheModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.FeedModule;
 import stroom.importexport.impl.ImportExportModule;
+import stroom.security.mock.MockSecurityContextModule;
 import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.StreamCloser;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.node.api.NodeInfo;
-import stroom.node.shared.Node;
 import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.pipeline.scope.PipelineScoped;
@@ -46,7 +47,7 @@ import java.util.concurrent.Executors;
 public class CliModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new stroom.activity.impl.mock.MockActivityModule());
+        install(new MockActivityModule());
         install(new CacheModule());
         install(new PipelineCacheModule());
 //        install(new ClusterModule());
@@ -77,14 +78,14 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.properties.impl.PropertyModule());
 //        install(new stroom.pipeline.refdata.ReferenceDataModule());
 //        install(new stroom.resource.ResourceModule());
-        install(new stroom.security.impl.mock.MockSecurityContextModule());
+        install(new MockSecurityContextModule());
 //        install(new DataStoreHandlerModule());
         install(new DocStoreModule());
         install(new stroom.docstore.impl.fs.FSPersistenceModule());
 //        install(new stroom.streamtask.StreamTaskModule());
 //        install(new stroom.task.impl.TaskModule());
 //        install(new stroom.task.cluster.impl.ClusterTaskModule());
-//        install(new stroom.index.selection.VolumeModule());
+//        install(new stroom.index.impl.selection.selection.VolumeModule());
 
         bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);
         bind(StreamCloser.class).to(BasicStreamCloser.class).in(PipelineScoped.class);

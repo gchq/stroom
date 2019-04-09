@@ -20,7 +20,6 @@ import com.google.inject.AbstractModule;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
-import stroom.explorer.impl.db.ExplorerDbModule;
 import stroom.explorer.shared.ExplorerServiceCopyAction;
 import stroom.explorer.shared.ExplorerServiceCreateAction;
 import stroom.explorer.shared.ExplorerServiceDeleteAction;
@@ -32,14 +31,12 @@ import stroom.explorer.shared.FetchDocumentTypesAction;
 import stroom.explorer.shared.FetchExplorerNodeAction;
 import stroom.explorer.shared.FetchExplorerPermissionsAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.RestResource;
+import stroom.util.guice.GuiceUtil;
 
 public class ExplorerModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new ExplorerDbModule());
-
         bind(ExplorerNodeService.class).to(ExplorerNodeServiceImpl.class);
         bind(ExplorerService.class).to(ExplorerServiceImpl.class);
         bind(ExplorerEventLog.class).to(ExplorerEventLogImpl.class);

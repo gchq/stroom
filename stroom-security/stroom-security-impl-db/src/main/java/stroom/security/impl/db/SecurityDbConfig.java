@@ -29,30 +29,4 @@ public class SecurityDbConfig implements IsConfig {
     public void setConnectionPoolConfig(final ConnectionPoolConfig connectionPoolConfig) {
         this.connectionPoolConfig = connectionPoolConfig;
     }
-
-    public static class Builder {
-        private final SecurityDbConfig instance;
-
-        public Builder(final SecurityDbConfig instance) {
-            this.instance = instance;
-        }
-
-        public Builder() {
-            this(new SecurityDbConfig());
-        }
-
-        public Builder withConnectionConfig(final ConnectionConfig value) {
-            instance.setConnectionConfig(value);
-            return this;
-        }
-
-        public Builder withConnectionPoolConfig(final ConnectionPoolConfig value) {
-            instance.setConnectionPoolConfig(value);
-            return this;
-        }
-
-        public SecurityDbConfig build() {
-            return instance;
-        }
-    }
 }
