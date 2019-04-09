@@ -16,6 +16,7 @@
 
 package stroom.pipeline.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -33,6 +34,7 @@ public class XsltDoc extends Doc implements HasData {
 
     private String description;
 
+    @JsonIgnore
     private String data;
 
     public String getDescription() {
