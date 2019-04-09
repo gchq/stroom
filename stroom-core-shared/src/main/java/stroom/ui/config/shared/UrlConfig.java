@@ -9,10 +9,10 @@ public class UrlConfig implements SharedObject, IsConfig {
     private String authenticationService = "http://auth-service:8099/authentication/v1";
     private String users = "http://IP_ADDRESS/users";
     private String apiKeys = "http://IP_ADDRESS/tokens";
-    private String indexVolumes = "http://IP_ADDRESS:5001/s/indexing/volumes";
+    private String indexVolumes = "http://IP_ADDRESS/s/indexing/volumes";
     private String indexVolumeGroups = "http://IP_ADDRESS/s/indexing/groups";
-    private String userAuthorisation = "http://IP_ADDRESS:5001/s/authorisationManager/false";
-    private String groupAuthorisation = "http://IP_ADDRESS:5001/s/authorisationManager/true";
+    private String userAuthorisation = "http://IP_ADDRESS/s/authorisationManager/false";
+    private String groupAuthorisation = "http://IP_ADDRESS/s/authorisationManager/true";
     private String changepassword = "http://IP_ADDRESS/changepassword";
     private String kibana = null;
     private String trackers = null;
