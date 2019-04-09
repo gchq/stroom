@@ -118,6 +118,11 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<User> findGroupsForUserName(final String userName) {
+        return userDao.findGroupsForUserName(userName);
+    }
+
+    @Override
     public void addUserToGroup(final String userUuid, final String groupUuid) {
         security.secure(PermissionNames.MANAGE_USERS_PERMISSION, () ->
                 userDao.addUserToGroup(userUuid, groupUuid));

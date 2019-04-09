@@ -47,6 +47,11 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
     }
 
     @Override
+    public Set<String> getPermissionNamesForUserName(String userName) {
+        return appPermissionDao.getPermissionsForUserName(userName);
+    }
+
+    @Override
     public void addPermission(final String userUuid, final String permission) {
         try {
             appPermissionDao.addPermission(userUuid, permission);

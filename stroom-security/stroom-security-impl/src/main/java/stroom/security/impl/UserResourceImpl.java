@@ -46,6 +46,13 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
+    public Response findGroupsForUserName(String userName) {
+        final List<User> users = userService.findGroupsForUserName(userName);
+
+        return Response.ok(users).build();
+    }
+
+    @Override
     public Response findGroupsForUser(final String userUuid) {
         final List<User> groups = userService.findGroupsForUser(userUuid);
         return Response.ok(groups).build();

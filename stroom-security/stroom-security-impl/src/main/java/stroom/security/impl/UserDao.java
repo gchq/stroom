@@ -27,6 +27,8 @@ public interface UserDao {
 
     List<User> findGroupsForUser(String userUuid);
 
+    List<User> findGroupsForUserName(String userName);
+
     void addUserToGroup(String userUuid, String groupUuid);
 
     void removeUserFromGroup(String userUuid, String groupUuid);
