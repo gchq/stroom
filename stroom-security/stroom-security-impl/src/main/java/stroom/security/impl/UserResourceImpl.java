@@ -2,7 +2,6 @@ package stroom.security.impl;
 
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
-import stroom.security.shared.User;
 import stroom.util.shared.StringCriteria;
 
 import javax.inject.Inject;
@@ -76,6 +75,23 @@ public class UserResourceImpl implements UserResource {
         userService.delete(uuid);
 
         return Response.noContent().build();
+    }
+
+    @Override
+    public Response setStatus(String userName, boolean status) {
+        try {
+            User existingUser = userService.getUserByName(userName);
+            if (existingUser != null) {
+                User user = userService.loadByUuid(existingUser.getUuid());
+                user.setEnabled(status);
+                userService.update(user);
+                return Response.ok().build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        } catch (final RuntimeException e) {
+            return Response.serverError().build();
+        }
     }
 
     @Override
