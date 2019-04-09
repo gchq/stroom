@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentSerialiser2;
-import stroom.docstore.api.Persistence;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocRefUtil;
@@ -207,6 +206,11 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
 
     @Override
+    public boolean exists(final DocRef docRef) {
+        return persistence.exists(docRef);
+    }
+
+    @Override
     public Set<DocRef> listDocuments() {
         final List<DocRef> list = list();
         return list.stream()
@@ -239,7 +243,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         final String uuid = docRef.getUuid();
         try {
-            final boolean exists = persistence.exists(docRef);
+            final boolean exists = exists(docRef);
 
             if (ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
                 // See if the new document is the same as the old one.
@@ -528,5 +532,4 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 .sorted()
                 .collect(Collectors.toList());
     }
-
 }

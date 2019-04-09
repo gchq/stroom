@@ -16,7 +16,8 @@
 
 package stroom.core.db.migration.mysql;
 
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,11 +26,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
-public class V5_0_0_43__FolderIdSet implements JdbcMigration {
+public class V5_0_0_43__FolderIdSet extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_43__FolderIdSet.class);
 
     @Override
-    public void migrate(final Connection connection) throws Exception {
+    public void migrate(final Context flywayContext) throws Exception {
+        migrate(flywayContext.getConnection());
+    }
+
+    private void migrate(final Connection connection) throws Exception {
         try (final Statement statement = connection.createStatement()) {
             try (final ResultSet resultSet = statement.executeQuery("SELECT ID, DAT FROM STRM_PROC_FILT;")) {
                 while (resultSet.next()) {

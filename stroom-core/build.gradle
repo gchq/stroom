@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.core.server'
+ext.moduleName = 'stroom.core'
 
 dependencies {
     compile project(':stroom-cache:stroom-cache-api')
@@ -72,8 +72,8 @@ dependencies {
     runtimeOnly libs.lucene_queryparser
     runtimeOnly libs.mysql_connector_java
 
-    testCompile project(':stroom-node:stroom-node-impl-mock')
-    testCompile project(':stroom-security:stroom-security-impl-mock')
+    testCompile project(':stroom-node:stroom-node-mock')
+    testCompile project(':stroom-security:stroom-security-mock')
     testCompile project(':stroom-test-common')
     
     testCompile libs.assertj_core

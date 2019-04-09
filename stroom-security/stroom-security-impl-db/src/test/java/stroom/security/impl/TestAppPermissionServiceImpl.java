@@ -23,13 +23,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.MySQLContainer;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -38,22 +36,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestAppPermissionServiceImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppPermissionServiceImpl.class);
 
-    private static MySQLContainer dbContainer = new MySQLContainer()
-            .withDatabaseName(TestModule.DATABASE_NAME);//= null;//pu
-
-    private static Injector injector;
-
     private static UserService userService;
     private static UserAppPermissionService userAppPermissionService;
     private static UserGroupsCache userGroupsCache;
     private static UserAppPermissionsCache userAppPermissionsCache;
 
     @BeforeAll
-    public static void beforeAll() {
-        LOGGER.info("Before All - Start Database");
-        Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
-
-        injector = Guice.createInjector(new TestModule(dbContainer));
+    static void beforeAll() {
+        final Injector injector = Guice.createInjector(new TestModule());
 
         userService = injector.getInstance(UserService.class);
         userAppPermissionService = injector.getInstance(UserAppPermissionService.class);

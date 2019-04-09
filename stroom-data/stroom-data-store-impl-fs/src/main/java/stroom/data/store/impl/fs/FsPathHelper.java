@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import com.google.inject.Inject;
-import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
+import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.meta.shared.Meta;
 import stroom.data.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
@@ -50,12 +50,12 @@ class FsPathHelper {
             StreamTypeNames.META,
             StreamTypeNames.CONTEXT};
 
-    private final FsFeedPaths fileSystemFeedPaths;
-    private final FsTypePaths fileSystemTypePaths;
+    private final FsFeedPathDao fileSystemFeedPaths;
+    private final FsTypePathDao fileSystemTypePaths;
 
     @Inject
-    FsPathHelper(final FsFeedPaths fileSystemFeedPaths,
-                 final FsTypePaths fileSystemTypePaths) {
+    FsPathHelper(final FsFeedPathDao fileSystemFeedPaths,
+                 final FsTypePathDao fileSystemTypePaths) {
         this.fileSystemFeedPaths = fileSystemFeedPaths;
         this.fileSystemTypePaths = fileSystemTypePaths;
     }
@@ -153,7 +153,7 @@ class FsPathHelper {
      * </p>
      */
     String getBaseName(Meta meta) {
-        final String feedPath = fileSystemFeedPaths.getPath(meta.getFeedName());
+        final String feedPath = fileSystemFeedPaths.getOrCreatePath(meta.getFeedName());
         return feedPath +
                 FILE_SEPERATOR_CHAR +
                 FsPrefixUtil.padId(meta.getId());
@@ -161,7 +161,7 @@ class FsPathHelper {
 
     String getDirectory(Meta meta, String streamTypeName) {
         StringBuilder builder = new StringBuilder();
-        builder.append(fileSystemTypePaths.getPath(streamTypeName));
+        builder.append(fileSystemTypePaths.getOrCreatePath(streamTypeName));
         builder.append(FsPathHelper.SEPERATOR_CHAR);
         String utcDate = DateUtil.createNormalDateTimeString(meta.getCreateMs());
         builder.append(utcDate, 0, 4);

@@ -1,10 +1,6 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
-import stroom.core.db.DataSourceModule;
-import stroom.dashboard.impl.DashboardModule;
-import stroom.dashboard.impl.script.ScriptModule;
-import stroom.dashboard.impl.visualisation.VisualisationModule;
 
 public class CoreModule extends AbstractModule {
     @Override
@@ -15,25 +11,27 @@ public class CoreModule extends AbstractModule {
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
         install(new stroom.cluster.task.impl.ClusterTaskModule());
         install(new stroom.config.global.impl.db.GlobalConfigDbModule());
-        install(new stroom.config.global.impl.db.GlobalConfigModule());
         install(new stroom.core.dataprocess.PipelineStreamTaskModule());
+        install(new stroom.core.db.DataSourceModule());
         install(new stroom.core.document.DocumentModule());
         install(new stroom.core.entity.cluster.EntityClusterModule());
         install(new stroom.core.entity.event.EntityClusterTaskModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new stroom.core.feed.RemoteFeedModule());
-        install(new DataSourceModule());
         install(new stroom.core.query.QueryModule());
         install(new stroom.core.receive.ReceiveDataModule());
         install(new stroom.core.servlet.ServletModule());
         install(new stroom.core.ui.config.UiConfigModule());
-        install(new DashboardModule());
+        install(new stroom.dashboard.impl.DashboardModule());
         install(new stroom.dashboard.impl.datasource.DatasourceModule());
         install(new stroom.dashboard.impl.logging.LoggingModule());
+        install(new stroom.dashboard.impl.script.ScriptModule());
+        install(new stroom.dashboard.impl.visualisation.VisualisationModule());
         install(new stroom.data.retention.impl.DataRetentionModule());
         install(new stroom.data.store.impl.DataStoreHandlerModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
+        install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());
         install(new stroom.data.store.impl.fs.FsDataStoreTaskHandlerModule());
         install(new stroom.dictionary.impl.DictionaryHandlerModule());
         install(new stroom.dictionary.impl.DictionaryModule());
@@ -43,22 +41,25 @@ public class CoreModule extends AbstractModule {
         install(new stroom.elastic.impl.ElasticModule());
         install(new stroom.elastic.impl.http.HttpElasticModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
+        install(new stroom.explorer.impl.db.ExplorerDbModule());
         install(new stroom.explorer.impl.ExplorerModule());
         install(new stroom.feed.impl.FeedModule());
         install(new stroom.importexport.impl.ExportConfigResourceModule());
         install(new stroom.importexport.impl.ImportExportHandlerModule());
         install(new stroom.importexport.impl.ImportExportModule());
-        install(new stroom.index.IndexElementModule());
-        install(new stroom.index.IndexModule());
+        install(new stroom.index.impl.db.IndexDbModule());
+        install(new stroom.index.impl.IndexElementModule());
+        install(new stroom.index.impl.IndexModule());
         install(new stroom.job.impl.db.JobDbModule());
         install(new stroom.job.impl.JobSystemModule());
         install(new stroom.kafka.impl.KafkaModule());
         install(new stroom.kafka.pipeline.KafkaPipelineModule());
         install(new stroom.meta.impl.db.MetaDbModule());
-        install(new stroom.meta.impl.db.StreamAttributeMapResourceModule());
+        install(new stroom.meta.impl.MetaModule());
+        install(new stroom.meta.impl.StreamAttributeMapResourceModule());
         install(new stroom.node.impl.db.NodeDbModule());
-        install(new stroom.node.impl.NodeHandlerModule());
         install(new stroom.node.impl.NodeModule());
+        install(new stroom.node.impl.NodeHandlerModule());
         install(new stroom.node.impl.NodeServiceModule());
         install(new stroom.pipeline.cache.PipelineCacheModule());
         install(new stroom.pipeline.factory.CommonPipelineElementModule());
@@ -74,10 +75,9 @@ public class CoreModule extends AbstractModule {
         install(new stroom.processor.impl.ProcessorModule());
         install(new stroom.processor.impl.StreamTaskLifecycleModule());
         install(new stroom.receive.rules.impl.ReceiveDataRulesetModule());
-        install(new ScriptModule());
-        install(new stroom.search.SearchElementModule());
-        install(new stroom.search.SearchModule());
-        install(new stroom.search.shard.ShardModule());
+        install(new stroom.search.impl.SearchElementModule());
+        install(new stroom.search.impl.SearchModule());
+        install(new stroom.search.impl.shard.ShardModule());
         install(new stroom.security.impl.db.SecurityDbModule());
         install(new stroom.security.impl.SecurityModule());
         install(new stroom.servicediscovery.impl.ServiceDiscoveryModule());
@@ -92,8 +92,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.statistics.impl.sql.search.SQLStatisticSearchModule());
         install(new stroom.statistics.impl.sql.SQLStatisticsModule());
         install(new stroom.storedquery.impl.db.StoredQueryDbModule());
+        install(new stroom.storedquery.impl.StoredQueryModule());
         install(new stroom.task.impl.TaskModule());
         install(new stroom.util.pipeline.scope.PipelineScopeModule());
-        install(new VisualisationModule());
     }
 }

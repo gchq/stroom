@@ -18,18 +18,17 @@
 package stroom.feed.impl;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.Persistence;
+import stroom.docref.DocRefInfo;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
-import stroom.util.shared.EntityServiceException;
 import stroom.explorer.shared.DocumentType;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRefInfo;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -46,19 +45,16 @@ import java.util.UUID;
 public class FeedStoreImpl implements FeedStore {
     private final Store<FeedDoc> store;
     private final SecurityContext securityContext;
-    private final Persistence persistence;
     private final FeedNameValidator feedNameValidator;
     private final FeedSerialiser serialiser;
 
     @Inject
     public FeedStoreImpl(final StoreFactory storeFactory,
                          final SecurityContext securityContext,
-                         final Persistence persistence,
                          final FeedNameValidator feedNameValidator,
                          final FeedSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, FeedDoc.DOCUMENT_TYPE, FeedDoc.class);
         this.securityContext = securityContext;
-        this.persistence = persistence;
         this.feedNameValidator = feedNameValidator;
         this.serialiser = serialiser;
     }
@@ -164,7 +160,7 @@ public class FeedStoreImpl implements FeedStore {
         if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {
             final String uuid = docRef.getUuid();
             try {
-                final boolean exists = persistence.exists(docRef);
+                final boolean exists = store.exists(docRef);
                 FeedDoc document;
                 if (exists) {
                     document = readDocument(docRef);

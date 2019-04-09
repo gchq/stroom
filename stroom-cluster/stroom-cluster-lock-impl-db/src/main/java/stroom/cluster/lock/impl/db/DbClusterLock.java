@@ -53,8 +53,8 @@ class DbClusterLock implements Clearable {
             // This happens outside this transaction
         checkLockCreated(lockName);
 
-        JooqUtil.context(connectionProvider, context -> context.transaction(nested -> {
-            final Optional<Record> optional = DSL.using(nested)
+        JooqUtil.transaction(connectionProvider, context -> {
+            final Optional<Record> optional = context
                     .select()
                     .from(CLUSTER_LOCK)
                     .where(CLUSTER_LOCK.NAME.eq(lockName))
@@ -68,7 +68,7 @@ class DbClusterLock implements Clearable {
             LOGGER.debug("lock({}) - <<< {}", lockName, logExecutionTime);
 
             runnable.run();
-        }));
+        });
     }
 
     private void checkLockCreated(final String name) {

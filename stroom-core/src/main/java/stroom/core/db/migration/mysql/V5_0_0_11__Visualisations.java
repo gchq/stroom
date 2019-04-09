@@ -16,7 +16,8 @@
 
 package stroom.core.db.migration.mysql;
 
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.core.db.migration._V07_00_00.entity.util._V07_00_00_ObjectMarshaller;
@@ -27,18 +28,17 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
-public class V5_0_0_11__Visualisations implements JdbcMigration {
+public class V5_0_0_11__Visualisations extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_11__Visualisations.class);
 
     @Override
-    public void migrate(Connection connection) throws Exception {
+    public void migrate(final Context flywayContext) throws Exception {
         // Change parent pipeline references to be document references.
-        makeParentReferenceDocRef(connection);
+        makeParentReferenceDocRef(flywayContext.getConnection());
     }
 
     private void makeParentReferenceDocRef(final Connection connection) throws Exception {
         final _V07_00_00_ObjectMarshaller<DocRef> objectMarshaller = new _V07_00_00_ObjectMarshaller<>(DocRef.class);
-
         try (final Statement statement = connection.createStatement()) {
             statement.executeUpdate("ALTER TABLE VIS ADD COLUMN SCRIPT longtext;");
         }

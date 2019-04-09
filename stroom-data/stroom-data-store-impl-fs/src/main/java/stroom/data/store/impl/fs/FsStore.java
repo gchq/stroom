@@ -25,7 +25,7 @@ import stroom.data.store.api.DataException;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
-import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
+import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;
@@ -53,17 +53,17 @@ class FsStore implements Store {
     private final FsPathHelper fileSystemStreamPathHelper;
     private final MetaService metaService;
     private final FsVolumeService volumeService;
-    private final DataVolumeService streamVolumeService;
+    private final DataVolumeService dataVolumeService;
 
     @Inject
     FsStore(final FsPathHelper fileSystemStreamPathHelper,
             final MetaService metaService,
             final FsVolumeService volumeService,
-            final DataVolumeService streamVolumeService) {
+            final DataVolumeService dataVolumeService) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
         this.volumeService = volumeService;
-        this.streamVolumeService = streamVolumeService;
+        this.dataVolumeService = dataVolumeService;
     }
 
     @Override
@@ -78,7 +78,7 @@ class FsStore implements Store {
         // First time call (no file yet exists)
         final Meta meta = metaService.create(metaProperties);
 
-        final DataVolume dataVolume = streamVolumeService.createStreamVolume(meta.getId(), volume);
+        final DataVolume dataVolume = dataVolumeService.createDataVolume(meta.getId(), volume);
         final String rootPath = dataVolume.getVolumePath();
         final String streamType = meta.getTypeName();
         final FsTarget target = FsTarget.create(metaService, fileSystemStreamPathHelper, meta, rootPath, streamType, false);
@@ -97,7 +97,7 @@ class FsStore implements Store {
         LOGGER.debug("openExistingTarget() " + meta);
 
         // Lock the object
-        final DataVolume dataVolume = streamVolumeService.findDataVolume(meta.getId());
+        final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
         if (dataVolume == null) {
             throw new DataException("Not all volumes are unlocked");
         }
@@ -225,14 +225,14 @@ class FsStore implements Store {
         if (meta != null) {
             LOGGER.debug("openSource() {}", meta.getId());
 
-            final DataVolume dataVolume = streamVolumeService.findDataVolume(meta.getId());
+            final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
             if (dataVolume == null) {
                 final String message = "Unable to find any volume for " + meta;
                 LOGGER.warn(message);
                 throw new DataException(message);
             }
 //            final Node node = nodeInfo.getThisNode();
-//            final DataVolume streamVolume = streamVolumeService.pickBestVolume(volumeSet, node.getId(), node.getRack().getId());
+//            final DataVolume streamVolume = dataVolumeService.pickBestVolume(volumeSet, node.getId(), node.getRack().getId());
 //            if (streamVolume == null) {
 //                final String message = "Unable to access any volume for " + meta
 //                        + " perhaps the data is on a private volume";
@@ -257,7 +257,7 @@ class FsStore implements Store {
 //
 //    @Override
 //    public AttributeMap getStoredMeta(final Meta meta) {
-//        final Set<DataVolume> volumeSet = streamVolumeService.findDataVolume(meta.getId());
+//        final Set<DataVolume> volumeSet = dataVolumeService.findDataVolume(meta.getId());
 //        if (volumeSet != null && volumeSet.size() > 0) {
 //            final DataVolume streamVolume = volumeSet.iterator().next();
 //            final Path manifest = fileSystemStreamPathHelper.getChildPath(meta, streamVolume, InternalStreamTypeNames.MANIFEST);

@@ -54,12 +54,12 @@ dependencies {
 
     testCompile project(':stroom-cache:stroom-cache-api')
     testCompile project(':stroom-cache:stroom-cache-impl')
-    testCompile project(':stroom-meta:stroom-meta-impl-mock')
-    testCompile project(':stroom-data:stroom-data-store-impl-mock')
+    testCompile project(':stroom-meta:stroom-meta-mock')
+    testCompile project(':stroom-data:stroom-data-store-mock')
     testCompile project(':stroom-docstore:stroom-docstore-impl')
     testCompile project(':stroom-docstore:stroom-docstore-impl-memory')
     testCompile project(':stroom-feed:stroom-feed-impl')
-    testCompile project(':stroom-security:stroom-security-impl-mock')
+    testCompile project(':stroom-security:stroom-security-mock')
     testCompile project(':stroom-test-common')
 
     testCompile libs.assertj_core

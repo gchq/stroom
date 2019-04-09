@@ -15,7 +15,6 @@ import static stroom.security.impl.db.jooq.tables.AppPermission.APP_PERMISSION;
 import static stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
 
 public class AppPermissionDaoImpl implements AppPermissionDao {
-
     private final ConnectionProvider connectionProvider;
 
     @Inject

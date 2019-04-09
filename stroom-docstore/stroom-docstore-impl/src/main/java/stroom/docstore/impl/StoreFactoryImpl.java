@@ -1,7 +1,6 @@
 package stroom.docstore.impl;
 
 import stroom.docstore.api.DocumentSerialiser2;
-import stroom.docstore.api.Persistence;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.shared.Doc;

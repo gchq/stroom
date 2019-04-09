@@ -18,7 +18,7 @@
 package stroom.pipeline.xslt;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.Persistence;
+import stroom.docref.DocRefInfo;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.explorer.shared.DocumentType;
@@ -26,7 +26,6 @@ import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.docref.DocRefInfo;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
@@ -44,17 +43,14 @@ import java.util.UUID;
 class XsltStoreImpl implements XsltStore {
     private final Store<XsltDoc> store;
     private final SecurityContext securityContext;
-    private final Persistence persistence;
     private final XsltSerialiser serialiser;
 
     @Inject
     XsltStoreImpl(final StoreFactory storeFactory,
                   final SecurityContext securityContext,
-                  final Persistence persistence,
                   final XsltSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, XsltDoc.DOCUMENT_TYPE, XsltDoc.class);
         this.securityContext = securityContext;
-        this.persistence = persistence;
         this.serialiser = serialiser;
     }
 
@@ -156,7 +152,7 @@ class XsltStoreImpl implements XsltStore {
         if (!dataMap.containsKey("meta")) {
             final String uuid = docRef.getUuid();
             try {
-                final boolean exists = persistence.exists(docRef);
+                final boolean exists = store.exists(docRef);
                 XsltDoc document;
                 if (exists) {
                     document = readDocument(docRef);

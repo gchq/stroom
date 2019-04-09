@@ -44,7 +44,7 @@ dependencies {
 
     testCompile project(':stroom-docstore:stroom-docstore-impl')
     testCompile project(':stroom-docstore:stroom-docstore-impl-memory')
-    testCompile project(':stroom-security:stroom-security-impl-mock')
+    testCompile project(':stroom-security:stroom-security-mock')
     testCompile project(':stroom-test-common')
     
     testCompile libs.assertj_core

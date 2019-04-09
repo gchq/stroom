@@ -20,6 +20,8 @@ package stroom.index;
 
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
+import stroom.index.impl.IndexSerialiser;
+import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;

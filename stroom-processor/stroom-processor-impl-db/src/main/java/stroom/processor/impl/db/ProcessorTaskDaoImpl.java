@@ -6,7 +6,6 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
-import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.db.util.GenericDao;
@@ -125,7 +124,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private final ConnectionProvider connectionProvider;
     private final ProcessorFilterMarshaller marshaller;
 
-    private final GenericDao<ProcessorTaskRecord, ProcessorTask, Long> dao;
+    private final GenericDao<ProcessorTaskRecord, ProcessorTask, Long> genericDao;
 
     @Inject
     ProcessorTaskDaoImpl(final NodeInfo nodeInfo,
@@ -143,8 +142,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         this.connectionProvider = connectionProvider;
         this.marshaller = marshaller;
 
-        this.dao = new GenericDao<>(PROCESSOR_TASK, PROCESSOR_TASK.ID, ProcessorTask.class, connectionProvider);
-        this.dao.setObjectToRecordMapper((processorTask, record) -> {
+        this.genericDao = new GenericDao<>(PROCESSOR_TASK, PROCESSOR_TASK.ID, ProcessorTask.class, connectionProvider);
+        this.genericDao.setObjectToRecordMapper((processorTask, record) -> {
             record.from(processorTask);
             if (processorTask.getStatus() != null) {
                 record.set(PROCESSOR_TASK.STATUS, processorTask.getStatus().getPrimitiveValue());
@@ -153,9 +152,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             record.set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, processorNodeCache.getOrCreate(processorTask.getNodeName()));
             return record;
         });
-        this.dao.setRecordToObjectMapper(new RecordToProcessorTaskMapper());
+        this.genericDao.setRecordToObjectMapper(new RecordToProcessorTaskMapper());
 
-//        this.dao.setRecordToObjectMapper(record -> {
+//        this.genericDao.setRecordToObjectMapper(record -> {
 //            final ProcessorTask processorTask = new ProcessorTask();
 //            processorTask.setId(record.get(PROCESSOR_TASK.ID));
 //            processorTask.setVersion(record.get(PROCESSOR_TASK.VERSION));
@@ -303,9 +302,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         // Lock the cluster so that only this node can create tasks for this
         // filter at this time.
         clusterLockService.lock(LOCK_NAME, () -> {
-            DSL.using(connectionProvider, SQLDialect.MYSQL).transaction(nested -> {
-                final DSLContext context = DSL.using(nested);
-
+            // Do everything within a single transaction.
+            JooqUtil.transaction(connectionProvider, context -> {
                 List<ProcessorTask> availableTaskList = Collections.emptyList();
                 int availableTasksCreated = 0;
                 int totalTasksCreated = 0;
@@ -319,15 +317,15 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 InclusiveRange eventIdRange = null;
 
                 if (streams.size() > 0) {
-//                    final Field[] columns = new Field[] {
-//                            PROCESSOR_TASK.VERSION,
-//                            PROCESSOR_TASK.CREATE_TIME_MS,
-//                            PROCESSOR_TASK.STATUS,
-//                            PROCESSOR_TASK.START_TIME_MS,
-//                            PROCESSOR_TASK.NODE_NAME,
-//                            PROCESSOR_TASK.STREAM_ID,
-//                            PROCESSOR_TASK.DATA,
-//                            PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID};
+                    //                    final Field[] columns = new Field[] {
+                    //                            PROCESSOR_TASK.VERSION,
+                    //                            PROCESSOR_TASK.CREATE_TIME_MS,
+                    //                            PROCESSOR_TASK.STATUS,
+                    //                            PROCESSOR_TASK.START_TIME_MS,
+                    //                            PROCESSOR_TASK.NODE_NAME,
+                    //                            PROCESSOR_TASK.STREAM_ID,
+                    //                            PROCESSOR_TASK.DATA,
+                    //                            PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID};
 
                     BatchBindStep batchBindStep = null;
                     int rowCount = 0;
@@ -494,9 +492,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
                 consumer.accept(new CreatedTasks(availableTaskList, availableTasksCreated, totalTasksCreated, eventCount));
             });
-//            } catch (final RuntimeException e) {
-//                LOGGER.error("createNewTasks", e);
-//            }
+            //            } catch (final RuntimeException e) {
+            //                LOGGER.error("createNewTasks", e);
+            //            }
         });
     }
 
@@ -776,11 +774,11 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
 
     private Optional<ProcessorTask> fetch(final DSLContext context, final ProcessorTask processorTask) {
-        return dao.fetch(context, processorTask.getId()).map(p -> decorate(p, processorTask));
+        return genericDao.fetch(context, processorTask.getId()).map(p -> decorate(p, processorTask));
     }
 
     private ProcessorTask update(final DSLContext context, final ProcessorTask processorTask) {
-        return decorate(dao.update(context, processorTask), processorTask);
+        return decorate(genericDao.update(context, processorTask), processorTask);
     }
 
     private ProcessorTask decorate(final ProcessorTask result, final ProcessorTask original) {
@@ -898,9 +896,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                                 final TaskStatus status,
                                                 final Long startTime,
                                                 final Long endTime) {
-        return DSL.using(connectionProvider, SQLDialect.MYSQL).transactionResult(nested -> {
-            final DSLContext context = DSL.using(nested);
-
+        // Do everything within a single transaction.
+        return JooqUtil.transactionResult(connectionProvider, context -> {
             LOGGER.debug(LambdaLogUtil.message("changeTaskStatus() - Changing task status of {} to node={}, status={}", processorTask, nodeName, status));
             final long now = System.currentTimeMillis();
 

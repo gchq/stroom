@@ -32,14 +32,30 @@ public final class JooqUtil {
 
     private static final String DEFAULT_ID_FIELD_NAME = "id";
     private static final OrderField[] EMPTY_ORDER_FIELDS = new OrderField[0];
+    private static final Boolean RENDER_SCHEMA = false;
 
     private JooqUtil() {
         // Utility class.
     }
 
+    public static DSLContext createContext(final Connection connection) {
+        Settings settings = new Settings();
+        // Turn off fully qualified schemata.
+        settings = settings.withRenderSchema(RENDER_SCHEMA);
+        return DSL.using(connection, SQLDialect.MYSQL, settings);
+    }
+
+    public static DSLContext createContextWithOptimisticLocking(final Connection connection) {
+        Settings settings = new Settings();
+        // Turn off fully qualified schemata.
+        settings = settings.withRenderSchema(RENDER_SCHEMA);
+        settings = settings.withExecuteWithOptimisticLocking(true);
+        return DSL.using(connection, SQLDialect.MYSQL, settings);
+    }
+
     public static void context(final DataSource dataSource, final Consumer<DSLContext> consumer) {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
+            final DSLContext context = createContext(connection);
             consumer.accept(context);
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
@@ -50,7 +66,7 @@ public final class JooqUtil {
     public static <R> R contextResult(final DataSource dataSource, final Function<DSLContext, R> function) {
         R result;
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
+            final DSLContext context = createContext(connection);
             result = function.apply(context);
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
@@ -59,9 +75,9 @@ public final class JooqUtil {
         return result;
     }
 
-//    public static void contextWithOptimisticLocking(final DataSource dataSource, final Consumer<DSLContext> consumer) {
+//    public static void contextResultWithOptimisticLocking(final DataSource dataSource, final Consumer<DSLContext> consumer) {
 //        try (final Connection connection = dataSource.getConnection()) {
-//            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL, new Settings().withExecuteWithOptimisticLocking(true));
+//            final DSLContext context = createContextWithOptimisticLocking(connection);
 //            consumer.accept(context);
 //        } catch (final SQLException e) {
 //            LOGGER.error(e.getMessage(), e);
@@ -69,16 +85,24 @@ public final class JooqUtil {
 //        }
 //    }
 
-    public static <R> R contextWithOptimisticLocking(final DataSource dataSource, final Function<DSLContext, R> function) {
+    public static <R> R contextResultWithOptimisticLocking(final DataSource dataSource, final Function<DSLContext, R> function) {
         R result;
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL, new Settings().withExecuteWithOptimisticLocking(true));
+            final DSLContext context = createContextWithOptimisticLocking(connection);
             result = function.apply(context);
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
         return result;
+    }
+
+    public static void transaction(final DataSource dataSource, final Consumer<DSLContext> consumer) {
+        context(dataSource, context -> context.transaction(nested -> consumer.accept(DSL.using(nested))));
+    }
+
+    public static <R> R transactionResult(final DataSource dataSource, final Function<DSLContext, R> function) {
+        return contextResult(dataSource, context -> context.transactionResult(nested -> function.apply(DSL.using(nested))));
     }
 
     /**

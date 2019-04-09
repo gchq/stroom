@@ -7,18 +7,11 @@ import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.activity.api.ActivityService;
-import stroom.activity.api.CurrentActivity;
-import stroom.activity.shared.CreateActivityAction;
-import stroom.activity.shared.DeleteActivityAction;
-import stroom.activity.shared.FetchActivityAction;
-import stroom.activity.shared.FindActivityAction;
-import stroom.activity.shared.SetCurrentActivityAction;
-import stroom.activity.shared.UpdateActivityAction;
+import stroom.activity.impl.ActivityDao;
+import stroom.activity.impl.ActivityModule;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
@@ -33,16 +26,9 @@ public class ActivityDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ActivityService.class).to(ActivityServiceImpl.class);
-        bind(CurrentActivity.class).to(CurrentActivityImpl.class);
+        install(new ActivityModule());
 
-        TaskHandlerBinder.create(binder())
-                .bind(CreateActivityAction.class, CreateActivityHandler.class)
-                .bind(UpdateActivityAction.class, UpdateActivityHandler.class)
-                .bind(DeleteActivityAction.class, DeleteActivityHandler.class)
-                .bind(FetchActivityAction.class, FetchActivityHandler.class)
-                .bind(FindActivityAction.class, FindActivityHandler.class)
-                .bind(SetCurrentActivityAction.class, SetCurrentActivityHandler.class);
+        bind(ActivityDao.class).to(ActivityDaoImpl.class);
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)

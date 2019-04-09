@@ -1,0 +1,30 @@
+ext.moduleName = 'stroom.config.global.impl'
+
+dependencies {
+    compile project(':stroom-config:stroom-config-app')
+    compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-job:stroom-job-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+
+    compile libs.stroomDocRef
+
+    compile libs.guava
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.slf4j_api
+
+    testCompile libs.assertj_core
+    testCompile libs.dropwizard_configuration
+    testCompile libs.dropwizard_core
+    testCompile libs.dropwizard_jersey
+    testCompile libs.dropwizard_jackson
+    testCompile libs.junit_jupiter_api
+
+    testRuntimeOnly libs.junit_jupiter_engine
+}

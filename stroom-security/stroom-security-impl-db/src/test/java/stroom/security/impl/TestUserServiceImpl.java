@@ -21,14 +21,10 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.MySQLContainer;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -36,23 +32,11 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestUserServiceImpl {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestUserServiceImpl.class);
-
-    private static MySQLContainer dbContainer = new MySQLContainer()
-            .withDatabaseName(TestModule.DATABASE_NAME);
-
-    private static Injector injector;
-
     private static UserService userService;
-
 
     @BeforeAll
     static void beforeAll() {
-        LOGGER.info("Before All - Start Database");
-        Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
-
-        injector = Guice.createInjector(new TestModule(dbContainer));
-
+        final Injector injector = Guice.createInjector(new TestModule());
         userService = injector.getInstance(UserService.class);
     }
 

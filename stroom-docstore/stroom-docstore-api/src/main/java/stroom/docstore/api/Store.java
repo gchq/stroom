@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.Set;
 
 public interface Store<D extends Doc> extends DocumentActionHandler<D> {
+    ////////////////////////////////////////////////////////////////////////
+    // START OF ExplorerActionHandler
+    ////////////////////////////////////////////////////////////////////////
 
     DocRef createDocument(String name);
 
@@ -25,6 +28,12 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
     void deleteDocument(String uuid);
 
     DocRefInfo info(String uuid);
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF ExplorerActionHandler
+    ////////////////////////////////////////////////////////////////////////
+
+    boolean exists(DocRef docRef);
 
     Set<DocRef> listDocuments();
 
@@ -43,5 +52,4 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
     List<DocRef> list();
 
     List<DocRef> findByName(String name);
-
 }

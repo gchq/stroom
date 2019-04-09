@@ -39,7 +39,7 @@ public class FsDataStoreTaskHandlerModule extends AbstractModule {
                 .bind(UpdateFsVolumeAction.class, UpdateFsVolumeHandler.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(FsVolumeServiceImpl.class);
+        entityEventHandlerBinder.addBinding().to(FsVolumeService.class);
     }
 
     @Override

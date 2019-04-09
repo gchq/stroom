@@ -27,11 +27,11 @@ import stroom.dispatch.shared.DispatchService;
 import stroom.docref.SharedObject;
 import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.security.api.SecurityContext;
-import stroom.security.util.UserTokenUtil;
+import stroom.security.api.UserTokenUtil;
 import stroom.task.api.TaskHandler;
 import stroom.task.api.TaskIdFactory;
 import stroom.task.api.TaskManager;
-import stroom.task.impl.TaskHandlerBeanRegistry;
+import stroom.task.impl.TaskHandlerRegistry;
 import stroom.task.shared.Action;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ModelStringUtil;
@@ -63,13 +63,13 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
         MODULE_BASE_URL_TO_RPC.put("/dashboard/", GWT_RPC_PATH_DASHBOARD);
     }
 
-    private final TaskHandlerBeanRegistry taskHandlerBeanRegistry;
+    private final TaskHandlerRegistry taskHandlerBeanRegistry;
     private final TaskManager taskManager;
     private final SecurityContext securityContext;
     private final transient HttpServletRequestHolder httpServletRequestHolder;
 
     @Inject
-    public DispatchServiceImpl(final TaskHandlerBeanRegistry taskHandlerBeanRegistry,
+    public DispatchServiceImpl(final TaskHandlerRegistry taskHandlerBeanRegistry,
                                final TaskManager taskManager,
                                final SecurityContext securityContext,
                                final HttpServletRequestHolder httpServletRequestHolder) {

@@ -4,23 +4,24 @@ import com.google.inject.AbstractModule;
 import stroom.core.benchmark.BenchmarkJobsModule;
 import stroom.cache.impl.CacheJobsModule;
 import stroom.cluster.lock.impl.db.ClusterLockJobsModule;
-import stroom.config.global.impl.db.GlobalConfigJobsModule;
+import stroom.config.global.impl.GlobalConfigJobsModule;
 import stroom.core.receive.ProxyAggregationJobsModule;
 import stroom.data.retention.impl.DataRetentionJobsModule;
 import stroom.data.store.impl.DataRetentionJobModule;
 import stroom.data.store.impl.fs.FsDataStoreJobsModule;
 import stroom.data.store.impl.fs.FsVolumeJobsModule;
-import stroom.index.IndexJobsModule;
-import stroom.index.selection.VolumeJobsModule;
+import stroom.index.impl.IndexJobsModule;
+import stroom.index.impl.selection.VolumeJobsModule;
+import stroom.meta.impl.MetaDbJobsModule;
 import stroom.pipeline.PipelineJobsModule;
 import stroom.pipeline.refdata.store.RefDataStoreJobsModule;
 import stroom.processor.impl.ProcessorTaskJobsModule;
 import stroom.resource.impl.ResourceJobsModule;
-import stroom.search.SearchJobsModule;
-import stroom.search.shard.ShardJobsModule;
+import stroom.search.impl.SearchJobsModule;
+import stroom.search.impl.shard.ShardJobsModule;
 import stroom.statistics.impl.sql.SQLStatisticsJobsModule;
 import stroom.statistics.impl.sql.search.SQLStatisticSearchJobsModule;
-import stroom.storedquery.impl.db.StoredQueryJobsModule;
+import stroom.storedquery.impl.StoredQueryJobsModule;
 
 public class JobsModule extends AbstractModule {
     @Override
@@ -43,7 +44,7 @@ public class JobsModule extends AbstractModule {
         install(new SQLStatisticsJobsModule());
         install(new StoredQueryJobsModule());
         install(new stroom.job.impl.JobSystemJobsModule());
-        install(new stroom.meta.impl.db.MetaDbJobsModule());
+        install(new MetaDbJobsModule());
         install(new stroom.node.impl.NodeJobsModule());
         install(new ProcessorTaskJobsModule());
         install(new ProxyAggregationJobsModule());

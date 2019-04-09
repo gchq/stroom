@@ -22,15 +22,14 @@ import org.slf4j.LoggerFactory;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentSerialiser2;
-import stroom.docstore.api.Persistence;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRefInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.Message;
@@ -55,19 +54,16 @@ class DictionaryStoreImpl implements DictionaryStore {
 
     private final Store<DictionaryDoc> store;
     private final SecurityContext securityContext;
-    private final Persistence persistence;
     private final DocumentSerialiser2<DictionaryDoc> serialiser;
     private final DocumentSerialiser2<OldDictionaryDoc> oldSerialiser;
 
     @Inject
     DictionaryStoreImpl(final StoreFactory storeFactory,
                         final SecurityContext securityContext,
-                        final Persistence persistence,
                         final DictionarySerialiser serialiser,
                         final Serialiser2Factory serialiser2Factory) {
         this.store = storeFactory.createStore(serialiser, DictionaryDoc.ENTITY_TYPE, DictionaryDoc.class);
         this.securityContext = securityContext;
-        this.persistence = persistence;
         this.serialiser = serialiser;
         this.oldSerialiser = serialiser2Factory.createSerialiser(OldDictionaryDoc.class);
     }
@@ -238,7 +234,7 @@ class DictionaryStoreImpl implements DictionaryStore {
                 } else {
                     // If we don't have a 'dat' file then this version is pre 6.0. We need to create the dictionary meta and put the data in the map.
 
-                    final boolean exists = persistence.exists(docRef);
+                    final boolean exists = store.exists(docRef);
                     DictionaryDoc document;
                     if (exists) {
                         document = readDocument(docRef);

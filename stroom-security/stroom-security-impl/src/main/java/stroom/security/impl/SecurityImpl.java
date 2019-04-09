@@ -4,7 +4,7 @@ import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionException;
 import stroom.security.shared.UserToken;
-import stroom.security.util.UserTokenUtil;
+import stroom.security.api.UserTokenUtil;
 
 import javax.inject.Inject;
 import java.util.function.Supplier;

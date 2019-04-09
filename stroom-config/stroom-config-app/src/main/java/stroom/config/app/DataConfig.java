@@ -11,7 +11,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class DataConfig implements IsConfig {
-    private MetaServiceConfig dataMetaServiceConfig = new MetaServiceConfig();
+    private MetaServiceConfig metaServiceConfig = new MetaServiceConfig();
     private DataRetentionConfig dataRetentionConfig = new DataRetentionConfig();
     private DataStoreServiceConfig dataStoreServiceConfig = new DataStoreServiceConfig();
 
@@ -19,21 +19,21 @@ public class DataConfig implements IsConfig {
     }
 
     @Inject
-    DataConfig(final MetaServiceConfig dataMetaServiceConfig,
+    DataConfig(final MetaServiceConfig metaServiceConfig,
                final DataRetentionConfig dataRetentionConfig,
                final DataStoreServiceConfig dataStoreServiceConfig) {
-        this.dataMetaServiceConfig = dataMetaServiceConfig;
+        this.metaServiceConfig = metaServiceConfig;
         this.dataRetentionConfig = dataRetentionConfig;
         this.dataStoreServiceConfig = dataStoreServiceConfig;
     }
 
     @JsonProperty("meta")
-    public MetaServiceConfig getDataMetaServiceConfig() {
-        return dataMetaServiceConfig;
+    public MetaServiceConfig getMetaServiceConfig() {
+        return metaServiceConfig;
     }
 
-    public void setDataMetaServiceConfig(final MetaServiceConfig dataMetaServiceConfig) {
-        this.dataMetaServiceConfig = dataMetaServiceConfig;
+    public void setMetaServiceConfig(final MetaServiceConfig metaServiceConfig) {
+        this.metaServiceConfig = metaServiceConfig;
     }
 
     @JsonProperty("retention")

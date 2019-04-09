@@ -3,10 +3,11 @@ package stroom.meta.impl.db;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
+import stroom.meta.impl.MetaKeyDao;
+import stroom.meta.impl.db.ExpressionMapper.TermHandler;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.meta.impl.db.ExpressionMapper.TermHandler;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -76,18 +77,22 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
     }
 
     static class MetaTermHandler {
+        private final MetaKeyDao metaKeyDao;
         private final Field<Integer> keyField;
-        private final int keyId;
+        private final String key;
         private final TermHandler<Long> valueHandler;
 
-        MetaTermHandler(final Field<Integer> keyField, final int keyId, final TermHandler<Long> valueHandler) {
+        MetaTermHandler(final MetaKeyDao metaKeyDao, final Field<Integer> keyField, final String key, final TermHandler<Long> valueHandler) {
+            this.metaKeyDao = metaKeyDao;
             this.keyField = keyField;
             this.valueHandler = valueHandler;
-            this.keyId = keyId;
+            this.key = key;
         }
 
         Condition apply(final ExpressionTerm term) {
-            return keyField.equal(keyId).and(valueHandler.apply(term));
+            return metaKeyDao.getIdForName(key)
+                    .map(id -> keyField.equal(id).and(valueHandler.apply(term)))
+                    .orElse(null);
         }
     }
 }

@@ -76,7 +76,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 
     private final ConnectionProvider connectionProvider;
     private final SecurityContext securityContext;
-    private final GenericDao<JobNodeRecord, JobNode, Integer> dao;
+    private final GenericDao<JobNodeRecord, JobNode, Integer> genericDao;
 
     @Inject
     JobNodeDaoImpl(final ConnectionProvider connectionProvider,
@@ -84,15 +84,15 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
         this.connectionProvider = connectionProvider;
         this.securityContext = securityContext;
 
-        dao = new GenericDao<>(JOB_NODE, JOB_NODE.ID, JobNode.class, connectionProvider);
-        dao.setObjectToRecordMapper(JOB_NODE_TO_RECORD_MAPPER);
-        dao.setRecordToObjectMapper(RECORD_TO_JOB_NODE_MAPPER);
+        genericDao = new GenericDao<>(JOB_NODE, JOB_NODE.ID, JobNode.class, connectionProvider);
+        genericDao.setObjectToRecordMapper(JOB_NODE_TO_RECORD_MAPPER);
+        genericDao.setRecordToObjectMapper(RECORD_TO_JOB_NODE_MAPPER);
     }
 
     @Override
     public JobNode create(@Nonnull final JobNode jobNode) {
         AuditUtil.stamp(securityContext.getUserId(), jobNode);
-        final JobNode result = dao.create(jobNode);
+        final JobNode result = genericDao.create(jobNode);
         result.setJob(jobNode.getJob());
         return result;
 
@@ -112,19 +112,19 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
     @Override
     public JobNode update(@Nonnull final JobNode jobNode) {
         AuditUtil.stamp(securityContext.getUserId(), jobNode);
-        final JobNode result = dao.update(jobNode);
+        final JobNode result = genericDao.update(jobNode);
         result.setJob(jobNode.getJob());
         return result;
     }
 
     @Override
     public boolean delete(int id) {
-        return dao.delete(id);
+        return genericDao.delete(id);
     }
 
     @Override
     public Optional<JobNode> fetch(int id) {
-        return dao.fetch(id);
+        return genericDao.fetch(id);
     }
 
     public BaseResultList<JobNode> find(FindJobNodeCriteria criteria) {
@@ -153,30 +153,30 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
     }
 
 
-//    private GenericDao<JobNodeRecord, JobNode, Integer> dao;
+//    private GenericDao<JobNodeRecord, JobNode, Integer> genericDao;
 //
 //    @Inject
 //    JobNodeDao(final ConnectionProvider connectionProvider) {
-//        dao = new GenericDao<>(JOB_NODE, JOB_NODE.ID, JobNode.class, connectionProvider);
+//        genericDao = new GenericDao<>(JOB_NODE, JOB_NODE.ID, JobNode.class, connectionProvider);
 //    }
 //
 //    @Override
 //    public JobNode create(@Nonnull final JobNode jobNode) {
-//        return dao.create(jobNode);
+//        return genericDao.create(jobNode);
 //    }
 //
 //    @Override
 //    public JobNode update(@Nonnull final JobNode jobNode) {
-//        return dao.update(jobNode);
+//        return genericDao.update(jobNode);
 //    }
 //
 //    @Override
 //    public boolean delete(int id) {
-//        return dao.delete(id);
+//        return genericDao.delete(id);
 //    }
 //
 //    @Override
 //    public Optional<JobNode> fetch(int id) {
-//        return dao.fetch(id);
+//        return genericDao.fetch(id);
 //    }
 }

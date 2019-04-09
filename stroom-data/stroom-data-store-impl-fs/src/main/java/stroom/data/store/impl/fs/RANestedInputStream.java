@@ -17,9 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.NestedInputStream;
-import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.SeekableInputStream;
-import stroom.util.io.StreamCloser;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +30,6 @@ import java.io.InputStream;
 class RANestedInputStream extends NestedInputStream {
     private final InputStream data;
     private final InputStream indexInputStream;
-    private final StreamCloser streamCloser;
     private long currentEntry = -1;
     private boolean currentEntryClosed = true;
     private boolean closed = false;
@@ -42,9 +39,6 @@ class RANestedInputStream extends NestedInputStream {
     RANestedInputStream(final InputStream data, final InputStream indexInputStream) {
         this.data = data;
         this.indexInputStream = indexInputStream;
-
-        streamCloser = new BasicStreamCloser();
-        streamCloser.add(data);
     }
 
     public void closeEntry() throws IOException {
@@ -156,9 +150,13 @@ class RANestedInputStream extends NestedInputStream {
     public void close() throws IOException {
         closed = true;
         try {
-            streamCloser.close();
+            data.close();
         } finally {
-            super.close();
+            try {
+                indexInputStream.close();
+            } finally {
+                super.close();
+            }
         }
     }
 

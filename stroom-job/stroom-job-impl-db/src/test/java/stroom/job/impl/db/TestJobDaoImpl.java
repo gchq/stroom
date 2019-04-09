@@ -2,19 +2,14 @@ package stroom.job.impl.db;
 
 import com.google.inject.Guice;
 import com.google.inject.Inject;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.jooq.exception.DataAccessException;
 import org.jooq.exception.DataChangedException;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.commons.logging.Logger;
-import org.junit.platform.commons.logging.LoggerFactory;
-import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.Job;
-import stroom.security.impl.mock.MockSecurityContextModule;
+import stroom.security.mock.MockSecurityContextModule;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,25 +18,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestJobDaoImpl {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestJobDaoImpl.class);
-
-    private static MySQLContainer dbContainer = new MySQLContainer()
-            .withDatabaseName("stroom");
-
     @Inject
     private JobDaoImpl dao;
-
-    @BeforeAll
-    static void beforeAll() {
-        LOGGER.info(() -> "Before All - Start Database");
-        Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
-    }
 
     @BeforeEach
     void beforeEach() {
         Guice.createInjector(
                 new JobDbModule(),
-                new MySQLContainerModule(dbContainer),
                 new MockSecurityContextModule())
                 .injectMembers(this);
         cleanup();
@@ -145,12 +128,6 @@ class TestJobDaoImpl {
 
         // When/then
         assertThrows(DataChangedException.class, () -> dao.update(copy2));
-    }
-
-    @AfterAll
-    static void afterAll() {
-        LOGGER.info(() -> "After All - Stop Database");
-        Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::stop);
     }
 
     private Job createStandardJob(){

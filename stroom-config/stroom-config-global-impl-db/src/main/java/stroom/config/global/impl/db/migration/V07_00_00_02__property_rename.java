@@ -1,17 +1,16 @@
 package stroom.config.global.impl.db.migration;
 
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
 import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
-import stroom.config.global.impl.db.ConfigMapper;
+import stroom.config.global.impl.ConfigMapper;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
+import stroom.db.util.JooqUtil;
 import stroom.util.logging.LogUtil;
 
-import java.sql.Connection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +20,7 @@ import static stroom.config.impl.db.jooq.tables.Config.CONFIG;
 
 @SuppressWarnings("unused")
         // used by FlyWay
-public class V07_00_00_02__property_rename implements JdbcMigration {
+public class V07_00_00_02__property_rename extends BaseJavaMigration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_02__property_rename.class);
 
@@ -146,8 +145,8 @@ public class V07_00_00_02__property_rename implements JdbcMigration {
         FROM_TO_MAP.put("stroom.rack", "stroom.node.rack");
 
         // Same name in 6 & master
-        // stroom.search.extraction.maxThreads
-        // stroom.search.extraction.maxThreadsPerTask
+        // stroom.search.impl.extraction.maxThreads
+        // stroom.search.impl.extraction.maxThreadsPerTask
         // stroom.search.maxBooleanClauseCount
         // stroom.search.maxStoredDataQueueSize
 
@@ -155,9 +154,9 @@ public class V07_00_00_02__property_rename implements JdbcMigration {
         FROM_TO_MAP.put("stroom.search.process.defaultTimeLimit", "stroom.ui.process.defaultTimeLimit");
 
         // Same name in 6 & master
-        // stroom.search.shard.maxDocIdQueueSize
-        // stroom.search.shard.maxThreads
-        // stroom.search.shard.maxThreadsPerTask
+        // stroom.search.impl.shard.maxDocIdQueueSize
+        // stroom.search.impl.shard.maxThreads
+        // stroom.search.impl.shard.maxThreadsPerTask
         // stroom.search.storeSize
 
         FROM_TO_MAP.put("stroom.security.apitoken", "stroom.security.authentication.apiToken");
@@ -272,9 +271,9 @@ public class V07_00_00_02__property_rename implements JdbcMigration {
     }
 
     @Override
-    public void migrate(final Connection connection) throws Exception {
+    public void migrate(final Context flywayContext) {
         try {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            final DSLContext context = JooqUtil.createContext(flywayContext.getConnection());
 
             // This line should only be un-commented for manual testing in development
 //            loadTestDataForManualTesting(create);
@@ -286,7 +285,7 @@ public class V07_00_00_02__property_rename implements JdbcMigration {
                         final String from = entry.getKey();
                         final String to = entry.getValue();
 
-                        final Optional<ConfigRecord> optRec = create
+                        final Optional<ConfigRecord> optRec = context
                                 .selectFrom(CONFIG)
                                 .where(CONFIG.NAME.eq(from))
                                 .fetchOptional();
@@ -305,7 +304,7 @@ public class V07_00_00_02__property_rename implements JdbcMigration {
                     });
 
             // Remove property entries that don't map to the object model
-            create
+            context
                     .selectFrom(CONFIG)
                     .fetch()
                     .forEach(configRecord -> {

@@ -94,8 +94,8 @@ class TestFileSystemUtil {
         when(meta.getFeedName()).thenReturn("TEST_FEED");
         when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
-        final FsFeedPaths fileSystemFeedPaths = mock(FsFeedPaths.class);
-        when(fileSystemFeedPaths.getPath(any())).thenReturn("1");
+        final FsFeedPathDao fileSystemFeedPaths = mock(FsFeedPathDao.class);
+        when(fileSystemFeedPaths.getOrCreatePath(any())).thenReturn("1");
 
         final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
 
@@ -113,8 +113,8 @@ class TestFileSystemUtil {
         when(meta.getFeedName()).thenReturn("TEST_FEED");
         when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
-        final FsFeedPaths fileSystemFeedPaths = mock(FsFeedPaths.class);
-        when(fileSystemFeedPaths.getPath(any())).thenReturn("1");
+        final FsFeedPathDao fileSystemFeedPaths = mock(FsFeedPathDao.class);
+        when(fileSystemFeedPaths.getOrCreatePath(any())).thenReturn("1");
 
         final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
 
@@ -267,8 +267,8 @@ class TestFileSystemUtil {
         when(meta.getFeedName()).thenReturn("TEST_FEED");
         when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
 
-        final FsFeedPaths fileSystemFeedPaths = mock(FsFeedPaths.class);
-        when(fileSystemFeedPaths.getPath(any())).thenReturn("2");
+        final FsFeedPathDao fileSystemFeedPaths = mock(FsFeedPathDao.class);
+        when(fileSystemFeedPaths.getOrCreatePath(any())).thenReturn("2");
 
         final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
 
@@ -284,8 +284,8 @@ class TestFileSystemUtil {
         when(meta.getFeedName()).thenReturn("TEST_FEED");
         when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
 
-        final FsFeedPaths fileSystemFeedPaths = mock(FsFeedPaths.class);
-        when(fileSystemFeedPaths.getPath(any())).thenReturn("2");
+        final FsFeedPathDao fileSystemFeedPaths = mock(FsFeedPathDao.class);
+        when(fileSystemFeedPaths.getOrCreatePath(any())).thenReturn("2");
 
         final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
 

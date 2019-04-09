@@ -19,7 +19,7 @@ package stroom.core.servlet;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;
 import stroom.security.api.Security;
-import stroom.security.util.UserTokenUtil;
+import stroom.security.api.UserTokenUtil;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.cluster.task.api.ClusterCallEntry;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;

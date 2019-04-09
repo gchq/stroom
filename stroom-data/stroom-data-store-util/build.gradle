@@ -1,21 +1,23 @@
 ext.moduleName = 'stroom.data.store.util'
 
 dependencies {
-    compile project(':stroom-activity:stroom-activity-impl-mock')
+    compile project(':stroom-activity:stroom-activity-mock')
     compile project(':stroom-cache:stroom-cache-api')
     compile project(':stroom-cache:stroom-cache-impl')
-    compile project(':stroom-cluster:stroom-cluster-lock-impl-mock')
+    compile project(':stroom-cluster:stroom-cluster-lock-mock')
     compile project(':stroom-cluster:stroom-cluster-impl')
     compile project(':stroom-core-shared')
     compile project(':stroom-data:stroom-data-store-api')
     compile project(':stroom-data:stroom-data-store-impl-fs')
+    compile project(':stroom-data:stroom-data-store-impl-fs-db')
     compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-meta:stroom-meta-impl')
     compile project(':stroom-meta:stroom-meta-impl-db')
     compile project(':stroom-db-util')
     compile project(':stroom-event-logging:stroom-event-logging-impl')
     compile project(':stroom-node:stroom-node-impl')
-    compile project(':stroom-security:stroom-security-impl-mock')
-    compile project(':stroom-statistics:stroom-statistics-impl-mock')
+    compile project(':stroom-security:stroom-security-mock')
+    compile project(':stroom-statistics:stroom-statistics-mock')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
@@ -37,4 +39,6 @@ dependencies {
     testRuntimeOnly libs.log4j_over_slf4j
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
+    testRuntimeOnly libs.test_containers
+    testRuntimeOnly libs.test_containers_mysql
 }

@@ -58,14 +58,14 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
             FindJobCriteria.FIELD_ID, JOB.ID,
             FindJobCriteria.FIELD_NAME, JOB.NAME);
 
-    private final GenericDao<JobRecord, Job, Integer> dao;
+    private final GenericDao<JobRecord, Job, Integer> genericDao;
     private final ConnectionProvider connectionProvider;
     private final SecurityContext securityContext;
 
     @Inject
     JobDaoImpl(final ConnectionProvider connectionProvider,
                final SecurityContext securityContext) {
-        dao = new GenericDao<>(JOB, JOB.ID, Job.class, connectionProvider);
+        genericDao = new GenericDao<>(JOB, JOB.ID, Job.class, connectionProvider);
         this.connectionProvider = connectionProvider;
         this.securityContext = securityContext;
     }
@@ -73,23 +73,23 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
     @Override
     public Job create(@Nonnull final Job job) {
         AuditUtil.stamp(securityContext.getUserId(), job);
-        return dao.create(job);
+        return genericDao.create(job);
     }
 
     @Override
     public Job update(@Nonnull final Job job) {
         AuditUtil.stamp(securityContext.getUserId(), job);
-        return dao.update(job);
+        return genericDao.update(job);
     }
 
     @Override
     public boolean delete(int id) {
-        return dao.delete(id);
+        return genericDao.delete(id);
     }
 
     @Override
     public Optional<Job> fetch(int id) {
-        return dao.fetch(id);
+        return genericDao.fetch(id);
     }
 
     @Override
@@ -123,31 +123,31 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
     }
 
 
-//    private GenericDao<JobRecord, Job, Integer> dao;
+//    private GenericDao<JobRecord, Job, Integer> genericDao;
 //
 //    @Inject
 //    JobDao(final ConnectionProvider connectionProvider) {
-//        dao = new GenericDao<>(JOB, JOB.ID, Job.class, connectionProvider);
+//        genericDao = new GenericDao<>(JOB, JOB.ID, Job.class, connectionProvider);
 //    }
 //
 //    @Override
 //    public Job create(final Job job) {
-//        return dao.create(job);
+//        return genericDao.create(job);
 //    }
 //
 //    @Override
 //    public Job update(final Job job) {
-//        return dao.update(job);
+//        return genericDao.update(job);
 //    }
 //
 //    @Override
 //    public boolean delete(int id) {
-//        return dao.delete(id);
+//        return genericDao.delete(id);
 //    }
 //
 //    @Override
 //    public Optional<Job> fetch(int id) {
-//        return dao.fetch(id);
+//        return genericDao.fetch(id);
 //    }
 
 }

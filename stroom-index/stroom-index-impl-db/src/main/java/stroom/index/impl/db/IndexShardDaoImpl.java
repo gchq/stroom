@@ -5,14 +5,13 @@ import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.impl.DSL;
 import stroom.db.util.JooqUtil;
-import stroom.index.dao.IndexShardDao;
-import stroom.index.dao.IndexVolumeDao;
+import stroom.index.impl.IndexShardDao;
+import stroom.index.impl.IndexVolumeDao;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
-import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -23,21 +22,17 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static stroom.index.impl.db.Tables.INDEX_SHARD;
-import static stroom.index.impl.db.tables.IndexVolume.INDEX_VOLUME;
+import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
+import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
-public class IndexShardDaoImpl implements IndexShardDao {
-
+class IndexShardDaoImpl implements IndexShardDao {
     private final ConnectionProvider connectionProvider;
-    private final SecurityContext securityContext;
     private final IndexVolumeDao indexVolumeDao;
 
     @Inject
-    public IndexShardDaoImpl(final ConnectionProvider connectionProvider,
-                             final SecurityContext securityContext,
-                             final IndexVolumeDao indexVolumeDao) {
+    IndexShardDaoImpl(final ConnectionProvider connectionProvider,
+                      final IndexVolumeDao indexVolumeDao) {
         this.connectionProvider = connectionProvider;
-        this.securityContext = securityContext;
         this.indexVolumeDao = indexVolumeDao;
     }
 

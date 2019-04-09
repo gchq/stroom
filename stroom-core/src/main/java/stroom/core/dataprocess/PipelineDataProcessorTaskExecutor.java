@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
@@ -71,11 +72,9 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
-import stroom.data.shared.StreamTypeNames;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.PreviewInputStream;
-import stroom.util.io.StreamCloser;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
@@ -112,7 +111,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
     private final ErrorWriterProxy errorWriterProxy;
     private final MetaData metaData;
     private final RecordCount recordCount;
-    private final StreamCloser streamCloser;
     private final RecordErrorReceiver recordErrorReceiver;
     private final NodeInfo nodeInfo;
     private final PipelineDataCache pipelineDataCache;
@@ -143,7 +141,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                                       final ErrorWriterProxy errorWriterProxy,
                                       final MetaData metaData,
                                       final RecordCount recordCount,
-                                      final StreamCloser streamCloser,
                                       final RecordErrorReceiver recordErrorReceiver,
                                       final NodeInfo nodeInfo,
                                       final PipelineDataCache pipelineDataCache,
@@ -165,7 +162,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         this.errorWriterProxy = errorWriterProxy;
         this.metaData = metaData;
         this.recordCount = recordCount;
-        this.streamCloser = streamCloser;
         this.recordErrorReceiver = recordErrorReceiver;
         this.nodeInfo = nodeInfo;
         this.pipelineDataCache = pipelineDataCache;
@@ -294,13 +290,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         } finally {
             // Record some statistics about processing.
             recordStats(feedName, pipelineDoc);
-
-            try {
-                // Close all open streams.
-                streamCloser.close();
-            } catch (final IOException e) {
-                outputError(e);
-            }
         }
     }
 
@@ -571,7 +560,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                         .typeName(StreamTypeNames.ERROR)
                         .parent(meta)
                         .processorUuid(processorUuid)
-                        .processorFilterUuid(processorFilterUuid)
                         .pipelineUuid(pipelineUuid)
                         .processorTaskId(processorTaskId)
                         .build();

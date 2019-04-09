@@ -23,7 +23,6 @@ import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.feed.api.FeedProperties;
-import stroom.util.io.StreamCloser;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineStore;
@@ -74,7 +73,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     private final RefDataLoaderHolder refDataLoaderHolder;
     private final RefDataStore refDataStore;
     private final LocationFactoryProxy locationFactory;
-    private final StreamCloser streamCloser;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final PipelineDataCache pipelineDataCache;
     private final Security security;
@@ -93,7 +91,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  final RefDataLoaderHolder refDataLoaderHolder,
                                  final RefDataStoreFactory refDataStoreFactory,
                                  final LocationFactoryProxy locationFactory,
-                                 final StreamCloser streamCloser,
                                  final ErrorReceiverProxy errorReceiverProxy,
                                  final PipelineDataCache pipelineDataCache,
                                  final Security security) {
@@ -108,7 +105,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         this.locationFactory = locationFactory;
         this.metaHolder = metaHolder;
         this.refDataLoaderHolder = refDataLoaderHolder;
-        this.streamCloser = streamCloser;
         this.errorReceiverProxy = errorReceiverProxy;
         this.pipelineDataCache = pipelineDataCache;
         this.security = security;
@@ -133,40 +129,32 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
             try (final Source source = streamStore.openSource(refStreamDefinition.getStreamId())) {
                 if (source != null) {
                     final Meta meta = source.getMeta();
-                    try {
-                        // Load the feed.
-                        final String feedName = meta.getFeedName();
-                        feedHolder.setFeedName(feedName);
 
-                        // Setup the meta data holder.
-                        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
+                    // Load the feed.
+                    final String feedName = meta.getFeedName();
+                    feedHolder.setFeedName(feedName);
 
-                        // Set the pipeline so it can be used by a filter if needed.
-                        final PipelineDoc pipelineDoc = pipelineStore
-                                .readDocument(refStreamDefinition.getPipelineDocRef());
-                        pipelineHolder.setPipeline(refStreamDefinition.getPipelineDocRef());
+                    // Setup the meta data holder.
+                    metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
-                        // Create the parser.
-                        final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-                        final Pipeline pipeline = pipelineFactory.create(pipelineData);
+                    // Set the pipeline so it can be used by a filter if needed.
+                    final PipelineDoc pipelineDoc = pipelineStore
+                            .readDocument(refStreamDefinition.getPipelineDocRef());
+                    pipelineHolder.setPipeline(refStreamDefinition.getPipelineDocRef());
 
-                        populateMaps(
-                                pipeline,
-                                meta,
-                                source,
-                                feedName,
-                                meta.getTypeName(),
-                                task.getRefStreamDefinition());
+                    // Create the parser.
+                    final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
+                    final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
-                        LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
-                    } finally {
-                        try {
-                            // Close all open streams.
-                            streamCloser.close();
-                        } catch (final IOException e) {
-                            log(Severity.FATAL_ERROR, e.getMessage(), e);
-                        }
-                    }
+                    populateMaps(
+                            pipeline,
+                            meta,
+                            source,
+                            feedName,
+                            meta.getTypeName(),
+                            task.getRefStreamDefinition());
+
+                    LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
                 }
             } catch (final IOException | RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);

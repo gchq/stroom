@@ -28,7 +28,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserToken;
-import stroom.security.util.UserTokenUtil;
+import stroom.security.api.UserTokenUtil;
 
 import javax.inject.Inject;
 import java.util.List;
