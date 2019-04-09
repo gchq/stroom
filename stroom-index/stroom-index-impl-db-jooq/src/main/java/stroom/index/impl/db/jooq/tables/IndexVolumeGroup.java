@@ -41,7 +41,7 @@ import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
 
-    private static final long serialVersionUID = 2137595665;
+    private static final long serialVersionUID = -129852791;
 
     /**
      * The reference instance of <code>stroom.index_volume_group</code>
@@ -59,12 +59,12 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
     /**
      * The column <code>stroom.index_volume_group.id</code>.
      */
-    public final TableField<IndexVolumeGroupRecord, Long> ID = createField("id", org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<IndexVolumeGroupRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>stroom.index_volume_group.version</code>.
      */
-    public final TableField<IndexVolumeGroupRecord, Byte> VERSION = createField("version", org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
+    public final TableField<IndexVolumeGroupRecord, Integer> VERSION = createField("version", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>stroom.index_volume_group.create_time_ms</code>.
@@ -144,7 +144,7 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
      * {@inheritDoc}
      */
     @Override
-    public Identity<IndexVolumeGroupRecord, Long> getIdentity() {
+    public Identity<IndexVolumeGroupRecord, Integer> getIdentity() {
         return Keys.IDENTITY_INDEX_VOLUME_GROUP;
     }
 
@@ -168,7 +168,7 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
      * {@inheritDoc}
      */
     @Override
-    public TableField<IndexVolumeGroupRecord, Byte> getRecordVersion() {
+    public TableField<IndexVolumeGroupRecord, Integer> getRecordVersion() {
         return VERSION;
     }
 

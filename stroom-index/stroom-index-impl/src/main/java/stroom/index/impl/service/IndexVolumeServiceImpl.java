@@ -38,7 +38,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
     }
 
     @Override
-    public IndexVolume getById(final Long id) {
+    public IndexVolume getById(final int id) {
         return security.secureResult(() -> indexVolumeDao.fetch(id).orElse(null));
     }
 
@@ -53,21 +53,21 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
     }
 
     @Override
-    public void addVolumeToGroup(final Long volumeId,
+    public void addVolumeToGroup(final int volumeId,
                                  final String name) {
         security.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeDao.addVolumeToGroup(volumeId, name));
     }
 
     @Override
-    public void removeVolumeFromGroup(final Long volumeId,
+    public void removeVolumeFromGroup(final int volumeId,
                                       final String name) {
         security.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeDao.removeVolumeFromGroup(volumeId, name));
     }
 
     @Override
-    public void delete(final Long id) {
+    public void delete(final int id) {
         security.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeDao.delete(id));
     }

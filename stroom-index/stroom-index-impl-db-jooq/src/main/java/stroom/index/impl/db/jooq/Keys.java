@@ -40,8 +40,8 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final Identity<IndexShardRecord, Long> IDENTITY_INDEX_SHARD = Identities0.IDENTITY_INDEX_SHARD;
-    public static final Identity<IndexVolumeRecord, Long> IDENTITY_INDEX_VOLUME = Identities0.IDENTITY_INDEX_VOLUME;
-    public static final Identity<IndexVolumeGroupRecord, Long> IDENTITY_INDEX_VOLUME_GROUP = Identities0.IDENTITY_INDEX_VOLUME_GROUP;
+    public static final Identity<IndexVolumeRecord, Integer> IDENTITY_INDEX_VOLUME = Identities0.IDENTITY_INDEX_VOLUME;
+    public static final Identity<IndexVolumeGroupRecord, Integer> IDENTITY_INDEX_VOLUME_GROUP = Identities0.IDENTITY_INDEX_VOLUME_GROUP;
 
     // -------------------------------------------------------------------------
     // UNIQUE and PRIMARY KEY definitions
@@ -68,8 +68,8 @@ public class Keys {
 
     private static class Identities0 {
         public static Identity<IndexShardRecord, Long> IDENTITY_INDEX_SHARD = Internal.createIdentity(IndexShard.INDEX_SHARD, IndexShard.INDEX_SHARD.ID);
-        public static Identity<IndexVolumeRecord, Long> IDENTITY_INDEX_VOLUME = Internal.createIdentity(IndexVolume.INDEX_VOLUME, IndexVolume.INDEX_VOLUME.ID);
-        public static Identity<IndexVolumeGroupRecord, Long> IDENTITY_INDEX_VOLUME_GROUP = Internal.createIdentity(IndexVolumeGroup.INDEX_VOLUME_GROUP, IndexVolumeGroup.INDEX_VOLUME_GROUP.ID);
+        public static Identity<IndexVolumeRecord, Integer> IDENTITY_INDEX_VOLUME = Internal.createIdentity(IndexVolume.INDEX_VOLUME, IndexVolume.INDEX_VOLUME.ID);
+        public static Identity<IndexVolumeGroupRecord, Integer> IDENTITY_INDEX_VOLUME_GROUP = Internal.createIdentity(IndexVolumeGroup.INDEX_VOLUME_GROUP, IndexVolumeGroup.INDEX_VOLUME_GROUP.ID);
     }
 
     private static class UniqueKeys0 {

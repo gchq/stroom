@@ -19,13 +19,13 @@ public interface IndexVolumeDao {
      * @param id The Unique ID of the volume
      * @return The located Index Volume
      */
-    Optional<IndexVolume> fetch(long id);
+    Optional<IndexVolume> fetch(int id);
 
     /**
      * Delete a single volume
      * @param id The Unique ID of the volume to delete.
      */
-    boolean delete(long id);
+    boolean delete(int id);
 
     /**
      * Retrieve the complete list of index volumes.
@@ -54,19 +54,19 @@ public interface IndexVolumeDao {
      * @param volumeId The ID of the volume to add
      * @param name The group into which the volume is being added.
      */
-    void addVolumeToGroup(Long volumeId, String name);
+    void addVolumeToGroup(int volumeId, String name);
 
     /**
      * Remove a volume from a group.
      * @param volumeId The ID of the volume to remove.
      * @param name The name of the group
      */
-    void removeVolumeFromGroup(Long volumeId, String name);
+    void removeVolumeFromGroup(int volumeId, String name);
 
     /**
      * Clear all group memberships for a specific volume.
      * Used to remove a volume from the available pool.
      * @param volumeId The ID of the volume to remove from all groups.
      */
-    void clearVolumeGroupMemberships(Long volumeId);
+    void clearVolumeGroupMemberships(int volumeId);
 }

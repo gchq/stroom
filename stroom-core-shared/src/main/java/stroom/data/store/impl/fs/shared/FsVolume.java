@@ -28,7 +28,7 @@ import java.util.Objects;
  * Some path on the network where we can store stuff.
  */
 public class FsVolume implements HasAuditInfo, SharedObject {
-    private static final long TEN_GB = 10 * 1024 * 1024 * 1024;
+    private static final long TEN_GB = 10L * 1024L * 1024L * 1024L;
     private static final double NINETY_NINE_PERCENT = 0.99D;
 
     private Integer id;
@@ -169,9 +169,9 @@ public class FsVolume implements HasAuditInfo, SharedObject {
         // that we will allow.
         // Choose the higher limit of either the total storage minus 10Gb or 99%
         // of total storage.
-        final long minusOneGig = total - TEN_GB;
+        final long minusTenGig = total - TEN_GB;
         final long percentage = (long) (total * NINETY_NINE_PERCENT);
-        final long max = Math.max(minusOneGig, percentage);
+        final long max = Math.max(minusTenGig, percentage);
 
         return used >= max;
     }

@@ -6,7 +6,6 @@ import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import stroom.index.impl.IndexVolumeGroupDao;
-import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.util.AuditUtil;
 
@@ -149,7 +148,7 @@ class TestIndexVolumeGroupDaoImpl {
     private IndexVolumeGroup createGroup(final String name) {
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         indexVolumeGroup.setName(name);
-        AuditUtil.stamp("test", indexVolumeGroup);
+        AuditUtil.stamp(TestModule.TEST_USER, indexVolumeGroup);
         return indexVolumeGroupDao.create(indexVolumeGroup);
     }
 }

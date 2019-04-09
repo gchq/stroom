@@ -31,7 +31,7 @@ public interface IndexVolumeResource {
      */
     @GET
     @Path("{/{id}")
-    Response getById(@PathParam("id") Long id);
+    Response getById(@PathParam("id") int id);
 
     /**
      * Create a new Index Volume at a given path/node
@@ -48,7 +48,7 @@ public interface IndexVolumeResource {
      */
     @DELETE
     @Path("/{id}")
-    Response delete(@PathParam("id") Long id);
+    Response delete(@PathParam("id") int id);
 
     /**
      * Retrieve the list of volumes that are within a group
@@ -67,7 +67,7 @@ public interface IndexVolumeResource {
      */
     @POST
     @Path("/inGroup/{volumeId}/{groupName}")
-    Response addVolumeToGroup(@PathParam("volumeId") Long volumeId,
+    Response addVolumeToGroup(@PathParam("volumeId") int volumeId,
                               @PathParam("groupName") String groupName);
 
     /**
@@ -78,6 +78,6 @@ public interface IndexVolumeResource {
      */
     @DELETE
     @Path("/inGroup/{volumeId}/{groupName}")
-    Response removeVolumeFromGroup(@PathParam("volumeId") Long volumeId,
+    Response removeVolumeFromGroup(@PathParam("volumeId") int volumeId,
                                    @PathParam("groupName") String groupName);
 }

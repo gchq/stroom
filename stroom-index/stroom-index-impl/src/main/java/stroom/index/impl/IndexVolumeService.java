@@ -21,13 +21,13 @@ public interface IndexVolumeService extends Clearable, Flushable {
      * @param id The Unique ID of the volume
      * @return The located Index Volume
      */
-    IndexVolume getById(Long id);
+    IndexVolume getById(int id);
 
     /**
      * Delete a single volume
      * @param id The Unique ID of the volume to delete.
      */
-    void delete(Long id);
+    void delete(int id);
 
     /**
      * Retrieve the complete list of index volumes.
@@ -40,14 +40,14 @@ public interface IndexVolumeService extends Clearable, Flushable {
      * @param volumeId The ID of the volume to add
      * @param name The group into which the volume is being added.
      */
-    void addVolumeToGroup(Long volumeId, String name);
+    void addVolumeToGroup(int volumeId, String name);
 
     /**
      * Remove a volume from a group.
      * @param volumeId The ID of the volume to remove.
      * @param name The name of the group
      */
-    void removeVolumeFromGroup(Long volumeId, String name);
+    void removeVolumeFromGroup(int volumeId, String name);
 
     List<IndexVolume> getVolumesInGroup(String groupName);
 }

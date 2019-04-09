@@ -27,7 +27,7 @@ public class FindIndexShardCriteria extends BaseCriteria {
     private static final long serialVersionUID = 3552286394659242683L;
     private Range<Integer> documentCountRange = new Range<>();
     private CriteriaSet<String> nodeNameSet = new CriteriaSet<>();
-    private CriteriaSet<Long> volumeIdSet = new CriteriaSet<>();
+    private CriteriaSet<Integer> volumeIdSet = new CriteriaSet<>();
     private CriteriaSet<String> indexUuidSet = new CriteriaSet<>();
     private CriteriaSet<Long> indexShardIdSet = new CriteriaSet<>();
     private CriteriaSet<IndexShardStatus> indexShardStatusSet = new CriteriaSet<>();
@@ -72,7 +72,7 @@ public class FindIndexShardCriteria extends BaseCriteria {
         return nodeNameSet;
     }
 
-    public CriteriaSet<Long> getVolumeIdSet() {
+    public CriteriaSet<Integer> getVolumeIdSet() {
         return volumeIdSet;
     }
 

@@ -75,7 +75,7 @@ public class IndexShard implements SharedObject {
     private String indexVersion;
 
     private IndexVolume volume;
-    private Long fkVolumeId;
+    private Integer fkVolumeId;
 
     private String nodeName;
 
@@ -100,7 +100,7 @@ public class IndexShard implements SharedObject {
         return volume;
     }
 
-    public Long getFkVolumeId() {
+    public Integer getFkVolumeId() {
         return fkVolumeId;
     }
 

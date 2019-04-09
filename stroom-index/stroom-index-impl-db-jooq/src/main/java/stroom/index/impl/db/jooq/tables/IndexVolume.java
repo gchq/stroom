@@ -41,7 +41,7 @@ import stroom.index.impl.db.jooq.tables.records.IndexVolumeRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexVolume extends TableImpl<IndexVolumeRecord> {
 
-    private static final long serialVersionUID = 946540855;
+    private static final long serialVersionUID = -1797865327;
 
     /**
      * The reference instance of <code>stroom.index_volume</code>
@@ -59,12 +59,12 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
     /**
      * The column <code>stroom.index_volume.id</code>.
      */
-    public final TableField<IndexVolumeRecord, Long> ID = createField("id", org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<IndexVolumeRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>stroom.index_volume.version</code>.
      */
-    public final TableField<IndexVolumeRecord, Byte> VERSION = createField("version", org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
+    public final TableField<IndexVolumeRecord, Integer> VERSION = createField("version", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>stroom.index_volume.create_time_ms</code>.
@@ -174,7 +174,7 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
      * {@inheritDoc}
      */
     @Override
-    public Identity<IndexVolumeRecord, Long> getIdentity() {
+    public Identity<IndexVolumeRecord, Integer> getIdentity() {
         return Keys.IDENTITY_INDEX_VOLUME;
     }
 
@@ -198,7 +198,7 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
      * {@inheritDoc}
      */
     @Override
-    public TableField<IndexVolumeRecord, Byte> getRecordVersion() {
+    public TableField<IndexVolumeRecord, Integer> getRecordVersion() {
         return VERSION;
     }
 
