@@ -1,6 +1,7 @@
 package stroom.security.impl;
 
 import io.swagger.annotations.Api;
+import stroom.util.RestResource;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -16,7 +17,7 @@ import javax.ws.rs.core.Response;
         description = "Stroom Application Permissions API")
 @Path("/appPermissions/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public interface UserAppPermissionResource {
+public interface UserAppPermissionResource extends RestResource {
 
     @GET
     @Path("/{userUuid}")

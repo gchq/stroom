@@ -36,14 +36,44 @@ public class XsltResource implements RestResource {
                 .build();
     }
 
+    private static class XsltDTO extends DocRef {
+        private String description;
+        private String data;
+
+        XsltDTO(final XsltDoc doc) {
+            super(XsltDoc.DOCUMENT_TYPE, doc.getUuid(), doc.getName());
+            setData(doc.getData());
+            setDescription(doc.getDescription());
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public String getData() {
+            return data;
+        }
+
+        public void setData(String data) {
+            this.data = data;
+        }
+    }
+
     @GET
     @Path("/{xsltId}")
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response fetch(@PathParam("xsltId") final String xsltId) {
         return security.secureResult(() -> {
             final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
-
-            return Response.ok(xsltDoc.getData()).build();
+            if (null != xsltDoc) {
+                return Response.ok(new XsltDTO(xsltDoc)).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
         });
     }
 
