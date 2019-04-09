@@ -17,7 +17,6 @@
 package stroom.activity.impl.db;
 
 import org.jooq.Condition;
-import org.jooq.impl.DSL;
 import stroom.activity.impl.ActivityDao;
 import stroom.activity.impl.db.jooq.tables.records.ActivityRecord;
 import stroom.activity.shared.Activity;
@@ -27,6 +26,7 @@ import stroom.db.util.JooqUtil;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -67,18 +67,14 @@ public class ActivityDaoImpl implements ActivityDao {
     @Override
     public BaseResultList<Activity> find(final FindActivityCriteria criteria) {
         List<Activity> list = JooqUtil.contextResult(connectionProvider, context -> {
-            Condition condition = DSL.trueCondition();
-            if (criteria.getUserId() != null) {
-                condition = condition.and(ACTIVITY.USER_ID.eq(criteria.getUserId()));
-            }
-            if (criteria.getName() != null && criteria.getName().isConstrained()) {
-                condition = condition.and(ACTIVITY.JSON.like(criteria.getName().getMatchString()));
-            }
+            final Collection<Condition> conditions = JooqUtil.conditions(
+                    Optional.ofNullable(criteria.getUserId()).map(ACTIVITY.USER_ID::eq),
+                    JooqUtil.getStringCondition(ACTIVITY.JSON, criteria.getName()));
 
             return context
                     .select()
                     .from(ACTIVITY)
-                    .where(condition)
+                    .where(conditions)
                     .limit(JooqUtil.getLimit(criteria.getPageRequest()))
                     .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                     .fetch()

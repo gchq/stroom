@@ -28,7 +28,7 @@ import stroom.index.impl.db.jooq.tables.IndexVolume;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexVolumeRecord extends UpdatableRecordImpl<IndexVolumeRecord> implements Record13<Long, Byte, Long, String, Long, String, String, String, Long, Long, Long, Long, Long> {
 
-    private static final long serialVersionUID = 1624964976;
+    private static final long serialVersionUID = -427192220;
 
     /**
      * Setter for <code>stroom.index_volume.id</code>.

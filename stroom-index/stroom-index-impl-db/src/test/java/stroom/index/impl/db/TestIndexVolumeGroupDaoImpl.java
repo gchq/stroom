@@ -6,7 +6,9 @@ import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import stroom.index.impl.IndexVolumeGroupDao;
+import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
+import stroom.util.AuditUtil;
 
 import java.util.List;
 import java.util.Set;
@@ -17,7 +19,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class IndexVolumeGroupDaoImplTest {
+class TestIndexVolumeGroupDaoImpl {
     private static IndexVolumeGroupDao indexVolumeGroupDao;
 
     @BeforeAll
@@ -36,8 +38,8 @@ class IndexVolumeGroupDaoImplTest {
                 .mapToObj(TestData::createVolumeGroupName).collect(Collectors.toSet());
 
         // When
-        namesToDelete.forEach(indexVolumeGroupDao::create);
-        names.forEach(indexVolumeGroupDao::create);
+        namesToDelete.forEach(this::createGroup);
+        names.forEach(this::createGroup);
         final List<String> allNames1 = indexVolumeGroupDao.getNames();
         final List<IndexVolumeGroup> allGroups1 = indexVolumeGroupDao.getAll();
         final List<IndexVolumeGroup> foundGroups1 = Stream.concat(namesToDelete.stream(), names.stream())
@@ -87,7 +89,7 @@ class IndexVolumeGroupDaoImplTest {
         final String groupName = TestData.createVolumeGroupName();
 
         // When
-        final IndexVolumeGroup created = indexVolumeGroupDao.create(groupName);
+        final IndexVolumeGroup created = createGroup(groupName);
         final IndexVolumeGroup retrieved = indexVolumeGroupDao.get(groupName);
 
         // Then
@@ -111,7 +113,7 @@ class IndexVolumeGroupDaoImplTest {
         final String groupName = TestData.createVolumeGroupName();
 
         // When
-        final IndexVolumeGroup createdOnce = indexVolumeGroupDao.create(groupName);
+        final IndexVolumeGroup createdOnce = createGroup(groupName);
         final Long createdTimeMs = createdOnce.getCreateTimeMs();
         assertThat(createdTimeMs).isCloseTo(now, Offset.offset(100L));
         final IndexVolumeGroup retrievedOnce = indexVolumeGroupDao.get(groupName);
@@ -123,7 +125,7 @@ class IndexVolumeGroupDaoImplTest {
             e.printStackTrace();
         }
 
-        final IndexVolumeGroup createdTwice = indexVolumeGroupDao.create(groupName);
+        final IndexVolumeGroup createdTwice = createGroup(groupName);
         final IndexVolumeGroup retrievedTwice = indexVolumeGroupDao.get(groupName);
 
         // Make sure they are all the same
@@ -134,5 +136,20 @@ class IndexVolumeGroupDaoImplTest {
                     assertThat(i.getCreateUser()).isEqualTo(TestModule.TEST_USER);
                     assertThat(i.getUpdateUser()).isEqualTo(TestModule.TEST_USER);
                 });
+    }
+
+//    private IndexVolume createVolume(final String nodeName, final String path) {
+//        final IndexVolume indexVolume = new IndexVolume();
+//        indexVolume.setNodeName(nodeName);
+//        indexVolume.setPath(path);
+//        AuditUtil.stamp("test", indexVolume);
+//        return indexVolumeDao.create(indexVolume);
+//    }
+
+    private IndexVolumeGroup createGroup(final String name) {
+        final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
+        indexVolumeGroup.setName(name);
+        AuditUtil.stamp("test", indexVolumeGroup);
+        return indexVolumeGroupDao.create(indexVolumeGroup);
     }
 }

@@ -28,7 +28,7 @@ import stroom.index.impl.db.jooq.tables.IndexShard;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> implements Record14<Long, String, Long, String, Integer, Long, Long, Integer, Long, Byte, String, String, Long, Long> {
 
-    private static final long serialVersionUID = -1788133652;
+    private static final long serialVersionUID = 97220363;
 
     /**
      * Setter for <code>stroom.index_shard.id</code>.
@@ -171,30 +171,30 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
     }
 
     /**
-     * Setter for <code>stroom.index_shard.partition</code>.
-     */
-    public void setPartition(String value) {
-        set(10, value);
-    }
-
-    /**
-     * Getter for <code>stroom.index_shard.partition</code>.
-     */
-    public String getPartition() {
-        return (String) get(10);
-    }
-
-    /**
      * Setter for <code>stroom.index_shard.index_version</code>.
      */
     public void setIndexVersion(String value) {
-        set(11, value);
+        set(10, value);
     }
 
     /**
      * Getter for <code>stroom.index_shard.index_version</code>.
      */
     public String getIndexVersion() {
+        return (String) get(10);
+    }
+
+    /**
+     * Setter for <code>stroom.index_shard.partition_name</code>.
+     */
+    public void setPartitionName(String value) {
+        set(11, value);
+    }
+
+    /**
+     * Getter for <code>stroom.index_shard.partition_name</code>.
+     */
+    public String getPartitionName() {
         return (String) get(11);
     }
 
@@ -343,7 +343,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public Field<String> field11() {
-        return IndexShard.INDEX_SHARD.PARTITION;
+        return IndexShard.INDEX_SHARD.INDEX_VERSION;
     }
 
     /**
@@ -351,7 +351,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public Field<String> field12() {
-        return IndexShard.INDEX_SHARD.INDEX_VERSION;
+        return IndexShard.INDEX_SHARD.PARTITION_NAME;
     }
 
     /**
@@ -455,7 +455,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public String component11() {
-        return getPartition();
+        return getIndexVersion();
     }
 
     /**
@@ -463,7 +463,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public String component12() {
-        return getIndexVersion();
+        return getPartitionName();
     }
 
     /**
@@ -567,7 +567,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public String value11() {
-        return getPartition();
+        return getIndexVersion();
     }
 
     /**
@@ -575,7 +575,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public String value12() {
-        return getIndexVersion();
+        return getPartitionName();
     }
 
     /**
@@ -689,7 +689,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public IndexShardRecord value11(String value) {
-        setPartition(value);
+        setIndexVersion(value);
         return this;
     }
 
@@ -698,7 +698,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
      */
     @Override
     public IndexShardRecord value12(String value) {
-        setIndexVersion(value);
+        setPartitionName(value);
         return this;
     }
 
@@ -756,7 +756,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
     /**
      * Create a detached, initialised IndexShardRecord
      */
-    public IndexShardRecord(Long id, String nodeName, Long fkVolumeId, String indexUuid, Integer commitDocumentCount, Long commitDurationMs, Long commitMs, Integer documentCount, Long fileSize, Byte status, String partition, String indexVersion, Long partitionFromMs, Long partitionToMs) {
+    public IndexShardRecord(Long id, String nodeName, Long fkVolumeId, String indexUuid, Integer commitDocumentCount, Long commitDurationMs, Long commitMs, Integer documentCount, Long fileSize, Byte status, String indexVersion, String partitionName, Long partitionFromMs, Long partitionToMs) {
         super(IndexShard.INDEX_SHARD);
 
         set(0, id);
@@ -769,8 +769,8 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> impl
         set(7, documentCount);
         set(8, fileSize);
         set(9, status);
-        set(10, partition);
-        set(11, indexVersion);
+        set(10, indexVersion);
+        set(11, partitionName);
         set(12, partitionFromMs);
         set(13, partitionToMs);
     }

@@ -35,7 +35,7 @@ import stroom.util.shared.CriteriaSet;
 import javax.inject.Inject;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +45,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
@@ -183,9 +182,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final CriteriaSet<Byte> criteriaSet = new CriteriaSet<>();
         criteriaSet.setSet(statusSet);
 
-        final List<Condition> conditions = new ArrayList<>();
-        conditions.add(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId));
-        JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, criteriaSet).ifPresent(conditions::add);
+        final Collection<Condition> conditions = JooqUtil.conditions(
+                Optional.of(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId)),
+                JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, criteriaSet));
 
         final int results = JooqUtil.contextResult(connectionProvider, context -> context
                 .update(PROCESSOR_TASK)
@@ -793,7 +792,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     BaseResultList<ProcessorTask> find(final DSLContext context, final FindProcessorTaskCriteria criteria) {
-        final List<Condition> conditions = convertCriteria(criteria);
+        final Collection<Condition> conditions = convertCriteria(criteria);
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
@@ -832,7 +831,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     @Override
     public BaseResultList<ProcessorTaskSummaryRow> findSummary(final FindProcessorTaskCriteria criteria) {
-        final List<Condition> conditions = convertCriteria(criteria);
+        final Collection<Condition> conditions = convertCriteria(criteria);
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
@@ -862,33 +861,17 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return BaseResultList.createUnboundedList(list);
     }
 
-    private List<Condition> convertCriteria(final FindProcessorTaskCriteria criteria) {
-        final List<Condition> conditions = new ArrayList<>();
-        JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, convertTaskStatusSet(criteria.getTaskStatusSet())).ifPresent(conditions::add);
-        JooqUtil.getSetCondition(PROCESSOR_TASK.ID, criteria.getProcessorTaskIdSet()).ifPresent(conditions::add);
-        JooqUtil.getStringCondition(PROCESSOR_NODE.NAME, criteria.getNodeNameCriteria()).ifPresent(conditions::add);
-        JooqUtil.getStringCondition(PROCESSOR.PIPELINE_UUID, criteria.getPipelineUuidCriteria()).ifPresent(conditions::add);
-        JooqUtil.getSetCondition(PROCESSOR_FILTER.ID, criteria.getProcessorFilterIdSet()).ifPresent(conditions::add);
-        Optional.ofNullable(criteria.getCreateMs()).map(PROCESSOR_TASK.CREATE_TIME_MS::eq).ifPresent(conditions::add);
-        JooqUtil.getRangeCondition(PROCESSOR_TASK.CREATE_TIME_MS, criteria.getCreatePeriod()).ifPresent(conditions::add);
-        JooqUtil.getSetCondition(PROCESSOR_TASK.META_ID, criteria.getMetaIdSet()).ifPresent(conditions::add);
-        return conditions;
+    private Collection<Condition> convertCriteria(final FindProcessorTaskCriteria criteria) {
+        return JooqUtil.conditions(
+                JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, CriteriaSet.convert(criteria.getTaskStatusSet(), TaskStatus::getPrimitiveValue)),
+                JooqUtil.getSetCondition(PROCESSOR_TASK.ID, criteria.getProcessorTaskIdSet()),
+                JooqUtil.getStringCondition(PROCESSOR_NODE.NAME, criteria.getNodeNameCriteria()),
+                JooqUtil.getStringCondition(PROCESSOR.PIPELINE_UUID, criteria.getPipelineUuidCriteria()),
+                JooqUtil.getSetCondition(PROCESSOR_FILTER.ID, criteria.getProcessorFilterIdSet()),
+                Optional.ofNullable(criteria.getCreateMs()).map(PROCESSOR_TASK.CREATE_TIME_MS::eq),
+                JooqUtil.getRangeCondition(PROCESSOR_TASK.CREATE_TIME_MS, criteria.getCreatePeriod()),
+                JooqUtil.getSetCondition(PROCESSOR_TASK.META_ID, criteria.getMetaIdSet()));
     }
-
-    private CriteriaSet<Byte> convertTaskStatusSet(final CriteriaSet<TaskStatus> taskStatusSet) {
-        CriteriaSet<Byte> criteriaSet = null;
-        if (taskStatusSet != null) {
-            criteriaSet = new CriteriaSet<>();
-            criteriaSet.setMatchAll(taskStatusSet.getMatchAll());
-            criteriaSet.setMatchNull(taskStatusSet.getMatchNull());
-            if (taskStatusSet.getSet() != null) {
-                criteriaSet.setSet(taskStatusSet.getSet().stream().map(TaskStatus::getPrimitiveValue).collect(Collectors.toSet()));
-            }
-        }
-
-        return criteriaSet;
-    }
-
 
     @Override
     public ProcessorTask changeTaskStatus(final ProcessorTask processorTask,

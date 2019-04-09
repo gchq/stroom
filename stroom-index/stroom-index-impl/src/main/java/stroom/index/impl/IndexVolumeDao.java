@@ -3,6 +3,7 @@ package stroom.index.impl;
 import stroom.index.shared.IndexVolume;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface IndexVolumeDao {
     /**
@@ -11,20 +12,20 @@ public interface IndexVolumeDao {
      * @param path The path of the volume.
      * @return The created Index Volume
      */
-    IndexVolume create(String nodeName, String path);
+    IndexVolume create(IndexVolume indexVolume);
 
     /**
      * Retrieve a single IndexVolume by it's unique ID
      * @param id The Unique ID of the volume
      * @return The located Index Volume
      */
-    IndexVolume getById(Long id);
+    Optional<IndexVolume> fetch(long id);
 
     /**
      * Delete a single volume
      * @param id The Unique ID of the volume to delete.
      */
-    void delete(Long id);
+    boolean delete(long id);
 
     /**
      * Retrieve the complete list of index volumes.

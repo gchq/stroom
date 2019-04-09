@@ -41,7 +41,7 @@ import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexShard extends TableImpl<IndexShardRecord> {
 
-    private static final long serialVersionUID = 903439591;
+    private static final long serialVersionUID = 242740338;
 
     /**
      * The reference instance of <code>stroom.index_shard</code>
@@ -107,14 +107,14 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
     public final TableField<IndexShardRecord, Byte> STATUS = createField("status", org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.index_shard.partition</code>.
-     */
-    public final TableField<IndexShardRecord, String> PARTITION = createField("partition", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
-
-    /**
      * The column <code>stroom.index_shard.index_version</code>.
      */
     public final TableField<IndexShardRecord, String> INDEX_VERSION = createField("index_version", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
+
+    /**
+     * The column <code>stroom.index_shard.partition_name</code>.
+     */
+    public final TableField<IndexShardRecord, String> PARTITION_NAME = createField("partition_name", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.index_shard.partition_from_ms</code>.

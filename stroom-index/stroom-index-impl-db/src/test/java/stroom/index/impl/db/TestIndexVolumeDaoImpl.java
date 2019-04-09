@@ -8,6 +8,7 @@ import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
+import stroom.util.AuditUtil;
 
 import java.util.List;
 import java.util.Set;
@@ -17,7 +18,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class IndexVolumeDaoImplTest {
+class TestIndexVolumeDaoImpl {
     private static IndexVolumeDao indexVolumeDao;
     private static IndexVolumeGroupDao indexVolumeGroupDao;
 
@@ -36,15 +37,15 @@ class IndexVolumeDaoImplTest {
         final String path = TestData.createPath();
 
         // When
-        final IndexVolume created = indexVolumeDao.create(nodeName, path);
+        final IndexVolume created = createVolume(nodeName, path);
         assertThat(created).isNotNull();
-        final IndexVolume retrieved = indexVolumeDao.getById(created.getId());
+        final IndexVolume retrieved = indexVolumeDao.fetch(created.getId()).orElse(null);
         assertThat(Stream.of(created, retrieved)).allSatisfy(i -> {
             assertThat(i.getNodeName()).isEqualTo(nodeName);
             assertThat(i.getPath()).isEqualTo(path);
         });
         indexVolumeDao.delete(retrieved.getId());
-        final IndexVolume retrievedAfterDelete = indexVolumeDao.getById(created.getId());
+        final IndexVolume retrievedAfterDelete = indexVolumeDao.fetch(created.getId()).orElse(null);
 
         assertThat(retrievedAfterDelete).isNull();
     }
@@ -62,11 +63,11 @@ class IndexVolumeDaoImplTest {
                 .collect(Collectors.toSet()); // used to ensure some 'noise' exists in the db.
 
         // When
-        final IndexVolumeGroup group = indexVolumeGroupDao.create(groupName);
+        final IndexVolumeGroup group = createGroup(groupName);
         final Set<IndexVolume> indexVolumesInsideGroup = pathsInsideGroup.stream()
-                .map(p -> indexVolumeDao.create(nodeName, p))
+                .map(p -> createVolume(nodeName, p))
                 .collect(Collectors.toSet());
-        pathsOutsideGroup.forEach(p -> indexVolumeDao.create(nodeName, p)); // noise
+        pathsOutsideGroup.forEach(p -> createVolume(nodeName, p)); // noise
         indexVolumesInsideGroup.forEach(i -> indexVolumeDao.addVolumeToGroup(i.getId(), groupName));
         final List<IndexVolume> volumesInGroup = indexVolumeDao.getVolumesInGroup(groupName);
 
@@ -89,8 +90,8 @@ class IndexVolumeDaoImplTest {
         final String path = TestData.createPath();
 
         // When
-        final IndexVolumeGroup group = indexVolumeGroupDao.create(groupName);
-        final IndexVolume indexVolume = indexVolumeDao.create(nodeName, path);
+        final IndexVolumeGroup group = createGroup(groupName);
+        final IndexVolume indexVolume = createVolume(nodeName, path);
         indexVolumeDao.addVolumeToGroup(indexVolume.getId(), groupName);
         final List<IndexVolume> found1 = indexVolumeDao.getVolumesInGroup(groupName);
         indexVolumeDao.removeVolumeFromGroup(indexVolume.getId(), groupName);
@@ -115,10 +116,10 @@ class IndexVolumeDaoImplTest {
         final String pathToRemain = TestData.createPath();
 
         // When
-        final IndexVolume volumeToRemove = indexVolumeDao.create(nodeName, pathToRemove);
-        final IndexVolume volumeToRemain = indexVolumeDao.create(nodeName, pathToRemain);
+        final IndexVolume volumeToRemove = createVolume(nodeName, pathToRemove);
+        final IndexVolume volumeToRemain = createVolume(nodeName, pathToRemain);
         final Set<IndexVolumeGroup> groups = groupNames.stream()
-                .map(indexVolumeGroupDao::create)
+                .map(this::createGroup)
                 .peek(g -> indexVolumeDao.addVolumeToGroup(volumeToRemove.getId(), g.getName()))
                 .peek(g -> indexVolumeDao.addVolumeToGroup(volumeToRemain.getId(), g.getName()))
                 .collect(Collectors.toSet());
@@ -130,5 +131,20 @@ class IndexVolumeDaoImplTest {
         assertThat(indexesInGroup1.stream().map(IndexVolume::getPath)).containsOnly(pathToRemain, pathToRemove);
         assertThat(indexesInGroup2.stream().map(IndexVolume::getPath)).containsOnly(pathToRemain);
 
+    }
+
+    private IndexVolume createVolume(final String nodeName, final String path) {
+        final IndexVolume indexVolume = new IndexVolume();
+        indexVolume.setNodeName(nodeName);
+        indexVolume.setPath(path);
+        AuditUtil.stamp("test", indexVolume);
+        return indexVolumeDao.create(indexVolume);
+    }
+
+    private IndexVolumeGroup createGroup(final String name) {
+        final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
+        indexVolumeGroup.setName(name);
+        AuditUtil.stamp("test", indexVolumeGroup);
+        return indexVolumeGroupDao.create(indexVolumeGroup);
     }
 }

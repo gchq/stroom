@@ -22,10 +22,15 @@ import stroom.util.shared.StringCriteria;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class JooqUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(JooqUtil.class);
@@ -189,6 +194,15 @@ public final class JooqUtil {
         }
 
         return 0;
+    }
+
+    @SafeVarargs
+    @SuppressWarnings("varargs") // Creating a stream from an array is safe
+    public static Collection<Condition> conditions(final Optional<Condition>... conditions) {
+        return Stream.of(conditions)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
     }
 
     /**

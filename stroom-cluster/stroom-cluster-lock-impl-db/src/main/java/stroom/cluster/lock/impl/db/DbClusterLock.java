@@ -17,7 +17,6 @@
 package stroom.cluster.lock.impl.db;
 
 import org.jooq.Record;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.db.util.JooqUtil;

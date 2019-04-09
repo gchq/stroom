@@ -18,18 +18,20 @@
 package stroom.processor.impl.db;
 
 import stroom.db.util.JooqUtil;
+import stroom.processor.impl.db.jooq.tables.records.ProcessorNodeRecord;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static stroom.processor.impl.db.jooq.tables.ProcessorNode.PROCESSOR_NODE;
 
 @Singleton
 class ProcessorNodeCache implements Clearable {
+    // TODO : @66 Replace with a proper cache.
     private final Map<String, Integer> cache = new ConcurrentHashMap<>();
 
     private final ConnectionProvider connectionProvider;
@@ -41,13 +43,21 @@ class ProcessorNodeCache implements Clearable {
 
 //    @Override
     public Integer getOrCreate(final String name) {
-        Integer id = get(name);
-        if (id == null) {
-            // Create.
-            id = create(name);
-        }
-
-        return id;
+        // Try and get the id from the cache.
+        return Optional.ofNullable(cache.get(name))
+                .or(() -> {
+                    // Try and get the existing id from the DB.
+                    return get(name)
+                            .or(() -> {
+                                create(name);
+                                return get(name);
+                            })
+                            .map(path -> {
+                                // Cache for next time.
+                                cache.put(name, path);
+                                return path;
+                            });
+                }).orElseThrow();
     }
 
 //    @Override
@@ -58,35 +68,22 @@ class ProcessorNodeCache implements Clearable {
 //                .fetch(PROCESSOR_NODE.NAME));
 //    }
 
-    private Integer get(final String name) {
-        Integer id = cache.get(name);
-        if (id != null) {
-            return id;
-        }
-
+    private Optional<Integer> get(final String name) {
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .select(PROCESSOR_NODE.ID)
                 .from(PROCESSOR_NODE)
                 .where(PROCESSOR_NODE.NAME.eq(name))
-                .fetchOptional(PROCESSOR_NODE.ID))
-                .map(i -> cache.put(name, i))
-                .orElse(null);
+                .fetchOptional(PROCESSOR_NODE.ID));
     }
 
-    Integer create(final String name) {
+    private Optional<Integer> create(final String name) {
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .insertInto(PROCESSOR_NODE, PROCESSOR_NODE.NAME)
                 .values(name)
                 .onDuplicateKeyIgnore()
                 .returning(PROCESSOR_NODE.ID)
                 .fetchOptional()
-                .map(record -> {
-                    final Integer id = record.getId();
-                    cache.put(name, id);
-                    return id;
-                })
-                .orElseGet(() -> get(name))
-        );
+                .map(ProcessorNodeRecord::getId));
     }
 
     @Override

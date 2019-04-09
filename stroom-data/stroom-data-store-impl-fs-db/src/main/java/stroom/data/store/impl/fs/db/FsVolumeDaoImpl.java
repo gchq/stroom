@@ -18,7 +18,7 @@ import stroom.util.shared.CriteriaSet;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -100,9 +100,8 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
 
     @Override
     public List<FsVolume> find(final FindFsVolumeCriteria criteria) {
-        final Optional<Condition> volumeStatusCondition = volumeStatusCriteriaSetToCondition(FS_VOLUME.STATUS, criteria.getStatusSet());
-        final List<Condition> conditions = new ArrayList<>();
-        volumeStatusCondition.ifPresent(conditions::add);
+        final Collection<Condition> conditions = JooqUtil.conditions(
+                volumeStatusCriteriaSetToCondition(FS_VOLUME.STATUS, criteria.getStatusSet()));
 
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .select()

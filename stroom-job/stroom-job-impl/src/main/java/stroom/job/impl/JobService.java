@@ -22,10 +22,11 @@ import stroom.job.api.DistributedTaskFactoryDescription;
 import stroom.job.api.ScheduledJob;
 import stroom.job.api.TaskConsumer;
 import stroom.job.shared.FindJobCriteria;
-import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.util.AuditUtil;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Sort;
 
@@ -43,6 +44,7 @@ import java.util.Set;
 class JobService {
     private final JobDao jobDao;
     private final Security security;
+    private final SecurityContext securityContext;
 
     private final Map<String, String> jobDescriptionMap = new HashMap<>();
     private final Set<String> jobAdvancedSet = new HashSet<>();
@@ -50,10 +52,12 @@ class JobService {
     @Inject
     JobService(final JobDao jobDao,
                final Security security,
+               final SecurityContext securityContext,
                final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
                final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
         this.jobDao = jobDao;
         this.security = security;
+        this.securityContext = securityContext;
 
         scheduledJobsMap.keySet().forEach(scheduledJob -> {
             jobDescriptionMap.put(scheduledJob.getName(), scheduledJob.getDescription());
@@ -76,6 +80,7 @@ class JobService {
                 // We always want to update a job instance even if we have a stale version.
                 before.ifPresent(j -> job.setVersion(j.getVersion()));
 
+            AuditUtil.stamp(securityContext.getUserId(), job);
                 final Job after = jobDao.update(job);
                 return decorate(after);
             });

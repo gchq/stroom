@@ -1,7 +1,7 @@
 package stroom.security.impl.db;
 
+import org.jooq.Condition;
 import org.jooq.Record;
-import org.jooq.impl.DSL;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.security.impl.UserDao;
@@ -9,7 +9,9 @@ import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 import stroom.security.shared.User;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -105,10 +107,13 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public List<User> find(final String name, final Boolean group) {
+        final Collection<Condition> conditions = JooqUtil.conditions(
+                Optional.ofNullable(group).map(STROOM_USER.IS_GROUP::eq),
+                Optional.ofNullable(name).map(STROOM_USER.NAME::eq));
+
         return JooqUtil.contextResult(connectionProvider, context ->
                 context.select().from(STROOM_USER)
-                        .where(DSL.condition(group == null).or(STROOM_USER.IS_GROUP.eq(group))
-                                .and(DSL.condition(name == null).or(STROOM_USER.NAME.eq(name))))
+                        .where(conditions)
                         .fetch()
                         .stream()
                         .map(RECORD_TO_USER_MAPPER)

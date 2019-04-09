@@ -3,7 +3,6 @@ package stroom.index.impl.db;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
-import org.jooq.impl.DSL;
 import stroom.db.util.JooqUtil;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
@@ -12,15 +11,14 @@ import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.util.shared.CriteriaSet;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
@@ -46,33 +44,30 @@ class IndexShardDaoImpl implements IndexShardDao {
     }
 
     private static Map<String, Field> FIELD_MAP = new HashMap<>();
+
     static {
         FIELD_MAP.put(FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID);
-        FIELD_MAP.put(FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION);
+        FIELD_MAP.put(FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME);
     }
 
     @Override
     public List<IndexShard> find(final FindIndexShardCriteria criteria) {
-        final List<Condition> conditions = Stream.of(
+        final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getRangeCondition(INDEX_SHARD.DOCUMENT_COUNT, criteria.getDocumentCountRange()),
                 JooqUtil.getSetCondition(INDEX_SHARD.NODE_NAME, criteria.getNodeNameSet()),
                 JooqUtil.getSetCondition(INDEX_SHARD.FK_VOLUME_ID, criteria.getVolumeIdSet()),
                 JooqUtil.getSetCondition(INDEX_SHARD.ID, criteria.getIndexShardIdSet()),
                 JooqUtil.getSetCondition(INDEX_SHARD.INDEX_UUID, criteria.getIndexUuidSet()),
-                JooqUtil.getSetCondition(INDEX_SHARD.STATUS,
-                        criteria.getIndexShardStatusSet().convertTo(IndexShard.IndexShardStatus::getPrimitiveValue)),
-                JooqUtil.getStringCondition(INDEX_SHARD.PARTITION, criteria.getPartition())
-        )
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList());
+                JooqUtil.getSetCondition(INDEX_SHARD.STATUS, CriteriaSet.convert(criteria.getIndexShardStatusSet(), IndexShard.IndexShardStatus::getPrimitiveValue)),
+                JooqUtil.getStringCondition(INDEX_SHARD.PARTITION_NAME, criteria.getPartition())
+        );
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         return JooqUtil.contextResult(connectionProvider, context -> {
             final List<IndexShard> shards = context.select()
                     .from(INDEX_SHARD)
-                    .where(DSL.and(conditions))
+                    .where(conditions)
                     .orderBy(orderFields)
                     .fetchInto(IndexShard.class);
 
@@ -109,7 +104,7 @@ class IndexShardDaoImpl implements IndexShardDao {
             final Long id = context.insertInto(INDEX_SHARD,
                     INDEX_SHARD.INDEX_UUID,
                     INDEX_SHARD.NODE_NAME,
-                    INDEX_SHARD.PARTITION,
+                    INDEX_SHARD.PARTITION_NAME,
                     INDEX_SHARD.PARTITION_FROM_MS,
                     INDEX_SHARD.PARTITION_TO_MS,
                     INDEX_SHARD.FK_VOLUME_ID,
