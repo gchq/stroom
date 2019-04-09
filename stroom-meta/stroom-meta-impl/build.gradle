@@ -1,0 +1,41 @@
+ext.moduleName = 'stroom.meta.impl'
+
+dependencies {
+    compile project(':stroom-cluster:stroom-cluster-lock-api')
+    compile project(':stroom-cluster:stroom-cluster-lock-mock')
+    compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-lifecycle:stroom-lifecycle-api')
+    compile project(':stroom-security:stroom-security-api')
+//    compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
+    compile project(':stroom-util-shared')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-job:stroom-job-api')
+
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.slf4j_api
+    compile libs.swagger_annotations
+    compile libs.ws_rs_api
+
+    runtimeOnly libs.mysql_connector_java
+    
+    testCompile project(':stroom-security:stroom-security-mock')
+    
+    testCompile libs.assertj_core
+    
+    testCompile libs.junit_jupiter_api
+    
+    // the following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}

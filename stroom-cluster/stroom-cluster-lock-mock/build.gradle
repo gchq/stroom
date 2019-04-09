@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.cluster.lock.impl.mock'
+ext.moduleName = 'stroom.cluster.lock.mock'
 
 dependencies {
     compile project(':stroom-cluster:stroom-cluster-lock-api')

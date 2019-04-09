@@ -4,17 +4,19 @@ import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.cluster.lock.mock.MockClusterLockModule;
-import stroom.util.shared.BaseResultList;
+import stroom.meta.impl.MetaModule;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFieldNames;
 import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.impl.mock.MockSecurityContextModule;
+import stroom.security.mock.MockSecurityContextModule;
+import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
 
@@ -22,31 +24,32 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestMetaServiceImpl {
     @Inject
-    private MetaServiceImpl dataMetaService;
+    private Cleanup cleanup;
+    @Inject
+    private MetaService metaService;
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(new MetaDbModule(), new MockClusterLockModule(), new MockSecurityContextModule()).injectMembers(this);
+        Guice.createInjector(new MetaModule(), new MetaDbModule(), new MockClusterLockModule(), new MockSecurityContextModule()).injectMembers(this);
+        // Delete everything
+        cleanup.clear();
     }
 
     @Test
     void test() {
-        // Delete everything
-        dataMetaService.deleteAll();
-
-        final Meta meta1 = dataMetaService.create(createProperties("FEED1"));
-        final Meta meta2 = dataMetaService.create(createProperties("FEED2"));
+        final Meta meta1 = metaService.create(createProperties("FEED1"));
+        final Meta meta2 = metaService.create(createProperties("FEED2"));
 
         final ExpressionOperator expression = new Builder(Op.AND)
                 .addTerm(MetaFieldNames.ID, Condition.EQUALS, String.valueOf(meta2.getId()))
                 .build();
         final FindMetaCriteria criteria = new FindMetaCriteria(expression);
 
-        final BaseResultList<Meta> list = dataMetaService.find(criteria);
+        final BaseResultList<Meta> list = metaService.find(criteria);
 
         assertThat(list.size()).isEqualTo(1);
 
-        int deleted = dataMetaService.updateStatus(new FindMetaCriteria(), Status.DELETED);
+        int deleted = metaService.updateStatus(new FindMetaCriteria(), Status.DELETED);
         assertThat(deleted).isEqualTo(2);
     }
 
@@ -55,7 +58,6 @@ class TestMetaServiceImpl {
                 .createMs(System.currentTimeMillis())
                 .feedName(feedName)
                 .processorUuid("12345")
-                .processorFilterUuid("12345")
                 .pipelineUuid("PIPELINE_UUID")
                 .typeName("TEST_STREAM_TYPE")
                 .build();

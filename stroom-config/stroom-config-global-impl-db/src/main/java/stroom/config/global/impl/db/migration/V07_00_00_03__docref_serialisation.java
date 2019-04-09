@@ -1,19 +1,18 @@
 package stroom.config.global.impl.db.migration;
 
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
 import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.db.util.JooqUtil;
 
-import java.sql.Connection;
 import java.util.Map;
 
 import static stroom.config.impl.db.jooq.tables.Config.CONFIG;
 
 @SuppressWarnings("unused") // used by FlyWay
-public class V07_00_00_03__docref_serialisation implements JdbcMigration {
+public class V07_00_00_03__docref_serialisation extends BaseJavaMigration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_03__docref_serialisation.class);
 
@@ -25,7 +24,7 @@ public class V07_00_00_03__docref_serialisation implements JdbcMigration {
      * @throws Exception when the migration failed.
      */
     @Override
-    public void migrate(final Connection connection) throws Exception {
+    public void migrate(final Context flywayContext) {
 
         // Change the serialised form of internal statistic docRef lists in the config table from:
         // docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes),docRef(StroomStatsStore,b0110ab4-ac25-4b73-b4f6-96f2b50b456a,Heap Histogram Bytes)
@@ -33,12 +32,12 @@ public class V07_00_00_03__docref_serialisation implements JdbcMigration {
         // |,docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)|,docRef(StroomStatsStore,b0110ab4-ac25-4b73-b4f6-96f2b50b456a,Heap Histogram Bytes)
 
         try {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            final DSLContext context = JooqUtil.createContext(flywayContext.getConnection());
 
             // This line should only be un-commented for manual testing in development
 //            loadTestDataForManualTesting(create);
 
-            create
+            context
                     .selectFrom(CONFIG)
                     .where(CONFIG.NAME.like("stroom.statistics.internal.%"))
                     .fetch()

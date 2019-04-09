@@ -25,6 +25,7 @@ import stroom.docstore.impl.DocStoreModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.FeedModule;
 import stroom.importexport.impl.ImportExportModule;
+import stroom.security.mock.MockSecurityContextModule;
 import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.StreamCloser;
 import stroom.meta.statistics.api.MetaStatistics;
@@ -77,7 +78,7 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.properties.impl.PropertyModule());
 //        install(new stroom.pipeline.refdata.ReferenceDataModule());
 //        install(new stroom.resource.ResourceModule());
-        install(new stroom.security.impl.mock.MockSecurityContextModule());
+        install(new MockSecurityContextModule());
 //        install(new DataStoreHandlerModule());
         install(new DocStoreModule());
         install(new stroom.docstore.impl.fs.FSPersistenceModule());

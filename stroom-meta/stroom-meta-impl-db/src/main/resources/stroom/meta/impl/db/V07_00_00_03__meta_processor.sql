@@ -6,7 +6,6 @@
 CREATE TABLE IF NOT EXISTS meta_processor (
   id 				    int(11) NOT NULL AUTO_INCREMENT,
   processor_uuid 	    varchar(255) DEFAULT NULL,
-  processor_filter_uuid varchar(255) DEFAULT NULL,
   pipeline_uuid 	    varchar(255) DEFAULT NULL,
   PRIMARY KEY           (id),
   UNIQUE KEY            processor_uuid (processor_uuid)

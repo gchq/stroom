@@ -23,7 +23,7 @@ dependencies {
 
     runtimeOnly libs.mysql_connector_java
 
-    testCompile project(':stroom-security:stroom-security-impl-mock')
+    testCompile project(':stroom-security:stroom-security-mock')
 
     testCompile libs.assertj_core
     testCompile libs.mockito_core
@@ -40,4 +40,6 @@ dependencies {
     testRuntimeOnly libs.log4j_over_slf4j
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
+    testRuntimeOnly libs.test_containers
+    testRuntimeOnly libs.test_containers_mysql
 }

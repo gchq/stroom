@@ -14,32 +14,32 @@ import static stroom.config.impl.db.jooq.tables.Config.CONFIG;
 
 class ConfigPropertyDaoImpl implements ConfigPropertyDao {
     private final ConnectionProvider connectionProvider;
-    private final GenericDao<ConfigRecord, ConfigProperty, Integer> dao;
+    private final GenericDao<ConfigRecord, ConfigProperty, Integer> genericDao;
 
     @Inject
     ConfigPropertyDaoImpl(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
-        this.dao = new GenericDao<>(CONFIG, CONFIG.ID, ConfigProperty.class, connectionProvider);
+        this.genericDao = new GenericDao<>(CONFIG, CONFIG.ID, ConfigProperty.class, connectionProvider);
     }
 
     @Override
     public ConfigProperty create(final ConfigProperty configProperty) {
-        return dao.create(configProperty);
+        return genericDao.create(configProperty);
     }
 
     @Override
     public Optional<ConfigProperty> fetch(final int id) {
-        return dao.fetch(id);
+        return genericDao.fetch(id);
     }
 
     @Override
     public ConfigProperty update(final ConfigProperty configProperty) {
-        return dao.update(configProperty);
+        return genericDao.update(configProperty);
     }
 
     @Override
     public boolean delete(final int id) {
-        return dao.delete(id);
+        return genericDao.delete(id);
     }
 
     @Override

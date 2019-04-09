@@ -3,6 +3,9 @@ package stroom.explorer.impl.db;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.db.util.JooqUtil;
+import stroom.explorer.impl.ExplorerTreeDao;
+import stroom.explorer.impl.ExplorerTreeNode;
+import stroom.explorer.impl.ExplorerTreePath;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

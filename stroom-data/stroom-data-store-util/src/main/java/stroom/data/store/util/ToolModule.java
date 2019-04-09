@@ -24,18 +24,22 @@ import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEvent.Handler;
 import stroom.entity.shared.EntityEventBus;
+import stroom.security.mock.MockSecurityContextModule;
+import stroom.statistics.mock.MockInternalStatisticsModule;
 
 public class ToolModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new MockActivityModule());
+        install(new stroom.activity.mock.MockActivityModule());
         install(new stroom.cache.impl.CacheModule());
         install(new MockClusterLockModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
+        install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.meta.impl.db.MetaDbModule());
-        install(new stroom.security.impl.mock.MockSecurityContextModule());
-        install(new stroom.statistics.impl.mock.MockInternalStatisticsModule());
+        install(new stroom.meta.impl.MetaModule());
+        install(new MockSecurityContextModule());
+        install(new MockInternalStatisticsModule());
     }
 
     @Provides

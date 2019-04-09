@@ -2,7 +2,7 @@ package stroom.docstore.impl.fs;
 
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.docstore.api.Persistence;
+import stroom.docstore.impl.Persistence;
 
 import java.io.IOException;
 import java.nio.charset.Charset;

@@ -30,8 +30,6 @@ dependencies {
     testCompile libs.assertj_core
 
     testCompile libs.junit_jupiter_api
-    testCompile libs.test_containers
-    testCompile libs.test_containers_mysql
     testCompile libs.mockito_core
 
     // The following logging libs are needed when running junits outside dropwizard
@@ -43,4 +41,6 @@ dependencies {
     testRuntimeOnly libs.log4j_over_slf4j
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
+    testRuntimeOnly libs.test_containers
+    testRuntimeOnly libs.test_containers_mysql
 }

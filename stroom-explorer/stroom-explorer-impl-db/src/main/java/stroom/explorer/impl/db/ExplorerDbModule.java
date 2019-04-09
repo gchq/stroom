@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
+import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;

@@ -2,20 +2,14 @@ package stroom.security.impl.db;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.commons.logging.Logger;
-import org.junit.platform.commons.logging.LoggerFactory;
-import org.testcontainers.containers.MySQLContainer;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
-import stroom.security.impl.db.jooq.Stroom;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -24,21 +18,11 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class UserDaoImplTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserDaoImplTest.class);
-
-    private static MySQLContainer dbContainer = new MySQLContainer()
-            .withDatabaseName(Stroom.STROOM.getName());//= null;//
-
     private static UserDao userDao;
 
     @BeforeAll
     static void beforeAll() {
-        LOGGER.info(() -> "Before All - Start Database");
-        Optional.ofNullable(dbContainer)
-                .ifPresent(MySQLContainer::start);
-
-        final Injector injector = Guice.createInjector(new SecurityDbModule(), new TestModule(dbContainer));
-
+        final Injector injector = Guice.createInjector(new SecurityDbModule(), new TestModule());
         userDao = injector.getInstance(UserDao.class);
     }
 
@@ -162,13 +146,6 @@ class UserDaoImplTest {
         groupNames.forEach(groupName -> assertThat(groupsForUserToTest.stream()
                 .anyMatch(g -> groupName.equals(g.getName())))
                 .isTrue());
-    }
-
-    @AfterAll
-    static void afterAll() {
-        LOGGER.info(() -> "After All - Stop Database");
-        Optional.ofNullable(dbContainer)
-                .ifPresent(MySQLContainer::stop);
     }
 
     private User createUser(final String name, boolean group) {

@@ -1,8 +1,8 @@
 package stroom.docstore.impl.memory;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.Persistence;
 import stroom.docstore.api.RWLockFactory;
+import stroom.docstore.impl.Persistence;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;

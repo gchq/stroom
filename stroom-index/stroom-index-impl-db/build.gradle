@@ -21,14 +21,13 @@ dependencies {
 
     runtime libs.mysql_connector_java
 
-    testCompile libs.test_containers
-    testCompile libs.test_containers_mysql
+    testCompile project(':stroom-test-common')
 
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter_api
     testCompile libs.mockito_core
 
     testRuntimeOnly libs.junit_jupiter_engine
-
-    //testCompile project(':stroom-security:stroom-security-impl-mock')
+    testRuntimeOnly libs.test_containers
+    testRuntimeOnly libs.test_containers_mysql
 }

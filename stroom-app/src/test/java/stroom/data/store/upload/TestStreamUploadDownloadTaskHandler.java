@@ -34,7 +34,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
-import stroom.security.util.UserTokenUtil;
+import stroom.security.api.UserTokenUtil;
 import stroom.data.shared.StreamTypeNames;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;

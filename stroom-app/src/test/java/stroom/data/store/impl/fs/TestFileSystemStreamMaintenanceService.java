@@ -37,7 +37,7 @@ class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest
     @Inject
     private FsDataStoreMaintenanceService streamMaintenanceService;
     @Inject
-    private DataVolumeService streamVolumeService;
+    private DataVolumeService dataVolumeService;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
@@ -58,7 +58,7 @@ class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest
         assertThat(files.size() > 0).isTrue();
 
         final FindDataVolumeCriteria findStreamVolumeCriteria = FindDataVolumeCriteria.create(md);
-        assertThat(streamVolumeService.find(findStreamVolumeCriteria).size() > 0).isTrue();
+        assertThat(dataVolumeService.find(findStreamVolumeCriteria).size() > 0).isTrue();
 
         final Path dir = files.iterator().next().getParent();
 

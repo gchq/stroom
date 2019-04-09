@@ -1,15 +1,13 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
-import stroom.util.entity.NameValidationUtil;
+import stroom.docref.DocRefInfo;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.explorer.impl.db.ExplorerTreeDao;
-import stroom.explorer.impl.db.ExplorerTreeNode;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.docref.DocRefInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.entity.NameValidationUtil;
 import stroom.util.shared.PermissionException;
 
 import javax.inject.Inject;

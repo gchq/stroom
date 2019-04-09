@@ -64,7 +64,7 @@ dependencies {
     compile libs.xml_apis
 
     testCompile project(':stroom-test-common')
-    testCompile project(':stroom-index:stroom-index-impl-mock')
+    testCompile project(':stroom-index:stroom-index-mock')
 
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter_api

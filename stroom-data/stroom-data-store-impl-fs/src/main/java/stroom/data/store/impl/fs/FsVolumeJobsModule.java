@@ -20,7 +20,7 @@ public class FsVolumeJobsModule extends ScheduledJobsModule {
 
     private static class FileVolumeStatus extends TaskConsumer {
         @Inject
-        FileVolumeStatus(final FsVolumeServiceImpl volumeService) {
+        FileVolumeStatus(final FsVolumeService volumeService) {
             super(task -> volumeService.updateStatus());
         }
     }

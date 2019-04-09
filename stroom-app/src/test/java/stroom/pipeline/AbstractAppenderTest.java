@@ -25,7 +25,6 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
-import stroom.util.io.StreamCloser;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
@@ -86,8 +85,6 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     private PipelineDataCache pipelineDataCache;
     @Inject
     private RollingDestinations destinations;
-    @Inject
-    private Provider<StreamCloser> streamCloserProvider;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
     @Inject
@@ -200,9 +197,6 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
             }
 
             pipeline.endProcessing();
-
-            // Close all streams that have been written.
-            streamCloserProvider.get().close();
 
             // FORCE ROLL SO WE CAN GET OUTPUT
             destinations.forceRoll();

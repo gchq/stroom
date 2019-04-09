@@ -31,7 +31,6 @@ dependencies {
     compile project(':stroom-cluster:stroom-cluster-lock-impl-db')
     compile project(':stroom-cluster:stroom-cluster-task-impl')
     compile project(':stroom-config:stroom-config-app')
-    compile project(':stroom-config:stroom-config-global-impl')
     compile project(':stroom-config:stroom-config-global-impl-db')
     compile project(':stroom-core')
     compile project(':stroom-core-shared')
@@ -40,6 +39,7 @@ dependencies {
     compile project(':stroom-data:stroom-data-retention-impl')
     compile project(':stroom-data:stroom-data-store-impl')
     compile project(':stroom-data:stroom-data-store-impl-fs')
+    compile project(':stroom-data:stroom-data-store-impl-fs-db')
     compile project(':stroom-data:stroom-data-zip')
     compile project(':stroom-db-util')
     compile project(':stroom-dictionary:stroom-dictionary-impl')
@@ -61,17 +61,13 @@ dependencies {
     compile project(':stroom-lifecycle:stroom-lifecycle-impl')
     compile project(':stroom-meta:stroom-meta-impl-db')
     compile project(':stroom-meta:stroom-meta-statistics-impl')
-    compile project(':stroom-node:stroom-node-impl')
     compile project(':stroom-node:stroom-node-impl-db')
     compile project(':stroom-pipeline')
-    compile project(':stroom-processor:stroom-processor-impl')
     compile project(':stroom-processor:stroom-processor-impl-db')
     compile project(':stroom-proxy:stroom-proxy-repo')
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-receive:stroom-receive-rules-impl')
     compile project(':stroom-resource:stroom-resource-impl')
-    compile project(':stroom-search:stroom-search-impl')
-    compile project(':stroom-security:stroom-security-impl')
     compile project(':stroom-security:stroom-security-impl-db')
     compile project(':stroom-servicediscovery:stroom-servicediscovery-impl')
     compile project(':stroom-statistics:stroom-statistics-impl')
@@ -124,7 +120,7 @@ dependencies {
     testCompile project(':stroom-dashboard:stroom-dashboard-impl')
     testCompile project(':stroom-data:stroom-data-store-api')
     testCompile project(':stroom-data:stroom-data-store-impl-fs')
-    testCompile project(':stroom-data:stroom-data-store-impl-mock')
+    testCompile project(':stroom-data:stroom-data-store-mock')
     testCompile project(':stroom-docstore:stroom-docstore-api')
     testCompile project(':stroom-docstore:stroom-docstore-impl')
     testCompile project(':stroom-docstore:stroom-docstore-impl-memory')
@@ -136,21 +132,20 @@ dependencies {
     testCompile project(':stroom-explorer:stroom-explorer-impl-db')
     testCompile project(':stroom-headless')
     testCompile project(':stroom-importexport:stroom-importexport-api')
-    testCompile project(':stroom-index:stroom-index-impl-mock')
+    testCompile project(':stroom-index:stroom-index-mock')
     testCompile project(':stroom-index:stroom-index-impl')
     testCompile project(':stroom-meta:stroom-meta-api')
-    testCompile project(':stroom-meta:stroom-meta-impl-db')
-    testCompile project(':stroom-meta:stroom-meta-impl-mock')
-    testCompile project(':stroom-node:stroom-node-impl-mock')
+    testCompile project(':stroom-meta:stroom-meta-mock')
+    testCompile project(':stroom-node:stroom-node-mock')
     testCompile project(':stroom-pipeline')
     testCompile project(':stroom-receive:stroom-receive-rules-impl')
     testCompile project(':stroom-security:stroom-security-api')
     testCompile project(':stroom-security:stroom-security-impl')
-    testCompile project(':stroom-security:stroom-security-impl-mock')
+    testCompile project(':stroom-security:stroom-security-mock')
     testCompile project(':stroom-statistics:stroom-statistics-api')
     testCompile project(':stroom-statistics:stroom-statistics-impl')
     testCompile project(':stroom-statistics:stroom-statistics-impl-hbase')
-    testCompile project(':stroom-statistics:stroom-statistics-impl-mock')
+    testCompile project(':stroom-statistics:stroom-statistics-mock')
     testCompile project(':stroom-statistics:stroom-statistics-impl-sql')
     testCompile project(':stroom-task:stroom-task-api')
     testCompile project(':stroom-test-common')
@@ -172,8 +167,10 @@ dependencies {
     testRuntimeOnly libs.javax_el
     testRuntimeOnly libs.jaxb_runtime
     testRuntimeOnly libs.junit_jupiter_engine
-
-    //the following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.test_containers
+    testRuntimeOnly libs.test_containers_mysql
+    
+    // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jcl_over_slf4j
     testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.log4j_over_slf4j

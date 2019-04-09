@@ -18,7 +18,7 @@
 package stroom.pipeline.textconverter;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.Persistence;
+import stroom.docref.DocRefInfo;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.explorer.shared.DocumentType;
@@ -27,7 +27,6 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.docref.DocRefInfo;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
@@ -45,17 +44,14 @@ import java.util.UUID;
 class TextConverterStoreImpl implements TextConverterStore {
     private final Store<TextConverterDoc> store;
     private final SecurityContext securityContext;
-    private final Persistence persistence;
     private final TextConverterSerialiser serialiser;
 
     @Inject
     TextConverterStoreImpl(final StoreFactory storeFactory,
                            final SecurityContext securityContext,
-                           final Persistence persistence,
                            final TextConverterSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, TextConverterDoc.DOCUMENT_TYPE, TextConverterDoc.class);
         this.securityContext = securityContext;
-        this.persistence = persistence;
         this.serialiser = serialiser;
     }
 
@@ -157,7 +153,7 @@ class TextConverterStoreImpl implements TextConverterStore {
         if (dataMap.size() > 1 && !dataMap.containsKey("meta") && dataMap.containsKey("xml")) {
             final String uuid = docRef.getUuid();
             try {
-                final boolean exists = persistence.exists(docRef);
+                final boolean exists = store.exists(docRef);
                 TextConverterDoc document;
                 if (exists) {
                     document = readDocument(docRef);

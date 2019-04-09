@@ -27,7 +27,7 @@ import stroom.security.api.Security;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.shared.User;
 import stroom.security.shared.UserToken;
-import stroom.security.util.UserTokenUtil;
+import stroom.security.api.UserTokenUtil;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.StreamUtil;
 

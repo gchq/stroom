@@ -24,7 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
-import stroom.data.store.impl.mock.MockStore;
+import stroom.data.store.mock.MockStore;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.util.date.DateUtil;

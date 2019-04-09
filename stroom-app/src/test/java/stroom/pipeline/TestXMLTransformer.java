@@ -19,14 +19,12 @@ package stroom.pipeline;
 
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.util.io.StreamCloser;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.parser.CombinedParser;
-import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
@@ -41,6 +39,7 @@ import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -88,8 +87,6 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
     private PipelineStore pipelineStore;
     @Inject
     private PipelineDataCache pipelineDataCache;
-    @Inject
-    private Provider<StreamCloser> streamCloserProvider;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
 
@@ -179,7 +176,7 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
 
     private void test(final DocRef pipelineRef, final String inputResource, final String encoding) {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            try {
+            try (final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(inputResource)) {
                 // We have to use /tmp here as the pipeline is hard coded to output
                 // to ${stroom.temp}/TestXMLTransformer.xml
                 final Path tempDir = FileUtil.getTempDir();
@@ -199,17 +196,11 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
                 final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
                 final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
 
-                // Get the input stream.
-                final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(inputResource);
-
                 pipeline.startProcessing();
 
                 pipeline.process(inputStream, encoding);
 
                 pipeline.endProcessing();
-
-                // Close all streams that have been written.,
-                streamCloserProvider.get().close();
 
                 assertThat(recordCountProvider.get().getRead() > 0).isTrue();
                 assertThat(recordCountProvider.get().getWritten() > 0).isTrue();

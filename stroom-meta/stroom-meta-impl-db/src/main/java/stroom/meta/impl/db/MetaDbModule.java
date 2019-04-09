@@ -10,10 +10,13 @@ import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
-import stroom.event.logging.api.ObjectInfoProviderBinder;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaSecurityFilter;
-import stroom.meta.shared.MetaService;
+import stroom.meta.impl.MetaDao;
+import stroom.meta.impl.MetaFeedDao;
+import stroom.meta.impl.MetaKeyDao;
+import stroom.meta.impl.MetaModule;
+import stroom.meta.impl.MetaProcessorDao;
+import stroom.meta.impl.MetaTypeDao;
+import stroom.meta.impl.MetaValueDao;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
@@ -22,26 +25,21 @@ import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 public class MetaDbModule extends AbstractModule {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetaDbModule.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetaModule.class);
     private static final String MODULE = "stroom-meta";
     private static final String FLYWAY_LOCATIONS = "stroom/meta/impl/db";
     private static final String FLYWAY_TABLE = "meta_schema_history";
 
     @Override
     protected void configure() {
-        bind(MetaFeedService.class).to(MetaFeedServiceImpl.class);
-        bind(MetaTypeService.class).to(MetaTypeServiceImpl.class);
-        bind(MetaProcessorService.class).to(MetaProcessorServiceImpl.class);
-        bind(MetaKeyService.class).to(MetaKeyServiceImpl.class);
-        bind(MetaValueService.class).to(MetaValueServiceImpl.class);
-        bind(MetaService.class).to(MetaServiceImpl.class);
-        bind(MetaSecurityFilter.class).to(MetaSecurityFilterImpl.class);
+        bind(MetaFeedDao.class).to(MetaFeedDaoImpl.class);
+        bind(MetaTypeDao.class).to(MetaTypeDaoImpl.class);
+        bind(MetaProcessorDao.class).to(MetaProcessorDaoImpl.class);
+        bind(MetaKeyDao.class).to(MetaKeyDaoImpl.class);
+        bind(MetaValueDao.class).to(MetaValueDaoImpl.class);
+        bind(MetaDao.class).to(MetaDaoImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(Cleanup.class);
-
-        // Provide object info to the logging service.
-        ObjectInfoProviderBinder.create(binder())
-                .bind(Meta.class, MetaObjectInfoProvider.class);
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)

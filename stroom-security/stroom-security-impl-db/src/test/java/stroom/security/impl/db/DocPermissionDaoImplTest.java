@@ -2,22 +2,16 @@ package stroom.security.impl.db;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.commons.logging.Logger;
-import org.junit.platform.commons.logging.LoggerFactory;
-import org.testcontainers.containers.MySQLContainer;
 import stroom.docref.DocRef;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
-import stroom.security.impl.db.jooq.Stroom;
 import stroom.security.shared.DocumentPermissionJooq;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -26,11 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DocPermissionDaoImplTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserDaoImplTest.class);
-
-    private static MySQLContainer dbContainer = new MySQLContainer()
-            .withDatabaseName(Stroom.STROOM.getName());//= null;//
-
     private static UserDao userDao;
     private static DocumentPermissionDao documentPermissionDao;
 
@@ -40,10 +29,7 @@ class DocPermissionDaoImplTest {
 
     @BeforeAll
     static void beforeAll() {
-        LOGGER.info(() -> "Before All - Start Database");
-        Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
-
-        Injector injector = Guice.createInjector(new SecurityDbModule(), new TestModule(dbContainer));
+        final Injector injector = Guice.createInjector(new SecurityDbModule(), new TestModule());
 
         userDao = injector.getInstance(UserDao.class);
         documentPermissionDao = injector.getInstance(DocumentPermissionDao.class);
@@ -161,12 +147,6 @@ class DocPermissionDaoImplTest {
 
         final Set<String> user2Doc1After = documentPermissionDao.getPermissionsForDocumentForUser(docRef2.getUuid(), user1.getUuid());
         assertThat(user2Doc1After).isEqualTo(Set.of(PERMISSION_READ, PERMISSION_USE));
-    }
-
-    @AfterAll
-    static void afterAll() {
-        LOGGER.info(() -> "After All - Stop Database");
-        Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::stop);
     }
 
     private DocRef createTestDocRef() {

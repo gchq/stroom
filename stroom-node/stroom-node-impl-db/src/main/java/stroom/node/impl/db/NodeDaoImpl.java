@@ -60,7 +60,7 @@ public class NodeDaoImpl implements NodeDao {
 
     @Override
     public Node update(final Node node) {
-        return JooqUtil.contextWithOptimisticLocking(connectionProvider, context -> {
+        return JooqUtil.contextResultWithOptimisticLocking(connectionProvider, context -> {
             final NodeRecord nodeRecord = context.newRecord(NODE, node);
             nodeRecord.update();
             return nodeRecord.into(Node.class);

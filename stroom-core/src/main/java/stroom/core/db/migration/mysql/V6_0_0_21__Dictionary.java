@@ -16,12 +16,13 @@
 
 package stroom.core.db.migration.mysql;
 
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
-import stroom.dictionary.shared.DictionaryDoc;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
 import stroom.core.db.migration._V07_00_00.docstore.shared._V07_00_00_JsonSerialiser;
 import stroom.core.db.migration._V07_00_00.docstore.shared._V07_00_00_Serialiser;
-import stroom.docstore.shared.DocRefUtil;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.sql.Connection;
@@ -31,9 +32,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.UUID;
 
-public class V6_0_0_21__Dictionary implements JdbcMigration {
+public class V6_0_0_21__Dictionary extends BaseJavaMigration {
     @Override
-    public void migrate(final Connection connection) throws Exception {
+    public void migrate(final Context flywayContext) throws Exception {
+        migrate(flywayContext.getConnection());
+    }
+
+    private void migrate(final Connection connection) throws Exception {
         final _V07_00_00_Serialiser<DictionaryDoc> serialiser = new _V07_00_00_JsonSerialiser<>();
         try (final Statement statement = connection.createStatement()) {
             try (final ResultSet resultSet = statement.executeQuery("SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, UUID, NAME, DAT FROM DICT")) {

@@ -9,7 +9,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.docstore.api.DocumentSerialiser2;
-import stroom.docstore.api.Persistence;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;

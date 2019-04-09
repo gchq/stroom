@@ -205,7 +205,6 @@ ext.libs = [
         jaxb_runtime                   : "org.glassfish.jaxb:jaxb-runtime:2.4.0-b180830.0438",
         jcl_over_slf4j                 : "org.slf4j:jcl-over-slf4j", // version controlled by DW BOM
         jcommander                     : 'com.beust:jcommander:1.72',
-        jersey_bom                     : "org.glassfish.jersey:jersey-bom", // version controlled by DW BOM
         jersey_client                  : "org.glassfish.jersey.core:jersey-client", // version controlled by DW BOM
         jersey_common                  : "org.glassfish.jersey.core:jersey-common", // version controlled by DW BOM
         jersey_server                  : "org.glassfish.jersey.core:jersey-server", // version controlled by DW BOM
@@ -233,7 +232,7 @@ ext.libs = [
         lucene_queryparser             : "org.apache.lucene:lucene-queryparser:$versions.lucene",
         mockito_core                   : "org.mockito:mockito-core:$versions.mockito",
         mockito_junit_jupiter          : "org.mockito:mockito-junit-jupiter:$versions.mockito",
-        mysql_connector_java           : "mysql:mysql-connector-java:5.1.40",
+        mysql_connector_java           : "mysql:mysql-connector-java:8.0.15",
         objenesis                      : "org.objenesis:objenesis", // version controlled by DW BOM
         poi                            : "org.apache.poi:poi:3.17",
         poi_ooxml                      : "org.apache.poi:poi-ooxml:3.17",
@@ -243,8 +242,8 @@ ext.libs = [
         slf4j_api                      : "org.slf4j:slf4j-api", // version controlled by DW BOM
         stax_api                       : "stax:stax-api:1.0.1",
         swagger_annotations            : "io.swagger:swagger-annotations:$versions.swagger",
-        test_containers                : "org.testcontainers:testcontainers:1.8.0",
-        test_containers_mysql          : "org.testcontainers:mysql:1.8.0",
+        test_containers                : "org.testcontainers:testcontainers:1.11.1",
+        test_containers_mysql          : "org.testcontainers:mysql:1.11.1",
         unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",
         vavr                           : "io.vavr:vavr:0.9.0",
         ws_rs_api                      : "javax.ws.rs:javax.ws.rs-api:2.1",
@@ -321,7 +320,6 @@ subprojects {
     // This bit makes all sub projects have access to the BOMs for the dependency versions
     dependencies {
         compile platform(libs.dropwizard_bom)
-        compile platform(libs.jersey_bom)
     }
 
     //println project.getConfigurations().getByName("implementation").getAllDependencies()

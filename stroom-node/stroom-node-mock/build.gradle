@@ -1,0 +1,40 @@
+ext.moduleName = 'stroom.node.mock'
+
+dependencies {
+    compile project(':stroom-cluster:stroom-cluster-task-api')
+    compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-job:stroom-job-api')
+    compile project(':stroom-node:stroom-node-api')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-statistics:stroom-statistics-api')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+
+    compile libs.stroomDocRef
+    
+    compile libs.guice4
+    compile libs.hessian
+    compile libs.jackson_annotations
+    compile libs.jackson_databind
+    compile libs.javax_inject
+    compile libs.javax_servlet_api
+    compile libs.slf4j_api
+    
+    testCompile libs.assertj_core
+    testCompile libs.mockito_core
+    testCompile libs.mockito_junit_jupiter
+    
+    testCompile libs.junit_jupiter_api
+    
+    // the following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}

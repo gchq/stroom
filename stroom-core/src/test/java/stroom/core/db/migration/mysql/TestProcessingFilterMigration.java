@@ -2,10 +2,10 @@ package stroom.core.db.migration.mysql;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import stroom.config.common.ConnectionConfig;
+import stroom.db.util.DbUtil;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.util.Properties;
 
 @Disabled
 class TestProcessingFilterMigration {
@@ -23,16 +23,11 @@ class TestProcessingFilterMigration {
     public void testMigrateOnDockerImage() throws Exception {
         final V6_0_0_9__ProcessingFilter filter = new V6_0_0_9__ProcessingFilter(false);
 
-        final Properties connectionProps = new Properties();
-        connectionProps.put("user", TEST_USER);
-        connectionProps.put("password", TEST_PASSWORD);
-
-        final Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3307/stroom",
-                connectionProps);
-
-        filter.migrate(conn);
-
-        conn.close();
+        final ConnectionConfig connectionConfig = new ConnectionConfig();
+        DbUtil.decorateConnectionConfig(connectionConfig);
+        DbUtil.validate(connectionConfig);
+        try (final Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
+            filter.migrate(conn);
+        }
     }
 }

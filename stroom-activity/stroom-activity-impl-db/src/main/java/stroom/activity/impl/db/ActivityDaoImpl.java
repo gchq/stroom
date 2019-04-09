@@ -35,33 +35,33 @@ import static stroom.activity.impl.db.jooq.tables.Activity.ACTIVITY;
 
 public class ActivityDaoImpl implements ActivityDao {
     private final ConnectionProvider connectionProvider;
-    private final GenericDao<ActivityRecord, Activity, Integer> dao;
+    private final GenericDao<ActivityRecord, Activity, Integer> genericDao;
 
     @Inject
     ActivityDaoImpl(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
-        dao = new GenericDao<>(ACTIVITY, ACTIVITY.ID, Activity.class, connectionProvider);
+        genericDao = new GenericDao<>(ACTIVITY, ACTIVITY.ID, Activity.class, connectionProvider);
     }
 
     @Override
     public Activity create(Activity activity) {
-        return dao.create(activity);
+        return genericDao.create(activity);
     }
 
     @Override
     public Activity update(final Activity activity) {
         ActivitySerialiser.serialise(activity);
-        return ActivitySerialiser.deserialise(dao.update(activity));
+        return ActivitySerialiser.deserialise(genericDao.update(activity));
     }
 
     @Override
     public boolean delete(final int id) {
-        return dao.delete(id);
+        return genericDao.delete(id);
     }
 
     @Override
     public Optional<Activity> fetch(final int id) {
-        return dao.fetch(id).map(ActivitySerialiser::deserialise);
+        return genericDao.fetch(id).map(ActivitySerialiser::deserialise);
     }
 
     @Override

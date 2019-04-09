@@ -12,6 +12,7 @@ import stroom.data.store.impl.fs.FsDataStoreJobsModule;
 import stroom.data.store.impl.fs.FsVolumeJobsModule;
 import stroom.index.impl.IndexJobsModule;
 import stroom.index.impl.selection.VolumeJobsModule;
+import stroom.meta.impl.MetaDbJobsModule;
 import stroom.pipeline.PipelineJobsModule;
 import stroom.pipeline.refdata.store.RefDataStoreJobsModule;
 import stroom.processor.impl.ProcessorTaskJobsModule;
@@ -20,7 +21,7 @@ import stroom.search.impl.SearchJobsModule;
 import stroom.search.impl.shard.ShardJobsModule;
 import stroom.statistics.impl.sql.SQLStatisticsJobsModule;
 import stroom.statistics.impl.sql.search.SQLStatisticSearchJobsModule;
-import stroom.storedquery.impl.db.StoredQueryJobsModule;
+import stroom.storedquery.impl.StoredQueryJobsModule;
 
 public class JobsModule extends AbstractModule {
     @Override
@@ -43,7 +44,7 @@ public class JobsModule extends AbstractModule {
         install(new SQLStatisticsJobsModule());
         install(new StoredQueryJobsModule());
         install(new stroom.job.impl.JobSystemJobsModule());
-        install(new stroom.meta.impl.db.MetaDbJobsModule());
+        install(new MetaDbJobsModule());
         install(new stroom.node.impl.NodeJobsModule());
         install(new ProcessorTaskJobsModule());
         install(new ProxyAggregationJobsModule());

@@ -45,7 +45,7 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.security.api.DocumentPermissionCache;
-import stroom.security.impl.mock.AllowAllMockSecurity;
+import stroom.security.mock.AllowAllMockSecurity;
 import stroom.data.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.ByteSizeUnit;

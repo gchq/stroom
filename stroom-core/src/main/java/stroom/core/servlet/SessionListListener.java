@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.BaseResultList;
 import stroom.meta.shared.StandardHeaderArguments;
-import stroom.security.util.UserTokenUtil;
+import stroom.security.api.UserTokenUtil;
 import stroom.task.api.TaskManager;
 import stroom.task.api.TaskIdFactory;
 import stroom.task.shared.FindTaskCriteria;

@@ -62,7 +62,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskManagerImpl.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TaskManagerImpl.class);
 
-    private final TaskHandlerBeanRegistry taskHandlerBeanRegistry;
+    private final TaskHandlerRegistry taskHandlerRegistry;
     private final NodeInfo nodeInfo;
     private final Security security;
     private final PipelineScopeRunnable pipelineScopeRunnable;
@@ -74,11 +74,11 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
     private final ReentrantLock poolCreationLock = new ReentrantLock();
 
     @Inject
-    TaskManagerImpl(final TaskHandlerBeanRegistry taskHandlerBeanRegistry,
+    TaskManagerImpl(final TaskHandlerRegistry taskHandlerRegistry,
                     final NodeInfo nodeInfo,
                     final Security security,
                     final PipelineScopeRunnable pipelineScopeRunnable) {
-        this.taskHandlerBeanRegistry = taskHandlerBeanRegistry;
+        this.taskHandlerRegistry = taskHandlerRegistry;
         this.nodeInfo = nodeInfo;
         this.security = security;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
@@ -362,7 +362,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 CurrentTaskState.pushState(taskThread);
                 try {
                     // Get the task handler that will deal with this task.
-                    final TaskHandler<Task<R>, R> taskHandler = taskHandlerBeanRegistry.findHandler(task);
+                    final TaskHandler<Task<R>, R> taskHandler = taskHandlerRegistry.findHandler(task);
 
                     LOGGER.debug("doExec() - exec >> '{}' {}", task.getClass().getName(), task);
                     taskHandler.exec(task, callback);
