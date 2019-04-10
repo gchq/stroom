@@ -40,6 +40,10 @@ public class XsltResource implements RestResource {
         private String description;
         private String data;
 
+        XsltDTO() {
+
+        }
+
         XsltDTO(final XsltDoc doc) {
             super(XsltDoc.DOCUMENT_TYPE, doc.getUuid(), doc.getName());
             setData(doc.getData());
@@ -65,7 +69,6 @@ public class XsltResource implements RestResource {
 
     @GET
     @Path("/{xsltId}")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response fetch(@PathParam("xsltId") final String xsltId) {
         return security.secureResult(() -> {
             final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
@@ -79,20 +82,20 @@ public class XsltResource implements RestResource {
 
     @POST
     @Path("/{xsltId}")
-    @Produces(MediaType.APPLICATION_XML)
-    @Consumes(MediaType.APPLICATION_XML)
+    @Consumes(MediaType.APPLICATION_JSON)
     public Response save(@PathParam("xsltId") final String xsltId,
-                         final String xsltData) {
+                         final XsltDTO xsltDto) {
         // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
         security.useAsRead(() -> {
             final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
 
             if (xsltDoc != null) {
-                xsltDoc.setData(xsltData);
+                xsltDoc.setDescription(xsltDto.getDescription());
+                xsltDoc.setData(xsltDto.getData());
                 xsltStore.writeDocument(xsltDoc);
             }
         });
 
-        return Response.ok().build();
+        return Response.noContent().build();
     }
 }
