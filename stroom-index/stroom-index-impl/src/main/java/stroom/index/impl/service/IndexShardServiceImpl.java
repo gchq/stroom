@@ -62,7 +62,7 @@ public class IndexShardServiceImpl implements IndexShardService {
 
     @Override
     public IndexShard loadById(final Long id) {
-        return security.secureResult(() -> indexShardDao.loadById(id));
+        return security.secureResult(() -> indexShardDao.fetch(id).orElse(null));
     }
 
     @Override

@@ -202,7 +202,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
     private boolean compareStatus(final IndexShardStatus expected, final long indexShardId) {
         final IndexShard loaded = indexShardService.loadById(indexShardId);
-        return expected.equals(loaded.getStatusE());
+        return expected.equals(loaded.getStatus());
     }
 
     @Test

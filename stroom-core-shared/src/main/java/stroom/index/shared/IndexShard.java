@@ -31,11 +31,8 @@ import java.util.Set;
  * A place where a indexUuid has been created.
  */
 public class IndexShard implements SharedObject {
-    public static final Set<IndexShardStatus> NON_DELETED_INDEX_SHARD_STATUS = Collections.unmodifiableSet(
-            new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.CORRUPT)));
-    public static final Set<IndexShardStatus> READABLE_INDEX_SHARD_STATUS = Collections
-            .unmodifiableSet(new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED)));
-
+    public static final Set<IndexShardStatus> NON_DELETED_INDEX_SHARD_STATUS = Set.of(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.CORRUPT);
+    public static final Set<IndexShardStatus> READABLE_INDEX_SHARD_STATUS = Set.of(IndexShardStatus.OPEN, IndexShardStatus.CLOSED);
 
     private Long id;
 
@@ -70,12 +67,11 @@ public class IndexShard implements SharedObject {
     /**
      * Status
      */
-    private volatile byte status = IndexShardStatus.CLOSED.getPrimitiveValue();
+    private volatile IndexShardStatus status = IndexShardStatus.CLOSED;
     private Long fileSize;
     private String indexVersion;
 
     private IndexVolume volume;
-    private Integer fkVolumeId;
 
     private String nodeName;
 
@@ -98,10 +94,6 @@ public class IndexShard implements SharedObject {
 
     public IndexVolume getVolume() {
         return volume;
-    }
-
-    public Integer getFkVolumeId() {
-        return fkVolumeId;
     }
 
     public String getNodeName() {
@@ -144,20 +136,12 @@ public class IndexShard implements SharedObject {
         this.partitionToTime = partitionToTime;
     }
 
-    public byte getStatus() {
+    public IndexShardStatus getStatus() {
         return status;
     }
 
-    public void setStatus(final byte status) {
+    public void setStatus(final IndexShardStatus status) {
         this.status = status;
-    }
-
-    public IndexShardStatus getStatusE() {
-        return IndexShardStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(getStatus());
-    }
-
-    public void setStatusE(final IndexShardStatus status) {
-        this.status = status.getPrimitiveValue();
     }
 
     public Long getFileSize() {

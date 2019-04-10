@@ -18,7 +18,7 @@ import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP_LINK;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
 class IndexVolumeDaoImpl implements IndexVolumeDao {
-    private static final Function<Record, IndexVolume> RECORD_TO_INDEX_VOLUME_MAPPER = record -> {
+    public static final Function<Record, IndexVolume> RECORD_TO_INDEX_VOLUME_MAPPER = record -> {
         final IndexVolume indexVolume = new IndexVolume();
         indexVolume.setId(record.get(INDEX_VOLUME.ID));
         indexVolume.setVersion(record.get(INDEX_VOLUME.VERSION));
@@ -36,7 +36,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         return indexVolume;
     };
 
-    private static final BiFunction<IndexVolume, IndexVolumeRecord, IndexVolumeRecord> INDEX_VOLUME_TO_RECORD_MAPPER = (indexVolume, record) -> {
+    public static final BiFunction<IndexVolume, IndexVolumeRecord, IndexVolumeRecord> INDEX_VOLUME_TO_RECORD_MAPPER = (indexVolume, record) -> {
         record.from(indexVolume);
         record.set(INDEX_VOLUME.ID, indexVolume.getId());
         record.set(INDEX_VOLUME.VERSION, indexVolume.getVersion());

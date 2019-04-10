@@ -62,11 +62,14 @@ class TestIndexShardDaoImpl {
                 .partitionToTime(shardTo)
                 .build();
         final IndexShard createdIndexShard = indexShardDao.create(indexShardKey, volumeGroupName, nodeName, "1.0-test");
-        final IndexShard byIdIndexShard = indexShardDao.loadById(createdIndexShard.getId());
+        final IndexShard byIdIndexShard = indexShardDao.fetch(createdIndexShard.getId()).orElse(null);
 
         // Then
         assertThat(createdIndexShard).isNotNull();
         assertThat(byIdIndexShard).isNotNull();
+
+        assertThat(createdIndexShard.getVolume()).isNotNull();
+        assertThat(byIdIndexShard.getVolume()).isNotNull();
     }
 
     @Test

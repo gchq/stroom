@@ -20,14 +20,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.SearcherManager;
 import org.junit.jupiter.api.Test;
-
-import stroom.index.impl.FieldFactory;
-import stroom.index.impl.IndexShardKeyUtil;
-import stroom.index.impl.IndexShardUtil;
-import stroom.index.impl.IndexShardWriter;
-import stroom.index.impl.IndexShardWriterImpl;
-import stroom.index.impl.IndexStructure;
-import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;

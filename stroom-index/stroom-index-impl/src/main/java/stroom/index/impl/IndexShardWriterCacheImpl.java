@@ -143,7 +143,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final List<IndexShard> list = indexShardService.find(criteria);
         for (final IndexShard indexShard : list) {
             // Look for non deleted, non full, non corrupt index shards.
-            if (IndexShardStatus.CLOSED.equals(indexShard.getStatusE())) {
+            if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
                 // Get the index fields.
                 final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
                 if (indexStructure != null && indexShard.getDocumentCount() < indexStructure.getIndex().getMaxDocsPerShard()) {
@@ -482,7 +482,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private void clean(final IndexShard indexShard) {
         try {
             LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
-            indexShard.setStatusE(IndexShardStatus.CLOSED);
+            indexShard.setStatus(IndexShardStatus.CLOSED);
             indexShardService.setStatus(indexShard.getId(), IndexShardStatus.CLOSED);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
