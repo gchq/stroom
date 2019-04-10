@@ -1,6 +1,7 @@
 package stroom.index.impl;
 
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeGroup;
 
 import java.util.List;
 
@@ -38,6 +39,13 @@ public interface IndexVolumeDao {
      * @return The list of index volumes in that specific group.
      */
     List<IndexVolume> getVolumesInGroup(String groupName);
+
+    /**
+     * Retrieve the list of groups a volume belongs to.
+     * @param id The ID of the volume to filter on.
+     * @return The list of groups
+     */
+    List<IndexVolumeGroup> getGroupsForVolume(Long id);
 
     /**
      * Retrieve all the volumes in a specific group, on a specific node.

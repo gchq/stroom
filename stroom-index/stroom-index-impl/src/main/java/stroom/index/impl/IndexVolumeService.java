@@ -1,6 +1,7 @@
 package stroom.index.impl;
 
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeGroup;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
 
@@ -49,5 +50,17 @@ public interface IndexVolumeService extends Clearable, Flushable {
      */
     void removeVolumeFromGroup(Long volumeId, String name);
 
+    /**
+     * Retrieve all the volumes that are in a given group.
+     * @param groupName The group name to filter on.
+     * @return The list of volumes in that group.
+     */
     List<IndexVolume> getVolumesInGroup(String groupName);
+
+    /**
+     * Retrieve all the groups that a given volume belongs to
+     * @param id The ID of the volume to filter on
+     * @return The list of groups that the volume belongs to.
+     */
+    List<IndexVolumeGroup> getGroupsForVolume(Long id);
 }
