@@ -145,6 +145,6 @@ class TestIndexVolumeDaoImpl {
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         indexVolumeGroup.setName(name);
         AuditUtil.stamp("test", indexVolumeGroup);
-        return indexVolumeGroupDao.create(indexVolumeGroup);
+        return indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
     }
 }

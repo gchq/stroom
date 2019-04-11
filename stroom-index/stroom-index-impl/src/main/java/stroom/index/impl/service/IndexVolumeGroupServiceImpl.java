@@ -40,7 +40,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         AuditUtil.stamp(securityContext.getUserId(), indexVolumeGroup);
         return security.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
-                () -> indexVolumeGroupDao.create(indexVolumeGroup));
+                () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
     }
 
     @Override

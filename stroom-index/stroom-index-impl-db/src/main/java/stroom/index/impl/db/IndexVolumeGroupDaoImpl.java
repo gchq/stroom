@@ -9,6 +9,7 @@ import stroom.index.shared.IndexVolumeGroup;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -52,25 +53,30 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     }
 
     @Override
-    public IndexVolumeGroup create(final IndexVolumeGroup indexVolumeGroup) {
-//        return JooqUtil.contextResult(connectionProvider, context -> {
-//            context
-//                    .insertInto(INDEX_VOLUME_GROUP,
-//                            INDEX_VOLUME_GROUP.NAME,
-//                            INDEX_VOLUME_GROUP.CREATE_USER,
-//                            INDEX_VOLUME_GROUP.CREATE_TIME_MS)
-//                    .values(indexVolumeGroup.getName(), indexVolumeGroup.getCreateUser(), indexVolumeGroup.getCreateTimeMs())
-//                    .onDuplicateKeyIgnore()
-//                    .execute();
-//
-//            return context
-//                    .select()
-//                    .from(INDEX_VOLUME_GROUP)
-//                    .where(INDEX_VOLUME_GROUP.NAME.eq(indexVolumeGroup.getName()))
-//                    .fetchOneInto(IndexVolumeGroup.class);
-//        });
+    public IndexVolumeGroup getOrCreate(final IndexVolumeGroup indexVolumeGroup) {
+        Optional<Integer> optional = JooqUtil.contextResult(connectionProvider, context -> context
+                .insertInto(INDEX_VOLUME_GROUP,
+                        INDEX_VOLUME_GROUP.VERSION,
+                        INDEX_VOLUME_GROUP.CREATE_USER,
+                        INDEX_VOLUME_GROUP.CREATE_TIME_MS,
+                        INDEX_VOLUME_GROUP.UPDATE_USER,
+                        INDEX_VOLUME_GROUP.UPDATE_TIME_MS,
+                        INDEX_VOLUME_GROUP.NAME)
+                .values(1,
+                        indexVolumeGroup.getCreateUser(),
+                        indexVolumeGroup.getCreateTimeMs(),
+                        indexVolumeGroup.getUpdateUser(),
+                        indexVolumeGroup.getUpdateTimeMs(),
+                        indexVolumeGroup.getName())
+                .onDuplicateKeyIgnore()
+                .returning(INDEX_VOLUME_GROUP.ID)
+                .fetchOptional()
+                .map(IndexVolumeGroupRecord::getId));
 
-        return genericDao.create(indexVolumeGroup);
+        return optional.map(id -> {
+            indexVolumeGroup.setId(id);
+            return indexVolumeGroup;
+        }).orElse(get(indexVolumeGroup.getName()));
     }
 
     @Override

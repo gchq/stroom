@@ -142,13 +142,13 @@ class TestIndexVolumeGroupDaoImpl {
 //        indexVolume.setNodeName(nodeName);
 //        indexVolume.setPath(path);
 //        AuditUtil.stamp("test", indexVolume);
-//        return indexVolumeDao.create(indexVolume);
+//        return indexVolumeDao.getOrCreate(indexVolume);
 //    }
 
     private IndexVolumeGroup createGroup(final String name) {
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         indexVolumeGroup.setName(name);
         AuditUtil.stamp(TestModule.TEST_USER, indexVolumeGroup);
-        return indexVolumeGroupDao.create(indexVolumeGroup);
+        return indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
     }
 }
