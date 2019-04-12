@@ -45,7 +45,6 @@ class IndexShardDaoImpl implements IndexShardDao {
         indexShard.setStatus(IndexShardStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(INDEX_SHARD.STATUS)));
         indexShard.setFileSize(record.get(INDEX_SHARD.FILE_SIZE));
         indexShard.setIndexVersion(record.get(INDEX_SHARD.INDEX_VERSION));
-//        indexShard.setVolume(record.get(INDEX_SHARD.FK_VOLUME_ID));
         indexShard.setNodeName(record.get(INDEX_SHARD.NODE_NAME));
         indexShard.setIndexUuid(record.get(INDEX_SHARD.INDEX_UUID));
         return indexShard;
@@ -77,8 +76,6 @@ class IndexShardDaoImpl implements IndexShardDao {
         FIELD_MAP.put(FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME);
     }
 
-    private static final Field[] COMBINED_FIELDS = Stream.of(INDEX_SHARD.fields(), INDEX_VOLUME.fields()).flatMap(Stream::of).toArray(Field[]::new);
-
     private final ConnectionProvider connectionProvider;
     private final IndexVolumeDao indexVolumeDao;
     private final GenericDao<IndexShardRecord, IndexShard, Long> genericDao;
@@ -96,7 +93,7 @@ class IndexShardDaoImpl implements IndexShardDao {
     @Override
     public Optional<IndexShard> fetch(final long id) {
         return JooqUtil.contextResult(connectionProvider, context -> context
-                .select(COMBINED_FIELDS)
+                .select()
                 .from(INDEX_SHARD)
                 .join(INDEX_VOLUME).on(INDEX_VOLUME.ID.eq(INDEX_SHARD.FK_VOLUME_ID))
                 .where(INDEX_SHARD.ID.eq(id))
@@ -153,7 +150,7 @@ class IndexShardDaoImpl implements IndexShardDao {
 
         return JooqUtil.contextResult(connectionProvider, context ->
                 context
-                        .select(COMBINED_FIELDS)
+                        .select()
                         .from(INDEX_SHARD)
                         .join(INDEX_VOLUME).on(INDEX_VOLUME.ID.eq(INDEX_SHARD.FK_VOLUME_ID))
                         .where(conditions)

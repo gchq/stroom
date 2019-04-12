@@ -6,6 +6,7 @@ import stroom.db.util.JooqUtil;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeRecord;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolume.VolumeUseState;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -28,7 +29,10 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         indexVolume.setUpdateUser(record.get(INDEX_VOLUME.UPDATE_USER));
         indexVolume.setPath(record.get(INDEX_VOLUME.PATH));
         indexVolume.setNodeName(record.get(INDEX_VOLUME.NODE_NAME));
-//        indexVolume.setStatus(record.get);
+        final Byte state = record.get(INDEX_VOLUME.STATE);
+        if (state != null) {
+            indexVolume.setState(VolumeUseState.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(state));
+        }
         indexVolume.setBytesLimit(record.get(INDEX_VOLUME.BYTES_LIMIT));
         indexVolume.setBytesUsed(record.get(INDEX_VOLUME.BYTES_USED));
         indexVolume.setBytesFree(record.get(INDEX_VOLUME.BYTES_FREE));
@@ -47,6 +51,9 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         record.set(INDEX_VOLUME.UPDATE_USER, indexVolume.getUpdateUser());
         record.set(INDEX_VOLUME.PATH, indexVolume.getPath());
         record.set(INDEX_VOLUME.NODE_NAME, indexVolume.getNodeName());
+        if ( indexVolume.getState() != null) {
+            record.set(INDEX_VOLUME.STATE, indexVolume.getState().getPrimitiveValue());
+        }
         record.set(INDEX_VOLUME.BYTES_LIMIT, indexVolume.getBytesLimit());
         record.set(INDEX_VOLUME.BYTES_USED, indexVolume.getBytesUsed());
         record.set(INDEX_VOLUME.BYTES_FREE, indexVolume.getBytesFree());

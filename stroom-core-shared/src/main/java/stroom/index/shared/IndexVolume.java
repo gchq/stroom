@@ -16,7 +16,6 @@
 
 package stroom.index.shared;
 
-import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.docref.HasDisplayValue;
 import stroom.docref.SharedObject;
 import stroom.util.shared.HasAuditInfo;
@@ -39,7 +38,7 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
     private String updateUser;
     private String path;
     private String nodeName;
-    private VolumeUseStatus status = VolumeUseStatus.ACTIVE;
+    private VolumeUseState state = VolumeUseState.ACTIVE;
     private Long bytesLimit;
     private Long bytesUsed;
     private Long bytesFree;
@@ -130,8 +129,8 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
             return this;
         }
 
-        public Builder status(final VolumeUseStatus value) {
-            instance.setStatus(value);
+        public Builder status(final VolumeUseState value) {
+            instance.setState(value);
             return this;
         }
 
@@ -176,12 +175,12 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
         this.path = path;
     }
 
-    public VolumeUseStatus getStatus() {
-        return status;
+    public VolumeUseState getState() {
+        return state;
     }
 
-    public void setStatus(final VolumeUseStatus status) {
-        this.status = status;
+    public void setState(final VolumeUseState state) {
+        this.state = state;
     }
 
     public Long getBytesLimit() {
@@ -258,18 +257,18 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
         return percent;
     }
 
-    public enum VolumeUseStatus implements HasDisplayValue, HasPrimitiveValue {
+    public enum VolumeUseState implements HasDisplayValue, HasPrimitiveValue {
         ACTIVE("Active", 0), // Currently being written to.
         INACTIVE("Inactive", 1), // No longer being written to but still accessible for reading.
         CLOSED("Closed", 3); // Data has been removed and the volume is closed.
 
-        public static final PrimitiveValueConverter<FsVolume.VolumeUseStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
-                FsVolume.VolumeUseStatus.values());
+        public static final PrimitiveValueConverter<VolumeUseState> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
+                VolumeUseState.values());
 
         private final String displayValue;
         private final byte primitiveValue;
 
-        VolumeUseStatus(final String displayValue, final int primitiveValue) {
+        VolumeUseState(final String displayValue, final int primitiveValue) {
             this.displayValue = displayValue;
             this.primitiveValue = (byte) primitiveValue;
         }

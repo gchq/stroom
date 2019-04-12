@@ -41,7 +41,7 @@ import stroom.index.impl.db.jooq.tables.records.IndexVolumeRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexVolume extends TableImpl<IndexVolumeRecord> {
 
-    private static final long serialVersionUID = -1797865327;
+    private static final long serialVersionUID = -1183407900;
 
     /**
      * The reference instance of <code>stroom.index_volume</code>
@@ -89,12 +89,17 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
     /**
      * The column <code>stroom.index_volume.node_name</code>.
      */
-    public final TableField<IndexVolumeRecord, String> NODE_NAME = createField("node_name", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<IndexVolumeRecord, String> NODE_NAME = createField("node_name", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
 
     /**
      * The column <code>stroom.index_volume.path</code>.
      */
-    public final TableField<IndexVolumeRecord, String> PATH = createField("path", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<IndexVolumeRecord, String> PATH = createField("path", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
+
+    /**
+     * The column <code>stroom.index_volume.state</code>.
+     */
+    public final TableField<IndexVolumeRecord, Byte> STATE = createField("state", org.jooq.impl.SQLDataType.TINYINT, this, "");
 
     /**
      * The column <code>stroom.index_volume.bytes_limit</code>.
