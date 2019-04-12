@@ -18,7 +18,7 @@ import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP_LINK;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
 class IndexVolumeDaoImpl implements IndexVolumeDao {
-    public static final Function<Record, IndexVolume> RECORD_TO_INDEX_VOLUME_MAPPER = record -> {
+    static final Function<Record, IndexVolume> RECORD_TO_INDEX_VOLUME_MAPPER = record -> {
         final IndexVolume indexVolume = new IndexVolume();
         indexVolume.setId(record.get(INDEX_VOLUME.ID));
         indexVolume.setVersion(record.get(INDEX_VOLUME.VERSION));
@@ -28,6 +28,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         indexVolume.setUpdateUser(record.get(INDEX_VOLUME.UPDATE_USER));
         indexVolume.setPath(record.get(INDEX_VOLUME.PATH));
         indexVolume.setNodeName(record.get(INDEX_VOLUME.NODE_NAME));
+//        indexVolume.setStatus(record.get);
         indexVolume.setBytesLimit(record.get(INDEX_VOLUME.BYTES_LIMIT));
         indexVolume.setBytesUsed(record.get(INDEX_VOLUME.BYTES_USED));
         indexVolume.setBytesFree(record.get(INDEX_VOLUME.BYTES_FREE));
@@ -36,7 +37,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         return indexVolume;
     };
 
-    public static final BiFunction<IndexVolume, IndexVolumeRecord, IndexVolumeRecord> INDEX_VOLUME_TO_RECORD_MAPPER = (indexVolume, record) -> {
+    private static final BiFunction<IndexVolume, IndexVolumeRecord, IndexVolumeRecord> INDEX_VOLUME_TO_RECORD_MAPPER = (indexVolume, record) -> {
         record.from(indexVolume);
         record.set(INDEX_VOLUME.ID, indexVolume.getId());
         record.set(INDEX_VOLUME.VERSION, indexVolume.getVersion());

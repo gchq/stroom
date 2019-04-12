@@ -45,8 +45,8 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class V07_00_00_031__Index extends BaseJavaMigration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_031__Index.class);
+public class V07_00_00_033__Index extends BaseJavaMigration {
+    private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_033__Index.class);
 
     @Override
     public void migrate(final Context context) throws Exception {
@@ -97,6 +97,11 @@ public class V07_00_00_031__Index extends BaseJavaMigration {
     }
 
     private void createIndexVolumes(final Connection connection, final Set<Integer> volumeIdSSet) throws SQLException {
+        String idSet = volumeIdSSet.stream().map(String::valueOf).collect(Collectors.joining(","));
+        if (idSet.length() > 0) {
+            idSet = " v.ID IN (" + idSet + ") OR";
+        }
+
         // Create index volumes.
         final String selectSql = "" +
                 "SELECT" +
@@ -113,12 +118,12 @@ public class V07_00_00_031__Index extends BaseJavaMigration {
                 " vs.BYTES_FREE," +
                 " vs.BYTES_TOTL," +
                 " vs.STAT_MS" +
-                " FROM IDX_VOL v" +
+                " FROM VOL v" +
                 " JOIN ND n ON (n.ID = v.FK_ND_ID)" +
                 " JOIN VOL_STATE vs ON (vs.ID = v.FK_VOL_STATE_ID)" +
-                " WHERE v.ID IN (" +
-                volumeIdSSet.stream().map(String::valueOf).collect(Collectors.joining(",")) +
-                ") OR v.IDX_STAT = 0";
+                " WHERE" +
+                idSet +
+                " v.IDX_STAT = 0";
         final String insertSql = "" +
                 "INSERT INTO index_volume (" +
                 " id," +
@@ -247,7 +252,7 @@ public class V07_00_00_031__Index extends BaseJavaMigration {
                 " UUID," +
                 " DESCRIP," +
                 " MAX_DOC," +
-                " MAX_SHARD," +
+                " MAX_SHRD," +
                 " PART_BY," +
                 " PART_SZ," +
                 " RETEN_DAY_AGE," +
@@ -274,7 +279,7 @@ public class V07_00_00_031__Index extends BaseJavaMigration {
                         final String uuid = resultSet.getString(6);
                         final String descrip = resultSet.getString(7);
                         final int maxDoc = resultSet.getInt(8);
-                        final int maxShard = resultSet.getInt(9);
+                        final int maxShrd = resultSet.getInt(9);
                         final byte partBy = resultSet.getByte(10);
                         final int partSz = resultSet.getInt(11);
                         final int retenDayAge = resultSet.getInt(12);
@@ -291,7 +296,7 @@ public class V07_00_00_031__Index extends BaseJavaMigration {
                         document.setUpdateUser(updUser);
                         document.setDescription(descrip);
                         document.setMaxDocsPerShard(maxDoc);
-                        document.setShardsPerPartition(maxShard);
+                        document.setShardsPerPartition(maxShrd);
                         document.setPartitionBy(PartitionBy.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(partBy));
                         document.setPartitionSize(partSz);
                         document.setRetentionDayAge(retenDayAge);

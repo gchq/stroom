@@ -32,7 +32,7 @@ BEGIN
 
         -- Only migrate if the core schema has been migrated.
         IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'schema_version' > 0) THEN
-            IF (SELECT COUNT(*) FROM schema_version where version = '07.00.00.025' > 0) THEN
+            IF (SELECT COUNT(*) FROM schema_version where version = '07.00.00.031' > 0) THEN
 
                 --
                 -- Copy data into the table, use ID predicate to make it re-runnable
