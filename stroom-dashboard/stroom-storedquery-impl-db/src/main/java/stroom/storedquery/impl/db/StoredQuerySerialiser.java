@@ -27,10 +27,10 @@ import stroom.query.api.v2.Query;
 
 import java.io.IOException;
 
-class StoredQuerySerialiser {
+public class StoredQuerySerialiser {
     private static final Logger LOGGER = LoggerFactory.getLogger(StoredQuerySerialiser.class);
 
-    static StoredQuery serialise(final StoredQuery storedQuery) {
+    public static StoredQuery serialise(final StoredQuery storedQuery) {
         try {
             if (storedQuery != null) {
                 if (storedQuery.getQuery() == null) {

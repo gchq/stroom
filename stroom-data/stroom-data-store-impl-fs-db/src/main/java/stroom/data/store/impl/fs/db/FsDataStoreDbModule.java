@@ -41,7 +41,7 @@ import javax.sql.DataSource;
 public class FsDataStoreDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(FsDataStoreDbModule.class);
     private static final String MODULE = "stroom-data-store";
-    private static final String FLYWAY_LOCATIONS = "stroom/data/store/impl/fs/db";
+    private static final String FLYWAY_LOCATIONS = "stroom/data/store/impl/fs/db/migration";
     private static final String FLYWAY_TABLE = "fs_schema_history";
 
     @Override

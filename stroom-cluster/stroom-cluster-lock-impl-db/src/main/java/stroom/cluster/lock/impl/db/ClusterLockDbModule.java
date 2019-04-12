@@ -22,7 +22,7 @@ import javax.sql.DataSource;
 public class ClusterLockDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockDbModule.class);
     private static final String MODULE = "stroom-cluster-lock";
-    private static final String FLYWAY_LOCATIONS = "stroom/cluster/lock/impl/db";
+    private static final String FLYWAY_LOCATIONS = "stroom/cluster/lock/impl/db/migration";
     private static final String FLYWAY_TABLE = "cluster_lock_schema_history";
 
     @Override

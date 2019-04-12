@@ -23,7 +23,7 @@ import javax.sql.DataSource;
 public class SecurityDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityDbModule.class);
     private static final String MODULE = "stroom-security";
-    private static final String FLYWAY_LOCATIONS = "stroom/security/impl/db";
+    private static final String FLYWAY_LOCATIONS = "stroom/security/impl/db/migration";
     private static final String FLYWAY_TABLE = "security_schema_history";
 
     @Override
