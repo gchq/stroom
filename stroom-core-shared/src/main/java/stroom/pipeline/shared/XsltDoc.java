@@ -33,6 +33,7 @@ public class XsltDoc extends Doc implements HasData {
     public static final String DOCUMENT_TYPE = "XSLT";
 
     private String description;
+
     @JsonIgnore
     private String data;
 

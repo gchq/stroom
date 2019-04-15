@@ -2,6 +2,7 @@ package stroom.security.impl;
 
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
+import stroom.util.RestResource;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -17,7 +18,7 @@ import javax.ws.rs.core.Response;
         description = "Stroom Document Permissions API")
 @Path("/docPermissions/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public interface DocumentPermissionResource {
+public interface DocumentPermissionResource extends RestResource {
 
     @GET
     @Path("/forDocType/{docType}")

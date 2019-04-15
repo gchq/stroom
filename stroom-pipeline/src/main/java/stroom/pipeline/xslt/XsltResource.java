@@ -36,33 +36,66 @@ public class XsltResource implements RestResource {
                 .build();
     }
 
+    private static class XsltDTO extends DocRef {
+        private String description;
+        private String data;
+
+        XsltDTO() {
+
+        }
+
+        XsltDTO(final XsltDoc doc) {
+            super(XsltDoc.DOCUMENT_TYPE, doc.getUuid(), doc.getName());
+            setData(doc.getData());
+            setDescription(doc.getDescription());
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public String getData() {
+            return data;
+        }
+
+        public void setData(String data) {
+            this.data = data;
+        }
+    }
+
     @GET
     @Path("/{xsltId}")
-    @Produces(MediaType.APPLICATION_XML)
     public Response fetch(@PathParam("xsltId") final String xsltId) {
         return security.secureResult(() -> {
             final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
-
-            return Response.ok(xsltDoc.getData()).build();
+            if (null != xsltDoc) {
+                return Response.ok(new XsltDTO(xsltDoc)).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
         });
     }
 
     @POST
     @Path("/{xsltId}")
-    @Produces(MediaType.APPLICATION_XML)
-    @Consumes(MediaType.APPLICATION_XML)
+    @Consumes(MediaType.APPLICATION_JSON)
     public Response save(@PathParam("xsltId") final String xsltId,
-                         final String xsltData) {
+                         final XsltDTO xsltDto) {
         // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
         security.useAsRead(() -> {
             final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
 
             if (xsltDoc != null) {
-                xsltDoc.setData(xsltData);
+                xsltDoc.setDescription(xsltDto.getDescription());
+                xsltDoc.setData(xsltDto.getData());
                 xsltStore.writeDocument(xsltDoc);
             }
         });
 
-        return Response.ok().build();
+        return Response.noContent().build();
     }
 }

@@ -31,6 +31,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.UiConfig;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -55,26 +56,9 @@ public class ManageNodeToolsPlugin extends NodeToolsPlugin {
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_VOLUMES_PERMISSION)) {
             clientPropertyCache.get()
-                .onSuccess(result -> {
-                    final IconMenuItem usersMenuItem;
-                    final SvgPreset icon = SvgPresets.VOLUMES;
-                    final String indexVolumesUiUrl = result.getUrlConfig().getIndexVolumes();
-                    if (indexVolumesUiUrl != null && indexVolumesUiUrl.trim().length() > 0) {
-                        usersMenuItem = new IconMenuItem(4, icon, null, "Index Volumes", null, true, () -> {
-                            final Hyperlink hyperlink = new Hyperlink.Builder()
-                                    .text("Index Volumes")
-                                    .href(indexVolumesUiUrl)
-                                    .type(HyperlinkType.TAB + "|Index Volumes")
-                                    .icon(icon)
-                                    .build();
-                            HyperlinkEvent.fire(this, hyperlink);
-                        });
-                    } else {
-                        usersMenuItem = new IconMenuItem(5, icon, icon, "Index Volumes UI is not configured!", null, false, null);
-                    }
-
-                    event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, usersMenuItem);
-
+                .onSuccess(uiConfig -> {
+                    addIndexVolumesMenuItem(event, uiConfig);
+                    addIndexVolumeGroupsMenuItem(event, uiConfig);
                 })
                 .onFailure(caught -> AlertEvent.fireError(ManageNodeToolsPlugin.this, caught.getMessage(), null));
         }
@@ -86,5 +70,48 @@ public class ManageNodeToolsPlugin extends NodeToolsPlugin {
                                 PopupType.CLOSE_DIALOG, null, popupSize, "System Properties", null, null);
                     }));
         }
+    }
+
+    private void addIndexVolumesMenuItem(final BeforeRevealMenubarEvent event,
+                                         final UiConfig uiConfig) {
+        final IconMenuItem volumeMenuItem;
+        final SvgPreset icon = SvgPresets.VOLUMES;
+        final String indexVolumesUiUrl = uiConfig.getUrlConfig().getIndexVolumes();
+        if (indexVolumesUiUrl != null && indexVolumesUiUrl.trim().length() > 0) {
+            volumeMenuItem = new IconMenuItem(4, icon, null, "Index Volumes", null, true, () -> {
+                final Hyperlink hyperlink = new Hyperlink.Builder()
+                        .text("Index Volumes")
+                        .href(indexVolumesUiUrl)
+                        .type(HyperlinkType.TAB + "|Index Volumes")
+                        .icon(icon)
+                        .build();
+                HyperlinkEvent.fire(this, hyperlink);
+            });
+
+        } else {
+            volumeMenuItem = new IconMenuItem(5, icon, icon, "Index Volumes UI is not configured!", null, false, null);
+        }
+        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, volumeMenuItem);
+    }
+
+    private void addIndexVolumeGroupsMenuItem(final BeforeRevealMenubarEvent event,
+                                              final UiConfig uiConfig) {
+        final SvgPreset icon = SvgPresets.VOLUMES;
+        final IconMenuItem volumeGroupMenuItem;
+        final String indexVolumeGroupsUiUrl = uiConfig.getUrlConfig().getIndexVolumeGroups();
+        if (indexVolumeGroupsUiUrl != null && indexVolumeGroupsUiUrl.trim().length() > 0) {
+            volumeGroupMenuItem = new IconMenuItem(4, icon, null, "Index Volume Groups", null, true, () -> {
+                final Hyperlink hyperlink = new Hyperlink.Builder()
+                        .text("Index Volume Groups")
+                        .href(indexVolumeGroupsUiUrl)
+                        .type(HyperlinkType.TAB + "|Index Volume Groups")
+                        .icon(icon)
+                        .build();
+                HyperlinkEvent.fire(this, hyperlink);
+            });
+        } else {
+            volumeGroupMenuItem = new IconMenuItem(5, icon, icon, "Index Volume Groups UI is not configured!", null, false, null);
+        }
+        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, volumeGroupMenuItem);
     }
 }

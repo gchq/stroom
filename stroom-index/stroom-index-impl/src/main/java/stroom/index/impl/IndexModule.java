@@ -22,10 +22,15 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.entity.shared.EntityEvent;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.index.impl.rest.IndexResourceImpl;
+import stroom.index.impl.rest.IndexShardResourceImpl;
+import stroom.index.impl.rest.IndexVolumeGroupResourceImpl;
+import stroom.index.impl.rest.IndexVolumeResourceImpl;
 import stroom.index.impl.service.IndexShardServiceImpl;
 import stroom.index.impl.service.IndexVolumeGroupServiceImpl;
 import stroom.index.impl.service.IndexVolumeServiceImpl;
 import stroom.index.shared.IndexDoc;
+import stroom.util.RestResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
@@ -58,6 +63,12 @@ public class IndexModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(IndexStoreImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(IndexResourceImpl.class)
+                .addBinding(IndexShardResourceImpl.class)
+                .addBinding(IndexVolumeGroupResourceImpl.class)
+                .addBinding(IndexVolumeResourceImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);

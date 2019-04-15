@@ -85,6 +85,7 @@ public class SecurityModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(UserResourceImpl.class)
-                .addBinding(UserAppPermissionResourceImpl.class);
+                .addBinding(UserAppPermissionResourceImpl.class)
+                .addBinding(DocumentPermissionResourceImpl.class);
     }
 }
