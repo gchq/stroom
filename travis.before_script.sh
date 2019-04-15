@@ -44,10 +44,10 @@ else
     ./gradlew clean build publishToMavenLocal
     popd
 
-    echo -e "${GREEN}Clone our stroom-resources repo${NC}"
+    echo -e "${GREEN}Clone our stroom-resources repo ${BLUE}${STROOM_RESOURCES_GIT_REF}${NC}"
     git clone https://github.com/gchq/stroom-resources.git
     pushd stroom-resources/bin
-    git checkout $STROOM_RESOURCES_BRANCH
+    git checkout $STROOM_RESOURCES_GIT_REF
 
     echo -e "${GREEN}Start all the services we need to run the integration tests in stroom${NC}"
     ./bounceIt.sh 'up -d --build' -d -e -y -x kafka stroom-all-dbs zookeeper
