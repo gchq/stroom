@@ -188,7 +188,7 @@ ext.libs = [
     lucene_queryparser: "org.apache.lucene:lucene-queryparser:$versions.lucene",
     lucene_backward_codecs: "org.apache.lucene:lucene-backward-codecs:$versions.lucene",
     mockito_core: "org.mockito:mockito-core:2.0.2-beta",
-    mysql_connector_java: "mysql:mysql-connector-java:5.1.40",
+    mysql_connector_java: "mysql:mysql-connector-java:8.0.15",
     poi: "org.apache.poi:poi:3.17",
     poi_ooxml: "org.apache.poi:poi-ooxml:3.17",
     reactivestreams: "org.reactivestreams:reactive-streams:1.0.2", //used by rxjava
