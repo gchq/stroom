@@ -41,9 +41,8 @@ public class PipelineResource implements RestResource {
     private final Security security;
     private final PipelineScopeRunnable pipelineScopeRunnable;
 
-    private static class PipelineDTO {
+    private static class PipelineDTO extends DocRef {
         private DocRef parentPipeline;
-        private DocRef docRef;
         private String description;
         private List<PipelineData> configStack;
         private PipelineData merged;
@@ -56,8 +55,8 @@ public class PipelineResource implements RestResource {
                     final DocRef docRef,
                     final String description,
                     final List<PipelineData> configStack) {
+            super(docRef.getType(), docRef.getUuid(),docRef.getName());
             this.parentPipeline = parentPipeline;
-            this.docRef = docRef;
             this.description = description;
             this.configStack = configStack;
             this.merged = new PipelineDataMerger().merge(configStack).createMergedData();
@@ -65,10 +64,6 @@ public class PipelineResource implements RestResource {
 
         public String getDescription() {
             return description;
-        }
-
-        public DocRef getDocRef() {
-            return docRef;
         }
 
         public DocRef getParentPipeline() {
@@ -225,6 +220,6 @@ public class PipelineResource implements RestResource {
             });
         });
 
-        return Response.ok().build();
+        return Response.noContent().build();
     }
 }

@@ -24,6 +24,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
+import stroom.util.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -34,7 +35,7 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "stroom-index query - /v2")
 @Path("/stroom-index/v2")
 @Produces(MediaType.APPLICATION_JSON)
-public interface StroomIndexQueryResource {
+public interface StroomIndexQueryResource extends RestResource {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)

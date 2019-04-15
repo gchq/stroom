@@ -3,11 +3,13 @@ package stroom.index.impl.db;
 import stroom.db.util.JooqUtil;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeGroup;
 import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 import java.util.List;
 
+import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
 import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP_LINK;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
@@ -91,6 +93,17 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                 .on(INDEX_VOLUME.ID.eq(INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_ID))
                 .where(INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_GROUP_NAME.eq(groupName))
                 .fetchInto(IndexVolume.class)
+        );
+    }
+
+    @Override
+    public List<IndexVolumeGroup> getGroupsForVolume(final Long id) {
+        return JooqUtil.contextResult(connectionProvider, context -> context.select()
+                .from(INDEX_VOLUME_GROUP)
+                .innerJoin(INDEX_VOLUME_GROUP_LINK)
+                .on(INDEX_VOLUME_GROUP.NAME.eq(INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_GROUP_NAME))
+                .where(INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_ID.eq(id))
+                .fetchInto(IndexVolumeGroup.class)
         );
     }
 
