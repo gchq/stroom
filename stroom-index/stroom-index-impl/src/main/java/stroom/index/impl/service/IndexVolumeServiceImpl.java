@@ -3,6 +3,7 @@ package stroom.index.impl.service;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeGroup;
 import stroom.security.api.Security;
 import stroom.security.shared.PermissionNames;
 
@@ -40,6 +41,11 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
     @Override
     public List<IndexVolume> getVolumesInGroup(final String groupName) {
         return security.secureResult(() -> indexVolumeDao.getVolumesInGroup(groupName));
+    }
+
+    @Override
+    public List<IndexVolumeGroup> getGroupsForVolume(final Long id) {
+        return security.secureResult(() -> indexVolumeDao.getGroupsForVolume(id));
     }
 
     @Override

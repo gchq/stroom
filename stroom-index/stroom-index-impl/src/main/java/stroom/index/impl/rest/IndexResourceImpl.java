@@ -87,6 +87,6 @@ public class IndexResourceImpl implements IndexResource {
             indexStore.writeDocument(doc);
         }
 
-        return Response.ok().build();
+        return Response.noContent().build();
     }
 }

@@ -220,6 +220,6 @@ public class PipelineResource implements RestResource {
             });
         });
 
-        return Response.ok().build();
+        return Response.noContent().build();
     }
 }

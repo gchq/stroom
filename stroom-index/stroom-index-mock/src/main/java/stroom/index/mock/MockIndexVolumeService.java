@@ -19,6 +19,7 @@ package stroom.index.mock;
 
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeGroup;
 
 import java.util.Collections;
 import java.util.List;
@@ -56,6 +57,11 @@ public class MockIndexVolumeService implements IndexVolumeService {
 
     @Override
     public List<IndexVolume> getVolumesInGroup(String groupName) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<IndexVolumeGroup> getGroupsForVolume(Long id) {
         return Collections.emptyList();
     }
 

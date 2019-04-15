@@ -409,6 +409,7 @@ appConfig:
       trackers: null
       annotations: http://${STROOM_HOST:-localhost}/annotationsService/queryApi/v1
       elastic: http://${STROOM_HOST:-localhost}/queryElasticService/queryApi/v1
+      documentPermissions: http://${STROOM_HOST:-localhost}:5001/s/authorisationManager/document/
   volumes:
     resilientReplicationCount: 1
     preferLocalVolumes: false

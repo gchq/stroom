@@ -61,6 +61,15 @@ public interface IndexVolumeResource extends RestResource {
     Response getVolumesInGroup(@PathParam("groupName") String groupName);
 
     /**
+     * Retrieve the list of groups that a given volume belongs to
+     * @param id The ID of the volume
+     * @return The list of Index Volume Groups for that volume
+     */
+    @GET
+    @Path("/groupsFor/{id}")
+    Response getGroupsForVolume(@PathParam("id") Long id);
+
+    /**
      * Add a volume to the membership of a group.
      * @param volumeId The ID of the volume
      * @param groupName the name of the group.

@@ -62,11 +62,15 @@ import stroom.explorer.shared.ExplorerServiceInfoAction;
 import stroom.explorer.shared.ExplorerServiceMoveAction;
 import stroom.explorer.shared.ExplorerServiceRenameAction;
 import stroom.explorer.shared.FetchExplorerPermissionsAction;
+import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.hyperlink.client.HyperlinkType;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgIcon;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.ImageUtil;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.SharedMap;
@@ -108,18 +112,21 @@ public class DocumentPluginEventManager extends Plugin {
     private final KeyboardInterceptor keyboardInterceptor;
     private TabData selectedTab;
     private MultiSelectionModel<ExplorerNode> selectionModel;
+    private final UiConfigCache clientPropertyCache;
 
     @Inject
     public DocumentPluginEventManager(final EventBus eventBus,
                                       final KeyboardInterceptor keyboardInterceptor,
                                       final ClientDispatchAsync dispatcher,
                                       final DocumentTypeCache documentTypeCache,
-                                      final MenuListPresenter menuListPresenter) {
+                                      final MenuListPresenter menuListPresenter,
+                                      final UiConfigCache clientPropertyCache) {
         super(eventBus);
         this.keyboardInterceptor = keyboardInterceptor;
         this.dispatcher = dispatcher;
         this.documentTypeCache = documentTypeCache;
         this.menuListPresenter = menuListPresenter;
+        this.clientPropertyCache = clientPropertyCache;
     }
 
     @Override
@@ -178,6 +185,22 @@ public class DocumentPluginEventManager extends Plugin {
                         }
                     }
                 }));
+
+        clientPropertyCache.get()
+                .onSuccess(uiConfig -> {
+                    registerHandler(
+                            getEventBus().addHandler(ShowPermissionsDialogEvent.getType(), event -> {
+                                final Hyperlink hyperlink = new Hyperlink.Builder()
+                                        .text("Permissions")
+                                        .href(uiConfig.getUrlConfig().getDocumentPermissions() + event.getExplorerNode().getUuid())
+                                        .type(HyperlinkType.TAB + "|Document Permissions")
+                                        .icon(SvgPresets.PERMISSIONS)
+                                        .build();
+                                HyperlinkEvent.fire(this, hyperlink);
+                            }));
+                });
+
+
 
         // 11. Handle entity reload events.
         registerHandler(getEventBus().addHandler(RefreshDocumentEvent.getType(), event -> {
