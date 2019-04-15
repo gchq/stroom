@@ -308,6 +308,7 @@ ui:
     trackers: null
     annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
     elastic: "http://IP_ADDRESS/queryElasticService/queryApi/v1"
+    documentPermissions: "http://IP_ADDRESS/s/authorisationManager/document/"
 volumes:
   resilientReplicationCount: 1
   preferLocalVolumes: false

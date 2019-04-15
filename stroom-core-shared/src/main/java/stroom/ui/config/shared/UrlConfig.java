@@ -18,6 +18,7 @@ public class UrlConfig implements SharedObject, IsConfig {
     private String trackers = null;
     private String annotations = "http://IP_ADDRESS/annotationsService/queryApi/v1";
     private String elastic = "http://IP_ADDRESS/queryElasticService/queryApi/v1";
+    private String documentPermissions = "http://IP_ADDRESS/s/authorisationManager/document/";
 
     public UrlConfig() {
         // Default constructor necessary for GWT serialisation.
@@ -129,6 +130,14 @@ public class UrlConfig implements SharedObject, IsConfig {
         this.groupAuthorisation = groupAuthorisation;
     }
 
+    public String getDocumentPermissions() {
+        return documentPermissions;
+    }
+
+    public void setDocumentPermissions(String documentPermissions) {
+        this.documentPermissions = documentPermissions;
+    }
+
     @Override
     public String toString() {
         return "UrlConfig{" +
@@ -145,6 +154,7 @@ public class UrlConfig implements SharedObject, IsConfig {
                 ", trackers='" + trackers + '\'' +
                 ", annotations='" + annotations + '\'' +
                 ", elastic='" + elastic + '\'' +
+                ", documentPermissions='" + documentPermissions + '\'' +
                 '}';
     }
 }
