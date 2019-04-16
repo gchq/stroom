@@ -7,6 +7,7 @@ dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-docstore-server')
 
+    compile libs.stroomProxyRemoteApi
     compile libs.stroomQueryApi
     compile libs.slf4j_api
     compile libs.spring_context
