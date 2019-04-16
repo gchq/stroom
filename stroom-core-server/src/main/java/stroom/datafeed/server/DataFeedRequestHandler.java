@@ -25,12 +25,11 @@ import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.StroomStatusCode;
 import stroom.feed.StroomStreamException;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.internalstatistics.MetaDataStatistic;
-import stroom.node.server.StroomPropertyService;
+import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
@@ -64,38 +63,28 @@ public class DataFeedRequestHandler implements RequestHandler {
     private final FeedService feedService;
     private final MetaDataStatistic metaDataStatistics;
     private final MetaMapFilterFactory metaMapFilterFactory;
-    private final StroomPropertyService stroomPropertyService;
-
-    private volatile MetaMapFilter metaMapFilter;
 
     @Inject
     DataFeedRequestHandler(final SecurityContext securityContext,
                            final StreamStore streamStore,
                            @Named("cachedFeedService") final FeedService feedService,
                            final MetaDataStatistic metaDataStatistics,
-                           final MetaMapFilterFactory metaMapFilterFactory,
-                           final StroomPropertyService stroomPropertyService) {
+                           final MetaMapFilterFactory metaMapFilterFactory) {
         this.securityContext = securityContext;
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.metaDataStatistics = metaDataStatistics;
         this.metaMapFilterFactory = metaMapFilterFactory;
-        this.stroomPropertyService = stroomPropertyService;
     }
 
     @Override
     @Insecure
     public void handle(final HttpServletRequest request, final HttpServletResponse response) {
-        if (metaMapFilter == null) {
-            final String receiptPolicyUuid = stroomPropertyService.getProperty("stroom.feed.receiptPolicyUuid");
-            if (receiptPolicyUuid != null && receiptPolicyUuid.length() > 0) {
-                this.metaMapFilter = metaMapFilterFactory.create(receiptPolicyUuid);
-            }
-        }
-
         try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+            final MetaMapFilter metaMapFilter = metaMapFilterFactory.create();
+
             final MetaMap metaMap = MetaMapFactory.create(request);
-            if (metaMapFilter == null || metaMapFilter.filter(metaMap)) {
+            if (metaMapFilter.filter(metaMap)) {
                 debug("Receiving data", metaMap);
                 final String feedName = metaMap.get(StroomHeaderArguments.FEED);
 

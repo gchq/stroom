@@ -16,8 +16,9 @@
 
 package stroom.feed.server;
 
-import java.io.Serializable;
+import stroom.proxy.feed.remote.GetFeedStatusRequest;
+import stroom.proxy.feed.remote.GetFeedStatusResponse;
 
-public class RemoteRequest implements Serializable {
-    private static final long serialVersionUID = -3023517525631202886L;
+public interface FeedStatusService {
+    GetFeedStatusResponse getFeedStatus(GetFeedStatusRequest request);
 }

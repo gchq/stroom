@@ -18,30 +18,27 @@
 package stroom.ruleset.server;
 
 import org.springframework.stereotype.Component;
+import stroom.datafeed.server.DataReceiptPolicyMetaMapFilterFactory;
 import stroom.datafeed.server.MetaMapFilter;
-import stroom.datafeed.server.MetaMapFilterFactory;
 import stroom.dictionary.server.DictionaryStore;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Component
-public class MetaMapFilterFactoryImpl implements MetaMapFilterFactory {
+@Singleton
+public class DataReceiptPolicyMetaMapFilterFactoryImpl implements DataReceiptPolicyMetaMapFilterFactory {
     private final RuleSetService ruleSetService;
     private final DictionaryStore dictionaryStore;
 
     @Inject
-    public MetaMapFilterFactoryImpl(final RuleSetService ruleSetService, final DictionaryStore dictionaryStore) {
+    public DataReceiptPolicyMetaMapFilterFactoryImpl(final RuleSetService ruleSetService, final DictionaryStore dictionaryStore) {
         this.ruleSetService = ruleSetService;
         this.dictionaryStore = dictionaryStore;
     }
 
     @Override
-    public MetaMapFilter create() {
-        return new MetaMapFilterImpl();
-    }
-
-    @Override
     public MetaMapFilter create(final String dataReceiptPolicyUuid) {
-        return new MetaMapFilterImpl(new DataReceiptPolicyChecker(ruleSetService, dictionaryStore, dataReceiptPolicyUuid));
+        return new DataReceiptPolicyMetaMapFilter(new DataReceiptPolicyChecker(ruleSetService, dictionaryStore, dataReceiptPolicyUuid));
     }
 }

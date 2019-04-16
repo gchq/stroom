@@ -19,36 +19,29 @@ package stroom.ruleset.server;
 
 import stroom.datafeed.server.MetaMapFilter;
 import stroom.feed.MetaMap;
-import stroom.feed.StroomStatusCode;
 import stroom.feed.StroomStreamException;
+import stroom.proxy.StroomStatusCode;
 import stroom.ruleset.shared.DataReceiptAction;
 
-class MetaMapFilterImpl implements MetaMapFilter {
-    private DataReceiptPolicyChecker dataReceiptPolicyChecker = null;
+import java.util.Objects;
 
-    MetaMapFilterImpl() {
-    }
+class DataReceiptPolicyMetaMapFilter implements MetaMapFilter {
+    private final DataReceiptPolicyChecker dataReceiptPolicyChecker;
 
-    MetaMapFilterImpl(final DataReceiptPolicyChecker dataReceiptPolicyChecker) {
+    DataReceiptPolicyMetaMapFilter(final DataReceiptPolicyChecker dataReceiptPolicyChecker) {
+        Objects.requireNonNull(dataReceiptPolicyChecker, "Null policy checker");
         this.dataReceiptPolicyChecker = dataReceiptPolicyChecker;
     }
 
     @Override
     public boolean filter(final MetaMap metaMap) {
-        boolean allowThrough = true;
+        // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
+        final DataReceiptAction dataReceiptAction = dataReceiptPolicyChecker.check(metaMap);
 
-        if(dataReceiptPolicyChecker != null) {
-            // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
-            final DataReceiptAction dataReceiptAction = dataReceiptPolicyChecker.check(metaMap);
-
-            if (DataReceiptAction.REJECT.equals(dataReceiptAction)) {
-                throw new StroomStreamException(StroomStatusCode.RECEIPT_POLICY_SET_TO_REJECT_DATA);
-
-            }
-
-            allowThrough = DataReceiptAction.RECEIVE.equals(dataReceiptAction);
+        if (DataReceiptAction.REJECT.equals(dataReceiptAction)) {
+            throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA);
         }
 
-        return allowThrough;
+        return DataReceiptAction.RECEIVE.equals(dataReceiptAction);
     }
 }

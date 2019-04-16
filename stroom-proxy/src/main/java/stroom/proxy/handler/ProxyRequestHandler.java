@@ -1,15 +1,13 @@
 package stroom.proxy.handler;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datafeed.server.MetaMapFilter;
-import stroom.datafeed.server.MetaMapFilterFactory;
 import stroom.datafeed.server.RequestHandler;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
-import stroom.feed.StroomStatusCode;
 import stroom.feed.StroomStreamException;
+import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.thread.BufferFactory;
@@ -37,19 +35,12 @@ public class ProxyRequestHandler implements RequestHandler {
     private final LogStream logStream;
 
     @Inject
-    public ProxyRequestHandler(final ProxyRequestConfig proxyRequestConfig,
-                               final MasterStreamHandlerFactory streamHandlerFactory,
+    public ProxyRequestHandler(final MasterStreamHandlerFactory streamHandlerFactory,
                                final MetaMapFilterFactory metaMapFilterFactory,
                                final LogStream logStream) {
         this.streamHandlerFactory = streamHandlerFactory;
         this.logStream = logStream;
-
-        if (StringUtils.isNotBlank(proxyRequestConfig.getReceiptPolicyUuid())) {
-            metaMapFilter = metaMapFilterFactory.create(proxyRequestConfig.getReceiptPolicyUuid());
-        }
-        else{
-            metaMapFilter = metaMapFilterFactory.create();
-        }
+        metaMapFilter = metaMapFilterFactory.create();
     }
 
     @Override
@@ -131,7 +122,7 @@ public class ProxyRequestHandler implements RequestHandler {
             LOGGER.warn("\"handleException()\",{},\"{}\"", CSVFormatter.format(metaMap), CSVFormatter.escape(e.getMessage()));
 
             final long duration = System.currentTimeMillis() - startTimeMs;
-            if (StroomStatusCode.RECEIPT_POLICY_SET_TO_REJECT_DATA.equals(e.getStroomStatusCode())) {
+            if (StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA.equals(e.getStroomStatusCode())) {
                 logStream.log(RECEIVE_LOG, metaMap, "REJECT", request.getRequestURI(), returnCode, -1, duration);
             } else {
                 logStream.log(RECEIVE_LOG, metaMap, "ERROR", request.getRequestURI(), returnCode, -1, duration);

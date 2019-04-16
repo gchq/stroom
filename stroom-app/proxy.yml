@@ -88,6 +88,7 @@ proxyConfig:
 # in Stroom and have the UUID as specified below in receiptPolicyUuid
   proxyRequestConfig:
     receiptPolicyUuid:
+    feedStatusUrl: http://127.0.0.1:8080/api/feedStatus/v1
   forwardStreamConfig:
     forwardingEnabled: true
     forwardUrl: "http://localhost:8080/stroom/datafeed"

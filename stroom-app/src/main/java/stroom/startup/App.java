@@ -52,6 +52,7 @@ import stroom.elastic.spring.ElasticIndexConfiguration;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.explorer.server.ExplorerConfiguration;
+import stroom.feed.server.FeedStatusResource;
 import stroom.feed.server.RemoteFeedServiceRPC;
 import stroom.healthchecks.LogLevelInspector;
 import stroom.importexport.server.ImportExportActionHandler;
@@ -177,6 +178,7 @@ public class App extends Application<Config> {
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, DictionaryResource.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RuleSetResource.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ForwardStreamHandlerFactory.class);
+        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, FeedStatusResource.class);
 
         healthCheckRegistry.register(configuration.getProxyConfig().getClass().getName(), new HealthCheck() {
             @Override
@@ -215,6 +217,7 @@ public class App extends Application<Config> {
         // Add resources.
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, FeedStatusResource.class);
 
         // Listen to the lifecycle of the Dropwizard app.
         GuiceUtil.manage(environment.lifecycle(), injector, ProxyLifecycle.class);
@@ -267,6 +270,7 @@ public class App extends Application<Config> {
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, DictionaryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, RuleSetResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, JWTService.class);
+        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, FeedStatusResource.class);
 
         // Add filters
         SpringUtil.addFilter(servletContextHandler, applicationContext, HttpServletRequestFilter.class, "/*");
@@ -303,6 +307,7 @@ public class App extends Application<Config> {
         SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SessionResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, FeedStatusResource.class);
 
         // Map exceptions to helpful HTTP responses
         environment.jersey().register(PermissionExceptionMapper.class);

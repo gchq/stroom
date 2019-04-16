@@ -12,13 +12,50 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.datafeed.server;
 
-public interface MetaMapFilterFactory {
-    MetaMapFilter create();
+import org.springframework.stereotype.Component;
+import stroom.node.server.StroomPropertyService;
 
-    MetaMapFilter create(String receiptPolicyUuid);
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
+
+@Component
+@Singleton
+public class MetaMapFilterFactory {
+    private final StroomPropertyService stroomPropertyService;
+    private final DataReceiptPolicyMetaMapFilterFactory dataReceiptPolicyMetaMapFilterFactory;
+    private final FeedStatusMetaMapFilter feedStatusMetaMapFilter;
+
+    private volatile MetaMapFilter metaMapFilter;
+    private final AtomicReference<String> lastPolicyUuid = new AtomicReference<>();
+
+    @Inject
+    public MetaMapFilterFactory(final StroomPropertyService stroomPropertyService,
+                                final DataReceiptPolicyMetaMapFilterFactory dataReceiptPolicyMetaMapFilterFactory,
+                                final FeedStatusMetaMapFilter feedStatusMetaMapFilter) {
+        this.stroomPropertyService = stroomPropertyService;
+        this.dataReceiptPolicyMetaMapFilterFactory = dataReceiptPolicyMetaMapFilterFactory;
+        this.feedStatusMetaMapFilter = feedStatusMetaMapFilter;
+    }
+
+    public MetaMapFilter create() {
+        final String receiptPolicyUuid = stroomPropertyService.getProperty("stroom.feed.receiptPolicyUuid");
+        final String last = lastPolicyUuid.get();
+        if (metaMapFilter == null || !Objects.equals(last, receiptPolicyUuid)) {
+            lastPolicyUuid.compareAndSet(last, receiptPolicyUuid);
+
+            if (receiptPolicyUuid != null && receiptPolicyUuid.length() > 0) {
+                metaMapFilter = dataReceiptPolicyMetaMapFilterFactory.create(receiptPolicyUuid);
+            } else {
+                metaMapFilter = feedStatusMetaMapFilter;
+            }
+        }
+
+        return metaMapFilter;
+    }
 }

@@ -20,14 +20,16 @@ package stroom.feed.server;
 import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
+import stroom.proxy.feed.remote.GetFeedStatusRequest;
+import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.security.SecurityHelper;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 
 import javax.annotation.Resource;
 
-@Component("remoteFeedService")
-public class RemoteFeedServiceImpl implements RemoteFeedService {
+@Component
+public class FeedStatusServiceImpl implements FeedStatusService {
     @Resource
     private SecurityContext securityContext;
     @Resource(name = "cachedFeedService")
@@ -37,6 +39,10 @@ public class RemoteFeedServiceImpl implements RemoteFeedService {
     @Insecure
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
         try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+            if (request == null || request.getFeedName() == null) {
+                return GetFeedStatusResponse.createFeedIsNotDefinedResponse();
+            }
+
             final Feed feed = feedService.loadByName(request.getFeedName());
 
             if (feed == null) {

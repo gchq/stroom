@@ -16,6 +16,9 @@
 
 package stroom.node.server;
 
+import stroom.proxy.status.remote.GetStatusRequest;
+import stroom.proxy.status.remote.GetStatusResponse;
+
 public interface RemoteStatusService {
     GetStatusResponse getStatus(GetStatusRequest request);
 }

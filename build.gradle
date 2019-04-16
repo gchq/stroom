@@ -73,6 +73,7 @@ ext.versions = [
     stroomExpression: 'v1.4.14',
     stroomQuery: 'v2.1-beta.21', //same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.6.0-alpha.2',
+    stroomProxyApi: 'v5.1.2',
 
     //------------3rd-party------------
     curator: '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
@@ -110,6 +111,7 @@ ext.libs = [
     stroomExpression: "stroom:stroom-expression:$versions.stroomExpression",
     stroomStatsSchema: "stroom:stroom-stats-schema:$versions.stroomStats",
     stroomAuthApi: "stroom:stroom-auth-service-api:$versions.stroomAuth",
+    stroomProxyRemoteApi: "stroom:stroom-proxy-remote-api:$versions.stroomProxyApi",
 
     //------3rd Party-libs---------------
     aopalliance: "aopalliance:aopalliance:1.0",
@@ -326,6 +328,7 @@ subprojects {
         jcenter()
         maven { url "https://dl.bintray.com/stroom/event-logging" }
         maven { url "https://dl.bintray.com/stroom/stroom" }
+        maven { url "https://dl.bintray.com/stroom/stroom-proxy" }
     }
 
     // This means the reports from our integration tests won't over-write the reports from our unit tests.
