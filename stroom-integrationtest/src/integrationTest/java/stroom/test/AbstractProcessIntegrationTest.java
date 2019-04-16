@@ -19,11 +19,12 @@ package stroom.test;
 import org.junit.Before;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import stroom.dictionary.spring.DictionaryConfiguration;
-import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
+import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.explorer.server.ExplorerConfiguration;
 import stroom.index.spring.IndexConfiguration;
+import stroom.logging.spring.EventLoggingConfiguration;
+import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.spring.SecurityConfiguration;
@@ -55,7 +56,8 @@ import stroom.visualisation.spring.VisualisationConfiguration;
         ScriptConfiguration.class,
         VisualisationConfiguration.class,
         DashboardConfiguration.class,
-        StatisticsConfiguration.class})
+        StatisticsConfiguration.class,
+        RuleSetConfiguration.class})
 public abstract class AbstractProcessIntegrationTest extends StroomIntegrationTest {
 
     @Before
