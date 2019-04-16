@@ -11,6 +11,7 @@ import stroom.dictionary.server.DictionaryStoreImpl;
 import stroom.docstore.server.Persistence;
 import stroom.docstore.server.fs.FSPersistence;
 import stroom.feed.server.FeedStatusService;
+import stroom.proxy.handler.FeedStatusConfig;
 import stroom.proxy.handler.ForwardStreamConfig;
 import stroom.proxy.handler.ForwardStreamHandlerFactory;
 import stroom.proxy.handler.LogStreamConfig;
@@ -46,6 +47,7 @@ public class ProxyModule extends AbstractModule {
         bind(ProxyRepositoryConfig.class).toProvider(proxyConfig::getProxyRepositoryConfig);
         bind(ProxyRepositoryReaderConfig.class).toProvider(proxyConfig::getProxyRepositoryReaderConfig);
         bind(ContentSyncConfig.class).toProvider(proxyConfig::getContentSyncConfig);
+        bind(FeedStatusConfig.class).toProvider(proxyConfig::getFeedStatusConfig);
 
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
         bind(Monitor.class).to(MonitorImpl.class);

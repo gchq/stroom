@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
 
 public class ContentSyncConfig {
-
     private boolean isContentSyncEnabled = false;
     private Map<String, String> upstreamUrl;
     private long syncFrequency;

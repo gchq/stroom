@@ -36,12 +36,13 @@ public class MetaMapFilterFactory {
 
     @Inject
     public MetaMapFilterFactory(final ProxyRequestConfig proxyRequestConfig,
+                                final FeedStatusConfig feedStatusConfig,
                                 final DataReceiptPolicyMetaMapFilterFactory dataReceiptPolicyMetaMapFilterFactory,
                                 final Provider<RemoteFeedStatusService> remoteFeedStatusServiceProvider) {
         if (StringUtils.isNotBlank(proxyRequestConfig.getReceiptPolicyUuid())) {
             LOGGER.info("Using data receipt policy to filter received data");
             metaMapFilter = dataReceiptPolicyMetaMapFilterFactory.create(proxyRequestConfig.getReceiptPolicyUuid());
-        } else if (StringUtils.isNotBlank(proxyRequestConfig.getFeedStatusUrl())) {
+        } else if (StringUtils.isNotBlank(feedStatusConfig.getFeedStatusUrl())) {
             LOGGER.info("Using remote feed status service to filter received data");
             final RemoteFeedStatusService remoteFeedStatusService = remoteFeedStatusServiceProvider.get();
             metaMapFilter = new FeedStatusMetaMapFilter(remoteFeedStatusService);

@@ -14,6 +14,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -26,11 +27,13 @@ public class RemoteFeedStatusService implements FeedStatusService {
     private static final long ONE_MINUTE = 60000;
 
     private final String url;
+    private final String apiKey;
     private final Map<GetFeedStatusRequest, CachedResponse> lastKnownResponse = new ConcurrentHashMap<>();
 
     @Inject
-    RemoteFeedStatusService(final ProxyRequestConfig proxyRequestConfig) {
-        this.url = proxyRequestConfig.getFeedStatusUrl();
+    RemoteFeedStatusService(final FeedStatusConfig feedStatusConfig) {
+        this.url = feedStatusConfig.getFeedStatusUrl();
+        this.apiKey = feedStatusConfig.getApiKey();
     }
 
     @Override
@@ -83,7 +86,7 @@ public class RemoteFeedStatusService implements FeedStatusService {
         final Client client = ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
         final WebTarget webTarget = client.target(url).path(path);
         final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-//        invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + contentSyncConfig.getApiKey());
+        invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey);
         return invocationBuilder;
     }
 

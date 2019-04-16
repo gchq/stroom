@@ -2,6 +2,7 @@ package stroom.proxy.guice;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.content.ContentSyncConfig;
+import stroom.proxy.handler.FeedStatusConfig;
 import stroom.proxy.handler.ForwardStreamConfig;
 import stroom.proxy.handler.LogStreamConfig;
 import stroom.proxy.handler.ProxyRequestConfig;
@@ -16,6 +17,7 @@ public class ProxyConfig {
     private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
     private LogStreamConfig logStreamConfig;
     private ContentSyncConfig contentSyncConfig;
+    private FeedStatusConfig feedStatusConfig;
 
     @JsonProperty
     public ProxyRequestConfig getProxyRequestConfig() {
@@ -75,6 +77,16 @@ public class ProxyConfig {
     @JsonProperty
     public void setContentSyncConfig(final ContentSyncConfig contentSyncConfig) {
         this.contentSyncConfig = contentSyncConfig;
+    }
+
+    @JsonProperty("feedStatus")
+    public FeedStatusConfig getFeedStatusConfig() {
+        return feedStatusConfig;
+    }
+
+    @JsonProperty("feedStatus")
+    public void setFeedStatusConfig(final FeedStatusConfig feedStatusConfig) {
+        this.feedStatusConfig = feedStatusConfig;
     }
 
     @JsonProperty
