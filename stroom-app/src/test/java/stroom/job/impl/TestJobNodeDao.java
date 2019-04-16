@@ -74,6 +74,7 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
         jobNode.setJob(job);
         jobNode.setNodeName(nodeInfo.getThisNodeName());
 
+        AuditUtil.stamp("test", jobNode);
         jobNode = jobNodeDao.create(jobNode);
         jobNode.setEnabled(true);
 
