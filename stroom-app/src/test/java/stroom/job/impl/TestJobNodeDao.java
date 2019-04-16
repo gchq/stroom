@@ -25,6 +25,7 @@ import stroom.job.shared.JobNode;
 import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
+import stroom.util.AuditUtil;
 
 import javax.inject.Inject;
 
@@ -49,6 +50,7 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
         Job job = new Job();
         job.setName("Test Job" + System.currentTimeMillis());
         job.setEnabled(true);
+        AuditUtil.stamp("test", job);
         job = jobDao.create(job);
 
         // Test update
