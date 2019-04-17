@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fixed NPE created when using empty config sections.
+
 ## [v6.0-beta.32] - 2019-04-17
 
 * Issue **#1122** : Fixed hessian communication between stroom and stroom proxy used to establish feed receive status. Added restful endpoints for feed status to stroom and stroom proxy. Proxy will now be able to request feed status from upstream stroom or stroom proxy instances.
