@@ -312,13 +312,13 @@ public class IndexShardManagerImpl implements IndexShardManager {
                 final IndexShard indexShard = indexShardService.loadById(indexShardId);
                 if (indexShard != null) {
                     // Only allow certain state transitions.
-                    final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatusE());
+                    final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
                     if (allowed.contains(status)) {
                         indexShardService.setStatus(indexShard.getId(), status);
                     } else {
                         LOGGER.warn(() -> String.format("Disallowed state transition for shard %d %s -> %s (allowed: %s)",
                                 indexShardId,
-                                indexShard.getStatusE(),
+                                indexShard.getStatus(),
                                 status,
                                 allowed));
                     }

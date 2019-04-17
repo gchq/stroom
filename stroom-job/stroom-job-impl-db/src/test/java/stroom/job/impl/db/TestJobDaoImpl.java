@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.Job;
 import stroom.security.mock.MockSecurityContextModule;
+import stroom.util.AuditUtil;
 
 import java.util.List;
 import java.util.Optional;
@@ -132,6 +133,7 @@ class TestJobDaoImpl {
 
     private Job createStandardJob(){
         Job job = new Job();
+        AuditUtil.stamp("test", job);
         job.setEnabled(true);
         job.setName("Some name");
         Job createdJob = dao.create(job);

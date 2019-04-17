@@ -5,6 +5,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface IndexShardDao {
     /**
@@ -12,7 +13,7 @@ public interface IndexShardDao {
      * @param id The Database ID of the shard
      * @return The Shard from the database
      */
-    IndexShard loadById(Long id);
+    Optional<IndexShard> fetch(long id);
 
     /**
      * Locate shards based on various criteria

@@ -54,8 +54,8 @@ public class Indexes {
         public static Index INDEX_VOLUME_NODE_NAME_PATH = Internal.createIndex("node_name_path", IndexVolume.INDEX_VOLUME, new OrderField[] { IndexVolume.INDEX_VOLUME.NODE_NAME, IndexVolume.INDEX_VOLUME.PATH }, true);
         public static Index INDEX_VOLUME_PRIMARY = Internal.createIndex("PRIMARY", IndexVolume.INDEX_VOLUME, new OrderField[] { IndexVolume.INDEX_VOLUME.ID }, true);
         public static Index INDEX_VOLUME_GROUP_INDEX_VOLUME_GROUP_NAME = Internal.createIndex("index_volume_group_name", IndexVolumeGroup.INDEX_VOLUME_GROUP, new OrderField[] { IndexVolumeGroup.INDEX_VOLUME_GROUP.NAME }, true);
-        public static Index INDEX_VOLUME_GROUP_PRIMARY = Internal.createIndex("PRIMARY", IndexVolumeGroup.INDEX_VOLUME_GROUP, new OrderField[] { IndexVolumeGroup.INDEX_VOLUME_GROUP.NAME }, true);
+        public static Index INDEX_VOLUME_GROUP_PRIMARY = Internal.createIndex("PRIMARY", IndexVolumeGroup.INDEX_VOLUME_GROUP, new OrderField[] { IndexVolumeGroup.INDEX_VOLUME_GROUP.ID }, true);
         public static Index INDEX_VOLUME_GROUP_LINK_INDEX_VOLUME_GROUP_LINK_FK_VOLUME_ID = Internal.createIndex("index_volume_group_link_fk_volume_id", IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK, new OrderField[] { IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_ID }, false);
-        public static Index INDEX_VOLUME_GROUP_LINK_INDEX_VOLUME_GROUP_LINK_UNIQUE = Internal.createIndex("index_volume_group_link_unique", IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK, new OrderField[] { IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_GROUP_NAME, IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_ID }, true);
+        public static Index INDEX_VOLUME_GROUP_LINK_INDEX_VOLUME_GROUP_LINK_UNIQUE = Internal.createIndex("index_volume_group_link_unique", IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK, new OrderField[] { IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_GROUP_ID, IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_ID }, true);
     }
 }

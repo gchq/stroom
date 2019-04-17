@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Utility class to match on sets of id's With concepts like match anything,
@@ -95,12 +96,19 @@ public class CriteriaSet<T>
         return set.contains(item);
     }
 
-    public <OUT> CriteriaSet<OUT> convertTo(final Function<T, OUT> converter) {
-        final CriteriaSet<OUT> converted = new CriteriaSet<>();
-        converted.setMatchAll(this.matchAll);
-        converted.setMatchNull(this.matchNull);
-        this.set.stream().map(converter).forEach(converted::add);
-        return converted;
+    public static <IN, OUT> CriteriaSet<OUT> convert(final CriteriaSet<IN> in, final Function<IN, OUT> converter) {
+        if (in == null) {
+            return null;
+        }
+
+        final CriteriaSet<OUT> out = new CriteriaSet<>();
+        out.matchAll = in.matchAll;
+        out.matchNull = in.matchNull;
+        if (in.set != null) {
+            out.set = in.set.stream().map(converter).collect(Collectors.toSet());
+        }
+
+        return out;
     }
 
     @Override

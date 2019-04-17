@@ -22,7 +22,7 @@ import javax.sql.DataSource;
 public class JobDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobDbModule.class);
     private static final String MODULE = "stroom-job";
-    private static final String FLYWAY_LOCATIONS = "stroom/job/impl/db";
+    private static final String FLYWAY_LOCATIONS = "stroom/job/impl/db/migration";
     private static final String FLYWAY_TABLE = "job_schema_history";
 
     @Override

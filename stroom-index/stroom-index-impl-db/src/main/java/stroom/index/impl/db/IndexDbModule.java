@@ -20,7 +20,7 @@ import javax.sql.DataSource;
 public class IndexDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexDbModule.class);
     private static final String MODULE = "stroom-index";
-    private static final String FLYWAY_LOCATIONS = "stroom/index/impl/db";
+    private static final String FLYWAY_LOCATIONS = "stroom/index/impl/db/migration";
     private static final String FLYWAY_TABLE = "index_schema_history";
 
     @Override

@@ -18,11 +18,16 @@ public class ProxyConfigModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ProxyRequestConfig.class).toProvider(proxyConfig::getProxyRequestConfig);
-        bind(LogStreamConfig.class).toProvider(proxyConfig::getLogStreamConfig);
-        bind(ForwardStreamConfig.class).toProvider(proxyConfig::getForwardStreamConfig);
-        bind(ProxyRepositoryConfig.class).toProvider(proxyConfig::getProxyRepositoryConfig);
-        bind(ProxyRepositoryReaderConfig.class).toProvider(proxyConfig::getProxyRepositoryReaderConfig);
-        bind(ContentSyncConfig.class).toProvider(proxyConfig::getContentSyncConfig);
+        // Bind the application config.        
+        bind(ProxyConfig.class).toInstance(proxyConfig);
+
+        // AppConfig will instantiate all of its child config objects so
+        // bind each of these instances so we can inject these objects on their own
+        bind(ProxyRequestConfig.class).toInstance(proxyConfig.getProxyRequestConfig());
+        bind(LogStreamConfig.class).toInstance(proxyConfig.getLogStreamConfig());
+        bind(ForwardStreamConfig.class).toInstance(proxyConfig.getForwardStreamConfig());
+        bind(ProxyRepositoryConfig.class).toInstance(proxyConfig.getProxyRepositoryConfig());
+        bind(ProxyRepositoryReaderConfig.class).toInstance(proxyConfig.getProxyRepositoryReaderConfig());
+        bind(ContentSyncConfig.class).toInstance(proxyConfig.getContentSyncConfig());
     }
 }

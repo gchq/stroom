@@ -31,6 +31,7 @@ import stroom.job.shared.JobNodeRow;
 import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.util.AuditUtil;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ModelStringUtil;
@@ -73,6 +74,7 @@ class JobNodeService {
                 // We always want to update a job node instance even if we have a stale version.
                 before.ifPresent(j -> jobNode.setVersion(j.getVersion()));
 
+                AuditUtil.stamp(securityContext.getUserId(), jobNode);
                 final JobNode after = jobNodeDao.update(jobNode);
                 return after;
             });

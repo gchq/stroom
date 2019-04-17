@@ -27,28 +27,36 @@ import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Singleton
 public class SQLStatisticAggregationTransactionHelper {
     public static final long NEWEST_SENSIBLE_STAT_AGE = DateUtil.parseNormalDateTimeString("9999-01-01T00:00:00.000Z");
-    // /**
-    // * The number of records to add to the aggregate from the aggregate source
-    // * table on each pass
-    // */
+    // The number of records to add to the aggregate from the aggregate source
+    // table on each pass
+    //
     // private static final int AGGREGATE_INCREMENT = 10000;
     public static final byte DEFAULT_PRECISION = 0;
     public static final long MS_HOUR = 1000 * 60 * 60;
     public static final long MS_DAY = MS_HOUR * 24;
     public static final long MS_MONTH = 31 * MS_DAY;
-    public static final String AGGREGATE_MAX_ID = "SELECT MAX(" + SQLStatisticNames.ID + ") FROM "
+    public static final String AGGREGATE_MAX_ID = "" +
+            "SELECT MAX(" +
+            SQLStatisticNames.ID +
+            ") FROM "
             + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME;
-    public static final String AGGREGATE_MIN_ID = "SELECT MIN(" + SQLStatisticNames.ID + ") FROM "
-            + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME;
+    public static final String AGGREGATE_MIN_ID = "" +
+            "SELECT MIN(" +
+            SQLStatisticNames.ID +
+            ") FROM " +
+            SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME;
     public static final String TRUNCATE_TABLE_SQL = "TRUNCATE TABLE ";
     public static final String CLEAR_TABLE_SQL = "DELETE FROM ";
     public static final byte MONTH_PRECISION = (byte) Math.floor(Math.log10(MS_MONTH));
@@ -56,159 +64,66 @@ public class SQLStatisticAggregationTransactionHelper {
     public static final byte HOUR_PRECISION = (byte) Math.floor(Math.log10(MS_HOUR));
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticAggregationTransactionHelper.class);
     private static final String AGGREGATE = "AGGREGATE";
-    private static final String AGGREGATE_COUNT = new StringBuilder()
-            .append("SELECT COUNT(*) ")
-            .append("FROM SQL_STAT_VAL_SRC ")
-            .toString();
-    private static final String DELETE_OLD_STATS = new StringBuilder()
-            .append("DELETE FROM SQL_STAT_VAL ")
-            .append("WHERE TIME_MS < ? ")
-            .toString();
+    private static final String AGGREGATE_COUNT = "" +
+            "SELECT COUNT(*) " +
+            "FROM SQL_STAT_VAL_SRC ";
+    private static final String DELETE_OLD_STATS = "" +
+            "DELETE FROM SQL_STAT_VAL " +
+            "WHERE TIME_MS < ? ";
     // Mark a batch of n records as 'processing' so we can work on them in
     // isolation
-    private static final String STAGE1_MARK_PROCESSING = new StringBuilder()
-            .append("UPDATE SQL_STAT_VAL_SRC ")
-            .append("SET ")
-            .append("    PROCESSING = 1 ")
-            .append("LIMIT ? ")
-            .toString();
+    private static final String STAGE1_MARK_PROCESSING = "" +
+            "UPDATE SQL_STAT_VAL_SRC " +
+            "SET " +
+            "PROCESSING = 1 " +
+            "LIMIT ? ";
 
     // @formatter:off
-    private static final String STAGE1_AGGREGATE_SOURCE_KEY = new StringBuilder()
-            .append("INSERT INTO SQL_STAT_KEY (NAME, VER) ")
-            .append("SELECT ")
-            .append("    DISTINCT(SSVS.NAME), ")
-            .append("    1 ")
-            .append("FROM SQL_STAT_VAL_SRC SSVS ")
-            .append("LEFT OUTER JOIN SQL_STAT_KEY SSK on (SSK.NAME = SSVS.NAME) ")
-            .append("WHERE SSVS.PROCESSING = 1 ")
-            .append("AND SSK.ID IS NULL")
-            .toString();
+    private static final String STAGE1_AGGREGATE_SOURCE_KEY = "" +
+            "INSERT INTO SQL_STAT_KEY (NAME, VER) " +
+            "SELECT " +
+            "    DISTINCT(SSVS.NAME), " +
+            "    1 " +
+            "FROM SQL_STAT_VAL_SRC SSVS " +
+            "LEFT OUTER JOIN SQL_STAT_KEY SSK on (SSK.NAME = SSVS.NAME) " +
+            "WHERE SSVS.PROCESSING = 1 " +
+            "AND SSK.ID IS NULL";
     // grab the oldest n records from SVS and aggregate those records with the
     // right time range
     // then outer join them to any existing SV records and add the values
     // then insert or update the values back into SV
     // relies on SV having a unique key index on FK_SQL_STAT_KEY_ID, TIME_MS,
     // PRES, VAL_TP
-    private static final String STAGE1_UPSERT = new StringBuilder()
-            .append("INSERT INTO SQL_STAT_VAL (FK_SQL_STAT_KEY_ID, TIME_MS, PRES, VAL_TP, VAL, CT) ")
-            .append("SELECT ")
-            .append("   AGG.FK_SQL_STAT_KEY_ID,  ")
-            .append("   AGG.TIME_MS,  ")
-            .append("   AGG.PRES,  ")
-            .append("   AGG.VAL_TP,  ")
-            .append("   AGG.VAL,  ")
-            .append("   AGG.CT ")
-            .append("FROM ( ")
-            .append("   SELECT ")
-            .append("       SSVT.FK_SQL_STAT_KEY_ID as FK_SQL_STAT_KEY_ID, ")
-            .append("       SSVT.TIME_MS_RND as TIME_MS, ")
-            .append("       SSVT.PRES as PRES, ")
-            .append("       SSVT.VAL_TP as VAL_TP, ")
-            .append("       COALESCE(SSVT.VAL,0) + COALESCE(SSV.VAL, 0) as VAL, ")
-            .append("       COALESCE(SSVT.CT,0) + COALESCE(SSV.CT, 0) as CT ")
-            .append("   FROM ( ")
-            .append("       SELECT  ")
-            .append("           ROUND(SSVS.TIME_MS, ?) AS TIME_MS_RND,  ")
-            .append("           ? as PRES, ")
-            .append("           ? as VAL_TP, ")
-            .append("           SUM(SSVS.VAL) as VAL, ")
-            .append("           SUM(CASE SSVS.VAL_TP WHEN " + StatisticType.COUNT.getPrimitiveValue() + " THEN SSVS.VAL ELSE 1 END) as CT, ")
-            .append("           SSK.ID as FK_SQL_STAT_KEY_ID ")
-            .append("       FROM SQL_STAT_VAL_SRC SSVS  ")
-            .append("       JOIN SQL_STAT_KEY SSK ON (SSK.NAME = SSVS.NAME)  ")
-            .append("       WHERE SSVS.TIME_MS < ?  ")
-            .append("       AND SSVS.VAL_TP = ?  ")
-            .append("       AND SSVS.PROCESSING = 1  ")
-            .append("       GROUP BY FK_SQL_STAT_KEY_ID, TIME_MS_RND, VAL_TP, PRES ")
-            .append("       HAVING COUNT(*) > 0 ")
-            .append("   ) SSVT ")
-            .append("   LEFT JOIN SQL_STAT_VAL SSV ON (")
-            .append("       SSV.FK_SQL_STAT_KEY_ID = SSVT.FK_SQL_STAT_KEY_ID AND ")
-            .append("       SSV.TIME_MS = SSVT.TIME_MS_RND AND ")
-            .append("       SSV.PRES = SSVT.PRES AND SSV.VAL_TP = SSVT.VAL_TP")
-            .append("   ) ")
-            .append(") AGG ")
-            .append("WHERE AGG.CT > 0 ")
-            .append("ON DUPLICATE KEY UPDATE ")
-            .append("   VAL = AGG.VAL, ")
-            .append("   CT = AGG.CT ")
-            .toString();
-    private static final String STAGE1_AGGREGATE_DELETE_SOURCE = new StringBuilder()
-            .append("DELETE FROM SQL_STAT_VAL_SRC ")
-            .append("WHERE PROCESSING = 1 ")
-            .append("AND TIME_MS < ? ")
-            .append("AND VAL_TP = ?")
-            .toString();
+    private static final String SPROC_STAGE1_UPSERT = "{call stage1Upsert (?, ?, ?, ?, ?)}";
+    private static final String STAGE1_AGGREGATE_DELETE_SOURCE = "" +
+            "DELETE FROM SQL_STAT_VAL_SRC " +
+            "WHERE PROCESSING = 1 " +
+            "AND TIME_MS < ? " +
+            "AND VAL_TP = ?";
     // Find if records exist in STAT_VAL older than a given age for a given
     // precision
-    private static final String STAGE2_FIND_ROWS_TO_MOVE = new StringBuilder()
-            .append("SELECT ")
-            .append("   EXISTS( ")
-            .append("       SELECT ")
-            .append("           NULL ")
-            .append("       FROM SQL_STAT_VAL SSV")
-            .append("       WHERE SSV.TIME_MS < ? ")
-            .append("       AND SSV.PRES = ? ") // old PRES
-            .append("       AND SSV.VAL_TP = ? ")
-            .append("   ) ").toString();
+    private static final String STAGE2_FIND_ROWS_TO_MOVE = "" +
+            "SELECT " +
+            "   EXISTS( " +
+            "       SELECT " +
+            "           NULL " +
+            "       FROM SQL_STAT_VAL SSV" +
+            "       WHERE SSV.TIME_MS < ? " +
+            "       AND SSV.PRES = ? " + // old PRES
+            "       AND SSV.VAL_TP = ? " +
+            "   ) ";
     // Copy stats from one precision to a coarser precision, aggregating them
     // with any stats
     // in the target precision if there are any
-    private static final String STAGE2_UPSERT = new StringBuilder()
-            .append("INSERT INTO SQL_STAT_VAL (FK_SQL_STAT_KEY_ID, TIME_MS, PRES, VAL_TP, VAL, CT) ")
-            .append("SELECT ")
-            .append("   AGG.FK_SQL_STAT_KEY_ID,  ")
-            .append("   AGG.TIME_MS,  ")
-            .append("   ? as PRES,  ") // target pres
-            .append("   ? as VAL_TP,  ")
-            .append("   AGG.VAL AS VAL,  ")
-            .append("   AGG.CT AS CT ")
-            .append("FROM ( ")
-            .append("   SELECT ")
-            .append("       FK_SQL_STAT_KEY_ID,  ")
-            .append("       TIME_MS,  ")
-            .append("       SUM(VAL) AS VAL,  ")
-            .append("       SUM(CT) AS CT ")
-            .append("   FROM ( ")
-            .append("       SELECT ") // existing values at correct precision
-            .append("           SSVO.TIME_MS, ")
-            .append("           SSVO.VAL, ")
-            .append("           SSVO.CT, ")
-            .append("           SSVO.FK_SQL_STAT_KEY_ID ")
-            .append("       FROM SQL_STAT_VAL SSVO ")
-            .append("       WHERE SSVO.PRES = ? ") // target pres
-            .append("       AND SSVO.VAL_TP = ? ")
-            .append("       AND SSVO.TIME_MS <= ROUND(?, ?) ") // only pick up records up to the point we are interested in
-            .append("       UNION ALL ")
-            .append("       SELECT ")
-            .append("           ROUND(SSVN.TIME_MS, ?) AS TIME_MS, ") // target pres, e.g. -9
-            .append("           SSVN.VAL AS VAL, ")
-            .append("           SSVN.CT AS CT, ")
-            .append("           SSVN.FK_SQL_STAT_KEY_ID AS FK_SQL_STAT_KEY_ID ")
-            .append("       FROM SQL_STAT_VAL SSVN ")
-            .append("       WHERE SSVN.TIME_MS < ? ") // stat age threshold to change precision
-            .append("       AND SSVN.PRES = ? ") // old PRES
-            .append("       AND SSVN.VAL_TP = ? ")
-            .append("       GROUP BY FK_SQL_STAT_KEY_ID, TIME_MS ")
-            .append("   ) ROUNDED ")
-            .append("   GROUP BY FK_SQL_STAT_KEY_ID, TIME_MS ")
-            .append(") AGG ")
-            .append("ON DUPLICATE KEY UPDATE ")
-            .append("   VAL = AGG.VAL, ")
-            .append("   CT = AGG.CT ")
-            .toString();
+    private static final String SPROC_STAGE2_UPSERT = "{call stage2Upsert (?, ?, ?, ?, ?, ?)}";
 
-    //TODO The last line of the above sql "CT = AGG.CT" causes the upsert to never update when run against mysql 5.7.18
-    //but works fine on 5.5. and 5.6. It also works fine on MariaDB 10.2.5.
     // Delete records from STAT_VAL older than a certain threshold for a given
     // precision
-    private static final String STAGE2_AGGREGATE_DELETE_OLD_PRECISION = new StringBuilder()
-            .append("DELETE FROM SQL_STAT_VAL ")
-            .append("WHERE TIME_MS < ? ")
-            .append("AND PRES = ? ")
-            .append("AND VAL_TP = ?")
-            .toString();
+    private static final String STAGE2_AGGREGATE_DELETE_OLD_PRECISION = "" +
+            "DELETE FROM SQL_STAT_VAL " +
+            "WHERE TIME_MS < ? " +
+            "AND PRES = ? " +
+            "AND VAL_TP = ?";
     private final ConnectionProvider connectionProvider;
     private final SQLStatisticsConfig config;
 
@@ -241,7 +156,6 @@ public class SQLStatisticAggregationTransactionHelper {
 
             new AggregateConfig(StatisticType.VALUE, MS_DAY, DAY_PRECISION, DEFAULT_PRECISION, "0 * *"),
             new AggregateConfig(StatisticType.VALUE, -1, DEFAULT_PRECISION, DEFAULT_PRECISION, "* * *"),
-
     };
 
     @Inject
@@ -376,12 +290,15 @@ public class SQLStatisticAggregationTransactionHelper {
                     // get the sum of the grouped stats
                     // if it is a value stat then the VAL column gets the sum of
                     // the grouped stats and the CNT column
-                    // gets th count of the number of records in the group
-                    final int rowsAffectedOnUpsert = doAggregateSQL_Update(connection, taskContext, newPrefix,
-                            STAGE1_UPSERT,
-                            Arrays.asList(level.getSQLPrecision(), level.getPrecision(),
-                                    level.getValueType().getPrimitiveValue(), aggregateToMs,
-                                    level.getValueType().getPrimitiveValue()));
+                    // gets the count of the number of records in the group
+
+                    final int rowsAffectedOnUpsert = callUpsert1(connection,
+                            taskContext,
+                            newPrefix,
+                            level.getSQLPrecision(),
+                            level.getPrecision(),
+                            level.getValueType().getPrimitiveValue(),
+                            aggregateToMs);
 
                     // delete records from STAT_VAL_SRC up to maxSrcId and below
                     // aggregateToMs,
@@ -404,6 +321,80 @@ public class SQLStatisticAggregationTransactionHelper {
 
         return processCount;
 
+    }
+
+    private int callUpsert1(final Connection connection,
+                            final TaskContext taskContext,
+                            final String prefix,
+                            final byte sqlPrecision,
+                            final byte precision,
+                            final byte valueType,
+                            final long aggregateToMs) throws SQLException {
+        int count;
+        final LogExecutionTime time = new LogExecutionTime();
+        taskContext.info("{}\n {}", prefix, SPROC_STAGE1_UPSERT);
+
+        LOGGER.debug(">>> {}", SPROC_STAGE1_UPSERT);
+        try (final CallableStatement stmt = connection.prepareCall(SPROC_STAGE1_UPSERT)) {
+            // Set IN parameters
+            stmt.setByte(1, sqlPrecision);
+            stmt.setByte(2, precision);
+            stmt.setByte(3, valueType);
+            stmt.setLong(4, aggregateToMs);
+
+            // Set OUT parameter
+            stmt.registerOutParameter(5, Types.INTEGER);
+
+            // Execute stored procedure
+            stmt.execute();
+
+            // Get the OUT parameter
+            count = stmt.getInt(5);
+        } catch (final SQLException sqlException) {
+            LOGGER.error("callUpsert1", sqlException);
+            throw sqlException;
+        }
+
+        logDebug("callUpsert1 - {} - {} in {}", prefix, ModelStringUtil.formatCsv(count), time);
+        return count;
+    }
+
+    private int callUpsert2(final Connection connection,
+                            final TaskContext taskContext,
+                            final String prefix,
+                            final byte targetPrecision,
+                            final byte targetSqlPrecision,
+                            final byte lastPrecision,
+                            final byte valueType,
+                            final long aggregateToMs) throws SQLException {
+        int count;
+        final LogExecutionTime time = new LogExecutionTime();
+        taskContext.info("{}\n {}", prefix, SPROC_STAGE2_UPSERT);
+
+        LOGGER.debug(">>> {}", SPROC_STAGE2_UPSERT);
+        try (final CallableStatement stmt = connection.prepareCall(SPROC_STAGE2_UPSERT)) {
+            // Set IN parameters
+            stmt.setByte(1, targetPrecision);
+            stmt.setByte(2, targetSqlPrecision);
+            stmt.setByte(3, lastPrecision);
+            stmt.setByte(4, valueType);
+            stmt.setLong(5, aggregateToMs);
+
+            // Set OUT parameter
+            stmt.registerOutParameter(6, Types.INTEGER);
+
+            // Execute stored procedure
+            stmt.execute();
+
+            // Get the OUT parameter
+            count = stmt.getInt(6);
+        } catch (final SQLException sqlException) {
+            LOGGER.error("callUpsert2", sqlException);
+            throw sqlException;
+        }
+
+        logDebug("callUpsert2 - {} - {} in {}", prefix, ModelStringUtil.formatCsv(count), time);
+        return count;
     }
 
     public void aggregateConfigStage2(final TaskContext taskContext, final String prefix, final long timeNowMs)
@@ -444,10 +435,14 @@ public class SQLStatisticAggregationTransactionHelper {
                         // required. Does an update or
                         // insert depending on if the target precision has a
                         // record or not.
-                        final int upsertCount = doAggregateSQL_Update(connection, taskContext, newPrefix, STAGE2_UPSERT,
-                                Arrays.asList(targetPrecision, valueType, targetPrecision, valueType,
-                                        aggregateToMs, targetSqlPrecision, targetSqlPrecision, aggregateToMs,
-                                        lastPrecision, valueType));
+                        final int upsertCount = callUpsert2(connection,
+                                taskContext,
+                                newPrefix,
+                                targetPrecision,
+                                targetSqlPrecision,
+                                lastPrecision,
+                                valueType,
+                                aggregateToMs);
 
                         if (upsertCount > 0) {
                             // now delete the old stats that we just copied up

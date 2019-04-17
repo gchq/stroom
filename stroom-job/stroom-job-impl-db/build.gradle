@@ -6,7 +6,6 @@ dependencies {
     compile project(':stroom-db-util')
     compile project(':stroom-job:stroom-job-impl')
     compile project(':stroom-job:stroom-job-impl-db-jooq')
-    compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 

@@ -101,7 +101,7 @@ public class MockIndexShardService
             } else if (!criteria.getIndexUuidSet().isMatch(indexShard.getIndexUuid())) {
                 include = false;
 
-            } else if (!criteria.getIndexShardStatusSet().isMatch(indexShard.getStatusE())) {
+            } else if (!criteria.getIndexShardStatusSet().isMatch(indexShard.getStatus())) {
                 include = false;
             }
 
@@ -127,7 +127,7 @@ public class MockIndexShardService
                              final IndexShard.IndexShardStatus status) {
         final IndexShard indexShard = map.get(id);
         if (null != indexShard) {
-            indexShard.setStatusE(status);
+            indexShard.setStatus(status);
             return Boolean.TRUE;
         }
         return Boolean.FALSE;

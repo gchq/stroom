@@ -17,11 +17,13 @@
 
 package stroom.job.impl;
 
+import stroom.job.api.JobManager;
 import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
-import stroom.job.api.JobManager;
 import stroom.job.shared.JobNode;
+import stroom.security.api.SecurityContext;
+import stroom.util.AuditUtil;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -34,12 +36,15 @@ import java.util.List;
 public class JobManagerImpl implements JobManager {
     private final JobDao jobDao;
     private final JobNodeDao jobNodeDao;
+    private final SecurityContext securityContext;
 
     @Inject
     public JobManagerImpl(final JobDao jobDao,
-                          final JobNodeDao jobNodeDao) {
+                          final JobNodeDao jobNodeDao,
+                          final SecurityContext securityContext) {
         this.jobDao = jobDao;
         this.jobNodeDao = jobNodeDao;
+        this.securityContext = securityContext;
     }
 
     /**
@@ -121,6 +126,7 @@ public class JobManagerImpl implements JobManager {
         if (jobs.size() > 0) {
             final Job job = jobs.get(0);
             job.setEnabled(enabled);
+            AuditUtil.stamp(securityContext.getUserId(), job);
             jobDao.update(job);
         }
     }
@@ -139,6 +145,7 @@ public class JobManagerImpl implements JobManager {
         final List<JobNode> jobNodes = jobNodeDao.find(criteria);
         for (final JobNode jobNode : jobNodes) {
             jobNode.setEnabled(enabled);
+            AuditUtil.stamp(securityContext.getUserId(), jobNode);
             jobNodeDao.update(jobNode);
         }
     }
@@ -156,6 +163,7 @@ public class JobManagerImpl implements JobManager {
         final List<JobNode> jobNodes = jobNodeDao.find(criteria);
         for (final JobNode jobNode : jobNodes) {
             jobNode.setEnabled(enabled);
+            AuditUtil.stamp(securityContext.getUserId(), jobNode);
             jobNodeDao.update(jobNode);
         }
     }

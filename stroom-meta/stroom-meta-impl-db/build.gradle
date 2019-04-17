@@ -11,7 +11,6 @@ dependencies {
     compile project(':stroom-db-util')
 //    compile project(':stroom-event-logging:stroom-event-logging-api')
 //    compile project(':stroom-lifecycle:stroom-lifecycle-api')
-//    compile project(':stroom-security:stroom-security-api')
 //    compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
 //    compile project(':stroom-util-shared')
 //    compile project(':stroom-task:stroom-task-api')

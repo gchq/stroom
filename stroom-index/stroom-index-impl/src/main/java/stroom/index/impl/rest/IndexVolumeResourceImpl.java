@@ -25,7 +25,7 @@ public class IndexVolumeResourceImpl implements IndexVolumeResource {
     }
 
     @Override
-    public Response getById(final Long id) {
+    public Response getById(final int id) {
         final IndexVolume indexVolume = indexVolumeService.getById(id);
         return Response.ok(indexVolume).build();
     }
@@ -39,7 +39,7 @@ public class IndexVolumeResourceImpl implements IndexVolumeResource {
     }
 
     @Override
-    public Response delete(final Long id) {
+    public Response delete(final int id) {
         indexVolumeService.delete(id);
         return Response.noContent().build();
     }
@@ -52,14 +52,14 @@ public class IndexVolumeResourceImpl implements IndexVolumeResource {
     }
 
     @Override
-    public Response getGroupsForVolume(final Long id) {
+    public Response getGroupsForVolume(final int id) {
         final List<IndexVolumeGroup> groups = indexVolumeService.getGroupsForVolume(id);
 
         return Response.ok(groups).build();
     }
 
     @Override
-    public Response addVolumeToGroup(final Long volumeId,
+    public Response addVolumeToGroup(final int volumeId,
                                      final String groupName) {
         indexVolumeService.addVolumeToGroup(volumeId, groupName);
 
@@ -67,7 +67,7 @@ public class IndexVolumeResourceImpl implements IndexVolumeResource {
     }
 
     @Override
-    public Response removeVolumeFromGroup(final Long volumeId,
+    public Response removeVolumeFromGroup(final int volumeId,
                                           final String groupName) {
         indexVolumeService.removeVolumeFromGroup(volumeId, groupName);
 

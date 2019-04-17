@@ -19,12 +19,11 @@ package stroom.index.impl.service;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.PermissionException;
+import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexStructure;
 import stroom.index.impl.IndexStructureCache;
-import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.LuceneVersionUtil;
-import stroom.index.impl.IndexShardDao;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
@@ -46,19 +45,16 @@ public class IndexShardServiceImpl implements IndexShardService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardServiceImpl.class);
 
     private final Security security;
-    private final IndexVolumeService indexVolumeService;
     private final IndexStructureCache indexStructureCache;
     private final SecurityContext securityContext;
     private final IndexShardDao indexShardDao;
 
     @Inject
     IndexShardServiceImpl(final Security security,
-                          final IndexVolumeService indexVolumeService,
                           final IndexStructureCache indexStructureCache,
                           final SecurityContext securityContext,
                           final IndexShardDao indexShardDao) {
         this.security = security;
-        this.indexVolumeService = indexVolumeService;
         this.indexStructureCache = indexStructureCache;
         this.securityContext = securityContext;
         this.indexShardDao = indexShardDao;
@@ -66,7 +62,7 @@ public class IndexShardServiceImpl implements IndexShardService {
 
     @Override
     public IndexShard loadById(final Long id) {
-        return security.secureResult(() -> indexShardDao.loadById(id));
+        return security.secureResult(() -> indexShardDao.fetch(id).orElse(null));
     }
 
     @Override

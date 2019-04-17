@@ -13,13 +13,15 @@ import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeGroup;
+import stroom.util.AuditUtil;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class IndexShardDaoImplTest {
+class TestIndexShardDaoImpl {
     private static IndexVolumeDao indexVolumeDao;
     private static IndexVolumeGroupDao indexVolumeGroupDao;
     private static IndexShardDao indexShardDao;
@@ -49,8 +51,8 @@ class IndexShardDaoImplTest {
         final Long shardTo = shardFrom + 3600;
 
         // When
-        final IndexVolume createdVolume = indexVolumeDao.create(nodeName, path);
-        indexVolumeGroupDao.create(volumeGroupName);
+        final IndexVolume createdVolume = createVolume(nodeName, path);
+        createGroup(volumeGroupName);
         indexVolumeDao.addVolumeToGroup(createdVolume.getId(), volumeGroupName);
         final IndexShardKey indexShardKey = new IndexShardKey.Builder()
                 .indexUuid(index.getUuid())
@@ -60,11 +62,14 @@ class IndexShardDaoImplTest {
                 .partitionToTime(shardTo)
                 .build();
         final IndexShard createdIndexShard = indexShardDao.create(indexShardKey, volumeGroupName, nodeName, "1.0-test");
-        final IndexShard byIdIndexShard = indexShardDao.loadById(createdIndexShard.getId());
+        final IndexShard byIdIndexShard = indexShardDao.fetch(createdIndexShard.getId()).orElse(null);
 
         // Then
         assertThat(createdIndexShard).isNotNull();
         assertThat(byIdIndexShard).isNotNull();
+
+        assertThat(createdIndexShard.getVolume()).isNotNull();
+        assertThat(byIdIndexShard.getVolume()).isNotNull();
     }
 
     @Test
@@ -82,7 +87,7 @@ class IndexShardDaoImplTest {
         final String volumeGroupName = TestData.createVolumeGroupName();
 
         // When
-        indexVolumeGroupDao.create(volumeGroupName);
+        createGroup(volumeGroupName);
         final IndexShardKey indexShardKey = new IndexShardKey.Builder()
                 .indexUuid(index.getUuid())
                 .partition(partitionName)
@@ -123,5 +128,20 @@ class IndexShardDaoImplTest {
         // Then
         assertThrows(IndexException.class,
                 () -> indexShardDao.create(indexShardKey, volumeGroupName, nodeName, "1.0-test"));
+    }
+
+    private IndexVolume createVolume(final String nodeName, final String path) {
+        final IndexVolume indexVolume = new IndexVolume();
+        indexVolume.setNodeName(nodeName);
+        indexVolume.setPath(path);
+        AuditUtil.stamp("test", indexVolume);
+        return indexVolumeDao.create(indexVolume);
+    }
+
+    private IndexVolumeGroup createGroup(final String name) {
+        final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
+        indexVolumeGroup.setName(name);
+        AuditUtil.stamp("test", indexVolumeGroup);
+        return indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
     }
 }

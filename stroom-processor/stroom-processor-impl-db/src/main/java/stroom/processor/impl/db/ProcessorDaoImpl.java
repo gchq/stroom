@@ -10,7 +10,7 @@ import stroom.processor.shared.Processor;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -86,8 +86,8 @@ class ProcessorDaoImpl implements ProcessorDao {
 
     @Override
     public BaseResultList<Processor> find(final FindProcessorCriteria criteria) {
-        final List<Condition> conditions = new ArrayList<>();
-        JooqUtil.getStringCondition(PROCESSOR.PIPELINE_UUID, criteria.getPipelineUuidCriteria()).ifPresent(conditions::add);
+        final Collection<Condition> conditions = JooqUtil.conditions(
+                JooqUtil.getStringCondition(PROCESSOR.PIPELINE_UUID, criteria.getPipelineUuidCriteria()));
 
         final List<Processor> list = JooqUtil.contextResult(connectionProvider, context -> context
                 .select()

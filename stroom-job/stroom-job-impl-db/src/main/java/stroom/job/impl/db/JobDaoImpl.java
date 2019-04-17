@@ -19,20 +19,17 @@ package stroom.job.impl.db;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
-import stroom.util.AuditUtil;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.job.impl.JobDao;
 import stroom.job.impl.db.jooq.tables.records.JobRecord;
 import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.Job;
-import stroom.security.api.SecurityContext;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.HasIntCrud;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -60,25 +57,20 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
 
     private final GenericDao<JobRecord, Job, Integer> genericDao;
     private final ConnectionProvider connectionProvider;
-    private final SecurityContext securityContext;
 
     @Inject
-    JobDaoImpl(final ConnectionProvider connectionProvider,
-               final SecurityContext securityContext) {
+    JobDaoImpl(final ConnectionProvider connectionProvider) {
         genericDao = new GenericDao<>(JOB, JOB.ID, Job.class, connectionProvider);
         this.connectionProvider = connectionProvider;
-        this.securityContext = securityContext;
     }
 
     @Override
     public Job create(@Nonnull final Job job) {
-        AuditUtil.stamp(securityContext.getUserId(), job);
         return genericDao.create(job);
     }
 
     @Override
     public Job update(@Nonnull final Job job) {
-        AuditUtil.stamp(securityContext.getUserId(), job);
         return genericDao.update(job);
     }
 
@@ -94,8 +86,8 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
 
     @Override
     public BaseResultList<Job> find(FindJobCriteria criteria) {
-        final Collection<Condition> conditions = new ArrayList<>();
-        JooqUtil.getStringCondition(JOB.NAME, criteria.getName()).ifPresent(conditions::add);
+        final Collection<Condition> conditions = JooqUtil.conditions(
+                JooqUtil.getStringCondition(JOB.NAME, criteria.getName()));
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 

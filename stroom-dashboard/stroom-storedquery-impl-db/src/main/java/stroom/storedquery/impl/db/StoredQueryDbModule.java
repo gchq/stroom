@@ -22,7 +22,7 @@ import javax.sql.DataSource;
 public class StoredQueryDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(StoredQueryModule.class);
     private static final String MODULE = "stroom-storedquery";
-    private static final String FLYWAY_LOCATIONS = "stroom/storedquery/impl/db";
+    private static final String FLYWAY_LOCATIONS = "stroom/storedquery/impl/db/migration";
     private static final String FLYWAY_TABLE = "query_schema_history";
 
     @Override

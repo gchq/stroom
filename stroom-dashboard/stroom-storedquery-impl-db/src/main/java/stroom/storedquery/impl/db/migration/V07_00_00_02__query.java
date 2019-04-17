@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.storedquery.impl.db;
+package stroom.storedquery.impl.db.migration;
 
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.query.api.v2.Query;
+import stroom.storedquery.impl.db.StoredQuerySerialiser;
 import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;

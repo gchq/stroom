@@ -31,12 +31,12 @@ public class MockIndexVolumeService implements IndexVolumeService {
     }
 
     @Override
-    public IndexVolume getById(Long id) {
+    public IndexVolume getById(int id) {
         return null;
     }
 
     @Override
-    public void delete(Long id) {
+    public void delete(int id) {
 
     }
 
@@ -46,12 +46,12 @@ public class MockIndexVolumeService implements IndexVolumeService {
     }
 
     @Override
-    public void addVolumeToGroup(Long volumeId, String name) {
+    public void addVolumeToGroup(int volumeId, String name) {
 
     }
 
     @Override
-    public void removeVolumeFromGroup(Long volumeId, String name) {
+    public void removeVolumeFromGroup(int volumeId, String name) {
 
     }
 
@@ -61,7 +61,7 @@ public class MockIndexVolumeService implements IndexVolumeService {
     }
 
     @Override
-    public List<IndexVolumeGroup> getGroupsForVolume(Long id) {
+    public List<IndexVolumeGroup> getGroupsForVolume(int id) {
         return Collections.emptyList();
     }
 

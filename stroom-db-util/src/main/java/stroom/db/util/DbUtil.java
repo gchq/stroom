@@ -148,14 +148,11 @@ public class DbUtil {
     public static void clearAllTables(final Connection connection) {
         final List<String> tables = new ArrayList<>();
 
-        boolean seenInnodb = false;
-        try (final PreparedStatement statement = connection.prepareStatement("SELECT table_name FROM information_schema.tables;")) {
+        try (final PreparedStatement statement = connection.prepareStatement("SELECT table_name FROM information_schema.tables where table_type like '%BASE TABLE%';")) {
             try (final ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     final String name = resultSet.getString(1);
-                    if (name.toLowerCase().contains("innodb")) {
-                        seenInnodb = true;
-                    } else if (seenInnodb && !name.contains("schema")) {
+                    if (!name.contains("schema")) {
                         tables.add(name);
                     }
                 }

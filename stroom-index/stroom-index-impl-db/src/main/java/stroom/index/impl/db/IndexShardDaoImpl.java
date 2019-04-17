@@ -3,89 +3,176 @@ package stroom.index.impl.db;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
-import org.jooq.impl.DSL;
+import org.jooq.Record;
+import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
+import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.util.shared.CriteriaSet;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
 class IndexShardDaoImpl implements IndexShardDao {
+    private static final Function<Record, IndexShard> RECORD_TO_INDEX_SHARD_MAPPER = record -> {
+        final IndexShard indexShard = new IndexShard();
+        indexShard.setId(record.get(INDEX_SHARD.ID));
+        indexShard.setPartition(record.get(INDEX_SHARD.PARTITION_NAME));
+        indexShard.setPartitionFromTime(record.get(INDEX_SHARD.PARTITION_FROM_MS));
+        indexShard.setPartitionToTime(record.get(INDEX_SHARD.PARTITION_TO_MS));
+        indexShard.setDocumentCount(record.get(INDEX_SHARD.DOCUMENT_COUNT));
+        indexShard.setCommitMs(record.get(INDEX_SHARD.COMMIT_MS));
+        indexShard.setCommitDurationMs(record.get(INDEX_SHARD.COMMIT_DURATION_MS));
+        indexShard.setCommitDocumentCount(record.get(INDEX_SHARD.COMMIT_DOCUMENT_COUNT));
+        indexShard.setStatus(IndexShardStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(INDEX_SHARD.STATUS)));
+        indexShard.setFileSize(record.get(INDEX_SHARD.FILE_SIZE));
+        indexShard.setIndexVersion(record.get(INDEX_SHARD.INDEX_VERSION));
+        indexShard.setNodeName(record.get(INDEX_SHARD.NODE_NAME));
+        indexShard.setIndexUuid(record.get(INDEX_SHARD.INDEX_UUID));
+        return indexShard;
+    };
+
+    private static final BiFunction<IndexShard, IndexShardRecord, IndexShardRecord> INDEX_SHARD_TO_RECORD_MAPPER = (indexShard, record) -> {
+        record.from(indexShard);
+        record.set(INDEX_SHARD.ID, indexShard.getId());
+        record.set(INDEX_SHARD.PARTITION_NAME, indexShard.getPartition());
+        record.set(INDEX_SHARD.PARTITION_FROM_MS, indexShard.getPartitionFromTime());
+        record.set(INDEX_SHARD.PARTITION_TO_MS, indexShard.getPartitionToTime());
+        record.set(INDEX_SHARD.DOCUMENT_COUNT, indexShard.getDocumentCount());
+        record.set(INDEX_SHARD.COMMIT_MS, indexShard.getCommitMs());
+        record.set(INDEX_SHARD.COMMIT_DURATION_MS, indexShard.getCommitDurationMs());
+        record.set(INDEX_SHARD.COMMIT_DOCUMENT_COUNT, indexShard.getCommitDocumentCount());
+        record.set(INDEX_SHARD.STATUS, indexShard.getStatus().getPrimitiveValue());
+        record.set(INDEX_SHARD.FILE_SIZE, indexShard.getFileSize());
+        record.set(INDEX_SHARD.INDEX_VERSION, indexShard.getIndexVersion());
+        record.set(INDEX_SHARD.FK_VOLUME_ID, indexShard.getVolume().getId());
+        record.set(INDEX_SHARD.NODE_NAME, indexShard.getNodeName());
+        record.set(INDEX_SHARD.INDEX_UUID, indexShard.getIndexUuid());
+        return record;
+    };
+
+    private static Map<String, Field> FIELD_MAP = new HashMap<>();
+
+    static {
+        FIELD_MAP.put(FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID);
+        FIELD_MAP.put(FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME);
+    }
+
     private final ConnectionProvider connectionProvider;
     private final IndexVolumeDao indexVolumeDao;
+    private final GenericDao<IndexShardRecord, IndexShard, Long> genericDao;
 
     @Inject
     IndexShardDaoImpl(final ConnectionProvider connectionProvider,
                       final IndexVolumeDao indexVolumeDao) {
         this.connectionProvider = connectionProvider;
         this.indexVolumeDao = indexVolumeDao;
+        genericDao = new GenericDao<>(INDEX_SHARD, INDEX_SHARD.ID, IndexShard.class, connectionProvider);
+        genericDao.setRecordToObjectMapper(RECORD_TO_INDEX_SHARD_MAPPER);
+        genericDao.setObjectToRecordMapper(INDEX_SHARD_TO_RECORD_MAPPER);
     }
 
     @Override
-    public IndexShard loadById(final Long id) {
-        return JooqUtil.contextResult(connectionProvider, context -> context.select()
+    public Optional<IndexShard> fetch(final long id) {
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select()
                 .from(INDEX_SHARD)
+                .join(INDEX_VOLUME).on(INDEX_VOLUME.ID.eq(INDEX_SHARD.FK_VOLUME_ID))
                 .where(INDEX_SHARD.ID.eq(id))
-                .fetchOneInto(IndexShard.class)
-        );
+                .fetchOptional()
+                .map(r -> {
+                    final IndexVolume indexVolume = IndexVolumeDaoImpl.RECORD_TO_INDEX_VOLUME_MAPPER.apply(r);
+                    final IndexShard indexShard = RECORD_TO_INDEX_SHARD_MAPPER.apply(r);
+                    indexShard.setVolume(indexVolume);
+                    return indexShard;
+                }));
     }
 
-    private static Map<String, Field> FIELD_MAP = new HashMap<>();
-    static {
-        FIELD_MAP.put(FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID);
-        FIELD_MAP.put(FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION);
-    }
+//        return JooqUtil.contextResult(connectionProvider, context ->
+//         context
+//                .select(
+//                       INDEX_SHARD.ID,
+//        INDEX_SHARD.PARTITION_NAME,
+//        INDEX_SHARD.PARTITION_FROM_MS,
+//        INDEX_SHARD.PARTITION_TO_MS,
+//        INDEX_SHARD.DOCUMENT_COUNT,
+//        INDEX_SHARD.COMMIT_MS,
+//        INDEX_SHARD.COMMIT_DURATION_MS,
+//        INDEX_SHARD.COMMIT_DOCUMENT_COUNT,
+//        INDEX_SHARD.STATUS,
+//        INDEX_SHARD.FILE_SIZE,
+//        INDEX_SHARD.INDEX_VERSION,
+//        INDEX_SHARD.FK_VOLUME_ID,
+//        INDEX_SHARD.NODE_NAME,
+//        INDEX_SHARD.INDEX_UUID,
+//
+//                 joi
+//                .where(idField.eq(id))
+//                .fetchOptional(record ->
+//                        recordToObjectMapper.apply(record));
+//
+//        return genericDao.fetch(id).
+//
+//    orElse(null);
+
 
     @Override
     public List<IndexShard> find(final FindIndexShardCriteria criteria) {
-        final List<Condition> conditions = Stream.of(
+        final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getRangeCondition(INDEX_SHARD.DOCUMENT_COUNT, criteria.getDocumentCountRange()),
                 JooqUtil.getSetCondition(INDEX_SHARD.NODE_NAME, criteria.getNodeNameSet()),
                 JooqUtil.getSetCondition(INDEX_SHARD.FK_VOLUME_ID, criteria.getVolumeIdSet()),
                 JooqUtil.getSetCondition(INDEX_SHARD.ID, criteria.getIndexShardIdSet()),
                 JooqUtil.getSetCondition(INDEX_SHARD.INDEX_UUID, criteria.getIndexUuidSet()),
-                JooqUtil.getSetCondition(INDEX_SHARD.STATUS,
-                        criteria.getIndexShardStatusSet().convertTo(IndexShard.IndexShardStatus::getPrimitiveValue)),
-                JooqUtil.getStringCondition(INDEX_SHARD.PARTITION, criteria.getPartition())
-        )
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList());
+                JooqUtil.getSetCondition(INDEX_SHARD.STATUS, CriteriaSet.convert(criteria.getIndexShardStatusSet(), IndexShard.IndexShardStatus::getPrimitiveValue)),
+                JooqUtil.getStringCondition(INDEX_SHARD.PARTITION_NAME, criteria.getPartition())
+        );
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
-        return JooqUtil.contextResult(connectionProvider, context -> {
-            final List<IndexShard> shards = context.select()
-                    .from(INDEX_SHARD)
-                    .where(DSL.and(conditions))
-                    .orderBy(orderFields)
-                    .fetchInto(IndexShard.class);
+        return JooqUtil.contextResult(connectionProvider, context ->
+                context
+                        .select()
+                        .from(INDEX_SHARD)
+                        .join(INDEX_VOLUME).on(INDEX_VOLUME.ID.eq(INDEX_SHARD.FK_VOLUME_ID))
+                        .where(conditions)
+                        .orderBy(orderFields)
+                        .fetch()
+                        .map(r -> {
+                            final IndexVolume indexVolume = IndexVolumeDaoImpl.RECORD_TO_INDEX_VOLUME_MAPPER.apply(r);
+                            final IndexShard indexShard = RECORD_TO_INDEX_SHARD_MAPPER.apply(r);
+                            indexShard.setVolume(indexVolume);
+                            return indexShard;
+                        }));
 
-            shards.forEach(shard -> {
-                final IndexVolume indexVolume = context.select()
-                        .from(INDEX_VOLUME)
-                        .where(INDEX_VOLUME.ID.eq(shard.getFkVolumeId()))
-                        .fetchOneInto(IndexVolume.class);
-                shard.setVolume(indexVolume);
-            });
-
-            return shards;
-        });
+//            shards.forEach(shard -> {
+//                final IndexVolume indexVolume = context.select()
+//                        .from(INDEX_VOLUME)
+//                        .where(INDEX_VOLUME.ID.eq(shard.getVolumeId()))
+//                        .fetchOneInto(IndexVolume.class);
+//                shard.setVolume(indexVolume);
+//            });
+//
+//            return shards;
+//        });
     }
 
     @Override
@@ -105,46 +192,63 @@ class IndexShardDaoImpl implements IndexShardDao {
             throw new IndexException(msg);
         }
 
-        return JooqUtil.contextResult(connectionProvider, context -> {
-            final Long id = context.insertInto(INDEX_SHARD,
-                    INDEX_SHARD.INDEX_UUID,
-                    INDEX_SHARD.NODE_NAME,
-                    INDEX_SHARD.PARTITION,
-                    INDEX_SHARD.PARTITION_FROM_MS,
-                    INDEX_SHARD.PARTITION_TO_MS,
-                    INDEX_SHARD.FK_VOLUME_ID,
-                    INDEX_SHARD.INDEX_VERSION,
-                    INDEX_SHARD.STATUS
-            )
-                    .values(indexShardKey.getIndexUuid(),
-                            ownerNodeName,
-                            indexShardKey.getPartition(),
-                            indexShardKey.getPartitionFromTime(),
-                            indexShardKey.getPartitionToTime(),
-                            indexVolume.getId(),
-                            indexVersion,
-                            IndexShard.IndexShardStatus.OPEN.getPrimitiveValue())
-                    .returning(INDEX_VOLUME.ID)
-                    .fetchOne()
-                    .getId();
+        final IndexShard indexShard = new IndexShard();
+        indexShard.setIndexUuid(indexShardKey.getIndexUuid());
+        indexShard.setNodeName(ownerNodeName);
+        indexShard.setPartition(indexShardKey.getPartition());
+        indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
+        indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
+        indexShard.setVolume(indexVolume);
+        indexShard.setIndexVersion(indexVersion);
+        indexShard.setStatus(IndexShardStatus.OPEN);
 
-            final IndexShard result = context.select()
-                    .from(INDEX_SHARD)
-                    .where(INDEX_SHARD.ID.eq(id))
-                    .fetchOneInto(IndexShard.class);
+        final IndexShard created = genericDao.create(indexShard);
+        created.setVolume(indexVolume);
 
-            result.setVolume(indexVolume);
+        return created;
 
-            return result;
-        });
+//        return JooqUtil.contextResult(connectionProvider, context -> {
+//            final Long id = context.insertInto(INDEX_SHARD,
+//                    INDEX_SHARD.INDEX_UUID,
+//                    INDEX_SHARD.NODE_NAME,
+//                    INDEX_SHARD.PARTITION_NAME,
+//                    INDEX_SHARD.PARTITION_FROM_MS,
+//                    INDEX_SHARD.PARTITION_TO_MS,
+//                    INDEX_SHARD.FK_VOLUME_ID,
+//                    INDEX_SHARD.INDEX_VERSION,
+//                    INDEX_SHARD.STATUS
+//            )
+//                    .values(indexShardKey.getIndexUuid(),
+//                            ownerNodeName,
+//                            indexShardKey.getPartition(),
+//                            indexShardKey.getPartitionFromTime(),
+//                            indexShardKey.getPartitionToTime(),
+//                            indexVolume.getId(),
+//                            indexVersion,
+//                            IndexShard.IndexShardStatus.OPEN.getPrimitiveValue())
+//                    .returning(INDEX_VOLUME.ID)
+//                    .fetchOne()
+//                    .getId();
+//
+//            final IndexShard result = context.select()
+//                    .from(INDEX_SHARD)
+//                    .where(INDEX_SHARD.ID.eq(id))
+//                    .fetchOneInto(IndexShard.class);
+//
+//            result.setVolume(indexVolume);
+//
+//            return result;
+//        });
     }
 
     @Override
     public void delete(final Long id) {
-        JooqUtil.context(connectionProvider, context -> context
-                .deleteFrom(INDEX_SHARD)
-                .where(INDEX_SHARD.ID.eq(id))
-                .execute());
+        genericDao.delete(id);
+
+//        JooqUtil.context(connectionProvider, context -> context
+//                .deleteFrom(INDEX_SHARD)
+//                .where(INDEX_SHARD.ID.eq(id))
+//                .execute());
     }
 
     @Override

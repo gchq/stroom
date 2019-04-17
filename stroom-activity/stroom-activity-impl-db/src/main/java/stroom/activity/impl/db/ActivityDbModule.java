@@ -21,7 +21,7 @@ import javax.sql.DataSource;
 public class ActivityDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityDbModule.class);
     private static final String MODULE = "stroom-activity";
-    private static final String FLYWAY_LOCATIONS = "stroom/activity/impl/db";
+    private static final String FLYWAY_LOCATIONS = "stroom/activity/impl/db/migration";
     private static final String FLYWAY_TABLE = "activity_schema_history";
 
     @Override

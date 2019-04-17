@@ -33,7 +33,7 @@ import stroom.index.impl.db.jooq.tables.IndexVolumeGroupLink;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = -1440087635;
+    private static final long serialVersionUID = 343475722;
 
     /**
      * The reference instance of <code>stroom</code>
