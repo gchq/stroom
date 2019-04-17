@@ -13,6 +13,7 @@ public class UrlConfig implements SharedObject, IsConfig {
     private String indexVolumeGroups = "http://IP_ADDRESS/s/indexing/groups";
     private String userAuthorisation = "http://IP_ADDRESS/s/authorisationManager/false";
     private String groupAuthorisation = "http://IP_ADDRESS/s/authorisationManager/true";
+    private String editDoc = "http://IP_ADDRESS/s/doc/";
     private String changepassword = "http://IP_ADDRESS/changepassword";
     private String kibana = null;
     private String trackers = null;
@@ -138,6 +139,14 @@ public class UrlConfig implements SharedObject, IsConfig {
         this.documentPermissions = documentPermissions;
     }
 
+    public String getEditDoc() {
+        return editDoc;
+    }
+
+    public void setEditDoc(String editDoc) {
+        this.editDoc = editDoc;
+    }
+
     @Override
     public String toString() {
         return "UrlConfig{" +
@@ -149,6 +158,7 @@ public class UrlConfig implements SharedObject, IsConfig {
                 ", indexVolumeGroups='" + indexVolumeGroups + '\'' +
                 ", userAuthorisation='" + userAuthorisation + '\'' +
                 ", groupAuthorisation='" + groupAuthorisation + '\'' +
+                ", editDoc='" + editDoc + '\'' +
                 ", changepassword='" + changepassword + '\'' +
                 ", kibana='" + kibana + '\'' +
                 ", trackers='" + trackers + '\'' +
