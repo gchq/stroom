@@ -5,6 +5,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import io.dropwizard.lifecycle.Managed;
+import io.dropwizard.setup.Environment;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.impl.DictionaryResource;
 import stroom.dictionary.impl.DictionaryResource2;
@@ -12,6 +13,7 @@ import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.fs.FSPersistence;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.NoSecurityContext;
 import stroom.proxy.app.ProxyConfig;
@@ -47,15 +49,20 @@ import stroom.util.guice.ServletBinder;
 import java.nio.file.Paths;
 
 public class ProxyModule extends AbstractModule {
-    private final ProxyConfig proxyConfig;
+    private final Config configuration;
+    private final Environment environment;
 
-    public ProxyModule(final ProxyConfig proxyConfig) {
-        this.proxyConfig = proxyConfig;
+    public ProxyModule(final Config configuration, final Environment environment) {
+        this.configuration = configuration;
+        this.environment = environment;
     }
 
     @Override
     protected void configure() {
-        install(new ProxyConfigModule(proxyConfig));
+        bind(Config.class).toInstance(configuration);
+        bind(Environment.class).toInstance(environment);
+
+        install(new ProxyConfigModule(configuration.getProxyConfig()));
 
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
         bind(StreamHandlerFactory.class).to(ForwardStreamHandlerFactory.class);
@@ -101,6 +108,6 @@ public class ProxyModule extends AbstractModule {
     @Provides
     @Singleton
     Persistence providePersistence() {
-        return new FSPersistence(Paths.get(proxyConfig.getProxyContentDir()));
+        return new FSPersistence(Paths.get(configuration.getProxyConfig().getProxyContentDir()));
     }
 }
