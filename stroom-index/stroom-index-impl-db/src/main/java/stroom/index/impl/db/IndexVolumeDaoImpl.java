@@ -7,6 +7,7 @@ import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeRecord;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
+import stroom.index.shared.IndexVolumeGroup;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -108,6 +109,17 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                 .where(INDEX_VOLUME_GROUP.NAME.eq(groupName))
                 .fetch()
                 .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply));
+    }
+
+    @Override
+    public List<IndexVolumeGroup> getGroupsForVolume(final int id) {
+        return JooqUtil.contextResult(connectionProvider, context -> context.select()
+                .from(INDEX_VOLUME_GROUP)
+                .innerJoin(INDEX_VOLUME_GROUP_LINK)
+                .on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_GROUP_ID))
+                .where(INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_ID.eq(id))
+                .fetchInto(IndexVolumeGroup.class)
+        );
     }
 
     @Override

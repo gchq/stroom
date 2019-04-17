@@ -4,6 +4,7 @@ import stroom.index.impl.CreateVolumeDTO;
 import stroom.index.impl.IndexVolumeResource;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeGroup;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
@@ -48,6 +49,13 @@ public class IndexVolumeResourceImpl implements IndexVolumeResource {
         final List<IndexVolume> volumes = indexVolumeService.getVolumesInGroup(groupName);
 
         return Response.ok(volumes).build();
+    }
+
+    @Override
+    public Response getGroupsForVolume(final int id) {
+        final List<IndexVolumeGroup> groups = indexVolumeService.getGroupsForVolume(id);
+
+        return Response.ok(groups).build();
     }
 
     @Override

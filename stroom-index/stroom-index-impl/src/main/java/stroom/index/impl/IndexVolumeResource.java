@@ -2,6 +2,7 @@ package stroom.index.impl;
 
 
 import io.swagger.annotations.Api;
+import stroom.util.RestResource;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -15,7 +16,7 @@ import javax.ws.rs.core.Response;
 @Api(value = "stroom-index volumes - /v1")
 @Path("/stroom-index/volume/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public interface IndexVolumeResource {
+public interface IndexVolumeResource extends RestResource {
 
     /**
      * Retrieve all the Index Volumes in the system.
@@ -58,6 +59,15 @@ public interface IndexVolumeResource {
     @GET
     @Path("/inGroup/{groupName}")
     Response getVolumesInGroup(@PathParam("groupName") String groupName);
+
+    /**
+     * Retrieve the list of groups that a given volume belongs to
+     * @param id The ID of the volume
+     * @return The list of Index Volume Groups for that volume
+     */
+    @GET
+    @Path("/groupsFor/{id}")
+    Response getGroupsForVolume(@PathParam("id") int id);
 
     /**
      * Add a volume to the membership of a group.

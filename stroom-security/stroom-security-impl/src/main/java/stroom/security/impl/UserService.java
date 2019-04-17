@@ -20,7 +20,6 @@ package stroom.security.impl;
 import stroom.util.shared.ProvidesNamePattern;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
-import stroom.security.shared.User;
 
 import java.util.List;
 
@@ -42,6 +41,8 @@ public interface UserService extends ProvidesNamePattern {
     List<User> findUsersInGroup(String groupUuid);
 
     List<User> findGroupsForUser(String userUuid);
+
+    List<User> findGroupsForUserName(String userName);
 
     void addUserToGroup(String userUuid, String groupUuid);
 

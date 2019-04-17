@@ -3,11 +3,14 @@ package stroom.security.impl.db;
 import org.jooq.Record;
 import stroom.db.util.JooqUtil;
 import stroom.security.impl.AppPermissionDao;
+import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.records.AppPermissionRecord;
 
 import javax.inject.Inject;
+import java.util.HashSet;
 import java.util.Set;
 
+import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;
 import static stroom.security.impl.db.jooq.tables.AppPermission.APP_PERMISSION;
 import static stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
 
@@ -26,6 +29,40 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
                         .from(APP_PERMISSION)
                         .where(APP_PERMISSION.USER_UUID.eq(userUuid))
                         .fetchSet(APP_PERMISSION.PERMISSION));
+    }
+
+    @Override
+    public Set<String> getPermissionsForUserName(String userName) {
+        Set<String> permissions = new HashSet<>();
+        // Get all permissions for this user
+        permissions.addAll(JooqUtil.contextResult(connectionProvider, context ->
+                context.select()
+                        .from(APP_PERMISSION)
+                        .join(STROOM_USER)
+                        .on(STROOM_USER.UUID.eq(APP_PERMISSION.USER_UUID))
+                        .where(STROOM_USER.NAME.eq(userName))
+                        .fetchSet(APP_PERMISSION.PERMISSION)));
+
+
+        // Get all permissions for this user's groups
+        StroomUser userUser = STROOM_USER.as("userUser");
+        StroomUser groupUser = STROOM_USER.as("groupUser");
+        permissions.addAll(JooqUtil.contextResult(connectionProvider, context ->
+                context.select()
+                        .from(APP_PERMISSION)
+                        // app_permission -> group user
+                        .join(groupUser)
+                        .on(APP_PERMISSION.USER_UUID.eq(groupUser.UUID))
+                        // group user -> stroom user group
+                        .join(STROOM_USER_GROUP)
+                        .on(groupUser.UUID.eq(STROOM_USER_GROUP.GROUP_UUID))
+                        // stroom user group -> user
+                        .join(userUser)
+                        .on(userUser.UUID.eq(STROOM_USER_GROUP.USER_UUID))
+                        .where(userUser.NAME.eq(userName))
+                        .fetchSet(APP_PERMISSION.PERMISSION)));
+
+        return permissions;
     }
 
     @Override

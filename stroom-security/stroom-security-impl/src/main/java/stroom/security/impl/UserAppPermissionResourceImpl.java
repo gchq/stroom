@@ -19,6 +19,13 @@ public class UserAppPermissionResourceImpl implements UserAppPermissionResource 
     }
 
     @Override
+    public Response getPermissionNamesForUserName(final String userName) {
+        final Set<String> permissions = userAppPermissionService.getPermissionNamesForUserName(userName);
+        return Response.ok(permissions).build();
+    }
+
+
+    @Override
     public Response getAllPermissionNames() {
         final Set<String> allPermissions = userAppPermissionService.getAllPermissionNames();
         return Response.ok(allPermissions).build();

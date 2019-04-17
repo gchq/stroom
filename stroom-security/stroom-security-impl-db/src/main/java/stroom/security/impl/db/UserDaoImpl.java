@@ -5,6 +5,7 @@ import org.jooq.Record;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.security.impl.UserDao;
+import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 import stroom.security.shared.User;
 
@@ -144,6 +145,27 @@ public class UserDaoImpl implements UserDao {
                         .on(STROOM_USER.UUID.eq(STROOM_USER_GROUP.GROUP_UUID))
                         .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
                         .orderBy(STROOM_USER.NAME)
+                        .fetch()
+                        .stream()
+                        .map(RECORD_TO_USER_MAPPER)
+                        .collect(Collectors.toList()));
+    }
+
+    @Override
+    public List<User> findGroupsForUserName(final String userName) {
+        StroomUser userUser = STROOM_USER.as("userUser");
+        StroomUser groupUser = STROOM_USER.as("groupUser");
+        return JooqUtil.contextResult(connectionProvider, context ->
+                context.select()
+                        .from(groupUser)
+                        // group users -> groups
+                        .join(STROOM_USER_GROUP)
+                        .on(groupUser.UUID.eq(STROOM_USER_GROUP.GROUP_UUID))
+                        // users -> groups
+                        .join(userUser)
+                        .on(userUser.UUID.eq(STROOM_USER_GROUP.USER_UUID))
+                        .where(userUser.NAME.eq(userName))
+                        .orderBy(groupUser.NAME)
                         .fetch()
                         .stream()
                         .map(RECORD_TO_USER_MAPPER)

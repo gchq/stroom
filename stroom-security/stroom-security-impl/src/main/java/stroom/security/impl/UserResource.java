@@ -3,6 +3,7 @@ package stroom.security.impl;
 import io.swagger.annotations.Api;
 import stroom.util.RestResource;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -22,7 +23,7 @@ import javax.ws.rs.core.Response;
 public interface UserResource extends RestResource {
     @GET
     Response get(@QueryParam("name") String name,
-                 @QueryParam("group") Boolean isGroup,
+                 @QueryParam("isGroup") Boolean isGroup,
                  @QueryParam("uuid") String uuid);
 
     @GET
@@ -34,11 +35,17 @@ public interface UserResource extends RestResource {
     Response findUsersInGroup(@PathParam("groupUuid") String groupUuid);
 
     @GET
+    @Path("/groupsForUserName/{userName}")
+    Response findGroupsForUserName(@PathParam("userName") String userName);
+
+    @GET
     @Path("/groupsForUser/{userUuid}")
     Response findGroupsForUser(@PathParam("userUuid") String userUuid);
 
     @POST
-    Response create(CreateDTO createDTO);
+    @Path("/create/{name}/{isGroup}")
+    Response create(@PathParam("name") String name,
+                    @PathParam("isGroup") Boolean isGroup);
 
     @DELETE
     @Path("/{uuid}")

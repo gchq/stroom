@@ -70,9 +70,18 @@ class TestIndexVolumeDaoImpl {
         pathsOutsideGroup.forEach(p -> createVolume(nodeName, p)); // noise
         indexVolumesInsideGroup.forEach(i -> indexVolumeDao.addVolumeToGroup(i.getId(), groupName));
         final List<IndexVolume> volumesInGroup = indexVolumeDao.getVolumesInGroup(groupName);
+        final List<IndexVolumeGroup> groupsForVolume = indexVolumeDao
+                .getGroupsForVolume(
+                        indexVolumesInsideGroup
+                                .stream()
+                                .findFirst()
+                                .get()
+                                .getId());
 
         // Then
         assertThat(group.getName()).isEqualTo(groupName);
+        assertThat(groupsForVolume.stream().map(IndexVolumeGroup::getName))
+                .containsOnly(groupName);
         assertThat(volumesInGroup.stream().map(IndexVolume::getId))
                 .containsOnlyElementsOf(indexVolumesInsideGroup.stream()
                         .map(IndexVolume::getId)

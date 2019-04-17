@@ -46,19 +46,27 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
+    public Response findGroupsForUserName(String userName) {
+        final List<User> users = userService.findGroupsForUserName(userName);
+
+        return Response.ok(users).build();
+    }
+
+    @Override
     public Response findGroupsForUser(final String userUuid) {
         final List<User> groups = userService.findGroupsForUser(userUuid);
         return Response.ok(groups).build();
     }
 
     @Override
-    public Response create(final CreateDTO createDTO) {
+    public Response create(final String name,
+                           final Boolean isGroup) {
         User user;
 
-        if (null != createDTO.getGroup() && createDTO.getGroup()) {
-            user = userService.createUser(createDTO.getName());
+        if (isGroup) {
+            user = userService.createUserGroup(name);
         } else {
-            user = userService.createUserGroup(createDTO.getName());
+            user = userService.createUser(name);
         }
 
         return Response.ok(user).build();
