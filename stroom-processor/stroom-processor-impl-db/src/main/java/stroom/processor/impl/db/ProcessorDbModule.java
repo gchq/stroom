@@ -26,7 +26,7 @@ import javax.sql.DataSource;
 public class ProcessorDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorDbModule.class);
     private static final String MODULE = "stroom-processor";
-    private static final String FLYWAY_LOCATIONS = "stroom/processor/impl/db";
+    private static final String FLYWAY_LOCATIONS = "stroom/processor/impl/db/migration";
     private static final String FLYWAY_TABLE = "processor_schema_history";
 
     @Override

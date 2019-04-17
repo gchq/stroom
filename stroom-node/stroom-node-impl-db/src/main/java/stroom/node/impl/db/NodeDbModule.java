@@ -20,7 +20,7 @@ import javax.sql.DataSource;
 public class NodeDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeDbModule.class);
     private static final String MODULE = "stroom-node";
-    private static final String FLYWAY_LOCATIONS = "stroom/node/impl/db";
+    private static final String FLYWAY_LOCATIONS = "stroom/node/impl/db/migration";
     private static final String FLYWAY_TABLE = "node_schema_history";
 
     @Override

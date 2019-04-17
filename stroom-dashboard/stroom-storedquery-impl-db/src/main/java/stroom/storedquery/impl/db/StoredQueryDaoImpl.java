@@ -12,11 +12,10 @@ import stroom.db.util.JooqUtil;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
 import stroom.util.shared.BaseResultList;
-import stroom.util.shared.Clearable;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -70,20 +69,12 @@ class StoredQueryDaoImpl implements StoredQueryDao {
     @Override
     public BaseResultList<StoredQuery> find(FindStoredQueryCriteria criteria) {
         List<StoredQuery> list = JooqUtil.contextResult(connectionProvider, context -> {
-            final List<Condition> conditions = new ArrayList<>();
-            if (criteria.getUserId() != null) {
-                conditions.add(QUERY.CREATE_USER.eq(criteria.getUserId()));
-            }
-            JooqUtil.getStringCondition(QUERY.NAME, criteria.getName()).ifPresent(conditions::add);
-            if (criteria.getDashboardUuid() != null) {
-                conditions.add(QUERY.DASHBOARD_UUID.eq(criteria.getDashboardUuid()));
-            }
-            if (criteria.getComponentId() != null) {
-                conditions.add(QUERY.COMPONENT_ID.eq(criteria.getComponentId()));
-            }
-            if (criteria.getFavourite() != null) {
-                conditions.add(QUERY.FAVOURITE.eq(criteria.getFavourite()));
-            }
+            final Collection<Condition> conditions = JooqUtil.conditions(
+                    Optional.ofNullable(criteria.getUserId()).map(QUERY.CREATE_USER::eq),
+                    JooqUtil.getStringCondition(QUERY.NAME, criteria.getName()),
+                    Optional.ofNullable(criteria.getDashboardUuid()).map(QUERY.DASHBOARD_UUID::eq),
+                    Optional.ofNullable(criteria.getComponentId()).map(QUERY.COMPONENT_ID::eq),
+                    Optional.ofNullable(criteria.getFavourite()).map(QUERY.FAVOURITE::eq));
 
             final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
@@ -107,15 +98,12 @@ class StoredQueryDaoImpl implements StoredQueryDao {
         try {
             LOGGER.debug("Deleting old rows");
 
-            final List<Condition> conditions = new ArrayList<>();
-            conditions.add(QUERY.CREATE_USER.eq(user));
-            conditions.add(QUERY.FAVOURITE.eq(favourite));
-
-            if (oldestId != null) {
-                conditions.add(QUERY.ID.le(oldestId).or(QUERY.CREATE_TIME_MS.lt(oldestCrtMs)));
-            } else {
-                conditions.add(QUERY.CREATE_TIME_MS.lt(oldestCrtMs));
-            }
+            final Collection<Condition> conditions = JooqUtil.conditions(
+                    Optional.ofNullable(user).map(QUERY.CREATE_USER::eq),
+                    Optional.of(QUERY.FAVOURITE.eq(favourite)),
+                    Optional.ofNullable(oldestId)
+                            .map(id -> QUERY.ID.le(id).or(QUERY.CREATE_TIME_MS.lt(oldestCrtMs)))
+                            .or(() -> Optional.of(QUERY.CREATE_TIME_MS.lt(oldestCrtMs))));
 
             final int rows = JooqUtil.contextResult(connectionProvider, context -> context
                     .deleteFrom(QUERY)

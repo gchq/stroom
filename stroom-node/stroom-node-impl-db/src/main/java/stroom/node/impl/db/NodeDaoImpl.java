@@ -27,7 +27,7 @@ import stroom.node.shared.Node;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -69,8 +69,8 @@ public class NodeDaoImpl implements NodeDao {
 
     @Override
     public BaseResultList<Node> find(final FindNodeCriteria criteria) {
-        final List<Condition> conditions = new ArrayList<>();
-        JooqUtil.getStringCondition(NODE.NAME, criteria.getName()).ifPresent(conditions::add);
+        final Collection<Condition> conditions = JooqUtil.conditions(
+                JooqUtil.getStringCondition(NODE.NAME, criteria.getName()));
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 

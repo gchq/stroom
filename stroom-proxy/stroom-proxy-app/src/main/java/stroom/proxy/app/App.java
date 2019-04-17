@@ -94,7 +94,7 @@ public class App extends Application<Config> {
 
         LOGGER.info("Starting Stroom Proxy");
 
-        final ProxyModule proxyModule = new ProxyModule(configuration.getProxyConfig());
+        final ProxyModule proxyModule = new ProxyModule(configuration, environment);
         final Injector injector = Guice.createInjector(proxyModule);
         injector.injectMembers(this);
 

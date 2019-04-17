@@ -23,9 +23,9 @@ import com.google.common.cache.RemovalListener;
 import org.apache.lucene.index.IndexWriter;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
+import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
-import stroom.index.impl.IndexShardService;
 import stroom.index.shared.IndexShard;
 import stroom.search.impl.SearchException;
 import stroom.task.api.ExecutorProvider;
@@ -40,6 +40,7 @@ import stroom.util.shared.Clearable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -133,7 +134,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
     }
 
     private void destroy(final Key key, final Object value) {
-        if (value != null && value instanceof IndexShardSearcherImpl) {
+        if (value instanceof IndexShardSearcherImpl) {
             final IndexShardSearcherImpl indexShardSearcher = (IndexShardSearcherImpl) value;
 
             closing.incrementAndGet();
@@ -253,18 +254,14 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
         public boolean equals(final Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-
             final Key key = (Key) o;
-
-            if (indexShardId != key.indexShardId) return false;
-            return indexWriter != null ? indexWriter.equals(key.indexWriter) : key.indexWriter == null;
+            return indexShardId == key.indexShardId &&
+                    Objects.equals(indexWriter, key.indexWriter);
         }
 
         @Override
         public int hashCode() {
-            int result = (int) (indexShardId ^ (indexShardId >>> 32));
-            result = 31 * result + (indexWriter != null ? indexWriter.hashCode() : 0);
-            return result;
+            return Objects.hash(indexShardId, indexWriter);
         }
     }
 }

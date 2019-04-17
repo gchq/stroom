@@ -8,7 +8,7 @@ import stroom.db.util.JooqUtil;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume.FS_META_VOLUME;
@@ -24,9 +24,9 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
 
     @Override
     public BaseResultList<DataVolume> find(final FindDataVolumeCriteria criteria) {
-        final List<Condition> conditions = new ArrayList<>();
-        JooqUtil.getSetCondition(FS_META_VOLUME.FS_VOLUME_ID, criteria.getVolumeIdSet()).ifPresent(conditions::add);
-        JooqUtil.getSetCondition(FS_META_VOLUME.META_ID, criteria.getMetaIdSet()).ifPresent(conditions::add);
+        final Collection<Condition> conditions = JooqUtil.conditions(
+                JooqUtil.getSetCondition(FS_META_VOLUME.FS_VOLUME_ID, criteria.getVolumeIdSet()),
+                JooqUtil.getSetCondition(FS_META_VOLUME.META_ID, criteria.getMetaIdSet()));
 
         return JooqUtil.contextResult(connectionProvider, context -> {
             final List<DataVolume> list = context.select(FS_META_VOLUME.META_ID, FS_VOLUME.PATH)

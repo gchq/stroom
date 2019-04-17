@@ -156,29 +156,6 @@ class GlobalConfigService {
                 }).orElse(null));
     }
 
-//    public ConfigProperty create(final ConfigProperty configProperty) {
-//        return security.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
-//            JooqUtil.context(connectionProvider, context -> context
-//
-//                // Insert value.
-//                create
-//                        .insertInto(CONFIG, CONFIG.NAME, CONFIG.VAL)
-//                        .values(configProperty.getName(), configProperty.getValue())
-//                        .execute();
-//
-//                // Record history.
-//                recordHistory(configProperty);
-//
-//                // Update property.
-//                update(configProperty.getName(), configProperty.getValue());
-//            } catch (final SQLException e) {
-//                LOGGER.error(e.getMessage(), e);
-//            }
-//
-//            return configProperty;
-//        });
-//    }
-
     public ConfigProperty update(final ConfigProperty configProperty) {
         return security.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
             LAMBDA_LOGGER.debug(LambdaLogUtil.message(
@@ -233,26 +210,6 @@ class GlobalConfigService {
         LAMBDA_LOGGER.warn(() -> LogUtil.message("Deleting property {} as it is not valid in the object model", name));
         dao.delete(name);
     }
-
-//    private void recordHistory(final ConfigProperty configProperty) {
-//        // Record history.
-//        JooqUtil.context(connectionProvider, context -> context
-//            create
-//                    .insertInto(CONFIG_HISTORY,
-//                            CONFIG_HISTORY.UPDATE_TIME,
-//                            CONFIG_HISTORY.UPDATE_USER,
-//                            CONFIG_HISTORY.NAME,
-//                            CONFIG_HISTORY.VAL)
-//                    .values(
-//                            System.currentTimeMillis(),
-//                            securityContext.getUserId(),
-//                            configProperty.getName(),
-//                            configProperty.getValue())
-//                    .execute();
-//        } catch (final SQLException e) {
-//            LOGGER.error(e.getMessage(), e);
-//        }
-//    }
 
     @Override
     public String toString() {

@@ -4,7 +4,6 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
-import stroom.util.AuditUtil;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.job.impl.JobNodeDao;
@@ -13,13 +12,11 @@ import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
-import stroom.security.api.SecurityContext;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.HasIntCrud;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -75,14 +72,11 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
     };
 
     private final ConnectionProvider connectionProvider;
-    private final SecurityContext securityContext;
     private final GenericDao<JobNodeRecord, JobNode, Integer> genericDao;
 
     @Inject
-    JobNodeDaoImpl(final ConnectionProvider connectionProvider,
-                   final SecurityContext securityContext) {
+    JobNodeDaoImpl(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
-        this.securityContext = securityContext;
 
         genericDao = new GenericDao<>(JOB_NODE, JOB_NODE.ID, JobNode.class, connectionProvider);
         genericDao.setObjectToRecordMapper(JOB_NODE_TO_RECORD_MAPPER);
@@ -91,7 +85,6 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 
     @Override
     public JobNode create(@Nonnull final JobNode jobNode) {
-        AuditUtil.stamp(securityContext.getUserId(), jobNode);
         final JobNode result = genericDao.create(jobNode);
         result.setJob(jobNode.getJob());
         return result;
@@ -111,7 +104,6 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 
     @Override
     public JobNode update(@Nonnull final JobNode jobNode) {
-        AuditUtil.stamp(securityContext.getUserId(), jobNode);
         final JobNode result = genericDao.update(jobNode);
         result.setJob(jobNode.getJob());
         return result;
@@ -128,9 +120,9 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
     }
 
     public BaseResultList<JobNode> find(FindJobNodeCriteria criteria) {
-        final Collection<Condition> conditions = new ArrayList<>();
-        JooqUtil.getStringCondition(JOB.NAME, criteria.getJobName()).ifPresent(conditions::add);
-        JooqUtil.getStringCondition(JOB_NODE.NODE_NAME, criteria.getNodeName()).ifPresent(conditions::add);
+        final Collection<Condition> conditions = JooqUtil.conditions(
+                JooqUtil.getStringCondition(JOB.NAME, criteria.getJobName()),
+                JooqUtil.getStringCondition(JOB_NODE.NODE_NAME, criteria.getNodeName()));
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 

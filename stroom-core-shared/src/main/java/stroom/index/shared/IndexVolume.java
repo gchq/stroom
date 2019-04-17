@@ -16,28 +16,30 @@
 
 package stroom.index.shared;
 
+import stroom.docref.HasDisplayValue;
 import stroom.docref.SharedObject;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.PrimitiveValueConverter;
 
 /**
  * Some path on the network where we can store stuff.
  */
 public class IndexVolume implements HasAuditInfo, SharedObject {
-
-    private static final long TEN_GB = 10 * 1024 * 1024 * 1024;
+    private static final long TEN_GB = 10L * 1024L * 1024L * 1024L;
     private static final double NINETY_NINE_PERCENT = 0.99D;
+    private static final double ONE_HUNDRED = 100D;
 
-    private Long id;
-
-    private Long createTime;
-    private Long updateTime;
+    private Integer id;
+    private Integer version;
+    private Long createTimeMs;
     private String createUser;
+    private Long updateTimeMs;
     private String updateUser;
-
     private String path;
     private String nodeName;
+    private VolumeUseState state = VolumeUseState.ACTIVE;
     private Long bytesLimit;
-    private static final double ONE_HUNDRED = 100D;
     private Long bytesUsed;
     private Long bytesFree;
     private Long bytesTotal;
@@ -46,28 +48,29 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
     public IndexVolume() {
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(final Integer id) {
         this.id = id;
     }
 
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(final Integer version) {
+        this.version = version;
+    }
+
+    @Override
     public Long getCreateTimeMs() {
-        return createTime;
+        return createTimeMs;
     }
 
-    public void setCreateTimeMs(Long createTime) {
-        this.createTime = createTime;
-    }
-
-    public Long getUpdateTimeMs() {
-        return updateTime;
-    }
-
-    public void setUpdateTimeMs(Long updateTime) {
-        this.updateTime = updateTime;
+    public void setCreateTimeMs(final Long createTimeMs) {
+        this.createTimeMs = createTimeMs;
     }
 
     @Override
@@ -75,9 +78,17 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
         return createUser;
     }
 
-    @Override
-    public void setCreateUser(String createUser) {
+    public void setCreateUser(final String createUser) {
         this.createUser = createUser;
+    }
+
+    @Override
+    public Long getUpdateTimeMs() {
+        return updateTimeMs;
+    }
+
+    public void setUpdateTimeMs(final Long updateTimeMs) {
+        this.updateTimeMs = updateTimeMs;
     }
 
     @Override
@@ -85,8 +96,7 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
         return updateUser;
     }
 
-    @Override
-    public void setUpdateUser(String updateUser) {
+    public void setUpdateUser(final String updateUser) {
         this.updateUser = updateUser;
     }
 
@@ -116,6 +126,11 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
 
         public Builder path(final String value) {
             instance.setPath(value);
+            return this;
+        }
+
+        public Builder status(final VolumeUseState value) {
+            instance.setState(value);
             return this;
         }
 
@@ -160,6 +175,14 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
         this.path = path;
     }
 
+    public VolumeUseState getState() {
+        return state;
+    }
+
+    public void setState(final VolumeUseState state) {
+        this.state = state;
+    }
+
     public Long getBytesLimit() {
         return bytesLimit;
     }
@@ -187,9 +210,9 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
         // that we will allow.
         // Choose the higher limit of either the total storage minus 10Gb or 99%
         // of total storage.
-        final long minusOneGig = bytesTotal - TEN_GB;
+        final long minusTenGig = bytesTotal - TEN_GB;
         final long percentage = (long) (bytesTotal * NINETY_NINE_PERCENT);
-        final long max = Math.max(minusOneGig, percentage);
+        final long max = Math.max(minusTenGig, percentage);
 
         return bytesUsed >= max;
     }
@@ -232,5 +255,32 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
             percent = Double.valueOf(((double) bytesUsed) / ((double) bytesTotal) * ONE_HUNDRED).longValue();
         }
         return percent;
+    }
+
+    public enum VolumeUseState implements HasDisplayValue, HasPrimitiveValue {
+        ACTIVE("Active", 0), // Currently being written to.
+        INACTIVE("Inactive", 1), // No longer being written to but still accessible for reading.
+        CLOSED("Closed", 3); // Data has been removed and the volume is closed.
+
+        public static final PrimitiveValueConverter<VolumeUseState> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
+                VolumeUseState.values());
+
+        private final String displayValue;
+        private final byte primitiveValue;
+
+        VolumeUseState(final String displayValue, final int primitiveValue) {
+            this.displayValue = displayValue;
+            this.primitiveValue = (byte) primitiveValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
+
+        @Override
+        public byte getPrimitiveValue() {
+            return primitiveValue;
+        }
     }
 }

@@ -29,6 +29,8 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
+import stroom.util.AuditUtil;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
@@ -49,6 +51,7 @@ class JobBootstrap {
     private final JobNodeDao jobNodeDao;
     private final ClusterLockService clusterLockService;
     private final Security security;
+    private final SecurityContext securityContext;
     private final NodeInfo nodeInfo;
     private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
     private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
@@ -58,6 +61,7 @@ class JobBootstrap {
                  final JobNodeDao jobNodeDao,
                  final ClusterLockService clusterLockService,
                  final Security security,
+                 final SecurityContext securityContext,
                  final NodeInfo nodeInfo,
                  final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
                  final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
@@ -65,6 +69,7 @@ class JobBootstrap {
         this.jobNodeDao = jobNodeDao;
         this.clusterLockService = clusterLockService;
         this.security = security;
+        this.securityContext = securityContext;
         this.nodeInfo = nodeInfo;
         this.scheduledJobsMap = scheduledJobsMap;
         this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
@@ -117,6 +122,7 @@ class JobBootstrap {
                 if (existingJobNode == null) {
                     LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
                             newJobNode.getNodeName());
+                    AuditUtil.stamp(securityContext.getUserId(), newJobNode);
                     jobNodeDao.create(newJobNode);
                     existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
 
@@ -124,6 +130,7 @@ class JobBootstrap {
                     // If the job type has changed then update the job node.
                     existingJobNode.setJobType(newJobNode.getJobType());
                     existingJobNode.setSchedule(newJobNode.getSchedule());
+                    AuditUtil.stamp(securityContext.getUserId(), existingJobNode);
                     existingJobNode = jobNodeDao.update(existingJobNode);
                     existingJobMap.put(scheduledJob.getName(), existingJobNode);
                 }
@@ -150,6 +157,7 @@ class JobBootstrap {
 
                     LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
                             newJobNode.getNodeName());
+                    AuditUtil.stamp(securityContext.getUserId(), newJobNode);
                     jobNodeDao.create(newJobNode);
                     existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
                 }
@@ -259,10 +267,12 @@ class JobBootstrap {
             if (job.getDescription() != null && !job.getDescription().equals(result.getDescription())) {
                 result.setDescription(job.getDescription());
                 LOGGER.info("Updating Job     '%s'", job.getName());
+                AuditUtil.stamp(securityContext.getUserId(), result);
                 result = jobDao.update(result);
             }
         } else {
             LOGGER.info("Adding Job     '{}'", job.getName());
+            AuditUtil.stamp(securityContext.getUserId(), job);
             result = jobDao.create(job);
         }
 

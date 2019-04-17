@@ -20,7 +20,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -129,7 +129,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     private BaseResultList<ProcessorFilter> find(final DSLContext context, final FindProcessorFilterCriteria criteria) {
-        final List<Condition> conditions = convertCriteria(criteria);
+        final Collection<Condition> conditions = convertCriteria(criteria);
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
@@ -155,16 +155,14 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         return BaseResultList.createCriterialBasedList(list, criteria);
     }
 
-    private List<Condition> convertCriteria(final FindProcessorFilterCriteria criteria) {
-        final List<Condition> conditions = new ArrayList<>();
-        JooqUtil.getRangeCondition(PROCESSOR_FILTER.PRIORITY, criteria.getPriorityRange()).ifPresent(conditions::add);
-        JooqUtil.getRangeCondition(PROCESSOR_FILTER_TRACKER.LAST_POLL_MS, criteria.getLastPollPeriod()).ifPresent(conditions::add);
-        JooqUtil.getSetCondition(PROCESSOR_FILTER.FK_PROCESSOR_ID, criteria.getProcessorIdSet()).ifPresent(conditions::add);
-        JooqUtil.getStringCondition(PROCESSOR.PIPELINE_UUID, criteria.getPipelineUuidCriteria()).ifPresent(conditions::add);
-
-        Optional.ofNullable(criteria.getProcessorEnabled()).map(PROCESSOR.ENABLED::eq).ifPresent(conditions::add);
-        Optional.ofNullable(criteria.getProcessorFilterEnabled()).map(PROCESSOR_FILTER.ENABLED::eq).ifPresent(conditions::add);
-        Optional.ofNullable(criteria.getCreateUser()).map(PROCESSOR_FILTER.CREATE_USER::eq).ifPresent(conditions::add);
-        return conditions;
+    private Collection<Condition> convertCriteria(final FindProcessorFilterCriteria criteria) {
+        return JooqUtil.conditions(
+                JooqUtil.getRangeCondition(PROCESSOR_FILTER.PRIORITY, criteria.getPriorityRange()),
+                JooqUtil.getRangeCondition(PROCESSOR_FILTER_TRACKER.LAST_POLL_MS, criteria.getLastPollPeriod()),
+                JooqUtil.getSetCondition(PROCESSOR_FILTER.FK_PROCESSOR_ID, criteria.getProcessorIdSet()),
+                JooqUtil.getStringCondition(PROCESSOR.PIPELINE_UUID, criteria.getPipelineUuidCriteria()),
+                Optional.ofNullable(criteria.getProcessorEnabled()).map(PROCESSOR.ENABLED::eq),
+                Optional.ofNullable(criteria.getProcessorFilterEnabled()).map(PROCESSOR_FILTER.ENABLED::eq),
+                Optional.ofNullable(criteria.getCreateUser()).map(PROCESSOR_FILTER.CREATE_USER::eq));
     }
 }

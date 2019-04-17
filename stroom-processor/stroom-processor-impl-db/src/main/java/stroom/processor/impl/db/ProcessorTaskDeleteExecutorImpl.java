@@ -35,8 +35,9 @@ import stroom.util.date.DateUtil;
 import stroom.util.shared.Period;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
@@ -102,10 +103,9 @@ class ProcessorTaskDeleteExecutorImpl extends AbstractBatchDeleteExecutor implem
 
     @Override
     protected List<Long> getDeleteIdList(final long age, final int batchSize) {
-        final List<Condition> conditions = new ArrayList<>(2);
-        conditions.add(PROCESSOR_TASK.STATUS.in(TaskStatus.COMPLETE.getPrimitiveValue(), TaskStatus.FAILED.getPrimitiveValue()));
-        conditions.add(PROCESSOR_TASK.CREATE_TIME_MS.isNull().or(PROCESSOR_TASK.CREATE_TIME_MS.lessThan(age)));
-
+        final Collection<Condition> conditions = JooqUtil.conditions(
+                Optional.of(PROCESSOR_TASK.STATUS.in(TaskStatus.COMPLETE.getPrimitiveValue(), TaskStatus.FAILED.getPrimitiveValue())),
+                Optional.of(PROCESSOR_TASK.CREATE_TIME_MS.isNull().or(PROCESSOR_TASK.CREATE_TIME_MS.lessThan(age))));
 
         return JooqUtil.contextResult(connectionProvider, context ->
                 context

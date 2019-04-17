@@ -27,7 +27,7 @@ import javax.sql.DataSource;
 public class MetaDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaModule.class);
     private static final String MODULE = "stroom-meta";
-    private static final String FLYWAY_LOCATIONS = "stroom/meta/impl/db";
+    private static final String FLYWAY_LOCATIONS = "stroom/meta/impl/db/migration";
     private static final String FLYWAY_TABLE = "meta_schema_history";
 
     @Override

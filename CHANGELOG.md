@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fixed incompatibility issues with MySQL 5.7 and 8.0.
 
 * Added debug to help diagnose search failures
 

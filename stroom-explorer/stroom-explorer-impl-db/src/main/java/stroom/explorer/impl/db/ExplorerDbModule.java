@@ -20,7 +20,7 @@ import javax.sql.DataSource;
 public class ExplorerDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerDbModule.class);
     private static final String MODULE = "stroom-explorer";
-    private static final String FLYWAY_LOCATIONS = "stroom/explorer/impl/db";
+    private static final String FLYWAY_LOCATIONS = "stroom/explorer/impl/db/migration";
     private static final String FLYWAY_TABLE = "explorer_schema_history";
 
     @Override

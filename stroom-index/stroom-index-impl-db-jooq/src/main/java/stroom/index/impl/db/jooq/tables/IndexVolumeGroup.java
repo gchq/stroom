@@ -11,6 +11,7 @@ import javax.annotation.Generated;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
+import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
@@ -40,7 +41,7 @@ import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
 
-    private static final long serialVersionUID = -1216619573;
+    private static final long serialVersionUID = -129852791;
 
     /**
      * The reference instance of <code>stroom.index_volume_group</code>
@@ -56,9 +57,14 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
     }
 
     /**
-     * The column <code>stroom.index_volume_group.name</code>.
+     * The column <code>stroom.index_volume_group.id</code>.
      */
-    public final TableField<IndexVolumeGroupRecord, String> NAME = createField("name", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<IndexVolumeGroupRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+
+    /**
+     * The column <code>stroom.index_volume_group.version</code>.
+     */
+    public final TableField<IndexVolumeGroupRecord, Integer> VERSION = createField("version", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>stroom.index_volume_group.create_time_ms</code>.
@@ -69,6 +75,21 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
      * The column <code>stroom.index_volume_group.create_user</code>.
      */
     public final TableField<IndexVolumeGroupRecord, String> CREATE_USER = createField("create_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.index_volume_group.update_time_ms</code>.
+     */
+    public final TableField<IndexVolumeGroupRecord, Long> UPDATE_TIME_MS = createField("update_time_ms", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.index_volume_group.update_user</code>.
+     */
+    public final TableField<IndexVolumeGroupRecord, String> UPDATE_USER = createField("update_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.index_volume_group.name</code>.
+     */
+    public final TableField<IndexVolumeGroupRecord, String> NAME = createField("name", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * Create a <code>stroom.index_volume_group</code> table reference
@@ -123,6 +144,14 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
      * {@inheritDoc}
      */
     @Override
+    public Identity<IndexVolumeGroupRecord, Integer> getIdentity() {
+        return Keys.IDENTITY_INDEX_VOLUME_GROUP;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public UniqueKey<IndexVolumeGroupRecord> getPrimaryKey() {
         return Keys.KEY_INDEX_VOLUME_GROUP_PRIMARY;
     }
@@ -133,6 +162,14 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
     @Override
     public List<UniqueKey<IndexVolumeGroupRecord>> getKeys() {
         return Arrays.<UniqueKey<IndexVolumeGroupRecord>>asList(Keys.KEY_INDEX_VOLUME_GROUP_PRIMARY, Keys.KEY_INDEX_VOLUME_GROUP_INDEX_VOLUME_GROUP_NAME);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public TableField<IndexVolumeGroupRecord, Integer> getRecordVersion() {
+        return VERSION;
     }
 
     /**

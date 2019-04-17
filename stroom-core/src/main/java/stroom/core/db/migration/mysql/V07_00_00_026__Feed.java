@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.UUID;
 
 public class V07_00_00_026__Feed extends BaseJavaMigration {
-
     @Override
     public void migrate(final Context context) throws Exception {
         final _V07_00_00_FeedSerialiser serialiser = new _V07_00_00_FeedSerialiser();
