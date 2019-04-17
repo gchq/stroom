@@ -20,21 +20,19 @@ package stroom.core.receive;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.store.api.Store;
-import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
-import stroom.util.io.BufferFactory;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.meta.statistics.api.MetaStatistics;
+import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.AttributeMapFilter;
-import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
-import stroom.receive.common.StroomStatusCode;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.security.api.Security;
+import stroom.util.io.BufferFactory;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -57,10 +55,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
     private final FeedProperties feedProperties;
     private final MetaStatistics metaDataStatistics;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
-    private final ReceiveDataConfig dataFeedConfig;
     private final BufferFactory bufferFactory;
-
-    private volatile AttributeMapFilter attributeMapFilter;
 
     @Inject
     public ReceiveDataRequestHandler(final Security security,
@@ -68,29 +63,22 @@ class ReceiveDataRequestHandler implements RequestHandler {
                                      final FeedProperties feedProperties,
                                      final MetaStatistics metaDataStatistics,
                                      final AttributeMapFilterFactory attributeMapFilterFactory,
-                                     final ReceiveDataConfig dataFeedConfig,
                                      final BufferFactory bufferFactory) {
         this.security = security;
         this.streamStore = streamStore;
         this.feedProperties = feedProperties;
         this.metaDataStatistics = metaDataStatistics;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
-        this.dataFeedConfig = dataFeedConfig;
         this.bufferFactory = bufferFactory;
     }
 
     @Override
     public void handle(final HttpServletRequest request, final HttpServletResponse response) {
-        if (attributeMapFilter == null) {
-            final String receiptPolicyUuid = dataFeedConfig.getReceiptPolicyUuid();
-            if (receiptPolicyUuid != null && !receiptPolicyUuid.isEmpty()) {
-                this.attributeMapFilter = attributeMapFilterFactory.create(new DocRef("RuleSet", receiptPolicyUuid));
-            }
-        }
-
         security.asProcessingUser(() -> {
+            final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
+
             final AttributeMap attributeMap = AttributeMapUtil.create(request);
-            if (attributeMapFilter == null || attributeMapFilter.filter(attributeMap)) {
+            if (attributeMapFilter.filter(attributeMap)) {
                 debug("Receiving data", attributeMap);
                 final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
 

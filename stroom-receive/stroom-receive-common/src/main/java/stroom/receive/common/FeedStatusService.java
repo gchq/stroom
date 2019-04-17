@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.core.feed;
+package stroom.receive.common;
 
-import java.io.Serializable;
+import stroom.proxy.feed.remote.GetFeedStatusRequest;
+import stroom.proxy.feed.remote.GetFeedStatusResponse;
 
-public class RemoteResponse implements Serializable {
-    private static final long serialVersionUID = 8148142593205786503L;
+public interface FeedStatusService {
+    GetFeedStatusResponse getFeedStatus(GetFeedStatusRequest request);
 }

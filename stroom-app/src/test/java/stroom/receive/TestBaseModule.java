@@ -2,6 +2,7 @@ package stroom.receive;
 
 import com.google.inject.AbstractModule;
 import stroom.cache.impl.CacheModule;
+import stroom.receive.common.RemoteFeedModule;
 import stroom.core.receive.ReceiveDataModule;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;

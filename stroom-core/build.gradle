@@ -34,15 +34,13 @@ dependencies {
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-task:stroom-task-impl')
     compile project(':stroom-job:stroom-job-api')
-
-    compile libs.eventLogging
-    compile libs.stroomDocRef
-
+    
     compile libs.commons_compress
     compile libs.commons_io
     compile libs.commons_lang
     compile libs.dropwizard_lifecycle
     compile libs.dropwizard_metrics_annotation
+    compile libs.eventLogging
     compile libs.flyway_core
     compile libs.guava
     compile libs.guice4
@@ -58,6 +56,8 @@ dependencies {
     compile libs.jaxb_api
     compile libs.saxon_he
     compile libs.slf4j_api
+    compile libs.stroomDocRef
+    compile libs.stroomProxyRemoteApi
     compile libs.swagger_annotations
     compile libs.ws_rs_api
     compile libs.xml_apis

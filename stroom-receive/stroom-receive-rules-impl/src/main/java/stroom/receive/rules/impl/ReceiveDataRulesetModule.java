@@ -17,19 +17,19 @@
 package stroom.receive.rules.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.receive.common.AttributeMapFilterFactory;
+import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.RestResource;
-import stroom.docstore.api.DocumentActionHandlerBinder;
+import stroom.util.guice.GuiceUtil;
 
 public class ReceiveDataRulesetModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
-        bind(AttributeMapFilterFactory.class).to(AttributeMapFilterFactoryImpl.class);
+        bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(ReceiveDataRuleSetServiceImpl.class);

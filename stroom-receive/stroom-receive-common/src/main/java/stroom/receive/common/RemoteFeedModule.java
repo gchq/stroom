@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.core.feed;
+package stroom.receive.common;
 
 import com.google.inject.AbstractModule;
+import stroom.util.RestResource;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.ResourcePaths;
 import stroom.util.guice.ServletBinder;
 
 public class RemoteFeedModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(RemoteFeedService.class).to(RemoteFeedServiceImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(FeedStatusResource.class);
 
         ServletBinder.create(binder())
                 .bind(ResourcePaths.ROOT_PATH + "/remoting/remotefeedservice.rpc", RemoteFeedServiceRPC.class);

@@ -31,7 +31,7 @@ public interface IndexVolumeResource extends RestResource {
      * @return
      */
     @GET
-    @Path("{/{id}")
+    @Path("/{id}")
     Response getById(@PathParam("id") int id);
 
     /**

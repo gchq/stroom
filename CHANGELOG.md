@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fixed NPE created when using empty config sections.
+
+* Issue **#1122** : Fixed hessian communication between stroom and stroom proxy used to establish feed receive status. Added restful endpoints for feed status to stroom and stroom proxy. Proxy will now be able to request feed status from upstream stroom or stroom proxy instances.
+
 * Fixed incompatibility issues with MySQL 5.7 and 8.0.
 
 * Added debug to help diagnose search failures
@@ -1480,6 +1484,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 * Issue **#22** : Dashboard table columns can now be configured to wrap text via the format options.
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
+
+* Issue **#202** : Initial release of the new data retention policy functionality.
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v6.0.0...HEAD
 [v6.0.0]: https://github.com/gchq/stroom/compare/v5.4.0...v6.0.0

@@ -84,6 +84,6 @@ public class FeedPropertiesImpl implements FeedProperties {
     public FeedStatus getStatus(final String feedName) {
         return feedDocCache.get(feedName)
                 .map(FeedDoc::getStatus)
-                .orElse(FeedStatus.REJECT);
+                .orElse(null);
     }
 }

@@ -3,6 +3,7 @@ package stroom.proxy.app.guice;
 import com.google.inject.AbstractModule;
 import stroom.proxy.app.ContentSyncConfig;
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardStreamConfig;
 import stroom.proxy.app.handler.LogStreamConfig;
 import stroom.proxy.app.handler.ProxyRequestConfig;
@@ -29,5 +30,6 @@ public class ProxyConfigModule extends AbstractModule {
         bind(ProxyRepositoryConfig.class).toInstance(proxyConfig.getProxyRepositoryConfig());
         bind(ProxyRepositoryReaderConfig.class).toInstance(proxyConfig.getProxyRepositoryReaderConfig());
         bind(ContentSyncConfig.class).toInstance(proxyConfig.getContentSyncConfig());
+        bind(FeedStatusConfig.class).toInstance(proxyConfig.getFeedStatusConfig());
     }
 }

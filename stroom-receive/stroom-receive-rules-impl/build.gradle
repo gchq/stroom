@@ -11,21 +11,19 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
     
-    compile libs.stroomDocRef
-    compile libs.slf4j_api
-    compile libs.javax_inject
-
-    compile libs.guice4
-
     compile libs.dropwizard_metrics_healthchecks
     compile libs.dropwizard_metrics_annotation
+    compile libs.guice4
     compile libs.jackson_annotations
+    compile libs.javax_inject
     compile libs.jaxb_api
+    compile libs.slf4j_api
+    compile libs.stroomDocRef
+    compile libs.stroomProxyRemoteApi
     compile libs.swagger_annotations
     compile libs.ws_rs_api
     
     testCompile libs.assertj_core
-    
     testCompile libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard

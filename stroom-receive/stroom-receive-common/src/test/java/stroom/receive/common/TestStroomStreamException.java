@@ -17,6 +17,7 @@
 package stroom.receive.common;
 
 import org.junit.jupiter.api.Test;
+import stroom.proxy.StroomStatusCode;
 
 import java.io.IOException;
 import java.util.zip.ZipException;
