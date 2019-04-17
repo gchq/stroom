@@ -11,13 +11,13 @@ import stroom.proxy.repo.ProxyRepositoryReaderConfig;
 
 public class ProxyConfig {
     private String proxyContentDir;
-    private ProxyRequestConfig proxyRequestConfig;
-    private ForwardStreamConfig forwardStreamConfig;
-    private ProxyRepositoryConfigImpl proxyRepositoryConfig;
-    private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
-    private LogStreamConfig logStreamConfig;
-    private ContentSyncConfig contentSyncConfig;
-    private FeedStatusConfig feedStatusConfig;
+    private ProxyRequestConfig proxyRequestConfig = new ProxyRequestConfig();
+    private ForwardStreamConfig forwardStreamConfig = new ForwardStreamConfig();
+    private ProxyRepositoryConfigImpl proxyRepositoryConfig = new ProxyRepositoryConfigImpl();
+    private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig = new ProxyRepositoryReaderConfig();
+    private LogStreamConfig logStreamConfig = new LogStreamConfig();
+    private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
+    private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
 
     @JsonProperty
     public ProxyRequestConfig getProxyRequestConfig() {
