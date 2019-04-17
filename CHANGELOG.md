@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.33] - 2019-04-17
+
 * Fixed NPE created when using empty config sections.
 
 ## [v6.0-beta.32] - 2019-04-17
@@ -1531,7 +1533,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.32...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.33...6.0
+[v6.0-beta.33]: https://github.com/gchq/stroom/compare/v6.0-beta.32...v6.0-beta.33
 [v6.0-beta.32]: https://github.com/gchq/stroom/compare/v6.0-beta.31...v6.0-beta.32
 [v6.0-beta.31]: https://github.com/gchq/stroom/compare/v6.0-beta.30...v6.0-beta.31
 [v6.0-beta.30]: https://github.com/gchq/stroom/compare/v6.0-beta.29...v6.0-beta.30
