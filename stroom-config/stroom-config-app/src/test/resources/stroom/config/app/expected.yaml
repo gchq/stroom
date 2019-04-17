@@ -303,6 +303,7 @@ ui:
     indexVolumeGroups: "http://IP_ADDRESS/s/indexing/groups"
     userAuthorisation: "http://IP_ADDRESS/s/authorisationManager/false"
     groupAuthorisation: "http://IP_ADDRESS/s/authorisationManager/true"
+    editDoc: "http://IP_ADDRESS/s/doc/"
     changepassword: "http://IP_ADDRESS/changepassword"
     kibana: null
     trackers: null
