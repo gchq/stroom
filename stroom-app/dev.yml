@@ -434,6 +434,7 @@ appConfig:
       indexVolumeGroups: ${STROOM_UI_URL:-http://localhost:5001}/s/indexing/groups
       userAuthorisation: ${STROOM_UI_URL:-http://localhost:5001}/s/authorisationManager/false
       groupAuthorisation: ${STROOM_UI_URL:-http://localhost:5001}/s/authorisationManager/true
+      editDoc: http://${STROOM_HOST:-localhost}:5001/s/doc/
       changepassword: ${STROOM_UI_URL:-http://localhost:5001}/changepassword
       kibana: null
       trackers: null

@@ -1,51 +1,22 @@
 package stroom.proxy.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.proxy.app.ContentSyncConfig;
+import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardStreamConfig;
 import stroom.proxy.app.handler.LogStreamConfig;
 import stroom.proxy.app.handler.ProxyRequestConfig;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-@Singleton
 public class ProxyConfig {
     private String proxyContentDir;
-    private ProxyRequestConfig proxyRequestConfig;
-    private ForwardStreamConfig forwardStreamConfig;
-    private ProxyRepositoryConfig proxyRepositoryConfig;
-    private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
-    private LogStreamConfig logStreamConfig;
-    private ContentSyncConfig contentSyncConfig;
-
-    @Inject
-    public ProxyConfig(final String proxyContentDir,
-                       final ProxyRequestConfig proxyRequestConfig,
-                       final ForwardStreamConfig forwardStreamConfig,
-                       final ProxyRepositoryConfig proxyRepositoryConfig,
-                       final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig,
-                       final LogStreamConfig logStreamConfig,
-                       final ContentSyncConfig contentSyncConfig) {
-        this.proxyContentDir = proxyContentDir;
-        this.proxyRequestConfig = proxyRequestConfig;
-        this.forwardStreamConfig = forwardStreamConfig;
-        this.proxyRepositoryConfig = proxyRepositoryConfig;
-        this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
-        this.logStreamConfig = logStreamConfig;
-        this.contentSyncConfig = contentSyncConfig;
-    }
-
-    public ProxyConfig() {
-        this.proxyRequestConfig = new ProxyRequestConfig();
-        this.forwardStreamConfig = new ForwardStreamConfig();
-        this.proxyRepositoryConfig = new ProxyRepositoryConfig();
-        this.proxyRepositoryReaderConfig = new ProxyRepositoryReaderConfig();
-        this.logStreamConfig = new LogStreamConfig();
-        this.contentSyncConfig = new ContentSyncConfig();
-    }
+    private ProxyRequestConfig proxyRequestConfig = new ProxyRequestConfig();
+    private ForwardStreamConfig forwardStreamConfig = new ForwardStreamConfig();
+    private ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
+    private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig = new ProxyRepositoryReaderConfig();
+    private LogStreamConfig logStreamConfig = new LogStreamConfig();
+    private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
+    private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
 
     @JsonProperty
     public ProxyRequestConfig getProxyRequestConfig() {
@@ -105,6 +76,16 @@ public class ProxyConfig {
     @JsonProperty
     public void setContentSyncConfig(final ContentSyncConfig contentSyncConfig) {
         this.contentSyncConfig = contentSyncConfig;
+    }
+
+    @JsonProperty("feedStatus")
+    public FeedStatusConfig getFeedStatusConfig() {
+        return feedStatusConfig;
+    }
+
+    @JsonProperty("feedStatus")
+    public void setFeedStatusConfig(final FeedStatusConfig feedStatusConfig) {
+        this.feedStatusConfig = feedStatusConfig;
     }
 
     @JsonProperty

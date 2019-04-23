@@ -7,7 +7,7 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.shared.AttributeMap;
-import stroom.receive.common.StroomStatusCode;
+import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamHandler;
 import stroom.receive.common.StroomStreamProcessor;

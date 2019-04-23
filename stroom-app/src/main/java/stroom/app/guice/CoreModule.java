@@ -1,6 +1,7 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
+import stroom.receive.common.RemoteFeedModule;
 
 public class CoreModule extends AbstractModule {
     @Override
@@ -18,7 +19,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.core.entity.event.EntityClusterTaskModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new stroom.core.entity.event.EntityEventModule());
-        install(new stroom.core.feed.RemoteFeedModule());
+        install(new RemoteFeedModule());
         install(new stroom.core.query.QueryModule());
         install(new stroom.core.receive.ReceiveDataModule());
         install(new stroom.core.servlet.ServletModule());

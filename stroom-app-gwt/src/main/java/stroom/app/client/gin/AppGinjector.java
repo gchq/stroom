@@ -40,6 +40,8 @@ import stroom.data.store.impl.fs.client.gin.FSVolumeModule;
 import stroom.dictionary.client.gin.DictionaryGinjector;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.ClientDispatchModule;
+import stroom.document.client.gin.NewUiGinjector;
+import stroom.document.client.gin.NewUiModule;
 import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
 import stroom.explorer.client.presenter.ExplorerTabPanePresenter;
@@ -93,6 +95,7 @@ import stroom.xmlschema.client.gin.XMLSchemaModule;
         FolderModule.class,
         ImportExportConfigModule.class,
         MonitoringModule.class,
+        NewUiModule.class,
         PipelineModule.class,
         PluginsModule.class,
         PopupModule.class,
@@ -121,6 +124,7 @@ public interface AppGinjector extends
         Ginjector,
         ImportExportConfigGinjector,
         MonitoringGinjector,
+        NewUiGinjector,
         PipelineGinjector,
         PluginsGinjector,
         PopupGinjector,

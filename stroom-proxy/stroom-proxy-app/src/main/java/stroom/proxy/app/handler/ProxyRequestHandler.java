@@ -1,19 +1,16 @@
 package stroom.proxy.app.handler;
 
-import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
+import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.StreamHandler;
 import stroom.receive.common.AttributeMapFilter;
-import stroom.receive.common.AttributeMapFilterFactory;
-import stroom.util.io.BufferFactory;
 import stroom.receive.common.RequestHandler;
-import stroom.receive.common.StroomStatusCode;
 import stroom.receive.common.StroomStreamException;
-import stroom.docref.DocRef;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.receive.common.StroomStreamProcessor;
+import stroom.util.io.BufferFactory;
 import stroom.util.io.ByteCountInputStream;
 
 import javax.inject.Inject;
@@ -41,20 +38,14 @@ public class ProxyRequestHandler implements RequestHandler {
     private final BufferFactory bufferFactory;
 
     @Inject
-    public ProxyRequestHandler(final ProxyRequestConfig proxyRequestConfig,
-                               final MasterStreamHandlerFactory streamHandlerFactory,
+    public ProxyRequestHandler(final MasterStreamHandlerFactory streamHandlerFactory,
                                final AttributeMapFilterFactory attributeMapFilterFactory,
                                final LogStream logStream,
                                final BufferFactory bufferFactory) {
         this.streamHandlerFactory = streamHandlerFactory;
         this.logStream = logStream;
         this.bufferFactory = bufferFactory;
-
-        if (!Strings.isNullOrEmpty(proxyRequestConfig.getReceiptPolicyUuid())) {
-            attributeMapFilter = attributeMapFilterFactory.create(new DocRef("RuleSet", proxyRequestConfig.getReceiptPolicyUuid()));
-        } else {
-            attributeMapFilter = attributeMapFilterFactory.create();
-        }
+        attributeMapFilter = attributeMapFilterFactory.create();
     }
 
     @Override
@@ -136,7 +127,7 @@ public class ProxyRequestHandler implements RequestHandler {
             LOGGER.warn("\"handleException()\",{},\"{}\"", CSVFormatter.format(attributeMap), CSVFormatter.escape(e.getMessage()));
 
             final long duration = System.currentTimeMillis() - startTimeMs;
-            if (StroomStatusCode.RECEIPT_POLICY_SET_TO_REJECT_DATA.equals(e.getStroomStatusCode())) {
+            if (StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA.equals(e.getStroomStatusCode())) {
                 logStream.log(RECEIVE_LOG, attributeMap, "REJECT", request.getRequestURI(), returnCode, -1, duration);
             } else {
                 logStream.log(RECEIVE_LOG, attributeMap, "ERROR", request.getRequestURI(), returnCode, -1, duration);

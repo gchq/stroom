@@ -87,6 +87,7 @@ ext.versions = [
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v1.0-beta.8',
         stroomExpression  : 'v2.0.4',
+        stroomProxyApi    : 'v5.1.2',
         stroomQuery       : 'v4.0-beta.25', // same version for both stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
@@ -134,6 +135,7 @@ ext.libs = [
         stroomAuthApi                  : "stroom:stroom-auth-service-api:$versions.stroomAuth",
         stroomDocRef                   : "stroom:stroom-docref:$versions.stroomQuery",
         stroomExpression               : "stroom:stroom-expression:$versions.stroomExpression",
+        stroomProxyRemoteApi           : "stroom:stroom-proxy-remote-api:$versions.stroomProxyApi",
         stroomQueryApi                 : "stroom:stroom-query-api:$versions.stroomQuery",
         stroomQueryAudit               : "stroom:stroom-query-audit:$versions.stroomQuery",
         stroomQueryAuthorisation       : "stroom:stroom-query-authorisation:$versions.stroomQuery",
@@ -382,6 +384,7 @@ subprojects {
         jcenter()
         maven { url "https://dl.bintray.com/stroom/event-logging" }
         maven { url "https://dl.bintray.com/stroom/stroom" }
+        maven { url "https://dl.bintray.com/stroom/stroom-proxy" }
     }
 
     test {

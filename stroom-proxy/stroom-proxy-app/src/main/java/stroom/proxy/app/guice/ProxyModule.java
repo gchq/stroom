@@ -16,10 +16,10 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.NoSecurityContext;
-import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.ProxyConfigHealthCheck;
 import stroom.proxy.app.handler.ForwardStreamHandlerFactory;
 import stroom.proxy.app.handler.ProxyRequestHandler;
+import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.servlet.ConfigServlet;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
@@ -28,11 +28,11 @@ import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryReader;
 import stroom.proxy.repo.StreamHandlerFactory;
-import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.common.DebugServlet;
+import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.ReceiveDataServlet;
+import stroom.receive.common.RemoteFeedModule;
 import stroom.receive.common.RequestHandler;
-import stroom.receive.rules.impl.AttributeMapFilterFactoryImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResource;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResource2;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
@@ -64,14 +64,16 @@ public class ProxyModule extends AbstractModule {
 
         install(new ProxyConfigModule(configuration.getProxyConfig()));
 
+        // Allow discovery of feed status from other proxies.
+        install(new RemoteFeedModule());
+
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
         bind(StreamHandlerFactory.class).to(ForwardStreamHandlerFactory.class);
         bind(ProxyRepositoryManager.class).asEagerSingleton();
         bind(ProxyRepositoryReader.class).asEagerSingleton();
-
-        bind(AttributeMapFilterFactory.class).to(AttributeMapFilterFactoryImpl.class);
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
         bind(SecurityContext.class).to(NoSecurityContext.class);
+        bind(FeedStatusService.class).to(RemoteFeedStatusService.class);
 
         HealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)

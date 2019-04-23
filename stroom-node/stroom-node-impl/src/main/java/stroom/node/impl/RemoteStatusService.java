@@ -16,10 +16,11 @@
 
 package stroom.node.impl;
 
-import com.caucho.hessian.server.HessianServlet;
+import stroom.proxy.status.remote.GetStatusRequest;
+import stroom.proxy.status.remote.GetStatusResponse;
 
-public class RemoteStatusService extends HessianServlet {
-    public GetStatusResponse getStatus(final GetStatusRequest request) {
+class RemoteStatusService {
+    GetStatusResponse getStatus(final GetStatusRequest request) {
         final GetStatusResponse response = new GetStatusResponse();
         response.getStatusEntryList().add(new GetStatusResponse.StatusEntry(GetStatusResponse.Status.Info, "SYSTEM", "All Ok"));
         return response;

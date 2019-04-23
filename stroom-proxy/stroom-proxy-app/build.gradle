@@ -24,11 +24,7 @@ dependencies {
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
-
-    compile libs.jetty_server
     
-    compile libs.stroomDocRef
-
     compile(libs.dropwizard_assets) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
@@ -51,7 +47,10 @@ dependencies {
     compile libs.javax_servlet_api
     compile libs.jaxb_api
     compile libs.jersey_client
+    compile libs.jetty_server
     compile libs.slf4j_api
+    compile libs.stroomDocRef
+    compile libs.stroomProxyRemoteApi
     
     testCompile project(':stroom-test-common')
     testCompile libs.assertj_core

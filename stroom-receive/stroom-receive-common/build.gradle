@@ -11,12 +11,14 @@ dependencies {
     compile project(':stroom-util')
     
     compile libs.commons_compress
-    compile libs.javax_servlet_api
-    compile libs.stroomDocRef
-
+    compile libs.dropwizard_metrics_annotation
+    compile libs.hessian
     compile libs.javax_inject
+    compile libs.javax_servlet_api
     compile libs.jaxb_api
     compile libs.slf4j_api
+    compile libs.stroomDocRef
+    compile libs.stroomProxyRemoteApi
 
     testCompile libs.assertj_core
     testCompile libs.commons_lang

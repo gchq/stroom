@@ -15,20 +15,23 @@
  *
  */
 
-package stroom.core.feed;
+package stroom.core.receive;
 
 import stroom.feed.api.FeedProperties;
 import stroom.feed.shared.FeedDoc.FeedStatus;
+import stroom.proxy.feed.remote.GetFeedStatusRequest;
+import stroom.proxy.feed.remote.GetFeedStatusResponse;
+import stroom.receive.common.FeedStatusService;
 import stroom.security.api.Security;
 
 import javax.inject.Inject;
 
-class RemoteFeedServiceImpl implements RemoteFeedService {
+class FeedStatusServiceImpl implements FeedStatusService {
     private final Security security;
     private final FeedProperties feedProperties;
 
     @Inject
-    RemoteFeedServiceImpl(final Security security, final FeedProperties feedProperties) {
+    FeedStatusServiceImpl(final Security security, final FeedProperties feedProperties) {
         this.security = security;
         this.feedProperties = feedProperties;
     }

@@ -29,6 +29,7 @@ import stroom.data.zip.StroomZipNameSet;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.StandardHeaderArguments;
+import stroom.proxy.StroomStatusCode;
 import stroom.util.date.DateUtil;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.CloseableUtil;

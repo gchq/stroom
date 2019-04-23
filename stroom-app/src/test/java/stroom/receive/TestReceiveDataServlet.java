@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
 import stroom.data.store.mock.MockStore;
+import stroom.feed.api.FeedStore;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.util.date.DateUtil;
@@ -48,15 +49,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  * The combination of mock and prod classes means this test needs its own
  * context.
  */
-class TestDataFeedServiceImpl {
+class TestReceiveDataServlet {
     @Inject
-    private ReceiveDataServlet dataFeedService;
+    private ReceiveDataServlet receiveDataServlet;
     @Inject
     private MockHttpServletRequest request;
     @Inject
     private MockHttpServletResponse response;
     @Inject
-    private MockStore streamStore;
+    private MockStore store;
+    @Inject
+    private FeedStore feedStore;
 
     @BeforeEach
     void init() {
@@ -65,12 +68,16 @@ class TestDataFeedServiceImpl {
 
         request.resetMock();
         response.resetMock();
-        streamStore.clear();
+        store.clear();
+
+        if (feedStore.list().size() == 0) {
+            feedStore.createDocument("TEST-FEED");
+        }
     }
 
     @Test
     void testErrorNoParameters() throws IOException, ServletException {
-        dataFeedService.doPost(request, response);
+        receiveDataServlet.doPost(request, response);
         checkError(HttpServletResponse.SC_NOT_ACCEPTABLE, "Feed must be specified");
     }
 
@@ -90,10 +97,10 @@ class TestDataFeedServiceImpl {
         request.addHeader("compression", "UNKNOWN");
         request.setInputStream("SOME TEST DATA".getBytes());
 
-        dataFeedService.doPost(request, response);
+        receiveDataServlet.doPost(request, response);
 
         checkError(HttpServletResponse.SC_NOT_ACCEPTABLE, "Unknown compression");
-        assertThat(streamStore.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount()).isEqualTo(0);
     }
 
     @Test
@@ -103,13 +110,13 @@ class TestDataFeedServiceImpl {
         request.addHeader("compression", "NONE");
         request.setInputStream("SOME TEST DATA".getBytes());
 
-        dataFeedService.doPost(request, response);
+        receiveDataServlet.doPost(request, response);
 
         checkOK();
 
-        try (final Source source = streamStore.openSource(streamStore.getLastMeta().getId())) {
+        try (final Source source = store.openSource(store.getLastMeta().getId())) {
             assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
-            assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
+            assertThat(store.getStreamStoreCount()).isEqualTo(1);
         }
     }
 
@@ -119,13 +126,13 @@ class TestDataFeedServiceImpl {
                 + "&periodEndTime=" + DateUtil.createNormalDateTimeString());
         request.setInputStream("SOME TEST DATA".getBytes());
 
-        dataFeedService.doPost(request, response);
+        receiveDataServlet.doPost(request, response);
 
         checkOK();
 
-        try (final Source source = streamStore.openSource(streamStore.getLastMeta().getId())) {
+        try (final Source source = store.openSource(store.getLastMeta().getId())) {
             assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
-            assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
+            assertThat(store.getStreamStoreCount()).isEqualTo(1);
         }
     }
 
@@ -137,13 +144,13 @@ class TestDataFeedServiceImpl {
         request.addHeader("compression", "");
         request.setInputStream("SOME TEST DATA".getBytes());
 
-        dataFeedService.doPost(request, response);
+        receiveDataServlet.doPost(request, response);
 
         checkOK();
 
-        try (final Source source = streamStore.openSource(streamStore.getLastMeta().getId())) {
+        try (final Source source = store.openSource(store.getLastMeta().getId())) {
             assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
-            assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
+            assertThat(store.getStreamStoreCount()).isEqualTo(1);
         }
     }
 
@@ -154,13 +161,13 @@ class TestDataFeedServiceImpl {
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
         request.setInputStream("SOME TEST DATA".getBytes());
 
-        dataFeedService.doPost(request, response);
+        receiveDataServlet.doPost(request, response);
 
         checkOK();
 
-        try (final Source source = streamStore.openSource(streamStore.getLastMeta().getId())) {
+        try (final Source source = store.openSource(store.getLastMeta().getId())) {
             assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
-            assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
+            assertThat(store.getStreamStoreCount()).isEqualTo(1);
         }
     }
 
@@ -172,7 +179,7 @@ class TestDataFeedServiceImpl {
         request.addHeader("compression", "GZIP");
         request.setInputStream("SOME TEST DATA".getBytes());
 
-        dataFeedService.doPost(request, response);
+        receiveDataServlet.doPost(request, response);
 
         checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "format");
         // checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
@@ -189,7 +196,7 @@ class TestDataFeedServiceImpl {
         // Data needs to be big else it gets dropped
         request.setInputStream("SOME TEST DATA XXXXXXXXXXX XXXXXXXXXXXXXX XXXXXXXXXXXXXXXX".getBytes());
 
-        dataFeedService.doPost(request, response);
+        receiveDataServlet.doPost(request, response);
 
         checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Compressed stream invalid");
     }
@@ -203,7 +210,7 @@ class TestDataFeedServiceImpl {
         // Data needs to be big else it gets dropped
         request.setInputStream("SMALL DATA".getBytes());
 
-        dataFeedService.doPost(request, response);
+        receiveDataServlet.doPost(request, response);
 
         checkOK();
     }
@@ -221,11 +228,11 @@ class TestDataFeedServiceImpl {
         }
         request.setInputStream(outputStream.toByteArray());
 
-        dataFeedService.doPost(request, response);
+        receiveDataServlet.doPost(request, response);
 
         checkOK();
 
-        try (final Source source = streamStore.openSource(streamStore.getLastMeta().getId())) {
+        try (final Source source = store.openSource(store.getLastMeta().getId())) {
             assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
         }
     }
@@ -247,11 +254,11 @@ class TestDataFeedServiceImpl {
         }
         request.setInputStream(outputStream.toByteArray());
 
-        dataFeedService.doPost(request, response);
+        receiveDataServlet.doPost(request, response);
 
         checkOK();
 
-        try (final Source source = streamStore.openSource(streamStore.getLastMeta().getId())) {
+        try (final Source source = store.openSource(store.getLastMeta().getId())) {
             assertThat(SourceUtil.readString(source)).isEqualTo("LINE1\nLINE2\n");
         }
     }
@@ -265,7 +272,7 @@ class TestDataFeedServiceImpl {
         request.addHeader("compression", "GZIP");
         request.setInputStream("".getBytes());
 
-        dataFeedService.doPost(request, response);
+        receiveDataServlet.doPost(request, response);
 
         checkOK();
     }
@@ -286,7 +293,7 @@ class TestDataFeedServiceImpl {
 
         request.setInputStream(outputStream.toByteArray());
 
-        dataFeedService.doPost(request, response);
+        receiveDataServlet.doPost(request, response);
 
         checkOK();
     }
@@ -297,11 +304,11 @@ class TestDataFeedServiceImpl {
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
         request.setInputStream(new CorruptInputStream(new ByteArrayInputStream("SOME TEST DATA".getBytes()), 10));
-        assertThat(streamStore.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount()).isEqualTo(0);
 
-        dataFeedService.doPost(request, response);
+        receiveDataServlet.doPost(request, response);
 
-        assertThat(streamStore.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount()).isEqualTo(0);
 
         checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Expected IO Junit Error at byte ");
     }
@@ -321,11 +328,11 @@ class TestDataFeedServiceImpl {
 
         request.setInputStream(new CorruptInputStream(new ByteArrayInputStream(outputStream.toByteArray()), 10));
 
-        assertThat(streamStore.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount()).isEqualTo(0);
 
-        dataFeedService.doPost(request, response);
+        receiveDataServlet.doPost(request, response);
 
-        assertThat(streamStore.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount()).isEqualTo(0);
 
         checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Expected IO Junit Error at byte ");
     }
@@ -346,9 +353,9 @@ class TestDataFeedServiceImpl {
 
         request.setInputStream(new CorruptInputStream(new ByteArrayInputStream(outputStream.toByteArray()), 10));
 
-        assertThat(streamStore.getStreamStoreCount()).isEqualTo(0);
-        dataFeedService.doPost(request, response);
-        assertThat(streamStore.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount()).isEqualTo(0);
+        receiveDataServlet.doPost(request, response);
+        assertThat(store.getStreamStoreCount()).isEqualTo(0);
 
         checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Expected IO Junit Error at byte ");
     }
