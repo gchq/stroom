@@ -18,6 +18,9 @@ package stroom.streamstore.server.udload;
 
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
+import stroom.feed.MetaMap;
+import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedService;
 import stroom.proxy.repo.StroomFileNameUtil;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
@@ -30,6 +33,7 @@ import stroom.streamstore.server.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.io.CloseableUtil;
@@ -41,12 +45,14 @@ import stroom.util.spring.StroomScope;
 import stroom.util.task.MonitorImpl;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadLocalBuffer;
+import stroom.util.zip.StroomHeaderArguments;
 
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.concurrent.atomic.AtomicLong;
 
 @TaskHandlerBean(task = StreamDownloadTask.class)
 @Scope(value = StroomScope.TASK)
@@ -54,6 +60,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
     private static final StroomLogger LOGGER = StroomLogger.getLogger(StreamDownloadTaskHandler.class);
 
     private static final String AGGREGATION_DELIMITER = "_";
+    private static final String ZIP_EXTENSION = ".zip";
 
     @Resource
     private TaskMonitor taskMonitor;
@@ -61,90 +68,109 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
     private StreamStore streamStore;
     @Resource(name = "prototypeThreadLocalBuffer")
     private ThreadLocalBuffer writeThreadLocalBuffer;
+    @Resource(name = "cachedFeedService")
+    private FeedService feedService;
+    @Resource(name = "cachedStreamTypeService")
+    private StreamTypeService streamTypeService;
+
+    private final AtomicLong fileCount = new AtomicLong(0);
+
+    private String lastPossibleFileName;
 
     @Override
     public StreamDownloadResult exec(final StreamDownloadTask task) {
-        StreamDownloadResult result = null;
-        taskMonitor.info(task.getFile().toString());
-
-        result = downloadData(task, task.getCriteria(), task.getFile(), task.getSettings());
-
-        return result;
+        return downloadData(task);
     }
 
-    private StreamDownloadResult downloadData(final StreamDownloadTask task, final FindStreamCriteria criteria,
-                                              Path data, final StreamDownloadSettings settings) throws RuntimeException {
+    private StreamDownloadResult downloadData(final StreamDownloadTask task) throws RuntimeException {
+        final FindStreamCriteria criteria = task.getCriteria();
+        final StreamDownloadSettings settings = task.getSettings();
         final BaseResultList<Stream> list = streamStore.find(criteria);
-
         final StreamDownloadResult result = new StreamDownloadResult();
-
         if (list.size() == 0) {
             return result;
         }
 
-        final Monitor zipProgressMonitor = new MonitorImpl(taskMonitor);
         final Monitor streamProgressMonitor = new MonitorImpl(taskMonitor);
+        long id = 0;
 
         StroomZipOutputStream stroomZipOutputStream = null;
         try {
-            stroomZipOutputStream = new StroomZipOutputStreamImpl(data, zipProgressMonitor, false);
-
-            long id = 0;
-            long fileCount = 0;
-
-            final String fileBasePath = data.toAbsolutePath().toString().substring(0, data.toAbsolutePath().toString().lastIndexOf(".zip"));
-
             final LogItemProgress logItemProgress = new LogItemProgress(0, list.size());
             streamProgressMonitor.info("Stream %s", logItemProgress);
 
             for (final Stream stream : list) {
-                result.incrementRecordsWritten();
-                logItemProgress.incrementProgress();
-
-                id = downloadStream(streamProgressMonitor, stream.getId(), stroomZipOutputStream, id,
-                        settings.getMaxFileParts());
-
-                boolean startNewFile = false;
-                boolean hitMaxFileSize = false;
-                boolean hitMaxFileParts = false;
-                if (settings.getMaxFileSize() != null
-                        && stroomZipOutputStream.getProgressSize() > settings.getMaxFileSize()) {
-                    startNewFile = true;
-                    hitMaxFileSize = true;
-                }
-                if (settings.getMaxFileParts() != null
-                        && stroomZipOutputStream.getEntryCount() > settings.getMaxFileParts()) {
-                    startNewFile = true;
-                    hitMaxFileParts = true;
-                }
-                if (startNewFile) {
-                    if (!settings.isMultipleFiles()) {
-                        // Process no more !
-                        result.setHitMaxFileParts(hitMaxFileParts);
-                        result.setHitMaxFileSize(hitMaxFileSize);
-                        break;
-                    } else {
+                try {
+                    // Establish the output file name.
+                    final MetaMap metaMap = new MetaMap();
+                    final Feed feed = feedService.load(stream.getFeed());
+                    final StreamType streamType = streamTypeService.load(stream.getStreamType());
+                    metaMap.put(StroomHeaderArguments.FEED, feed.getName());
+                    metaMap.put("streamType", streamType.getName());
+                    metaMap.put("streamId", String.valueOf(stream.getId()));
+                    final String possibleFilename = StroomFileNameUtil.constructFilename(0, task.getFormat(), metaMap, ZIP_EXTENSION);
+                    if (stroomZipOutputStream != null && !possibleFilename.equals(lastPossibleFileName)) {
                         stroomZipOutputStream.close();
-                        fileCount++;
-                        data = Paths.get(fileBasePath + "_" + fileCount + ".zip");
-                        stroomZipOutputStream = new StroomZipOutputStreamImpl(data, zipProgressMonitor, false);
+                        stroomZipOutputStream = null;
                     }
+                    lastPossibleFileName = possibleFilename;
+
+                    // Open a zip output stream if we don't currently have one.
+                    if (stroomZipOutputStream == null) {
+                        stroomZipOutputStream = getStroomZipOutputStream(task.getOutputDir(), task.getFormat(), metaMap);
+                        id = 0;
+                    }
+
+                    // Write to the output stream.
+                    result.incrementRecordsWritten();
+                    logItemProgress.incrementProgress();
+                    id = downloadStream(streamProgressMonitor, stream.getId(), stroomZipOutputStream, id,
+                            settings.getMaxFileParts());
+
+                    // Determine if we should now close the output stream and start a new one.
+                    boolean startNewFile = false;
+                    boolean hitMaxFileSize = false;
+                    boolean hitMaxFileParts = false;
+                    if (settings.getMaxFileSize() != null
+                            && stroomZipOutputStream.getProgressSize() > settings.getMaxFileSize()) {
+                        startNewFile = true;
+                        hitMaxFileSize = true;
+                    }
+                    if (settings.getMaxFileParts() != null
+                            && stroomZipOutputStream.getEntryCount() > settings.getMaxFileParts()) {
+                        startNewFile = true;
+                        hitMaxFileParts = true;
+                    }
+                    if (startNewFile) {
+                        if (!settings.isMultipleFiles()) {
+                            // Process no more !
+                            result.setHitMaxFileParts(hitMaxFileParts);
+                            result.setHitMaxFileSize(hitMaxFileSize);
+                            break;
+                        } else {
+                            stroomZipOutputStream.close();
+                            stroomZipOutputStream = null;
+                        }
+                    }
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
                 }
-
             }
 
-            if (id == 0) {
-                stroomZipOutputStream.closeDelete();
-            } else {
-                stroomZipOutputStream.close();
+            if (stroomZipOutputStream != null) {
+                if (id == 0) {
+                    stroomZipOutputStream.closeDelete();
+                } else {
+                    stroomZipOutputStream.close();
+                }
+                stroomZipOutputStream = null;
             }
-            stroomZipOutputStream = null;
 
             return result;
         } catch (final IOException ioEx) {
             throw new RuntimeException(ioEx);
         } finally {
-            closeDelete(data, stroomZipOutputStream);
+            closeDelete(stroomZipOutputStream);
             taskMonitor.info("done");
         }
     }
@@ -165,52 +191,54 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
 
             // Export Source
             dataSource = streamStore.openStreamSource(streamId);
-            final StreamSource metaSource = dataSource.getChildStream(StreamType.META);
-            final StreamSource contextSource = dataSource.getChildStream(StreamType.CONTEXT);
+            if (dataSource != null) {
+                final StreamSource metaSource = dataSource.getChildStream(StreamType.META);
+                final StreamSource contextSource = dataSource.getChildStream(StreamType.CONTEXT);
 
-            dataInputStream = new RANestedInputStream(dataSource);
-            metaInputStream = null;
-            if (metaSource != null) {
-                metaInputStream = new RANestedInputStream(metaSource);
-            }
-            contextInputStream = null;
-            if (contextSource != null) {
-                contextInputStream = new RANestedInputStream(contextSource);
-            }
-
-            long entryProgress = 0;
-            final long entryTotal = dataInputStream.getEntryCount();
-
-            if (maxParts == null || entryTotal < maxParts) {
-                long part = -1;
-                if (dataInputStream.getEntryCount() > 1) {
-                    part = 0;
+                dataInputStream = new RANestedInputStream(dataSource);
+                metaInputStream = null;
+                if (metaSource != null) {
+                    metaInputStream = new RANestedInputStream(metaSource);
                 }
-                while (dataInputStream.getNextEntry()) {
-                    entryProgress++;
+                contextInputStream = null;
+                if (contextSource != null) {
+                    contextInputStream = new RANestedInputStream(contextSource);
+                }
 
-                    streamProgressMonitor.info("Stream Input %s/%s", entryProgress, entryTotal);
+                long entryProgress = 0;
+                final long entryTotal = dataInputStream.getEntryCount();
 
-                    String basePartName = StroomFileNameUtil.getIdPath(id);
-
-                    if (part != -1) {
-                        part++;
-                        basePartName += AGGREGATION_DELIMITER + part;
+                if (maxParts == null || entryTotal < maxParts) {
+                    long part = -1;
+                    if (dataInputStream.getEntryCount() > 1) {
+                        part = 0;
                     }
+                    while (dataInputStream.getNextEntry()) {
+                        entryProgress++;
 
-                    // Write out the manifest
-                    if (part == 1 || part == -1) {
-                        dataSource.getAttributeMap().write(stroomZipOutputStream
-                                .addEntry(new StroomZipEntry(null, basePartName, StroomZipFileType.Manifest)), true);
+                        streamProgressMonitor.info("Stream Input %s/%s", entryProgress, entryTotal);
+
+                        String basePartName = StroomFileNameUtil.getIdPath(id);
+
+                        if (part != -1) {
+                            part++;
+                            basePartName += AGGREGATION_DELIMITER + part;
+                        }
+
+                        // Write out the manifest
+                        if (part == 1 || part == -1) {
+                            dataSource.getAttributeMap().write(stroomZipOutputStream
+                                    .addEntry(new StroomZipEntry(null, basePartName, StroomZipFileType.Manifest)), true);
+                        }
+
+                        // False here as the loop does the next next next
+                        streamToStream(dataInputStream, stroomZipOutputStream, basePartName, StroomZipFileType.Data, false);
+
+                        streamToStream(metaInputStream, stroomZipOutputStream, basePartName, StroomZipFileType.Meta, true);
+
+                        streamToStream(contextInputStream, stroomZipOutputStream, basePartName, StroomZipFileType.Context, true);
+
                     }
-
-                    // False here as the loop does the next next next
-                    streamToStream(dataInputStream, stroomZipOutputStream, basePartName, StroomZipFileType.Data, false);
-
-                    streamToStream(metaInputStream, stroomZipOutputStream, basePartName, StroomZipFileType.Meta, true);
-
-                    streamToStream(contextInputStream, stroomZipOutputStream, basePartName, StroomZipFileType.Context, true);
-
                 }
             }
         } finally {
@@ -247,13 +275,35 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
         return false;
     }
 
-    private void closeDelete(final Path data, final StroomZipOutputStream stroomZipOutputStream) {
+    private void closeDelete(final StroomZipOutputStream stroomZipOutputStream) {
         if (stroomZipOutputStream != null) {
             try {
                 stroomZipOutputStream.closeDelete();
             } catch (final IOException e) {
-                LOGGER.error("closeDelete() - Failed to delete " + data);
+                LOGGER.error("closeDelete() - Failed to delete " + stroomZipOutputStream);
             }
         }
+    }
+
+    private StroomZipOutputStream getStroomZipOutputStream(final Path outputDir, final String format, final MetaMap metaMap)
+            throws IOException {
+        final String filename = StroomFileNameUtil.constructFilename(fileCount.incrementAndGet(), format,
+                metaMap, ZIP_EXTENSION);
+        final Path file = outputDir.resolve(filename);
+
+        taskMonitor.info(file.toString());
+
+        StroomZipOutputStreamImpl outputStream;
+
+        // Create directories and files in a synchronized way so that the clean() method will not remove empty
+        // directories that we are just about to write to.
+        final Path dir = file.getParent();
+        // Ensure parent dir's exist
+        Files.createDirectories(dir);
+
+        final Monitor zipProgressMonitor = new MonitorImpl(taskMonitor);
+        outputStream = new StroomZipOutputStreamImpl(file, zipProgressMonitor, false);
+
+        return outputStream;
     }
 }

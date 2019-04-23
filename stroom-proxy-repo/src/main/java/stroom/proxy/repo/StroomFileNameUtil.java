@@ -34,7 +34,7 @@ public final class StroomFileNameUtil {
         return clean(path);
     }
 
-    static String idToString(long id) {
+    public static String idToString(long id) {
         final StringBuilder sb = new StringBuilder();
         sb.append(id);
         // Pad out e.g. 10100 -> 010100
@@ -105,7 +105,7 @@ public final class StroomFileNameUtil {
         return new String(out, 0, outIndex);
     }
 
-    static String constructFilename(long id, final String template,
+    public static String constructFilename(long id, final String template,
                                     final MetaMap metaMap,
                                     String... fileExtensions) {
         if (LOGGER.isDebugEnabled()) {

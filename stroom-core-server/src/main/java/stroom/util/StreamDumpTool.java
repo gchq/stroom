@@ -37,6 +37,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.ServerTask;
+import stroom.util.task.TaskScopeRunnable;
 import stroom.util.thread.ThreadScopeRunnable;
 
 import java.io.IOException;
@@ -57,6 +58,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
     private String createPeriodFrom;
     private String createPeriodTo;
     private String outputDir;
+    private String format;
 
     public static void main(final String[] args) throws Exception {
         new StreamDumpTool().doMain(args);
@@ -80,6 +82,10 @@ public class StreamDumpTool extends AbstractCommandLineTool {
 
     public void setOutputDir(final String outputDir) {
         this.outputDir = outputDir;
+    }
+
+    public void setFormat(final String format) {
+        this.format = format;
     }
 
     @Override
@@ -106,38 +112,50 @@ public class StreamDumpTool extends AbstractCommandLineTool {
             throw new RuntimeException(e.getMessage(), e);
         }
 
+        if (format == null || format.trim().length() == 0) {
+            System.out.println("Using default output format: \"${feed}/${pathId}/${id}\"");
+            format = "${feed}/${pathId}/${id}";
+        }
+
         // Boot up spring
         final ApplicationContext appContext = getAppContext();
         final FeedService feedService = (FeedService) appContext.getBean("cachedFeedService");
         final StreamTypeService streamTypeService = (StreamTypeService) appContext.getBean("cachedStreamTypeService");
-        final StreamDownloadTaskHandler streamDownloadTaskHandler = appContext.getBean(StreamDownloadTaskHandler.class);
 
         new ThreadScopeRunnable() {
             @Override
             protected void exec() {
-                if (feed == null || feed.trim().length() == 0) {
-                    final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
-                    findFeedCriteria.setPageRequest(null);
-                    findFeedCriteria.setSort(FindFeedCriteria.FIELD_NAME);
-                    final List<Feed> feedList = feedService.find(findFeedCriteria);
-                    for (final Feed f : feedList) {
-                        download(feedService, streamTypeService, streamDownloadTaskHandler, f.getName(), streamType, createPeriodFrom, createPeriodTo, dir);
+                new TaskScopeRunnable(new StreamDownloadTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, null, null, null, null)) {
+                    @Override
+                    protected void exec() {
+                        final StreamDownloadTaskHandler streamDownloadTaskHandler = appContext.getBean(StreamDownloadTaskHandler.class);
+
+                        if (feed == null || feed.trim().length() == 0) {
+                            final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
+                            findFeedCriteria.setPageRequest(null);
+                            findFeedCriteria.setSort(FindFeedCriteria.FIELD_NAME);
+                            final List<Feed> feedList = feedService.find(findFeedCriteria);
+                            for (final Feed f : feedList) {
+                                download(feedService, streamTypeService, f.getName(), streamType, createPeriodFrom, createPeriodTo, dir, format, streamDownloadTaskHandler);
+                            }
+                        } else {
+                            download(feedService, streamTypeService, feed, streamType, createPeriodFrom, createPeriodTo, dir, format, streamDownloadTaskHandler);
+                        }
                     }
-                } else {
-                    download(feedService, streamTypeService, streamDownloadTaskHandler, feed, streamType, createPeriodFrom, createPeriodTo, dir);
-                }
+                }.run();
             }
         }.run();
     }
 
     private void download(final FeedService feedService,
                           final StreamTypeService streamTypeService,
-                          final StreamDownloadTaskHandler streamDownloadTaskHandler,
                           final String feedName,
                           final String streamType,
                           final String createPeriodFrom,
                           final String createPeriodTo,
-                          final Path dir) {
+                          final Path dir,
+                          final String format,
+                          final StreamDownloadTaskHandler streamDownloadTaskHandler) {
         System.out.println("Dumping data for " + feedName);
 
         final FindStreamCriteria criteria = new FindStreamCriteria();
@@ -151,7 +169,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         }
         criteria.setCreatePeriod(new Period(createPeriodFromMs, createPeriodToMs));
 
-        Feed definition = null;
+        Feed definition;
         if (feedName != null) {
             definition = feedService.loadByName(feedName);
             if (definition == null) {
@@ -166,18 +184,18 @@ public class StreamDumpTool extends AbstractCommandLineTool {
                 throw new RuntimeException("Unable to locate stream type " + streamType);
             }
             criteria.obtainStreamTypeIdSet().add(type.getId());
-        } else {
-            criteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
-            criteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE.getId());
         }
+//        else {
+//            criteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
+//            criteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE.getId());
+//        }
 
         final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
         streamDownloadSettings.setMultipleFiles(true);
         streamDownloadSettings.setMaxFileSize(ModelStringUtil.parseIECByteSizeString("2G"));
         streamDownloadSettings.setMaxFileParts(10000L);
 
-        final StreamDownloadTask streamDownloadTask = new StreamDownloadTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, criteria, dir.resolve(definition.getName() + ".zip"), streamDownloadSettings);
-
+        final StreamDownloadTask streamDownloadTask = new StreamDownloadTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, criteria, dir, format, streamDownloadSettings);
         streamDownloadTaskHandler.exec(streamDownloadTask);
 
 
@@ -231,10 +249,9 @@ public class StreamDumpTool extends AbstractCommandLineTool {
 
     private ApplicationContext buildAppContext() {
         System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
-        final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+        return new AnnotationConfigApplicationContext(
                 ScopeConfiguration.class, PersistenceConfiguration.class,
                 ServerConfiguration.class, HeadlessConfiguration.class);
-        return context;
     }
 
 //    /**

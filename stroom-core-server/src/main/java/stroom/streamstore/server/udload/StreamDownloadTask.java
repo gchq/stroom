@@ -23,17 +23,22 @@ import java.nio.file.Path;
 
 public class StreamDownloadTask extends ServerTask<StreamDownloadResult> {
     private FindStreamCriteria criteria;
-    private Path file;
+    private Path outputDir;
+    private String format;
     private StreamDownloadSettings settings;
 
     public StreamDownloadTask() {
     }
 
-    public StreamDownloadTask(final String userToken, final FindStreamCriteria criteria,
-                              final Path file, final StreamDownloadSettings settings) {
+    public StreamDownloadTask(final String userToken,
+                              final FindStreamCriteria criteria,
+                              final Path outputDir,
+                              final String format,
+                              final StreamDownloadSettings settings) {
         super(null, userToken);
         this.criteria = criteria;
-        this.file = file;
+        this.outputDir = outputDir;
+        this.format = format;
         this.settings = settings;
     }
 
@@ -41,8 +46,12 @@ public class StreamDownloadTask extends ServerTask<StreamDownloadResult> {
         return criteria;
     }
 
-    public Path getFile() {
-        return file;
+    public Path getOutputDir() {
+        return outputDir;
+    }
+
+    public String getFormat() {
+        return format;
     }
 
     public StreamDownloadSettings getSettings() {
