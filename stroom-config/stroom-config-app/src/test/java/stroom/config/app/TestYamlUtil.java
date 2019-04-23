@@ -2,7 +2,6 @@ package stroom.config.app;
 
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,22 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 class TestYamlUtil {
-    @Test
-    void test() throws IOException {
-        String expected;
-        try (final InputStream inputStream = getClass().getResourceAsStream("expected.yaml")) {
-            expected = new String(inputStream.readAllBytes());
-        }
-
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        YamlUtil.write(new AppConfig(), byteArrayOutputStream);
-        final String actual = new String(byteArrayOutputStream.toByteArray());
-
-        assertThat(actual).isEqualTo(expected);
-    }
 
     @Test
     void testDevYaml() throws FileNotFoundException {
