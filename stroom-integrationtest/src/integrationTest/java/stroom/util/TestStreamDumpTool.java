@@ -28,6 +28,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
 import javax.annotation.Resource;
+import java.nio.file.Files;
 
 public class TestStreamDumpTool extends AbstractCoreIntegrationTest {
     @Resource
@@ -40,11 +41,12 @@ public class TestStreamDumpTool extends AbstractCoreIntegrationTest {
         try {
             final Feed feed = commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
 
-            addData(feed, "This is some test data to dump");
+            addData(feed, "This is some test data to dump1");
+            addData(feed, "This is some test data to dump2");
+            addData(feed, "This is some test data to dump3");
 
             final StreamDumpTool streamDumpTool = new StreamDumpTool();
-            streamDumpTool.setFeed(feed.getName());
-            streamDumpTool.setOutputDir(FileUtil.getCanonicalPath(FileUtil.getTempDir()));
+            streamDumpTool.setOutputDir(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
             streamDumpTool.run();
 
         } catch (final Exception e) {
@@ -56,6 +58,13 @@ public class TestStreamDumpTool extends AbstractCoreIntegrationTest {
         Stream stream = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null, System.currentTimeMillis());
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         streamTarget.getOutputStream().write(data.getBytes(StreamUtil.DEFAULT_CHARSET));
+
+        final StreamTarget metaStreamTarget = streamTarget.addChildStream(StreamType.META);
+        metaStreamTarget.getOutputStream().write(("FEED:" + feed.getName()).getBytes(StreamUtil.DEFAULT_CHARSET));
+
+        final StreamTarget contextStreamTarget = streamTarget.addChildStream(StreamType.CONTEXT);
+        contextStreamTarget.getOutputStream().write("context=blah".getBytes(StreamUtil.DEFAULT_CHARSET));
+
         streamStore.closeStreamTarget(streamTarget);
     }
 }

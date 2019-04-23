@@ -104,7 +104,7 @@ public final class StroomFileNameUtil {
         return new String(out, 0, outIndex);
     }
 
-    static String constructFilename(long id, final String template,
+    public static String constructFilename(long id, final String template,
                                     final MetaMap metaMap,
                                     String... fileExtensions) {
         if (LOGGER.isDebugEnabled()) {

@@ -70,7 +70,9 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
         Assert.assertEquals(2, streamStore.find(findStreamCriteria).size());
 
-        taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, file, streamDownloadSettings));
+        String format = file.getFileName().toString();
+        format = format.substring(0, format.indexOf("."));
+        taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, getCurrentTestDir(), format, streamDownloadSettings));
 
         Assert.assertEquals(2, streamStore.find(findStreamCriteria).size());
 
@@ -146,7 +148,9 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
         Assert.assertEquals(1, streamStore.find(findStreamCriteria).size());
 
-        taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, file, streamDownloadSettings));
+        String format = file.getFileName().toString();
+        format = format.substring(0, format.indexOf("."));
+        taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, getCurrentTestDir(), format, streamDownloadSettings));
 
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
         Assert.assertTrue(stroomZipFile.containsEntry("001_1", StroomZipFileType.Manifest));

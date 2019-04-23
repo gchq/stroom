@@ -60,7 +60,8 @@ public class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction,
             final Path file = sessionResourceStore.getTempFile(resourceKey);
 
             final StreamDownloadSettings settings = new StreamDownloadSettings();
-            taskManager.exec(new StreamDownloadTask(action.getUserToken(), action.getCriteria(), file, settings));
+            taskManager.exec(new StreamDownloadTask(action.getUserToken(), action.getCriteria(),
+                    file.getParent(), "StroomData", settings));
 
             streamEventLog.exportStream(action.getCriteria(), null);
 
