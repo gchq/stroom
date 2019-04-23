@@ -426,8 +426,8 @@ appConfig:
         title: "Please Provide Query Info"
         validationRegex: "^[\\s\\S]{3,}$"
     url:
-      ui: null
-      authenticationService: ${STROOM_AUTH_AUTHENTICATION_SERVICE_URL:-http://localhost/authentication/v1}
+      ui: ${STROOM_ADVERTISED_URL:-http//localhost/stroom}
+      authenticationService: ${STROOM_AUTHENTICATION_SERVICE_URL:-http://localhost/authentication/v1}
       users: ${STROOM__UI_URL:-http://localhost:5001}/s/users
       apiKeys: ${STROOM_UI_URL:-http://localhost:5001}/s/tokens
       indexVolumes: ${STROOM_UI_URL:-http://localhost:5001}/s/indexing/volumes
