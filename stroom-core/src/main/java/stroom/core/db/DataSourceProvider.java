@@ -37,6 +37,7 @@ public class DataSourceProvider implements Provider<DataSource> {
     }
 
     private DataSource dataSource() {
+        LOGGER.info("Creating connection provider for {}", MODULE);
         final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
         final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
         final HikariConfig config = HikariUtil.createConfig(connectionConfig, connectionPoolConfig);

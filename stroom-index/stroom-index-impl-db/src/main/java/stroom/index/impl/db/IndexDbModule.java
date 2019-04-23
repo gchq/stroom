@@ -37,6 +37,7 @@ public class IndexDbModule extends AbstractModule {
     @Provides
     @Singleton
     ConnectionProvider getConnectionProvider(final Provider<IndexDbConfig> configProvider) {
+        LOGGER.info("Creating connection provider for {}", MODULE);
         final HikariConfig config = HikariUtil.createConfig(configProvider.get().getConnectionConfig(),
                 configProvider.get().getConnectionPoolConfig());
         final ConnectionProvider connectionProvider = new ConnectionProvider(config);

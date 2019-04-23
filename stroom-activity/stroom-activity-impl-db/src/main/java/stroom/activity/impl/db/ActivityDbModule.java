@@ -38,6 +38,7 @@ public class ActivityDbModule extends AbstractModule {
     @Provides
     @Singleton
     ConnectionProvider getConnectionProvider(final Provider<ActivityConfig> configProvider) {
+        LOGGER.info("Creating connection provider for {}", MODULE);
         final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
         final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
         final HikariConfig config = HikariUtil.createConfig(connectionConfig, connectionPoolConfig);

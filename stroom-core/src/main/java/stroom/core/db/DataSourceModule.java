@@ -26,6 +26,8 @@ import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
@@ -35,6 +37,8 @@ import javax.sql.DataSource;
  * entity manager factory, data sources.
  */
 public class DataSourceModule extends AbstractModule {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceModule.class);
+    private static final String MODULE = "datasource-module";
     @Override
     protected void configure() {
         // Force creation of connection provider so that legacy migration code executes.
@@ -51,6 +55,7 @@ public class DataSourceModule extends AbstractModule {
     @Provides
     @Singleton
     ConnectionProvider getConnectionProvider(final Provider<DbConfig> configProvider) {
+        LOGGER.info("Creating connection provider for {}", MODULE);
         final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
         final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
         final HikariConfig config = HikariUtil.createConfig(connectionConfig, connectionPoolConfig);
