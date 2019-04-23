@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.9] - 2019-04-23
+
 * Issue **#1119** : StreamDumpTool will now dump data to zip files containing all data and associated meta and context data. This now behaves the same way as downloading data from the UI and can be used as an input to proxy aggregation or uploaded manually.
 
 ## [v5.5.8] - 2019-03-22
@@ -986,7 +988,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.9...HEAD
+[v5.5.9]: https://github.com/gchq/stroom/compare/v5.5.8...v5.5.9
 [v5.5.8]: https://github.com/gchq/stroom/compare/v5.5.7...v5.5.8
 [v5.5.7]: https://github.com/gchq/stroom/compare/v5.5.6...v5.5.7
 [v5.5.6]: https://github.com/gchq/stroom/compare/v5.5.5...v5.5.6
