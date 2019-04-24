@@ -16,7 +16,7 @@
 
 package stroom.task.impl;
 
-import org.slf4j.helpers.MessageFormatter;
+import stroom.util.logging.LogUtil;
 
 import java.util.IllegalFormatException;
 
@@ -34,7 +34,7 @@ public class LoggerUtil {
                 if (args.length > 1) {
                     final Object[] otherArgs = new Object[args.length - 1];
                     System.arraycopy(args, 1, otherArgs, 0, otherArgs.length);
-                    return MessageFormatter.format((String) args[0], otherArgs).getMessage();
+                    return LogUtil.message((String) args[0], otherArgs);
                 } else {
                     return (String) args[0];
                 }

@@ -153,12 +153,12 @@ public class V07_00_00_033__Index extends BaseJavaMigration {
                         final String updUser = resultSet.getString(5);
                         final String path = resultSet.getString(6);
                         final byte state = resultSet.getByte(7);
-                        final long bytesLimit = resultSet.getByte(8);
+                        final long bytesLimit = resultSet.getLong(8);
                         final String node = resultSet.getString(9);
-                        final long bytesUsed = resultSet.getByte(10);
-                        final long bytesFree = resultSet.getByte(11);
-                        final long bytesTotal = resultSet.getByte(12);
-                        final long statMs = resultSet.getByte(13);
+                        final long bytesUsed = resultSet.getLong(10);
+                        final long bytesFree = resultSet.getLong(11);
+                        final long bytesTotal = resultSet.getLong(12);
+                        final long statMs = resultSet.getLong(13);
 
                         insert.setInt(1, volId);
                         insert.setInt(2, 1);

@@ -26,6 +26,7 @@ import stroom.entity.shared.EntityEvent.Handler;
 import stroom.entity.shared.EntityEventBus;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
+import stroom.util.io.BufferFactory;
 
 public class ToolModule extends AbstractModule {
     @Override

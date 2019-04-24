@@ -24,17 +24,22 @@ import java.nio.file.Path;
 
 public class DataDownloadTask extends ServerTask<DataDownloadResult> {
     private FindMetaCriteria criteria;
-    private Path file;
-    private StreamDownloadSettings settings;
+    private Path outputDir;
+    private String format;
+    private DataDownloadSettings settings;
 
     public DataDownloadTask() {
     }
 
-    public DataDownloadTask(final UserToken userToken, final FindMetaCriteria criteria,
-                            final Path file, final StreamDownloadSettings settings) {
+    public DataDownloadTask(final UserToken userToken,
+                            final FindMetaCriteria criteria,
+                            final Path outputDir,
+                            final String format,
+                            final DataDownloadSettings settings) {
         super(null, userToken);
         this.criteria = criteria;
-        this.file = file;
+        this.outputDir = outputDir;
+        this.format = format;
         this.settings = settings;
     }
 
@@ -42,11 +47,15 @@ public class DataDownloadTask extends ServerTask<DataDownloadResult> {
         return criteria;
     }
 
-    public Path getFile() {
-        return file;
+    public Path getOutputDir() {
+        return outputDir;
     }
 
-    public StreamDownloadSettings getSettings() {
+    public String getFormat() {
+        return format;
+    }
+
+    public DataDownloadSettings getSettings() {
         return settings;
     }
 }

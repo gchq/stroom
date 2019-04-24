@@ -23,7 +23,7 @@ import java.io.Serializable;
 /**
  * Holds the settings for import/export.
  */
-public class StreamDownloadSettings implements Serializable {
+public class DataDownloadSettings implements Serializable {
     private static final long serialVersionUID = -6976894005366894145L;
 
     // By default we only export 50k segments or 1GB file and we don't write

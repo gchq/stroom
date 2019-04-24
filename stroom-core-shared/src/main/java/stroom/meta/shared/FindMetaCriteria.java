@@ -28,6 +28,9 @@ import java.util.Objects;
 public class FindMetaCriteria extends BaseCriteria implements SharedObject, HasIsConstrained, Copyable<FindMetaCriteria> {
     private static final long serialVersionUID = -4777723504698304778L;
 
+    public static final String FIELD_FEED = "Feed";
+    public static final String FIELD_TYPE = "Type";
+
     private ExpressionOperator expression;
     private IdSet selectedIdSet;
     private boolean fetchRelationships;

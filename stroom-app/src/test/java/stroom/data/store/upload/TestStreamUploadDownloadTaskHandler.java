@@ -18,14 +18,16 @@ package stroom.data.store.upload;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
+import stroom.data.store.impl.DataDownloadSettings;
 import stroom.data.store.impl.DataDownloadTask;
-import stroom.data.store.impl.StreamDownloadSettings;
 import stroom.data.store.impl.StreamUploadTask;
+import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
 import stroom.meta.shared.ExpressionUtil;
@@ -35,12 +37,11 @@ import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.security.api.UserTokenUtil;
-import stroom.data.shared.StreamTypeNames;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
-import stroom.util.io.StreamUtil;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -63,32 +64,41 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
 
     @Test
     void testDownload() throws IOException {
-        final String feedName = FileSystemTestUtil.getUniqueTestString();
-        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
-        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        final int entryCount = 2;
 
-        final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
+        for (int i = 1; i <= entryCount; i++) {
+            commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        }
+
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
         findMetaCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
-        final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
 
-        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(2);
+        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(entryCount);
 
-        taskManager.exec(new DataDownloadTask(UserTokenUtil.processingUser(), findMetaCriteria, file, streamDownloadSettings));
+        final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
+        final DataDownloadSettings streamDownloadSettings = new DataDownloadSettings();
 
-        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(2);
+        String format = file.getFileName().toString();
+        format = format.substring(0, format.indexOf("."));
+        taskManager.exec(new DataDownloadTask(UserTokenUtil.processingUser(), findMetaCriteria, getCurrentTestDir(), format, streamDownloadSettings));
+
+        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(entryCount);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
-        assertThat(stroomZipFile.containsEntry("001", StroomZipFileType.Manifest)).isTrue();
-        assertThat(stroomZipFile.containsEntry("001", StroomZipFileType.Data)).isTrue();
-        assertThat(stroomZipFile.containsEntry("001", StroomZipFileType.Context)).isFalse();
-        assertThat(stroomZipFile.containsEntry("001", StroomZipFileType.Meta)).isFalse();
+        for (int i = 1; i <= entryCount; i++) {
+            final String baseName = StroomFileNameUtil.idToString(i);
+            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.Manifest)).isTrue();
+            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.Data)).isTrue();
+            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.Context)).isFalse();
+            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.Meta)).isFalse();
+        }
         stroomZipFile.close();
 
         taskManager.exec(new StreamUploadTask(UserTokenUtil.processingUser(), "test.zip", file, feedName,
                 StreamTypeNames.RAW_EVENTS, null, null));
 
-        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(4);
+        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(entryCount * 2);
     }
 
     @Test
@@ -139,11 +149,13 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
 
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
         findMetaCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
-        final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
+        final DataDownloadSettings streamDownloadSettings = new DataDownloadSettings();
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(1);
 
-        taskManager.exec(new DataDownloadTask(UserTokenUtil.processingUser(), findMetaCriteria, file, streamDownloadSettings));
+        String format = file.getFileName().toString();
+        format = format.substring(0, format.indexOf("."));
+        taskManager.exec(new DataDownloadTask(UserTokenUtil.processingUser(), findMetaCriteria, getCurrentTestDir(), format, streamDownloadSettings));
 
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
         assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Manifest)).isTrue();

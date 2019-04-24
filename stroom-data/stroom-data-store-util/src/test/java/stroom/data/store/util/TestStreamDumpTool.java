@@ -40,7 +40,6 @@ import java.sql.SQLException;
 
 @ExtendWith(TempDirExtension.class)
 class TestStreamDumpTool {
-
     @Inject
     private ConnectionProvider connectionProvider;
     @Inject
@@ -62,7 +61,9 @@ class TestStreamDumpTool {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         try {
-            addData(feedName, "This is some test data to dump");
+            addData(feedName, "This is some test data to dump1");
+            addData(feedName, "This is some test data to dump2");
+            addData(feedName, "This is some test data to dump3");
 
             final StreamDumpTool streamDumpTool = new StreamDumpTool();
             streamDumpTool.setFeed(feedName);

@@ -1,6 +1,8 @@
 package stroom.meta.impl.db;
 
 import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
@@ -22,6 +24,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -219,6 +222,7 @@ class MetaDaoImpl implements MetaDao {
     public List<Meta> find(final FindMetaCriteria criteria) {
         final PageRequest pageRequest = criteria.getPageRequest();
         final Condition condition = createCondition(criteria);
+        final OrderField[] orderFields = createOrderFields(criteria);
 
         int offset = 0;
         int numberOfRows = 1000000;
@@ -228,10 +232,10 @@ class MetaDaoImpl implements MetaDao {
             numberOfRows = pageRequest.getLength();
         }
 
-        return find(condition, offset, numberOfRows);
+        return find(condition, orderFields, offset, numberOfRows);
     }
 
-    private List<Meta> find(final Condition condition, final int offset, final int numberOfRows) {
+    private List<Meta> find(final Condition condition, final OrderField[] orderFields, final int offset, final int numberOfRows) {
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .select(
                         meta.ID,
@@ -251,7 +255,7 @@ class MetaDaoImpl implements MetaDao {
                 .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                 .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
                 .where(condition)
-                .orderBy(meta.ID)
+                .orderBy(orderFields)
                 .limit(offset, numberOfRows)
                 .fetch()
                 .map(RECORD_TO_META_MAPPER::apply));
@@ -331,5 +335,29 @@ class MetaDaoImpl implements MetaDao {
             return c1;
         }
         return c1.and(c2);
+    }
+
+    private OrderField[] createOrderFields(final FindMetaCriteria criteria) {
+        if (criteria.getSortList() == null || criteria.getSortList().size() == 0) {
+            return new OrderField[]{meta.ID};
+        }
+
+        return criteria.getSortList().stream().map(sort -> {
+            Field field = meta.ID;
+            if (FindMetaCriteria.FIELD_ID.equals(sort.getField())) {
+                field = meta.ID;
+            } else if (FindMetaCriteria.FIELD_FEED.equals(sort.getField())) {
+                field = metaFeed.NAME;
+            } else if (FindMetaCriteria.FIELD_TYPE.equals(sort.getField())) {
+                field = metaType.NAME;
+            }
+
+            OrderField orderField = field;
+            if (Sort.Direction.DESCENDING.equals(sort.getDirection())) {
+                orderField = field.desc();
+            }
+
+            return orderField;
+        }).toArray(OrderField[]::new);
     }
 }
