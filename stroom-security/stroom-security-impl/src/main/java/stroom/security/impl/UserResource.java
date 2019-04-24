@@ -52,6 +52,10 @@ public interface UserResource extends RestResource {
     Response deleteUser(@PathParam("uuid") String uuid);
 
     @PUT
+    @Path("/{userName}/status")
+    Response setStatus(@PathParam("userName") String userName, @QueryParam("enabled") boolean status);
+
+    @PUT
     @Path("/{userUuid}/{groupUuid}")
     Response addUserToGroup(@PathParam("userUuid") String userUuid,
                         @PathParam("groupUuid") String groupUuid);

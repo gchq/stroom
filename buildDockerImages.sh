@@ -30,7 +30,7 @@ NC='\033[0m' # No Color
 
 # Exclude tests because we want this to be fast. 
 # I guess you'd better test the build before releasing.
-./gradlew clean build -x test -x test
+#./gradlew clean build -x test -x test
 
 if [ $? -ne 0 ]; then
     exit 1

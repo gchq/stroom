@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.cluster.api.ClusterConfig;
+import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.db.DbConfig;
 import stroom.core.receive.ProxyAggregationConfig;
@@ -16,8 +17,10 @@ import stroom.index.impl.IndexConfig;
 import stroom.index.impl.db.IndexDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
+import stroom.job.impl.db.JobDbConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.impl.NodeConfig;
+import stroom.node.impl.db.NodeDbConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.search.impl.SearchConfig;
@@ -37,17 +40,20 @@ public class AppConfig implements IsConfig {
     private ActivityConfig activityConfig;
     private BenchmarkClusterConfig benchmarkClusterConfig;
     private ClusterConfig clusterConfig;
+    private ClusterLockConfig clusterLockConfig;
     private ContentPackImportConfig contentPackImportConfig;
-    private DbConfig dbConfig;
     private DataConfig dataConfig;
     private DataSourceUrlConfig dataSourceUrlConfig;
+    private DbConfig dbConfig;
     private ExplorerConfig explorerConfig;
     private ExportConfig exportConfig;
     private IndexConfig indexConfig;
     private IndexDbConfig indexDbConfig;
     private JobSystemConfig jobSystemConfig;
+    private JobDbConfig jobDbConfig;
     private LifecycleConfig lifecycleConfig;
     private NodeConfig nodeConfig;
+    private NodeDbConfig nodeDbConfig;
     private PathConfig pathConfig;
     private PipelineConfig pipelineConfig;
     private ProcessorConfig processorConfig;
@@ -67,17 +73,20 @@ public class AppConfig implements IsConfig {
         this.activityConfig = new ActivityConfig();
         this.benchmarkClusterConfig = new BenchmarkClusterConfig();
         this.clusterConfig = new ClusterConfig();
+        this.clusterLockConfig = new ClusterLockConfig();
         this.contentPackImportConfig = new ContentPackImportConfig();
-        this.dbConfig = new DbConfig();
         this.dataConfig = new DataConfig();
         this.dataSourceUrlConfig = new DataSourceUrlConfig();
+        this.dbConfig = new DbConfig();
         this.explorerConfig = new ExplorerConfig();
         this.exportConfig = new ExportConfig();
         this.indexConfig = new IndexConfig();
         this.indexDbConfig = new IndexDbConfig();
         this.jobSystemConfig = new JobSystemConfig();
+        this.jobDbConfig = new JobDbConfig();
         this.lifecycleConfig = new LifecycleConfig();
         this.nodeConfig = new NodeConfig();
+        this.nodeDbConfig = new NodeDbConfig();
         this.pathConfig = new PathConfig();
         this.pipelineConfig = new PipelineConfig();
         this.processorConfig = new ProcessorConfig();
@@ -95,20 +104,22 @@ public class AppConfig implements IsConfig {
     }
 
     @Inject
-    AppConfig(final ActivityConfig activityConfig,
-              final BenchmarkClusterConfig benchmarkClusterConfig,
+    AppConfig(final BenchmarkClusterConfig benchmarkClusterConfig,
               final ClusterConfig clusterConfig,
+              final ClusterLockConfig clusterLockConfig,
               final ContentPackImportConfig contentPackImportConfig,
-              final DbConfig dbConfig,
               final DataConfig dataConfig,
               final DataSourceUrlConfig dataSourceUrlConfig,
+              final DbConfig dbConfig,
               final ExplorerConfig explorerConfig,
               final ExportConfig exportConfig,
               final IndexConfig indexConfig,
               final IndexDbConfig indexDbConfig,
               final JobSystemConfig jobSystemConfig,
+              final JobDbConfig jobDbConfig,
               final LifecycleConfig lifecycleConfig,
               final NodeConfig nodeConfig,
+              final NodeDbConfig nodeDbConfig,
               final PathConfig pathConfig,
               final PipelineConfig pipelineConfig,
               final ProcessorConfig processorConfig,
@@ -122,14 +133,16 @@ public class AppConfig implements IsConfig {
               final StatisticsConfig statisticsConfig,
               final StoredQueryHistoryConfig storedQueryHistoryConfig,
               final UiConfig uiConfig,
-              final VolumeConfig volumeConfig) {
+              final VolumeConfig volumeConfig,
+              final ActivityConfig activityConfig ) {
         this.activityConfig = activityConfig;
         this.benchmarkClusterConfig = benchmarkClusterConfig;
         this.clusterConfig = clusterConfig;
+        this.clusterLockConfig = clusterLockConfig;
         this.contentPackImportConfig = contentPackImportConfig;
-        this.dbConfig = dbConfig;
         this.dataConfig = dataConfig;
         this.dataSourceUrlConfig = dataSourceUrlConfig;
+        this.dbConfig = dbConfig;
         this.explorerConfig = explorerConfig;
         this.exportConfig = exportConfig;
         this.indexConfig = indexConfig;
@@ -137,6 +150,7 @@ public class AppConfig implements IsConfig {
         this.jobSystemConfig = jobSystemConfig;
         this.lifecycleConfig = lifecycleConfig;
         this.nodeConfig = nodeConfig;
+        this.nodeDbConfig = nodeDbConfig;
         this.pathConfig = pathConfig;
         this.pipelineConfig = pipelineConfig;
         this.processorConfig = processorConfig;
@@ -178,6 +192,15 @@ public class AppConfig implements IsConfig {
 
     public void setClusterConfig(final ClusterConfig clusterConfig) {
         this.clusterConfig = clusterConfig;
+    }
+
+    @JsonProperty("clusterLock")
+    public ClusterLockConfig getClusterLockConfig() {
+        return clusterLockConfig;
+    }
+
+    public void setClusterLockConfig(ClusterLockConfig clusterLockConfig) {
+        this.clusterLockConfig = clusterLockConfig;
     }
 
     @JsonProperty("contentPackImport")
@@ -263,6 +286,15 @@ public class AppConfig implements IsConfig {
         this.jobSystemConfig = jobSystemConfig;
     }
 
+    @JsonProperty("jobDb")
+    public JobDbConfig getJobDbConfig() {
+        return jobDbConfig;
+    }
+
+    public void setJobDbConfig(JobDbConfig jobDbConfig) {
+        this.jobDbConfig = jobDbConfig;
+    }
+
     @JsonProperty("lifecycle")
     public LifecycleConfig getLifecycleConfig() {
         return lifecycleConfig;
@@ -279,6 +311,15 @@ public class AppConfig implements IsConfig {
 
     public void setNodeConfig(final NodeConfig nodeConfig) {
         this.nodeConfig = nodeConfig;
+    }
+
+    @JsonProperty("nodeDb")
+    public NodeDbConfig getNodeDbConfig() {
+        return nodeDbConfig;
+    }
+
+    public void setNodeDbConfig(NodeDbConfig nodeDbConfig) {
+        this.nodeDbConfig = nodeDbConfig;
     }
 
     @JsonProperty("path")

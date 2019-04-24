@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1119** : StreamDumpTool will now dump data to zip files containing all data and associated meta and context data. This now behaves the same way as downloading data from the UI and can be used as an input to proxy aggregation or uploaded manually.
 
+## [v7.0-alpha.1] - 2019-04-23
+
+* Fix config issue
+
 * Fixed NPE created when using empty config sections.
 
 * Issue **#1122** : Fixed hessian communication between stroom and stroom proxy used to establish feed receive status. Added restful endpoints for feed status to stroom and stroom proxy. Proxy will now be able to request feed status from upstream stroom or stroom proxy instances.
@@ -1489,5 +1493,6 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.0...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-alpha.1...HEAD
+[v7.0-alpha.1]: https://github.com/gchq/stroom/compare/v6.0.0...v7.0-alpha.1
 [v6.0.0]: https://github.com/gchq/stroom/compare/v5.4.0...v6.0.0

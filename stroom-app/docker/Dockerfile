@@ -21,7 +21,7 @@
 
 # The JDK (rather than JRE) is required for the diagnostic tools like
 # jstat/jmap/jcmd/etc.
-FROM openjdk:8u191-jdk-alpine3.9 as stroom-base-stage
+FROM adoptopenjdk/openjdk11:jdk-11.0.2.9-alpine as stroom-base-stage
 
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user

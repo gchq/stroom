@@ -31,7 +31,7 @@ public interface IndexVolumeResource extends RestResource {
      * @return
      */
     @GET
-    @Path("/{id}")
+    @Path("{id}")
     Response getById(@PathParam("id") int id);
 
     /**
@@ -48,7 +48,7 @@ public interface IndexVolumeResource extends RestResource {
      * @return Empty response if all went well.
      */
     @DELETE
-    @Path("/{id}")
+    @Path("{id}")
     Response delete(@PathParam("id") int id);
 
     /**

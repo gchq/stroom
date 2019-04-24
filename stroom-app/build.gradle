@@ -280,7 +280,8 @@ task copyFilesForStroomDockerBuild() {
 
         // Copy the dropwizard yml configuration
         copy {
-            from "${projectDir}/prod.yml"
+            from "${projectDir}/dev.yml"
+            rename ("dev.yml", "prod.yml")
             into stroomDockerBuildDir
         }
 

@@ -24,7 +24,7 @@ import java.util.Objects;
 
 public class ConnectionConfig implements IsConfig {
     private String jdbcDriverClassName = "com.mysql.cj.jdbc.Driver";
-    private String jdbcDriverUrl = "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8";
+    private String jdbcDriverUrl = "jdbc:mysql://TEMP:3307/stroom?useUnicode=yes&characterEncoding=UTF-8";
     private String jdbcDriverUsername = "stroomuser";
     private String jdbcDriverPassword = "stroompassword1";
 

@@ -156,7 +156,7 @@ public class StreamAttributeMapResource implements RestResource {
     }
 
     @GET
-    @Path("/{id}")
+    @Path("{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response search(@PathParam("id") Long id) {
         return security.secureResult(() -> {
