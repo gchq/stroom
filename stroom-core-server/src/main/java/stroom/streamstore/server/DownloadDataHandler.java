@@ -58,10 +58,15 @@ public class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction,
             // Import file.
             resourceKey = sessionResourceStore.createTempFile("StroomData.zip");
             final Path file = sessionResourceStore.getTempFile(resourceKey);
+            String fileName = file.getFileName().toString();
+            int index = fileName.lastIndexOf(".");
+            if (index != -1) {
+                fileName = fileName.substring(0, index);
+            }
 
             final StreamDownloadSettings settings = new StreamDownloadSettings();
             taskManager.exec(new StreamDownloadTask(action.getUserToken(), action.getCriteria(),
-                    file.getParent(), "StroomData", settings));
+                    file.getParent(), fileName, settings));
 
             streamEventLog.exportStream(action.getCriteria(), null);
 
