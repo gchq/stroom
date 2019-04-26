@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.10] - 2019-04-26
+
 * Issue **#1129** : Fixed stream download from the UI.
 
 ## [v5.5.9] - 2019-04-23
@@ -990,7 +992,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.10...HEAD
+[v5.5.10]: https://github.com/gchq/stroom/compare/v5.5.9...v5.5.10
 [v5.5.9]: https://github.com/gchq/stroom/compare/v5.5.8...v5.5.9
 [v5.5.8]: https://github.com/gchq/stroom/compare/v5.5.7...v5.5.8
 [v5.5.7]: https://github.com/gchq/stroom/compare/v5.5.6...v5.5.7
