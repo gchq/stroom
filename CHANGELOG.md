@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1130** : Change `start.sh` so it works when realpath is not installed.
+
 * Issue **#1129** : Fixed stream download from the UI.
 
 * Issue **#1119** : StreamDumpTool will now dump data to zip files containing all data and associated meta and context data. This now behaves the same way as downloading data from the UI and can be used as an input to proxy aggregation or uploaded manually.
