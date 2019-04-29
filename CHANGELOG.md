@@ -6,21 +6,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.34] - 2019-04-29
+
 * Issue **#1130** : Change `start.sh` so it works when realpath is not installed.
 
 * Issue **#1129** : Fixed stream download from the UI.
 
 * Issue **#1119** : StreamDumpTool will now dump data to zip files containing all data and associated meta and context data. This now behaves the same way as downloading data from the UI and can be used as an input to proxy aggregation or uploaded manually.
 
+
 ## [v6.0-beta.33] - 2019-04-17
 
 * Fixed NPE created when using empty config sections.
+
 
 ## [v6.0-beta.32] - 2019-04-17
 
 * Issue **#1122** : Fixed hessian communication between stroom and stroom proxy used to establish feed receive status. Added restful endpoints for feed status to stroom and stroom proxy. Proxy will now be able to request feed status from upstream stroom or stroom proxy instances.
 
 * Fixed incompatibility issues with MySQL 5.7 and 8.0.
+
 
 ## [v6.0-beta.31] - 2019-03-25
 
@@ -1539,7 +1545,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.33...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.34...6.0
+[v6.0-beta.34]: https://github.com/gchq/stroom/compare/v6.0-beta.33...v6.0-beta.34
 [v6.0-beta.33]: https://github.com/gchq/stroom/compare/v6.0-beta.32...v6.0-beta.33
 [v6.0-beta.32]: https://github.com/gchq/stroom/compare/v6.0-beta.31...v6.0-beta.32
 [v6.0-beta.31]: https://github.com/gchq/stroom/compare/v6.0-beta.30...v6.0-beta.31
