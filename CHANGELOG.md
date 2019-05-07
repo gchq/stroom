@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+## [v6.0-beta.35] - 2019-05-07
+
+* Test release, no changes
+
 ## [v6.0-beta.34] - 2019-04-29
 
 * Issue **#1130** : Change `start.sh` so it works when realpath is not installed.
@@ -1545,7 +1549,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.34...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.35...6.0
+[v6.0-beta.35]: https://github.com/gchq/stroom/compare/v6.0-beta.34...v6.0-beta.35
 [v6.0-beta.34]: https://github.com/gchq/stroom/compare/v6.0-beta.33...v6.0-beta.34
 [v6.0-beta.33]: https://github.com/gchq/stroom/compare/v6.0-beta.32...v6.0-beta.33
 [v6.0-beta.32]: https://github.com/gchq/stroom/compare/v6.0-beta.31...v6.0-beta.32
