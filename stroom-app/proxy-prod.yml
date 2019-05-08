@@ -130,4 +130,4 @@ proxyConfig:
       RuleSet: "${UPSTREAM_RULE_URL:-http://stroom:8080/api/ruleset/v1}"
       Dictionary: "${UPSTREAM_DICTIONARY_URL:-http://stroom:8080/api/dictionary/v1}"
     syncFrequency: 30000
-    apiKey: ""
+    apiKey: "${SYNC_API_KEY:-}"
