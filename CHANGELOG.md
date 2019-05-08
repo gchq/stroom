@@ -6,11 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.36] - 2019-05-10
+
 * Expose proxy api key in yaml config via SYNC_API_KEY
+
 
 ## [v6.0-beta.35] - 2019-05-07
 
 * Test release, no changes
+
 
 ## [v6.0-beta.34] - 2019-04-29
 
@@ -1550,7 +1555,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.35...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.36...6.0
+[v6.0-beta.36]: https://github.com/gchq/stroom/compare/v6.0-beta.35...v6.0-beta.36
 [v6.0-beta.35]: https://github.com/gchq/stroom/compare/v6.0-beta.34...v6.0-beta.35
 [v6.0-beta.34]: https://github.com/gchq/stroom/compare/v6.0-beta.33...v6.0-beta.34
 [v6.0-beta.33]: https://github.com/gchq/stroom/compare/v6.0-beta.32...v6.0-beta.33
