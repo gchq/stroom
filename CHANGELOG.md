@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Expose proxy api key in yaml config via SYNC_API_KEY
 
 ## [v6.0-beta.35] - 2019-05-07
 
