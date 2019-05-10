@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1136** : Remove recursive chown from stroom and proxy docker entrypoint scripts.
+
 
 ## [v6.0-beta.37] - 2019-05-10
 

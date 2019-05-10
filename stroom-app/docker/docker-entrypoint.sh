@@ -7,7 +7,12 @@ set -e
 if [ "$(id -u)" = '0' ]; then
     . /stroom/add_container_identity_headers.sh /stroom/logs/extra_headers.txt
 
-    chown -R stroom:stroom .
+    # change ownership of docker volume directories
+    chown stroom:stroom /stroom/logs
+    chown stroom:stroom /stroom/logs/extra_headers.txt
+    chown stroom:stroom /stroom/output
+    chown stroom:stroom /stroom/proxy-repo
+    chown stroom:stroom /stroom/volumes
     
     # This is a bit of a cludge to get round "Text file in use" errors
     # See: https://github.com/moby/moby/issues/9547
