@@ -89,9 +89,26 @@ start_stroom() {
   # paths to distinguish the two processes when using the 'ps' command.
   # Also makes it explicit about what files are being used.
   local absolute_path_to_config
-  absolute_path_to_config="$(realpath "${PATH_TO_CONFIG}")"
   local absoulte_path_to_jar
-  absoulte_path_to_jar="$(realpath "${PATH_TO_JAR}")"
+  if command -v realpath 1>/dev/null; then
+    # realpath binary is available so use that
+    absolute_path_to_config="$(realpath "${PATH_TO_CONFIG}")"
+    absoulte_path_to_jar="$(realpath "${PATH_TO_JAR}")"
+  elif command -v readlink 1>/dev/null; then
+    # readlink binary is available
+    absolute_path_to_config="$(readlink -f "${PATH_TO_CONFIG}")"
+    absoulte_path_to_jar="$(readlink -f "${PATH_TO_JAR}")"
+  else
+    # Binaries to determine absolute path not available so fall back on just
+    # using the relative path. Use of an absolute path is not critical so using
+    # a relative one is preferable to the script not working.
+    warn "Unable to find ${BLUE}realpath${NC} or ${BLUE}readlink${NC}" \
+      "binaries.${NC}"
+    warn "It is recommended to install one of these to help distinguish between" \
+      "stroom and stroom-proxy processes.${NC}"
+    absolute_path_to_config="${PATH_TO_CONFIG}"
+    absoulte_path_to_jar="${PATH_TO_JAR}"
+  fi
 
   # We need word splitting on JAVA_OPTS so we need to disable SC2086
   # shellcheck disable=SC2086
