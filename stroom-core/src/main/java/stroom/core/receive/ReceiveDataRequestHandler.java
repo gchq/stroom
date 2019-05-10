@@ -80,9 +80,9 @@ class ReceiveDataRequestHandler implements RequestHandler {
             final AttributeMap attributeMap = AttributeMapUtil.create(request);
             if (attributeMapFilter.filter(attributeMap)) {
                 debug("Receiving data", attributeMap);
-                final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
 
-                if (feedName == null || feedName.isEmpty()) {
+                final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
+                if (feedName == null || feedName.trim().isEmpty()) {
                     throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
                 }
 

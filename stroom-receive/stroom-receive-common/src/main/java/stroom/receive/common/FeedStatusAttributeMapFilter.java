@@ -23,12 +23,12 @@ public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
 
     @Override
     public boolean filter(final AttributeMap attributeMap) {
-        String feedName = attributeMap.get(StandardHeaderArguments.FEED);
-        if (feedName == null) {
+        final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
+        if (feedName == null || feedName.trim().isEmpty()) {
             throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
         }
 
-        String senderDn = attributeMap.get(StandardHeaderArguments.REMOTE_DN);
+        final String senderDn = attributeMap.get(StandardHeaderArguments.REMOTE_DN);
         final GetFeedStatusRequest request = new GetFeedStatusRequest(feedName, senderDn);
         final GetFeedStatusResponse response = getFeedStatus(request);
 

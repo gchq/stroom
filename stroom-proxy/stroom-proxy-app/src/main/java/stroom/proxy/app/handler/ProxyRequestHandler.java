@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.StreamHandler;
 import stroom.receive.common.AttributeMapFilter;
@@ -65,6 +66,11 @@ public class ProxyRequestHandler implements RequestHandler {
         final AttributeMap attributeMap = AttributeMapUtil.create(request);
 
         try {
+            final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
+            if (feedName == null || feedName.trim().isEmpty()) {
+                throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
+            }
+
             try (final ByteCountInputStream inputStream = new ByteCountInputStream(request.getInputStream())) {
                 // Test to see if we are going to accept this stream or drop the data.
                 if (attributeMapFilter.filter(attributeMap)) {
