@@ -27,12 +27,12 @@ public class FeedStatusMetaMapFilter implements MetaMapFilter {
 
     @Override
     public boolean filter(final MetaMap metaMap) {
-        String feedName = metaMap.get(StroomHeaderArguments.FEED);
-        if (feedName == null) {
+        final String feedName = metaMap.get(StroomHeaderArguments.FEED);
+        if (feedName == null || feedName.trim().isEmpty()) {
             throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
         }
 
-        String senderDn = metaMap.get(StroomHeaderArguments.REMOTE_DN);
+        final String senderDn = metaMap.get(StroomHeaderArguments.REMOTE_DN);
         final GetFeedStatusRequest request = new GetFeedStatusRequest(feedName, senderDn);
         final GetFeedStatusResponse response = getFeedStatus(request);
 

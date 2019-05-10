@@ -110,11 +110,14 @@ proxyConfig:
 
 # If you want to use a receipt policy then the RuleSet must exist
 # in Stroom and have the UUID as specified below in receiptPolicyUuid
-  proxyRequestConfig:
-    receiptPolicyUuid: "${RECEIPT_POLICY_UUID:-}"
+#  proxyRequestConfig:
+#    receiptPolicyUuid: "${RECEIPT_POLICY_UUID:-}"
+  feedStatus:
+    url: "${FEED_STATUS_URL:-http://stroom:8080/api/feedStatus/v1}"
+    apiKey: "${FEED_STATUS_API_KEY:-}"
   forwardStreamConfig:
     forwardingEnabled: ${FORWARDING_ENABLED:-true}
-    forwardUrl: "${FORWARD_URL:-http://localhost:8080/stroom/datafeed}"
+    forwardUrl: "${FORWARD_URL:-http://stroom:8080/stroom/datafeed}"
   proxyRepositoryConfig:
     storingEnabled: ${STORING_ENABLED:-true}
     repoDir: "${REPO_DIR:-/stroom-proxy/repo}"
@@ -124,10 +127,10 @@ proxyConfig:
     readCron: "* * *"
   logStreamConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
-  contentSyncConfig:
-    contentSyncEnabled: ${CONTENT_SYNC_ENABLED:-false}
-    upstreamUrl:
-      RuleSet: "${UPSTREAM_RULE_URL:-http://stroom:8080/api/ruleset/v1}"
-      Dictionary: "${UPSTREAM_DICTIONARY_URL:-http://stroom:8080/api/dictionary/v1}"
-    syncFrequency: 30000
-    apiKey: "${SYNC_API_KEY:-}"
+#  contentSyncConfig:
+#    contentSyncEnabled: ${CONTENT_SYNC_ENABLED:-false}
+#    upstreamUrl:
+#      RuleSet: "${UPSTREAM_RULE_URL:-http://stroom:8080/api/ruleset/v1}"
+#      Dictionary: "${UPSTREAM_DICTIONARY_URL:-http://stroom:8080/api/dictionary/v1}"
+#    syncFrequency: 30000
+#    apiKey: "${SYNC_API_KEY:-}"

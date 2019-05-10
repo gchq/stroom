@@ -6,6 +6,7 @@ import stroom.datafeed.server.MetaMapFilter;
 import stroom.datafeed.server.RequestHandler;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
+import stroom.feed.StroomHeaderArguments;
 import stroom.feed.StroomStreamException;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.StroomStreamProcessor;
@@ -60,6 +61,11 @@ public class ProxyRequestHandler implements RequestHandler {
         final MetaMap metaMap = MetaMapFactory.create(request);
 
         try {
+            final String feedName = metaMap.get(StroomHeaderArguments.FEED);
+            if (feedName == null || feedName.trim().isEmpty()) {
+                throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
+            }
+
             try (final ByteCountInputStream inputStream = new ByteCountInputStream(request.getInputStream())) {
                 // Test to see if we are going to accept this stream or drop the data.
                 if (metaMapFilter.filter(metaMap)) {

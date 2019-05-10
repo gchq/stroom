@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
@@ -86,9 +85,9 @@ public class DataFeedRequestHandler implements RequestHandler {
             final MetaMap metaMap = MetaMapFactory.create(request);
             if (metaMapFilter.filter(metaMap)) {
                 debug("Receiving data", metaMap);
-                final String feedName = metaMap.get(StroomHeaderArguments.FEED);
 
-                if (!StringUtils.hasText(feedName)) {
+                final String feedName = metaMap.get(StroomHeaderArguments.FEED);
+                if (feedName == null || feedName.trim().isEmpty()) {
                     throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
                 }
 

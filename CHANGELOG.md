@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1134** : Proxy now requires feed name to always be supplied.
+
 
 ## [v6.0-beta.36] - 2019-05-08
 
