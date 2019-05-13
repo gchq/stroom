@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1135** : Data retention policies are now migrated to use `Type` and not `Stream Type`.
+
 
 ## [v6.0-beta.38] - 2019-05-13
 
