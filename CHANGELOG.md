@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.38] - 2019-05-13
+
 * Issue **#1136** : Remove recursive chown from stroom and proxy docker entrypoint scripts.
 
 
@@ -1562,7 +1565,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.37...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.38...6.0
+[v6.0-beta.38]: https://github.com/gchq/stroom/compare/v7.0-beta.36...v6.0-beta.38
 [v6.0-beta.37]: https://github.com/gchq/stroom/compare/v6.0-beta.36...v6.0-beta.37
 [v6.0-beta.36]: https://github.com/gchq/stroom/compare/v6.0-beta.35...v6.0-beta.36
 [v6.0-beta.35]: https://github.com/gchq/stroom/compare/v6.0-beta.34...v6.0-beta.35
