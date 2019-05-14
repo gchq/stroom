@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1138** : Stroom proxy now deletes empty repository directories based on creation time and depth first so that pruning empty directories is quicker and generally more successful.
+
 * Issue **#1135** : Data retention policies are now migrated to use `Type` and not `Stream Type`.
 
 
