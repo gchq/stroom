@@ -16,7 +16,6 @@ server:
   adminConnectors:
   - type: http
     port: 8091
-
   requestLog:
     appenders:
     - type: file
@@ -28,6 +27,7 @@ server:
       archivedLogFilenamePattern: ${HOME}/.stroom-proxy/logs/access-%d{yyyy-MM-dd'T'HH:mm}.log
       archivedFileCount: 100
       timeZone: UTC
+
 
 logging:
   level: ${STROOM_LOGGING_LEVEL:- ERROR}
@@ -89,8 +89,9 @@ proxyConfig:
   proxyRequestConfig:
     receiptPolicyUuid:
   feedStatus:
-    url: http://127.0.0.1:8080/api/feedStatus/v1
-    apiKey: ""
+#    url: http://127.0.0.1:8080/api/feedStatus/v1
+    url: "https://localhost/feedStatusService/v1"
+    apiKey: "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6InN0cm9vbSIsInNpZCI6bnVsbH0.k0Ssb43GCdTunAMeM26fIulYKNUuPUaJJk6GxDmzCPb7kVPwEtdfBSrtwazfEFM97dnmvURkLqs-DAZTXhhf-0VqQx4hkwcCHf83eVptWTy-lufIhQo6FCM223c9ONIhl6CPqknWh9Bo3vFNrNJoKz5Zw2T_iCcQhi2WGjd_tjTG7VbibTIpH3lPQDw1IBD2nMsEqACJSk3IaFe0GYcrAEMwsjj3sjAwByMbj5DJvo_DJbAuzUwS5IVpASEENen5Xd3wALLirrraUfED1OY0G56Ttcwl3uQ2s-grZXBM4JCiIurlWR5iNtNwoPUsZsyMju4FMSXt3Ur1NIpD7XKJlg"
   forwardStreamConfig:
     forwardingEnabled: true
     forwardUrl: "http://localhost:8080/stroom/datafeed"
@@ -110,3 +111,28 @@ proxyConfig:
       Dictionary: "http://localhost:8080/api/dictionary/v1"
     syncFrequency: 30000
     apiKey: ""
+  jerseyClient:
+    timeout: 500ms
+    connectionTimeout: 500ms
+    timeToLive: 1h
+    cookiesEnabled: false
+    maxConnections: 1024
+    maxConnectionsPerRoute: 1024
+    keepAlive: 0ms
+    retries: 0
+    userAgent: Stroom-Proxy (Jersey)
+    tls:
+      protocol: TLSv1.2
+      verifyHostname: true
+      #    keyStorePath: /path/to/file
+      #    keyStorePassword: changeit
+      #    keyStoreType: JKS
+      trustStorePath: ${HOME}/git_work/stroom-resources/dev-resources/certs/server/ca.jks
+      trustStorePassword: password
+      trustStoreType: JKS
+      trustSelfSignedCertificates: false
+      supportedProtocols:
+        - TLSv1.1
+        - TLSv1.2
+  #    supportedCipherSuites:
+  #      - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256

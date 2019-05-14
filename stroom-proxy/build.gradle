@@ -9,6 +9,7 @@ dependencies {
     compile project(':stroom-docstore-server')
     
     compile libs.commons_lang
+    compile libs.dropwizard_client
     compile libs.dropwizard_lifecycle
     compile libs.dropwizard_metrics_healthchecks
     compile libs.guice4

@@ -41,6 +41,32 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         this.apiKey = feedStatusConfig.getApiKey();
     }
 
+
+
+
+    //TODO use this for the client
+//    final Client client = new JerseyClientBuilder(environment)
+//            .using(configuration.getProxyConfig().getJerseyClientConfiguration())
+//            .build(getName());
+//
+//    final GetFeedStatusRequest request = new GetFeedStatusRequest("DUMMY_FEED", "dummy DN");
+//    final WebTarget webTarget = client
+//            .target(configuration.getProxyConfig().getFeedStatusConfig().getFeedStatusUrl())
+//            .path("/getFeedStatus");
+//    final Response response = webTarget.request(MediaType.APPLICATION_JSON)
+//            .header(
+//                    HttpHeaders.AUTHORIZATION,
+//                    "Bearer " + configuration.getProxyConfig().getFeedStatusConfig().getApiKey())
+//            .post(Entity.json(request));
+//
+//    GetFeedStatusResponse feedStatusResponse = response.readEntity(GetFeedStatusResponse.class);
+//
+//        LOGGER.info("Resonse: {}", response);
+//        LOGGER.info("feedStatusResponse: {}", feedStatusResponse);
+
+//        environment.jersey().register(new ExternalServiceResource(client))
+
+
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
         // Assume ok to receive by default.

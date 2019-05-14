@@ -104,6 +104,7 @@ dependencies {
     permitUnusedDeclared libs.spring_aspects
     compile libs.spring_aspects
 
+    compile libs.dropwizard_client
     compile (libs.dropwizard_assets) {
         exclude ( group: "org.glassfish.web", module: "javax.el" )
     }
