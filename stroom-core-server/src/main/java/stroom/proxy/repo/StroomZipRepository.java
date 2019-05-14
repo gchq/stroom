@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.util.io.AbstractFileVisitor;
+import stroom.util.io.FileUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -404,24 +405,35 @@ public class StroomZipRepository {
                 }
 
                 @Override
-                public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
-                    try {
-                        // Only try and delete directories that are at least 10 seconds old.
-                        final FileTime lastModified = attrs.lastModifiedTime();
-                        if (lastModified != null && lastModified.toMillis() < tenSecondsAgoMs) {
-                            // Synchronize deletion of directories so that the getStroomOutputStream() method has a
-                            // chance to create dirs and place files inside them before this method cleans them up.
-                            synchronized (StroomZipRepository.this) {
-                                // Have a go at deleting this directory if it is empty and not just about to be written to.
-                                delete(dir);
-                            }
-                        }
-                    } catch (final Exception e) {
-                        LOGGER.debug(e.getMessage(), e);
-                    }
-                    return super.preVisitDirectory(dir, attrs);
+                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
+                    attemptDirDeletion(dir, tenSecondsAgoMs);
+                    return super.postVisitDirectory(dir, exc);
                 }
             });
+        } catch (final IOException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+    }
+
+    private void attemptDirDeletion(final Path dir, final long tenSecondsAgoMs) {
+        try {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("attemptDirDeletion() - " + FileUtil.getCanonicalPath(dir));
+            }
+
+            // Only try and delete directories that are at least 10 seconds old.
+            final BasicFileAttributes attr = Files.readAttributes(dir, BasicFileAttributes.class);
+            final FileTime creationTime = attr.creationTime();
+            if (creationTime.toMillis() < tenSecondsAgoMs) {
+                // Synchronize deletion of directories so that the getStroomOutputStream() method has a
+                // chance to create dirs and place files inside them before this method cleans them up.
+                synchronized (StroomZipRepository.this) {
+                    // Have a go at deleting this directory if it is empty and not just about to be written to.
+                    delete(dir);
+                }
+            } else if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("attemptDirDeletion() - Dir too young for deletion: " + FileUtil.getCanonicalPath(dir));
+            }
         } catch (final IOException e) {
             LOGGER.debug(e.getMessage(), e);
         }
@@ -494,14 +506,14 @@ public class StroomZipRepository {
     private boolean delete(final Path path) {
         try {
             if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("Attempting to delete: " + path.toString());
+                LOGGER.trace("delete() - Attempting to delete: " + path.toString());
             }
 
             Files.delete(path);
 
             return true;
         } catch (final DirectoryNotEmptyException e) {
-            LOGGER.trace("Unable to delete dir as it was not empty: " + path.toString());
+            LOGGER.trace("delete() - Unable to delete dir as it was not empty: " + path.toString());
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }

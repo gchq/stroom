@@ -192,33 +192,47 @@ public class ProxyRepositoryManager {
         return activeRepository.get();
     }
 
-    List<StroomZipRepository> getReadableRepository() {
-        final List<StroomZipRepository> rtnList = new ArrayList<>(rolledRepository);
+    Path getRootRepoDir() {
+        return rootRepoDir;
+    }
 
-        final StroomZipRepository proxyRepository = activeRepository.get();
-        if (scheduler == null && proxyRepository != null) {
-            rtnList.add(proxyRepository);
+    List<StroomZipRepository> getReadableRepository() {
+        final List<StroomZipRepository> rtnList = new ArrayList<>();
+
+        // Add rolled repos unless they have already been deleted.
+        rolledRepository.forEach(repo -> {
+            if (!Files.isDirectory(repo.getRootDir())) {
+                rolledRepository.remove(repo);
+            } else {
+                rtnList.add(repo);
+            }
+        });
+
+        // Provide the one and only repository dir if we are not using rolling repositories.
+        if (scheduler == null) {
+            final StroomZipRepository proxyRepository = activeRepository.get();
+            if (proxyRepository != null && Files.isDirectory(proxyRepository.getRootDir())) {
+                rtnList.add(proxyRepository);
+            }
         }
+
         return rtnList;
     }
 
     void doRunWork() {
         if (scheduler != null && scheduler.execute()) {
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("run() - Cron Match at " + DateUtil.createNormalDateTimeString());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Cron Match at " + DateUtil.createNormalDateTimeString());
             }
 
             rollCurrentRepo();
         }
     }
 
-
     private synchronized void rollCurrentRepo() {
         final StroomZipRepository proxyRepository = activeRepository.getAndSet(null);
         if (proxyRepository != null) {
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("run() rolling repository");
-            }
+            LOGGER.info("Rolling repository");
 
             // Tell the current repo to finish.
             proxyRepository.finish();
