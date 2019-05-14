@@ -6,7 +6,6 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'gchq:urlDependencyPlugin:v0.2.0'
         classpath 'ca.cutterslade.gradle:gradle-dependency-analyze:1.2.0'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
     }
@@ -26,7 +25,6 @@ task wrapper(type: Wrapper) {
     gradleVersion = '4.1'
 }
 
-apply plugin: 'gchq.urldependencies'
 apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'de.undercouch.download'
@@ -67,8 +65,8 @@ ext.versions = [
     //------Stroom-repos---------------
 //    stroomProxyRepo: 'v5.1-beta.8',
     eventLogging: 'v3.1.2_schema-v3.1.2',
-    hadoopCommonShaded: 'v2.6.4-3',
-    hadoopHdfsShaded: 'v2.6.4',
+    hadoopCommonShaded: 'v2.6.4-5',
+    hadoopHdfsShaded: 'v2.6.4-4',
     stroomAuth: 'v1.0-beta.8',
     stroomExpression: 'v1.4.14',
     stroomQuery: 'v2.1-beta.21', //same version for both stroom-query-api and stroom-query-common
@@ -94,13 +92,6 @@ ext.versions = [
     zzDUMMYzz: 'makes sorting easier'
 ]
 
-//lib names for urlDependenciesPlugin
-ext.urlLibs = [
-    hadoopCommonShaded: "hadoop-common-shaded-$versions.hadoopCommonShaded-all",
-    hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
-    zzDUMMYzz: "makes sorting easier"
-]
-
 //dependency strings for use in sub projects
 ext.libs = [
     //------Stroom-libs---------------
@@ -112,6 +103,8 @@ ext.libs = [
     stroomStatsSchema: "stroom:stroom-stats-schema:$versions.stroomStats",
     stroomAuthApi: "stroom:stroom-auth-service-api:$versions.stroomAuth",
     stroomProxyRemoteApi: "stroom:stroom-proxy-remote-api:$versions.stroomProxyApi",
+    hadoopCommonShaded: "stroom:hadoop-common-shaded:$versions.hadoopCommonShaded",
+    hadoopHdfsShaded: "stroom:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
 
     //------3rd Party-libs---------------
     aopalliance: "aopalliance:aopalliance:1.0",
@@ -392,7 +385,7 @@ subprojects {
     }
 
     //ensure we download our libs before compiling java
-    tasks.compileJava.dependsOn downloadUrlDependencies
+    //tasks.compileJava.dependsOn downloadUrlDependencies
 
     // These lines pull the integration test task into our build process.
     tasks.check.dependsOn integrationTest
@@ -590,16 +583,6 @@ task copyContentPacksToImportDir(type: Copy) {
 task setupSampleData() {
     dependsOn copyContentPacksToImportDir
     dependsOn ':stroom-integrationtest:setupSampleDataApplication'
-}
-
-urlDependencies {
-    libs "libs"
-
-    compile(urlLibs.hadoopHdfsShaded,
-            "https://github.com/gchq/hadoop-hdfs-shaded/releases/download/$versions.hadoopHdfsShaded/${urlLibs.hadoopHdfsShaded}.jar")
-
-    compile(urlLibs.hadoopCommonShaded,
-            "https://github.com/gchq/hadoop-common-shaded/releases/download/$versions.hadoopCommonShaded/${urlLibs.hadoopCommonShaded}.jar")
 }
 
 gradle.buildFinished {
