@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1140** : Add health check for proxy feed status url.
+
 * Issue **#1135** : Data retention policies are now migrated to use `Type` and not `Stream Type`.
 
 

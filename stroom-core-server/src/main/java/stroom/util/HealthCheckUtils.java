@@ -13,6 +13,7 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -71,22 +72,27 @@ public class HealthCheckUtils {
      */
     public static Map<String, Object> beanToMap(final Object object) {
 
-        // far from the most efficient way to do this but sufficient for a rarely used
-        // health check page
-        final String json = JsonUtil.writeValueAsString(object);
-
-        LOGGER.debug("json\n{}", json);
-
         Map<String, Object> map;
+        if (object != null) {
+            // far from the most efficient way to do this but sufficient for a rarely used
+            // health check page
+            final String json = JsonUtil.writeValueAsString(object);
 
-        try {
-            map = JsonUtil.getMapper().readValue(json, new TypeReference<Map<String, Object>>(){});
-        } catch (IOException e) {
-            final String msg = LambdaLogger.buildMessage("Unable to convert object {} of type {}",
-                    object, object.getClass().getName());
-            LOGGER.error(msg, e);
-            map = new HashMap<>();
-            map.put("ERROR", msg + " due to: " + e.getMessage());
+            LOGGER.debug("json\n{}", json);
+
+
+            try {
+                map = JsonUtil.getMapper().readValue(json, new TypeReference<Map<String, Object>>() {
+                });
+            } catch (IOException e) {
+                final String msg = LambdaLogger.buildMessage("Unable to convert object {} of type {}",
+                        object, object.getClass().getName());
+                LOGGER.error(msg, e);
+                map = new HashMap<>();
+                map.put("ERROR", msg + " due to: " + e.getMessage());
+            }
+        } else {
+            map = Collections.emptyMap();
         }
         return map;
     }

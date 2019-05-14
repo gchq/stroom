@@ -63,6 +63,7 @@ import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.proxy.guice.ProxyModule;
 import stroom.proxy.handler.ForwardStreamHandlerFactory;
+import stroom.proxy.handler.RemoteFeedStatusService;
 import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
@@ -179,6 +180,7 @@ public class App extends Application<Config> {
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RuleSetResource.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ForwardStreamHandlerFactory.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, FeedStatusResource.class);
+        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RemoteFeedStatusService.class);
 
         healthCheckRegistry.register(configuration.getProxyConfig().getClass().getName(), new HealthCheck() {
             @Override
