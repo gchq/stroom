@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1140** : Add health check for proxy feed status url.
 
+* Issue **#1137** : Change proxy remote url health check to accept a 406 code as the feed will not be specified.
+
 * Issue **#1135** : Data retention policies are now migrated to use `Type` and not `Stream Type`.
 
 
