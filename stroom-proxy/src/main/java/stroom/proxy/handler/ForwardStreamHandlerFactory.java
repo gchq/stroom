@@ -2,6 +2,7 @@ package stroom.proxy.handler;
 
 import com.codahale.metrics.health.HealthCheck;
 import org.apache.commons.lang.StringUtils;
+import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
@@ -20,6 +21,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Singleton
 public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHealthCheck {
+    private static final List<StroomStatusCode> VALID_HEALTH_CHECK_RESPONSE_CODES = Arrays.asList(
+            StroomStatusCode.OK,
+            // The healthcheck will send an empty POST with no feed specified so if we get a feed not defined code back
+            // it confirms the url is valid and we can reach it.
+            StroomStatusCode.FEED_IS_NOT_DEFINED
+    );
+
     private final LogStream logStream;
     private final ForwardStreamConfig forwardStreamConfig;
     private final ProxyRepositoryConfig proxyRepositoryConfig;
@@ -91,7 +99,12 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
                 .forEach(url -> {
                     final String msg = HealthCheckUtils.validateHttpConnection("POST", url);
 
-                    if (!"200".equals(msg)) {
+                    boolean isHealthyCode = VALID_HEALTH_CHECK_RESPONSE_CODES.stream()
+                            .map(StroomStatusCode::getHttpCode)
+                            .map(code -> Integer.toString(code))
+                            .anyMatch(code -> code.equals(msg));
+
+                    if (!isHealthyCode) {
                         allHealthy.set(false);
                     }
                     postResults.put(url, msg);
