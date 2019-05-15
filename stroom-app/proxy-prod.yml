@@ -117,6 +117,7 @@ proxyConfig:
     apiKey: "${FEED_STATUS_API_KEY:-}"
   forwardStreamConfig:
     forwardingEnabled: ${FORWARDING_ENABLED:-true}
+    # TODO this should really be FORWARD_URLS as it is a comma delimited list
     forwardUrl: "${FORWARD_URL:-http://stroom:8080/stroom/datafeed}"
   proxyRepositoryConfig:
     storingEnabled: ${STORING_ENABLED:-true}
@@ -134,3 +135,21 @@ proxyConfig:
 #      Dictionary: "${UPSTREAM_DICTIONARY_URL:-http://stroom:8080/api/dictionary/v1}"
 #    syncFrequency: 30000
 #    apiKey: "${SYNC_API_KEY:-}"
+  jerseyClient:
+    timeout: "${JERSEY_TIMEOUT:-500ms}"
+    connectionTimeout: "{JERSEY_CONN_TIMEOUT:-500ms}"
+    timeToLive: "${JERSEY_TIME_TO_LIVE:-1h}"
+    cookiesEnabled: false
+    maxConnections: "${JERSEY_MAX_CONNECTIONS:-1024}"
+    maxConnectionsPerRoute: "${JERSEY_MAX_CONNECTIONS_PER_ROUTE:-1024}"
+    keepAlive: "${JERSEY_KEEP_ALIVE:-0ms}"
+    retries: "${JERSEY_RETRIES:-0}"
+    tls:
+      verifyHostname: ${JERSEY_VERIFY_HOSTNAME:-true}
+      keyStorePath: "${STROOM_PROXY_CLIENT_KEYSTORE_PATH:-/stroom-proxy/certs/server.jks}"
+      keyStorePassword: "${STROOM_PROXY_CLIENT_KEYSTORE_PASSWORD:-password}"
+      keyStoreType: "${STROOM_PROXY_CLIENT_KEYSTORE_TYPE:-JKS}"
+      trustStorePath: "${STROOM_PROXY_CLIENT_TRUSTSTORE_PATH:-/stroom-proxy/certs/ca.jks}"
+      trustStorePassword: "${STROOM_PROXY_CLIENT_TRUSTSTORE_PASSWORD:-password}"
+      trustStoreType: "${STROOM_PROXY_CLIENT_TRUSTSTORE_TYPE:-JKS}"
+      trustSelfSignedCertificates: ${JERSEY_TRUST_SELF_SIGNED:-false}
