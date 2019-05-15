@@ -426,21 +426,21 @@ appConfig:
         title: "Please Provide Query Info"
         validationRegex: "^[\\s\\S]{3,}$"
     url:
-      ui: ${STROOM_ADVERTISED_URL:-http//localhost/stroom}
-      authenticationService: ${STROOM_AUTHENTICATION_SERVICE_URL:-http://localhost/authentication/v1}
-      users: ${STROOM_UI_URL:-http://localhost:5001}/s/users
-      apiKeys: ${STROOM_UI_URL:-http://localhost:5001}/s/apiKeys
-      indexVolumes: ${STROOM_UI_URL:-http://localhost:5001}/s/indexing/volumes
-      indexVolumeGroups: ${STROOM_UI_URL:-http://localhost:5001}/s/indexing/groups
-      userAuthorisation: ${STROOM_UI_URL:-http://localhost:5001}/s/authorisationManager/false
-      groupAuthorisation: ${STROOM_UI_URL:-http://localhost:5001}/s/authorisationManager/true
-      editDoc: http://${STROOM_HOST:-localhost}:5001/s/doc/
-      changepassword: ${STROOM_UI_URL:-http://localhost:5001}/changepassword
+      ui: ${STROOM_ADVERTISED_URL:-http//${IP_ADDRESS}/stroom}
+      authenticationService: ${STROOM_AUTHENTICATION_SERVICE_URL:-http://${IP_ADDRESS}/authentication/v1}
+      users: ${STROOM_UI_URL:-http://${IP_ADDRESS}:5001}/s/users
+      apiKeys: ${STROOM_UI_URL:-http://${IP_ADDRESS}:5001}/s/apiKeys
+      indexVolumes: ${STROOM_UI_URL:-http://${IP_ADDRESS}:5001}/s/indexing/volumes
+      indexVolumeGroups: ${STROOM_UI_URL:-http://${IP_ADDRESS}:5001}/s/indexing/groups
+      userAuthorisation: ${STROOM_UI_URL:-http://${IP_ADDRESS}:5001}/s/authorisationManager/false
+      groupAuthorisation: ${STROOM_UI_URL:-http://${IP_ADDRESS}:5001}/s/authorisationManager/true
+      editDoc: http://${STROOM_HOST:-${IP_ADDRESS}}:5001/s/doc/
+      changepassword: ${STROOM_UI_URL:-http://${IP_ADDRESS}:5001}/changepassword
       kibana: null
       trackers: null
-      annotations: ${STROOM_UI_URL:-http://localhost:5001}/annotationsService/queryApi/v1
-      elastic: ${STROOM_UI_URL:-http://localhost:5001}/queryElasticService/queryApi/v1
-      documentPermissions: ${STROOM_UI_URL:-http://localhost:5001}/s/authorisationManager/document/
+      annotations: ${STROOM_UI_URL:-http://${IP_ADDRESS}:5001}/annotationsService/queryApi/v1
+      elastic: ${STROOM_UI_URL:-http://${IP_ADDRESS}:5001}/queryElasticService/queryApi/v1
+      documentPermissions: ${STROOM_UI_URL:-http://${IP_ADDRESS}:5001}/s/authorisationManager/document/
   volumes:
     resilientReplicationCount: 1
     preferLocalVolumes: false
