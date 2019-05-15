@@ -5,11 +5,11 @@ server:
   - type: http
     port: 8090
   - type: https
-    port: 9443
-    keyStorePath: ${HOME}/work/stroom-resources/dev-resources/certs/server/server.jks
+    port: 9543
+    keyStorePath: ${HOME}/git_work/stroom-resources/dev-resources/certs/server/server.jks
     keyStorePassword: password
     keyStoreType: JKS
-    trustStorePath: ${HOME}/work/stroom-resources/dev-resources/certs/server/ca.jks
+    trustStorePath: ${HOME}/git_work/stroom-resources/dev-resources/certs/server/ca.jks
     trustStorePassword: password
     trustStoreType: JKS
     needClientAuth: true
@@ -120,19 +120,22 @@ proxyConfig:
     maxConnectionsPerRoute: 1024
     keepAlive: 0ms
     retries: 0
-    userAgent: Stroom-Proxy (Jersey)
+#    userAgent: Stroom-Proxy (Jersey)
     tls:
-      protocol: TLSv1.2
+#      protocol: TLSv1.2
       verifyHostname: true
       #    keyStorePath: /path/to/file
       #    keyStorePassword: changeit
       #    keyStoreType: JKS
+      keyStorePath: ${HOME}/git_work/stroom-resources/dev-resources/certs/client/client.jks
+      keyStorePassword: password
+      keyStoreType: JKS
       trustStorePath: ${HOME}/git_work/stroom-resources/dev-resources/certs/server/ca.jks
       trustStorePassword: password
       trustStoreType: JKS
       trustSelfSignedCertificates: false
-      supportedProtocols:
-        - TLSv1.1
-        - TLSv1.2
+#      supportedProtocols:
+#        - TLSv1.1
+#        - TLSv1.2
   #    supportedCipherSuites:
   #      - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256

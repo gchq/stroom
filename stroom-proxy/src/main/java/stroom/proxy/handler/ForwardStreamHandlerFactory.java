@@ -9,6 +9,7 @@ import stroom.util.HealthCheckUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.ws.rs.client.Client;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -32,11 +33,13 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
     private final ForwardStreamConfig forwardStreamConfig;
     private final ProxyRepositoryConfig proxyRepositoryConfig;
     private final List<String> urls;
+//    private final WebTarget webtarget;
 
     @Inject
     ForwardStreamHandlerFactory(final LogStream logStream,
                                 final ForwardStreamConfig forwardStreamConfig,
-                                final ProxyRepositoryConfig proxyRepositoryConfig) {
+                                final ProxyRepositoryConfig proxyRepositoryConfig,
+                                final Client jerseyClient) {
         this.logStream = logStream;
         this.forwardStreamConfig = forwardStreamConfig;
         this.proxyRepositoryConfig = proxyRepositoryConfig;

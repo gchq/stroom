@@ -1,8 +1,6 @@
 package stroom.proxy.handler;
 
 import com.codahale.metrics.health.HealthCheck;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.server.FeedStatusService;
@@ -10,12 +8,11 @@ import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
+import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -23,6 +20,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 public class RemoteFeedStatusService implements FeedStatusService, HasHealthCheck {
     private static Logger LOGGER = LoggerFactory.getLogger(RemoteFeedStatusService.class);
@@ -34,20 +32,33 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private final String url;
     private final String apiKey;
     private final Map<GetFeedStatusRequest, CachedResponse> lastKnownResponse = new ConcurrentHashMap<>();
+//    private final Client jerseyClient;
+    private final WebTarget webTarget;
+//    private final Environment environment;
+//    private final ProxyConfig proxyConfig;
+
 
     @Inject
-    RemoteFeedStatusService(final FeedStatusConfig feedStatusConfig) {
+    RemoteFeedStatusService(final FeedStatusConfig feedStatusConfig,
+//                            final ProxyConfig proxyConfig,
+//                            final Environment environment,
+                            final Client jerseyClient) {
         this.url = feedStatusConfig.getFeedStatusUrl();
         this.apiKey = feedStatusConfig.getApiKey();
+//        this.jerseyClient = jerseyClient;
+
+        this.webTarget = jerseyClient
+                .target(url)
+                .path(GET_FEED_STATUS_PATH);
+
+//        this.environment = environment;
+//        this.proxyConfig = proxyConfig;
     }
 
 
 
 
-    //TODO use this for the client
-//    final Client client = new JerseyClientBuilder(environment)
-//            .using(configuration.getProxyConfig().getJerseyClientConfiguration())
-//            .build(getName());
+//    public void test() {
 //
 //    final GetFeedStatusRequest request = new GetFeedStatusRequest("DUMMY_FEED", "dummy DN");
 //    final WebTarget webTarget = client
@@ -63,14 +74,16 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 //
 //        LOGGER.info("Resonse: {}", response);
 //        LOGGER.info("feedStatusResponse: {}", feedStatusResponse);
-
-//        environment.jersey().register(new ExternalServiceResource(client))
+//
+////        environment.jersey().register(new ExternalServiceResource(client))
+//
+//    }
 
 
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
         // Assume ok to receive by default.
-        GetFeedStatusResponse feedStatusResponse = new GetFeedStatusResponse();
+        GetFeedStatusResponse feedStatusResponse = GetFeedStatusResponse.createOKRecieveResponse();
 
         final CachedResponse cachedResponse = lastKnownResponse.get(request);
 
@@ -84,16 +97,19 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                 }
 
                 LOGGER.info("Checking feed status from '" + url + "'");
-                final Response response = sendRequest(request);
-                if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
-                    LOGGER.error(response.getStatusInfo().getReasonPhrase());
-                } else {
-                    feedStatusResponse = response.readEntity(GetFeedStatusResponse.class);
-                    if (feedStatusResponse == null) {
-                        // If we can't get a feed status response then we will assume ok.
-                        feedStatusResponse = new GetFeedStatusResponse();
+                feedStatusResponse = sendRequest(request, response -> {
+                    GetFeedStatusResponse feedStatusResponse2 = null;
+                    if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
+                        LOGGER.error(response.getStatusInfo().getReasonPhrase());
+                    } else {
+                        feedStatusResponse2 = response.readEntity(GetFeedStatusResponse.class);
                     }
-                }
+                    if (feedStatusResponse2 == null) {
+                        // If we can't get a feed status response then we will assume ok.
+                        feedStatusResponse2 = GetFeedStatusResponse.createOKRecieveResponse();
+                    }
+                    return feedStatusResponse2;
+                });
             } catch (final Exception e) {
                 LOGGER.debug("Unable to check remote feed service", e);
                 // Get the last response we received.
@@ -118,21 +134,33 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         return feedStatusResponse;
     }
 
-    private Response sendRequest(final GetFeedStatusRequest request) {
-        return createClient(url, GET_FEED_STATUS_PATH)
-                            .post(Entity.json(request));
+    private GetFeedStatusResponse sendRequest(final GetFeedStatusRequest request,
+                             final Function<Response, GetFeedStatusResponse> responseConsumer) {
+        LOGGER.debug("Sending request {}", request);
+        try {
+//            WebTarget webTarget = jerseyClient
+//                        .target(url)
+//                    .path("/getFeedStatus");
+            final Response response = webTarget
+                    .request(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                    .post(Entity.json(request));
+            try {
+                LOGGER.debug("Received response {}", response);
+                return responseConsumer.apply(response);
+            } finally {
+                response.close();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(LambdaLogger.buildMessage(
+                    "Error sending request {} to {}{}", request, url, GET_FEED_STATUS_PATH));
+        }
     }
 
-    private Invocation.Builder createClient(final String url, final String path) {
-        final Client client = ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
-        final WebTarget webTarget = client.target(url).path(path);
-        final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-        invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey);
-        return invocationBuilder;
-    }
 
     @Override
     public HealthCheck.Result getHealth() {
+        LOGGER.debug("getHealth called");
         final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
         resultBuilder.withDetail("url", url);
 
@@ -145,24 +173,49 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         } else {
             final GetFeedStatusRequest request = new GetFeedStatusRequest("DUMMY_FEED", "dummy DN");
             try {
-                final Response response = sendRequest(request);
 
-                int responseCode = response.getStatusInfo().getStatusCode();
-                resultBuilder.withDetail("responseCode", responseCode);
-                // Even though we have sent a dummy feed we should get back a 200 with something like
-                //{
-                //    "message": "Feed is not defined",
-                //        "status": "Reject",
-                //        "stroomStatusCode": "FEED_IS_NOT_DEFINED"
-                //}
-                if (Status.OK.getStatusCode() == responseCode) {
-                    resultBuilder.healthy();
-                } else {
-                    final GetFeedStatusResponse feedStatusResponse = response.readEntity(GetFeedStatusResponse.class);
-                    resultBuilder
-                            .unhealthy()
-                            .withDetail("response", HealthCheckUtils.beanToMap(feedStatusResponse));
-                }
+
+//                WebTarget webTarget2 = new JerseyClientBuilder(environment)
+//                        .using(proxyConfig.getJerseyClientConfiguration())
+//                        .build("test-client")
+//                        .register(LoggingFeature.class)
+//                        .target(url)
+//                        .path("/getFeedStatus");
+//                Response resp = webTarget2
+//                        .request(MediaType.APPLICATION_JSON)
+//                        .header(
+//                                HttpHeaders.AUTHORIZATION,
+//                                "Bearer " + apiKey)
+//                        .post(Entity.json(request));
+//
+//                GetFeedStatusResponse feedStatusResp = resp.readEntity(GetFeedStatusResponse.class);
+//
+//                LOGGER.info("Resonse: {}", resp);
+//                LOGGER.info("feedStatusResponse: {}", feedStatusResp);
+//                resp.close();
+
+
+                sendRequest(request, response -> {
+                    int responseCode = response.getStatusInfo().getStatusCode();
+                    // Even though we have sent a dummy feed we should get back a 200 with something like
+                    //{
+                    //    "message": "Feed is not defined",
+                    //        "status": "Reject",
+                    //        "stroomStatusCode": "FEED_IS_NOT_DEFINED"
+                    //}
+                    final GetFeedStatusResponse feedStatusResponse;
+                    if (Status.OK.getStatusCode() == responseCode) {
+                        resultBuilder.healthy();
+                        feedStatusResponse = null;
+                    } else {
+                        resultBuilder.withDetail("responseCode", responseCode);
+                        feedStatusResponse = response.readEntity(GetFeedStatusResponse.class);
+                        resultBuilder
+                                .unhealthy()
+                                .withDetail("response", HealthCheckUtils.beanToMap(feedStatusResponse));
+                    }
+                    return feedStatusResponse;
+                });
             } catch (Exception e) {
                 resultBuilder.unhealthy(e);
             }
