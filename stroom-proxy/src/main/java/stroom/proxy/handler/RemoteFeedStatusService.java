@@ -62,7 +62,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                     throw new RuntimeException("Missing API key in the feed status configuration");
                 }
 
-                LOGGER.info("Checking feed status from '" + url + "'");
+                LOGGER.info("Checking feed status for {} using url '{}'", request.getFeedName(), url);
                 effectiveFeedStatusResponse = sendRequest(request, response -> {
                     GetFeedStatusResponse feedStatusResponse = null;
                     if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
