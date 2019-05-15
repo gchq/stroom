@@ -137,7 +137,7 @@ proxyConfig:
 #    apiKey: "${SYNC_API_KEY:-}"
   jerseyClient:
     timeout: "${JERSEY_TIMEOUT:-10s}"
-    connectionTimeout: "{JERSEY_CONN_TIMEOUT:-10s}"
+    connectionTimeout: "${JERSEY_CONN_TIMEOUT:-10s}"
     timeToLive: "${JERSEY_TIME_TO_LIVE:-1h}"
     cookiesEnabled: false
     maxConnections: "${JERSEY_MAX_CONNECTIONS:-1024}"
