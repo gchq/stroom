@@ -124,6 +124,7 @@ dependencies {
     compile libs.javax_servlet_api
 //    compile libs.javax_validation
     compile libs.javax_servlet_api
+    compile libs.jersey_common
     compile libs.jetty_server
     compile libs.jetty_servlets
     compile libs.logback_classic
