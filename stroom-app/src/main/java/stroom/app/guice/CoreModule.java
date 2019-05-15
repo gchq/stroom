@@ -24,6 +24,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.core.receive.ReceiveDataModule());
         install(new stroom.core.servlet.ServletModule());
         install(new stroom.core.ui.config.UiConfigModule());
+        install(new stroom.core.welcome.BuildInfoModule());
+        install(new stroom.core.welcome.WelcomeModule());
         install(new stroom.dashboard.impl.DashboardModule());
         install(new stroom.dashboard.impl.datasource.DatasourceModule());
         install(new stroom.dashboard.impl.logging.LoggingModule());
