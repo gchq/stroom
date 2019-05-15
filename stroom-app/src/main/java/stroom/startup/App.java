@@ -128,7 +128,7 @@ public class App extends Application<Config> {
 
     // This name is used by dropwizard metrics
     public static final String PROXY_JERSEY_CLIENT_NAME = "stroom-proxy_jersey_client";
-    public static final String PROXY_JERSEY_CLIENT_USER_AGENT = "stroom-proxy";
+    public static final String PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX = "stroom-proxy/";
 
     private static String configPath;
 
@@ -182,36 +182,13 @@ public class App extends Application<Config> {
     private void startProxy(final Config configuration, final Environment environment) {
 
         // The jersey client is costly to create and is thread-safe so create one for the app
-        //
+        // and make it injectable by guice
         final Client jerseyClient = createJerseyClient(
                 configuration.getProxyConfig().getJerseyClientConfiguration(),
                 environment);
         final ProxyModule proxyModule = new ProxyModule(configuration.getProxyConfig(), jerseyClient);
+
         final Injector injector = Guice.createInjector(proxyModule);
-
-
-
-
-
-//    final GetFeedStatusRequest request = new GetFeedStatusRequest("DUMMY_FEED", "dummy DN");
-//    final WebTarget webTarget = jerseyClient
-//            .target(configuration.getProxyConfig().getFeedStatusConfig().getFeedStatusUrl())
-//            .path("/getFeedStatus");
-//    final Response response = webTarget.request(MediaType.APPLICATION_JSON)
-//            .header(
-//                    HttpHeaders.AUTHORIZATION,
-//                    "Bearer " + configuration.getProxyConfig().getFeedStatusConfig().getApiKey())
-//            .post(Entity.json(request));
-//
-//    GetFeedStatusResponse feedStatusResponse = response.readEntity(GetFeedStatusResponse.class);
-//
-//        LOGGER.info("Resonse: {}", response);
-//        LOGGER.info("feedStatusResponse: {}", feedStatusResponse);
-
-//        environment.jersey().register(new ExternalServiceResource(client))
-
-
-
 
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
@@ -287,7 +264,7 @@ public class App extends Application<Config> {
         // If the userAgent has not been explicitly set in the config then set it based
         // on the build version
         if (! jerseyClientConfiguration.getUserAgent().isPresent()) {
-            String userAgent = String.format(PROXY_JERSEY_CLIENT_USER_AGENT + " (%s)", BuildInfoUtil.getBuildVersion());
+            final String userAgent = PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX + BuildInfoUtil.getBuildVersion();
             LOGGER.info("Setting jersey client user agent string to [{}]", userAgent);
             jerseyClientConfiguration.setUserAgent(Optional.of(userAgent));
         }

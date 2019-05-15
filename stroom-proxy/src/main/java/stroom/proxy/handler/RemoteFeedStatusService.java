@@ -32,63 +32,29 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private final String url;
     private final String apiKey;
     private final Map<GetFeedStatusRequest, CachedResponse> lastKnownResponse = new ConcurrentHashMap<>();
-//    private final Client jerseyClient;
-    private final WebTarget webTarget;
-//    private final Environment environment;
-//    private final ProxyConfig proxyConfig;
+    private final WebTarget feedStatusWebTarget;
 
 
     @Inject
     RemoteFeedStatusService(final FeedStatusConfig feedStatusConfig,
-//                            final ProxyConfig proxyConfig,
-//                            final Environment environment,
                             final Client jerseyClient) {
         this.url = feedStatusConfig.getFeedStatusUrl();
         this.apiKey = feedStatusConfig.getApiKey();
-//        this.jerseyClient = jerseyClient;
 
-        this.webTarget = jerseyClient
+        this.feedStatusWebTarget = jerseyClient
                 .target(url)
                 .path(GET_FEED_STATUS_PATH);
-
-//        this.environment = environment;
-//        this.proxyConfig = proxyConfig;
     }
-
-
-
-
-//    public void test() {
-//
-//    final GetFeedStatusRequest request = new GetFeedStatusRequest("DUMMY_FEED", "dummy DN");
-//    final WebTarget webTarget = client
-//            .target(configuration.getProxyConfig().getFeedStatusConfig().getFeedStatusUrl())
-//            .path("/getFeedStatus");
-//    final Response response = webTarget.request(MediaType.APPLICATION_JSON)
-//            .header(
-//                    HttpHeaders.AUTHORIZATION,
-//                    "Bearer " + configuration.getProxyConfig().getFeedStatusConfig().getApiKey())
-//            .post(Entity.json(request));
-//
-//    GetFeedStatusResponse feedStatusResponse = response.readEntity(GetFeedStatusResponse.class);
-//
-//        LOGGER.info("Resonse: {}", response);
-//        LOGGER.info("feedStatusResponse: {}", feedStatusResponse);
-//
-////        environment.jersey().register(new ExternalServiceResource(client))
-//
-//    }
-
 
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
         // Assume ok to receive by default.
-        GetFeedStatusResponse feedStatusResponse = GetFeedStatusResponse.createOKRecieveResponse();
+        GetFeedStatusResponse effectiveFeedStatusResponse = GetFeedStatusResponse.createOKRecieveResponse();
 
         final CachedResponse cachedResponse = lastKnownResponse.get(request);
 
         if (cachedResponse != null && cachedResponse.getCreationTime() >= System.currentTimeMillis() - ONE_MINUTE) {
-            feedStatusResponse = cachedResponse.getResponse();
+            effectiveFeedStatusResponse = cachedResponse.getResponse();
 
         } else if (url != null && url.trim().length() > 0) {
             try {
@@ -97,18 +63,18 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                 }
 
                 LOGGER.info("Checking feed status from '" + url + "'");
-                feedStatusResponse = sendRequest(request, response -> {
-                    GetFeedStatusResponse feedStatusResponse2 = null;
+                effectiveFeedStatusResponse = sendRequest(request, response -> {
+                    GetFeedStatusResponse feedStatusResponse = null;
                     if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
                         LOGGER.error(response.getStatusInfo().getReasonPhrase());
                     } else {
-                        feedStatusResponse2 = response.readEntity(GetFeedStatusResponse.class);
+                        feedStatusResponse = response.readEntity(GetFeedStatusResponse.class);
                     }
-                    if (feedStatusResponse2 == null) {
+                    if (feedStatusResponse == null) {
                         // If we can't get a feed status response then we will assume ok.
-                        feedStatusResponse2 = GetFeedStatusResponse.createOKRecieveResponse();
+                        feedStatusResponse = GetFeedStatusResponse.createOKRecieveResponse();
                     }
-                    return feedStatusResponse2;
+                    return feedStatusResponse;
                 });
             } catch (final Exception e) {
                 LOGGER.debug("Unable to check remote feed service", e);
@@ -116,32 +82,29 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                 if (cachedResponse != null) {
                     LOGGER.error(
                             "Unable to check remote feed service ({}).... will use last response ({}) - {}",
-                            request, feedStatusResponse, e.getMessage());
-                    feedStatusResponse = cachedResponse.getResponse();
+                            request, effectiveFeedStatusResponse, e.getMessage());
+                    effectiveFeedStatusResponse = cachedResponse.getResponse();
 
                 } else {
                     LOGGER.error("Unable to check remote feed service ({}).... will assume OK ({}) - {}",
-                            request, feedStatusResponse, e.getMessage());
+                            request, effectiveFeedStatusResponse, e.getMessage());
                 }
 
                 LOGGER.error("Error checking feed status", e);
             }
 
             // Cache the response for next time.
-            lastKnownResponse.put(request, new CachedResponse(System.currentTimeMillis(), feedStatusResponse));
+            lastKnownResponse.put(request, new CachedResponse(System.currentTimeMillis(), effectiveFeedStatusResponse));
         }
 
-        return feedStatusResponse;
+        return effectiveFeedStatusResponse;
     }
 
     private GetFeedStatusResponse sendRequest(final GetFeedStatusRequest request,
                              final Function<Response, GetFeedStatusResponse> responseConsumer) {
         LOGGER.debug("Sending request {}", request);
         try {
-//            WebTarget webTarget = jerseyClient
-//                        .target(url)
-//                    .path("/getFeedStatus");
-            final Response response = webTarget
+            final Response response = feedStatusWebTarget
                     .request(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                     .post(Entity.json(request));
@@ -173,28 +136,6 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         } else {
             final GetFeedStatusRequest request = new GetFeedStatusRequest("DUMMY_FEED", "dummy DN");
             try {
-
-
-//                WebTarget webTarget2 = new JerseyClientBuilder(environment)
-//                        .using(proxyConfig.getJerseyClientConfiguration())
-//                        .build("test-client")
-//                        .register(LoggingFeature.class)
-//                        .target(url)
-//                        .path("/getFeedStatus");
-//                Response resp = webTarget2
-//                        .request(MediaType.APPLICATION_JSON)
-//                        .header(
-//                                HttpHeaders.AUTHORIZATION,
-//                                "Bearer " + apiKey)
-//                        .post(Entity.json(request));
-//
-//                GetFeedStatusResponse feedStatusResp = resp.readEntity(GetFeedStatusResponse.class);
-//
-//                LOGGER.info("Resonse: {}", resp);
-//                LOGGER.info("feedStatusResponse: {}", feedStatusResp);
-//                resp.close();
-
-
                 sendRequest(request, response -> {
                     int responseCode = response.getStatusInfo().getStatusCode();
                     // Even though we have sent a dummy feed we should get back a 200 with something like
