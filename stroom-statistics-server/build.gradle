@@ -10,8 +10,6 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-connectors')
 
-    compile libs.hadoopCommonShaded
-
     compile libs.stroomQueryApi
     compile libs.stroomExpression
     compile libs.stroomQueryCommon
