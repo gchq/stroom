@@ -38,7 +38,6 @@ import java.util.Set;
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlRootElement(name = "data")
 public class StatisticsDataSourceData implements SharedObject {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsDataSourceData.class);
     private static final long serialVersionUID = -9071682094300037627L;
 
     /**
@@ -218,7 +217,6 @@ public class StatisticsDataSourceData implements SharedObject {
     }
 
     private void sortFieldListAndCachePositions() {
-        LOGGER.debug("sortFieldListAndCachePositions() called");
         // de-dup the list
         Set<StatisticField> tempSet = new HashSet<>(statisticFields);
         statisticFields.clear();
