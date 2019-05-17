@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@XmlAccessorType(XmlAccessType.FIELD)
+@XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlRootElement(name = "data")
 public class StatisticsDataSourceData implements SharedObject {
     private static final long serialVersionUID = -9071682094300037627L;

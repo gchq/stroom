@@ -31,8 +31,10 @@ class StatisticsDataSourceMarshaller extends EntityMarshaller<StatisticStoreEnti
 
     @Override
     public void setObject(final StatisticStoreEntity entity, final StatisticsDataSourceData object) {
+        // Fields may be stored in XML out of order so ensure the entity has them in order
+        // This is required here as JAXB doesn't like using the setter
+        object.reOrderStatisticFields();
         entity.setStatisticDataSourceDataObject(object);
-
     }
 
     @Override

@@ -23,6 +23,8 @@ import com.google.inject.Injector;
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
 import io.dropwizard.assets.AssetsBundle;
+import io.dropwizard.client.JerseyClientBuilder;
+import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
@@ -32,6 +34,7 @@ import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -63,6 +66,7 @@ import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.proxy.guice.ProxyModule;
 import stroom.proxy.handler.ForwardStreamHandlerFactory;
+import stroom.proxy.handler.RemoteFeedStatusService;
 import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
@@ -104,6 +108,7 @@ import stroom.spring.ServerComponentScanConfiguration;
 import stroom.spring.ServerConfiguration;
 import stroom.statistics.server.sql.search.SqlStatisticsQueryResource;
 import stroom.statistics.spring.StatisticsConfiguration;
+import stroom.util.BuildInfoUtil;
 import stroom.util.HealthCheckUtils;
 import stroom.util.config.StroomProperties;
 import stroom.util.db.DbUtil;
@@ -112,12 +117,18 @@ import stroom.visualisation.spring.VisualisationConfiguration;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
+import javax.ws.rs.client.Client;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+
+    // This name is used by dropwizard metrics
+    public static final String PROXY_JERSEY_CLIENT_NAME = "stroom-proxy_jersey_client";
+    public static final String PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX = "stroom-proxy/";
 
     private static String configPath;
 
@@ -167,8 +178,16 @@ public class App extends Application<Config> {
         }
     }
 
+
     private void startProxy(final Config configuration, final Environment environment) {
-        final ProxyModule proxyModule = new ProxyModule(configuration.getProxyConfig());
+
+        // The jersey client is costly to create and is thread-safe so create one for the app
+        // and make it injectable by guice
+        final Client jerseyClient = createJerseyClient(
+                configuration.getProxyConfig().getJerseyClientConfiguration(),
+                environment);
+        final ProxyModule proxyModule = new ProxyModule(configuration.getProxyConfig(), jerseyClient);
+
         final Injector injector = Guice.createInjector(proxyModule);
 
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
@@ -179,6 +198,7 @@ public class App extends Application<Config> {
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RuleSetResource.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ForwardStreamHandlerFactory.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, FeedStatusResource.class);
+        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RemoteFeedStatusService.class);
 
         healthCheckRegistry.register(configuration.getProxyConfig().getClass().getName(), new HealthCheck() {
             @Override
@@ -236,6 +256,24 @@ public class App extends Application<Config> {
             environment.lifecycle().manage(contentSyncService);
             GuiceUtil.addHealthCheck(healthCheckRegistry, contentSyncService);
         }
+    }
+
+    private Client createJerseyClient(final JerseyClientConfiguration jerseyClientConfiguration,
+                                      final Environment environment) {
+
+        // If the userAgent has not been explicitly set in the config then set it based
+        // on the build version
+        if (! jerseyClientConfiguration.getUserAgent().isPresent()) {
+            final String userAgent = PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX + BuildInfoUtil.getBuildVersion();
+            LOGGER.info("Setting jersey client user agent string to [{}]", userAgent);
+            jerseyClientConfiguration.setUserAgent(Optional.of(userAgent));
+        }
+
+        LOGGER.info("Creating jersey client {}", PROXY_JERSEY_CLIENT_NAME);
+        return new JerseyClientBuilder(environment)
+                .using(jerseyClientConfiguration)
+                .build(PROXY_JERSEY_CLIENT_NAME)
+                .register(LoggingFeature.class);
     }
 
     private void startApp(final Config configuration, final Environment environment) {

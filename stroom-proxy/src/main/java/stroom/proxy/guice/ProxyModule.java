@@ -30,19 +30,25 @@ import stroom.security.SecurityContext;
 import stroom.util.shared.Monitor;
 import stroom.util.task.MonitorImpl;
 
+import javax.ws.rs.client.Client;
 import java.nio.file.Paths;
 
 public class ProxyModule extends AbstractModule {
     private final ProxyConfig proxyConfig;
+    private final Client jerseyClient;
 
-    public ProxyModule(final ProxyConfig proxyConfig) {
+    public ProxyModule(final ProxyConfig proxyConfig,
+                       final Client jerseyClient) {
         this.proxyConfig = proxyConfig;
+        this.jerseyClient = jerseyClient;
     }
 
     @Override
     protected void configure() {
         // Bind the application config.
         bind(ProxyConfig.class).toInstance(this.proxyConfig);
+        // Bind the dropwizard managed jersey client
+        bind(Client.class).toInstance(this.jerseyClient);
 
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own
