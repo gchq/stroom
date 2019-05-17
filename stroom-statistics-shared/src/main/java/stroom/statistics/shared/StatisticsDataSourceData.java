@@ -16,8 +16,6 @@
 
 package stroom.statistics.shared;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.util.shared.SharedObject;
