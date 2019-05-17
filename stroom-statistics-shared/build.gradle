@@ -4,6 +4,7 @@ dependencies {
     compile project(':stroom-util-shared')
 
     compile libs.hibernate_jpa_api
+    compile libs.slf4j_api
 
     testCompile libs.junit
 
