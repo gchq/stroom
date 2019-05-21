@@ -204,6 +204,10 @@ public class App extends Application<Config> {
             @Override
             protected Result check() throws Exception {
                 Map<String, Object> detailMap = HealthCheckUtils.beanToMap(configuration.getProxyConfig());
+
+                // We don't really want passwords appearing on the admin page so mask them out.
+                HealthCheckUtils.maskPasswords(detailMap);
+
                 return Result.builder()
                         .healthy()
                         .withDetail("values", detailMap)

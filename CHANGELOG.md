@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v6.0-beta.40] - 2019-05-21
 
+* Mask passwords on the proxy admin page.
+
 * Add exception to wrapped exception in the feedStatus service.
 
 

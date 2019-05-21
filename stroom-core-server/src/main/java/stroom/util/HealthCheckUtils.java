@@ -96,4 +96,21 @@ public class HealthCheckUtils {
         }
         return map;
     }
+
+
+    /**
+     * Replaces any values with '***' if the key is a string and contains 'password'
+     */
+    public static void maskPasswords(final Map<String, Object> map) {
+       map.entrySet().forEach(entry -> {
+
+           String key = entry.getKey();
+           if (key.toLowerCase().contains("password") && entry.getValue() instanceof String) {
+               LOGGER.debug("Masking entry with key {}", key);
+               map.put(key, "***");
+           } else if (entry.getValue() instanceof Map) {
+               maskPasswords((Map<String, Object>) entry.getValue());
+           }
+       });
+    }
 }
