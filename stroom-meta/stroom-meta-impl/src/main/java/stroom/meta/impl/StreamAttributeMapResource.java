@@ -156,7 +156,17 @@ public class StreamAttributeMapResource implements RestResource {
     }
 
     @GET
-    @Path("{id}")
+    @Path("/{id}/{anyStatus}/relations")
+    public Response getRelations(@PathParam("id") Long id,
+                                 @PathParam("anyStatus") Boolean anyStatus) {
+        return security.secureResult(() -> {
+            final List<MetaRow> rows = dataMetaService.findRelatedData(id, anyStatus);
+            return Response.ok(rows).build();
+        });
+    }
+
+    @GET
+    @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response search(@PathParam("id") Long id) {
         return security.secureResult(() -> {
