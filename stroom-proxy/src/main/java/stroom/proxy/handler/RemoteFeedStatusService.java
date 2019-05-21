@@ -116,7 +116,8 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
             }
         } catch (Exception e) {
             throw new RuntimeException(LambdaLogger.buildMessage(
-                    "Error sending request {} to {}{}", request, url, GET_FEED_STATUS_PATH));
+                    "Error sending request {} to {}{}: {}",
+                    request, url, GET_FEED_STATUS_PATH, e.getMessage()), e);
         }
     }
 

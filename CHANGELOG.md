@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+## [v6.0-beta.40] - 2019-05-21
+
+* Add exception to wrapped exception in the feedStatus service.
+
+
 ## [v6.0-beta.39] - 2019-05-17
 
 * Issue **#1140** : Add health check for proxy feed status url.
@@ -1576,7 +1581,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.39...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.40...6.0
+[v6.0-beta.40]: https://github.com/gchq/stroom/compare/v7.0-beta.40...v6.0-beta.40
 [v6.0-beta.39]: https://github.com/gchq/stroom/compare/v7.0-beta.38...v6.0-beta.39
 [v6.0-beta.38]: https://github.com/gchq/stroom/compare/v7.0-beta.36...v6.0-beta.38
 [v6.0-beta.37]: https://github.com/gchq/stroom/compare/v6.0-beta.36...v6.0-beta.37
