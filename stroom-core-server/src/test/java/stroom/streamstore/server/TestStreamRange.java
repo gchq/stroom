@@ -62,7 +62,7 @@ public class TestStreamRange extends StroomUnitTest {
         Assert.assertTrue(streamRange.isFileLocation());
         Assert.assertFalse(streamRange.isInvalidPath());
         Assert.assertEquals(101500000L, streamRange.getFrom().longValue());
-        Assert.assertEquals(101501000L, streamRange.getTo().longValue());
+        Assert.assertEquals(101500999L, streamRange.getTo().longValue());
         Assert.assertTrue(streamRange.getCreatePeriod().getFrom()
                 .equals(DateUtil.parseNormalDateTimeString("2011-01-01T00:00:00.000Z")));
         Assert.assertTrue(streamRange.getCreatePeriod().getTo()
