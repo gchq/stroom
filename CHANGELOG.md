@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1144** : Changed StreamRange to account for inclusive stream id ranges in v6.0 that was causing an issue with file system maintenance.
+
 
 ## [v6.0-beta.40] - 2019-05-21
 
