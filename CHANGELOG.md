@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.41] - 2019-05-24
+
 * Issue **#1144** : Changed StreamRange to account for inclusive stream id ranges in v6.0 that was causing an issue with file system maintenance.
 
 
@@ -1585,8 +1588,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.40...6.0
-[v6.0-beta.40]: https://github.com/gchq/stroom/compare/v7.0-beta.40...v6.0-beta.40
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.41...6.0
+[v6.0-beta.41]: https://github.com/gchq/stroom/compare/v7.0-beta.40...v6.0-beta.41
+[v6.0-beta.40]: https://github.com/gchq/stroom/compare/v7.0-beta.39...v6.0-beta.40
 [v6.0-beta.39]: https://github.com/gchq/stroom/compare/v7.0-beta.38...v6.0-beta.39
 [v6.0-beta.38]: https://github.com/gchq/stroom/compare/v7.0-beta.36...v6.0-beta.38
 [v6.0-beta.37]: https://github.com/gchq/stroom/compare/v6.0-beta.36...v6.0-beta.37
