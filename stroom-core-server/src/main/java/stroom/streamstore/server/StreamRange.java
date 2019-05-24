@@ -64,7 +64,7 @@ public class StreamRange extends Range<Long> {
                 // E.g. 001/110 would contain numbers 1,110,000 to 1,110,999
                 // 001/111 would contain numbers 1,111,000 to 1,111,999
                 final long fromId = dirNumber * 1000L;
-                init(fromId, fromId + 1000L);
+                init(fromId, fromId + 999L);
 
             } catch (final Exception ex) {
                 // Not a stream path
