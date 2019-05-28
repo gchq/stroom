@@ -246,7 +246,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, "concat($,$)", "concat("));
-        children.add(createFunction(item++, "dashboard(title,uuid,params)", "dashboard("));
+        children.add(createFunction(item++, "dashboard(text,uuid,params)", "dashboard("));
         children.add(createFunction(item++, "decode($,[search,replace]...,otherwise)", "decode("));
         children.add(createFunction(item++, "decodeUrl($)", "decodeUrl("));
         children.add(createFunction(item++, "encodeUrl($)", "encodeUrl("));
@@ -255,7 +255,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "include($,[regex...])", "include("));
         children.add(createFunction(item++, "indexOf($,string)", "indexOf("));
         children.add(createFunction(item++, "lastIndexOf($,string)", "lastIndexOf("));
-        children.add(createFunction(item++, "link(title,url,type)", "link("));
+        children.add(createFunction(item++, "link(text,url,type)", "link("));
         children.add(createFunction(item++, "lowerCase($)", "lowerCase("));
         children.add(createFunction(item++, "match($,regex)", "match("));
         children.add(createFunction(item++, "replace($,regex,replacement)", "replace("));
