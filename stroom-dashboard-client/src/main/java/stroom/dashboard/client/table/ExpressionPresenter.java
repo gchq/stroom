@@ -246,7 +246,10 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, "concat($,$)", "concat("));
+        children.add(createFunction(item++, "dashboard(title,uuid,params)", "dashboard("));
         children.add(createFunction(item++, "decode($,[search,replace]...,otherwise)", "decode("));
+        children.add(createFunction(item++, "decodeUrl($)", "decodeUrl("));
+        children.add(createFunction(item++, "encodeUrl($)", "encodeUrl("));
         children.add(createFunction(item++, "exclude($,[regex...])", "exclude("));
         children.add(createFunction(item++, "hash($,algorithm)", "hash("));
         children.add(createFunction(item++, "include($,[regex...])", "include("));

@@ -63,7 +63,7 @@ public class DashboardPlugin extends EntityPlugin<Dashboard> {
         final String uuid = map.get("uuid");
         final String params = map.get("params");
 
-        if (uuid == null) {
+        if (uuid == null || uuid.trim().length() == 0) {
             AlertEvent.fireError(this, "No dashboard UUID has been provided for link", null);
         } else {
             final DocRef docRef = new DocRef(Dashboard.ENTITY_TYPE, uuid);
