@@ -58,8 +58,9 @@ public class EntityIdSet<T extends BaseEntity> extends CriteriaSet<Long> {
      * DO NOT USE BUT DO NOT REMOVE EITHER
      */
     @Deprecated
-    public List<Long> getIdSet() {
-        return null;
+    public Set<Long> getIdSet() {
+        // Jaxb will call the getter to get the collection and then add to the collection if not null
+        return getSet();
     }
 
     /**
@@ -68,7 +69,8 @@ public class EntityIdSet<T extends BaseEntity> extends CriteriaSet<Long> {
      * DO NOT USE BUT DO NOT REMOVE EITHER
      */
     @Deprecated
-    public void setIdSet(final List<Long> newSet) {
+    public void setIdSet(final Set<Long> newSet) {
+        // Jaxb will call the getter to get the collection and then add to the collection if not null
         setId(newSet);
     }
 
@@ -76,6 +78,7 @@ public class EntityIdSet<T extends BaseEntity> extends CriteriaSet<Long> {
      * HERE FOR XML JAXB serialisation ..... DO NOT REMOVE
      */
     public Collection<Long> getId() {
+        // Jaxb will call the getter to get the collection and then add to the collection if not null
         return getSet();
     }
 
@@ -83,6 +86,7 @@ public class EntityIdSet<T extends BaseEntity> extends CriteriaSet<Long> {
      * HERE FOR XML JAXB serialisation ..... DO NOT REMOVE
      */
     public void setId(final Collection<Long> newSet) {
+        // Jaxb will call the getter to get the collection and then add to the collection if not null
         if (newSet == null) {
             setSet(null);
         } else {
