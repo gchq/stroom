@@ -18,20 +18,23 @@ package stroom.data.retention.impl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FetchDataRetentionRulesAction;
 import stroom.data.retention.shared.SaveDataRetentionRulesAction;
 import stroom.docref.DocRef;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.RestResource;
+import stroom.util.guice.GuiceUtil;
 
-import java.util.List;
 import java.util.Set;
 
 public class DataRetentionModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DataRetentionRulesService.class).to(DataRetentionRulesServiceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(DataRetentionRulesResource.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(FetchDataRetentionRulesAction.class, FetchDataRetentionPolicyHandler.class)

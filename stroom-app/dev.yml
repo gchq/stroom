@@ -263,7 +263,7 @@ appConfig:
       userNamePattern: "^[a-zA-Z0-9_-]{3,}$"
       jwt:
         jwtIssuer: "stroom"
-        enableTokenRevocationCheck: true
+        enableTokenRevocationCheck: false
   securityDb:
     connection:
       jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}

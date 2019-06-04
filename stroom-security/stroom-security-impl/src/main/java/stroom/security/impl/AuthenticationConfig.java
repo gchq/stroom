@@ -109,7 +109,7 @@ public class AuthenticationConfig implements IsConfig {
 
     public static class JwtConfig implements IsConfig {
         private String jwtIssuer= "stroom";
-        private boolean enableTokenRevocationCheck = true;
+        private boolean enableTokenRevocationCheck = false;
 
         @RequiresRestart(RequiresRestart.RestartScope.UI)
         @JsonPropertyDescription("The issuer to expect when verifying JWTs.")

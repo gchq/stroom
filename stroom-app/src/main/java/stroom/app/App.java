@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import stroom.app.guice.AppModule;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
-import stroom.dropwizard.common.LogLevelInspector;
+import stroom.dropwizard.common.JsonBindingFailureExceptionMapper;
 import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.RestResources;
@@ -111,6 +111,7 @@ public class App extends Application<Config> {
 
         // Map exceptions to helpful HTTP responses
         environment.jersey().register(PermissionExceptionMapper.class);
+        environment.jersey().register(JsonBindingFailureExceptionMapper.class);
 
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
