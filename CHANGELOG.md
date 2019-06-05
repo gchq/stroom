@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v6.0-beta.42] - 2019-06-05
 
+* Issue **#1149** : Changed the way EntryIdSet is unmarshalled so jaxb can now use the getter to add items to a collection.
+
 * Ignore broken junit test that cannot work as it stands
 
 * Fix NPE in DictionaryStoreImpl.findByName().
