@@ -155,6 +155,6 @@ public class StreamProcessorFilter extends AuditedEntity {
 
     @Override
     public String toString() {
-        return "[" + priority + "] - " + queryData.toString();
+        return "[" + priority + "] - " + queryData;
     }
 }

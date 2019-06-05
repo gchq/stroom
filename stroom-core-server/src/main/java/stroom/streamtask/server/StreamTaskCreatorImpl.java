@@ -546,7 +546,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
 
                                 final Context context = new Context(null, System.currentTimeMillis());
                                 final OldFindStreamCriteria findStreamCriteria = expressionToFindCriteria.convert(queryData, context);
-                                boolean isStreamStoreSearch = (queryData.getDataSource() != null) && queryData.getDataSource().getType().equals(StreamDataSource.STREAM_STORE_TYPE);
+                                final boolean isStreamStoreSearch = (queryData.getDataSource() != null) && queryData.getDataSource().getType().equals(StreamDataSource.STREAM_STORE_TYPE);
 
                                 // Record the time before we are going to query for
                                 // streams for tracking purposes.
@@ -817,6 +817,10 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                                          final StreamTaskQueue queue,
                                          final StreamTaskCreatorRecentStreamDetails recentStreamInfo,
                                          final StreamProcessorFilterTracker tracker) {
+        if (!findStreamCriteria.isConstrained()) {
+            throw new RuntimeException("Attempting to create tasks with an unconstrained filter " + filter);
+        }
+
         // Update the tracker status message.
         tracker.setStatus("Creating...");
         final StreamProcessorFilterTracker updatedTracker = streamTaskTransactionHelper.saveTracker(tracker);

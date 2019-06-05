@@ -125,7 +125,7 @@ public class ExpressionToFindCriteria {
     public OldFindStreamCriteria convert(final QueryData queryData, final Context context) {
         final OldFindStreamCriteria newCriteria = new OldFindStreamCriteria();
 
-        if ((queryData.getDataSource() == null) || !queryData.getDataSource().getType().equals(StreamDataSource.STREAM_STORE_TYPE)) {
+        if (queryData == null || queryData.getDataSource() == null || !queryData.getDataSource().getType().equals(StreamDataSource.STREAM_STORE_TYPE)) {
             return newCriteria;
         }
 
@@ -376,7 +376,7 @@ public class ExpressionToFindCriteria {
             if (pipeline != null) {
                 return Collections.singleton(pipeline);
             }
-        } catch(final EntityServiceException e) {
+        } catch (final EntityServiceException e) {
             throw e;
         } catch (final Exception e) {
             // Ignore.
@@ -391,7 +391,7 @@ public class ExpressionToFindCriteria {
             if (list != null) {
                 return new HashSet<>(list);
             }
-        } catch(final EntityServiceException e) {
+        } catch (final EntityServiceException e) {
             throw e;
         } catch (final Exception e) {
             // Ignore.
@@ -546,7 +546,7 @@ public class ExpressionToFindCriteria {
                     throw new EntityServiceException(errorMsg);
                 }
                 set.add(val);
-            } catch(final EntityServiceException e) {
+            } catch (final EntityServiceException e) {
                 throw e;
             } catch (final Exception e) {
                 final String errorMsg = String.format("Unexpected value '%s' used for %s: %s", value, field, e.getLocalizedMessage());
@@ -581,7 +581,7 @@ public class ExpressionToFindCriteria {
                     throw new EntityServiceException(errorMsg);
                 }
                 entityIdSet.addAllEntities(val);
-            } catch(final EntityServiceException e) {
+            } catch (final EntityServiceException e) {
                 throw e;
             } catch (final Exception e) {
                 final String errorMsg = String.format("Unexpected value '%s' used for %s: %s", value, field, e.getLocalizedMessage());
@@ -616,7 +616,7 @@ public class ExpressionToFindCriteria {
                     throw new EntityServiceException(errorMsg);
                 }
                 entityIdSet.add(val);
-            } catch(final EntityServiceException e) {
+            } catch (final EntityServiceException e) {
                 throw e;
             } catch (final Exception e) {
                 final String errorMsg = String.format("Unexpected value '%s' used for %s: %s", value, field, e.getLocalizedMessage());
