@@ -6,7 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.42] - 2019-06-05
+
 * Issue **#1149** : Changed the way EntryIdSet is unmarshalled so jaxb can now use the getter to add items to a collection.
+
+* Ignore broken junit test that cannot work as it stands
+
+* Fix NPE in DictionaryStoreImpl.findByName().
 
 * Issue **#1146** : Added `encodeUrl()`, `decodeUrl()` and `dashboard()` functions to dashboard tables to make dashboard linking easier. The `link()` function now automatically encodes/decodes each param so that parameters do not break the link format, e.g. `[Click Here](http://www.somehost.com/somepath){dialog|Dialog Title}`.
 
@@ -1592,7 +1599,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.41...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.42...6.0
+[v6.0-beta.42]: https://github.com/gchq/stroom/compare/v7.0-beta.41...v6.0-beta.42
 [v6.0-beta.41]: https://github.com/gchq/stroom/compare/v7.0-beta.40...v6.0-beta.41
 [v6.0-beta.40]: https://github.com/gchq/stroom/compare/v7.0-beta.39...v6.0-beta.40
 [v6.0-beta.39]: https://github.com/gchq/stroom/compare/v7.0-beta.38...v6.0-beta.39
