@@ -98,13 +98,14 @@ public class DBPersistence implements Persistence {
 
         final Connection connection = DataSourceUtils.getConnection(dataSource);
         try {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT uuid FROM doc WHERE type = ? ORDER BY id")) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT uuid, name FROM doc WHERE type = ? ORDER BY id")) {
                 preparedStatement.setString(1, type);
 
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         final String uuid = resultSet.getString(1);
-                        list.add(new DocRef(type, uuid));
+                        final String name = resultSet.getString(2);
+                        list.add(new DocRef(type, uuid, name));
                     }
                 }
             }
