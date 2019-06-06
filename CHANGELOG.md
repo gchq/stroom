@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.45] - 2019-06-06
+
 * Issue **#1162** : Proxy aggregation will no longer recurse parts directories when creating parts.
 
 * Issue **#1157** : Migration now adds dummy feeds etc to processor filters if the original doc can't be found. This will prevent filters from matching more items than they should if migration fails to map feeds etc because they can't be found.
@@ -1619,7 +1622,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.44...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.45...6.0
+[v6.0-beta.45]: https://github.com/gchq/stroom/compare/v7.0-beta.44...v6.0-beta.45
 [v6.0-beta.44]: https://github.com/gchq/stroom/compare/v7.0-beta.43...v6.0-beta.44
 [v6.0-beta.43]: https://github.com/gchq/stroom/compare/v7.0-beta.42...v6.0-beta.43
 [v6.0-beta.42]: https://github.com/gchq/stroom/compare/v7.0-beta.41...v6.0-beta.42
