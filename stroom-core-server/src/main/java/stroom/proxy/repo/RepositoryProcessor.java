@@ -122,7 +122,7 @@ public final class RepositoryProcessor {
                                   final ExecutorProvider executorProvider,
                                   final int threadCount,
                                   final ErrorReceiver errorReceiver) {
-        // Process only raw zip part files, i.e. files that have not already been created by the fragmenting process.
+        // Process only raw zip repo files, i.e. files that have not already been created by the fragmenting process.
         final FileFilter filter = (file, attrs) -> {
             final String fileName = file.getFileName().toString();
             return fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) && !fileName.contains(PathConstants.PART);
@@ -132,7 +132,7 @@ public final class RepositoryProcessor {
                 taskContext, executorProvider, threadCount, errorReceiver);
 
         final FileWalker fileWalker = new FileWalker();
-        fileWalker.walk(stroomZipRepository.getRootDir(), filter, zipFragmenter, taskContext);
+        fileWalker.walk(stroomZipRepository.getRootDir(), filter, zipFragmenter, taskContext, true);
 
         // Wait for the fragmenter to complete.
         zipFragmenter.await();
@@ -165,7 +165,7 @@ public final class RepositoryProcessor {
                 executorProvider,
                 threadCount);
         final FileWalker fileWalker = new FileWalker();
-        fileWalker.walk(stroomZipRepository.getRootDir(), filter, fileProcessor, taskContext);
+        fileWalker.walk(stroomZipRepository.getRootDir(), filter, fileProcessor, taskContext, false);
 
         // Wait for the file processor to complete.
         fileProcessor.await();
