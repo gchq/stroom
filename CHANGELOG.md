@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.43] - 2019-06-06
+
 * Issue **#1159** : Fix NPE in rolling appenders with no frequency value.
 
 * Issue **#1160** : Proxy repositories will no longer scan contents on open if they are set to be read only.
@@ -1607,7 +1610,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.42...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.43...6.0
+[v6.0-beta.43]: https://github.com/gchq/stroom/compare/v7.0-beta.42...v6.0-beta.43
 [v6.0-beta.42]: https://github.com/gchq/stroom/compare/v7.0-beta.41...v6.0-beta.42
 [v6.0-beta.41]: https://github.com/gchq/stroom/compare/v7.0-beta.40...v6.0-beta.41
 [v6.0-beta.40]: https://github.com/gchq/stroom/compare/v7.0-beta.39...v6.0-beta.40
