@@ -89,7 +89,7 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
         }
     }
 
-    long getFrequency() {
+    Long getFrequency() {
         return frequency;
     }
 

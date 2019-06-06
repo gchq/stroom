@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1159** : Fix NPE in rolling appenders with no frequency value.
+
 * Issue **#1156** : Added code to reduce unlikely chance of NPE or uncontrolled processing in the event of a null or empty processing filter.
 
 
