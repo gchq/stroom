@@ -78,8 +78,10 @@ public class StroomZipRepository {
      */
     private Path baseResultantDir;
 
-    public StroomZipRepository(final String dir) {
-        this(dir, null, false, DEFAULT_LOCK_AGE_MS);
+    private final boolean readOnly;
+
+    public StroomZipRepository(final String dir, final boolean readOnly) {
+        this(dir, null, false, DEFAULT_LOCK_AGE_MS, readOnly);
     }
 
 //    /**
@@ -92,7 +94,9 @@ public class StroomZipRepository {
     /**
      * Open a repository (with or without locking).
      */
-    StroomZipRepository(final String dir, final String repositoryFormat, final boolean lock, final int lockDeleteAgeMs) {
+    StroomZipRepository(final String dir, final String repositoryFormat, final boolean lock, final int lockDeleteAgeMs, final boolean readOnly) {
+        this.readOnly = readOnly;
+
         if (repositoryFormat == null || repositoryFormat.trim().length() == 0) {
             LOGGER.info("Using default repository format: {} in directory {}", DEFAULT_REPOSITORY_FORMAT, dir);
             this.repositoryFormat = DEFAULT_REPOSITORY_FORMAT;
@@ -142,11 +146,13 @@ public class StroomZipRepository {
         }
 
         // We may be an existing repository so check for the last ID.
-        scanRepository((min, max) -> {
-            LOGGER.info("First repository id = " + min);
-            LOGGER.info("Last repository id = " + max);
-            fileCount.set(max);
-        });
+        if (!readOnly) {
+            scanRepository((min, max) -> {
+                LOGGER.info("First repository id = " + min);
+                LOGGER.info("Last repository id = " + max);
+                fileCount.set(max);
+            });
+        }
 
         LOGGER.debug("() - Opened REPO {} lastId = {}", currentDir, fileCount.get());
     }
@@ -288,6 +294,10 @@ public class StroomZipRepository {
         if (finish.get()) {
             throw new RuntimeException("No longer allowed to write new streams to a finished repository");
         }
+        if (readOnly) {
+            throw new RuntimeException("This is a read only repository");
+        }
+
         final String filename = StroomFileNameUtil.constructFilename(fileCount.incrementAndGet(), repositoryFormat,
                 metaMap, ZIP_EXTENSION);
         final Path file = currentDir.resolve(filename);

@@ -150,14 +150,14 @@ public class ProxyRepositoryManager {
                                             Files.move(file, expectedDir);
                                             LOGGER.info("Unlocking old locked repository: " + expectedDir);
                                             rolledRepository.add(new StroomZipRepository(FileUtil.getCanonicalPath(expectedDir), repositoryFormat, false,
-                                                    lockDeleteAgeMs));
+                                                    lockDeleteAgeMs, false));
                                         } catch (final IOException e) {
                                             LOGGER.warn("Failed to rename locked repository: " + file);
                                         }
                                     } else {
                                         LOGGER.info("Picking up old rolled repository: " + expectedDir);
                                         rolledRepository.add(
-                                                new StroomZipRepository(FileUtil.getCanonicalPath(expectedDir), repositoryFormat, false, lockDeleteAgeMs));
+                                                new StroomZipRepository(FileUtil.getCanonicalPath(expectedDir), repositoryFormat, false, lockDeleteAgeMs, false));
                                     }
                                 }
                             }
@@ -179,12 +179,12 @@ public class ProxyRepositoryManager {
                     if (scheduler == null) {
                         // Open a static repository
                         activeRepository
-                                .set(new StroomZipRepository(FileUtil.getCanonicalPath(rootRepoDir), repositoryFormat, false, lockDeleteAgeMs));
+                                .set(new StroomZipRepository(FileUtil.getCanonicalPath(rootRepoDir), repositoryFormat, false, lockDeleteAgeMs, false));
                     } else {
                         final String dir = FileUtil.getCanonicalPath(rootRepoDir) + "/"
                                 + DateUtil.createFileDateTimeString(System.currentTimeMillis());
                         // Open a rolling repository
-                        activeRepository.set(new StroomZipRepository(dir, repositoryFormat, true, lockDeleteAgeMs));
+                        activeRepository.set(new StroomZipRepository(dir, repositoryFormat, true, lockDeleteAgeMs, false));
                     }
                 }
             }
