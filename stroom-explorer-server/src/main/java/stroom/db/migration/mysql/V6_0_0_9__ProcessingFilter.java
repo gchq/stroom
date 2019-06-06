@@ -15,6 +15,7 @@ import stroom.stream.OldFindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.util.date.DateUtil;
+import stroom.util.io.StreamUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -24,6 +25,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,7 +84,11 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
 
                         datBlob.free();
 
-                        final String datAsString = new String(blobAsBytes);
+                        String datAsString = new String(blobAsBytes, StreamUtil.DEFAULT_CHARSET);
+                        if (datAsString != null) {
+                            datAsString = datAsString.replaceAll("<idSet>", "<id>");
+                            datAsString = datAsString.replaceAll("</idSet>", "</id>");
+                        }
 
                         final OldFindStreamCriteria streamCriteria = unmarshalCriteria(datAsString);
 
@@ -209,6 +215,10 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                 feedDictionariesToInclude.add(feedIdDict);
             } else {
                 LOGGER.warn("Could not find folder for ID {}", folderId);
+                final Optional<DocRef> feedIdDict = dictionariesByFolder.computeIfAbsent(folderId,
+                        fid -> createDictionary(connection, fid, criteria.obtainFolderIdSet().isDeep(), Collections.emptySet())
+                );
+                feedDictionariesToInclude.add(feedIdDict);
             }
         }
 
@@ -495,10 +505,11 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                         if (!value.isPresent()) {
                             LOGGER.warn("Could not find value for {} in field {}", l, fieldName);
                         }
-                        return value;
+                        return value.orElseGet(() -> {
+                            final String name = "--missing " + fieldName + " (" + l + ")";
+                            return new DocRef(fieldName, name, name);
+                        });
                     })
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
                     .forEach(d -> opOp.addDocRefTerm(fieldName, ExpressionTerm.Condition.IS_DOC_REF, d));
             parentTerm.addOperator(opOp.build());
         } else if (rawTerms.size() == 1) {
@@ -519,10 +530,8 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                         if (!value.isPresent()) {
                             LOGGER.warn("Could not find value for {} in field {}", l, fieldName);
                         }
-                        return value;
+                        return value.orElseGet(() -> "--missing " + fieldName + " (" + l + ")");
                     })
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
                     .collect(Collectors.joining(IN_CONDITION_DELIMITER));
             parentTerm.addTerm(fieldName, ExpressionTerm.Condition.IN, values);
         } else if (rawTerms.size() == 1) {
