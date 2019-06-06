@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.44] - 2019-06-06
+
+* Issue **#1162** : Remove invalid CopyOption in move() call.
+
 
 ## [v6.0-beta.43] - 2019-06-06
 
@@ -1610,7 +1614,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.43...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.44...6.0
+[v6.0-beta.44]: https://github.com/gchq/stroom/compare/v7.0-beta.43...v6.0-beta.44
 [v6.0-beta.43]: https://github.com/gchq/stroom/compare/v7.0-beta.42...v6.0-beta.43
 [v6.0-beta.42]: https://github.com/gchq/stroom/compare/v7.0-beta.41...v6.0-beta.42
 [v6.0-beta.41]: https://github.com/gchq/stroom/compare/v7.0-beta.40...v6.0-beta.41
