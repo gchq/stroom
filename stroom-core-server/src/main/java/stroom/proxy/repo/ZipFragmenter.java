@@ -114,7 +114,11 @@ class ZipFragmenter {
                     try {
                         final String idString = StroomFileNameUtil.idToString(i);
                         final Path outputFile = currentDir.resolve(stem + PathConstants.PART + idString + ".zip");
-                        Files.move(path, outputFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.ATOMIC_MOVE);
+                        Files.move(
+                                path,
+                                outputFile,
+                                StandardCopyOption.REPLACE_EXISTING,
+                                StandardCopyOption.ATOMIC_MOVE);
                     } catch (final IOException | RuntimeException e) {
                         // Unable to move file ... must be bad.
                         errorReceiver.onError(path, e.getMessage());
