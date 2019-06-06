@@ -24,7 +24,7 @@ public class TestStroomZipRepository {
     public void testScan() throws IOException {
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo1"));
 
-        final StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, null, true, 100);
+        final StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, null, true, 100, false);
 
         final StroomZipOutputStream out1 = stroomZipRepository.getStroomZipOutputStream();
         StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),
@@ -41,7 +41,7 @@ public class TestStroomZipRepository {
         stroomZipRepository.finish();
 
         // Re open.
-        final StroomZipRepository reopenStroomZipRepository = new StroomZipRepository(repoDir, null, false, 100);
+        final StroomZipRepository reopenStroomZipRepository = new StroomZipRepository(repoDir, null, false, 100, false);
 
         reopenStroomZipRepository.scanRepository((min, max) -> {
             Assert.assertTrue(1L == min);
@@ -62,7 +62,7 @@ public class TestStroomZipRepository {
     public void testClean() throws IOException {
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo2"));
 
-        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, null, false, 10000);
+        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, null, false, 10000, false);
 
         final StroomZipOutputStreamImpl out1 = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream();
         StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),
@@ -79,7 +79,7 @@ public class TestStroomZipRepository {
 
         // Leave open
 
-        stroomZipRepository = new StroomZipRepository(repoDir, null, false, 1000);
+        stroomZipRepository = new StroomZipRepository(repoDir, null, false, 1000, false);
         Assert.assertTrue("Expecting pucker file to be left", Files.isRegularFile(out1.getFile()));
         Assert.assertTrue("Expecting lock file to not be deleted", Files.isRegularFile(out2.getLockFile()));
 
@@ -107,7 +107,7 @@ public class TestStroomZipRepository {
         final String repositoryFormat = "${id}_${FEED}_${key2}_${kEy1}_${Key3}";
 
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
-        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000);
+        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000, false);
 
         MetaMap metaMap = new MetaMap();
         metaMap.put("feed", "myFeed");
@@ -139,7 +139,7 @@ public class TestStroomZipRepository {
         final String FEED_NAME = "myFeed";
 
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
-        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000);
+        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000, false);
 
         MetaMap metaMap = new MetaMap();
         metaMap.put("feed", FEED_NAME);
@@ -174,7 +174,7 @@ public class TestStroomZipRepository {
         final String repositoryFormat = "%{id}_${id}_${FEED}_${kEy1}";
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
 
-        final StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000);
+        final StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000, false);
         final StroomZipOutputStreamImpl out1 = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(metaMap);
 
         StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),

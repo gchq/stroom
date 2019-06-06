@@ -90,7 +90,7 @@ public final class SampleRepositoryCreator {
         Files.createDirectories(repoDir);
         FileUtil.deleteContents(repoDir);
 
-        final StroomZipRepository repository = new StroomZipRepository(FileUtil.getCanonicalPath(repoDir));
+        final StroomZipRepository repository = new StroomZipRepository(FileUtil.getCanonicalPath(repoDir), false);
 
         // Add data.
         final ProxyRepositoryCreator creator = new ProxyRepositoryCreator(feedService, repository);

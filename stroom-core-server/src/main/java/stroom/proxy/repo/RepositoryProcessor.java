@@ -77,7 +77,7 @@ public final class RepositoryProcessor {
         this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
         this.maxUncompressedFileSize = maxUncompressedFileSize;
 
-        stroomZipRepository = new StroomZipRepository(proxyDir);
+        stroomZipRepository = new StroomZipRepository(proxyDir, true);
     }
 
     /**
