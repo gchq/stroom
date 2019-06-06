@@ -41,6 +41,12 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
+                .name("stroom.proxyBufferSize")
+                .value("8192")
+                .description("The amount of memory to use for buffering reads/writes")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
                 .name("stroom.proxyDir")
                 .value("${stroom.temp}/proxy")
                 .description("Folder to look for Stroom Proxy data to aggregate")
