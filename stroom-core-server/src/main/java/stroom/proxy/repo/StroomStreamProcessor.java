@@ -210,6 +210,12 @@ public class StroomStreamProcessor {
             // so we can return to the client an error in the case of a corrupt
             // stream.
             try {
+                // TODO See the javadoc for ZipArchiveInputStream as getNextZipEntry
+                // may return an entry that is not in the zip dictionary or it may
+                // return multiple entries with the same name. Our code probably
+                // works because we would not expect the zips to have been mutated which
+                // may cause these cases, however we are on slightly shaky ground grabbing
+                // entries without consulting the zip's dictionary.
                 zipEntry = zipArchiveInputStream.getNextZipEntry();
             } catch (final IOException ioEx) {
                 throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, ioEx.getMessage());
