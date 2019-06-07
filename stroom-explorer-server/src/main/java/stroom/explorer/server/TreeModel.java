@@ -24,6 +24,8 @@ import java.util.Map;
 interface TreeModel {
     void add(ExplorerNode parent, ExplorerNode child);
 
+    long getCreationTime();
+
     Map<ExplorerNode, ExplorerNode> getParentMap();
 
     Map<ExplorerNode, List<ExplorerNode>> getChildMap();

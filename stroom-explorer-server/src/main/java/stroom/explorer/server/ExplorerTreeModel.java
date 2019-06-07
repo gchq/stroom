@@ -16,49 +16,108 @@
 
 package stroom.explorer.server;
 
+import apple.laf.JRSUIUtils;
 import org.springframework.stereotype.Component;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.Insecure;
-import stroom.util.concurrent.ModelCache;
+import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.task.TaskScopeRunnable;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Component
 class ExplorerTreeModel {
+    private static final String MIN_EXPLORER_TREE_MODEL_BUILD_TIME =  "MIN_EXPLORER_TREE_MODEL_BUILD_TIME";
+
     private final ExplorerTreeDao explorerTreeDao;
     private final ExplorerActionHandlersImpl explorerActionHandlers;
-    private final ModelCache<TreeModel> modelCache;
+    private final HttpServletRequestHolder httpServletRequestHolder;
+
+    private volatile TreeModel currentModel;
 
     @Inject
-    ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao, final ExplorerActionHandlersImpl explorerActionHandlers) {
+    ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao,
+                      final ExplorerActionHandlersImpl explorerActionHandlers,
+                      final HttpServletRequestHolder httpServletRequestHolder) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerActionHandlers = explorerActionHandlers;
-        this.modelCache = new ModelCache.Builder<TreeModel>()
-                .valueSupplier(this::createModel)
-                .maxAge(10, TimeUnit.MINUTES)
-                .build();
+        this.httpServletRequestHolder = httpServletRequestHolder;
     }
 
     @Insecure
     public TreeModel getModel() {
-        return modelCache.get();
+        if (currentModel == null) {
+            // Create a model synchronously if it is currently null.
+            ensureModelExists();
+        }
+
+
+
+
+        TreeModel treeModel = null;
+
+        final HttpSession session = getSession();
+        final Object object = session.getAttribute(REBUILD_REQUIRED);
+        if (object == null) {
+            session.setAttribute(name, treeModel);
+        } else {
+            treeModel = (TreeModel) object;
+        }
+
+        return treeModel;
+    }
+
+    private synchronized boolean isRebuildRequired() {
+        modelCache.setRebuildRequired();
+        getSession().setAttribute(REBUILD_REQUIRED, Boolean.TRUE);
+    }
+
+    private void setRebuildRequired() {
+        final long now = System.currentTimeMillis();
+        modelCache.setRebuildRequired();
+        setMinExplorerTreeModelBuildTime(now);
+    }
+
+    private Optional<Long> getMinExplorerTreeModelBuildTime() {
+        final HttpSession session = getSession();
+        final Object object = session.getAttribute(MIN_EXPLORER_TREE_MODEL_BUILD_TIME);
+        return Optional.ofNullable((Long) object);
+    }
+
+    private void setMinExplorerTreeModelBuildTime(final long buildTime) {
+        getSession().setAttribute(MIN_EXPLORER_TREE_MODEL_BUILD_TIME, buildTime);
+    }
+
+    private HttpSession getSession() {
+        final HttpServletRequest request = httpServletRequestHolder.get();
+        if (request == null) {
+            throw new NullPointerException("Request holder has no current request");
+        }
+        return request.getSession();
+    }
+
+    private synchronized void ensureModelExists() {
+        if (currentModel == null) {
+            setCurrentModel(createModel());
+        }
+    }
+
+    private synchronized void setCurrentModel(final TreeModel treeModel) {
+        if (currentModel == null || currentModel.getCreationTime() < treeModel.getCreationTime()) {
+            currentModel = treeModel;
+        }
     }
 
     private TreeModel createModel() {
         final TreeModel newTreeModel = new TreeModelImpl();
-        final TaskScopeRunnable runnable = new TaskScopeRunnable(null) {
-            @Override
-            protected void exec() {
-                final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
-                addChildren(newTreeModel, sort(roots), null);
-            }
-        };
-
-        runnable.run();
+        final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
+        addChildren(newTreeModel, sort(roots), null);
         return newTreeModel;
     }
 
@@ -107,7 +166,7 @@ class ExplorerTreeModel {
     }
 
     void rebuild() {
-        modelCache.rebuild();
+        setRebuildRequired();
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
