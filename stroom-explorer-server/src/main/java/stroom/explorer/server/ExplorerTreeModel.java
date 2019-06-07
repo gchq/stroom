@@ -16,96 +16,84 @@
 
 package stroom.explorer.server;
 
-import apple.laf.JRSUIUtils;
 import org.springframework.stereotype.Component;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.Insecure;
-import stroom.servlet.HttpServletRequestHolder;
-import stroom.util.task.TaskScopeRunnable;
+import stroom.task.server.ExecutorProvider;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 class ExplorerTreeModel {
-    private static final String MIN_EXPLORER_TREE_MODEL_BUILD_TIME =  "MIN_EXPLORER_TREE_MODEL_BUILD_TIME";
+    private static final long ONE_HOUR = 60 * 60 * 1000;
+    private static final long TEN_MINUTES = 10 * 60 * 1000;
 
     private final ExplorerTreeDao explorerTreeDao;
     private final ExplorerActionHandlersImpl explorerActionHandlers;
-    private final HttpServletRequestHolder httpServletRequestHolder;
+    private final ExplorerSession explorerSession;
+    private final ExecutorProvider executorProvider;
 
     private volatile TreeModel currentModel;
+    private final AtomicBoolean performingRebuild = new AtomicBoolean();
 
     @Inject
     ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao,
                       final ExplorerActionHandlersImpl explorerActionHandlers,
-                      final HttpServletRequestHolder httpServletRequestHolder) {
+                      final ExplorerSession explorerSession,
+                      final ExecutorProvider executorProvider) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerActionHandlers = explorerActionHandlers;
-        this.httpServletRequestHolder = httpServletRequestHolder;
+        this.explorerSession = explorerSession;
+        this.executorProvider = executorProvider;
     }
 
     @Insecure
     public TreeModel getModel() {
-        if (currentModel == null) {
-            // Create a model synchronously if it is currently null.
-            ensureModelExists();
-        }
-
-
-
-
-        TreeModel treeModel = null;
-
-        final HttpSession session = getSession();
-        final Object object = session.getAttribute(REBUILD_REQUIRED);
-        if (object == null) {
-            session.setAttribute(name, treeModel);
-        } else {
-            treeModel = (TreeModel) object;
-        }
-
-        return treeModel;
-    }
-
-    private synchronized boolean isRebuildRequired() {
-        modelCache.setRebuildRequired();
-        getSession().setAttribute(REBUILD_REQUIRED, Boolean.TRUE);
-    }
-
-    private void setRebuildRequired() {
         final long now = System.currentTimeMillis();
-        modelCache.setRebuildRequired();
-        setMinExplorerTreeModelBuildTime(now);
-    }
 
-    private Optional<Long> getMinExplorerTreeModelBuildTime() {
-        final HttpSession session = getSession();
-        final Object object = session.getAttribute(MIN_EXPLORER_TREE_MODEL_BUILD_TIME);
-        return Optional.ofNullable((Long) object);
-    }
-
-    private void setMinExplorerTreeModelBuildTime(final long buildTime) {
-        getSession().setAttribute(MIN_EXPLORER_TREE_MODEL_BUILD_TIME, buildTime);
-    }
-
-    private HttpSession getSession() {
-        final HttpServletRequest request = httpServletRequestHolder.get();
-        if (request == null) {
-            throw new NullPointerException("Request holder has no current request");
+        // Create a model synchronously if it is currently null or hasn't been rebuilt for an hour.
+        final long oneHourAgo = now - ONE_HOUR;
+        if (requiresSynchronousRebuild(oneHourAgo)) {
+            ensureModelExists(oneHourAgo);
         }
-        return request.getSession();
+
+        // Force synchronous rebuild of the tree model if it is older than the minimum build time for the current session.
+        explorerSession.getMinExplorerTreeModelBuildTime().ifPresent(buildTime -> {
+            if (buildTime > currentModel.getCreationTime()) {
+                updateModel();
+            }
+        });
+
+        // If the model has not been rebuilt in the last 10 minutes for anybody then do so asynchronously.
+        if (currentModel.getCreationTime() < now - TEN_MINUTES) {
+            if (performingRebuild.compareAndSet(false, true)) {
+                final Executor executor = executorProvider.getExecutor();
+                CompletableFuture
+                        .runAsync(() -> updateModel(), executor)
+                        .thenRun(() -> performingRebuild.set(false));
+            }
+        }
+
+        return currentModel;
     }
 
-    private synchronized void ensureModelExists() {
-        if (currentModel == null) {
-            setCurrentModel(createModel());
+    private boolean requiresSynchronousRebuild(final long oldestAllowedForSynchronousRebuild) {
+        return currentModel == null || currentModel.getCreationTime() < oldestAllowedForSynchronousRebuild;
+    }
+
+    private synchronized void ensureModelExists(final long oldestAllowedForSynchronousRebuild) {
+        if (requiresSynchronousRebuild(oldestAllowedForSynchronousRebuild)) {
+            updateModel();
         }
+    }
+
+    private void updateModel() {
+        setCurrentModel(createModel());
     }
 
     private synchronized void setCurrentModel(final TreeModel treeModel) {
@@ -166,7 +154,8 @@ class ExplorerTreeModel {
     }
 
     void rebuild() {
-        setRebuildRequired();
+        final long now = System.currentTimeMillis();
+        explorerSession.setMinExplorerTreeModelBuildTime(now);
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
