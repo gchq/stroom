@@ -107,14 +107,22 @@ class ExplorerTreeModel {
     private boolean updateModel() {
         performingRebuild.incrementAndGet();
         try {
-            final TreeModel newTreeModel = new TreeModelImpl();
-            final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
-            addChildren(newTreeModel, sort(roots), null);
-            setCurrentModel(newTreeModel);
+            setCurrentModel(createModel());
         } finally {
             performingRebuild.decrementAndGet();
         }
         return true;
+    }
+
+    TreeModel createModel() {
+        final TreeModel newTreeModel = new TreeModelImpl();
+        final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
+        addChildren(newTreeModel, sort(roots), null);
+        return newTreeModel;
+    }
+
+    TreeModel createModel2() {
+        return explorerTreeDao.createModel();
     }
 
     private synchronized void setCurrentModel(final TreeModel treeModel) {
@@ -137,6 +145,19 @@ class ExplorerTreeModel {
     }
 
     private List<ExplorerTreeNode> sort(final List<ExplorerTreeNode> list) {
+        list.sort((o1, o2) -> {
+            if (!o1.getType().equals(o2.getType())) {
+                final int p1 = getPriority(o1.getType());
+                final int p2 = getPriority(o2.getType());
+                return Integer.compare(p1, p2);
+            }
+
+            return o1.getName().compareTo(o2.getName());
+        });
+        return list;
+    }
+
+    private List<ExplorerNode> sort2(final List<ExplorerNode> list) {
         list.sort((o1, o2) -> {
             if (!o1.getType().equals(o2.getType())) {
                 final int p1 = getPriority(o1.getType());

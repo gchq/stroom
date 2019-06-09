@@ -23,23 +23,39 @@ import fri.util.database.jpa.tree.uniqueconstraints.UniqueConstraintViolationExc
 import fri.util.database.jpa.tree.uniqueconstraints.UniqueTreeConstraint;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.entity.server.util.SqlBuilder;
+import stroom.entity.server.util.StroomEntityManager;
+import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.ExplorerNode;
 
 import javax.inject.Inject;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @Transactional
 class ExplorerTreeDaoImpl implements ExplorerTreeDao {
+    private static final String SQL_NODES = "select id, type, uuid, name, tags from explorerTreeNode";
+    private static final String SQL_PATHS = "select ancestor, descendant from explorerTreePath where depth = 1";
+
     private final DbSession session;
+    private final StroomEntityManager entityManager;
     private final ClosureTableTreeDao dao;
+    private final ExplorerActionHandlersImpl explorerActionHandlers;
 
     @Inject
-    ExplorerTreeDaoImpl(final DbSession session) {
+    ExplorerTreeDaoImpl(final DbSession session,
+                        final StroomEntityManager entityManager,
+                        final ExplorerActionHandlersImpl explorerActionHandlers) {
         this.session = session;
+        this.entityManager = entityManager;
         this.dao = new ClosureTableTreeDao(ExplorerTreeNode.class, ExplorerTreePath.class, false, session);
         this.dao.setRemoveReferencedNodes(true);
+        this.explorerActionHandlers = explorerActionHandlers;
     }
 
     @Override
@@ -74,8 +90,130 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
     @Override
     public List<ExplorerTreeNode> getRoots() {
+//        // getRoots()
+//        final String pathEntityName = ExplorerTreePath.class.getSimpleName();
+//
+//        Object parent = null;
+//        {
+//            StringBuilder queryText = new StringBuilder("select p.ancestor from " + pathEntityName + " p where p.depth = 0");
+//            List<Object> parameters = new ArrayList<>();
+//            queryText.append(" and not exists (select 'x' from " + pathEntityName + " p2 " + " where p2.descendant = p.descendant and p2.depth > 0)");
+//            List<Object> nodes = this.session.queryList(queryText.toString(), parameters.toArray());
+//            System.out.println(nodes);
+//
+//            parent = nodes.get(0);
+//        }
+//
+//        // getChildren
+//        {
+//            StringBuilder queryText = new StringBuilder("select p.descendant from " + pathEntityName + " p where p.ancestor = ?1 and p.depth = 1");
+//            List<Object> parameters = new ArrayList();
+//            parameters.add(parent);
+//            List nodes = this.session.queryList(queryText.append(" order by p.orderIndex").toString(), parameters.toArray());
+//            System.out.println(nodes);
+//        }
+
+
+
+
+
         return convertTo(dao.getRoots());
     }
+
+
+
+
+
+
+
+
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public TreeModel createModel() {
+        final TreeModelImpl treeModel = new TreeModelImpl();
+
+        final List<Object[]> nodes = entityManager.executeNativeQueryResultList(new SqlBuilder(SQL_NODES));
+
+        final Map<Integer, ExplorerNode> nodeMap =
+                nodes
+                        .stream()
+                        .collect(Collectors.toMap(
+                                o -> (int) o[0],
+                                o -> {
+                                    final ExplorerNode explorerNode = new ExplorerNode((String) o[1], (String) o[2], (String) o[3], (String) o[4]);
+                                    explorerNode.setIconUrl(getIconUrl(explorerNode.getType()));
+                                    return explorerNode;
+                                }));
+
+        final List<Object[]> paths = entityManager.executeNativeQueryResultList(new SqlBuilder(SQL_PATHS));
+
+        final Set<Integer> ancestors = new HashSet<>();
+        final Set<Integer> descendants = new HashSet<>();
+        paths.forEach(o -> {
+            final int ancestorId = (int) o[0];
+            final int descendantId = (int) o[1];
+            ancestors.add(ancestorId);
+            descendants.add(descendantId);
+            treeModel.add(nodeMap.get(ancestorId), nodeMap.get(descendantId));
+        });
+
+        // Figure out the root.
+        final Set<Integer> roots = new HashSet<>(ancestors);
+        roots.removeAll(descendants);
+
+        roots.forEach(root -> treeModel.add(null, nodeMap.get(root)));
+
+        // Sort children.
+        treeModel.getChildMap().values().forEach(this::sort);
+
+        return treeModel;
+    }
+
+    private String getIconUrl(final String type) {
+        final DocumentType documentType = explorerActionHandlers.getType(type);
+        if (documentType == null) {
+            return null;
+        }
+
+        return documentType.getIconUrl();
+    }
+
+    private List<ExplorerNode> sort(final List<ExplorerNode> list) {
+        list.sort((o1, o2) -> {
+            if (!o1.getType().equals(o2.getType())) {
+                final int p1 = getPriority(o1.getType());
+                final int p2 = getPriority(o2.getType());
+                return Integer.compare(p1, p2);
+            }
+
+            return o1.getName().compareTo(o2.getName());
+        });
+        return list;
+    }
+
+    private int getPriority(final String type) {
+        final DocumentType documentType = explorerActionHandlers.getType(type);
+        if (documentType == null) {
+            return Integer.MAX_VALUE;
+        }
+
+        return documentType.getPriority();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     @Override
     public void removeAll() {

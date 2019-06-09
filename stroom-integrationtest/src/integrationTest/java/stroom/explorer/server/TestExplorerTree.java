@@ -18,6 +18,7 @@ package stroom.explorer.server;
 
 import org.junit.Test;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.shared.ModelStringUtil;
 
 import javax.annotation.Resource;
 import java.util.UUID;
@@ -25,23 +26,37 @@ import java.util.UUID;
 public class TestExplorerTree extends AbstractCoreIntegrationTest {
     @Resource
     private ExplorerTreeDao explorerTreeDao;
+    @Resource
+    private ExplorerTreeModel explorerTreeModel;
 
     @Test
     public void testCreateTree() throws Exception {
         ExplorerTreeNode root = explorerTreeDao.createRoot(newTreePojo("System"));
-        ExplorerTreeNode a = explorerTreeDao.addChild(root, newTreePojo("A"));
-        ExplorerTreeNode b = explorerTreeDao.addChild(root, newTreePojo("B"));
-        ExplorerTreeNode c = explorerTreeDao.addChild(root, newTreePojo("C"));
-        explorerTreeDao.addChild(b, newTreePojo("B1"));
-        explorerTreeDao.addChild(b, newTreePojo("B2"));
-        explorerTreeDao.addChild(a, newTreePojo("A1"));
-        ExplorerTreeNode c1 = explorerTreeDao.addChild(c, newTreePojo("C1"));
-        explorerTreeDao.addChild(c1, newTreePojo("C11"));
-//        outputTree(root, dao);
+        addChildren(root, 0);
+
+
+
+        long now = System.currentTimeMillis();
+        explorerTreeModel.createModel();
+        System.out.println(ModelStringUtil.formatDurationString(System.currentTimeMillis() - now));
+
+        now = System.currentTimeMillis();
+        explorerTreeModel.createModel2();
+        System.out.println(ModelStringUtil.formatDurationString(System.currentTimeMillis() - now));
 
         //commitDbTransaction(session, "insert tree nodes");
 //        return root.getId();
     }
+
+    private void addChildren(final ExplorerTreeNode parent, final int depth) throws Exception {
+        for (int i = 0; i < 10; i++) {
+            ExplorerTreeNode a = explorerTreeDao.addChild(parent, newTreePojo(parent.getName() + "-" + i));
+            if (depth < 1) {
+                addChildren(a, depth + 1);
+            }
+        }
+    }
+
 //
 //    protected ClosureTableTreeDao newDao(final DbSession session)	{
 //        ClosureTableTreeDao dao =
