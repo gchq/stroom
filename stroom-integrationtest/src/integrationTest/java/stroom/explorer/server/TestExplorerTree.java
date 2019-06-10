@@ -16,76 +16,31 @@
 
 package stroom.explorer.server;
 
-import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.shared.ModelStringUtil;
 
 import javax.annotation.Resource;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class TestExplorerTree extends AbstractCoreIntegrationTest {
     @Resource
     private ExplorerTreeDao explorerTreeDao;
-    @Resource
-    private ExplorerTreeModel explorerTreeModel;
-
-    final AtomicLong nodeCOunt = new AtomicLong();
 
     @Test
     public void testCreateTree() throws Exception {
-        long now = System.currentTimeMillis();
-        System.out.println("INSERTING NODES");
-
         ExplorerTreeNode root = explorerTreeDao.createRoot(newTreePojo("System"));
-        addChildren(root, 0);
+        ExplorerTreeNode a = explorerTreeDao.addChild(root, newTreePojo("A"));
+        ExplorerTreeNode b = explorerTreeDao.addChild(root, newTreePojo("B"));
+        ExplorerTreeNode c = explorerTreeDao.addChild(root, newTreePojo("C"));
+        explorerTreeDao.addChild(b, newTreePojo("B1"));
+        explorerTreeDao.addChild(b, newTreePojo("B2"));
+        explorerTreeDao.addChild(a, newTreePojo("A1"));
+        ExplorerTreeNode c1 = explorerTreeDao.addChild(c, newTreePojo("C1"));
+        explorerTreeDao.addChild(c1, newTreePojo("C11"));
 
-        System.out.println(StringUtils.rightPad("CREATED " + nodeCOunt.get(), 28) + "= " + ModelStringUtil.formatDurationString(System.currentTimeMillis() - now));
-
-        now = System.currentTimeMillis();
-        explorerTreeModel.createModel();
-        System.out.println(StringUtils.rightPad("OLD CREATE MODEL", 28) + "= " + ModelStringUtil.formatDurationString(System.currentTimeMillis() - now));
-
-        now = System.currentTimeMillis();
-        explorerTreeModel.createModel2Calls();
-        System.out.println(StringUtils.rightPad("2 QUERY CREATE MODEL", 28) + "= " + ModelStringUtil.formatDurationString(System.currentTimeMillis() - now));
-
-        now = System.currentTimeMillis();
-        explorerTreeModel.createModelSingleCall();
-        System.out.println(StringUtils.rightPad("SINGLE QUERY CREATE MODEL", 28) + "= " + ModelStringUtil.formatDurationString(System.currentTimeMillis() - now));
-
-
-        //commitDbTransaction(session, "insert tree nodes");
-//        return root.getId();
+        // Check create model.
+        explorerTreeDao.createModel();
     }
-
-    private void addChildren(final ExplorerTreeNode parent, final int depth) throws Exception {
-        for (int i = 0; i < 150; i++) {
-            ExplorerTreeNode a = explorerTreeDao.addChild(parent, newTreePojo(parent.getName() + "-" + i));
-            nodeCOunt.getAndIncrement();
-            if (depth < 1) {
-                addChildren(a, depth + 1);
-            }
-        }
-    }
-
-//
-//    protected ClosureTableTreeDao newDao(final DbSession session)	{
-//        ClosureTableTreeDao dao =
-//                new ClosureTableTreeDao(
-//                        ExplorerTreeNode.class,
-//                        ExplorerTreePath.class,
-//                        false,
-//                        session);
-//
-//        dao.setRemoveReferencedNodes(true);
-//
-////        if (isTestCopy() == false)
-////            dao.setUniqueTreeConstraint(newUniqueWholeTreeConstraintImpl());
-//
-//        return dao;
-//    }
 
     private ExplorerTreeNode newTreePojo(final String name) {
         final ExplorerTreeNode explorerTreeNode = new ExplorerTreeNode();

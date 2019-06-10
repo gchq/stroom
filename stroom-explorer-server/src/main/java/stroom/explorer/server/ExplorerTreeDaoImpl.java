@@ -30,28 +30,35 @@ import stroom.explorer.shared.ExplorerNode;
 
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
 @Transactional
 class ExplorerTreeDaoImpl implements ExplorerTreeDao {
-    private static final String SQL_NODES = "select id, type, uuid, name, tags from explorerTreeNode";
-    private static final String SQL_PATHS = "select ancestor, descendant from explorerTreePath where depth = 1";
-    private static final String SQL_FULL_MODEL = "" +
-            "select" +
-            " a.id ancestor_id, a.type ancestor_type, a.uuid ancestor_uuid, a.name ancestor_name, a.tags ancestor_tags," +
-            " d.id descendant_id, d.type descendant_type, d.uuid descendant_uuid, d.name descendant_name, d.tags descendant_tags" +
-            " from explorerTreePath p" +
-            " join explorerTreeNode a" +
-            " on (p.ancestor = a.id)" +
-            " join explorerTreeNode d" +
-            " on (p.descendant = d.id)" +
-            " where p.depth = 1";
+    private static final String EXPLORER_TREE_PATH = "explorerTreePath";
+    private static final String EXPLORER_TREE_NODE = "explorerTreeNode";
+
+    private static final String SQL_ROOTS = "" +
+            "select p.ancestor" +
+            " from " + EXPLORER_TREE_PATH + " p" +
+            " where p.depth = 0" +
+            " and not exists " +
+            "(" +
+            "select 'x' from " + EXPLORER_TREE_PATH + " p2" +
+            " where p2.descendant = p.descendant" +
+            " and p2.depth > 0" +
+            ")";
+
+    private static final String SQL_NODES = "" +
+            "select id, type, uuid, name, tags" +
+            " from " + EXPLORER_TREE_NODE;
+
+    private static final String SQL_PATHS = "" +
+            "select ancestor, descendant" +
+            " from " + EXPLORER_TREE_PATH +
+            " where depth = 1";
 
     private final DbSession session;
     private final StroomEntityManager entityManager;
@@ -101,122 +108,55 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
     @Override
     public List<ExplorerTreeNode> getRoots() {
-//        // getRoots()
-//        final String pathEntityName = ExplorerTreePath.class.getSimpleName();
-//
-//        Object parent = null;
-//        {
-//            StringBuilder queryText = new StringBuilder("select p.ancestor from " + pathEntityName + " p where p.depth = 0");
-//            List<Object> parameters = new ArrayList<>();
-//            queryText.append(" and not exists (select 'x' from " + pathEntityName + " p2 " + " where p2.descendant = p.descendant and p2.depth > 0)");
-//            List<Object> nodes = this.session.queryList(queryText.toString(), parameters.toArray());
-//            System.out.println(nodes);
-//
-//            parent = nodes.get(0);
-//        }
-//
-//        // getChildren
-//        {
-//            StringBuilder queryText = new StringBuilder("select p.descendant from " + pathEntityName + " p where p.ancestor = ?1 and p.depth = 1");
-//            List<Object> parameters = new ArrayList();
-//            parameters.add(parent);
-//            List nodes = this.session.queryList(queryText.append(" order by p.orderIndex").toString(), parameters.toArray());
-//            System.out.println(nodes);
-//        }
-
-
-
-
-
         return convertTo(dao.getRoots());
     }
-
-
-
-
-
-
-
-
 
     @Override
     @SuppressWarnings("unchecked")
     public TreeModel createModel() {
         final TreeModelImpl treeModel = new TreeModelImpl();
 
-        final List<Object[]> nodes = entityManager.executeNativeQueryResultList(new SqlBuilder(SQL_NODES));
+        final List<Integer> roots = entityManager.executeNativeQueryResultList(new SqlBuilder(SQL_ROOTS));
+        if (roots != null && roots.size() > 0) {
+            final List<Object[]> paths = entityManager.executeNativeQueryResultList(new SqlBuilder(SQL_PATHS));
+            final List<Object[]> nodes = entityManager.executeNativeQueryResultList(new SqlBuilder(SQL_NODES));
 
-        final Map<Integer, ExplorerNode> nodeMap =
-                nodes
-                        .stream()
-                        .collect(Collectors.toMap(
-                                o -> (int) o[0],
-                                o -> {
-                                    final ExplorerNode explorerNode = new ExplorerNode((String) o[1], (String) o[2], (String) o[3], (String) o[4]);
-                                    explorerNode.setIconUrl(getIconUrl(explorerNode.getType()));
-                                    return explorerNode;
-                                }));
+            // Create a map of node objects to ids.
+            final Map<Integer, ExplorerNode> nodeMap =
+                    nodes
+                            .stream()
+                            .collect(Collectors.toMap(
+                                    o -> (int) o[0],
+                                    o -> {
+                                        final ExplorerNode explorerNode = new ExplorerNode((String) o[1], (String) o[2], (String) o[3], (String) o[4]);
+                                        explorerNode.setIconUrl(getIconUrl(explorerNode.getType()));
+                                        return explorerNode;
+                                    }));
 
-        final List<Object[]> paths = entityManager.executeNativeQueryResultList(new SqlBuilder(SQL_PATHS));
+            // Add the roots.
+            roots.forEach(rootId -> {
+                final ExplorerNode root = nodeMap.get(rootId);
+                if (root != null) {
+                    treeModel.add(null, root);
+                }
+            });
 
-        final Set<Integer> ancestors = new HashSet<>();
-        final Set<Integer> descendants = new HashSet<>();
-        paths.forEach(o -> {
-            final int ancestorId = (int) o[0];
-            final int descendantId = (int) o[1];
-            ancestors.add(ancestorId);
-            descendants.add(descendantId);
-            treeModel.add(nodeMap.get(ancestorId), nodeMap.get(descendantId));
-        });
+            // Add parents and children.
+            paths.forEach(o -> {
+                final int ancestorId = (int) o[0];
+                final int descendantId = (int) o[1];
+                final ExplorerNode ancestor = nodeMap.get(ancestorId);
+                final ExplorerNode descendant = nodeMap.get(descendantId);
+                if (ancestor != null && descendant != null) {
+                    treeModel.add(ancestor, descendant);
+                }
+            });
 
-        // Figure out the root.
-        final Set<Integer> roots = new HashSet<>(ancestors);
-        roots.removeAll(descendants);
-
-        roots.forEach(root -> treeModel.add(null, nodeMap.get(root)));
-
-        // Sort children.
-        treeModel.getChildMap().values().forEach(this::sort);
-
-        return treeModel;
-    }
-
-    public TreeModel createModel2() {
-        final TreeModelImpl treeModel = new TreeModelImpl();
-
-        final Map<Integer, ExplorerNode> nodeMap = new HashMap<>();
-        final List<Object[]> paths = entityManager.executeNativeQueryResultList(new SqlBuilder(SQL_FULL_MODEL));
-
-        final Set<Integer> ancestors = new HashSet<>();
-        final Set<Integer> descendants = new HashSet<>();
-        paths.forEach(o -> {
-            final int ancestorId = (int) o[0];
-            final int descendantId = (int) o[5];
-
-            final ExplorerNode ancestorNode = nodeMap.computeIfAbsent(ancestorId, k -> createNode(o, 0));
-            final ExplorerNode descendantNode = nodeMap.computeIfAbsent(descendantId, k -> createNode(o, 5));
-
-            ancestors.add(ancestorId);
-            descendants.add(descendantId);
-            treeModel.add(ancestorNode, descendantNode);
-        });
-
-        // Figure out the root.
-        final Set<Integer> roots = new HashSet<>(ancestors);
-        roots.removeAll(descendants);
-
-        roots.forEach(root -> treeModel.add(null, nodeMap.get(root)));
-
-        // Sort children.
-        treeModel.getChildMap().values().forEach(this::sort);
+            // Sort children.
+            treeModel.getChildMap().values().forEach(this::sort);
+        }
 
         return treeModel;
-    }
-
-    private ExplorerNode createNode(Object[] o, int offset) {
-        final ExplorerNode explorerNode = new ExplorerNode((String) o[offset + 1], (String) o[offset + 2], (String) o[offset + 3], (String) o[offset + 4]);
-        explorerNode.setIconUrl(getIconUrl(explorerNode.getType()));
-        return explorerNode;
     }
 
     private String getIconUrl(final String type) {
@@ -249,19 +189,6 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
         return documentType.getPriority();
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     @Override

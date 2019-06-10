@@ -115,18 +115,7 @@ class ExplorerTreeModel {
     }
 
     TreeModel createModel() {
-        final TreeModel newTreeModel = new TreeModelImpl();
-        final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
-        addChildren(newTreeModel, sort(roots), null);
-        return newTreeModel;
-    }
-
-    TreeModel createModel2Calls() {
         return explorerTreeDao.createModel();
-    }
-
-    TreeModel createModelSingleCall() {
-        return explorerTreeDao.createModel2();
     }
 
     private synchronized void setCurrentModel(final TreeModel treeModel) {
