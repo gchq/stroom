@@ -20,5 +20,6 @@ import fri.util.database.jpa.tree.TreeDao;
 
 public interface ExplorerTreeDao extends TreeDao<ExplorerTreeNode> {
     TreeModel createModel();
+    TreeModel createModel2();
     ExplorerTreeNode findByUUID(final String uuid);
 }

@@ -121,8 +121,12 @@ class ExplorerTreeModel {
         return newTreeModel;
     }
 
-    TreeModel createModel2() {
+    TreeModel createModel2Calls() {
         return explorerTreeDao.createModel();
+    }
+
+    TreeModel createModelSingleCall() {
+        return explorerTreeDao.createModel2();
     }
 
     private synchronized void setCurrentModel(final TreeModel treeModel) {
