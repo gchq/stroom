@@ -15,5 +15,6 @@
  */
 
 CREATE INDEX explorerTreePath_descendant_idx ON explorerTreePath (descendant);
+CREATE INDEX explorerTreePath_descendant_depth_idx ON explorerTreePath (descendant, depth);
 CREATE INDEX explorerTreePath_ancestor_depth_orderIndex_idx ON explorerTreePath (ancestor, depth, orderIndex);
 CREATE INDEX explorerTreePath_depth_idx ON explorerTreePath (depth);
