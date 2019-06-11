@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import stroom.servlet.HttpServletRequestHolder;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.Optional;
@@ -15,15 +16,20 @@ class ExplorerSessionImpl implements ExplorerSession {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerSessionImpl.class);
     private static final String MIN_EXPLORER_TREE_MODEL_BUILD_TIME = "MIN_EXPLORER_TREE_MODEL_BUILD_TIME";
 
-    private final HttpServletRequestHolder httpServletRequestHolder;
+    private final Provider<HttpServletRequestHolder> httpServletRequestHolderProvider;
 
     @Inject
-    ExplorerSessionImpl(final HttpServletRequestHolder httpServletRequestHolder) {
-        this.httpServletRequestHolder = httpServletRequestHolder;
+    ExplorerSessionImpl(final Provider<HttpServletRequestHolder> httpServletRequestHolderProvider) {
+        this.httpServletRequestHolderProvider = httpServletRequestHolderProvider;
     }
 
     @Override
     public Optional<Long> getMinExplorerTreeModelBuildTime() {
+        final HttpServletRequestHolder httpServletRequestHolder = httpServletRequestHolderProvider.get();
+        if (httpServletRequestHolder == null) {
+            return Optional.empty();
+        }
+
         final HttpServletRequest request = httpServletRequestHolder.get();
         if (request == null) {
             LOGGER.debug("Request holder has no current request");
@@ -37,13 +43,16 @@ class ExplorerSessionImpl implements ExplorerSession {
 
     @Override
     public void setMinExplorerTreeModelBuildTime(final long buildTime) {
-        final HttpServletRequest request = httpServletRequestHolder.get();
-        if (request == null) {
-            LOGGER.debug("Request holder has no current request");
+        final HttpServletRequestHolder httpServletRequestHolder = httpServletRequestHolderProvider.get();
+        if (httpServletRequestHolder != null) {
+            final HttpServletRequest request = httpServletRequestHolder.get();
+            if (request == null) {
+                LOGGER.debug("Request holder has no current request");
 
-        } else {
-            final HttpSession session = request.getSession();
-            session.setAttribute(MIN_EXPLORER_TREE_MODEL_BUILD_TIME, buildTime);
+            } else {
+                final HttpSession session = request.getSession();
+                session.setAttribute(MIN_EXPLORER_TREE_MODEL_BUILD_TIME, buildTime);
+            }
         }
     }
 }
