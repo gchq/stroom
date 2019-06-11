@@ -12,6 +12,7 @@ dependencies {
     compile libs.eventLogging
     compile libs.hibernate_jpa_api
     compile libs.javax_inject
+    compile libs.javax_servlet_api
     compile libs.spring_tx
     compile libs.spring_context
     compile libs.slf4j_api
