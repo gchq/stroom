@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.46] - 2019-06-11
+
 * Issue **#1153** : The explorer tree is now built with fewer DB queries.
 
 * Issue **#1163** : Added indexes to the DB to improve explorer performance.
@@ -1628,7 +1631,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.45...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.46...6.0
+[v6.0-beta.46]: https://github.com/gchq/stroom/compare/v7.0-beta.45...v6.0-beta.46
 [v6.0-beta.45]: https://github.com/gchq/stroom/compare/v7.0-beta.44...v6.0-beta.45
 [v6.0-beta.44]: https://github.com/gchq/stroom/compare/v7.0-beta.43...v6.0-beta.44
 [v6.0-beta.43]: https://github.com/gchq/stroom/compare/v7.0-beta.42...v6.0-beta.43
