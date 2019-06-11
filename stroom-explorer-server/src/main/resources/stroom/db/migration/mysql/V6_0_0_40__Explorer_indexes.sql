@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.explorer.server;
-
-import stroom.explorer.shared.ExplorerNode;
-
-import java.util.List;
-import java.util.Map;
-
-public interface TreeModel {
-    void add(ExplorerNode parent, ExplorerNode child);
-
-    long getCreationTime();
-
-    Map<ExplorerNode, ExplorerNode> getParentMap();
-
-    Map<ExplorerNode, List<ExplorerNode>> getChildMap();
-}
+CREATE INDEX explorerTreePath_descendant_idx ON explorerTreePath (descendant);
+CREATE INDEX explorerTreePath_descendant_depth_idx ON explorerTreePath (descendant, depth);
+CREATE INDEX explorerTreePath_ancestor_depth_orderIndex_idx ON explorerTreePath (ancestor, depth, orderIndex);
+CREATE INDEX explorerTreePath_depth_idx ON explorerTreePath (depth);

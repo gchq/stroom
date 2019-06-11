@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 class TreeModelImpl implements TreeModel {
+    private final long creationTime = System.currentTimeMillis();
     private final Map<ExplorerNode, ExplorerNode> parentMap = new HashMap<>();
     private final Map<ExplorerNode, List<ExplorerNode>> childMap = new HashMap<>();
 
@@ -15,6 +16,11 @@ class TreeModelImpl implements TreeModel {
     public void add(final ExplorerNode parent, final ExplorerNode child) {
         parentMap.put(child, parent);
         childMap.computeIfAbsent(parent, k -> new ArrayList<>()).add(child);
+    }
+
+    @Override
+    public long getCreationTime() {
+        return creationTime;
     }
 
     @Override

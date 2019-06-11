@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1153** : The explorer tree is now built with fewer DB queries.
+
+* Issue **#1163** : Added indexes to the DB to improve explorer performance.
+
+* Issue **#1153** : The explorer tree now only rebuilds synchronously for users who alter the tree, if has never been built or is very old. All other rebuilds of the explorer tree required to keep it fresh will happen asynchronously.
+
 
 ## [v6.0-beta.45] - 2019-06-06
 

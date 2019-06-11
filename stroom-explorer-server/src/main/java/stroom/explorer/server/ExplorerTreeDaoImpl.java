@@ -23,23 +23,57 @@ import fri.util.database.jpa.tree.uniqueconstraints.UniqueConstraintViolationExc
 import fri.util.database.jpa.tree.uniqueconstraints.UniqueTreeConstraint;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.entity.server.util.SqlBuilder;
+import stroom.entity.server.util.StroomEntityManager;
+import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.ExplorerNode;
 
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @Transactional
 class ExplorerTreeDaoImpl implements ExplorerTreeDao {
+    private static final String EXPLORER_TREE_PATH = "explorerTreePath";
+    private static final String EXPLORER_TREE_NODE = "explorerTreeNode";
+
+    private static final String SQL_ROOTS = "" +
+            "select p.ancestor" +
+            " from " + EXPLORER_TREE_PATH + " p" +
+            " where p.depth = 0" +
+            " and not exists " +
+            "(" +
+            "select 'x' from " + EXPLORER_TREE_PATH + " p2" +
+            " where p2.descendant = p.descendant" +
+            " and p2.depth > 0" +
+            ")";
+
+    private static final String SQL_NODES = "" +
+            "select id, type, uuid, name, tags" +
+            " from " + EXPLORER_TREE_NODE;
+
+    private static final String SQL_PATHS = "" +
+            "select ancestor, descendant" +
+            " from " + EXPLORER_TREE_PATH +
+            " where depth = 1";
+
     private final DbSession session;
+    private final StroomEntityManager entityManager;
     private final ClosureTableTreeDao dao;
+    private final ExplorerActionHandlersImpl explorerActionHandlers;
 
     @Inject
-    ExplorerTreeDaoImpl(final DbSession session) {
+    ExplorerTreeDaoImpl(final DbSession session,
+                        final StroomEntityManager entityManager,
+                        final ExplorerActionHandlersImpl explorerActionHandlers) {
         this.session = session;
+        this.entityManager = entityManager;
         this.dao = new ClosureTableTreeDao(ExplorerTreeNode.class, ExplorerTreePath.class, false, session);
         this.dao.setRemoveReferencedNodes(true);
+        this.explorerActionHandlers = explorerActionHandlers;
     }
 
     @Override
@@ -76,6 +110,86 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     public List<ExplorerTreeNode> getRoots() {
         return convertTo(dao.getRoots());
     }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public TreeModel createModel() {
+        final TreeModelImpl treeModel = new TreeModelImpl();
+
+        final List<Integer> roots = entityManager.executeNativeQueryResultList(new SqlBuilder(SQL_ROOTS));
+        if (roots != null && roots.size() > 0) {
+            final List<Object[]> paths = entityManager.executeNativeQueryResultList(new SqlBuilder(SQL_PATHS));
+            final List<Object[]> nodes = entityManager.executeNativeQueryResultList(new SqlBuilder(SQL_NODES));
+
+            // Create a map of node objects to ids.
+            final Map<Integer, ExplorerNode> nodeMap =
+                    nodes
+                            .stream()
+                            .collect(Collectors.toMap(
+                                    o -> (int) o[0],
+                                    o -> {
+                                        final ExplorerNode explorerNode = new ExplorerNode((String) o[1], (String) o[2], (String) o[3], (String) o[4]);
+                                        explorerNode.setIconUrl(getIconUrl(explorerNode.getType()));
+                                        return explorerNode;
+                                    }));
+
+            // Add the roots.
+            roots.forEach(rootId -> {
+                final ExplorerNode root = nodeMap.get(rootId);
+                if (root != null) {
+                    treeModel.add(null, root);
+                }
+            });
+
+            // Add parents and children.
+            paths.forEach(o -> {
+                final int ancestorId = (int) o[0];
+                final int descendantId = (int) o[1];
+                final ExplorerNode ancestor = nodeMap.get(ancestorId);
+                final ExplorerNode descendant = nodeMap.get(descendantId);
+                if (ancestor != null && descendant != null) {
+                    treeModel.add(ancestor, descendant);
+                }
+            });
+
+            // Sort children.
+            treeModel.getChildMap().values().forEach(this::sort);
+        }
+
+        return treeModel;
+    }
+
+    private String getIconUrl(final String type) {
+        final DocumentType documentType = explorerActionHandlers.getType(type);
+        if (documentType == null) {
+            return null;
+        }
+
+        return documentType.getIconUrl();
+    }
+
+    private List<ExplorerNode> sort(final List<ExplorerNode> list) {
+        list.sort((o1, o2) -> {
+            if (!o1.getType().equals(o2.getType())) {
+                final int p1 = getPriority(o1.getType());
+                final int p2 = getPriority(o2.getType());
+                return Integer.compare(p1, p2);
+            }
+
+            return o1.getName().compareTo(o2.getName());
+        });
+        return list;
+    }
+
+    private int getPriority(final String type) {
+        final DocumentType documentType = explorerActionHandlers.getType(type);
+        if (documentType == null) {
+            return Integer.MAX_VALUE;
+        }
+
+        return documentType.getPriority();
+    }
+
 
     @Override
     public void removeAll() {

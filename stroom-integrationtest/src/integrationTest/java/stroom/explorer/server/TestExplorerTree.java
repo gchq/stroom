@@ -37,27 +37,10 @@ public class TestExplorerTree extends AbstractCoreIntegrationTest {
         explorerTreeDao.addChild(a, newTreePojo("A1"));
         ExplorerTreeNode c1 = explorerTreeDao.addChild(c, newTreePojo("C1"));
         explorerTreeDao.addChild(c1, newTreePojo("C11"));
-//        outputTree(root, dao);
 
-        //commitDbTransaction(session, "insert tree nodes");
-//        return root.getId();
+        // Check create model.
+        explorerTreeDao.createModel();
     }
-//
-//    protected ClosureTableTreeDao newDao(final DbSession session)	{
-//        ClosureTableTreeDao dao =
-//                new ClosureTableTreeDao(
-//                        ExplorerTreeNode.class,
-//                        ExplorerTreePath.class,
-//                        false,
-//                        session);
-//
-//        dao.setRemoveReferencedNodes(true);
-//
-////        if (isTestCopy() == false)
-////            dao.setUniqueTreeConstraint(newUniqueWholeTreeConstraintImpl());
-//
-//        return dao;
-//    }
 
     private ExplorerTreeNode newTreePojo(final String name) {
         final ExplorerTreeNode explorerTreeNode = new ExplorerTreeNode();
