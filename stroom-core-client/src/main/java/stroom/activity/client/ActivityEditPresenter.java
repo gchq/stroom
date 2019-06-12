@@ -32,6 +32,7 @@ import stroom.activity.client.ActivityEditPresenter.ActivityEditView;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;
+import stroom.activity.shared.CreateActivityAction;
 import stroom.activity.shared.UpdateActivityAction;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
@@ -218,11 +219,24 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         activity.setDetails(details);
 
         // Save the activity.
-        dispatcher.exec(new UpdateActivityAction(activity)).onSuccess(result -> {
-            activity = result;
-            consumer.accept(result);
-            hide();
-        });
+        if (activity.getId() == null) {
+            dispatcher.exec(new CreateActivityAction()).onSuccess(result -> {
+                activity = result;
+                activity.setDetails(details);
+
+                dispatcher.exec(new UpdateActivityAction(activity)).onSuccess(r -> {
+                    activity = r;
+                    consumer.accept(r);
+                    hide();
+                });
+            });
+        } else {
+            dispatcher.exec(new UpdateActivityAction(activity)).onSuccess(result -> {
+                activity = result;
+                consumer.accept(result);
+                hide();
+            });
+        }
     }
 
     private void findInputElements(final NodeList<Node> nodes, final List<Element> inputElements) {
