@@ -43,12 +43,12 @@ stroom.uiPath=/stroom/ui?prompt=login
 
 stroom.auth.jwt.issuer=stroom
 stroom.auth.jwt.enableTokenRevocationCheck=true
-stroom.auth.services.url=http://IP_ADDRESS:8099
-stroom.auth.authentication.service.url=http://IP_ADDRESS/authenticationService/v1
+stroom.auth.services.url=http://IP_ADDRESS/api/auth
+stroom.auth.authentication.service.url=https://IP_ADDRESS/api/auth/authentication/v1
 
-stroom.users.ui.url=https://IP_ADDRESS/users
-stroom.apikeys.ui.url=https://IP_ADDRESS/tokens
-stroom.changepassword.url=https://IP_ADDRESS/changepassword
+stroom.users.ui.url=https://IP_ADDRESS/s/users
+stroom.apikeys.ui.url=https://IP_ADDRESS/s/tokens
+stroom.changepassword.url=https://IP_ADDRESS/s/changepassword
 
 #Service discovery
 #~~~~~~~~~~~~~~~~~
