@@ -165,14 +165,14 @@ public final class ProxyRepositoryReader {
                         continue;
                     }
 
-                    if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info("run() - Cron Match at " + DateUtil.createNormalDateTimeString());
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Cron Match at " + DateUtil.createNormalDateTimeString());
                     }
 
                     try {
                         doRunWork();
                     } catch (final RuntimeException e) {
-                        LOGGER.error("run() - Unhandled exception coming out of doRunWork()", e);
+                        LOGGER.error("Unhandled exception coming out of doRunWork()", e);
                     }
                 }
             }
@@ -180,7 +180,7 @@ public final class ProxyRepositoryReader {
             lock.unlock();
         }
 
-        LOGGER.info("run() - Completed ... Thread Exit");
+        LOGGER.info("Completed ... Thread Exit");
     }
 
     void doRunWork() {

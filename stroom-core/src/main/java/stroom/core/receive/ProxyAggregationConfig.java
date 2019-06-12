@@ -10,6 +10,7 @@ import javax.inject.Singleton;
 @Singleton
 public class ProxyAggregationConfig implements IsConfig {
     private String proxyDir = "${stroom.temp}/proxy";
+    private volatile long buffferSize = 8192;
     private volatile int proxyThreads = 10;
     private volatile int maxFilesPerAggregate = 10000;
     private volatile int maxConcurrentMappedFiles = 100000;
@@ -22,6 +23,15 @@ public class ProxyAggregationConfig implements IsConfig {
 
     public void setProxyDir(final String proxyDir) {
         this.proxyDir = proxyDir;
+    }
+
+    @JsonPropertyDescription("The amount of memory to use for buffering reads/writes")
+    public long getBuffferSize() {
+        return buffferSize;
+    }
+
+    public void setBuffferSize(final long buffferSize) {
+        this.buffferSize = buffferSize;
     }
 
     @JsonPropertyDescription("Number of threads used in aggregation")

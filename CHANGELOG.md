@@ -5,9 +5,56 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+* Issue **#1153** : The explorer tree is now built with fewer DB queries.
+
+* Issue **#1163** : Added indexes to the DB to improve explorer performance.
+
+* Issue **#1153** : The explorer tree now only rebuilds synchronously for users who alter the tree, if has never been built or is very old. All other rebuilds of the explorer tree required to keep it fresh will happen asynchronously.
+
+* Issue **#1162** : Proxy aggregation will no longer recurse parts directories when creating parts.
+
+* Issue **#1157** : Migration now adds dummy feeds etc to processor filters if the original doc can't be found. This will prevent filters from matching more items than they should if migration fails to map feeds etc because they can't be found.
+
+* Issue **#1162** : Remove invalid CopyOption in move() call.
+
+* Issue **#1159** : Fix NPE in rolling appenders with no frequency value.
+
+* Issue **#1160** : Proxy repositories will no longer scan contents on open if they are set to be read only.
+
+* Issue **#1162** : Added buffering etc to improve the performance of proxy aggregation.
+
+* Issue **#1156** : Added code to reduce unlikely chance of NPE or uncontrolled processing in the event of a null or empty processing filter.
+
+* Issue **#1149** : Changed the way EntryIdSet is unmarshalled so jaxb can now use the getter to add items to a collection.
+
+* Ignore broken junit test that cannot work as it stands
+
+* Fix NPE in DictionaryStoreImpl.findByName().
+
+* Issue **#1146** : Added `encodeUrl()`, `decodeUrl()` and `dashboard()` functions to dashboard tables to make dashboard linking easier. The `link()` function now automatically encodes/decodes each param so that parameters do not break the link format, e.g. `[Click Here](http://www.somehost.com/somepath){dialog|Dialog Title}`.
+
+* Issue **#1144** : Changed StreamRange to account for inclusive stream id ranges in v6.0 that was causing an issue with file system maintenance.
+
+* Mask passwords on the proxy admin page.
+
+* Add exception to wrapped exception in the feedStatus service.
+
+* Issue **#1140** : Add health check for proxy feed status url.
+
+* Issue **#1138** : Stroom proxy now deletes empty repository directories based on creation time and depth first so that pruning empty directories is quicker and generally more successful.
+
+* Issue **#1137** : Change proxy remote url health check to accept a 406 code as the feed will not be specified.
+
+* Issue **#1135** : Data retention policies are now migrated to use `Type` and not `Stream Type`.
+
+* Issue **#1136** : Remove recursive chown from stroom and proxy docker entrypoint scripts.
+
+
 ## [v7.0-alpha.3] - 2019-05-10
 
 * Fix config
+
 
 ## [v7.0-alpha.2] - 2019-05-10
 

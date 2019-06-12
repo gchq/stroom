@@ -27,11 +27,14 @@ import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Set;
 
@@ -69,13 +72,19 @@ class ZipFragmenter {
             Path currentDir = outputDir;
             if (Files.isDirectory(outputDir)) {
                 int i = 1;
-                boolean success = false;
+                boolean deleteOriginalFile = false;
+                boolean moveOriginalFile = false;
 
                 try (final StroomZipFile stroomZipFile = new StroomZipFile(path)) {
                     final Set<String> baseNameSet = stroomZipFile.getStroomZipNameSet().getBaseNameSet();
 
                     if (baseNameSet.isEmpty()) {
                         errorReceiver.onError(path, "Unable to find any entry?");
+
+                    } else if (baseNameSet.size() == 1) {
+                        // Remember that this zip contained a single base name as we will deal with this using a simple move.
+                        moveOriginalFile = true;
+
                     } else {
                         for (final String baseName : baseNameSet) {
                             final String idString = StroomFileNameUtil.idToString(i);
@@ -99,7 +108,7 @@ class ZipFragmenter {
                             i++;
                         }
 
-                        success = true;
+                        deleteOriginalFile = true;
                     }
                 } catch (final IOException | RuntimeException e) {
                     // Unable to open file ... must be bad.
@@ -107,7 +116,21 @@ class ZipFragmenter {
                     LOGGER.error(e.getMessage(), e);
                 }
 
-                if (success) {
+                if (moveOriginalFile) {
+                    try {
+                        final String idString = StroomFileNameUtil.idToString(i);
+                        final Path outputFile = currentDir.resolve(stem + PathConstants.PART + idString + ".zip");
+                        Files.move(
+                                path,
+                                outputFile,
+                                StandardCopyOption.REPLACE_EXISTING,
+                                StandardCopyOption.ATOMIC_MOVE);
+                    } catch (final IOException | RuntimeException e) {
+                        // Unable to move file ... must be bad.
+                        errorReceiver.onError(path, e.getMessage());
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                } else if (deleteOriginalFile) {
                     // Delete the original file.
                     FileUtil.delete(path);
                 }
@@ -116,21 +139,26 @@ class ZipFragmenter {
     }
 
     private void transferEntry(
-            final StroomZipFile input,
-            final StroomZipOutputStream output,
+            final StroomZipFile stroomZipFile,
+            final StroomZipOutputStream stroomZipOutputStream,
             final String baseName,
             final StroomZipFileType type) {
-        try (final InputStream inputStream = input.getInputStream(baseName, type)) {
+        try {
+            final InputStream inputStream = stroomZipFile.getInputStream(baseName, type);
             if (inputStream != null) {
+                try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream, ProxyBufferSizeUtil.get())) {
                 final String outputEntryName = new StroomZipEntry(null, baseName, type).getFullName();
-                try (final OutputStream outputStream = output.addEntry(outputEntryName)) {
-                    StreamUtil.streamToStream(inputStream, outputStream);
+                    try (final OutputStream outputStream = new BufferedOutputStream(stroomZipOutputStream.addEntry(outputEntryName), ProxyBufferSizeUtil.get())) {
+                        StreamUtil.streamToStream(bufferedInputStream, outputStream, false);
+                    } catch (final IOException e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
                 } catch (final IOException e) {
-                    LOGGER.debug(e.getMessage(), e);
+                    LOGGER.error(e.getMessage(), e);
                 }
             }
         } catch (final IOException e) {
-            LOGGER.debug(e.getMessage(), e);
+            LOGGER.error(e.getMessage(), e);
         }
     }
 }

@@ -47,6 +47,10 @@ import java.util.EnumSet;
 public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
+    // This name is used by dropwizard metrics
+    public static final String PROXY_JERSEY_CLIENT_NAME = "stroom-proxy_jersey_client";
+    public static final String PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX = "stroom-proxy/";
+
     @Inject
     private HealthChecks healthChecks;
     @Inject
@@ -94,7 +98,13 @@ public class App extends Application<Config> {
 
         LOGGER.info("Starting Stroom Proxy");
 
-        final ProxyModule proxyModule = new ProxyModule(configuration, environment);
+        // The jersey client is costly to create and is thread-safe so create one for the app
+        // and make it injectable by guice
+        final Client jerseyClient = createJerseyClient(
+                configuration.getProxyConfig().getJerseyClientConfiguration(),
+                environment);
+
+        final ProxyModule proxyModule = new ProxyModule(configuration, environment, jerseyClient);
         final Injector injector = Guice.createInjector(proxyModule);
         injector.injectMembers(this);
 
@@ -118,6 +128,24 @@ public class App extends Application<Config> {
 
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
+    }
+
+    private Client createJerseyClient(final JerseyClientConfiguration jerseyClientConfiguration,
+                                      final Environment environment) {
+
+        // If the userAgent has not been explicitly set in the config then set it based
+        // on the build version
+        if (! jerseyClientConfiguration.getUserAgent().isPresent()) {
+            final String userAgent = PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX + BuildInfoUtil.getBuildVersion();
+            LOGGER.info("Setting jersey client user agent string to [{}]", userAgent);
+            jerseyClientConfiguration.setUserAgent(Optional.of(userAgent));
+        }
+
+        LOGGER.info("Creating jersey client {}", PROXY_JERSEY_CLIENT_NAME);
+        return new JerseyClientBuilder(environment)
+                .using(jerseyClientConfiguration)
+                .build(PROXY_JERSEY_CLIENT_NAME)
+                .register(LoggingFeature.class);
     }
 
     private static void configureCors(io.dropwizard.setup.Environment environment) {

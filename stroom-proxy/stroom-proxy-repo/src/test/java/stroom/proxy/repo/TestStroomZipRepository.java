@@ -31,7 +31,7 @@ class TestStroomZipRepository {
     void testScan() throws IOException {
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo1"));
 
-        final StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, null, true, 100);
+        final StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, null, true, 100, false);
 
         final StroomZipOutputStream out1 = stroomZipRepository.getStroomZipOutputStream();
         StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),
@@ -48,7 +48,7 @@ class TestStroomZipRepository {
         stroomZipRepository.finish();
 
         // Re open.
-        final StroomZipRepository reopenStroomZipRepository = new StroomZipRepository(repoDir, null, false, 100);
+        final StroomZipRepository reopenStroomZipRepository = new StroomZipRepository(repoDir, null, false, 100, false);
 
         reopenStroomZipRepository.scanRepository((min, max) -> {
             assertThat(1L == min).isTrue();
@@ -69,7 +69,7 @@ class TestStroomZipRepository {
     void testClean() throws IOException {
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo2"));
 
-        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, null, false, 10000);
+        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, null, false, 10000, false);
 
         final StroomZipOutputStreamImpl out1 = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream();
         StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),
@@ -86,7 +86,7 @@ class TestStroomZipRepository {
 
         // Leave open
 
-        stroomZipRepository = new StroomZipRepository(repoDir, null, false, 1000);
+        stroomZipRepository = new StroomZipRepository(repoDir, null, false, 1000, false);
         assertThat(Files.isRegularFile(out1.getFile())).as("Expecting pucker file to be left").isTrue();
         assertThat(Files.isRegularFile(out2.getLockFile())).as("Expecting lock file to not be deleted").isTrue();
 
@@ -146,7 +146,7 @@ class TestStroomZipRepository {
         final String FEED_NAME = "myFeed";
 
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
-        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000);
+        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000, false);
 
         AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("feed", FEED_NAME);
@@ -181,7 +181,7 @@ class TestStroomZipRepository {
         final String repositoryFormat = "%{id}_${id}_${FEED}_${kEy1}";
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
 
-        final StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000);
+        final StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000, false);
         final StroomZipOutputStreamImpl out1 = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(attributeMap);
 
         StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),

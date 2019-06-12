@@ -17,8 +17,8 @@
 
 package stroom.document.client;
 
-import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.core.client.ContentManager;
@@ -142,7 +142,9 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
         load(docRef)
                 .onSuccess(doc -> {
                     try {
-                        if (doc != null) {
+                        if (doc == null) {
+                            AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
+                        } else {
                             // Read the newly loaded document.
                             documentEditPresenter.read(getDocRef(doc), doc);
 
@@ -155,7 +157,8 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
                     }
                 })
                 .onFailure(caught -> {
-                    GWT.log(caught.getMessage());
+                    AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, caught.getMessage(), null);
+//                    GWT.log(caught.getMessage());
                     // Stop spinning.
                     TaskEndEvent.fire(DocumentPlugin.this);
                 });

@@ -4,7 +4,6 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -28,7 +27,7 @@ class FetchJson extends StroomExtensionFunctionCall {
             final HttpURLConnection yc = (HttpURLConnection) url.openConnection();
 
             switch (yc.getResponseCode()) {
-                case HttpStatus.OK_200: {
+                case 200: { // OK
                     try (BufferedReader in = new BufferedReader(new InputStreamReader(
                             yc.getInputStream()))) {
                         final String json = in.lines().reduce("", String::concat);
@@ -37,7 +36,7 @@ class FetchJson extends StroomExtensionFunctionCall {
                     }
                     break;
                 }
-                case HttpStatus.NOT_FOUND_404:
+                case 404: // NOT_FOUND
                     // this is an expected failure condition
                     break;
                 default:

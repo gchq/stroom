@@ -19,6 +19,8 @@ package stroom.explorer.impl;
 import java.util.List;
 
 public interface ExplorerTreeDao {
+    TreeModel createModel();
+
     void update(ExplorerTreeNode node);
 
     ExplorerTreeNode createRoot(ExplorerTreeNode node);

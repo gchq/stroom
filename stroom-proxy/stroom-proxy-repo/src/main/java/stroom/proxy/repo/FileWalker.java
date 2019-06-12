@@ -17,10 +17,26 @@ import java.util.EnumSet;
 class FileWalker {
     private final Logger LOGGER = LoggerFactory.getLogger(FileWalker.class);
 
-    void walk(final Path dir, final FileFilter fileFilter, final FileProcessor fileProcessor, final TaskContext taskContext) {
+    void walk(final Path dir,
+              final FileFilter fileFilter,
+              final FileProcessor fileProcessor,
+              final TaskContext taskContext,
+              final boolean skipParts) {
         taskContext.setName("Walk Repository - " + FileUtil.getCanonicalPath(dir));
         try {
             Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                    if (skipParts) {
+                        final String fileName = dir.getFileName().toString();
+                        if (fileName.endsWith(PathConstants.PARTS)) {
+                            return FileVisitResult.SKIP_SUBTREE;
+                        }
+                    }
+
+                    return super.preVisitDirectory(dir, attrs);
+                }
+
                 @Override
                 public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                     taskContext.info(FileUtil.getCanonicalPath(file));

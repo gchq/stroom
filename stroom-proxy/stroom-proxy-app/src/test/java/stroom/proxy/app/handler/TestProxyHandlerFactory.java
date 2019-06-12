@@ -1,8 +1,14 @@
 package stroom.proxy.app.handler;
 
-
-import org.junit.jupiter.api.Test;
-import stroom.proxy.repo.ProxyRepositoryConfig;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.mockito.Matchers;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import stroom.proxy.repo.ProxyRepositoryConfigImpl;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlerFactory;
@@ -14,9 +20,19 @@ import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
 
-class TestProxyHandlerFactory extends StroomUnitTest {
+public class TestProxyHandlerFactory extends StroomUnitTest {
+
+    @Rule
+    public MockitoRule mockitoRule = MockitoJUnit.rule();
+
+    @Mock
+    Client mockJerseyClient;
+
+    @Mock
+    WebTarget mockWebTarget;
+
+    @SuppressWarnings("unchecked")
     @Test
     void testStoreAndForward() {
         final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(true, true);
@@ -74,7 +90,13 @@ class TestProxyHandlerFactory extends StroomUnitTest {
 
         final LogStream logStream = new LogStream(logRequestConfig);
         final ProxyRepositoryStreamHandlerFactory proxyRepositoryStreamHandlerFactory = new ProxyRepositoryStreamHandlerFactory(proxyRepositoryConfig, proxyRepositoryRequestHandlerProvider);
-        final ForwardStreamHandlerFactory forwardStreamHandlerFactory = new ForwardStreamHandlerFactory(logStream, forwardRequestConfig, proxyRepositoryConfig);
+
+        // Jersey client only used for dropwiz health checks so not important for tests
+        Mockito.when(mockJerseyClient.target(Matchers.anyString()))
+                .then(url -> mockWebTarget);
+
+        final ForwardStreamHandlerFactory forwardStreamHandlerFactory = new ForwardStreamHandlerFactory(
+                logStream, forwardRequestConfig, proxyRepositoryConfig, mockJerseyClient);
 
         return new MasterStreamHandlerFactory(proxyRepositoryStreamHandlerFactory, forwardStreamHandlerFactory);
     }

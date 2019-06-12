@@ -506,7 +506,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                             final int requiredTasks = tasksToCreate;
                             if (requiredTasks > 0 && !Thread.currentThread().isInterrupted()) {
                                 final QueryData queryData = loadedFilter.getQueryData();
-                                boolean isStreamStoreSearch = (queryData.getDataSource() != null) && queryData.getDataSource().getType().equals(MetaFieldNames.STREAM_STORE_TYPE);
+                                final boolean isStreamStoreSearch = queryData.getDataSource() != null && queryData.getDataSource().getType().equals(MetaFieldNames.STREAM_STORE_TYPE);
 
                                 // Record the time before we are going to query for
                                 // streams for tracking purposes.
@@ -818,6 +818,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                          final int requiredTasks,
                                          final StreamTaskQueue queue,
                                          final ProcessorFilterTracker tracker) {
+        if (termCount(queryData) == 0) {
+            throw new RuntimeException("Attempting to create tasks with an unconstrained filter " + filter);
+        }
+
         // Update the tracker status message.
         tracker.setStatus("Creating...");
         final ProcessorFilterTracker updatedTracker = processorFilterTrackerDao.update(tracker);
@@ -849,6 +853,31 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}", createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString());
                     exhaustedFilterMap.put(filter.getId(), createdTasks.getTotalTasksCreated() == 0);
                 });
+    }
+
+    private int termCount(final QueryData queryData) {
+        if (queryData == null || queryData.getExpression() == null) {
+            return 0;
+        }
+        return termCount(queryData.getExpression());
+    }
+
+    private int termCount(final ExpressionOperator expressionOperator) {
+        int count = 0;
+        if (expressionOperator.enabled()) {
+            for (final ExpressionItem item : expressionOperator.getChildren()) {
+                if (item.enabled()) {
+                    if (item instanceof ExpressionTerm) {
+//                        if (field.equals(((ExpressionTerm) item).getField())) {
+                            count++;
+//                        }
+                    } else if (item instanceof ExpressionOperator) {
+                        count += termCount((ExpressionOperator) item, field);
+                    }
+                }
+            }
+        }
+        return count;
     }
 
     private Map<Meta, InclusiveRanges> createStreamMap(final EventRefs eventRefs) {

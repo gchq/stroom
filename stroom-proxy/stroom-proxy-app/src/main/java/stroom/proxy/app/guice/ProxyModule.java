@@ -46,21 +46,26 @@ import stroom.util.guice.HealthCheckBinder;
 import stroom.util.guice.ResourcePaths;
 import stroom.util.guice.ServletBinder;
 
+import javax.ws.rs.client.Client;
 import java.nio.file.Paths;
 
 public class ProxyModule extends AbstractModule {
     private final Config configuration;
     private final Environment environment;
+    private final Client jerseyClient;
 
-    public ProxyModule(final Config configuration, final Environment environment) {
+    public ProxyModule(final Config configuration, final Environment environment, final Client jerseyClient) {
         this.configuration = configuration;
         this.environment = environment;
+        this.jerseyClient = jerseyClient;
     }
 
     @Override
     protected void configure() {
         bind(Config.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
+        // Bind the dropwizard managed jersey client
+        bind(Client.class).toInstance(this.jerseyClient);
 
         install(new ProxyConfigModule(configuration.getProxyConfig()));
 
@@ -79,7 +84,11 @@ public class ProxyModule extends AbstractModule {
                 .bind(ContentSyncService.class)
                 .bind(ForwardStreamHandlerFactory.class)
                 .bind(LogLevelInspector.class)
-                .bind(ProxyConfigHealthCheck.class);
+                .bind(ProxyConfigHealthCheck.class)
+        .bind(DictionaryResource.class)
+       .bind(RuleSetResource.class)
+       .bind(FeedStatusResource.class)
+        .bind(RemoteFeedStatusService.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), "/*"), ProxySecurityFilter.class);
@@ -96,7 +105,8 @@ public class ProxyModule extends AbstractModule {
                 .addBinding(DictionaryResource.class)
                 .addBinding(DictionaryResource2.class)
                 .addBinding(ReceiveDataRuleSetResource.class)
-                .addBinding(ReceiveDataRuleSetResource2.class);
+                .addBinding(ReceiveDataRuleSetResource2.class)
+                .addBinding(FeedStatusResource.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(ContentSyncService.class)

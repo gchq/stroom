@@ -31,6 +31,7 @@ dependencies {
     compile(libs.dropwizard_core) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
+    compile libs.dropwizard_client
     compile libs.dropwizard_jersey
     compile libs.dropwizard_jetty
     compile libs.dropwizard_metrics_healthchecks
@@ -46,7 +47,6 @@ dependencies {
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.jaxb_api
-    compile libs.jersey_client
     compile libs.jetty_server
     compile libs.slf4j_api
     compile libs.stroomDocRef

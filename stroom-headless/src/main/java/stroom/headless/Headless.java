@@ -233,7 +233,7 @@ public class Headless extends AbstractCommandLineTool {
     private void processRepository(final HeadlessFilter headlessFilter) {
         try {
             // Loop over all of the data files in the repository.
-            final StroomZipRepository repo = new StroomZipRepository(FileUtil.getCanonicalPath(inputDir));
+            final StroomZipRepository repo = new StroomZipRepository(FileUtil.getCanonicalPath(inputDir), true);
             final List<Path> zipFiles = repo.listAllZipFiles();
             zipFiles.sort(Comparator.naturalOrder());
             try (final Stream<Path> stream = zipFiles.stream()) {

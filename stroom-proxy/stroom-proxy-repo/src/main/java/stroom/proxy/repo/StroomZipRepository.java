@@ -82,8 +82,10 @@ public class StroomZipRepository {
      */
     private Path baseResultantDir;
 
-    public StroomZipRepository(final String dir) {
-        this(dir, null, false, DEFAULT_LOCK_AGE_MS);
+    private final boolean readOnly;
+
+    public StroomZipRepository(final String dir, final boolean readOnly) {
+        this(dir, null, false, DEFAULT_LOCK_AGE_MS, readOnly);
     }
 
 //    /**
@@ -96,7 +98,9 @@ public class StroomZipRepository {
     /**
      * Open a repository (with or without locking).
      */
-    StroomZipRepository(final String dir, final String repositoryFormat, final boolean lock, final int lockDeleteAgeMs) {
+    StroomZipRepository(final String dir, final String repositoryFormat, final boolean lock, final int lockDeleteAgeMs, final boolean readOnly) {
+        this.readOnly = readOnly;
+
         if (repositoryFormat == null || repositoryFormat.trim().length() == 0) {
             LOGGER.info("Using default repository format: {} in directory {}", DEFAULT_REPOSITORY_FORMAT, dir);
             this.repositoryFormat = DEFAULT_REPOSITORY_FORMAT;
@@ -146,11 +150,13 @@ public class StroomZipRepository {
         }
 
         // We may be an existing repository so check for the last ID.
-        scanRepository((min, max) -> {
-            LOGGER.info("First repository id = " + min);
-            LOGGER.info("Last repository id = " + max);
-            fileCount.set(max);
-        });
+        if (!readOnly) {
+            scanRepository((min, max) -> {
+                LOGGER.info("First repository id = " + min);
+                LOGGER.info("Last repository id = " + max);
+                fileCount.set(max);
+            });
+        }
 
         LOGGER.debug("() - Opened REPO {} lastId = {}", currentDir, fileCount.get());
     }
@@ -292,6 +298,10 @@ public class StroomZipRepository {
         if (finish.get()) {
             throw new RuntimeException("No longer allowed to write new streams to a finished repository");
         }
+        if (readOnly) {
+            throw new RuntimeException("This is a read only repository");
+        }
+
         final String filename = StroomFileNameUtil.constructFilename(fileCount.incrementAndGet(), repositoryFormat,
                 attributeMap, ZIP_EXTENSION);
         final Path file = currentDir.resolve(filename);
@@ -409,24 +419,35 @@ public class StroomZipRepository {
                 }
 
                 @Override
-                public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
+                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
+                    attemptDirDeletion(dir, tenSecondsAgoMs);
+                    return super.postVisitDirectory(dir, exc);
+                }
+            });
+        } catch (final IOException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+    }
+
+    private void attemptDirDeletion(final Path dir, final long tenSecondsAgoMs) {
                     try {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("attemptDirDeletion() - " + FileUtil.getCanonicalPath(dir));
+            }
+
                         // Only try and delete directories that are at least 10 seconds old.
-                        final FileTime lastModified = attrs.lastModifiedTime();
-                        if (lastModified != null && lastModified.toMillis() < tenSecondsAgoMs) {
+            final BasicFileAttributes attr = Files.readAttributes(dir, BasicFileAttributes.class);
+            final FileTime creationTime = attr.creationTime();
+            if (creationTime.toMillis() < tenSecondsAgoMs) {
                             // Synchronize deletion of directories so that the getStroomOutputStream() method has a
                             // chance to create dirs and place files inside them before this method cleans them up.
                             synchronized (StroomZipRepository.this) {
                                 // Have a go at deleting this directory if it is empty and not just about to be written to.
                                 delete(dir);
                             }
-                        }
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
+            } else if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("attemptDirDeletion() - Dir too young for deletion: " + FileUtil.getCanonicalPath(dir));
                     }
-                    return super.preVisitDirectory(dir, attrs);
-                }
-            });
         } catch (final IOException e) {
             LOGGER.debug(e.getMessage(), e);
         }

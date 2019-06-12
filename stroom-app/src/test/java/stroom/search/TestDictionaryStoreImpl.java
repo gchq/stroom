@@ -75,4 +75,30 @@ class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
         assertThat(dictionaryStore.getCombinedData(docRef2)).isEqualTo("dic1\ndic2");
         assertThat(dictionaryStore.getCombinedData(docRef3)).isEqualTo("dic1\ndic2\ndic3");
     }
+
+    @Test
+    void testFindByName() {
+        // Create a dictionary and save it.
+        final DocRef docRef1 = dictionaryStore.createDocument("dic1_name", null);
+        final DictionaryDoc dictionary1 = dictionaryStore.read(docRef1.getUuid());
+        dictionary1.setData("dic1");
+        dictionaryStore.update(dictionary1);
+
+        // Create a dictionary and save it.
+        final DocRef docRef2 = dictionaryStore.createDocument("dic2_name", null);
+        final DictionaryDoc dictionary2 = dictionaryStore.read(docRef2.getUuid());
+        dictionary2.setData("dic2");
+        dictionary2.setImports(Collections.singletonList(docRef1));
+        dictionaryStore.update(dictionary2);
+
+        // Make sure we can get it back.
+        Assert.assertEquals("dic1", dictionaryStore.getCombinedData(docRef1));
+        Assert.assertEquals("dic1\ndic2", dictionaryStore.getCombinedData(docRef2));
+
+        List<DocRef> dictionary1Results = dictionaryStore.findByName("dic1_name");
+        Assert.assertEquals(1, dictionary1Results.size());
+
+        List<DocRef> badResults = dictionaryStore.findByName("BAD NAME");
+        Assert.assertEquals(0, badResults.size());
+    }
 }

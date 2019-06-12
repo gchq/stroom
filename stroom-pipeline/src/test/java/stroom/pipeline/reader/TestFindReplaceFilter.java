@@ -489,6 +489,14 @@ class TestFindReplaceFilter {
         assertThat(out).isEqualTo("bcc");
     }
 
+    @Test
+    void testEscapedSquareBracket() {
+        final Builder builder = new Builder()
+                .find("<(\\[dog)")
+                .replacement("wolf")
+                .regex(true);
+        test(builder, 100000, "cat <[dog cat dog", "cat wolf cat dog", null);
+    }
 
     private String getDogCat() {
         final StringBuilder sb = new StringBuilder();
