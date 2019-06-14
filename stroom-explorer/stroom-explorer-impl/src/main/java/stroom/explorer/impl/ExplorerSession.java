@@ -1,4 +1,4 @@
-package stroom.explorer.server;
+package stroom.explorer.impl;
 
 import java.util.Optional;
 

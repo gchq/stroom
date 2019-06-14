@@ -9,8 +9,6 @@ import stroom.proxy.app.handler.ProxyRequestConfig;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
 
-import javax.validation.Valid;
-
 public class ProxyConfig {
     private String proxyContentDir;
     private ProxyRequestConfig proxyRequestConfig = new ProxyRequestConfig();
@@ -21,7 +19,6 @@ public class ProxyConfig {
     private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
     private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
 
-    @Valid
     private JerseyClientConfiguration jerseyClientConfig = new JerseyClientConfiguration();
 
     @JsonProperty

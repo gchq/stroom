@@ -2,6 +2,7 @@ package stroom.core.receive;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.data.zip.BufferSizeUtil;
 import stroom.util.shared.IsConfig;
 import stroom.util.shared.ModelStringUtil;
 
@@ -10,7 +11,6 @@ import javax.inject.Singleton;
 @Singleton
 public class ProxyAggregationConfig implements IsConfig {
     private String proxyDir = "${stroom.temp}/proxy";
-    private volatile long buffferSize = 8192;
     private volatile int proxyThreads = 10;
     private volatile int maxFilesPerAggregate = 10000;
     private volatile int maxConcurrentMappedFiles = 100000;
@@ -26,12 +26,12 @@ public class ProxyAggregationConfig implements IsConfig {
     }
 
     @JsonPropertyDescription("The amount of memory to use for buffering reads/writes")
-    public long getBuffferSize() {
-        return buffferSize;
+    public int getBuffferSize() {
+        return BufferSizeUtil.get();
     }
 
-    public void setBuffferSize(final long buffferSize) {
-        this.buffferSize = buffferSize;
+    public void setBuffferSize(final int buffferSize) {
+        BufferSizeUtil.setValue(buffferSize);
     }
 
     @JsonPropertyDescription("Number of threads used in aggregation")

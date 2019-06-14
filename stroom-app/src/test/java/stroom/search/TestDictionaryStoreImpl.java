@@ -26,6 +26,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
 import java.util.Collections;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -79,26 +80,26 @@ class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
     @Test
     void testFindByName() {
         // Create a dictionary and save it.
-        final DocRef docRef1 = dictionaryStore.createDocument("dic1_name", null);
-        final DictionaryDoc dictionary1 = dictionaryStore.read(docRef1.getUuid());
+        final DocRef docRef1 = dictionaryStore.createDocument("dic1_name");
+        final DictionaryDoc dictionary1 = dictionaryStore.readDocument(docRef1);
         dictionary1.setData("dic1");
-        dictionaryStore.update(dictionary1);
+        dictionaryStore.writeDocument(dictionary1);
 
         // Create a dictionary and save it.
-        final DocRef docRef2 = dictionaryStore.createDocument("dic2_name", null);
-        final DictionaryDoc dictionary2 = dictionaryStore.read(docRef2.getUuid());
+        final DocRef docRef2 = dictionaryStore.createDocument("dic2_name");
+        final DictionaryDoc dictionary2 = dictionaryStore.readDocument(docRef2);
         dictionary2.setData("dic2");
         dictionary2.setImports(Collections.singletonList(docRef1));
-        dictionaryStore.update(dictionary2);
+        dictionaryStore.writeDocument(dictionary2);
 
         // Make sure we can get it back.
-        Assert.assertEquals("dic1", dictionaryStore.getCombinedData(docRef1));
-        Assert.assertEquals("dic1\ndic2", dictionaryStore.getCombinedData(docRef2));
+        assertThat(dictionaryStore.getCombinedData(docRef1)).isEqualTo("dic1");
+        assertThat(dictionaryStore.getCombinedData(docRef2)).isEqualTo("dic1\ndic2");
 
         List<DocRef> dictionary1Results = dictionaryStore.findByName("dic1_name");
-        Assert.assertEquals(1, dictionary1Results.size());
+        assertThat(dictionary1Results.size()).isOne();
 
         List<DocRef> badResults = dictionaryStore.findByName("BAD NAME");
-        Assert.assertEquals(0, badResults.size());
+        assertThat(badResults.size()).isZero();
     }
 }

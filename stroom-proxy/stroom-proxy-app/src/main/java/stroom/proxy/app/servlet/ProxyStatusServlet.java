@@ -2,10 +2,10 @@ package stroom.proxy.app.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.BuildInfoProvider;
 import stroom.util.shared.BuildInfo;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -16,10 +16,10 @@ import java.io.Writer;
 public class ProxyStatusServlet extends HttpServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyStatusServlet.class);
 
-    private final BuildInfoProvider buildInfoProvider;
+    private final Provider<BuildInfo> buildInfoProvider;
 
     @Inject
-    public ProxyStatusServlet(final BuildInfoProvider buildInfoProvider) {
+    public ProxyStatusServlet(final Provider<BuildInfo> buildInfoProvider) {
         this.buildInfoProvider = buildInfoProvider;
     }
 

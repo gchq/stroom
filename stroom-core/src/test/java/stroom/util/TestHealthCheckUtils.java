@@ -1,23 +1,20 @@
 package stroom.util;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestHealthCheckUtils {
-
+class TestHealthCheckUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHealthCheckUtils.class);
 
     @Test
-    public void maskPasswords() {
-
+    void maskPasswords() {
         Map<String, Object> root = new HashMap<>();
         Map<String, Object> subMap = new HashMap<>();
-
 
         root.put("xxx", 1);
         root.put("yyy", "abc");
@@ -40,6 +37,5 @@ public class TestHealthCheckUtils {
 
         LOGGER.info("root map: {}", root);
         System.out.println(root.toString());
-
     }
 }

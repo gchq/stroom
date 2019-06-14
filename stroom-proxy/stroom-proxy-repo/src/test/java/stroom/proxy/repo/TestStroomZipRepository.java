@@ -1,9 +1,6 @@
 package stroom.proxy.repo;
 
-
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.CharsetConstants;
 import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFile;
@@ -114,7 +111,7 @@ class TestStroomZipRepository {
         final String repositoryFormat = "${id}_${FEED}_${key2}_${kEy1}_${Key3}";
 
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
-        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000);
+        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000, false);
 
         AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("feed", "myFeed");

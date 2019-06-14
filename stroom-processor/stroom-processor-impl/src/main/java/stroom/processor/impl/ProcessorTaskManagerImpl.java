@@ -38,8 +38,10 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
+import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.security.api.Security;
@@ -127,8 +129,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
      */
     private final AtomicBoolean filling = new AtomicBoolean();
     private final ConcurrentHashMap<Integer, Boolean> exhaustedFilterMap = new ConcurrentHashMap<>();
-    //    private volatile ProcessorTaskManagerRecentStreamDetails processorTaskManagerRecentStreamDetails;
-    private volatile int totalQueueSize = 1000;
     private volatile int lastQueueSizeForStats = -1;
 
     /**
@@ -388,7 +388,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // tests will call this directly while scheduled execution could also be
         // running.
         LOGGER.debug("doCreateTasks()");
-        totalQueueSize = processorConfig.getQueueSize();
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.debug("doCreateTasks() - Starting");
@@ -409,6 +408,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         prioritisedFiltersRef.set(filters);
 
         // Now fill the stream task store with tasks for each filter.
+        final int totalQueueSize = processorConfig.getQueueSize();
         final int halfQueueSize = totalQueueSize / 2;
 
         final String nodeName = nodeInfo.getThisNodeName();
@@ -872,7 +872,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                             count++;
 //                        }
                     } else if (item instanceof ExpressionOperator) {
-                        count += termCount((ExpressionOperator) item, field);
+                        count += termCount((ExpressionOperator) item);
                     }
                 }
             }

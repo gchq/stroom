@@ -1,23 +1,24 @@
-package stroom.explorer.server;
+package stroom.explorer.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.stereotype.Component;
-import stroom.servlet.HttpServletRequestHolder;
 
+import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.Optional;
 
-@Component
-class ExplorerSessionImpl implements ExplorerSession, BeanFactoryAware {
+class ExplorerSessionImpl implements ExplorerSession {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerSessionImpl.class);
     private static final String MIN_EXPLORER_TREE_MODEL_BUILD_TIME = "MIN_EXPLORER_TREE_MODEL_BUILD_TIME";
 
-    private BeanFactory beanFactory;
+    private final Provider<HttpServletRequest> httpServletRequestProvider;
+
+    @Inject
+    public ExplorerSessionImpl(final Provider<HttpServletRequest> httpServletRequestProvider) {
+        this.httpServletRequestProvider = httpServletRequestProvider;
+    }
 
     @Override
     public Optional<Long> getMinExplorerTreeModelBuildTime() {
@@ -45,21 +46,13 @@ class ExplorerSessionImpl implements ExplorerSession, BeanFactoryAware {
     }
 
     private HttpServletRequest getRequest() {
-        if (beanFactory != null) {
+        if (httpServletRequestProvider != null) {
             try {
-                final HttpServletRequestHolder holder = beanFactory.getBean(HttpServletRequestHolder.class);
-                if (holder != null) {
-                    return holder.get();
-                }
+                return httpServletRequestProvider.get();
             } catch (final RuntimeException e) {
                 // Ignore.
             }
         }
         return null;
-    }
-
-    @Override
-    public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
-        this.beanFactory = beanFactory;
     }
 }

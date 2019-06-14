@@ -17,26 +17,26 @@
 package stroom.activity.impl;
 
 import com.google.inject.Inject;
-import stroom.activity.shared.Activity;
 import stroom.activity.api.CurrentActivity;
-import stroom.event.logging.api.HttpServletRequestHolder;
+import stroom.activity.shared.Activity;
 
+import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 public class CurrentActivityImpl implements CurrentActivity {
     private static final String NAME = "SESSION_ACTIVITY";
-    private final HttpServletRequestHolder httpServletRequestHolder;
+    private final Provider<HttpServletRequest> httpServletRequestProvider;
 
     @Inject
-    CurrentActivityImpl(final HttpServletRequestHolder httpServletRequestHolder) {
-        this.httpServletRequestHolder = httpServletRequestHolder;
+    CurrentActivityImpl(final Provider<HttpServletRequest> httpServletRequestProvider) {
+        this.httpServletRequestProvider = httpServletRequestProvider;
     }
 
     public Activity getActivity() {
         Activity activity = null;
 
-        final HttpServletRequest request = httpServletRequestHolder.get();
+        final HttpServletRequest request = httpServletRequestProvider.get();
         if (request != null) {
             final HttpSession session = request.getSession();
             final Object object = session.getAttribute(NAME);
@@ -49,7 +49,7 @@ public class CurrentActivityImpl implements CurrentActivity {
     }
 
     public void setActivity(final Activity activity) {
-        final HttpServletRequest request = httpServletRequestHolder.get();
+        final HttpServletRequest request = httpServletRequestProvider.get();
         if (request != null) {
             final HttpSession session = request.getSession();
             session.setAttribute(NAME, activity);

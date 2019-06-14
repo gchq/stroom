@@ -25,20 +25,21 @@ import stroom.docstore.impl.DocStoreModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.FeedModule;
 import stroom.importexport.impl.ImportExportModule;
-import stroom.security.mock.MockSecurityContextModule;
-import stroom.util.io.BasicStreamCloser;
-import stroom.util.io.StreamCloser;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.cache.PipelineCacheModule;
-import stroom.util.pipeline.scope.PipelineScopeModule;
-import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.task.shared.ThreadPool;
+import stroom.util.io.BasicStreamCloser;
+import stroom.util.io.StreamCloser;
+import stroom.util.pipeline.scope.PipelineScopeModule;
+import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.servlet.MockServletModule;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -86,6 +87,7 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.task.impl.TaskModule());
 //        install(new stroom.task.cluster.impl.ClusterTaskModule());
 //        install(new stroom.index.impl.selection.selection.VolumeModule());
+        install(new MockServletModule());
 
         bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);
         bind(StreamCloser.class).to(BasicStreamCloser.class).in(PipelineScoped.class);

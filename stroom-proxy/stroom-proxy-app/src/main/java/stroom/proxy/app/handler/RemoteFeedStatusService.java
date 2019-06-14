@@ -3,12 +3,12 @@ package stroom.proxy.app.handler;
 import com.codahale.metrics.health.HealthCheck;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.server.FeedStatusService;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
+import stroom.receive.common.FeedStatusService;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
@@ -115,7 +115,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                 response.close();
             }
         } catch (Exception e) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
+            throw new RuntimeException(LogUtil.message(
                     "Error sending request {} to {}{}: {}",
                     request, url, GET_FEED_STATUS_PATH, e.getMessage()), e);
         }

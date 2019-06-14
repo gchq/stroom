@@ -335,6 +335,7 @@ subprojects {
             exclude group: "org.slf4j", module: "slf4j-log4j12"
             exclude group: "log4j", module: "log4j"
             exclude group: "commons-logging", module: "commons-logging"
+//            exclude group: "javax.validation", module: "validation-api"
             exclude module: 'xercesImpl'
 
             resolutionStrategy {
@@ -355,6 +356,7 @@ subprojects {
                 dependencySubstitution {
                     //println "Slf4j version = $dropwizardBomSlf4jVersion"
                     substitute module('log4j:log4j') with module("org.slf4j:log4j-over-slf4j:1.7.25")
+                    // substitute module('javax.validation:validation-api') with module("javax.validation:validation-api:1.1.0.Final")
                 }
 
                 // Stop stroom libs from dragging in a different version of dropwizard
@@ -369,7 +371,7 @@ subprojects {
                 //}
 
                 forcedModules = [
-                    // This is how to force a dep to a specfic version
+                    // This is how to force a dep to a specific version
 
                     // Curator will drag in a more recent version of zk but will support older versions so
                     // substitute it here. See NOTE in versions block above.

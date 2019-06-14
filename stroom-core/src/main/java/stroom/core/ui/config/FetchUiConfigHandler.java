@@ -20,9 +20,10 @@ import stroom.node.api.NodeInfo;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.ui.config.shared.FetchUiConfigAction;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.BuildInfoProvider;
+import stroom.util.shared.BuildInfo;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 
 class FetchUiConfigHandler extends AbstractTaskHandler<FetchUiConfigAction, UiConfig> {
@@ -30,7 +31,7 @@ class FetchUiConfigHandler extends AbstractTaskHandler<FetchUiConfigAction, UiCo
 
     @Inject
     FetchUiConfigHandler(final UiConfig uiConfig,
-                         final BuildInfoProvider buildInfoProvider,
+                         final Provider<BuildInfo> buildInfoProvider,
                          final NodeInfo nodeInfo) {
         this.uiConfig = uiConfig;
         uiConfig.setBuildInfo(buildInfoProvider.get());

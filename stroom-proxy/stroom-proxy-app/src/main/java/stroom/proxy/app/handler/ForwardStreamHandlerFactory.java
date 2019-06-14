@@ -2,11 +2,12 @@ package stroom.proxy.app.handler;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.StreamHandler;
 import stroom.proxy.repo.StreamHandlerFactory;
 import stroom.util.HasHealthCheck;
-import stroom.util.HealthCheckUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -28,6 +29,8 @@ import java.util.stream.Collectors;
  */
 @Singleton
 public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHealthCheck {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ForwardStreamHandlerFactory.class);
+
     private final LogStream logStream;
     private final ForwardStreamConfig forwardStreamConfig;
     private final ProxyRepositoryConfig proxyRepositoryConfig;
@@ -97,10 +100,9 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
         LOGGER.debug("Sending empty health check POST to {}", webTarget);
         try {
             // send an HTTP OPTIONS request just to check the url can be reached
-            final Response response = webTarget
+            try (final Response response = webTarget
                     .request()
-                    .options();
-            try {
+                    .options()) {
                 LOGGER.debug("Received response {}", response);
                 if (response == null) {
                     return Optional.of("Unhealthy: Response is null");
@@ -108,14 +110,10 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
                     return Optional.of(Integer.toString(response.getStatusInfo().getStatusCode()));
                 } else {
                     final String allowedMethods = response.getHeaderString("Allow");
-                    if (! allowedMethods.contains("POST")) {
+                    if (!allowedMethods.contains("POST")) {
                         return Optional.of("Unhealthy: POST method not supported");
                     }
                     return Optional.empty();
-                }
-            } finally {
-                if (response != null) {
-                    response.close();
                 }
             }
         } catch (Exception e) {

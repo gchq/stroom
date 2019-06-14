@@ -22,6 +22,7 @@ import stroom.security.shared.User;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.impl.MockTaskModule;
 import stroom.util.pipeline.scope.PipelineScopeModule;
+import stroom.util.servlet.MockServletModule;
 
 import java.util.List;
 import java.util.UUID;
@@ -63,6 +64,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockProcessorModule());
         install(new MockTaskModule());
         install(new stroom.test.MockTestControlModule());
+        install(new MockServletModule());
         install(new MockXmlSchemaModule());
 //        install(new stroom.document.DocumentModule());
 //        install(new stroom.entity.MockEntityModule());

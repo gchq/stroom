@@ -13,6 +13,7 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.util.date.DateUtil;
+import stroom.util.io.StreamUtil;
 import stroom.util.shared.IdRange;
 import stroom.util.shared.Range;
 import stroom.util.xml.XMLMarshallerUtil;
@@ -88,10 +89,8 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
                         datBlob.free();
 
                         String datAsString = new String(blobAsBytes, StreamUtil.DEFAULT_CHARSET);
-                        if (datAsString != null) {
-                            datAsString = datAsString.replaceAll("<idSet>", "<id>");
-                            datAsString = datAsString.replaceAll("</idSet>", "</id>");
-                        }
+                        datAsString = datAsString.replaceAll("<idSet>", "<id>");
+                        datAsString = datAsString.replaceAll("</idSet>", "</id>");
 
                         final _V07_00_00_FindStreamCriteria streamCriteria = unmarshalCriteria(datAsString);
 

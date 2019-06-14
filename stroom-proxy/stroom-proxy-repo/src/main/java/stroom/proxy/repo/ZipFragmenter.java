@@ -18,6 +18,7 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.zip.BufferSizeUtil;
 import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFile;
@@ -146,10 +147,10 @@ class ZipFragmenter {
         try {
             final InputStream inputStream = stroomZipFile.getInputStream(baseName, type);
             if (inputStream != null) {
-                try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream, ProxyBufferSizeUtil.get())) {
+                try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream, BufferSizeUtil.get())) {
                 final String outputEntryName = new StroomZipEntry(null, baseName, type).getFullName();
-                    try (final OutputStream outputStream = new BufferedOutputStream(stroomZipOutputStream.addEntry(outputEntryName), ProxyBufferSizeUtil.get())) {
-                        StreamUtil.streamToStream(bufferedInputStream, outputStream, false);
+                    try (final OutputStream outputStream = new BufferedOutputStream(stroomZipOutputStream.addEntry(outputEntryName), BufferSizeUtil.get())) {
+                        StreamUtil.streamToStream(bufferedInputStream, outputStream);
                     } catch (final IOException e) {
                         LOGGER.error(e.getMessage(), e);
                     }

@@ -14,14 +14,22 @@
  * limitations under the License.
  */
 
-package stroom.event.logging.api;
+package stroom.util.servlet;
 
+import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 
-public interface HttpServletRequestHolder {
-    HttpServletRequest get();
+@Singleton
+public class HttpServletRequestHolder implements Provider<HttpServletRequest> {
+    private final ThreadLocal<HttpServletRequest> threadLocal = new InheritableThreadLocal<>();
 
-    void set(HttpServletRequest httpServletRequest);
+    @Override
+    public HttpServletRequest get() {
+        return threadLocal.get();
+    }
 
-    String getSessionId();
+    public void set(final HttpServletRequest httpServletRequest) {
+        threadLocal.set(httpServletRequest);
+    }
 }

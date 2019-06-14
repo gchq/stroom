@@ -25,6 +25,7 @@ import stroom.data.zip.StroomZipOutputStream;
 import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.shared.AttributeMap;
 import stroom.util.io.AbstractFileVisitor;
+import stroom.util.io.FileUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;

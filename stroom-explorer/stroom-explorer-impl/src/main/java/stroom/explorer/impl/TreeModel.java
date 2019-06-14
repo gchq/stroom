@@ -1,32 +1,31 @@
-/*
- * Copyright 2016 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package stroom.explorer.impl;
 
 import stroom.explorer.shared.ExplorerNode;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-interface TreeModel {
-    void add(ExplorerNode parent, ExplorerNode child);
+public class TreeModel {
+    private final long creationTime = System.currentTimeMillis();
+    private final Map<ExplorerNode, ExplorerNode> parentMap = new HashMap<>();
+    private final Map<ExplorerNode, List<ExplorerNode>> childMap = new HashMap<>();
 
-    long getCreationTime();
+    public void add(final ExplorerNode parent, final ExplorerNode child) {
+        parentMap.put(child, parent);
+        childMap.computeIfAbsent(parent, k -> new ArrayList<>()).add(child);
+    }
 
-    Map<ExplorerNode, ExplorerNode> getParentMap();
+    long getCreationTime() {
+        return creationTime;
+    }
 
-    Map<ExplorerNode, List<ExplorerNode>> getChildMap();
+    Map<ExplorerNode, ExplorerNode> getParentMap() {
+        return parentMap;
+    }
+
+    Map<ExplorerNode, List<ExplorerNode>> getChildMap() {
+        return childMap;
+    }
 }

@@ -85,7 +85,7 @@ class ExplorerServiceImpl implements ExplorerService {
         allOpenItems.addAll(criteria.getOpenItems());
         allOpenItems.addAll(forcedOpenItems);
 
-        final TreeModel filteredModel = new TreeModelImpl();
+        final TreeModel filteredModel = new TreeModel();
         addDescendants(null, masterTreeModel, filteredModel, filter, false, allOpenItems, 0);
 
         // If the name filter has changed then we want to temporarily expand all nodes.

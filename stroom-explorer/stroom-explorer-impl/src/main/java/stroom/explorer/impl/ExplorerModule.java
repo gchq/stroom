@@ -38,6 +38,7 @@ public class ExplorerModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ExplorerNodeService.class).to(ExplorerNodeServiceImpl.class);
+        bind(ExplorerSession.class).to(ExplorerSessionImpl.class);
         bind(ExplorerService.class).to(ExplorerServiceImpl.class);
         bind(ExplorerEventLog.class).to(ExplorerEventLogImpl.class);
 

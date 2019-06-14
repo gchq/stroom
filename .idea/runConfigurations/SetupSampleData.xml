@@ -4,7 +4,7 @@
     <module name="stroom.stroom-app.test" />
     <extension name="coverage">
       <pattern>
-        <option name="PATTERN" value="stroom.test.*" />
+        <option name="PATTERN" value="stroom.util.servlet.*" />
         <option name="ENABLED" value="true" />
       </pattern>
     </extension>

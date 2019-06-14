@@ -1,38 +1,37 @@
 package stroom.proxy.app.handler;
 
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.Matchers;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-import stroom.proxy.repo.ProxyRepositoryConfigImpl;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlerFactory;
 import stroom.proxy.repo.StreamHandler;
-import stroom.util.io.FileUtil;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.io.FileUtil;
 
 import javax.inject.Provider;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.WebTarget;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestProxyHandlerFactory extends StroomUnitTest {
-
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class TestProxyHandlerFactory extends StroomUnitTest {
     @Mock
-    Client mockJerseyClient;
-
+    private Client mockJerseyClient;
     @Mock
-    WebTarget mockWebTarget;
+    private WebTarget mockWebTarget;
 
-    @SuppressWarnings("unchecked")
     @Test
     void testStoreAndForward() {
         final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(true, true);
@@ -92,7 +91,7 @@ public class TestProxyHandlerFactory extends StroomUnitTest {
         final ProxyRepositoryStreamHandlerFactory proxyRepositoryStreamHandlerFactory = new ProxyRepositoryStreamHandlerFactory(proxyRepositoryConfig, proxyRepositoryRequestHandlerProvider);
 
         // Jersey client only used for dropwiz health checks so not important for tests
-        Mockito.when(mockJerseyClient.target(Matchers.anyString()))
+        Mockito.when(mockJerseyClient.target(ArgumentMatchers.anyString()))
                 .then(url -> mockWebTarget);
 
         final ForwardStreamHandlerFactory forwardStreamHandlerFactory = new ForwardStreamHandlerFactory(

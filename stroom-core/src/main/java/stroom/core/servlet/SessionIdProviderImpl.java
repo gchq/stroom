@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,39 +14,29 @@
  * limitations under the License.
  */
 
-package stroom.event.logging.impl;
+package stroom.core.servlet;
 
-import stroom.event.logging.api.HttpServletRequestHolder;
+import stroom.util.servlet.SessionIdProvider;
 
-import javax.inject.Singleton;
+import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-@Singleton
-public class HttpServletRequestHolderImpl implements HttpServletRequestHolder {
-    private final ThreadLocal<HttpServletRequest> threadLocal = new InheritableThreadLocal<>();
+class SessionIdProviderImpl implements SessionIdProvider {
+    private final Provider<HttpServletRequest> httpServletRequestProvider;
 
-    @Override
-    public HttpServletRequest get() {
-        return threadLocal.get();
-    }
-
-    @Override
-    public void set(final HttpServletRequest httpServletRequest) {
-        threadLocal.set(httpServletRequest);
-    }
-
-    @Override
-    public String toString() {
-        return getSessionId();
+    @Inject
+    SessionIdProviderImpl(final Provider<HttpServletRequest> httpServletRequestProvider) {
+        this.httpServletRequestProvider = httpServletRequestProvider;
     }
 
     /**
      * @return back the session id without creating a session
      */
     @Override
-    public String getSessionId() {
-        final HttpServletRequest request = get();
+    public String get() {
+        final HttpServletRequest request = httpServletRequestProvider.get();
         if (request != null) {
             final HttpSession httpSession = request.getSession(false);
             if (httpSession != null) {

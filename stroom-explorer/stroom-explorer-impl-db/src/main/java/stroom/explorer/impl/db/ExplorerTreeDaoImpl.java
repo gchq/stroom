@@ -1,11 +1,13 @@
 package stroom.explorer.impl.db;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jooq.impl.DSL;
 import stroom.db.util.JooqUtil;
 import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.explorer.impl.ExplorerTreeNode;
 import stroom.explorer.impl.ExplorerTreePath;
+import stroom.explorer.impl.TreeModel;
+import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
+import stroom.explorer.shared.ExplorerNode;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -14,37 +16,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static stroom.explorer.impl.db.jooq.tables.ExplorerNode.EXPLORER_NODE;
 import static stroom.explorer.impl.db.jooq.tables.ExplorerPath.EXPLORER_PATH;
 
 class ExplorerTreeDaoImpl implements ExplorerTreeDao {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerTreeDaoImpl.class);
-
-    private static final String EXPLORER_TREE_PATH = "explorerTreePath";
-    private static final String EXPLORER_TREE_NODE = "explorerTreeNode";
-
-    private static final String SQL_ROOTS = "" +
-            "select p.ancestor" +
-            " from " + EXPLORER_TREE_PATH + " p" +
-            " where p.depth = 0" +
-            " and not exists " +
-            "(" +
-            "select 'x' from " + EXPLORER_TREE_PATH + " p2" +
-            " where p2.descendant = p.descendant" +
-            " and p2.depth > 0" +
-            ")";
-
-    private static final String SQL_NODES = "" +
-            "select id, type, uuid, name, tags" +
-            " from " + EXPLORER_TREE_NODE;
-
-    private static final String SQL_PATHS = "" +
-            "select ancestor, descendant" +
-            " from " + EXPLORER_TREE_PATH +
-            " where depth = 1";
-
     private final boolean orderIndexMatters;
     private boolean removeReferencedNodes;
     private final ConnectionProvider connectionProvider;
@@ -212,26 +190,31 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public TreeModel createModel() {
-        final TreeModelImpl treeModel = new TreeModelImpl();
+    public TreeModel createModel(final Function<String, String> iconUrlProvider) {
+        final TreeModel treeModel = new TreeModel();
 
-        final List<Integer> roots = entityManager.executeNativeQueryResultList(new SqlBuilder(SQL_ROOTS));
-        if (roots != null && roots.size() > 0) {
-            final List<Object[]> paths = entityManager.executeNativeQueryResultList(new SqlBuilder(SQL_PATHS));
-            final List<Object[]> nodes = entityManager.executeNativeQueryResultList(new SqlBuilder(SQL_NODES));
-
-            // Create a map of node objects to ids.
-            final Map<Integer, ExplorerNode> nodeMap =
-                    nodes
-                            .stream()
-                            .collect(Collectors.toMap(
-                                    o -> (int) o[0],
-                                    o -> {
-                                        final ExplorerNode explorerNode = new ExplorerNode((String) o[1], (String) o[2], (String) o[3], (String) o[4]);
-                                        explorerNode.setIconUrl(getIconUrl(explorerNode.getType()));
-                                        return explorerNode;
-                                    }));
+        final List<Integer> roots = JooqUtil.contextResult(connectionProvider, context -> context
+                .select(p.ANCESTOR)
+                .from(p)
+                .where(p.DEPTH.eq(0))
+                .andNotExists(
+                        context
+                                .select(DSL.val("x"))
+                                .from(p2)
+                                .where(p2.DESCENDANT.eq(p.DESCENDANT))
+                                .and(p2.DEPTH.gt(0))
+                )
+                .fetch(p.ANCESTOR));
+        if (roots.size() > 0) {
+            final Map<Integer, ExplorerNode> nodeMap = JooqUtil.contextResult(connectionProvider, context -> context
+                    .selectFrom(n)
+                    .fetch()
+                    .stream()
+                    .collect(Collectors.toMap(ExplorerNodeRecord::getId, r -> {
+                        final ExplorerNode explorerNode = new ExplorerNode(r.getType(), r.getUuid(), r.getName(), r.getTags());
+                        explorerNode.setIconUrl(iconUrlProvider.apply(r.getType()));
+                        return explorerNode;
+                    })));
 
             // Add the roots.
             roots.forEach(rootId -> {
@@ -242,52 +225,23 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
             });
 
             // Add parents and children.
-            paths.forEach(o -> {
-                final int ancestorId = (int) o[0];
-                final int descendantId = (int) o[1];
-                final ExplorerNode ancestor = nodeMap.get(ancestorId);
-                final ExplorerNode descendant = nodeMap.get(descendantId);
-                if (ancestor != null && descendant != null) {
-                    treeModel.add(ancestor, descendant);
-                }
-            });
-
-            // Sort children.
-            treeModel.getChildMap().values().forEach(this::sort);
+            JooqUtil.context(connectionProvider, context -> context
+                    .select(p.ANCESTOR, p.DESCENDANT)
+                    .from(p)
+                    .where(p.DEPTH.eq(1))
+                    .fetch()
+                    .forEach(r -> {
+                        final int ancestorId = r.value1();
+                        final int descendantId = r.value2();
+                        final ExplorerNode ancestor = nodeMap.get(ancestorId);
+                        final ExplorerNode descendant = nodeMap.get(descendantId);
+                        if (ancestor != null && descendant != null) {
+                            treeModel.add(ancestor, descendant);
+                        }
+                    }));
         }
 
         return treeModel;
-    }
-
-    private String getIconUrl(final String type) {
-        final DocumentType documentType = explorerActionHandlers.getType(type);
-        if (documentType == null) {
-            return null;
-        }
-
-        return documentType.getIconUrl();
-    }
-
-    private List<ExplorerNode> sort(final List<ExplorerNode> list) {
-        list.sort((o1, o2) -> {
-            if (!o1.getType().equals(o2.getType())) {
-                final int p1 = getPriority(o1.getType());
-                final int p2 = getPriority(o2.getType());
-                return Integer.compare(p1, p2);
-            }
-
-            return o1.getName().compareTo(o2.getName());
-        });
-        return list;
-    }
-
-    private int getPriority(final String type) {
-        final DocumentType documentType = explorerActionHandlers.getType(type);
-        if (documentType == null) {
-            return Integer.MAX_VALUE;
-        }
-
-        return documentType.getPriority();
     }
 
     @Override

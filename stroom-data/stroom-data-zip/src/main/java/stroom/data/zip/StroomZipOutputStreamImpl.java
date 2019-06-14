@@ -50,9 +50,9 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         // Ensure the lock file is created so that the parent dir is not cleaned up before we start writing data.
         this.lockFile = Files.createFile(lockFile);
 
-        streamProgressMonitor = new StreamProgressMonitor(monitor, "Write");
+        streamProgressMonitor = new StreamProgressMonitor(taskContext, "Write");
         final OutputStream rawOutputStream = Files.newOutputStream(lockFile);
-        final OutputStream bufferedOutputStream = new BufferedOutputStream(rawOutputStream, ProxyBufferSizeUtil.get());
+        final OutputStream bufferedOutputStream = new BufferedOutputStream(rawOutputStream, BufferSizeUtil.get());
         final OutputStream progressOutputStream = new FilterOutputStreamProgressMonitor(bufferedOutputStream, streamProgressMonitor);
         zipOutputStream = new ZipOutputStream(progressOutputStream);
         if (monitorEntries) {

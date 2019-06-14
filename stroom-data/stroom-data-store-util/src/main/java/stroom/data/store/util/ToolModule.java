@@ -27,6 +27,9 @@ import stroom.entity.shared.EntityEventBus;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.util.io.BufferFactory;
+import stroom.util.servlet.MockServletModule;
+
+import javax.servlet.http.HttpServletRequest;
 
 public class ToolModule extends AbstractModule {
     @Override
@@ -41,6 +44,7 @@ public class ToolModule extends AbstractModule {
         install(new stroom.meta.impl.MetaModule());
         install(new MockSecurityContextModule());
         install(new MockInternalStatisticsModule());
+        install(new MockServletModule());
     }
 
     @Provides

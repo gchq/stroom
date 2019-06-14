@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.proxy.repo;
-
-import stroom.util.config.StroomProperties;
+package stroom.data.zip;
 
 /**
  * Buffer held in thread scope for performance reasons.
  */
-public class ProxyBufferSizeUtil {
-    private ProxyBufferSizeUtil() {
+public class BufferSizeUtil {
+    private BufferSizeUtil() {
     }
 
     /**
@@ -30,14 +28,12 @@ public class ProxyBufferSizeUtil {
      */
     private static final int DEFAULT_BUFFER_SIZE = 8192;
     private static volatile int value = DEFAULT_BUFFER_SIZE;
-    private static volatile long lastTime;
 
     public static int get() {
-        final long now = System.currentTimeMillis();
-        if (lastTime < now - 10000) {
-            value = StroomProperties.getIntProperty("stroom.proxyBufferSize", DEFAULT_BUFFER_SIZE);
-            lastTime = now;
-        }
         return value;
+    }
+
+    public static void setValue(final int value) {
+        BufferSizeUtil.value = value;
     }
 }
