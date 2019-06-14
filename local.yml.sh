@@ -60,8 +60,7 @@ main(){
     echo -e "Overwriting ${GREEN}${LOCAL_CONF_FILE}${NC} with a version templated from ${GREEN}${SOURCE_CONF_FILE}${NC}"
     #Use '#' delimiter in HOME_DIR sed script as HOME contains '\'
     cat ${SOURCE_CONF_FILE} \
-        | sed "s/\${IP_ADDRESS[^}]*}/${ip}/g" \
-        | sed "s/\${STROOM_HOST[^}]*}/${ip}/g" \
+        | sed "s/<<<IP_ADDRESS>>>/${ip}/g" \
         | sed "s#\${HOME_DIR[^}]*}#${HOME}#g" \
         > ${LOCAL_CONF_FILE}
 
