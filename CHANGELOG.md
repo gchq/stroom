@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#747** : XSLT can now reference dictionaries by UUID.
+
 
 ## [v6.0-beta.46] - 2019-06-11
 

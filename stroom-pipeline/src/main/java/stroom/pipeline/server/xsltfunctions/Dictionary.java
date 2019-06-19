@@ -21,11 +21,15 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.query.api.v2.DocRef;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
@@ -37,6 +41,8 @@ import java.util.Map;
 @Component
 @Scope(value = StroomScope.TASK)
 class Dictionary extends StroomExtensionFunctionCall {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Dictionary.class);
+
     private final DictionaryStore dictionaryStore;
 
     private Map<String, String> cachedData;
@@ -60,30 +66,43 @@ class Dictionary extends StroomExtensionFunctionCall {
                 if (cachedData.containsKey(name)) {
                     result = cachedData.get(name);
 
-            } else {
-                try {
-                    // Try and load a dictionary with the supplied name.
-                    final List<DocRef> list = dictionaryStore.findByName(name);
-
-                    if (list == null || list.size() == 0) {
-                        log(context, Severity.WARNING, "Dictionary not found with name '" + name
-                                + "'. You might not have permission to access this dictionary", null);
-                    } else {
-                        if (list.size() > 1) {
-                            log(context, Severity.INFO, "Multiple dictionaries found with name '" + name
-                                    + "' - using the first one that was created", null);
+                } else {
+                    try {
+                        // Try by UUID
+                        try {
+                            DocRef docRef = new DocRef(DictionaryDoc.ENTITY_TYPE, name);
+                            result = dictionaryStore.getCombinedData(docRef);
+                            if (result == null) {
+                                LOGGER.debug(() -> "Unable to load dictionary by UUID '" + name + "'");
+                            }
+                        } catch (final RuntimeException e) {
+                            LOGGER.debug(() -> "Exception loading dictionary by UUID '" + name + "'", e);
                         }
-
-                        final DocRef docRef = list.get(0);
-                        result = dictionaryStore.getCombinedData(docRef);
 
                         if (result == null) {
-                            log(context, Severity.INFO, "Unable to find dictionary " + docRef, null);
+                            // Try and load a dictionary with the supplied name.
+                            final List<DocRef> list = dictionaryStore.findByName(name);
+
+                            if (list == null || list.size() == 0) {
+                                log(context, Severity.WARNING, "Dictionary not found with name '" + name
+                                        + "'. You might not have permission to access this dictionary", null);
+                            } else {
+                                if (list.size() > 1) {
+                                    log(context, Severity.INFO, "Multiple dictionaries found with name '" + name
+                                            + "' - using the first one that was created", null);
+                                }
+
+                                final DocRef docRef = list.get(0);
+                                result = dictionaryStore.getCombinedData(docRef);
+
+                                if (result == null) {
+                                    log(context, Severity.INFO, "Unable to find dictionary " + docRef, null);
+                                }
+                            }
                         }
+                    } catch (final Exception e) {
+                        log(context, Severity.ERROR, e.getMessage(), e);
                     }
-                } catch (final Exception e) {
-                    log(context, Severity.ERROR, e.getMessage(), e);
-                }
 
                     // Remember this data for the next call.
                     cachedData.put(name, result);
