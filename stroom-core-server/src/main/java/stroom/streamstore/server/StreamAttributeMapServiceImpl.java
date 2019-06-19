@@ -20,7 +20,6 @@ package stroom.streamstore.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
@@ -77,7 +76,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
     private final StreamProcessorService streamProcessorService;
     private final StreamStore streamStore;
     private final Provider<DataRetentionService> dataRetentionServiceProvider;
-    private final DictionaryStore dictionaryStore;
+    private final ExpressionMatcherFactory expressionMatcherFactory;
     private final StroomEntityManager entityManager;
     private final StreamAttributeKeyService streamAttributeKeyService;
     private final StreamMaintenanceService streamMaintenanceService;
@@ -90,7 +89,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
                                   @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
                                   final StreamStore streamStore,
                                   final Provider<DataRetentionService> dataRetentionServiceProvider,
-                                  final DictionaryStore dictionaryStore,
+                                  final ExpressionMatcherFactory expressionMatcherFactory,
                                   final StroomEntityManager entityManager,
                                   final StreamAttributeKeyService streamAttributeKeyService,
                                   final StreamMaintenanceService streamMaintenanceService,
@@ -101,7 +100,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
         this.streamProcessorService = streamProcessorService;
         this.streamStore = streamStore;
         this.dataRetentionServiceProvider = dataRetentionServiceProvider;
-        this.dictionaryStore = dictionaryStore;
+        this.expressionMatcherFactory = expressionMatcherFactory;
         this.entityManager = entityManager;
         this.streamAttributeKeyService = streamAttributeKeyService;
         this.streamMaintenanceService = streamMaintenanceService;
@@ -142,7 +141,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
                         if (dataRetentionPolicy != null && dataRetentionPolicy.getRules() != null) {
                             rules = dataRetentionPolicy.getRules();
                         }
-                        final StreamAttributeMapRetentionRuleDecorator ruleDecorator = new StreamAttributeMapRetentionRuleDecorator(dictionaryStore, rules);
+                        final StreamAttributeMapRetentionRuleDecorator ruleDecorator = new StreamAttributeMapRetentionRuleDecorator(expressionMatcherFactory, rules);
 
                         // Query the database for the attribute values
                         if (criteria.isUseCache()) {

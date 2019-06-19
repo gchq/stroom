@@ -20,12 +20,12 @@ package stroom.ruleset.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.dictionary.server.DictionaryStore;
 import stroom.feed.MetaMap;
 import stroom.ruleset.shared.DataReceiptAction;
 import stroom.ruleset.shared.Rule;
 import stroom.ruleset.shared.RuleSet;
 import stroom.streamstore.server.ExpressionMatcher;
+import stroom.streamstore.server.ExpressionMatcherFactory;
 import stroom.streamstore.shared.ExpressionUtil;
 
 import java.util.ArrayList;
@@ -45,16 +45,17 @@ class DataReceiptPolicyChecker {
     private static final int ONE_MINUTE = 60 * 1000;
 
     private final RuleSetService ruleSetService;
-    private final DictionaryStore dictionaryStore;
+    private final ExpressionMatcherFactory expressionMatcherFactory;
+
     private final String policyUUID;
     private final AtomicLong lastRefresh = new AtomicLong();
     private volatile Checker checker = new ReceiveAllChecker();
 
     DataReceiptPolicyChecker(final RuleSetService ruleSetService,
-                             final DictionaryStore dictionaryStore,
+                             final ExpressionMatcherFactory expressionMatcherFactory,
                              final String policyUUID) {
         this.ruleSetService = ruleSetService;
-        this.dictionaryStore = dictionaryStore;
+        this.expressionMatcherFactory = expressionMatcherFactory;
         this.policyUUID = policyUUID;
     }
 
@@ -105,7 +106,7 @@ class DataReceiptPolicyChecker {
                         .filter(Objects::nonNull)
                         .collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
 
-                final ExpressionMatcher expressionMatcher = new ExpressionMatcher(usedFieldMap, dictionaryStore);
+                final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(usedFieldMap);
                 checker = new CheckerImpl(expressionMatcher, activeRules, fieldMap);
 
             } else {

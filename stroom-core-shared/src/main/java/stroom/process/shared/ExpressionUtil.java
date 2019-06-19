@@ -1,7 +1,6 @@
-package stroom.streamstore.shared;
+package stroom.process.shared;
 
 import stroom.entity.shared.DocRefUtil;
-import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
@@ -19,45 +18,6 @@ public final class ExpressionUtil {
         // Utility class.
     }
 
-    public static ExpressionOperator createSimpleExpression() {
-        return createSimpleExpression(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue());
-    }
-
-    public static ExpressionOperator createSimpleExpression(final String field, final Condition condition, final String value) {
-        return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(field, condition, value)
-                .build();
-    }
-
-    public static ExpressionOperator createStatusExpression(final StreamStatus streamStatus) {
-        return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, streamStatus.getDisplayValue())
-                .build();
-    }
-
-    public static ExpressionOperator createStreamExpression(final long streamId) {
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(streamId))
-                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
-                .build();
-        return expression;
-    }
-
-    public static ExpressionOperator createParentStreamExpression(final long parentStreamId) {
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.PARENT_STREAM_ID, Condition.EQUALS, String.valueOf(parentStreamId))
-                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
-                .build();
-        return expression;
-    }
-
-    public static ExpressionOperator createStreamTypeExpression(final StreamType streamType) {
-        return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, streamType.getDisplayValue())
-                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
-                .build();
-    }
-
     public static ExpressionOperator createFolderExpression(final DocRef folder) {
         return createFoldersExpression(folder);
     }
@@ -67,47 +27,22 @@ public final class ExpressionUtil {
 
         if (folders != null) {
             if (folders.length == 1) {
-                builder.addDocRefTerm(StreamDataSource.FEED_NAME, Condition.IN_FOLDER, folders[0]);
+                builder.addDocRefTerm(ProcessDataSource.PIPELINE_UUID, Condition.IN_FOLDER, folders[0]);
             } else {
                 final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
                 for (final DocRef folder : folders) {
-                    or.addDocRefTerm(StreamDataSource.FEED_NAME, Condition.IN_FOLDER, folder);
+                    or.addDocRefTerm(ProcessDataSource.PIPELINE_UUID, Condition.IN_FOLDER, folder);
                 }
                 builder.addOperator(or.build());
             }
         }
 
-        builder.addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue());
-        return builder.build();
-    }
-
-    public static ExpressionOperator createFeedExpression(final Feed feed) {
-        return createFeedsExpression(feed);
-    }
-
-    public static ExpressionOperator createFeedsExpression(final Feed... feeds) {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
-
-        if (feeds != null) {
-            if (feeds.length == 1) {
-                builder.addDocRefTerm(StreamDataSource.FEED_NAME, Condition.IS_DOC_REF, DocRefUtil.create(feeds[0]));
-            } else {
-                final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
-                for (final Feed feed : feeds) {
-                    or.addDocRefTerm(StreamDataSource.FEED_NAME, Condition.IS_DOC_REF, DocRefUtil.create(feed));
-                }
-                builder.addOperator(or.build());
-            }
-        }
-
-        builder.addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue());
         return builder.build();
     }
 
     public static ExpressionOperator createPipelineExpression(final PipelineEntity pipelineEntity) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addDocRefTerm(StreamDataSource.PIPELINE_UUID, Condition.IS_DOC_REF, DocRefUtil.create(pipelineEntity))
-                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                .addDocRefTerm(ProcessDataSource.PIPELINE_UUID, Condition.IS_DOC_REF, DocRefUtil.create(pipelineEntity))
                 .build();
     }
 

@@ -30,12 +30,14 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.util.shared.HasNodeState;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -105,6 +107,49 @@ class ExplorerServiceImpl implements ExplorerService {
         }
 
         return result;
+    }
+
+    @Override
+    public Set<DocRef> getChildren(final DocRef folder, final String type) {
+        return getDescendants(folder, type, 0);
+    }
+
+    @Override
+    public Set<DocRef> getDescendants(final DocRef folder, final String type) {
+        return getDescendants(folder, type, Integer.MAX_VALUE);
+    }
+
+    private Set<DocRef> getDescendants(final DocRef folder, final String type, final int maxDepth) {
+        final TreeModel masterTreeModel = explorerTreeModel.getModel();
+        if (masterTreeModel != null && masterTreeModel.getChildMap() != null) {
+            final Set<DocRef> refs = new HashSet<>();
+            addChildren(ExplorerNode.create(folder), type, 0, maxDepth, masterTreeModel.getChildMap(), refs);
+            return refs;
+        }
+
+        return Collections.emptySet();
+    }
+
+    private void addChildren(final ExplorerNode parent,
+                             final String type,
+                             final int depth,
+                             final int maxDepth,
+                             final Map<ExplorerNode, List<ExplorerNode>> childMap,
+                             final Set<DocRef> refs) {
+        final List<ExplorerNode> childNodes = childMap.get(parent);
+        if (childNodes != null) {
+            childNodes.forEach(node -> {
+                if (node.getType().equals(type)) {
+                    if (securityContext.hasDocumentPermission(node.getType(), node.getUuid(), DocumentPermissionNames.USE)) {
+                        refs.add(node.getDocRef());
+                    }
+                }
+
+                if (depth < maxDepth) {
+                    addChildren(node, type, depth + 1, maxDepth, childMap, refs);
+                }
+            });
+        }
     }
 
     private Set<ExplorerNode> getForcedOpenItems(final TreeModel masterTreeModel,

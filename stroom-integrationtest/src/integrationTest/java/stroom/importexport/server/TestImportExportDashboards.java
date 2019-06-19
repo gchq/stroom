@@ -264,7 +264,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         // Verify all entity references have been restored.
         Assert.assertEquals(DocRefUtil.create(loadedIndex), loadedQueryData.getDataSource());
         Assert.assertEquals(stroom.docstore.shared.DocRefUtil.create(loadedDictionary),
-                ((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDictionary());
+                ((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDocRef());
         Assert.assertEquals(DocRefUtil.create(loadedPipeline), loadedTableSettings.getExtractionPipeline());
 
         if (!skipVisExport || skipVisCreation) {
@@ -290,7 +290,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private ExpressionOperator.Builder createExpression(final DictionaryDoc dictionary) {
         final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.AND);
         root.addTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z");
-        root.addDictionaryTerm("User", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dictionary));
+        root.addDocRefTerm("User", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dictionary));
         return root;
     }
 }

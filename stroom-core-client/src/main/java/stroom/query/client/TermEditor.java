@@ -391,10 +391,12 @@ public class TermEditor extends Composite {
         setActiveWidgets(docRefWidget);
 
         if (docRefPresenter != null) {
+            docRefPresenter.setAllowFolderSelection(false);
             if (Condition.IN_DICTIONARY.equals(condition)) {
                 docRefPresenter.setIncludedTypes("Dictionary");
             } else if (Condition.IN_FOLDER.equals(condition)) {
                 docRefPresenter.setIncludedTypes("Folder");
+                docRefPresenter.setAllowFolderSelection(true);
             } else {
                 docRefPresenter.setIncludedTypes(field.getDocRefType());
             }

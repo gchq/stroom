@@ -26,20 +26,17 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.Sort.Direction;
+import stroom.entity.shared.ResultList;
 import stroom.feed.shared.Feed;
-import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.streamtask.shared.ExpressionUtil;
+import stroom.streamtask.shared.FetchStreamTaskAction;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamTask;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -51,12 +48,23 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import java.util.ArrayList;
 
 public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<StreamTask>> implements HasDocumentRead<BaseEntity> {
-    private final EntityServiceFindActionDataProvider<FindStreamTaskCriteria, StreamTask> dataProvider;
+    private final ActionDataProvider<StreamTask> dataProvider;
+    private final FetchStreamTaskAction action;
+    private boolean doneDataDisplay = false;
 
     @Inject
     public StreamTaskListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                                    final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(false));
+
+        action = new FetchStreamTaskAction();
+        dataProvider = new ActionDataProvider<StreamTask>(dispatcher, action) {
+            @Override
+            protected void changeData(final ResultList<StreamTask> data) {
+                super.changeData(data);
+//                onChangeData(data);
+            }
+        };
 
         // Info column.
         getView().addColumn(new InfoColumn<StreamTask>() {
@@ -180,10 +188,18 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
                 }, "End Time", ColumnSizeConstants.DATE_COL);
 
         getView().addEndColumn(new EndColumn<>());
-
-        this.dataProvider = new EntityServiceFindActionDataProvider<>(dispatcher,
-                getView());
     }
+
+//    private void onChangeData(final ResultList<StreamTask> data) {
+//        final StreamTask selected = getView().getSelectionModel().getSelected();
+//        if (selected != null) {
+//            // Reselect the task set.
+//            getView().getSelectionModel().clear();
+//            if (data != null && data.contains(selected)) {
+//                getView().getSelectionModel().setSelected(selected);
+//            }
+//        }
+//    }
 
     private String toDateString(final Long ms) {
         if (ms != null) {
@@ -201,64 +217,35 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
         }
     }
 
-    public EntityServiceFindActionDataProvider<FindStreamTaskCriteria, StreamTask> getDataProvider() {
-        return dataProvider;
+    @Override
+    public void read(final DocRef docRef, final BaseEntity entity) {
+        if (entity instanceof PipelineEntity) {
+            setExpression(ExpressionUtil.createPipelineExpression((PipelineEntity) entity));
+        } else if (entity instanceof Feed) {
+            setExpression(ExpressionUtil.createFeedExpression((Feed) entity));
+        } else if (docRef != null) {
+            setExpression(ExpressionUtil.createFolderExpression(docRef));
+        } else {
+            setExpression(null);
+        }
     }
 
-    private void setCriteria(final Feed feed) {
-        final FindStreamTaskCriteria criteria = initCriteria(feed, null);
-        dataProvider.setCriteria(criteria);
+    private void doDataDisplay() {
+        if (!doneDataDisplay) {
+            doneDataDisplay = true;
+            dataProvider.addDataDisplay(getView().getDataDisplay());
+        } else {
+            dataProvider.refresh();
+        }
     }
 
-    public FindStreamTaskCriteria getCriteria() {
-        return dataProvider.getCriteria();
-    }
-
-    private void setCriteria(final PipelineEntity pipelineEntity) {
-        final FindStreamTaskCriteria criteria = initCriteria(null, pipelineEntity);
-        dataProvider.setCriteria(criteria);
-    }
-
-    private void setNullCriteria() {
-        dataProvider.setCriteria(initCriteria(null, null));
+    public void setExpression(final ExpressionOperator expression) {
+        action.setExpression(expression);
+        doDataDisplay();
     }
 
     public void clear() {
         getView().setRowData(0, new ArrayList<>(0));
         getView().setRowCount(0, true);
-    }
-
-    @Override
-    public void read(final DocRef docRef, final BaseEntity entity) {
-        if (entity instanceof Feed) {
-            setCriteria((Feed) entity);
-        } else if (entity instanceof PipelineEntity) {
-            setCriteria((PipelineEntity) entity);
-        } else {
-            setNullCriteria();
-        }
-    }
-
-    static FindStreamTaskCriteria initCriteria(final Feed feed, final PipelineEntity pipeline) {
-        final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
-        criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME, Direction.DESCENDING, false);
-        criteria.getFetchSet().add(Stream.ENTITY_TYPE);
-        criteria.getFetchSet().add(StreamType.ENTITY_TYPE);
-        criteria.getFetchSet().add(Feed.ENTITY_TYPE);
-        criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
-        criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
-        criteria.getFetchSet().add(Node.ENTITY_TYPE);
-        criteria.obtainStreamTaskStatusSet().setMatchAll(Boolean.FALSE);
-        // Only show unlocked stuff
-        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-
-        if (feed != null) {
-            criteria.obtainFeedIdSet().add(feed);
-        }
-        if (pipeline != null) {
-            criteria.obtainPipelineIdSet().add(pipeline);
-        }
-
-        return criteria;
     }
 }

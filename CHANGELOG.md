@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1167** : Use of folders to include child feeds and pipelines is now supported.
+
 
 ## [v6.0-beta.46] - 2019-06-11
 

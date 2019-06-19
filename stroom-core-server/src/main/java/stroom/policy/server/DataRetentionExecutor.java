@@ -25,6 +25,7 @@ import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.util.XMLMarshallerUtil;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
+import stroom.explorer.server.ExplorerService;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.StroomPropertyService;
@@ -34,6 +35,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.server.DataRetentionAgeUtil;
+import stroom.streamstore.server.ExpressionMatcherFactory;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
@@ -85,7 +87,7 @@ public class DataRetentionExecutor {
     private final ClusterLockService clusterLockService;
     private final DataRetentionService dataRetentionService;
     private final StroomPropertyService propertyService;
-    private final DictionaryStore dictionaryStore;
+    private final ExpressionMatcherFactory expressionMatcherFactory;
     private final DataSource dataSource;
     private final AtomicBoolean running = new AtomicBoolean();
 
@@ -94,13 +96,13 @@ public class DataRetentionExecutor {
                           final ClusterLockService clusterLockService,
                           final DataRetentionService dataRetentionService,
                           final StroomPropertyService propertyService,
-                          final DictionaryStore dictionaryStore,
+                          final ExpressionMatcherFactory expressionMatcherFactory,
                           final DataSource dataSource) {
         this.taskMonitor = taskMonitor;
         this.clusterLockService = clusterLockService;
         this.dataRetentionService = dataRetentionService;
         this.propertyService = propertyService;
-        this.dictionaryStore = dictionaryStore;
+        this.expressionMatcherFactory = expressionMatcherFactory;
         this.dataSource = dataSource;
     }
 
@@ -193,7 +195,12 @@ public class DataRetentionExecutor {
         }
     }
 
-    private boolean processAge(final Connection connection, final long age, final Long timeElapsedSinceLastRun, final List<DataRetentionRule> rules, final int batchSize, final Map<DataRetentionRule, Optional<Long>> ageMap) {
+    private boolean processAge(final Connection connection,
+                               final long age,
+                               final Long timeElapsedSinceLastRun,
+                               final List<DataRetentionRule> rules,
+                               final int batchSize,
+                               final Map<DataRetentionRule, Optional<Long>> ageMap) {
         boolean success = true;
 
         Long minAge = null;
@@ -224,7 +231,7 @@ public class DataRetentionExecutor {
         // Ignore rules if none are active.
         if (activeRules.getActiveRules().size() > 0) {
             // Create an object that can find streams with prepared statements and see if they match rules.
-            try (final DataRetentionStreamFinder finder = new DataRetentionStreamFinder(connection, dictionaryStore)) {
+            try (final DataRetentionStreamFinder finder = new DataRetentionStreamFinder(connection, expressionMatcherFactory)) {
 
                 // Find out how many rows we are likely to examine.
                 final long rowCount = finder.getRowCount(ageRange, activeRules.getFieldSet());
@@ -274,7 +281,8 @@ public class DataRetentionExecutor {
         return success;
     }
 
-    private Optional<Long> getAge(final LocalDateTime now, final DataRetentionRule rule) {
+    private Optional<Long> getAge(final LocalDateTime now,
+                                  final DataRetentionRule rule) {
         return Optional.ofNullable(DataRetentionAgeUtil.minus(now, rule));
     }
 

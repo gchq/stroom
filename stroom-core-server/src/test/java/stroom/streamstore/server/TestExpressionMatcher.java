@@ -52,7 +52,7 @@ public class TestExpressionMatcher extends StroomUnitTest {
     }
 
     private void test(final Map<String, Object> attributeMap, final ExpressionOperator expression, final boolean outcome) {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), null);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), null, null);
         Assert.assertEquals(outcome, expressionMatcher.match(attributeMap, expression));
     }
 

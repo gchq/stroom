@@ -537,17 +537,12 @@ public class DocumentPluginEventManager extends Plugin {
         final List<ExplorerNode> updatableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.UPDATE, false);
         final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.DELETE, false);
 
-        // Folders are not valid items for requesting info
-        final boolean containsFolder = documentPermissionMap.keySet().stream()
-                .findFirst().map(n -> DocumentTypes.isFolder(n.getType()))
-                .orElse(false);
-
         // Actions allowed based on permissions of selection
         final boolean allowRead = readableItems.size() > 0;
         final boolean allowUpdate = updatableItems.size() > 0;
         final boolean allowDelete = deletableItems.size() > 0;
 
-        menuItems.add(createInfoMenuItem(readableItems, 3, singleSelection & allowRead & !containsFolder));
+        menuItems.add(createInfoMenuItem(readableItems, 3, singleSelection & allowRead));
         menuItems.add(createCopyMenuItem(readableItems, 4, allowRead));
         menuItems.add(createMoveMenuItem(updatableItems, 5, allowUpdate));
         menuItems.add(createRenameMenuItem(updatableItems, 6, singleSelection && allowUpdate));

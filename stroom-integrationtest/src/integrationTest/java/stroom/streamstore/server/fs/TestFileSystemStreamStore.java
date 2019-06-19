@@ -25,8 +25,12 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.IdRange;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
+import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.server.ExplorerNodeService;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
+import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -72,7 +76,9 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private static final int N1 = 1;
@@ -91,15 +97,33 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private StreamTaskCreator streamTaskCreator;
     @Resource
     private StreamAttributeMapService streamMDService;
+    @Resource
+    private ExplorerNodeService explorerNodeService;
 
     private Feed feed1;
     private Feed feed2;
+    private Feed feed3;
+    private DocRef folder2;
     private int initialReplicationCount = 1;
 
     @Override
     protected void onBefore() {
         feed1 = setupFeed("FEED1");
         feed2 = setupFeed("FEED2");
+        feed3 = setupFeed("FEED3");
+
+        final Optional<ExplorerNode> system = explorerNodeService.getRoot();
+        final DocRef root = system.get().getDocRef();
+        final DocRef folder1 = new DocRef("Folder", UUID.randomUUID().toString(), "Folder 1");
+        folder2 = new DocRef("Folder", UUID.randomUUID().toString(), "Folder 2");
+        final DocRef folder3 = new DocRef("Folder", UUID.randomUUID().toString(), "Folder 3");
+
+        explorerNodeService.createNode(folder1, root, PermissionInheritance.NONE);
+        explorerNodeService.createNode(folder2, folder1, PermissionInheritance.NONE);
+        explorerNodeService.createNode(folder3, root, PermissionInheritance.NONE);
+        explorerNodeService.createNode(DocRefUtil.create(feed1), folder2, PermissionInheritance.NONE);
+        explorerNodeService.createNode(DocRefUtil.create(feed2), folder2, PermissionInheritance.NONE);
+
         initialReplicationCount = StroomProperties.getIntProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, 1);
         StroomProperties.setIntProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, 2, StroomProperties.Source.TEST);
     }
@@ -196,11 +220,20 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         testCriteria(new FindStreamCriteria(expression), 1);
     }
 
+    @Test
+    public void testFolder() throws Exception {
+        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                .addDocRefTerm(StreamDataSource.FEED_NAME, Condition.IN_FOLDER, folder2)
+                .build();
+        testCriteria(new FindStreamCriteria(expression), 2);
+    }
+
     private void testCriteria(final FindStreamCriteria criteria, final int expectedStreams) throws Exception {
         streamStore.findDelete(new FindStreamCriteria());
 
         createStream(feed1, 1L, null);
         createStream(feed2, 1L, null);
+        createStream(feed3, 1L, null);
 //        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
         final BaseResultList<Stream> streams = streamStore.find(criteria);
         Assert.assertEquals(expectedStreams, streams.size());

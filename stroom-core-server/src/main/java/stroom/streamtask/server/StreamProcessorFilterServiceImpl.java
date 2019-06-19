@@ -28,7 +28,6 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.Secured;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
@@ -49,12 +48,12 @@ public class StreamProcessorFilterServiceImpl
         implements StreamProcessorFilterService {
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterMarshaller marshaller;
-    private final ExpressionToFindCriteria expressionToFindCriteria;
+    private final ExpressionToFindStreamCriteria expressionToFindCriteria;
 
     @Inject
     public StreamProcessorFilterServiceImpl(final StroomEntityManager entityManager,
                                             final StreamProcessorService streamProcessorService,
-                                            final ExpressionToFindCriteria expressionToFindCriteria) {
+                                            final ExpressionToFindStreamCriteria expressionToFindCriteria) {
         super(entityManager);
         this.streamProcessorService = streamProcessorService;
         this.marshaller = new StreamProcessorFilterMarshaller();

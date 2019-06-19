@@ -22,10 +22,12 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.SummaryDataRow;
 import stroom.query.api.v2.DocRef;
-import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.TaskStatus;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.streamtask.shared.ProcessTaskDataSource;
+import stroom.streamtask.shared.StreamTaskSummary;
 
 public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.StreamTaskView>
         implements HasDocumentRead<BaseEntity> {
@@ -53,25 +55,21 @@ public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.S
             // Clear the task list.
             streamTaskListPresenter.clear();
 
-            final SummaryDataRow row = streamTaskSummaryPresenter.getSelectionModel().getSelected();
+            final StreamTaskSummary row = streamTaskSummaryPresenter.getSelectionModel().getSelected();
 
             if (row != null) {
-                final FindStreamTaskCriteria findStreamTaskCriteria = streamTaskListPresenter.getDataProvider()
-                        .getCriteria();
+                final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.AND);
+                if (row.getPipeline() != null) {
+                    root.addDocRefTerm(ProcessTaskDataSource.PIPELINE_UUID, Condition.IS_DOC_REF, row.getPipeline());
+                }
+                if (row.getFeed() != null) {
+                    root.addDocRefTerm(ProcessTaskDataSource.FEED_UUID, Condition.IS_DOC_REF, row.getFeed());
+                }
+                if (row.getStatus() != null) {
+                    root.addTerm(ProcessTaskDataSource.TASK_STATUS, Condition.EQUALS, row.getStatus().getDisplayValue());
+                }
 
-                findStreamTaskCriteria.obtainPipelineIdSet().clear();
-                findStreamTaskCriteria.obtainPipelineIdSet()
-                        .add(row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_PIPELINE));
-
-                findStreamTaskCriteria.obtainFeedIdSet().clear();
-                findStreamTaskCriteria.obtainFeedIdSet().add(row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_FEED));
-
-                findStreamTaskCriteria.obtainStreamTaskStatusSet().clear();
-                findStreamTaskCriteria.obtainStreamTaskStatusSet()
-                        .add(TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
-                                row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_STATUS).byteValue()));
-
-                streamTaskListPresenter.getDataProvider().refresh();
+                streamTaskListPresenter.setExpression(root.build());
             }
         }));
     }

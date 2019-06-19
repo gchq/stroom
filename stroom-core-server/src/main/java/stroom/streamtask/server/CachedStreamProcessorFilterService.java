@@ -28,7 +28,7 @@ public class CachedStreamProcessorFilterService extends StreamProcessorFilterSer
     @Inject
     CachedStreamProcessorFilterService(final CachingEntityManager entityManager,
                                        final StreamProcessorService streamProcessorService,
-                                       final ExpressionToFindCriteria expressionToFindCriteria) {
+                                       final ExpressionToFindStreamCriteria expressionToFindCriteria) {
         super(entityManager, streamProcessorService, expressionToFindCriteria);
     }
 }

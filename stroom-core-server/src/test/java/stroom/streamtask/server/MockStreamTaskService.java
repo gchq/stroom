@@ -21,9 +21,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.MockEntityService;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.SummaryDataRow;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.StreamTaskSummary;
 import stroom.util.spring.StroomSpringProfiles;
 
 /**
@@ -36,7 +36,7 @@ import stroom.util.spring.StroomSpringProfiles;
 public class MockStreamTaskService extends MockEntityService<StreamTask, FindStreamTaskCriteria>
         implements StreamTaskService {
     @Override
-    public BaseResultList<SummaryDataRow> findSummary(final FindStreamTaskCriteria criteria) throws RuntimeException {
+    public BaseResultList<StreamTaskSummary> findSummary(final FindStreamTaskCriteria criteria) throws RuntimeException {
         return null;
     }
 

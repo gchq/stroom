@@ -95,6 +95,22 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public DocRefInfo info(final String uuid) {
-        throw new PermissionException(securityContext.getUserId(), "You cannot get info about a folder");
+        final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(uuid);
+        if (explorerTreeNode == null) {
+            throw new RuntimeException("Unable to find tree node to get info");
+        }
+
+        if (!securityContext.hasDocumentPermission(FOLDER, uuid, DocumentPermissionNames.READ)) {
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
+        }
+
+        return new DocRefInfo.Builder()
+                .docRef(new DocRef.Builder()
+                        .type(explorerTreeNode.getType())
+                        .uuid(explorerTreeNode.getUuid())
+                        .name(explorerTreeNode.getName())
+                        .build())
+                .otherInfo("DB ID: " + explorerTreeNode.getId())
+                .build();
     }
 }

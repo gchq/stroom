@@ -40,6 +40,10 @@ public class FindStreamProcessorCriteria extends BaseCriteria {
         return pipelineIdSet;
     }
 
+    public void setPipelineIdSet(final EntityIdSet<PipelineEntity> pipelineIdSet) {
+        this.pipelineIdSet = pipelineIdSet;
+    }
+
     public EntityIdSet<PipelineEntity> obtainPipelineIdSet() {
         if (pipelineIdSet == null) {
             pipelineIdSet = new EntityIdSet<>();

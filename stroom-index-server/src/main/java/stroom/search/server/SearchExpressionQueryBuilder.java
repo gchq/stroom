@@ -202,7 +202,6 @@ public class SearchExpressionQueryBuilder {
         String field = term.getField();
         final Condition condition = term.getCondition();
         String value = term.getValue();
-        final DocRef dictionary = term.getDictionary();
         final DocRef docRef = term.getDocRef();
 
         // Clean strings to remove unwanted whitespace that the user may have
@@ -226,7 +225,7 @@ public class SearchExpressionQueryBuilder {
 
         // Ensure an appropriate value has been provided for the condition type.
         if (Condition.IN_DICTIONARY.equals(condition)) {
-            if (dictionary == null || dictionary.getUuid() == null) {
+            if (docRef == null || docRef.getUuid() == null) {
                 throw new SearchException("Dictionary not set for field: " + field);
             }
         } else {
@@ -278,7 +277,7 @@ public class SearchExpressionQueryBuilder {
                 case IN:
                     return getNumericIn(fieldName, value);
                 case IN_DICTIONARY:
-                    return getDictionary(fieldName, dictionary, indexField, matchVersion, terms);
+                    return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
                 default:
                     throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + indexField.getFieldType().getDisplayValue() + " field type");
@@ -314,7 +313,7 @@ public class SearchExpressionQueryBuilder {
                 case IN:
                     return getDateIn(fieldName, value);
                 case IN_DICTIONARY:
-                    return getDictionary(fieldName, dictionary, indexField, matchVersion, terms);
+                    return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
                 default:
                     throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + indexField.getFieldType().getDisplayValue() + " field type");
@@ -328,7 +327,7 @@ public class SearchExpressionQueryBuilder {
                 case IN:
                     return getIn(fieldName, value, indexField, matchVersion, terms);
                 case IN_DICTIONARY:
-                    return getDictionary(fieldName, dictionary, indexField, matchVersion, terms);
+                    return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
                 case IS_DOC_REF:
                     return getSubQuery(matchVersion, indexField, docRef.getUuid(), terms, false);
                 default:

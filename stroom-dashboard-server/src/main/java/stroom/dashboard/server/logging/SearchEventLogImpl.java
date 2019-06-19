@@ -32,6 +32,7 @@ import org.springframework.stereotype.Component;
 import stroom.datasource.DataSourceProviderRegistry;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.QueryDataLogUtil;
+import stroom.explorer.server.ExplorerService;
 import stroom.logging.StroomEventLoggingService;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
@@ -47,14 +48,17 @@ public class SearchEventLogImpl implements SearchEventLog {
     private final StroomEventLoggingService eventLoggingService;
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final DictionaryStore dictionaryStore;
+    private final ExplorerService explorerService;
 
     @Inject
     public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
                               final DataSourceProviderRegistry dataSourceProviderRegistry,
-                              final DictionaryStore dictionaryStore) {
+                              final DictionaryStore dictionaryStore,
+                              final ExplorerService explorerService) {
         this.eventLoggingService = eventLoggingService;
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
         this.dictionaryStore = dictionaryStore;
+        this.explorerService = explorerService;
     }
 
     @Override
@@ -195,7 +199,7 @@ public class SearchEventLogImpl implements SearchEventLog {
         final Query query = new Query();
         final Advanced advanced = new Advanced();
         query.setAdvanced(advanced);
-        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), dictionaryStore, expression);
+        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), dictionaryStore, explorerService, expression);
         return query;
     }
 }
