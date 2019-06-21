@@ -29,13 +29,13 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.ResultList;
-import stroom.entity.shared.SummaryDataRow;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
-import stroom.streamstore.shared.StreamStatus;
+import stroom.streamtask.shared.ExpressionUtil;
+import stroom.streamtask.shared.FetchStreamTaskSummaryAction;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.TaskStatus;
+import stroom.streamtask.shared.StreamTaskSummary;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -44,33 +44,39 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
-public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<SummaryDataRow>>
+public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<StreamTaskSummary>>
         implements HasDocumentRead<BaseEntity> {
-    private EntityServiceFindSummaryActionDataProvider<FindStreamTaskCriteria> dataProvider;
+    private final ActionDataProvider<StreamTaskSummary> dataProvider;
+    private final FetchStreamTaskSummaryAction action;
+    private boolean doneDataDisplay = false;
 
     @Inject
     public StreamTaskSummaryPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                                       final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(true, false));
 
-        // Info column.
-        final InfoColumn<SummaryDataRow> infoColumn = new InfoColumn<SummaryDataRow>() {
+        action = new FetchStreamTaskSummaryAction();
+        dataProvider = new ActionDataProvider<StreamTaskSummary>(dispatcher, action) {
             @Override
-            protected void showInfo(final SummaryDataRow row, final int x, final int y) {
+            protected void changeData(final ResultList<StreamTaskSummary> data) {
+                super.changeData(data);
+                onChangeData(data);
+            }
+        };
+
+        // Info column.
+        final InfoColumn<StreamTaskSummary> infoColumn = new InfoColumn<StreamTaskSummary>() {
+            @Override
+            protected void showInfo(final StreamTaskSummary row, final int x, final int y) {
                 final StringBuilder html = new StringBuilder();
 
                 TooltipUtil.addHeading(html, "Key Data");
-                TooltipUtil.addRowData(html, "Pipeline", row.getLabel().get(FindStreamTaskCriteria.SUMMARY_POS_PIPELINE)
-                        + " (" + row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_PIPELINE) + ")");
-                TooltipUtil.addRowData(html, "Feed", row.getLabel().get(FindStreamTaskCriteria.SUMMARY_POS_FEED) + " ("
-                        + row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_FEED) + ")");
-                TooltipUtil.addRowData(html, "Priority", row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_PRIORITY));
-                TooltipUtil.addRowData(html, "Status",
-                        TaskStatus.PRIMITIVE_VALUE_CONVERTER
-                                .fromPrimitiveValue(
-                                        row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_STATUS).byteValue())
-                                .getDisplayValue() + " (" + row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_STATUS)
-                                + ")");
+                TooltipUtil.addRowData(html, "Pipeline", row.getPipeline().getName()
+                        + " (" + row.getPipeline().getUuid() + ")");
+                TooltipUtil.addRowData(html, "Feed", row.getFeed().getName() + " ("
+                        + row.getFeed().getUuid() + ")");
+                TooltipUtil.addRowData(html, "Priority", row.getPriority());
+                TooltipUtil.addRowData(html, "Status", row.getStatus().getDisplayValue());
 
                 tooltipPresenter.setHTML(html.toString());
 
@@ -81,101 +87,103 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
         };
         getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
-        getView().addResizableColumn(new OrderByColumn<SummaryDataRow, String>(new TextCell(),
-                FindStreamTaskCriteria.FIELD_PIPELINE_UUID, true) {
-            @Override
-            public String getValue(final SummaryDataRow row) {
-                return row.getLabel().get(FindStreamTaskCriteria.SUMMARY_POS_PIPELINE);
-            }
-        }, "Pipeline", 250);
+        getView().addResizableColumn(
+                new OrderByColumn<StreamTaskSummary, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PIPELINE_UUID, true) {
+                    @Override
+                    public String getValue(final StreamTaskSummary row) {
+                        return row.getPipeline().getName();
+                    }
+                }, "Pipeline", 250);
 
         getView().addResizableColumn(
-                new OrderByColumn<SummaryDataRow, String>(new TextCell(), FindStreamTaskCriteria.FIELD_FEED_NAME, true) {
+                new OrderByColumn<StreamTaskSummary, String>(new TextCell(), FindStreamTaskCriteria.FIELD_FEED_NAME, true) {
                     @Override
-                    public String getValue(final SummaryDataRow row) {
-                        return row.getLabel().get(FindStreamTaskCriteria.SUMMARY_POS_FEED);
+                    public String getValue(final StreamTaskSummary row) {
+                        return row.getFeed().getName();
                     }
                 }, "Feed", 250);
 
         getView().addResizableColumn(
-                new OrderByColumn<SummaryDataRow, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PRIORITY, false) {
+                new OrderByColumn<StreamTaskSummary, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PRIORITY, false) {
                     @Override
-                    public String getValue(final SummaryDataRow row) {
-                        return row.getLabel().get(FindStreamTaskCriteria.SUMMARY_POS_PRIORITY);
+                    public String getValue(final StreamTaskSummary row) {
+                        return row.getPriority();
                     }
                 }, "Priority", 100);
 
         getView().addResizableColumn(
-                new OrderByColumn<SummaryDataRow, String>(new TextCell(), FindStreamTaskCriteria.FIELD_STATUS, false) {
+                new OrderByColumn<StreamTaskSummary, String>(new TextCell(), FindStreamTaskCriteria.FIELD_STATUS, false) {
                     @Override
-                    public String getValue(final SummaryDataRow row) {
-                        return TaskStatus.PRIMITIVE_VALUE_CONVERTER
-                                .fromPrimitiveValue(
-                                        row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_STATUS).byteValue())
-                                .getDisplayValue();
+                    public String getValue(final StreamTaskSummary row) {
+                        return row.getStatus().getDisplayValue();
                     }
                 }, "Status", 100);
 
         getView().addResizableColumn(
-                new OrderByColumn<SummaryDataRow, String>(new TextCell(), FindStreamTaskCriteria.FIELD_COUNT, false) {
+                new OrderByColumn<StreamTaskSummary, String>(new TextCell(), FindStreamTaskCriteria.FIELD_COUNT, false) {
                     @Override
-                    public String getValue(final SummaryDataRow row) {
+                    public String getValue(final StreamTaskSummary row) {
                         return ModelStringUtil.formatCsv(row.getCount());
                     }
                 }, "Count", 100);
 
         getView().addEndColumn(new EndColumn<>());
-
-        this.dataProvider = new EntityServiceFindSummaryActionDataProvider<FindStreamTaskCriteria>(dispatcher,
-                getView()) {
-            @Override
-            protected void afterDataChange(final ResultList<SummaryDataRow> data) {
-                final SummaryDataRow selected = getView().getSelectionModel().getSelected();
-                if (selected != null) {
-                    // Reselect the task set.
-                    getView().getSelectionModel().clear();
-                    if (data != null && data.contains(selected)) {
-                        getView().getSelectionModel().setSelected(selected);
-                    }
-                }
-            }
-        };
     }
 
-    public MultiSelectionModel<SummaryDataRow> getSelectionModel() {
+    private void onChangeData(final ResultList<StreamTaskSummary> data) {
+        final StreamTaskSummary selected = getView().getSelectionModel().getSelected();
+        if (selected != null) {
+            // Reselect the task set.
+            getView().getSelectionModel().clear();
+            if (data != null && data.contains(selected)) {
+                getView().getSelectionModel().setSelected(selected);
+            }
+        }
+    }
+
+    public MultiSelectionModel<StreamTaskSummary> getSelectionModel() {
         return getView().getSelectionModel();
     }
 
-    private void setCriteria(final Feed feed) {
-        final FindStreamTaskCriteria criteria = initCriteria();
-        criteria.obtainFeedIdSet().add(feed);
-        dataProvider.setCriteria(criteria);
+    private void doDataDisplay() {
+        if (!doneDataDisplay) {
+            doneDataDisplay = true;
+            dataProvider.addDataDisplay(getView().getDataDisplay());
+        } else {
+            dataProvider.refresh();
+        }
     }
 
-    private void setCriteria(final PipelineEntity pipelineEntity) {
-        final FindStreamTaskCriteria criteria = initCriteria();
-        criteria.obtainPipelineIdSet().add(pipelineEntity);
-        dataProvider.setCriteria(criteria);
+    private void setPipeline(final PipelineEntity pipelineEntity) {
+        action.setExpression(ExpressionUtil.createPipelineExpression(pipelineEntity));
+        doDataDisplay();
+    }
+
+    private void setFeed(final Feed feed) {
+        action.setExpression(ExpressionUtil.createFeedExpression(feed));
+        doDataDisplay();
+    }
+
+    private void setFolder(final DocRef folder) {
+        action.setExpression(ExpressionUtil.createFolderExpression(folder));
+        doDataDisplay();
     }
 
     private void setNullCriteria() {
-        dataProvider.setCriteria(initCriteria());
+        action.setExpression(null);
+        doDataDisplay();
     }
 
     @Override
     public void read(final DocRef docRef, final BaseEntity entity) {
-        if (entity instanceof Feed) {
-            setCriteria((Feed) entity);
-        } else if (entity instanceof PipelineEntity) {
-            setCriteria((PipelineEntity) entity);
+        if (entity instanceof PipelineEntity) {
+            setPipeline((PipelineEntity) entity);
+        } else if (entity instanceof Feed) {
+            setFeed((Feed) entity);
+        } else if (docRef != null) {
+            setFolder(docRef);
         } else {
             setNullCriteria();
         }
-    }
-
-    private FindStreamTaskCriteria initCriteria() {
-        final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
-        criteria.obtainStatusSet().setSingleItem(StreamStatus.UNLOCKED);
-        return criteria;
     }
 }

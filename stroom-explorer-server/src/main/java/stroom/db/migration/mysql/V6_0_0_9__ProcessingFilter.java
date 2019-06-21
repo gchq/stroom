@@ -3,19 +3,20 @@ package stroom.db.migration.mysql;
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.server.util.XMLMarshallerUtil;
 import stroom.entity.shared.IdRange;
 import stroom.entity.shared.Range;
+import stroom.entity.shared.SQLNameConstants;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.stream.OldFindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.util.date.DateUtil;
-import stroom.util.io.StreamUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -23,17 +24,10 @@ import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -46,8 +40,6 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
     private JAXBContext queryDataJaxb;
     private JAXBException jaxbException;
     private final boolean writeUpdates;
-
-    private static final String UPGRADE_USER = "upgrade";
 
     public V6_0_0_9__ProcessingFilter() {
         this(true);
@@ -77,22 +69,16 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                 while (rs.next()) {
                     try {
                         final long id = rs.getLong(1);
-                        final Blob datBlob = rs.getBlob(2);
+                        String dat = rs.getString(2);
 
-                        int blobLength = (int) datBlob.length();
-                        byte[] blobAsBytes = datBlob.getBytes(1, blobLength);
-
-                        datBlob.free();
-
-                        String datAsString = new String(blobAsBytes, StreamUtil.DEFAULT_CHARSET);
-                        if (datAsString != null) {
-                            datAsString = datAsString.replaceAll("<idSet>", "<id>");
-                            datAsString = datAsString.replaceAll("</idSet>", "</id>");
+                        if (dat != null) {
+                            dat = dat.replaceAll("<idSet>", "<id>");
+                            dat = dat.replaceAll("</idSet>", "</id>");
                         }
 
-                        final OldFindStreamCriteria streamCriteria = unmarshalCriteria(datAsString);
+                        final OldFindStreamCriteria streamCriteria = unmarshalCriteria(dat);
 
-                        findStreamCriteriaStrById.put(id, datAsString);
+                        findStreamCriteriaStrById.put(id, dat);
                         findStreamCriteriaById.put(id, streamCriteria);
                     } catch (final Exception e) {
                         LOGGER.error("Could not get old stream criteria {}", e.getLocalizedMessage());
@@ -101,6 +87,9 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                 }
             }
         }
+
+        // Get all the folder ID's to DocRefs
+        final Map<Long, DocRef> folderDocRefsById = getDocRefsById(connection, ExplorerConstants.FOLDER, SQLNameConstants.FOLDER);
 
         // Get all the feed ID's to Names
         final Map<Long, String> feedNamesById = getStringFieldById(connection, "FD", "NAME");
@@ -111,28 +100,17 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         // Get all the stream type ID's to names
         final Map<Long, DocRef> pipeDocRefsById = getDocRefsById(connection, PipelineEntity.ENTITY_TYPE, "PIPE");
 
-        // Get all the feed to folder names
-        final Map<Long, Long> folderByFeedId = getFkById(connection, "FD", "FK_FOLDER_ID");
-
-        // Get all the folder parenting information
-        final Map<Long, IdTreeNode> folders = getIdentifiedTree(connection, "FOLDER", "FK_FOLDER_ID");
-
         // Convert the existing criteria to query data/expression based
         final Map<Long, String> queryDataStrById = new HashMap<>();
 
-        // Keep track of the dictionaries created for folder ID sets
-        final ConcurrentHashMap<Long, Optional<DocRef>> dictionariesByFolder = new ConcurrentHashMap<>();
-
         for (final Map.Entry<Long, OldFindStreamCriteria> criteriaEntry : findStreamCriteriaById.entrySet()) {
             try {
-                final QueryData queryData = this.convertFindStreamCriteria(connection,
+                final QueryData queryData = this.convertFindStreamCriteria(
                         criteriaEntry.getValue(),
                         l -> Optional.ofNullable(feedNamesById.get(l)),
                         l -> Optional.ofNullable(streamTypeNamesById.get(l)),
                         l -> Optional.ofNullable(pipeDocRefsById.get(l)),
-                        folderByFeedId,
-                        l -> Optional.ofNullable(folders.get(l)),
-                        dictionariesByFolder);
+                        l -> Optional.ofNullable(folderDocRefsById.get(l)));
                 final String queryDataStr = this.marshalQueryData(queryData);
                 queryDataStrById.put(criteriaEntry.getKey(), queryDataStr);
 
@@ -178,84 +156,40 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         }
     }
 
-    private QueryData convertFindStreamCriteria(final Connection connection,
-                                                final OldFindStreamCriteria criteria,
+    private QueryData convertFindStreamCriteria(final OldFindStreamCriteria criteria,
                                                 final Function<Long, Optional<String>> feedNamesById,
                                                 final Function<Long, Optional<String>> streamTypeNamesById,
                                                 final Function<Long, Optional<DocRef>> pipeDocRefsById,
-                                                final Map<Long, Long> folderByFeedId,
-                                                final Function<Long, Optional<IdTreeNode>> folders,
-                                                final ConcurrentHashMap<Long, Optional<DocRef>> dictionariesByFolder) {
+                                                final Function<Long, Optional<DocRef>> folderDocRefsById) {
 
         final ExpressionOperator.Builder rootAnd = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
 
-        // Feed Folders
-        final List<Optional<DocRef>> feedDictionariesToInclude = new ArrayList<>();
+        // Include folders
+        final Set<Long> folderIdSet = criteria.obtainFolderIdSet().getSet();
+        if (folderIdSet.size() > 0) {
+            ExpressionOperator.Builder parent = rootAnd;
 
-        for (final Long folderId : criteria.obtainFolderIdSet()) {
-            final Optional<IdTreeNode> folderNodeOpt = folders.apply(folderId);
+            if (folderIdSet.size() > 1) {
+                parent = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
+            }
 
-            if (folderNodeOpt.isPresent()) {
-                IdTreeNode folderNode = folderNodeOpt.get();
+            for (final Long folderId : folderIdSet) {
+                final DocRef folderDocRef = folderDocRefsById.apply(folderId).orElseGet(() -> {
+                    LOGGER.warn("Could not find folder with id {}", folderId);
+                    return new DocRef(ExplorerConstants.FOLDER, "--missing folder (" + folderId + ")");
+                });
+                parent.addDocRefTerm(StreamDataSource.FEED_NAME, Condition.IN_FOLDER, folderDocRef);
+            }
 
-                final List<Long> folderIds = new ArrayList<>();
-                folderNode.recurse(folderIds::add, criteria.obtainFolderIdSet().isDeep());
-
-                final Set<String> feedNames = folderByFeedId.entrySet().stream()
-                        .filter(e -> folderIds.contains(e.getValue()))
-                        .map(Map.Entry::getKey)
-                        .map(feedNamesById)
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .collect(Collectors.toSet());
-
-                final Optional<DocRef> feedIdDict = dictionariesByFolder.computeIfAbsent(folderId,
-                        fid -> createDictionary(connection, fid, criteria.obtainFolderIdSet().isDeep(), feedNames)
-                );
-                feedDictionariesToInclude.add(feedIdDict);
-            } else {
-                LOGGER.warn("Could not find folder for ID {}", folderId);
-                final Optional<DocRef> feedIdDict = dictionariesByFolder.computeIfAbsent(folderId,
-                        fid -> createDictionary(connection, fid, criteria.obtainFolderIdSet().isDeep(), Collections.emptySet())
-                );
-                feedDictionariesToInclude.add(feedIdDict);
+            if (folderIdSet.size() > 1) {
+                rootAnd.addOperator(parent.build());
             }
         }
 
         // Include Feeds
-        // Individual ID's AND folders specified, wrap them in an OR
         final Set<Long> includeFeedIds = criteria.obtainFeeds().obtainInclude().getSet();
-        if ((includeFeedIds.size() > 0) && (feedDictionariesToInclude.size() > 0)) {
-            final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-            applyIncludesTerm(or, includeFeedIds, feedNamesById, StreamDataSource.FEED_NAME);
-            feedDictionariesToInclude.stream()
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .forEach(dict ->
-                            or.addTerm(new ExpressionTerm.Builder()
-                                    .field(StreamDataSource.FEED_NAME)
-                                    .condition(ExpressionTerm.Condition.IN_DICTIONARY)
-                                    .dictionary(dict)
-                                    .build()
-                            )
-                    );
-            rootAnd.addOperator(or.build());
-        } else if (includeFeedIds.size() > 0) {
+        if (includeFeedIds.size() > 0) {
             applyIncludesTerm(rootAnd, includeFeedIds, feedNamesById, StreamDataSource.FEED_NAME);
-        } else if (feedDictionariesToInclude.size() > 0) {
-            final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-            feedDictionariesToInclude.stream()
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .forEach(dict ->
-                            or.addTerm(new ExpressionTerm.Builder()
-                                    .field(StreamDataSource.FEED_NAME)
-                                    .condition(ExpressionTerm.Condition.IN_DICTIONARY)
-                                    .dictionary(dict)
-                                    .build()
-                            )
-                    );
-            rootAnd.addOperator(or.build());
         }
 
         // Exclude Feeds
@@ -291,9 +225,8 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         }
 
         // Dynamic Stream Attributes
-        criteria.obtainAttributeConditionList().forEach(c -> {
-            rootAnd.addTerm(c.getStreamAttributeKey().getName(), c.getCondition(), c.getFieldValue());
-        });
+        criteria.obtainAttributeConditionList().forEach(c ->
+                rootAnd.addTerm(c.getStreamAttributeKey().getName(), c.getCondition(), c.getFieldValue()));
 
         // Created Period
         applyBoundedTerm(rootAnd, criteria.obtainCreatePeriod(), StreamDataSource.CREATE_TIME, DateUtil::createNormalDateTimeString);
@@ -311,57 +244,6 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                 .build();
     }
 
-    private Optional<DocRef> createDictionary(final Connection connection,
-                                              final Long folderId,
-                                              final boolean isDeep,
-                                              final Set<String> feedNames) {
-        final DocRef dict = new DocRef.Builder()
-                .uuid(UUID.randomUUID().toString())
-                .name(String.format("_feeds_folder_%d_%s", folderId, isDeep ? "deep" : "shallow"))
-                .type(DictionaryDoc.ENTITY_TYPE)
-                .build();
-
-        final long now = System.currentTimeMillis();
-
-        final String dictDataStr = feedNames.stream()
-                .map(Object::toString)
-                .collect(Collectors.joining("\n"));
-
-        try {
-            final Blob dictDataBlob = connection.createBlob();
-            dictDataBlob.setBytes(1, dictDataStr.getBytes());
-
-            if (writeUpdates) {
-                final String sql = "INSERT INTO DICT (VER, CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DAT, FK_FOLDER_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
-                    stmt.setInt(1, 0);
-                    stmt.setLong(2, now);
-                    stmt.setString(3, UPGRADE_USER);
-                    stmt.setLong(4, now);
-                    stmt.setString(5, UPGRADE_USER);
-                    stmt.setString(6, dict.getName());
-                    stmt.setString(7, dict.getUuid());
-                    stmt.setBlob(8, dictDataBlob);
-                    stmt.setLong(9, folderId);
-
-                    int rowsAffected = stmt.executeUpdate();
-                    if (rowsAffected != 1) {
-                        throw new Exception(String.format("Wrong number of rows affected by update %d", rowsAffected));
-                    }
-                }
-            } else {
-                LOGGER.info("Creating Dictionary: {}, {}, {}", folderId, dict, dictDataStr);
-            }
-
-
-            return Optional.of(dict);
-
-        } catch (final Exception e) {
-            LOGGER.error("Could not create dictionary for folder Id {}", folderId);
-            return Optional.empty();
-        }
-    }
-
     private <T extends Number> void applyBoundedTerm(final ExpressionOperator.Builder parentTerm,
                                                      final Range<T> range,
                                                      final String fieldName,
@@ -373,39 +255,6 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
             parentTerm.addTerm(fieldName, ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO, toString.apply(range.getFrom()));
         } else if (null != range.getTo()) {
             parentTerm.addTerm(fieldName, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, toString.apply(range.getTo()));
-        }
-    }
-
-    private static class IdTreeNode {
-        private final long id;
-
-        private final List<IdTreeNode> children = new ArrayList<>();
-
-        IdTreeNode(final long id) {
-            this.id = id;
-        }
-
-        void addChild(final IdTreeNode child) {
-            this.children.add(child);
-        }
-
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder("IdTreeNode{");
-            sb.append("id=").append(id);
-            sb.append(", children=").append(children.size()).append(": ");
-
-            children.forEach(child -> sb.append(child.id).append(", "));
-            sb.append('}');
-            return sb.toString();
-        }
-
-        void recurse(final Consumer<Long> consumer,
-                     final boolean deep) {
-            consumer.accept(this.id);
-            if (deep) {
-                this.children.forEach(c -> c.recurse(consumer, deep));
-            }
         }
     }
 
@@ -451,46 +300,6 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                 return namesById;
             }
         }
-    }
-
-    private Map<Long, Long> getFkById(final Connection connection,
-                                      final String tableName,
-                                      final String fkFieldName) throws SQLException {
-        final Map<Long, Long> results = new HashMap<>();
-
-        final String sql = String.format("SELECT ID, %s FROM %s", fkFieldName, tableName);
-
-        try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            try (final ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    results.put(rs.getLong(1), rs.getLong(2));
-                }
-            }
-        }
-
-        return results;
-    }
-
-    private Map<Long, IdTreeNode> getIdentifiedTree(final Connection connection,
-                                                    final String tableName,
-                                                    final String parentIdFieldName) throws SQLException {
-        final Map<Long, Long> parentsById = getFkById(connection, tableName, parentIdFieldName);
-
-        // First create all the objects
-        final Map<Long, IdTreeNode> objectsById = parentsById.keySet().stream()
-                .collect(Collectors.toMap(o -> o, IdTreeNode::new));
-
-        // Then hook up all the children nodes
-        for (final Map.Entry<Long, IdTreeNode> e : objectsById.entrySet()) {
-            final Long parentId = parentsById.get(e.getKey());
-            if (parentId > 0) {
-                final IdTreeNode parentObj = objectsById.get(parentId);
-                parentObj.addChild(e.getValue());
-            }
-        }
-
-        return objectsById;
     }
 
     private <T> void applyIncludesDocRefTerm(final ExpressionOperator.Builder parentTerm,

@@ -20,6 +20,7 @@ import stroom.dispatch.shared.TreeAction;
 import stroom.entity.shared.Action;
 import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.ResultList;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.SharedObject;
 
 import java.util.HashSet;
@@ -29,28 +30,28 @@ public class FetchProcessorAction extends Action<ResultList<SharedObject>>
         implements TreeAction<SharedObject>, HasIsConstrained {
     private static final long serialVersionUID = -1773544031158236156L;
 
-    private Long pipelineId;
+    private ExpressionOperator expression;
     private Set<SharedObject> expandedRows;
 
     public FetchProcessorAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchProcessorAction(final long pipelineId) {
-        this.pipelineId = pipelineId;
+    public FetchProcessorAction(final ExpressionOperator expression) {
+        this.expression = expression;
     }
 
     @Override
     public boolean isConstrained() {
-        return pipelineId != null;
+        return expression != null;
     }
 
-    public Long getPipelineId() {
-        return pipelineId;
+    public ExpressionOperator getExpression() {
+        return expression;
     }
 
-    public void setPipelineId(final Long pipelineId) {
-        this.pipelineId = pipelineId;
+    public void setExpression(final ExpressionOperator expression) {
+        this.expression = expression;
     }
 
     @Override

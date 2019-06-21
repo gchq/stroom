@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import stroom.datafeed.server.DataReceiptPolicyMetaMapFilterFactory;
 import stroom.datafeed.server.MetaMapFilter;
 import stroom.dictionary.server.DictionaryStore;
+import stroom.streamstore.server.ExpressionMatcherFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -29,16 +30,16 @@ import javax.inject.Singleton;
 @Singleton
 public class DataReceiptPolicyMetaMapFilterFactoryImpl implements DataReceiptPolicyMetaMapFilterFactory {
     private final RuleSetService ruleSetService;
-    private final DictionaryStore dictionaryStore;
+    private final ExpressionMatcherFactory expressionMatcherFactory;
 
     @Inject
-    public DataReceiptPolicyMetaMapFilterFactoryImpl(final RuleSetService ruleSetService, final DictionaryStore dictionaryStore) {
+    public DataReceiptPolicyMetaMapFilterFactoryImpl(final RuleSetService ruleSetService, final ExpressionMatcherFactory expressionMatcherFactory) {
         this.ruleSetService = ruleSetService;
-        this.dictionaryStore = dictionaryStore;
+        this.expressionMatcherFactory = expressionMatcherFactory;
     }
 
     @Override
     public MetaMapFilter create(final String dataReceiptPolicyUuid) {
-        return new DataReceiptPolicyMetaMapFilter(new DataReceiptPolicyChecker(ruleSetService, dictionaryStore, dataReceiptPolicyUuid));
+        return new DataReceiptPolicyMetaMapFilter(new DataReceiptPolicyChecker(ruleSetService, expressionMatcherFactory, dataReceiptPolicyUuid));
     }
 }

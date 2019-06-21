@@ -71,8 +71,8 @@ import stroom.streamstore.shared.StreamPermissionException;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
-import stroom.streamtask.server.ExpressionToFindCriteria;
-import stroom.streamtask.server.ExpressionToFindCriteria.Context;
+import stroom.streamtask.server.ExpressionToFindStreamCriteria;
+import stroom.streamtask.server.ExpressionToFindStreamCriteria.Context;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.logging.LogExecutionTime;
@@ -129,7 +129,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private final FeedService feedService;
     private final StreamTypeService streamTypeService;
     private final VolumeService volumeService;
-    private final ExpressionToFindCriteria expressionToFindCriteria;
+    private final ExpressionToFindStreamCriteria expressionToFindCriteria;
     private final SecurityContext securityContext;
 
     // /**
@@ -179,7 +179,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                               @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                               final VolumeService volumeService,
                               final StreamAttributeValueFlush streamAttributeValueFlush,
-                              final ExpressionToFindCriteria expressionToFindCriteria,
+                              final ExpressionToFindStreamCriteria expressionToFindCriteria,
                               final SecurityContext securityContext) {
         this.entityManager = entityManager;
         this.stroomDatabaseInfo = stroomDatabaseInfo;

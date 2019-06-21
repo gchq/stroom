@@ -184,6 +184,10 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
         return pipelineIdSet;
     }
 
+    public void setPipelineIdSet(final EntityIdSet<PipelineEntity> pipelineIdSet) {
+        this.pipelineIdSet = pipelineIdSet;
+    }
+
     public EntityIdSet<PipelineEntity> obtainPipelineIdSet() {
         if (pipelineIdSet == null) {
             pipelineIdSet = new EntityIdSet<>();
@@ -193,6 +197,10 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
 
     public EntityIdSet<Feed> getFeedIdSet() {
         return feedIdSet;
+    }
+
+    public void setFeedIdSet(final EntityIdSet<Feed> feedIdSet) {
+        this.feedIdSet = feedIdSet;
     }
 
     public EntityIdSet<Feed> obtainFeedIdSet() {

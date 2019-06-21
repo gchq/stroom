@@ -19,10 +19,12 @@ package stroom.streamtask.server;
 
 import stroom.entity.server.BaseEntityService;
 import stroom.entity.server.FindService;
-import stroom.entity.server.FindSummaryService;
+import stroom.entity.shared.BaseResultList;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.StreamTaskSummary;
 
 public interface StreamTaskService
-        extends BaseEntityService<StreamTask>, FindService<StreamTask, FindStreamTaskCriteria>, FindSummaryService<FindStreamTaskCriteria> {
+        extends BaseEntityService<StreamTask>, FindService<StreamTask, FindStreamTaskCriteria> {
+    BaseResultList<StreamTaskSummary> findSummary(FindStreamTaskCriteria criteria) throws RuntimeException;
 }

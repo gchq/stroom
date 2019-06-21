@@ -26,6 +26,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.policy.server.DataRetentionStreamFinder;
+import stroom.streamstore.server.ExpressionMatcherFactory;
 import stroom.streamstore.server.StreamMaintenanceService;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -53,7 +54,7 @@ public class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationT
     @Resource
     private StreamMaintenanceService streamMaintenanceService;
     @Resource
-    private DictionaryStore dictionaryStore;
+    private ExpressionMatcherFactory expressionMatcherFactory;
     @Resource
     private DataSource dataSource;
 
@@ -85,7 +86,7 @@ public class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationT
 
             // run the stream retention task which should 'delete' one stream
             final Period ageRange = new Period(null, timeOutsideRetentionPeriod + 1);
-            try (final DataRetentionStreamFinder dataRetentionStreamFinder = new DataRetentionStreamFinder(connection, dictionaryStore)) {
+            try (final DataRetentionStreamFinder dataRetentionStreamFinder = new DataRetentionStreamFinder(connection, expressionMatcherFactory)) {
                 final long count = dataRetentionStreamFinder.getRowCount(ageRange, Collections.singleton(StreamDataSource.STREAM_ID));
                 Assert.assertEquals(1, count);
             }

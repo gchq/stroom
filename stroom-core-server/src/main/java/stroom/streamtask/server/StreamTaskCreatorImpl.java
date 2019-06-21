@@ -41,7 +41,7 @@ import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamtask.server.ExpressionToFindCriteria.Context;
+import stroom.streamtask.server.ExpressionToFindStreamCriteria.Context;
 import stroom.streamtask.server.StreamTaskCreatorTransactionHelper.CreatedTasks;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
@@ -106,7 +106,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final StreamStore streamStore;
     private final SecurityContext securityContext;
-    private final ExpressionToFindCriteria expressionToFindCriteria;
+    private final ExpressionToFindStreamCriteria expressionToFindCriteria;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
@@ -158,7 +158,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final InternalStatisticsReceiver internalStatisticsReceiver,
                           final StreamStore streamStore,
                           final SecurityContext securityContext,
-                          final ExpressionToFindCriteria expressionToFindCriteria) {
+                          final ExpressionToFindStreamCriteria expressionToFindCriteria) {
 
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.streamTaskTransactionHelper = streamTaskTransactionHelper;

@@ -30,10 +30,10 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.entity.shared.SummaryDataRow;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.query.api.v2.DocRef;
 import stroom.security.Secured;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
@@ -42,8 +42,11 @@ import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.StreamTaskSummary;
+import stroom.streamtask.shared.TaskStatus;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -74,27 +77,23 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
     }
 
     @Override
-    public BaseResultList<SummaryDataRow> findSummary(final FindStreamTaskCriteria criteria) throws RuntimeException {
+    @SuppressWarnings("unchecked")
+    public BaseResultList<StreamTaskSummary> findSummary(final FindStreamTaskCriteria criteria) throws RuntimeException {
         final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT D.* FROM (");
         sql.append("SELECT P.");
-        sql.append(PipelineEntity.ID);
-        sql.append(" PIPE_ID, P.");
-        sql.append(SQLNameConstants.NAME);
-        sql.append(" P_NAME, F.");
-        sql.append(Feed.ID);
-        sql.append(" FEED_ID, F.");
-        sql.append(SQLNameConstants.NAME);
-        sql.append(" F_NAME, SPF.");
+        sql.append(PipelineEntity.UUID);
+        sql.append(" PIPE_UUID, P.");
+        sql.append(PipelineEntity.NAME);
+        sql.append(" PIPE_NAME, F.");
+        sql.append(Feed.UUID);
+        sql.append(" FEED_UUID, F.");
+        sql.append(Feed.NAME);
+        sql.append(" FEED_NAME, SPF.");
         sql.append(StreamProcessorFilter.PRIORITY);
-        sql.append(" PRIORITY_1, SPF.");
-        sql.append(StreamProcessorFilter.PRIORITY);
-        sql.append(" PRIORITY_2, ST.");
+        sql.append(" PRIORITY, ST.");
         sql.append(StreamTask.STATUS);
-        sql.append(" STAT_ID1, ST.");
-        sql.append(StreamTask.STATUS);
-        sql.append(" STAT_ID2, COUNT(*) AS ");
-        sql.append(SQLNameConstants.COUNT);
+        sql.append(" STAT_ID, COUNT(*)");
         sql.append(" FROM ");
         sql.append(StreamTask.TABLE_NAME);
         sql.append(" ST JOIN ");
@@ -134,12 +133,25 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
         sql.appendEntityIdSetQuery("P." + BaseEntity.ID, criteria.getPipelineIdSet());
         sql.appendEntityIdSetQuery("F." + BaseEntity.ID, criteria.getFeedIdSet());
 
-        sql.append(" GROUP BY PIPE_ID, FEED_ID, PRIORITY_1, STAT_ID1");
+        sql.append(" GROUP BY PIPE_UUID, FEED_UUID, PRIORITY, STAT_ID");
         sql.append(") D");
 
         sql.appendOrderBy(getSqlFieldMap().getSqlFieldMap(), criteria, null);
 
-        return getEntityManager().executeNativeQuerySummaryDataResult(sql, 4);
+        final List<Object[]> list = getEntityManager().executeNativeQueryResultList(sql);
+
+        final ArrayList<StreamTaskSummary> summaryData = new ArrayList<>(list.size());
+        for (final Object[] row : list) {
+            final DocRef pipeline = new DocRef(PipelineEntity.ENTITY_TYPE, (String) row[0], (String) row[1]);
+            final DocRef feed = new DocRef(Feed.ENTITY_TYPE, (String) row[2], (String) row[3]);
+            final String priority = String.valueOf(row[4]);
+            final TaskStatus taskStatus = TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue((byte) row[5]);
+            final long count = ((Number) row[6]).longValue();
+            final StreamTaskSummary summary = new StreamTaskSummary(pipeline, feed, priority, taskStatus, count);
+            summaryData.add(summary);
+        }
+
+        return BaseResultList.createUnboundedList(summaryData);
     }
 
     @Override

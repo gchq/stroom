@@ -62,108 +62,51 @@ public class StreamDataSource {
         PIPELINE_FIELDS.put(PIPELINE_UUID, PipelineEntity.UUID);
 
         // Non grouped fields
-        FIELDS.add(createDocRefField(FEED_NAME, Feed.ENTITY_TYPE));
-        FIELDS.add(createDocRefField(PIPELINE_UUID, PipelineEntity.ENTITY_TYPE));
-        FIELDS.add(createStringField(STATUS));
-        FIELDS.add(createStringField(STREAM_TYPE_NAME));
+        FIELDS.add(DataSourceUtil.createDocRefField(FEED_NAME, Feed.ENTITY_TYPE));
+        FIELDS.add(DataSourceUtil.createDocRefField(PIPELINE_UUID, PipelineEntity.ENTITY_TYPE));
+        FIELDS.add(DataSourceUtil.createStringField(STATUS));
+        FIELDS.add(DataSourceUtil.createStringField(STREAM_TYPE_NAME));
 
         // Id's
-        FIELDS.add(createIdField(STREAM_ID));
-        FIELDS.add(createIdField(PARENT_STREAM_ID));
+        FIELDS.add(DataSourceUtil.createIdField(STREAM_ID));
+        FIELDS.add(DataSourceUtil.createIdField(PARENT_STREAM_ID));
 
         // Times
-        FIELDS.add(createDateField(CREATE_TIME));
-        FIELDS.add(createDateField(EFFECTIVE_TIME));
-        FIELDS.add(createDateField(STATUS_TIME));
+        FIELDS.add(DataSourceUtil.createDateField(CREATE_TIME));
+        FIELDS.add(DataSourceUtil.createDateField(EFFECTIVE_TIME));
+        FIELDS.add(DataSourceUtil.createDateField(STATUS_TIME));
         FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
 
 
         // Single Items
-        EXTENDED_FIELDS.add(createDocRefField(FEED_NAME, Feed.ENTITY_TYPE));
-        EXTENDED_FIELDS.add(createNumField(DURATION));
-        EXTENDED_FIELDS.add(createStringField(NODE));
-        EXTENDED_FIELDS.add(createDocRefField(PIPELINE_UUID, PipelineEntity.ENTITY_TYPE));
-        EXTENDED_FIELDS.add(createStringField(STATUS));
-        EXTENDED_FIELDS.add(createStringField(STREAM_TYPE_NAME));
+        EXTENDED_FIELDS.add(DataSourceUtil.createDocRefField(FEED_NAME, Feed.ENTITY_TYPE));
+        EXTENDED_FIELDS.add(DataSourceUtil.createNumField(DURATION));
+        EXTENDED_FIELDS.add(DataSourceUtil.createStringField(NODE));
+        EXTENDED_FIELDS.add(DataSourceUtil.createDocRefField(PIPELINE_UUID, PipelineEntity.ENTITY_TYPE));
+        EXTENDED_FIELDS.add(DataSourceUtil.createStringField(STATUS));
+        EXTENDED_FIELDS.add(DataSourceUtil.createStringField(STREAM_TYPE_NAME));
 
         // Id's
-        EXTENDED_FIELDS.add(createIdField(STREAM_ID));
-        EXTENDED_FIELDS.add(createIdField(PARENT_STREAM_ID));
+        EXTENDED_FIELDS.add(DataSourceUtil.createIdField(STREAM_ID));
+        EXTENDED_FIELDS.add(DataSourceUtil.createIdField(PARENT_STREAM_ID));
 
         // Counts
-        EXTENDED_FIELDS.add(createNumField(REC_READ));
-        EXTENDED_FIELDS.add(createNumField(REC_WRITE));
-        EXTENDED_FIELDS.add(createNumField(REC_FATAL));
-        EXTENDED_FIELDS.add(createNumField(REC_ERROR));
-        EXTENDED_FIELDS.add(createNumField(REC_WARN));
-        EXTENDED_FIELDS.add(createNumField(REC_INFO));
+        EXTENDED_FIELDS.add(DataSourceUtil.createNumField(REC_READ));
+        EXTENDED_FIELDS.add(DataSourceUtil.createNumField(REC_WRITE));
+        EXTENDED_FIELDS.add(DataSourceUtil.createNumField(REC_FATAL));
+        EXTENDED_FIELDS.add(DataSourceUtil.createNumField(REC_ERROR));
+        EXTENDED_FIELDS.add(DataSourceUtil.createNumField(REC_WARN));
+        EXTENDED_FIELDS.add(DataSourceUtil.createNumField(REC_INFO));
 
         // Times
-        EXTENDED_FIELDS.add(createDateField(CREATE_TIME));
-        EXTENDED_FIELDS.add(createDateField(EFFECTIVE_TIME));
-        EXTENDED_FIELDS.add(createDateField(STATUS_TIME));
+        EXTENDED_FIELDS.add(DataSourceUtil.createDateField(CREATE_TIME));
+        EXTENDED_FIELDS.add(DataSourceUtil.createDateField(EFFECTIVE_TIME));
+        EXTENDED_FIELDS.add(DataSourceUtil.createDateField(STATUS_TIME));
 
         // Sizes
-        EXTENDED_FIELDS.add(createNumField(FILE_SIZE));
-        EXTENDED_FIELDS.add(createNumField(STREAM_SIZE));
+        EXTENDED_FIELDS.add(DataSourceUtil.createNumField(FILE_SIZE));
+        EXTENDED_FIELDS.add(DataSourceUtil.createNumField(STREAM_SIZE));
         EXTENDED_FIELD_MAP = EXTENDED_FIELDS.stream().collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
-    }
-
-    private static DataSourceField createDateField(final String name) {
-        return new DataSourceField.Builder()
-                .name(name)
-                .addConditions(Condition.EQUALS)
-                .addConditions(Condition.BETWEEN)
-                .addConditions(Condition.GREATER_THAN)
-                .addConditions(Condition.GREATER_THAN_OR_EQUAL_TO)
-                .addConditions(Condition.LESS_THAN)
-                .addConditions(Condition.LESS_THAN_OR_EQUAL_TO)
-                .type(DataSourceField.DataSourceFieldType.DATE_FIELD)
-                .build();
-    }
-
-    private static DataSourceField createStringField(final String name) {
-        return new DataSourceField.Builder()
-                .name(name)
-                .addConditions(Condition.EQUALS)
-                .addConditions(Condition.IN)
-                .addConditions(Condition.IN_DICTIONARY)
-                .type(DataSourceField.DataSourceFieldType.FIELD)
-                .build();
-    }
-
-    private static DataSourceField createIdField(final String name) {
-        return new DataSourceField.Builder()
-                .name(name)
-                .addConditions(Condition.EQUALS)
-                .addConditions(Condition.IN)
-                .type(DataSourceField.DataSourceFieldType.ID)
-                .build();
-    }
-
-    private static DataSourceField createDocRefField(final String name, final String docRefType) {
-        return new DataSourceField.Builder()
-                .name(name)
-                .addConditions(Condition.IS_DOC_REF)
-                .addConditions(Condition.EQUALS)
-                .addConditions(Condition.CONTAINS)
-                .addConditions(Condition.IN)
-                .addConditions(Condition.IN_DICTIONARY)
-                .docRefType(docRefType)
-                .build();
-    }
-
-    private static DataSourceField createNumField(final String name) {
-        return new DataSourceField.Builder()
-                .name(name)
-                .addConditions(Condition.EQUALS)
-                .addConditions(Condition.BETWEEN)
-                .addConditions(Condition.GREATER_THAN)
-                .addConditions(Condition.GREATER_THAN_OR_EQUAL_TO)
-                .addConditions(Condition.LESS_THAN)
-                .addConditions(Condition.LESS_THAN_OR_EQUAL_TO)
-                .type(DataSourceFieldType.NUMERIC_FIELD)
-                .build();
     }
 
     public static List<DataSourceField> getFields() {

@@ -350,7 +350,7 @@ public class MockStreamStore implements StreamStore, Clearable {
 
     @Override
     public BaseResultList<Stream> find(final FindStreamCriteria criteria) throws RuntimeException {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getExtendedFieldMap(), null);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getExtendedFieldMap(), null, null);
         final List<Stream> list = new ArrayList<>();
         for (final Stream stream : fileData.keySet()) {
             final StreamAttributeMap streamAttributeMap = new StreamAttributeMap(stream);

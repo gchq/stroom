@@ -424,6 +424,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             setFeedCriteria((Feed) entity);
         } else if (entity instanceof PipelineEntity) {
             setPipelineCriteria((PipelineEntity) entity);
+        } else if (docRef != null) {
+            setFolderCriteria(docRef);
         } else {
             setNullCriteria();
         }
@@ -444,6 +446,20 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         criteria.obtainFindStreamCriteria().setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
 
         return criteria;
+    }
+
+    private void setFolderCriteria(final DocRef folder) {
+        // Only set this criteria once.
+        if (!hasSetCriteria) {
+            hasSetCriteria = true;
+            showStreamListButtons(true);
+            showStreamRelationListButtons(true);
+
+            findStreamAttributeMapCriteria = createFindStreamAttributeMapCriteria();
+            findStreamAttributeMapCriteria.obtainFindStreamCriteria().setExpression(ExpressionUtil.createFolderExpression(folder));
+
+            initCriteria();
+        }
     }
 
     private void setFeedCriteria(final Feed feed) {

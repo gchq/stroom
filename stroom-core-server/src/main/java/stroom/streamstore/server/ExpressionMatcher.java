@@ -20,6 +20,7 @@ package stroom.streamstore.server;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.dictionary.server.DictionaryStore;
+import stroom.explorer.server.ExplorerService;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -29,6 +30,7 @@ import stroom.util.date.DateUtil;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class ExpressionMatcher {
@@ -36,12 +38,16 @@ public class ExpressionMatcher {
 
     private final Map<String, DataSourceField> fieldMap;
     private final DictionaryStore dictionaryStore;
+    private final ExplorerService explorerService;
     private final Map<DocRef, String[]> wordMap = new HashMap<>();
     private final Map<String, Pattern> patternMap = new HashMap<>();
 
-    public ExpressionMatcher(final Map<String, DataSourceField> fieldMap, final DictionaryStore dictionaryStore) {
+    public ExpressionMatcher(final Map<String, DataSourceField> fieldMap,
+                             final DictionaryStore dictionaryStore,
+                             final ExplorerService explorerService) {
         this.fieldMap = fieldMap;
         this.dictionaryStore = dictionaryStore;
+        this.explorerService = explorerService;
     }
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
@@ -86,7 +92,6 @@ public class ExpressionMatcher {
         String termField = term.getField();
         final Condition condition = term.getCondition();
         String termValue = term.getValue();
-        final DocRef dictionary = term.getDictionary();
         final DocRef docRef = term.getDocRef();
 
         // Clean strings to remove unwanted whitespace that the user may have
@@ -109,19 +114,15 @@ public class ExpressionMatcher {
         final String fieldName = field.getName();
 
         // Ensure an appropriate termValue has been provided for the condition type.
-        if (Condition.IN_DICTIONARY.equals(condition)) {
-            if (dictionary == null || dictionary.getUuid() == null) {
-                throw new MatchException("Dictionary not set for field: " + termField);
+        if (Condition.IN_DICTIONARY.equals(condition) ||
+                Condition.IN_FOLDER.equals(condition) ||
+                Condition.IS_DOC_REF.equals(condition)) {
+            if (docRef == null || docRef.getUuid() == null) {
+                throw new MatchException("DocRef not set for field: " + termField);
             }
         } else {
             if (termValue == null || termValue.length() == 0) {
                 throw new MatchException("Value not set");
-            }
-        }
-
-        if (Condition.IS_DOC_REF.equals(condition)) {
-            if (docRef == null || docRef.getUuid() == null) {
-                throw new MatchException("Entity not set for field: " + termField);
             }
         }
 
@@ -177,7 +178,9 @@ public class ExpressionMatcher {
                 case IN:
                     return isNumericIn(fieldName, termValue, attribute);
                 case IN_DICTIONARY:
-                    return isInDictionary(fieldName, dictionary, field, attribute);
+                    return isInDictionary(fieldName, docRef, field, attribute);
+                case IN_FOLDER:
+                    return isInFolder(fieldName, docRef, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + field.getType().getDisplayValue() + " field type");
@@ -228,10 +231,9 @@ public class ExpressionMatcher {
                 case IN:
                     return isDateIn(fieldName, termValue, attribute);
                 case IN_DICTIONARY:
-                    return isInDictionary(fieldName, dictionary, field, attribute);
-                case IS_DOC_REF:
-                    throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getType().getDisplayValue() + " field type");
+                    return isInDictionary(fieldName, docRef, field, attribute);
+                case IN_FOLDER:
+                    return isInFolder(fieldName, docRef, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + field.getType().getDisplayValue() + " field type");
@@ -244,10 +246,12 @@ public class ExpressionMatcher {
                     return isStringMatch(termValue, attribute.toString());
                 case IN:
                     return isIn(fieldName, termValue, attribute);
+                case IN_DICTIONARY:
+                    return isInDictionary(fieldName, docRef, field, attribute);
+                case IN_FOLDER:
+                    return isInFolder(fieldName, docRef, field, attribute);
                 case IS_DOC_REF:
                     return isDocRef(fieldName, docRef, field, attribute);
-                case IN_DICTIONARY:
-                    return isInDictionary(fieldName, dictionary, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + field.getType().getDisplayValue() + " field type");
@@ -299,16 +303,6 @@ public class ExpressionMatcher {
         return pattern.matcher(attribute).matches();
     }
 
-    private boolean isDocRef(final String fieldName, final DocRef docRef,
-                             final DataSourceField field, final Object attribute) {
-        if (attribute instanceof DocRef) {
-            final String uuid = ((DocRef) attribute).getUuid();
-            return (null != uuid && uuid.equals(docRef.getUuid()));
-        }
-
-        return false;
-    }
-
     private boolean isInDictionary(final String fieldName, final DocRef docRef,
                                    final DataSourceField field, final Object attribute) {
         final String[] lines = loadWords(docRef);
@@ -328,6 +322,33 @@ public class ExpressionMatcher {
                     }
                 }
             }
+        }
+
+        return false;
+    }
+
+    private boolean isInFolder(final String fieldName, final DocRef docRef,
+                                   final DataSourceField field, final Object attribute) {
+        final Set<DocRef> descendants = explorerService.getDescendants(docRef, fieldName);
+        if (descendants != null && descendants.size() > 0) {
+            for (final DocRef descendant : descendants) {
+                if (attribute instanceof DocRef) {
+                    final String uuid = ((DocRef) attribute).getUuid();
+                    return (null != uuid && uuid.equals(descendant.getUuid()));
+                }
+
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean isDocRef(final String fieldName, final DocRef docRef,
+                             final DataSourceField field, final Object attribute) {
+        if (attribute instanceof DocRef) {
+            final String uuid = ((DocRef) attribute).getUuid();
+            return (null != uuid && uuid.equals(docRef.getUuid()));
         }
 
         return false;

@@ -10,6 +10,7 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.StringCriteria;
 import stroom.entity.shared.StringCriteria.MatchStyle;
+import stroom.explorer.server.ExplorerService;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
@@ -50,7 +51,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
-public class ExpressionToFindCriteria {
+public class ExpressionToFindStreamCriteria {
     private static final Map<String, String> ATTRIBUTE_MAPPING = Collections.unmodifiableMap(Stream.of(
             new SimpleEntry<>("Node", "Node"),
             new SimpleEntry<>("Read Count", "RecRead"),
@@ -67,6 +68,7 @@ public class ExpressionToFindCriteria {
     private final FeedService feedService;
     private final PipelineService pipelineService;
     private final DictionaryStore dictionaryStore;
+    private final ExplorerService explorerService;
     private final StreamAttributeKeyService streamAttributeKeyService;
     private final StreamTypeService streamTypeService;
 
@@ -80,14 +82,16 @@ public class ExpressionToFindCriteria {
             String.format("%s [%s]", err, OP_STACK_DISPLAY.apply(ops));
 
     @Inject
-    public ExpressionToFindCriteria(@Named("cachedFeedService") final FeedService feedService,
-                                    @Named("cachedPipelineService") final PipelineService pipelineService,
-                                    final DictionaryStore dictionaryStore,
-                                    final StreamAttributeKeyService streamAttributeKeyService,
-                                    @Named("cachedStreamTypeService") StreamTypeService streamTypeService) {
+    public ExpressionToFindStreamCriteria(@Named("cachedFeedService") final FeedService feedService,
+                                          @Named("cachedPipelineService") final PipelineService pipelineService,
+                                          final DictionaryStore dictionaryStore,
+                                          final ExplorerService explorerService,
+                                          final StreamAttributeKeyService streamAttributeKeyService,
+                                          @Named("cachedStreamTypeService") StreamTypeService streamTypeService) {
         this.feedService = feedService;
         this.pipelineService = pipelineService;
         this.dictionaryStore = dictionaryStore;
+        this.explorerService = explorerService;
         this.streamAttributeKeyService = streamAttributeKeyService;
         this.streamTypeService = streamTypeService;
     }
@@ -501,8 +505,12 @@ public class ExpressionToFindCriteria {
                     }
                     break;
                 case IN_DICTIONARY:
-                    final Set<String> words = getDictionaryWords(term.getDictionary());
+                    final Set<String> words = getDictionaryWords(term.getDocRef());
                     values.addAll(words);
+                    break;
+                case IN_FOLDER:
+                    final Set<DocRef> descendants = explorerService.getDescendants(term.getDocRef(), term.getField());
+                    values.addAll(descendants.stream().map(DocRef::getUuid).collect(Collectors.toSet()));
                     break;
                 case IS_DOC_REF:
                     final DocRef docRef = term.getDocRef();

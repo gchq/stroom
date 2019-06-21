@@ -25,12 +25,14 @@ import stroom.entity.server.util.PreparedStatementUtil;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
+import stroom.explorer.server.ExplorerService;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.policy.server.DataRetentionExecutor.ActiveRules;
 import stroom.policy.server.DataRetentionExecutor.Progress;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.server.ExpressionMatcher;
+import stroom.streamstore.server.ExpressionMatcherFactory;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
@@ -54,14 +56,15 @@ public class DataRetentionStreamFinder implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionStreamFinder.class);
 
     private final Connection connection;
-    private final DictionaryStore dictionaryStore;
+    private final ExpressionMatcherFactory expressionMatcherFactory;
 
     private PreparedStatement preparedStatement;
 
-    public DataRetentionStreamFinder(final Connection connection, final DictionaryStore dictionaryStore) {
+    public DataRetentionStreamFinder(final Connection connection,
+                                     final ExpressionMatcherFactory expressionMatcherFactory) {
         Objects.requireNonNull(connection, "No connection");
         this.connection = connection;
-        this.dictionaryStore = dictionaryStore;
+        this.expressionMatcherFactory = expressionMatcherFactory;
     }
 
     public long getRowCount(final Period ageRange, final Set<String> fieldSet) throws SQLException {
@@ -89,7 +92,7 @@ public class DataRetentionStreamFinder implements AutoCloseable {
     public boolean findMatches(final Period ageRange, final Range<Long> streamIdRange, final long batchSize, final ActiveRules activeRules, final Map<DataRetentionRule, Optional<Long>> ageMap, final TaskMonitor taskMonitor, final Progress progress, final List<Long> matches) throws SQLException {
         boolean more = false;
 
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), dictionaryStore);
+        final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(StreamDataSource.getFieldMap());
 
         final SqlBuilder sqlBuilder = getSelectSql(ageRange, streamIdRange, activeRules.getFieldSet(), false, batchSize);
         final String sql = sqlBuilder.toString();

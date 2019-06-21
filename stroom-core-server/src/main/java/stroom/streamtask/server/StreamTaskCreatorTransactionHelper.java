@@ -189,9 +189,9 @@ public class StreamTaskCreatorTransactionHelper {
 
                     // Don't copy stream status terms as we are going to set them later.
                     if (!StreamDataSource.STATUS.equals(expressionTerm.getField())) {
-                        if (Condition.IN_DICTIONARY.equals(expressionTerm.getCondition())) {
-                            builder.addDictionaryTerm(expressionTerm.getField(), expressionTerm.getCondition(), expressionTerm.getDictionary());
-                        } else if (Condition.IS_DOC_REF.equals(expressionTerm.getCondition())) {
+                        if (Condition.IN_DICTIONARY.equals(expressionTerm.getCondition()) ||
+                                Condition.IN_FOLDER.equals(expressionTerm.getCondition()) ||
+                                Condition.IS_DOC_REF.equals(expressionTerm.getCondition())) {
                             builder.addDocRefTerm(expressionTerm.getField(), expressionTerm.getCondition(), expressionTerm.getDocRef());
                         } else {
                             builder.addTerm(expressionTerm.getField(), expressionTerm.getCondition(), expressionTerm.getValue());

@@ -20,17 +20,16 @@ package stroom.process.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
-import stroom.dictionary.server.DictionaryStore;
-import stroom.dictionary.shared.DictionaryDoc;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
+import stroom.explorer.server.ExplorerService;
 import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.shared.FetchProcessorAction;
 import stroom.process.shared.StreamProcessorFilterRow;
 import stroom.process.shared.StreamProcessorRow;
 import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.DocRefInfo;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
@@ -70,29 +69,45 @@ public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAct
     @Resource
     private SecurityContext securityContext;
     @Resource
-    private DictionaryStore dictionaryStore;
+    private ExplorerService explorerService;
     @Resource
-    private PipelineService pipelineService;
+    private ExpressionToFindStreamProcessorFilterCriteria expressionToFindStreamProcessorFilterCriteria;
+    @Resource
+    private ExpressionToFindStreamProcessorCriteria expressionToFindStreamProcessorCriteria;
 
     @Override
     public ResultList<SharedObject> exec(final FetchProcessorAction action) {
         final List<SharedObject> values = new ArrayList<>();
 
-        final FindStreamProcessorFilterCriteria criteria = new FindStreamProcessorFilterCriteria();
-        final FindStreamProcessorCriteria criteriaRoot = new FindStreamProcessorCriteria();
-        if (action.getPipelineId() != null) {
-            criteria.obtainPipelineIdSet().add(action.getPipelineId());
-            criteriaRoot.obtainPipelineIdSet().add(action.getPipelineId());
-        }
+        final FindStreamProcessorFilterCriteria criteria = expressionToFindStreamProcessorFilterCriteria.convert(action.getExpression());
+        final FindStreamProcessorCriteria criteriaRoot = expressionToFindStreamProcessorCriteria.convert(action.getExpression());
+//        if (action.getExpression() != null) {
+//            criteria.obtainPipelineIdSet().add(action.getPipelineId());
+//            criteriaRoot.obtainPipelineIdSet().add(action.getPipelineId());
+//
+//        } else if (action.getFolder() != null) {
+//            final Set<DocRef> pipelines = explorerService.getDescendants(action.getFolder(), PipelineEntity.ENTITY_TYPE);
+//            pipelines.forEach(pipeline -> {
+//                try {
+//                    final PipelineEntity pipelineEntity = pipelineService.loadByUuidWithoutUnmarshal(pipeline.getUuid());
+//                    if (pipelineEntity != null) {
+//                        criteria.obtainPipelineIdSet().add(pipelineEntity.getId());
+//                        criteriaRoot.obtainPipelineIdSet().add(pipelineEntity.getId());
+//                    }
+//                } catch (final RuntimeException e) {
+//                    LOGGER.error(e.getMessage(), e);
+//                }
+//            });
+//        }
 
         // If the user is not an admin then only show them filters that were created by them.
         if (!securityContext.isAdmin()) {
             criteria.setCreateUser(securityContext.getUserId());
         }
 
-        criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
-        criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
-        criteriaRoot.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
+//        criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
+//        criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
+//        criteriaRoot.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
 
         final BaseResultList<StreamProcessor> streamProcessors = streamProcessorService.find(criteriaRoot);
 
@@ -160,39 +175,53 @@ public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAct
 
                 } else if (child instanceof ExpressionTerm) {
                     ExpressionTerm term = (ExpressionTerm) child;
-                    DocRef dictionary = term.getDictionary();
                     DocRef docRef = term.getDocRef();
 
-                    if (dictionary != null) {
-                        try {
-                            final DictionaryDoc dictionaryDoc = dictionaryStore.read(term.getDictionary().getUuid());
-                            dictionary = DocRefUtil.create(dictionaryDoc);
-                        } catch (final RuntimeException e) {
-                            LOGGER.debug(e.getMessage(), e);
+                    if (docRef != null) {
+                        final DocRefInfo docRefInfo = explorerService.info(docRef);
+                        if (docRefInfo != null) {
+                            term = new ExpressionTerm.Builder()
+                                    .enabled(term.getEnabled())
+                                    .field(term.getField())
+                                    .condition(term.getCondition())
+                                    .value(term.getValue())
+                                    .docRef(docRefInfo.getDocRef())
+                                    .build();
                         }
-
-                        term = new ExpressionTerm.Builder()
-                                .enabled(term.getEnabled())
-                                .field(term.getField())
-                                .condition(term.getCondition())
-                                .value(term.getValue())
-                                .dictionary(dictionary)
-                                .build();
-                    } else if (docRef != null && PipelineEntity.ENTITY_TYPE.equals(docRef.getType())) {
-                        try {
-                            final PipelineEntity pipelineEntity = pipelineService.loadByUuid(docRef.getUuid());
-                            docRef = stroom.entity.shared.DocRefUtil.create(pipelineEntity);
-                        } catch (final RuntimeException e) {
-                            LOGGER.debug(e.getMessage(), e);
-                        }
-
-                        term = new ExpressionTerm.Builder()
-                                .enabled(term.getEnabled())
-                                .field(term.getField())
-                                .condition(term.getCondition())
-                                .value(term.getValue())
-                                .docRef(docRef)
-                                .build();
+//
+//                        if (DictionaryDoc.ENTITY_TYPE.equals(docRef.getType())) {
+//                            try {
+//                                final DictionaryDoc dictionaryDoc = dictionaryStore.read(docRef.getUuid());
+//                                docRef = stroom.entity.shared.DocRefUtil.create(dictionaryDoc);
+//                            } catch (final RuntimeException e) {
+//                                LOGGER.debug(e.getMessage(), e);
+//                            }
+//
+//                            term = new ExpressionTerm.Builder()
+//                                    .enabled(term.getEnabled())
+//                                    .field(term.getField())
+//                                    .condition(term.getCondition())
+//                                    .value(term.getValue())
+//                                    .docRef(docRef)
+//                                    .build();
+//                        }
+//
+//                        if (PipelineEntity.ENTITY_TYPE.equals(docRef.getType())) {
+//                            try {
+//                                final PipelineEntity pipelineEntity = pipelineService.loadByUuid(docRef.getUuid());
+//                                docRef = stroom.entity.shared.DocRefUtil.create(pipelineEntity);
+//                            } catch (final RuntimeException e) {
+//                                LOGGER.debug(e.getMessage(), e);
+//                            }
+//
+//                            term = new ExpressionTerm.Builder()
+//                                    .enabled(term.getEnabled())
+//                                    .field(term.getField())
+//                                    .condition(term.getCondition())
+//                                    .value(term.getValue())
+//                                    .docRef(docRef)
+//                                    .build();
+//                        }
                     }
 
                     builder.addTerm(term);

@@ -20,10 +20,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
+import stroom.streamstore.server.ExpressionMatcherFactory;
 import stroom.streamstore.server.StreamMaintenanceService;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -51,7 +51,7 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
     @Resource
     private StreamMaintenanceService streamMaintenanceService;
     @Resource
-    private DictionaryStore dictionaryStore;
+    private ExpressionMatcherFactory expressionMatcherFactory;
     @Resource
     private DataSource dataSource;
 
@@ -82,7 +82,7 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
 
             // run the stream retention task which should 'delete' one stream
             final Period ageRange = new Period(null, timeOutsideRetentionPeriod + 1);
-            try (final DataRetentionStreamFinder finder = new DataRetentionStreamFinder(connection, dictionaryStore)) {
+            try (final DataRetentionStreamFinder finder = new DataRetentionStreamFinder(connection, expressionMatcherFactory)) {
                 final long count = finder.getRowCount(ageRange, Collections.singleton(StreamDataSource.STREAM_ID));
                 Assert.assertEquals(1, count);
             }

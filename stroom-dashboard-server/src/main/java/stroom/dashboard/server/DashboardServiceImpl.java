@@ -157,8 +157,8 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
             }
         } else if (expressionItem instanceof ExpressionTerm) {
             final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
-            if (expressionTerm.getDictionary() != null) {
-                docRefs.add(expressionTerm.getDictionary());
+            if (expressionTerm.getDocRef() != null) {
+                docRefs.add(expressionTerm.getDocRef());
             }
         }
     }

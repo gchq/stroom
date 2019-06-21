@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.folder.client;
@@ -20,10 +19,12 @@ package stroom.folder.client;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.document.client.DocumentTabData;
 import stroom.entity.client.presenter.ContentCallback;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
+import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.process.client.presenter.ProcessorPresenter;
 import stroom.query.api.v2.DocRef;
@@ -33,11 +34,14 @@ import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
 import stroom.streamstore.client.presenter.StreamTaskPresenter;
 import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
+import stroom.svg.client.Icon;
+import stroom.svg.client.SvgPreset;
+import stroom.util.client.ImageUtil;
 import stroom.util.shared.SharedObject;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
-public class FolderPresenter extends DocumentEditTabPresenter<LinkTabPanelView, SharedObject> {
+public class FolderPresenter extends LinkTabPanelPresenter implements DocumentTabData {
     private static final TabData DATA = new TabDataImpl("Data");
     private static final TabData TASKS = new TabDataImpl("Active Tasks");
     private static final TabData PROCESSORS = new TabDataImpl("Processors");
@@ -45,6 +49,7 @@ public class FolderPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     private final ClientSecurityContext securityContext;
     private final TabContentProvider<SharedObject> tabContentProvider = new TabContentProvider<>();
     private ProcessorPresenter processorPresenter;
+    private DocRef docRef;
 
     @Inject
     public FolderPresenter(final EventBus eventBus,
@@ -53,10 +58,8 @@ public class FolderPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
                            final Provider<ClassificationWrappedStreamPresenter> streamPresenterProvider,
                            final Provider<ProcessorPresenter> processorPresenterProvider,
                            final Provider<StreamTaskPresenter> streamTaskPresenterProvider) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view);
         this.securityContext = securityContext;
-
-        tabContentProvider.setDirtyHandler(event -> setDirty(event.isDirty()));
 
         TabData selectedTab = null;
 
@@ -90,25 +93,28 @@ public class FolderPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
         callback.onReady(tabContentProvider.getPresenter(tab));
     }
 
-    @Override
-    public void onRead(final DocRef docRef, final SharedObject folder) {
-        super.onRead(docRef, folder);
-        tabContentProvider.read(docRef, folder);
-    }
-
-    @Override
-    protected void onWrite(final SharedObject folder) {
-        tabContentProvider.write(folder);
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
-        tabContentProvider.onReadOnly(readOnly);
+    public void read(final DocRef docRef) {
+        this.docRef = docRef;
+        tabContentProvider.read(docRef, null);
     }
 
     @Override
     public String getType() {
         return ExplorerConstants.FOLDER;
+    }
+
+    @Override
+    public boolean isCloseable() {
+        return true;
+    }
+
+    @Override
+    public String getLabel() {
+        return docRef.getName();
+    }
+
+    @Override
+    public Icon getIcon() {
+        return new SvgPreset(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getType() + ".svg", null, true);
     }
 }
