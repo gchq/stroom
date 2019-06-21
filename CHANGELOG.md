@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1177** : Data retention now works with is doc refs.
+
 * Issue **#1172** : Fixed logging detail for viewing docs.
 
 * Issue **#1166** : Fixed issue where users with only read permission could not copy items.

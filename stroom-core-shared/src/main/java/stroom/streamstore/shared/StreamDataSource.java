@@ -27,9 +27,7 @@ public class StreamDataSource {
     private static final List<DataSourceField> EXTENDED_FIELDS = new ArrayList<>();
     private static final Map<String, DataSourceField> EXTENDED_FIELD_MAP;
     private static final Map<String, String> STREAM_FIELDS = new HashMap<>();
-    private static final Map<String, String> FEED_FIELDS = new HashMap<>();
     private static final Map<String, String> STREAM_TYPE_FIELDS = new HashMap<>();
-    private static final Map<String, String> PIPELINE_FIELDS = new HashMap<>();
 
     public static final String FEED_NAME = "Feed";
     public static final String PIPELINE_UUID = "Pipeline";
@@ -57,9 +55,7 @@ public class StreamDataSource {
         STREAM_FIELDS.put(STREAM_ID, Stream.ID);
         STREAM_FIELDS.put(PARENT_STREAM_ID, Stream.PARENT_STREAM_ID);
         STREAM_FIELDS.put(CREATE_TIME, Stream.CREATE_MS);
-        FEED_FIELDS.put(FEED_NAME, Feed.NAME);
         STREAM_TYPE_FIELDS.put(STREAM_TYPE_NAME, StreamType.NAME);
-        PIPELINE_FIELDS.put(PIPELINE_UUID, PipelineEntity.UUID);
 
         // Non grouped fields
         FIELDS.add(DataSourceUtil.createDocRefField(FEED_NAME, Feed.ENTITY_TYPE));
@@ -129,15 +125,7 @@ public class StreamDataSource {
         return STREAM_FIELDS;
     }
 
-    public static Map<String, String> getFeedFields() {
-        return FEED_FIELDS;
-    }
-
     public static Map<String, String> getStreamTypeFields() {
         return STREAM_TYPE_FIELDS;
-    }
-
-    public static Map<String, String> getPipelineFields() {
-        return PIPELINE_FIELDS;
     }
 }

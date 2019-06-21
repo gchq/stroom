@@ -86,7 +86,7 @@ public class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationT
 
             // run the stream retention task which should 'delete' one stream
             final Period ageRange = new Period(null, timeOutsideRetentionPeriod + 1);
-            try (final DataRetentionStreamFinder dataRetentionStreamFinder = new DataRetentionStreamFinder(connection, expressionMatcherFactory)) {
+            try (final DataRetentionStreamFinder dataRetentionStreamFinder = new DataRetentionStreamFinder(connection, expressionMatcherFactory, null, null)) {
                 final long count = dataRetentionStreamFinder.getRowCount(ageRange, Collections.singleton(StreamDataSource.STREAM_ID));
                 Assert.assertEquals(1, count);
             }

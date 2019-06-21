@@ -20,13 +20,14 @@ package stroom.policy.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.util.PreparedStatementUtil;
 import stroom.entity.server.util.SqlBuilder;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
-import stroom.explorer.server.ExplorerService;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.policy.server.DataRetentionExecutor.ActiveRules;
 import stroom.policy.server.DataRetentionExecutor.Progress;
@@ -40,6 +41,7 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.task.TaskMonitor;
 
+import javax.inject.Named;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -57,11 +59,17 @@ public class DataRetentionStreamFinder implements AutoCloseable {
 
     private final Connection connection;
     private final ExpressionMatcherFactory expressionMatcherFactory;
+    private final FeedService feedService;
+    private final PipelineService pipelineService;
 
     private PreparedStatement preparedStatement;
 
     public DataRetentionStreamFinder(final Connection connection,
-                                     final ExpressionMatcherFactory expressionMatcherFactory) {
+                                     final ExpressionMatcherFactory expressionMatcherFactory,
+                                     @Named("cachedFeedService") final FeedService feedService,
+                                     @Named("cachedPipelineService") final PipelineService pipelineService) {
+        this.feedService = feedService;
+        this.pipelineService = pipelineService;
         Objects.requireNonNull(connection, "No connection");
         this.connection = connection;
         this.expressionMatcherFactory = expressionMatcherFactory;
@@ -151,9 +159,9 @@ public class DataRetentionStreamFinder implements AutoCloseable {
         sql.append("SELECT");
 
         final boolean includeStream = addFieldsToQuery(StreamDataSource.getStreamFields(), fieldSet, sql, "S");
-        final boolean includeFeed = addFieldsToQuery(StreamDataSource.getFeedFields(), fieldSet, sql, "F");
+        final boolean includeFeed = addIdFieldToQuery(StreamDataSource.FEED_NAME, fieldSet, sql, "F");
         final boolean includeStreamType = addFieldsToQuery(StreamDataSource.getStreamTypeFields(), fieldSet, sql, "ST");
-        final boolean includePipeline = addFieldsToQuery(StreamDataSource.getPipelineFields(), fieldSet, sql, "P");
+        final boolean includePipeline = addIdFieldToQuery(StreamDataSource.PIPELINE_UUID, fieldSet, sql, "P");
 
         if (count) {
             sql.setLength(0);
@@ -218,8 +226,14 @@ public class DataRetentionStreamFinder implements AutoCloseable {
                             attributeMap.put(fieldName, string);
                             break;
                         case DOC_REF:
-                            final String name = resultSet.getString(fieldName);
-                            attributeMap.put(fieldName, name);
+                            final Long id = resultSet.getLong(fieldName);
+                            if (StreamDataSource.FEED_NAME.equals(fieldName)) {
+                                final Feed feed = feedService.loadById(id);
+                                attributeMap.put(fieldName, DocRefUtil.create(feed));
+                            } else if (StreamDataSource.PIPELINE_UUID.equals(fieldName)) {
+                                final PipelineEntity pipeline = pipelineService.loadById(id);
+                                attributeMap.put(fieldName, DocRefUtil.create(pipeline));
+                            }
                             break;
                         case DATE_FIELD:
                         case ID:
@@ -252,6 +266,24 @@ public class DataRetentionStreamFinder implements AutoCloseable {
                 used.set(true);
             }
         });
+
+        return used.get();
+    }
+
+    private boolean addIdFieldToQuery(final String field, final Set<String> fieldSet, final SqlBuilder sql, final String alias) {
+        final AtomicBoolean used = new AtomicBoolean();
+
+        if (fieldSet.contains(field)) {
+            sql.append(" ");
+            sql.append(alias);
+            sql.append(".");
+            sql.append("ID");
+            sql.append(" AS ");
+            sql.append("'" + field + "'");
+            sql.append(",");
+
+            used.set(true);
+        }
 
         return used.get();
     }
