@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1172** : Fixed logging detail for viewing docs.
+
 * Issue **#1166** : Fixed issue where users with only read permission could not copy items.
 
 * Issue **#1174** : Reduced hits on the document permission cache.

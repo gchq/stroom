@@ -30,6 +30,7 @@ import stroom.entity.shared.NamedEntity;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.shared.Stream;
 
@@ -52,7 +53,15 @@ public class BasicEventInfoProvider implements EventInfoProvider {
 
     @Override
     public BaseObject createBaseObject(final java.lang.Object obj) {
-        if (obj instanceof BaseEntity) {
+        if (obj instanceof DocRef) {
+            final DocRef docRef = (DocRef) obj;
+            final Object object = new Object();
+            object.setType(docRef.getType());
+            object.setId(docRef.getUuid());
+            object.setName(docRef.getName());
+            return object;
+
+        } else if (obj instanceof BaseEntity) {
             final BaseEntity entity = (BaseEntity) obj;
 
             final String type = getObjectType(entity);
