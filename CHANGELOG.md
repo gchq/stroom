@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1175** : Dropping unnecessary index `explorerTreePath_descendant_idx`.
+
 * Issue **#747** : XSLT can now reference dictionaries by UUID.
 
 * Issue **#1167** : Use of folders to include child feeds and pipelines is now supported.
