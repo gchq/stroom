@@ -17,6 +17,7 @@
 
 package stroom.pipeline.server.writer;
 
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
@@ -119,23 +120,27 @@ public class StreamAppender extends AbstractAppender {
         Feed feed;
         if (feedRef != null) {
             feed = feedService.loadByUuid(feedRef.getUuid());
+            if (feed == null) {
+                fatal("Feed not found " + feedRef);
+            }
         } else {
             if (parentStream == null) {
-                throw new ProcessException("Unable to determine feed as no parent stream set");
+                fatal("Unable to determine feed as no parent stream set");
             }
 
             // Use current feed if none other has been specified.
             feed = feedService.load(parentStream.getFeed());
         }
 
-        if (streamType == null) {
-            errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), "Stream type not specified", null);
-            throw new ProcessException("Stream type not specified");
+        if (feed == null) {
+            fatal("Feed not specified");
+        }
+        if (Strings.isNullOrEmpty(streamType)) {
+            fatal("Stream type not specified");
         }
         final StreamType st = streamTypeService.loadByName(streamType);
         if (st == null) {
-            errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), "Stream type not specified", null);
-            throw new ProcessException("Stream type not specified");
+            fatal("Stream type not specified");
         }
 
         final Stream stream = Stream.createProcessedStream(parentStream, feed, st,
@@ -242,5 +247,10 @@ public class StreamAppender extends AbstractAppender {
     @PipelineProperty(description = "Choose if you want to split aggregated streams into separate output streams.", defaultValue = "false")
     public void setSplitAggregatedStreams(final boolean splitAggregatedStreams) {
         super.setSplitAggregatedStreams(splitAggregatedStreams);
+    }
+
+    private void fatal(final String message) {
+        errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), message, null);
+        throw new ProcessException(message);
     }
 }

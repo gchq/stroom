@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1170** : Extra validation to check valid feed provided for stream appender.
+
 * Issue **#1174** : The size of the document permissions cache is now configurable via the `stroom.security.documentPermissions.maxCacheSize` property.
 
 * Issue **#1176** : Created index on document permissions to improve performance.

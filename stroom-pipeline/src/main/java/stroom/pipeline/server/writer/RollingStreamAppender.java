@@ -17,6 +17,7 @@
 
 package stroom.pipeline.server.writer;
 
+import com.google.common.base.Strings;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.server.FeedService;
@@ -116,6 +117,9 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
         if (feed == null) {
             if (feedRef != null) {
                 feed = feedService.loadByUuid(feedRef.getUuid());
+                if (feed == null) {
+                    throw new ProcessException("Feed not found " + feedRef);
+                }
             } else {
                 final Stream parentStream = streamHolder.getStream();
                 if (parentStream == null) {
@@ -127,7 +131,10 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
             }
         }
 
-        if (streamType == null) {
+        if (feed == null) {
+            throw new ProcessException("Feed not specified or not found");
+        }
+        if (Strings.isNullOrEmpty(streamType)) {
             throw new ProcessException("Stream type not specified");
         }
     }
