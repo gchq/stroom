@@ -332,8 +332,8 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                                               final Map<String, String> otherCopiesByOriginalUuid,
                                               final Function<E, String> dataSupplier,
                                               final BiConsumer<E, String> dataReceiver) {
-
-        final E copiedEntity = loadByUuid(copyDocRef.getUuid(), Collections.emptySet(), null);
+        // We have only just copied the document so it won't have permissions yet. For this reason we will reload it without security.
+        final E copiedEntity = loadByUuidInsecure(copyDocRef.getUuid(), Collections.emptySet());
 
         // Rewrite UUID's of dependant documents
         String modifiedData = dataSupplier.apply(copiedEntity);
@@ -343,7 +343,10 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
         dataReceiver.accept(copiedEntity, modifiedData);
 
-        save(copiedEntity, null);
+        if (copiedEntity.getUuid() == null) {
+            copiedEntity.setUuid(UUID.randomUUID().toString());
+        }
+        entityServiceHelper.save(copiedEntity, null);
 
         return copyDocRef;
     }
