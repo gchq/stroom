@@ -24,6 +24,7 @@ import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.EntityAction;
+import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.security.shared.DocumentPermissions;
 import stroom.util.cache.CacheManager;
@@ -36,43 +37,82 @@ import java.util.concurrent.TimeUnit;
 @Component
 @EntityEventHandler(action = EntityAction.CLEAR_CACHE)
 public class DocumentPermissionsCache implements EntityEvent.Handler {
-    private static final int MAX_CACHE_ENTRIES = 10000;
+    public static final String MAXIMUM_SIZE_PROPERTY = "stroom.security.documentPermissions.maxCacheSize";
+
+    private static final int DEFAULT_MAXIMUM_SIZE = 100000;
 
     private final Provider<EntityEventBus> eventBusProvider;
+    private final StroomPropertyService stroomPropertyService;
 
-    private final LoadingCache<DocRef, DocumentPermissions> cache;
+    private final CacheManager cacheManager;
+    private final DocumentPermissionService documentPermissionService;
+
+    private volatile Integer lastMaximumSize;
+    private volatile LoadingCache<DocRef, DocumentPermissions> cache;
 
     @Inject
-    @SuppressWarnings("unchecked")
     public DocumentPermissionsCache(final CacheManager cacheManager,
                                     final DocumentPermissionService documentPermissionService,
-                                    final Provider<EntityEventBus> eventBusProvider) {
+                                    final Provider<EntityEventBus> eventBusProvider,
+                                    final StroomPropertyService stroomPropertyService) {
+        this.cacheManager = cacheManager;
+        this.documentPermissionService = documentPermissionService;
         this.eventBusProvider = eventBusProvider;
-
-        final CacheLoader<DocRef, DocumentPermissions> cacheLoader = CacheLoader.from(documentPermissionService::getPermissionsForDocument);
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(30, TimeUnit.MINUTES);
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("Document Permissions Cache", cacheBuilder, cache);
+        this.stroomPropertyService = stroomPropertyService;
     }
 
     DocumentPermissions get(final DocRef key) {
-        return cache.getUnchecked(key);
+        return getCache().getUnchecked(key);
     }
 
     void remove(final DocRef docRef) {
-        cache.invalidate(docRef);
+        if (cache != null) {
+            cache.invalidate(docRef);
+        }
         final EntityEventBus entityEventBus = eventBusProvider.get();
         EntityEvent.fire(entityEventBus, docRef, EntityAction.CLEAR_CACHE);
     }
 
     void clear() {
-        CacheUtil.clear(cache);
+        if (cache != null) {
+            CacheUtil.clear(cache);
+        }
     }
 
     @Override
     public void onChange(final EntityEvent event) {
-        cache.invalidate(event.getDocRef());
+        if (cache != null) {
+            cache.invalidate(event.getDocRef());
+        }
+    }
+
+    private int getMaximumSize() {
+        return stroomPropertyService.getIntProperty(MAXIMUM_SIZE_PROPERTY, DEFAULT_MAXIMUM_SIZE);
+    }
+
+    private LoadingCache<DocRef, DocumentPermissions> getCache() {
+        if (lastMaximumSize == null || lastMaximumSize != getMaximumSize()) {
+            createCache();
+        }
+        return cache;
+    }
+
+    @SuppressWarnings("unchecked")
+    private synchronized void createCache() {
+        final int maximumSize = getMaximumSize();
+        if (lastMaximumSize == null || lastMaximumSize != maximumSize) {
+            final CacheLoader<DocRef, DocumentPermissions> cacheLoader = CacheLoader.from(documentPermissionService::getPermissionsForDocument);
+            final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
+                    .maximumSize(maximumSize)
+                    .expireAfterAccess(30, TimeUnit.MINUTES);
+            final LoadingCache<DocRef, DocumentPermissions> cache = cacheBuilder.build(cacheLoader);
+            if (lastMaximumSize == null) {
+                cacheManager.registerCache("Document Permissions Cache", cacheBuilder, cache);
+            } else {
+                cacheManager.replaceCache("Document Permissions Cache", cacheBuilder, cache);
+            }
+            lastMaximumSize = maximumSize;
+            this.cache = cache;
+        }
     }
 }

@@ -1091,6 +1091,12 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
+                .name("stroom.security.documentPermissions.maxCacheSize")
+                .value("100000")
+                .description("The maximum size of the document permissions cache")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
                 .name("stroom.authentication.required")
                 .value("true")
                 .description("Choose whether Stroom requires authenticated access")
