@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1174** : Reduced hits on the document permission cache.
+
 * Issue **#1168** : Statistics searches now work when user only has `Use` permission.
 
 * Issue **#1170** : Extra validation to check valid feed provided for stream appender.

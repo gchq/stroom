@@ -246,57 +246,54 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         final DocRef docRef = new DocRef(documentType, documentId);
-        boolean result = hasDocumentPermission(userRef, docRef, permission);
 
-        // If the user doesn't have read permission then check to see if the current task has been set to have elevated permissions.
-        if (!result && DocumentPermissionNames.READ.equals(permission)) {
-            if (CurrentUserState.isElevatePermissions()) {
-                result = hasDocumentPermission(userRef, docRef, DocumentPermissionNames.USE);
+        // Get the permissions for the document.
+        final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
+        if (documentPermissions != null) {
+            // Test the supplied permission.
+            if (hasDocumentPermission(documentPermissions, userRef, permission)) {
+                return true;
             }
-        }
 
-        return result;
-    }
-
-    private boolean hasDocumentPermission(final UserRef userRef, final DocRef docRef, final String permission) {
-        // See if the user has an explicit permission.
-        boolean result = hasUserDocumentPermission(userRef, docRef, permission);
-
-        // See if the user belongs to a group that has permission.
-        if (!result) {
-            final List<UserRef> userGroups = userGroupsCache.get(userRef);
-            result = hasUserGroupsDocumentPermission(userGroups, docRef, permission);
-        }
-
-        return result;
-    }
-
-    private boolean hasUserGroupsDocumentPermission(final List<UserRef> userGroups, final DocRef docRef, final String permission) {
-        if (userGroups != null) {
-            for (final UserRef userGroup : userGroups) {
-                final boolean result = hasUserDocumentPermission(userGroup, docRef, permission);
-                if (result) {
-                    return result;
+            // If the user doesn't have read permission then check to see if the current task has been set to have elevated permissions.
+            if (DocumentPermissionNames.READ.equals(permission)) {
+                if (CurrentUserState.isElevatePermissions()) {
+                    return hasDocumentPermission(documentPermissions, userRef, DocumentPermissionNames.USE);
                 }
             }
         }
         return false;
     }
 
-    private boolean hasUserDocumentPermission(final UserRef userRef, final DocRef docRef, final String permission) {
-        final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
-        if (documentPermissions != null) {
-            final Set<String> permissions = documentPermissions.getPermissionsForUser(userRef);
-            if (permissions != null) {
-                String perm = permission;
-                while (perm != null) {
-                    if (permissions.contains(perm)) {
-                        return true;
-                    }
+    private boolean hasDocumentPermission(final DocumentPermissions documentPermissions, final UserRef userRef, final String permission) {
+        // See if the user has an explicit permission.
+        if (hasUserDocumentPermission(documentPermissions, userRef, permission)) {
+            return true;
+        }
 
-                    // If the user doesn't explicitly have this permission then see if they have a higher permission that infers this one.
-                    perm = DocumentPermissionNames.getHigherPermission(perm);
+        // See if the user belongs to a group that has permission.
+        final List<UserRef> userGroups = userGroupsCache.get(userRef);
+        if (userGroups != null) {
+            for (final UserRef userGroup : userGroups) {
+                if (hasUserDocumentPermission(documentPermissions, userGroup, permission)) {
+                    return true;
                 }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasUserDocumentPermission(final DocumentPermissions documentPermissions, final UserRef userRef, final String permission) {
+        final Set<String> permissions = documentPermissions.getPermissionsForUser(userRef);
+        if (permissions != null) {
+            String perm = permission;
+            while (perm != null) {
+                if (permissions.contains(perm)) {
+                    return true;
+                }
+
+                // If the user doesn't explicitly have this permission then see if they have a higher permission that infers this one.
+                perm = DocumentPermissionNames.getHigherPermission(perm);
             }
         }
         return false;
