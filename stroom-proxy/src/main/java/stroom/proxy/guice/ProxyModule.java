@@ -23,15 +23,19 @@ import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryReader;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
+import stroom.query.api.v2.DocRef;
 import stroom.ruleset.server.DataReceiptPolicyMetaMapFilterFactoryImpl;
 import stroom.ruleset.server.RuleSetService;
 import stroom.ruleset.server.RuleSetServiceImpl;
 import stroom.security.SecurityContext;
+import stroom.streamstore.server.CollectionService;
 import stroom.util.shared.Monitor;
 import stroom.util.task.MonitorImpl;
 
 import javax.ws.rs.client.Client;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.Set;
 
 public class ProxyModule extends AbstractModule {
     private final ProxyConfig proxyConfig;
@@ -73,8 +77,25 @@ public class ProxyModule extends AbstractModule {
         bind(SecurityContext.class).to(NoSecurityContext.class);
     }
 
-    @Provides @Singleton
+    @Provides
+    @Singleton
     Persistence providePersistence() {
         return new FSPersistence(Paths.get(proxyConfig.getProxyContentDir()));
+    }
+
+    // Proxy does not use the explorer tree so does not support collections of items.
+    @Provides
+    CollectionService collectionService() {
+        return new CollectionService() {
+            @Override
+            public Set<DocRef> getChildren(DocRef folder, String type) {
+                return Collections.emptySet();
+            }
+
+            @Override
+            public Set<DocRef> getDescendants(DocRef folder, String type) {
+                return Collections.emptySet();
+            }
+        };
     }
 }

@@ -8,7 +8,6 @@ import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.StringCriteria;
 import stroom.entity.shared.StringCriteria.MatchStyle;
-import stroom.explorer.server.ExplorerService;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
@@ -20,12 +19,11 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.streamstore.server.CollectionService;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.ProcessTaskDataSource;
-import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.TaskStatus;
 
 import javax.inject.Inject;
@@ -46,7 +44,7 @@ public class ExpressionToFindStreamTaskCriteria {
     private final FeedService feedService;
     private final PipelineService pipelineService;
     private final DictionaryStore dictionaryStore;
-    private final ExplorerService explorerService;
+    private final CollectionService collectionService;
 
     private static final Function<List<Op>, String> OP_STACK_DISPLAY = (s) ->
             s.stream().map(Op::getDisplayValue).collect(Collectors.joining(" -> "));
@@ -61,11 +59,11 @@ public class ExpressionToFindStreamTaskCriteria {
     public ExpressionToFindStreamTaskCriteria(@Named("cachedFeedService") final FeedService feedService,
                                               @Named("cachedPipelineService") final PipelineService pipelineService,
                                               final DictionaryStore dictionaryStore,
-                                              final ExplorerService explorerService) {
+                                              final CollectionService collectionService) {
         this.feedService = feedService;
         this.pipelineService = pipelineService;
         this.dictionaryStore = dictionaryStore;
-        this.explorerService = explorerService;
+        this.collectionService = collectionService;
     }
 
     public FindStreamTaskCriteria convert(final ExpressionOperator findStreamCriteria) {
@@ -460,7 +458,7 @@ public class ExpressionToFindStreamTaskCriteria {
                     values.addAll(words);
                     break;
                 case IN_FOLDER:
-                    final Set<DocRef> descendants = explorerService.getDescendants(term.getDocRef(), term.getField());
+                    final Set<DocRef> descendants = collectionService.getDescendants(term.getDocRef(), term.getField());
                     values.addAll(descendants.stream().map(DocRef::getUuid).collect(Collectors.toSet()));
                     break;
                 case IS_DOC_REF:

@@ -29,14 +29,13 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.datasource.DataSourceProviderRegistry;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.QueryDataLogUtil;
-import stroom.explorer.server.ExplorerService;
 import stroom.logging.StroomEventLoggingService;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.Insecure;
+import stroom.streamstore.server.CollectionService;
 
 import javax.inject.Inject;
 
@@ -46,19 +45,16 @@ public class SearchEventLogImpl implements SearchEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
-    private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final DictionaryStore dictionaryStore;
-    private final ExplorerService explorerService;
+    private final CollectionService collectionService;
 
     @Inject
     public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
-                              final DataSourceProviderRegistry dataSourceProviderRegistry,
                               final DictionaryStore dictionaryStore,
-                              final ExplorerService explorerService) {
+                              final CollectionService collectionService) {
         this.eventLoggingService = eventLoggingService;
-        this.dataSourceProviderRegistry = dataSourceProviderRegistry;
         this.dictionaryStore = dictionaryStore;
-        this.explorerService = explorerService;
+        this.collectionService = collectionService;
     }
 
     @Override
@@ -199,7 +195,7 @@ public class SearchEventLogImpl implements SearchEventLog {
         final Query query = new Query();
         final Advanced advanced = new Advanced();
         query.setAdvanced(advanced);
-        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), dictionaryStore, explorerService, expression);
+        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), dictionaryStore, collectionService, expression);
         return query;
     }
 }

@@ -20,7 +20,6 @@ package stroom.streamstore.server;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.dictionary.server.DictionaryStore;
-import stroom.explorer.server.ExplorerService;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -38,16 +37,16 @@ public class ExpressionMatcher {
 
     private final Map<String, DataSourceField> fieldMap;
     private final DictionaryStore dictionaryStore;
-    private final ExplorerService explorerService;
+    private final CollectionService collectionService;
     private final Map<DocRef, String[]> wordMap = new HashMap<>();
     private final Map<String, Pattern> patternMap = new HashMap<>();
 
     public ExpressionMatcher(final Map<String, DataSourceField> fieldMap,
                              final DictionaryStore dictionaryStore,
-                             final ExplorerService explorerService) {
+                             final CollectionService collectionService) {
         this.fieldMap = fieldMap;
         this.dictionaryStore = dictionaryStore;
-        this.explorerService = explorerService;
+        this.collectionService = collectionService;
     }
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
@@ -328,8 +327,8 @@ public class ExpressionMatcher {
     }
 
     private boolean isInFolder(final String fieldName, final DocRef docRef,
-                                   final DataSourceField field, final Object attribute) {
-        final Set<DocRef> descendants = explorerService.getDescendants(docRef, fieldName);
+                               final DataSourceField field, final Object attribute) {
+        final Set<DocRef> descendants = collectionService.getDescendants(docRef, fieldName);
         if (descendants != null && descendants.size() > 0) {
             for (final DocRef descendant : descendants) {
                 if (attribute instanceof DocRef) {

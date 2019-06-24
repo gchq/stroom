@@ -26,14 +26,9 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 
 import java.util.List;
-import java.util.Set;
 
 public interface ExplorerService {
     FetchExplorerNodeResult getData(FindExplorerNodeCriteria criteria);
-
-    Set<DocRef> getChildren(DocRef folder, String type);
-
-    Set<DocRef> getDescendants(DocRef folder, String type);
 
     DocRef create(String docType, String docName, DocRef destinationFolderRef, PermissionInheritance permissionInheritance);
 

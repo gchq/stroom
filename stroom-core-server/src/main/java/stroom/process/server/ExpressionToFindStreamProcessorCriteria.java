@@ -6,7 +6,6 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.StringCriteria;
-import stroom.explorer.server.ExplorerService;
 import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
@@ -15,10 +14,10 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.streamstore.server.CollectionService;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
-import stroom.streamtask.shared.StreamProcessor;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -37,7 +36,7 @@ import java.util.stream.Collectors;
 public class ExpressionToFindStreamProcessorCriteria {
     private final PipelineService pipelineService;
     private final DictionaryStore dictionaryStore;
-    private final ExplorerService explorerService;
+    private final CollectionService collectionService;
 
     private static final Function<List<Op>, String> OP_STACK_DISPLAY = (s) ->
             s.stream().map(Op::getDisplayValue).collect(Collectors.joining(" -> "));
@@ -48,10 +47,10 @@ public class ExpressionToFindStreamProcessorCriteria {
     @Inject
     public ExpressionToFindStreamProcessorCriteria(@Named("cachedPipelineService") final PipelineService pipelineService,
                                                    final DictionaryStore dictionaryStore,
-                                                   final ExplorerService explorerService) {
+                                                   final CollectionService collectionService) {
         this.pipelineService = pipelineService;
         this.dictionaryStore = dictionaryStore;
-        this.explorerService = explorerService;
+        this.collectionService = collectionService;
     }
 
     public FindStreamProcessorCriteria convert(final ExpressionOperator findStreamCriteria) {
@@ -471,7 +470,7 @@ public class ExpressionToFindStreamProcessorCriteria {
                     values.addAll(words);
                     break;
                 case IN_FOLDER:
-                    final Set<DocRef> descendants = explorerService.getDescendants(term.getDocRef(), term.getField());
+                    final Set<DocRef> descendants = collectionService.getDescendants(term.getDocRef(), term.getField());
                     values.addAll(descendants.stream().map(DocRef::getUuid).collect(Collectors.toSet()));
                     break;
                 case IS_DOC_REF:

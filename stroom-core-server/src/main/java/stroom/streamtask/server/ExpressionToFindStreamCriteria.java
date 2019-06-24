@@ -10,7 +10,6 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.StringCriteria;
 import stroom.entity.shared.StringCriteria.MatchStyle;
-import stroom.explorer.server.ExplorerService;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
@@ -23,6 +22,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.streamstore.server.CollectionService;
 import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.server.StreamAttributeKeyService;
 import stroom.streamstore.server.StreamTypeService;
@@ -68,7 +68,7 @@ public class ExpressionToFindStreamCriteria {
     private final FeedService feedService;
     private final PipelineService pipelineService;
     private final DictionaryStore dictionaryStore;
-    private final ExplorerService explorerService;
+    private final CollectionService collectionService;
     private final StreamAttributeKeyService streamAttributeKeyService;
     private final StreamTypeService streamTypeService;
 
@@ -85,13 +85,13 @@ public class ExpressionToFindStreamCriteria {
     public ExpressionToFindStreamCriteria(@Named("cachedFeedService") final FeedService feedService,
                                           @Named("cachedPipelineService") final PipelineService pipelineService,
                                           final DictionaryStore dictionaryStore,
-                                          final ExplorerService explorerService,
+                                          final CollectionService collectionService,
                                           final StreamAttributeKeyService streamAttributeKeyService,
                                           @Named("cachedStreamTypeService") StreamTypeService streamTypeService) {
         this.feedService = feedService;
         this.pipelineService = pipelineService;
         this.dictionaryStore = dictionaryStore;
-        this.explorerService = explorerService;
+        this.collectionService = collectionService;
         this.streamAttributeKeyService = streamAttributeKeyService;
         this.streamTypeService = streamTypeService;
     }
@@ -509,7 +509,7 @@ public class ExpressionToFindStreamCriteria {
                     values.addAll(words);
                     break;
                 case IN_FOLDER:
-                    final Set<DocRef> descendants = explorerService.getDescendants(term.getDocRef(), term.getField());
+                    final Set<DocRef> descendants = collectionService.getDescendants(term.getDocRef(), term.getField());
                     values.addAll(descendants.stream().map(DocRef::getUuid).collect(Collectors.toSet()));
                     break;
                 case IS_DOC_REF:

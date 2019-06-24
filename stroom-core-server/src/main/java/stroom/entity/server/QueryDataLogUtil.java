@@ -22,12 +22,12 @@ import event.logging.BaseAdvancedQueryOperator;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import stroom.dictionary.server.DictionaryStore;
-import stroom.explorer.server.ExplorerService;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.streamstore.server.CollectionService;
 
 import java.util.List;
 import java.util.Set;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 public class QueryDataLogUtil {
     public static void appendExpressionItem(final List<BaseAdvancedQueryItem> items,
                                             final DictionaryStore dictionaryStore,
-                                            final ExplorerService explorerService,
+                                            final CollectionService collectionService,
                                             final ExpressionItem item) {
         if (item == null) {
             return;
@@ -44,7 +44,7 @@ public class QueryDataLogUtil {
 
         if (item.enabled()) {
             if (item instanceof ExpressionOperator) {
-                appendOperator(items, dictionaryStore, explorerService, (ExpressionOperator) item);
+                appendOperator(items, dictionaryStore, collectionService, (ExpressionOperator) item);
             } else {
                 final ExpressionTerm expressionTerm = (ExpressionTerm) item;
 
@@ -103,8 +103,8 @@ public class QueryDataLogUtil {
                         }
                         break;
                     case IN_FOLDER:
-                        if (explorerService != null) {
-                            final Set<DocRef> docRefs = explorerService.getDescendants(expressionTerm.getDocRef(), expressionTerm.getField());
+                        if (collectionService != null) {
+                            final Set<DocRef> docRefs = collectionService.getDescendants(expressionTerm.getDocRef(), expressionTerm.getField());
                             if (docRefs != null && docRefs.size() > 0) {
                                 final String words = docRefs.stream().map(DocRef::getUuid).collect(Collectors.joining(","));
                                 if (words != null) {
@@ -134,7 +134,7 @@ public class QueryDataLogUtil {
 
     private static void appendOperator(final List<BaseAdvancedQueryItem> items,
                                        final DictionaryStore dictionaryStore,
-                                       final ExplorerService explorerService,
+                                       final CollectionService collectionService,
                                        final ExpressionOperator exp) {
         BaseAdvancedQueryOperator operator;
         if (exp.getOp() == Op.NOT) {
@@ -149,7 +149,7 @@ public class QueryDataLogUtil {
 
         if (exp.getChildren() != null) {
             for (final ExpressionItem child : exp.getChildren()) {
-                appendExpressionItem(operator.getAdvancedQueryItems(), dictionaryStore, explorerService, child);
+                appendExpressionItem(operator.getAdvancedQueryItems(), dictionaryStore, collectionService, child);
             }
         }
     }

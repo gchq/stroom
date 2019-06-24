@@ -30,7 +30,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionNames;
+import stroom.streamstore.server.CollectionService;
 import stroom.util.shared.HasNodeState;
 import stroom.util.spring.StroomScope;
 
@@ -52,7 +52,7 @@ import java.util.stream.Stream;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-class ExplorerServiceImpl implements ExplorerService {
+class ExplorerServiceImpl implements ExplorerService, CollectionService {
     private final ExplorerNodeService explorerNodeService;
     private final ExplorerTreeModel explorerTreeModel;
     private final ExplorerActionHandlersImpl explorerActionHandlers;

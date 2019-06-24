@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1167** : Fix for proxy to deal with lack of explorer folder based collections.
+
 
 ## [v6.0-beta.47] - 2019-06-21
 
