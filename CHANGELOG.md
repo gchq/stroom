@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.49] - 2019-06-24
+
+* Updated to allow stacks to be built at this version.
+
 
 ## [v6.0-beta.48] - 2019-06-24
 
@@ -1661,7 +1665,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.48...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.49...6.0
+[v6.0-beta.49]: https://github.com/gchq/stroom/compare/v7.0-beta.48...v6.0-beta.49
 [v6.0-beta.48]: https://github.com/gchq/stroom/compare/v7.0-beta.47...v6.0-beta.48
 [v6.0-beta.47]: https://github.com/gchq/stroom/compare/v7.0-beta.46...v6.0-beta.47
 [v6.0-beta.46]: https://github.com/gchq/stroom/compare/v7.0-beta.45...v6.0-beta.46
