@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1154** : Search now terminates during result creation if it is asked to do so.
+
 * Issue **#1167** : Fix for proxy to deal with lack of explorer folder based collections.
 
 

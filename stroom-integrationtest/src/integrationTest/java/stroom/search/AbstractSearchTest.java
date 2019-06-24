@@ -38,6 +38,7 @@ import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
+import stroom.util.shared.HasTerminateImpl;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
@@ -53,7 +54,7 @@ import java.util.function.Function;
 
 public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
 
-    @Resource(name="luceneSearchResponseCreatorManager")
+    @Resource(name = "luceneSearchResponseCreatorManager")
     private SearchResponseCreatorManager searchResponseCreatorManager;
 
     protected SearchResponse search(SearchRequest searchRequest) {
@@ -65,10 +66,10 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(
                 new SearchResponseCreatorCache.Key(searchRequest));
 
-        SearchResponse response = searchResponseCreator.create(searchRequest);
+        SearchResponse response = searchResponseCreator.create(searchRequest, new HasTerminateImpl());
         try {
             while (!response.complete()) {
-                response = searchResponseCreator.create(searchRequest);
+                response = searchResponseCreator.create(searchRequest, new HasTerminateImpl());
 
                 if (!response.complete()) {
                     ThreadUtil.sleep(1000);
