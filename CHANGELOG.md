@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.48] - 2019-06-24
+
 * Issue **#1154** : Search now terminates during result creation if it is asked to do so.
 
 * Issue **#1167** : Fix for proxy to deal with lack of explorer folder based collections.
@@ -1658,7 +1661,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.47...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.48...6.0
+[v6.0-beta.48]: https://github.com/gchq/stroom/compare/v7.0-beta.47...v6.0-beta.48
 [v6.0-beta.47]: https://github.com/gchq/stroom/compare/v7.0-beta.46...v6.0-beta.47
 [v6.0-beta.46]: https://github.com/gchq/stroom/compare/v7.0-beta.45...v6.0-beta.46
 [v6.0-beta.45]: https://github.com/gchq/stroom/compare/v7.0-beta.44...v6.0-beta.45
