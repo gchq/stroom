@@ -39,6 +39,7 @@ import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.search.server.IndexDataSourceFieldUtil;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
+import stroom.task.server.TaskContext;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -66,14 +67,17 @@ public class StroomIndexQueryResource implements HasHealthCheck {
     private final SearchResponseCreatorManager searchResponseCreatorManager;
     private final IndexService indexService;
     private final SecurityContext securityContext;
+    private final TaskContext taskContext;
 
     @Inject
     public StroomIndexQueryResource(@Named("luceneSearchResponseCreatorManager") final SearchResponseCreatorManager searchResponseCreatorManager,
                                     final IndexService indexService,
-                                    final SecurityContext securityContext) {
+                                    final SecurityContext securityContext,
+                                    final TaskContext taskContext) {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.indexService = indexService;
         this.securityContext = securityContext;
+        this.taskContext = taskContext;
     }
 
     @POST
@@ -108,7 +112,7 @@ public class StroomIndexQueryResource implements HasHealthCheck {
         final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(new SearchResponseCreatorCache.Key(request));
 
         //create a response from the data found so far, this could be complete/incomplete
-        SearchResponse searchResponse = searchResponseCreator.create(request);
+        SearchResponse searchResponse = searchResponseCreator.create(request, taskContext);
 
         LAMBDA_LOGGER.trace(() ->
                 getResponseInfoForLogging(request, searchResponse));

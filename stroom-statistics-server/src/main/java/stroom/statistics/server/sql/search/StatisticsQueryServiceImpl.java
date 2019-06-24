@@ -22,6 +22,7 @@ import stroom.statistics.server.sql.StatisticsQueryService;
 import stroom.statistics.server.sql.datasource.StatisticStoreCache;
 import stroom.statistics.server.sql.datasource.StatisticsDataSourceProvider;
 import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.task.server.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -45,16 +46,19 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     private final StatisticStoreCache statisticStoreCache;
     private final SearchResponseCreatorManager searchResponseCreatorManager;
     private final SecurityContext securityContext;
+    private final TaskContext taskContext;
 
     @Inject
     public StatisticsQueryServiceImpl(final StatisticsDataSourceProvider statisticsDataSourceProvider,
                                       final StatisticStoreCache statisticStoreCache,
                                       @Named("sqlStatisticsSearchResponseCreatorManager") final SearchResponseCreatorManager searchResponseCreatorManager,
-                                      final SecurityContext securityContext) {
+                                      final SecurityContext securityContext,
+                                      final TaskContext taskContext) {
         this.statisticsDataSourceProvider = statisticsDataSourceProvider;
         this.statisticStoreCache = statisticStoreCache;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.securityContext = securityContext;
+        this.taskContext = taskContext;
     }
 
 
@@ -221,7 +225,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                     new SearchResponseCreatorCache.Key(searchRequest));
 
             // This will build a response from the search whether it is still running or has finished
-            searchResponse = searchResponseCreator.create(searchRequest);
+            searchResponse = searchResponseCreator.create(searchRequest, taskContext);
         } catch (Exception e) {
             searchResponse = SearchResponseCreator.createErrorResponse(Collections.singletonList(e.getMessage()));
         }

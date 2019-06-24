@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1154** : Search now terminates during result creation if it is asked to do so.
+
 
 ## [v6.0-beta.47] - 2019-06-21
 
