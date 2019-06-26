@@ -7,11 +7,8 @@ import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.StroomStreamException;
 import stroom.proxy.repo.StroomZipEntry;
-import stroom.util.logging.LambdaLogger;
 import stroom.util.thread.ThreadUtil;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -28,7 +25,6 @@ public class ForwardStreamHandler implements StreamHandler {
     private static Logger LOGGER = LoggerFactory.getLogger(ForwardStreamHandler.class);
     private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
 
-    private static final HostnameVerifier PERMISSIVE_HOSTNAME_VERIFIER = (s, sslSession) -> true;
 
 //    private final Client jerseyClient;
     private final LogStream logStream;
@@ -79,7 +75,7 @@ public class ForwardStreamHandler implements StreamHandler {
 
         connection.setRequestProperty("User-Agent", userAgent);
 
-        applySSLConfiguration();
+        SSLUtil.applySSLConfiguration(connection, sslSocketFactory, forwardDestinationConfig.getSslConfig());
 
         if (forwardTimeoutMs != null) {
             connection.setConnectTimeout(forwardTimeoutMs);
@@ -156,93 +152,6 @@ public class ForwardStreamHandler implements StreamHandler {
         }
     }
 
-    private void applySSLConfiguration() {
-        if (connection instanceof HttpsURLConnection) {
-            LOGGER.debug("Connection for {} is HTTPS", forwardUrl);
-
-            final HttpsURLConnection httpsConnection = (HttpsURLConnection) connection;
-
-            if (sslSocketFactory == null) {
-                throw new RuntimeException(LambdaLogger.buildMessage(
-                        "Missing SSLSocketFactory for forward url {}. Is the SSL config missing?", forwardUrl));
-            }
-
-//            final KeyStore keyStore;
-//            final String keyStorePath = "/home/dev/git_work/stroom-resources/dev-resources/certs/client/client.jks";
-//            final String keyStorePassword = "password";
-//            final String keyStoreType = "JKS";
-//            final String trustStorePath = "/home/dev/git_work/stroom-resources/dev-resources/certs/certificate-authority/ca.jks";
-//            final String trustStorePassword = "password";
-//            final String trustStoreType = "JKS";
-//            final String sslProtocol = "TLSv1.2";
-//            final boolean isHostNameVerificationEnabled = false;
-//
-//            final KeyStore trustStore;
-//            final TrustManagerFactory trustManagerFactory;
-//            final KeyManagerFactory keyManagerFactory;
-//            final SSLContext sslContext;
-//            InputStream inputStream;
-//
-//            // Load the keystore
-//            try {
-//                keyStore = KeyStore.getInstance(keyStoreType);
-//                inputStream = new FileInputStream(keyStorePath);
-//                LOGGER.info("Loading keystore {} of type {}", keyStorePath, keyStoreType);
-//                keyStore.load(inputStream, keyStorePassword.toCharArray());
-//            } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
-//                throw new RuntimeException(LambdaLogger.buildMessage("Error locating and loading keystore {} with type",
-//                        keyStorePath, keyStoreType), e);
-//            }
-//
-//            // Load the truststore
-//            try {
-//                trustStore = KeyStore.getInstance(trustStoreType);
-//                inputStream = new FileInputStream(trustStorePath);
-//                LOGGER.info("Loading truststore {} of type {}", trustStorePath, trustStoreType);
-//                trustStore.load(inputStream, trustStorePassword.toCharArray());
-//            } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
-//                throw new RuntimeException(LambdaLogger.buildMessage("Error locating and loading truststore {} with type",
-//                        trustStorePath, trustStoreType), e);
-//            }
-//
-//            try {
-//                keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-//                keyManagerFactory.init(keyStore, keyStorePassword.toCharArray());
-//            } catch (NoSuchAlgorithmException | KeyStoreException | UnrecoverableKeyException e) {
-//                throw new RuntimeException(LambdaLogger.buildMessage("Error initialising KeyManagerFactory for keystore {}",
-//                        keyStorePath), e);
-//            }
-//
-//            try {
-//                trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-//                trustManagerFactory.init(trustStore);
-//            } catch (NoSuchAlgorithmException | KeyStoreException e) {
-//                throw new RuntimeException(LambdaLogger.buildMessage("Error initialising TrustManagerFactory for truststore {}",
-//                        trustStorePath), e);
-//            }
-//
-//            try {
-//                sslContext = SSLContext.getInstance(sslProtocol);
-//                sslContext.init(
-//                        keyManagerFactory.getKeyManagers(),
-//                        trustManagerFactory.getTrustManagers(),
-//                        null);
-//            } catch (NoSuchAlgorithmException | KeyManagementException e) {
-//                throw new RuntimeException("Error initialising ssl context", e);
-//            }
-//
-//            SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-
-            LOGGER.debug("Setting custom ssl socket factory");
-            httpsConnection.setSSLSocketFactory(sslSocketFactory);
-
-            if (forwardDestinationConfig.getSslConfig() != null &&
-                    !forwardDestinationConfig.getSslConfig().isHostnameVerificationEnabled()) {
-                LOGGER.debug("Disabling hostname verification");
-                httpsConnection.setHostnameVerifier(PERMISSIVE_HOSTNAME_VERIFIER);
-            }
-        }
-    }
 
     @Override
     public void handleError() throws IOException {

@@ -17,13 +17,9 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -55,14 +51,12 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
     private final ProxyRepositoryConfig proxyRepositoryConfig;
     private final Map<String, ForwardDestinationConfig> urlToForwardDestinationConfigMap;
     private final Map<String, SSLSocketFactory> urlToSocketFactoryMap;
-    private final List<WebTarget> dataFeedWebTargets;
     private final String userAgentString;
 
     @Inject
     ForwardStreamHandlerFactory(final LogStream logStream,
                                 final ForwardStreamConfig forwardStreamConfig,
-                                final ProxyRepositoryConfig proxyRepositoryConfig,
-                                final Client jerseyClient) {
+                                final ProxyRepositoryConfig proxyRepositoryConfig) {
         this.logStream = logStream;
         this.forwardStreamConfig = forwardStreamConfig;
         this.proxyRepositoryConfig = proxyRepositoryConfig;
@@ -90,18 +84,10 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
                         return Tuple.of(url, sslSocketFactory);
                     })
                     .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
-
-            // TODO change to use same ssl config as forwarding
-            // Create WebTargets for all urls
-            this.dataFeedWebTargets = urlToForwardDestinationConfigMap.keySet().stream()
-                    .map(jerseyClient::target)
-                    .collect(Collectors.toList());
-
         } else {
             LOGGER.info("Forwarding of streams is disabled");
             this.urlToForwardDestinationConfigMap = Collections.emptyMap();
             this.urlToSocketFactoryMap = Collections.emptyMap();
-            this.dataFeedWebTargets = Collections.emptyList();
         }
 
         if (proxyRepositoryConfig.isStoringEnabled() && StringUtils.isEmpty(proxyRepositoryConfig.getRepoDir())) {
@@ -144,36 +130,6 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
         });
     }
 
-    private Optional<String> checkWebTargetHealth(final WebTarget webTarget) {
-        LOGGER.debug("Sending empty health check POST to {}", webTarget);
-        try {
-            // send an HTTP OPTIONS request just to check the url can be reached
-            final Response response = webTarget
-                    .request()
-                    .options();
-            try {
-                LOGGER.debug("Received response {}", response);
-                if (response == null) {
-                    return Optional.of("Unhealthy: Response is null");
-                } else if (response.getStatusInfo().getStatusCode() != 200) {
-                    return Optional.of(Integer.toString(response.getStatusInfo().getStatusCode()));
-                } else {
-                    final String allowedMethods = response.getHeaderString("Allow");
-                    if (! allowedMethods.contains("POST")) {
-                        return Optional.of("Unhealthy: POST method not supported");
-                    }
-                    return Optional.empty();
-                }
-            } finally {
-                if (response != null) {
-                    response.close();
-                }
-            }
-        } catch (Exception e) {
-            return Optional.of("Unhealthy: Error sending request - " + e.getMessage());
-        }
-    }
-
     @Override
     public HealthCheck.Result getHealth() {
         final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
@@ -184,17 +140,21 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
                 .withDetail("forwardingEnabled", forwardStreamConfig.isForwardingEnabled());
 
         if (forwardStreamConfig.isForwardingEnabled()) {
-            final Map<URI, String> postResults = new ConcurrentHashMap<>();
+            final Map<String, String> postResults = new ConcurrentHashMap<>();
             // parallelStream so we can hit multiple URLs concurrently
-            dataFeedWebTargets.parallelStream()
-                    .forEach(webTarget -> {
-                        Optional<String> errorMsg = checkWebTargetHealth(webTarget);
+            urlToForwardDestinationConfigMap.forEach((url, destinationConfig) -> {
 
-                        if (errorMsg.isPresent()) {
-                            allHealthy.set(false);
-                        }
-                        postResults.put(webTarget.getUri(), errorMsg.orElse("Healthy"));
-                    });
+                // sslSocketFactory may be null if the url is http
+                final SSLSocketFactory sslSocketFactory = urlToSocketFactoryMap.get(url);
+
+                final Optional<String> errorMsg = SSLUtil.checkUrlHealth(
+                        url, sslSocketFactory, destinationConfig.getSslConfig(), "POST");
+
+                if (errorMsg.isPresent()) {
+                    allHealthy.set(false);
+                }
+                postResults.put(url, errorMsg.orElse("Healthy"));
+            });
             resultBuilder
                     .withDetail("forwardUrls", postResults);
         }
@@ -206,7 +166,6 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
         }
         return resultBuilder.build();
     }
-
 
     private SSLSocketFactory createSslSocketFactory(final SSLConfig sslConfig) {
         Objects.requireNonNull(sslConfig);
