@@ -68,6 +68,7 @@ import stroom.proxy.guice.ProxyModule;
 import stroom.proxy.handler.ForwardStreamHandlerFactory;
 import stroom.proxy.handler.RemoteFeedStatusService;
 import stroom.proxy.repo.ProxyLifecycle;
+import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
@@ -193,10 +194,11 @@ public class App extends Application<Config> {
         HealthCheckRegistry healthCheckRegistry = environment.healthChecks();
         // Add health checks
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, DictionaryResource.class);
-        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RuleSetResource.class);
-        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ForwardStreamHandlerFactory.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, FeedStatusResource.class);
+        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ForwardStreamHandlerFactory.class);
+        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ProxyRepositoryManager.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RemoteFeedStatusService.class);
+        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RuleSetResource.class);
 
         healthCheckRegistry.register(configuration.getProxyConfig().getClass().getName(), new HealthCheck() {
             @Override
