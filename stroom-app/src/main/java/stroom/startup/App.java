@@ -108,7 +108,6 @@ import stroom.spring.ServerComponentScanConfiguration;
 import stroom.spring.ServerConfiguration;
 import stroom.statistics.server.sql.search.SqlStatisticsQueryResource;
 import stroom.statistics.spring.StatisticsConfiguration;
-import stroom.util.BuildInfoUtil;
 import stroom.util.HealthCheckUtils;
 import stroom.util.config.StroomProperties;
 import stroom.util.db.DbUtil;
@@ -128,7 +127,6 @@ public class App extends Application<Config> {
 
     // This name is used by dropwizard metrics
     public static final String PROXY_JERSEY_CLIENT_NAME = "stroom-proxy_jersey_client";
-    public static final String PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX = "stroom-proxy/";
 
     private static String configPath;
 
@@ -268,7 +266,7 @@ public class App extends Application<Config> {
         // If the userAgent has not been explicitly set in the config then set it based
         // on the build version
         if (! jerseyClientConfiguration.getUserAgent().isPresent()) {
-            final String userAgent = PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX + BuildInfoUtil.getBuildVersion();
+            final String userAgent = ForwardStreamHandlerFactory.getUserAgentString(null);
             LOGGER.info("Setting jersey client user agent string to [{}]", userAgent);
             jerseyClientConfiguration.setUserAgent(Optional.of(userAgent));
         }

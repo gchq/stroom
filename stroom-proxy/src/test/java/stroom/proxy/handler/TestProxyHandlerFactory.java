@@ -88,8 +88,14 @@ public class TestProxyHandlerFactory extends StroomUnitTest {
         proxyRepositoryConfig.setRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()));
         proxyRepositoryConfig.setStoringEnabled(isStoringEnabled);
 
-        forwardRequestConfig.setForwardUrl("https://url1,https://url2");
         forwardRequestConfig.setForwardingEnabled(isForwardingenabled);
+        ForwardDestinationConfig destinationConfig1 = new ForwardDestinationConfig();
+        destinationConfig1.setForwardUrl("https://url1");
+
+        ForwardDestinationConfig destinationConfig2 = new ForwardDestinationConfig();
+        destinationConfig1.setForwardUrl("https://url2");
+        forwardRequestConfig.getForwardDestinations().add(destinationConfig1);
+        forwardRequestConfig.getForwardDestinations().add(destinationConfig2);
 
         final ProxyRepositoryManager proxyRepositoryManager = new ProxyRepositoryManager(proxyRepositoryConfig);
         final Provider<ProxyRepositoryStreamHandler> proxyRepositoryRequestHandlerProvider = () -> new ProxyRepositoryStreamHandler(proxyRepositoryManager);
