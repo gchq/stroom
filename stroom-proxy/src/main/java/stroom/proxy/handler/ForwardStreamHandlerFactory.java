@@ -1,8 +1,6 @@
 package stroom.proxy.handler;
 
 import com.codahale.metrics.health.HealthCheck;
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +31,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -44,13 +41,12 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ForwardStreamHandlerFactory.class);
 
-    public static final String USER_AGENT_FORMAT = "stroom-proxy/{} java/{}";
+    private static final String USER_AGENT_FORMAT = "stroom-proxy/{} java/{}";
 
     private final LogStream logStream;
     private final ForwardStreamConfig forwardStreamConfig;
     private final ProxyRepositoryConfig proxyRepositoryConfig;
-    private final Map<String, ForwardDestinationConfig> urlToForwardDestinationConfigMap;
-    private final Map<String, SSLSocketFactory> urlToSocketFactoryMap;
+    private final List<ForwardDestination> destinations;
     private final String userAgentString;
 
     @Inject
@@ -71,23 +67,20 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
             }
             LOGGER.info("Initialising ForwardStreamHandlerFactory with user agent string [{}]", userAgentString);
 
-            this.urlToForwardDestinationConfigMap = forwardStreamConfig.getForwardDestinations().stream()
-                    .collect(Collectors.toMap(ForwardDestinationConfig::getForwardUrl, Function.identity()));
-
-            // create a SSLSocketFactory for each destination that has ssl config
-            this.urlToSocketFactoryMap = forwardStreamConfig.getForwardDestinations().stream()
-                    .filter(forwardDestinationConfig -> forwardDestinationConfig.getSslConfig() != null)
-                    .map(forwardDestinationConfig -> {
-                        LOGGER.info("Configuring SSLSocketFactory for destination {}", forwardDestinationConfig.getForwardUrl());
-                        String url = forwardDestinationConfig.getForwardUrl();
-                        SSLSocketFactory sslSocketFactory = createSslSocketFactory(forwardDestinationConfig.getSslConfig());
-                        return Tuple.of(url, sslSocketFactory);
+            this.destinations = forwardStreamConfig.getForwardDestinations()
+                    .stream()
+                    .map(config -> {
+                        LOGGER.info("Configuring SSLSocketFactory for destination {}", config.getForwardUrl());
+                        SSLSocketFactory sslSocketFactory = null;
+                        if (config.getSslConfig() != null) {
+                            sslSocketFactory = createSslSocketFactory(config.getSslConfig());
+                        }
+                        return new ForwardDestination(config, sslSocketFactory);
                     })
-                    .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
+                    .collect(Collectors.toList());
         } else {
             LOGGER.info("Forwarding of streams is disabled");
-            this.urlToForwardDestinationConfigMap = Collections.emptyMap();
-            this.urlToSocketFactoryMap = Collections.emptyMap();
+            this.destinations = Collections.emptyList();
         }
 
         if (proxyRepositoryConfig.isStoringEnabled() && StringUtils.isEmpty(proxyRepositoryConfig.getRepoDir())) {
@@ -117,17 +110,11 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
     }
 
     private void add(final List<StreamHandler> handlers) {
-        urlToForwardDestinationConfigMap.forEach((url, forwardDestinationConfig) -> {
-
-            // may be null if the dest is non-ssl
-            final SSLSocketFactory sslSocketFactory = urlToSocketFactoryMap.get(url);
-
-            handlers.add(new ForwardStreamHandler(
-                    logStream,
-                    forwardDestinationConfig,
-                    sslSocketFactory,
-                    userAgentString));
-        });
+        destinations.forEach(destination -> handlers.add(new ForwardStreamHandler(
+                logStream,
+                destination.config,
+                destination.sslSocketFactory,
+                userAgentString)));
     }
 
     @Override
@@ -142,13 +129,10 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
         if (forwardStreamConfig.isForwardingEnabled()) {
             final Map<String, String> postResults = new ConcurrentHashMap<>();
             // parallelStream so we can hit multiple URLs concurrently
-            urlToForwardDestinationConfigMap.forEach((url, destinationConfig) -> {
-
-                // sslSocketFactory may be null if the url is http
-                final SSLSocketFactory sslSocketFactory = urlToSocketFactoryMap.get(url);
-
+            destinations.forEach(destination -> {
+                final String url = destination.config.getForwardUrl();
                 final Optional<String> errorMsg = SSLUtil.checkUrlHealth(
-                        url, sslSocketFactory, destinationConfig.getSslConfig(), "POST");
+                        url, destination.sslSocketFactory, destination.config.getSslConfig(), "POST");
 
                 if (errorMsg.isPresent()) {
                     allHealthy.set(false);
@@ -245,6 +229,16 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
             // stroom-proxy/v6.0-beta.46 java/1.8.0_181
             return LambdaLogger.buildMessage(USER_AGENT_FORMAT,
                     BuildInfoUtil.getBuildVersion(), System.getProperty("java.version"));
+        }
+    }
+
+    private static class ForwardDestination {
+        private final ForwardDestinationConfig config;
+        private final SSLSocketFactory sslSocketFactory;
+
+        private ForwardDestination(final ForwardDestinationConfig config, final SSLSocketFactory sslSocketFactory) {
+            this.config = config;
+            this.sslSocketFactory = sslSocketFactory;
         }
     }
 }
