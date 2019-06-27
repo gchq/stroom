@@ -318,8 +318,9 @@ public class ManualProxyAggregationTest {
                 filePackProcessorProvider,
                 proxyDir,
                 10,
-                maxAggregation,
                 10000,
+                10000,
+                maxAggregation,
                 maxStreamSize);
         proxyAggregationExecutor.exec(new DummyTask());
     }

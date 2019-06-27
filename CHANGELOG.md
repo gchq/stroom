@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1152** : You can now control the maximum number of files that are fragmented prior to proxy aggregation with `stroom.maxFileScan`.
+
 
 ## [v6.0-beta.46] - 2019-06-11
 

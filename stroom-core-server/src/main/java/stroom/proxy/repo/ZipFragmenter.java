@@ -29,7 +29,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Set;
 
 class ZipFragmenter {
@@ -41,7 +40,7 @@ class ZipFragmenter {
         this.errorReceiver = errorReceiver;
     }
 
-    public void fragment(final Path path, final BasicFileAttributes attrs) {
+    public void fragment(final Path path) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Getting zip info for  '" + FileUtil.getCanonicalPath(path) + "'");
         }
