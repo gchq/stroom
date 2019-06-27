@@ -5,9 +5,12 @@ set -e
 # This avoids permission denied if the data volume is mounted by root
 #if [ "$1" = 'stroom' -a "$(id -u)" = '0' ]; then
 if [ "$(id -u)" = '0' ]; then
+    # shellcheck disable=SC1091
     . /stroom/add_container_identity_headers.sh /stroom/logs/extra_headers.txt
 
     # change ownership of docker volume directories
+    # WARNING: use chown -R with caution as some dirs (e.g. proxy-repo) can
+    # contain MANY files, resulting in a big delay on container start
     chown stroom:stroom /stroom/logs
     chown stroom:stroom /stroom/logs/extra_headers.txt
     chown stroom:stroom /stroom/output

@@ -5,10 +5,12 @@ set -e
 # This avoids permission denied if the data volume is mounted by root
 #if [ "$1" = 'proxy' -a "$(id -u)" = '0' ]; then
 if [ "$(id -u)" = '0' ]; then
+    # shellcheck disable=SC1091
     . /stroom-proxy/add_container_identity_headers.sh /stroom-proxy/logs/extra_headers.txt
 
     # change ownership of docker volume directories
-    chown proxy:proxy /stroom-proxy/config
+    # WARNING: use chown -R with caution as some dirs (e.g. proxy-repo) can
+    # contain MANY files, resulting in a big delay on container start
     chown proxy:proxy /stroom-proxy/content
     chown proxy:proxy /stroom-proxy/logs
     chown proxy:proxy /stroom-proxy/logs/extra_headers.txt
