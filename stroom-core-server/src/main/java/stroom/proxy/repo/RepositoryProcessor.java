@@ -145,8 +145,7 @@ public final class RepositoryProcessor {
             Files.walkFileTree(stroomZipRepository.getRootDir(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                    final String fileName = dir.getFileName().toString();
-                    if (fileName.endsWith(PathConstants.PARTS)) {
+                    if (PartsPathUtil.isPartsDir(dir)) {
                         return FileVisitResult.SKIP_SUBTREE;
                     }
                     return super.preVisitDirectory(dir, attrs);
@@ -163,7 +162,7 @@ public final class RepositoryProcessor {
                     // Process only raw zip repo files, i.e. files that have not already been created by the fragmenting process.
                     final String fileName = file.getFileName().toString();
                     if (fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) &&
-                            !fileName.contains(PathConstants.PART)) {
+                            !PartsPathUtil.isPart(file)) {
                         fileCount.incrementAndGet();
                         zipFragmenter.process(file);
                     }
@@ -209,11 +208,8 @@ public final class RepositoryProcessor {
             Files.walkFileTree(stroomZipRepository.getRootDir(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                    final String fileName = dir.getFileName().toString();
-                    if (fileName.endsWith(PathConstants.PARTS)) {
-                        final String stem = fileName.substring(0, fileName.length() - PathConstants.PARTS.length());
-                        final String originalZip = stem + StroomZipRepository.ZIP_EXTENSION;
-                        final Path originalZipFile = dir.getParent().resolve(originalZip);
+                    if (PartsPathUtil.isPartsDir(dir)) {
+                        final Path originalZipFile = PartsPathUtil.createParentPartsZipFile(dir);
 
                         // Make sure the parts directory that this file is in is not a partially fragmented output directory.
                         if (Files.exists(originalZipFile)) {
@@ -232,8 +228,7 @@ public final class RepositoryProcessor {
                     }
 
                     // Process only part files, i.e. files that have been created by the fragmenting process.
-                    final String fileName = file.getFileName().toString();
-                    if (fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) && fileName.contains(PathConstants.PART)) {
+                    if (PartsPathUtil.isPart(file)) {
                         fileProcessor.process(file, attrs);
                     }
 

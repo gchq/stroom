@@ -46,12 +46,8 @@ class ZipFragmenter {
         }
 
         // Create output dir.
-        final String fileName = path.getFileName().toString();
-        final int index = fileName.lastIndexOf(".");
-        if (index != -1) {
-            final String stem = fileName.substring(0, index);
-            final Path outputDir = path.getParent().resolve(stem + PathConstants.PARTS);
-
+        final Path outputDir = PartsPathUtil.createPartsDir(path);
+        if (outputDir != null) {
             if (!Files.isDirectory(outputDir)) {
                 try {
                     Files.createDirectory(outputDir);
@@ -91,7 +87,7 @@ class ZipFragmenter {
                                 }
                             }
 
-                            final Path outputFile = currentDir.resolve(stem + PathConstants.PART + idString + ".zip");
+                            final Path outputFile = PartsPathUtil.createPart(currentDir, path, idString);
                             // If output file already exists then it ought to be overwritten automatically.
                             try (final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(outputFile)) {
                                 transferEntry(stroomZipFile, stroomZipOutputStream, baseName, StroomZipFileType.Meta);
@@ -112,7 +108,7 @@ class ZipFragmenter {
                 if (moveOriginalFile) {
                     try {
                         final String idString = StroomFileNameUtil.idToString(i);
-                        final Path outputFile = currentDir.resolve(stem + PathConstants.PART + idString + ".zip");
+                        final Path outputFile = PartsPathUtil.createPart(currentDir, path, idString);
                         Files.move(
                                 path,
                                 outputFile,
