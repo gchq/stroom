@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix incorrect default keystore in proxy config yaml.
+
+* Rename environment variables in proxy config yaml.
+
 * Issue **#1170** : The UI should now treat the `None` tree node as a null selection.
 
 
