@@ -131,7 +131,6 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.obtainNodeIdSet().add(1L);
-        criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME);
         criteria.obtainStreamTaskIdSet().add(1L);
         criteria.obtainFeedIdSet().add(1L);
         criteria.obtainStreamIdSet().add(1L);
@@ -142,6 +141,7 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
         criteria.obtainStreamTypeIdSet().add(StreamType.CONTEXT.getId());
 
+        Assert.assertEquals(0, streamTaskService.findSummary(criteria).size());
     }
 
     private void createTasks() {

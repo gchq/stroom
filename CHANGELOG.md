@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1184** : Remove dropwizard yaml files from docker images.
 
+* Issue **#1152** : You can now control the maximum number of files that are fragmented prior to proxy aggregation with `stroom.maxFileScan`.
+
+* Issue **#1182** : Fixed use of `in folder` for data retention and receipt policies.
+
+
 ## [v6.0-beta.49] - 2019-06-24
 
 * Updated to allow stacks to be built at this version.

@@ -328,15 +328,20 @@ public class ExpressionMatcher {
 
     private boolean isInFolder(final String fieldName, final DocRef docRef,
                                final DataSourceField field, final Object attribute) {
-        final Set<DocRef> descendants = collectionService.getDescendants(docRef, fieldName);
-        if (descendants != null && descendants.size() > 0) {
-            for (final DocRef descendant : descendants) {
+        final String type = field.getDocRefType();
+        if (type != null) {
+            final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);
+            if (descendants != null && descendants.size() > 0) {
                 if (attribute instanceof DocRef) {
                     final String uuid = ((DocRef) attribute).getUuid();
-                    return (null != uuid && uuid.equals(descendant.getUuid()));
+                    if (uuid != null) {
+                        for (final DocRef descendant : descendants) {
+                            if (uuid.equals(descendant.getUuid())) {
+                                return true;
+                            }
+                        }
+                    }
                 }
-
-                return false;
             }
         }
 
