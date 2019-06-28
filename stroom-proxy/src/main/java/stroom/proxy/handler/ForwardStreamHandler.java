@@ -36,7 +36,6 @@ public class ForwardStreamHandler implements StreamHandler {
     private final Integer forwardDelayMs;
     private final Integer forwardChunkSize;
 
-    private String guid = null;
     private HttpURLConnection connection = null;
     private ZipOutputStream zipOutputStream;
     private long startTimeMs;
@@ -66,7 +65,7 @@ public class ForwardStreamHandler implements StreamHandler {
     @Override
     public void handleHeader() throws IOException {
         startTimeMs = System.currentTimeMillis();
-        guid = metaMap.computeIfAbsent(StroomHeaderArguments.GUID, k -> UUID.randomUUID().toString());
+        metaMap.computeIfAbsent(StroomHeaderArguments.GUID, k -> UUID.randomUUID().toString());
 
         LOGGER.info("handleHeader() - {} Sending request {}", forwardUrl, metaMap);
 
