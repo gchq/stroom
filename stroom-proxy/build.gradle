@@ -24,7 +24,6 @@ dependencies {
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile libs.junit
-    testCompile libs.mockito_core
 }
 //
 //war {

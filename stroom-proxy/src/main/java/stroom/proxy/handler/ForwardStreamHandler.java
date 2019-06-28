@@ -9,9 +9,7 @@ import stroom.feed.StroomStreamException;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.util.thread.ThreadUtil;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -23,17 +21,21 @@ import java.util.zip.ZipOutputStream;
 /**
  * Handler class that forwards the request to a URL.
  */
-public class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
+public class ForwardStreamHandler implements StreamHandler {
     private static Logger LOGGER = LoggerFactory.getLogger(ForwardStreamHandler.class);
     private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
 
+
+//    private final Client jerseyClient;
     private final LogStream logStream;
+    private final SSLSocketFactory sslSocketFactory;
+    private final ForwardDestinationConfig forwardDestinationConfig;
+    private final String userAgent;
     private final String forwardUrl;
     private final Integer forwardTimeoutMs;
     private final Integer forwardDelayMs;
     private final Integer forwardChunkSize;
 
-    private String guid = null;
     private HttpURLConnection connection = null;
     private ZipOutputStream zipOutputStream;
     private long startTimeMs;
@@ -41,16 +43,18 @@ public class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
 
     private MetaMap metaMap;
 
-    public ForwardStreamHandler(final LogStream logStream,
-                                final String forwardUrl,
-                                final Integer forwardTimeoutMs,
-                                final Integer forwardDelayMs,
-                                final Integer forwardChunkSize) {
+    ForwardStreamHandler(final LogStream logStream,
+                         final ForwardDestinationConfig forwardDestinationConfig,
+                         final SSLSocketFactory sslSocketFactory,
+                         final String userAgent) {
         this.logStream = logStream;
-        this.forwardUrl = forwardUrl;
-        this.forwardTimeoutMs = forwardTimeoutMs;
-        this.forwardDelayMs = forwardDelayMs;
-        this.forwardChunkSize = forwardChunkSize;
+        this.sslSocketFactory = sslSocketFactory;
+        this.forwardDestinationConfig = forwardDestinationConfig;
+        this.forwardUrl = forwardDestinationConfig.getForwardUrl();
+        this.forwardTimeoutMs = forwardDestinationConfig.getForwardTimeoutMs();
+        this.forwardDelayMs = forwardDestinationConfig.getForwardDelayMs();
+        this.forwardChunkSize = forwardDestinationConfig.getForwardChunkSize();
+        this.userAgent = userAgent;
     }
 
     @Override
@@ -60,16 +64,17 @@ public class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
 
     @Override
     public void handleHeader() throws IOException {
-        if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("handleHeader() - " + forwardUrl + " Sending request " + metaMap);
-        }
         startTimeMs = System.currentTimeMillis();
-        guid = metaMap.computeIfAbsent(StroomHeaderArguments.GUID, k -> UUID.randomUUID().toString());
+        metaMap.computeIfAbsent(StroomHeaderArguments.GUID, k -> UUID.randomUUID().toString());
+
+        LOGGER.info("handleHeader() - {} Sending request {}", forwardUrl, metaMap);
 
         URL url = new URL(forwardUrl);
         connection = (HttpURLConnection) url.openConnection();
 
-        sslCheck();
+        connection.setRequestProperty("User-Agent", userAgent);
+
+        SSLUtil.applySSLConfiguration(connection, sslSocketFactory, forwardDestinationConfig.getSslConfig());
 
         if (forwardTimeoutMs != null) {
             connection.setConnectTimeout(forwardTimeoutMs);
@@ -146,17 +151,6 @@ public class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
         }
     }
 
-    private void sslCheck() {
-        if (connection instanceof HttpsURLConnection) {
-            ((HttpsURLConnection) connection).setHostnameVerifier(this);
-        }
-
-    }
-
-    @Override
-    public boolean verify(final String s, final SSLSession sslSession) {
-        return true;
-    }
 
     @Override
     public void handleError() throws IOException {
