@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1182** : Fixed use of `in folder` for data retention and receipt policies.
+
+
 ## [v6.0-beta.49] - 2019-06-24
 
 * Updated to allow stacks to be built at this version.
