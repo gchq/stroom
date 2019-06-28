@@ -1,7 +1,9 @@
 package stroom.proxy.repo;
 
+import com.codahale.metrics.health.HealthCheck;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.HasHealthCheck;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileNameUtil;
 import stroom.util.io.FileUtil;
@@ -26,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Manager class that handles rolling the repository if required. Also tracks
  * old rolled repositories.
  */
-public class ProxyRepositoryManager {
+public class ProxyRepositoryManager implements HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryManager.class);
 
     private final AtomicReference<StroomZipRepository> activeRepository = new AtomicReference<>();
@@ -238,5 +240,29 @@ public class ProxyRepositoryManager {
             proxyRepository.finish();
             rolledRepository.add(proxyRepository);
         }
+    }
+
+    @Override
+    public HealthCheck.Result getHealth() {
+        final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
+        resultBuilder
+                .withDetail("rootRepoDir", rootRepoDir.toAbsolutePath().toString());
+
+        try {
+            boolean isDirectory = Files.isDirectory(rootRepoDir);
+            if (isDirectory) {
+                resultBuilder.healthy();
+            } else {
+                resultBuilder
+                        .withMessage("Repository directory does not exist or is not a directory")
+                        .unhealthy();
+            }
+        } catch (Exception e) {
+            resultBuilder
+                    .withMessage("Error reading repository directory")
+                    .unhealthy(e);
+        }
+
+        return resultBuilder.build();
     }
 }

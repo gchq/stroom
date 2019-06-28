@@ -68,6 +68,7 @@ import stroom.proxy.guice.ProxyModule;
 import stroom.proxy.handler.ForwardStreamHandlerFactory;
 import stroom.proxy.handler.RemoteFeedStatusService;
 import stroom.proxy.repo.ProxyLifecycle;
+import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
@@ -108,7 +109,6 @@ import stroom.spring.ServerComponentScanConfiguration;
 import stroom.spring.ServerConfiguration;
 import stroom.statistics.server.sql.search.SqlStatisticsQueryResource;
 import stroom.statistics.spring.StatisticsConfiguration;
-import stroom.util.BuildInfoUtil;
 import stroom.util.HealthCheckUtils;
 import stroom.util.config.StroomProperties;
 import stroom.util.db.DbUtil;
@@ -128,7 +128,6 @@ public class App extends Application<Config> {
 
     // This name is used by dropwizard metrics
     public static final String PROXY_JERSEY_CLIENT_NAME = "stroom-proxy_jersey_client";
-    public static final String PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX = "stroom-proxy/";
 
     private static String configPath;
 
@@ -195,10 +194,11 @@ public class App extends Application<Config> {
         HealthCheckRegistry healthCheckRegistry = environment.healthChecks();
         // Add health checks
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, DictionaryResource.class);
-        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RuleSetResource.class);
-        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ForwardStreamHandlerFactory.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, FeedStatusResource.class);
+        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ForwardStreamHandlerFactory.class);
+        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ProxyRepositoryManager.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RemoteFeedStatusService.class);
+        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RuleSetResource.class);
 
         healthCheckRegistry.register(configuration.getProxyConfig().getClass().getName(), new HealthCheck() {
             @Override
@@ -268,7 +268,7 @@ public class App extends Application<Config> {
         // If the userAgent has not been explicitly set in the config then set it based
         // on the build version
         if (! jerseyClientConfiguration.getUserAgent().isPresent()) {
-            final String userAgent = PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX + BuildInfoUtil.getBuildVersion();
+            final String userAgent = ForwardStreamHandlerFactory.getUserAgentString(null);
             LOGGER.info("Setting jersey client user agent string to [{}]", userAgent);
             jerseyClientConfiguration.setUserAgent(Optional.of(userAgent));
         }
