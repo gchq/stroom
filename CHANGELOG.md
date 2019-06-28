@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.50] - 2019-06-28
+
 * Issue **#1184** : Remove dropwizard yaml files from docker images.
 
 * Issue **#1181** : Remove dropwizard config yaml from the docker images.
@@ -1674,7 +1677,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.49...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.50...6.0
+[v6.0-beta.50]: https://github.com/gchq/stroom/compare/v7.0-beta.49...v6.0-beta.50
 [v6.0-beta.49]: https://github.com/gchq/stroom/compare/v7.0-beta.48...v6.0-beta.49
 [v6.0-beta.48]: https://github.com/gchq/stroom/compare/v7.0-beta.47...v6.0-beta.48
 [v6.0-beta.47]: https://github.com/gchq/stroom/compare/v7.0-beta.46...v6.0-beta.47
