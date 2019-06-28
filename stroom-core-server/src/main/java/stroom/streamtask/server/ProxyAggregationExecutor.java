@@ -47,9 +47,10 @@ import javax.inject.Provider;
 public class ProxyAggregationExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyAggregationExecutor.class);
 
-    private static final int DEFAULT_MAX_AGGREGATION = 10000;
-    private static final long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
-    private static final int DEFAULT_MAX_FILE_SCAN = 10000;
+    private static final int DEFAULT_MAX_FILE_SCAN = 100000;
+    private static final int DEFAULT_MAX_CONCURRENT_MAPPED_FILES = 100000;
+    private static final int DEFAULT_MAX_FILES_PER_AGGREGATE = 10000;
+    private static final long DEFAULT_MAX_UNCOMPRESSED_FILE_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
 
     private final TaskContext taskContext;
     private final RepositoryProcessor repositoryProcessor;
@@ -60,8 +61,9 @@ public class ProxyAggregationExecutor {
                              final Provider<FileSetProcessor> fileSetProcessorProvider,
                              @Value("#{propertyConfigurer.getProperty('stroom.proxyDir')}") final String proxyDir,
                              @Value("#{propertyConfigurer.getProperty('stroom.proxyThreads')}") final String threadCount,
+                             @Value("#{propertyConfigurer.getProperty('stroom.maxFileScan')}") final String maxFileScan,
+                             @Value("#{propertyConfigurer.getProperty('stroom.maxConcurrentMappedFiles')}") final String maxConcurrentMappedFiles,
                              @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxFilesPerAggregate,
-                             @Value("#{propertyConfigurer.getProperty('stroom.maxAggregationScan')}") final String maxConcurrentMappedFiles,
                              @Value("#{propertyConfigurer.getProperty('stroom.maxStreamSize')}") final String maxUncompressedFileSize) {
         this(
                 taskContext,
@@ -69,9 +71,10 @@ public class ProxyAggregationExecutor {
                 fileSetProcessorProvider,
                 proxyDir,
                 PropertyUtil.toInt(threadCount, 10),
-                PropertyUtil.toInt(maxFilesPerAggregate, DEFAULT_MAX_AGGREGATION),
-                PropertyUtil.toInt(maxConcurrentMappedFiles, DEFAULT_MAX_FILE_SCAN),
-                getByteSize(maxUncompressedFileSize, DEFAULT_MAX_STREAM_SIZE)
+                PropertyUtil.toInt(maxFileScan, DEFAULT_MAX_FILE_SCAN),
+                PropertyUtil.toInt(maxConcurrentMappedFiles, DEFAULT_MAX_CONCURRENT_MAPPED_FILES),
+                PropertyUtil.toInt(maxFilesPerAggregate, DEFAULT_MAX_FILES_PER_AGGREGATE),
+                getByteSize(maxUncompressedFileSize, DEFAULT_MAX_UNCOMPRESSED_FILE_SIZE)
         );
     }
 
@@ -80,8 +83,9 @@ public class ProxyAggregationExecutor {
                              final Provider<FileSetProcessor> fileSetProcessorProvider,
                              final String proxyDir,
                              final int threadCount,
-                             final int maxFilesPerAggregate,
+                             final int maxFileScan,
                              final int maxConcurrentMappedFiles,
+                             final int maxFilesPerAggregate,
                              final long maxUncompressedFileSize) {
         this.taskContext = taskContext;
         this.repositoryProcessor = new RepositoryProcessor(taskContext,
@@ -89,8 +93,9 @@ public class ProxyAggregationExecutor {
                 fileSetProcessorProvider,
                 proxyDir,
                 threadCount,
-                maxFilesPerAggregate,
+                maxFileScan,
                 maxConcurrentMappedFiles,
+                maxFilesPerAggregate,
                 maxUncompressedFileSize);
     }
 
