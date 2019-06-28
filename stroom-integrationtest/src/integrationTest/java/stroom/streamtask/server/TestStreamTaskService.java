@@ -142,6 +142,7 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
         criteria.obtainStreamTypeIdSet().add(StreamType.CONTEXT.getId());
 
+        Assert.assertEquals(0, streamTaskService.findSummary(criteria).size());
     }
 
     private void createTasks() {
