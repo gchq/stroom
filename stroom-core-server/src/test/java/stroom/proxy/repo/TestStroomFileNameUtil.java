@@ -27,10 +27,10 @@ public class TestStroomFileNameUtil {
         final String extension1 = ".zip";
         final String extension2 = ".bad";
 
-        Assert.assertEquals("001.zip.bad", StroomFileNameUtil.constructFilename(1, standardTemplate, metaMap, extension1, extension2));
-        Assert.assertEquals("003/003000.zip", StroomFileNameUtil.constructFilename(3000, standardTemplate, metaMap, extension1));
-        Assert.assertEquals("003000_myVar1_myFeed.zip", StroomFileNameUtil.constructFilename(3000, dynamicTemplate, metaMap, extension1));
-        Assert.assertEquals("003/003000_someStaticText.zip", StroomFileNameUtil.constructFilename(3000, staticTemplate, metaMap, extension1));
-        Assert.assertEquals("003/003000_someStaticText", StroomFileNameUtil.constructFilename(3000, staticTemplate, metaMap));
+        Assert.assertEquals("001.zip.bad", StroomFileNameUtil.constructFilename(null, 1, standardTemplate, metaMap, extension1, extension2));
+        Assert.assertEquals("003/003000.zip", StroomFileNameUtil.constructFilename(null, 3000, standardTemplate, metaMap, extension1));
+        Assert.assertEquals("003000_myVar1_myFeed.zip", StroomFileNameUtil.constructFilename(null, 3000, dynamicTemplate, metaMap, extension1));
+        Assert.assertEquals("003/003000_someStaticText.zip", StroomFileNameUtil.constructFilename(null, 3000, staticTemplate, metaMap, extension1));
+        Assert.assertEquals("003/003000_someStaticText", StroomFileNameUtil.constructFilename(null, 3000, staticTemplate, metaMap));
     }
 }

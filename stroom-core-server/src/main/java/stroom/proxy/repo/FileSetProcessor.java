@@ -1,5 +1,5 @@
 package stroom.proxy.repo;
 
 public interface FileSetProcessor {
-    void process(StroomZipRepository stroomZipRepository, FileSet fileSet);
+    void process(FileSet fileSet);
 }

@@ -62,7 +62,7 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
 
     @Override
     public void handleHeader() throws IOException {
-        stroomZipOutputStream = proxyRepositoryManager.getActiveRepository().getStroomZipOutputStream(metaMap);
+        stroomZipOutputStream = proxyRepositoryManager.getStroomZipOutputStream(metaMap);
     }
 
     @Override

@@ -32,11 +32,10 @@ public class TestProxyRepositoryManager extends StroomUnitTest {
 
         final ProxyRepositoryManager proxyRepositoryManager = new ProxyRepositoryManager(getCurrentTestDir(), null, scheduler);
 
-        final StroomZipRepository proxyRepository1 = proxyRepositoryManager.getActiveRepository();
-        final StroomZipOutputStream stream1 = proxyRepository1.getStroomZipOutputStream();
-        StroomZipOutputStreamUtil.addSimpleEntry(stream1, StroomZipFile.SINGLE_DATA_ENTRY,
-                "dummy".getBytes(StreamUtil.DEFAULT_CHARSET));
-        stream1.close();
+        try (final StroomZipOutputStream stream = proxyRepositoryManager.getStroomZipOutputStream()) {
+            StroomZipOutputStreamUtil.addSimpleEntry(stream, StroomZipFile.SINGLE_DATA_ENTRY,
+                    "dummy".getBytes(StreamUtil.DEFAULT_CHARSET));
+        }
 
         // Roll this REPO
         proxyRepositoryManager.doRunWork();
@@ -47,11 +46,10 @@ public class TestProxyRepositoryManager extends StroomUnitTest {
             //ignore it as only 10ms
         }
 
-        final StroomZipRepository proxyRepository2 = proxyRepositoryManager.getActiveRepository();
-        final StroomZipOutputStream stream2 = proxyRepository2.getStroomZipOutputStream();
-        StroomZipOutputStreamUtil.addSimpleEntry(stream2, StroomZipFile.SINGLE_DATA_ENTRY,
-                "dummy".getBytes(StreamUtil.DEFAULT_CHARSET));
-        stream2.close();
+        try (final StroomZipOutputStream stream = proxyRepositoryManager.getStroomZipOutputStream()) {
+            StroomZipOutputStreamUtil.addSimpleEntry(stream, StroomZipFile.SINGLE_DATA_ENTRY,
+                    "dummy".getBytes(StreamUtil.DEFAULT_CHARSET));
+        }
 
         // Roll this REPO
         proxyRepositoryManager.doRunWork();
@@ -63,21 +61,19 @@ public class TestProxyRepositoryManager extends StroomUnitTest {
     public void testNonRolling() throws IOException {
         final ProxyRepositoryManager proxyRepositoryManager = new ProxyRepositoryManager(getCurrentTestDir(), "${pathId}/${id}", null);
 
-        final StroomZipRepository proxyRepository1 = proxyRepositoryManager.getActiveRepository();
-        final StroomZipOutputStream stream1 = proxyRepository1.getStroomZipOutputStream();
-        StroomZipOutputStreamUtil.addSimpleEntry(stream1, StroomZipFile.SINGLE_DATA_ENTRY,
-                "dummy".getBytes(StreamUtil.DEFAULT_CHARSET));
-        stream1.close();
+        try (final StroomZipOutputStream stream = proxyRepositoryManager.getStroomZipOutputStream()) {
+            StroomZipOutputStreamUtil.addSimpleEntry(stream, StroomZipFile.SINGLE_DATA_ENTRY,
+                    "dummy".getBytes(StreamUtil.DEFAULT_CHARSET));
+        }
 
         // Nothing happens
         proxyRepositoryManager.doRunWork();
 
         // Same Repo
-        final StroomZipRepository proxyRepository2 = proxyRepositoryManager.getActiveRepository();
-        final StroomZipOutputStream stream2 = proxyRepository2.getStroomZipOutputStream();
-        StroomZipOutputStreamUtil.addSimpleEntry(stream2, StroomZipFile.SINGLE_DATA_ENTRY,
-                "dummy".getBytes(StreamUtil.DEFAULT_CHARSET));
-        stream2.close();
+        try (final StroomZipOutputStream stream = proxyRepositoryManager.getStroomZipOutputStream()) {
+            StroomZipOutputStreamUtil.addSimpleEntry(stream, StroomZipFile.SINGLE_DATA_ENTRY,
+                    "dummy".getBytes(StreamUtil.DEFAULT_CHARSET));
+        }
 
         // Nothing happens
         proxyRepositoryManager.doRunWork();
