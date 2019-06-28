@@ -88,7 +88,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
         getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<StreamTaskSummary, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PIPELINE_UUID, true) {
+                new OrderByColumn<StreamTaskSummary, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PIPELINE, true) {
                     @Override
                     public String getValue(final StreamTaskSummary row) {
                         return row.getPipeline().getName();
@@ -96,7 +96,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
                 }, "Pipeline", 250);
 
         getView().addResizableColumn(
-                new OrderByColumn<StreamTaskSummary, String>(new TextCell(), FindStreamTaskCriteria.FIELD_FEED_NAME, true) {
+                new OrderByColumn<StreamTaskSummary, String>(new TextCell(), FindStreamTaskCriteria.FIELD_FEED, true) {
                     @Override
                     public String getValue(final StreamTaskSummary row) {
                         return row.getFeed().getName();

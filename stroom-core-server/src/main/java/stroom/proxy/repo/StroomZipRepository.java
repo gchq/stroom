@@ -303,8 +303,7 @@ public class StroomZipRepository {
         final Path file = currentDir.resolve(filename);
 
         // Check that we aren't going to clash with the directories and files made by the zip fragmentation process that is part of proxy aggregation.
-        checkPath(filename, PathConstants.PART);
-        checkPath(filename, PathConstants.PARTS);
+        PartsPathUtil.checkPath(filename);
 
         StroomZipOutputStreamImpl outputStream;
 
@@ -319,14 +318,6 @@ public class StroomZipRepository {
         }
 
         return outputStream;
-    }
-
-    private void checkPath(final String filename, final String forbidden) throws IOException {
-        if (filename.contains(forbidden)) {
-            final String message = "Attempt to create a forbidden path that includes '" + forbidden + "'";
-            LOGGER.error(message);
-            throw new IOException(message);
-        }
     }
 
     private Path getErrorFile(final StroomZipFile zipFile) {

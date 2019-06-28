@@ -59,15 +59,21 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
-                .name("stroom.maxAggregation")
-                .value("10000")
-                .description("This stops the aggregation after a certain size / nested streams")
+                .name("stroom.maxFileScan")
+                .value("100000")
+                .description("The limit of files to inspect before aggregation begins (should be bigger than maxAggregation)")
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
-                .name("stroom.maxAggregationScan")
+                .name("stroom.maxConcurrentMappedFiles")
                 .value("100000")
-                .description("The limit of files to inspect before aggregation begins (should be bigger than maxAggregation)")
+                .description("The maximum number of concurrent mapped files we can hold before we send the largest set for aggregation")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.maxAggregation")
+                .value("10000")
+                .description("This stops the aggregation after a certain size / nested streams")
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
