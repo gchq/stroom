@@ -118,7 +118,7 @@ public class StreamAppender extends AbstractAppender {
         final Stream parentStream = streamHolder.getStream();
 
         Feed feed;
-        if (feedRef != null) {
+        if (feedRef != null && !Strings.isNullOrEmpty(feedRef.getUuid())) {
             feed = feedService.loadByUuid(feedRef.getUuid());
             if (feed == null) {
                 fatal("Feed not found " + feedRef);
@@ -128,7 +128,7 @@ public class StreamAppender extends AbstractAppender {
                 fatal("Unable to determine feed as no parent stream set");
             }
 
-            // Use current feed if none other has been specified.
+            // Use current feed if no other has been specified.
             feed = feedService.load(parentStream.getFeed());
         }
 

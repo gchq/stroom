@@ -123,7 +123,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     }
 
     private ExplorerNode getSelectedEntityData() {
-        return explorerTree.getSelectionModel().getSelected();
+        return resolve(explorerTree.getSelectionModel().getSelected());
     }
 
     private void setSelectedEntityData(final ExplorerNode explorerNode) {
@@ -157,20 +157,20 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         }
     }
 
+    private static ExplorerNode resolve(final ExplorerNode selection) {
+        if (selection == ExplorerTreeModel.NULL_SELECTION) {
+            return null;
+        }
+
+        return selection;
+    }
+
     private static class ExtendedExplorerTree extends ExplorerTree {
         private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
 
         public ExtendedExplorerTree(final ExplorerDropDownTreePresenter explorerDropDownTreePresenter, final ClientDispatchAsync dispatcher) {
             super(dispatcher, false);
             this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
-        }
-
-        private static ExplorerNode resolve(final ExplorerNode selection) {
-            if (selection == ExplorerTreeModel.NULL_SELECTION) {
-                return null;
-            }
-
-            return selection;
         }
 
         @Override

@@ -115,7 +115,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     @Override
     void validateSpecificSettings() {
         if (feed == null) {
-            if (feedRef != null) {
+            if (feedRef != null && !Strings.isNullOrEmpty(feedRef.getUuid())) {
                 feed = feedService.loadByUuid(feedRef.getUuid());
                 if (feed == null) {
                     throw new ProcessException("Feed not found " + feedRef);

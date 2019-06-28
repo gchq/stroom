@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1170** : The UI should now treat the `None` tree node as a null selection.
+
 
 ## [v6.0-beta.50] - 2019-06-28
 
