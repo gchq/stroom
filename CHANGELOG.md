@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.46-2] - 2019-06-28
+
 * Issue **#1152** : You can now control the maximum number of files that are fragmented prior to proxy aggregation with `stroom.maxFileScan`.
 
 
@@ -1633,7 +1635,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.46...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.46-2...6.0
+[v6.0-beta.46-2]: https://github.com/gchq/stroom/compare/v7.0-beta.46...v6.0-beta.46-2
 [v6.0-beta.46]: https://github.com/gchq/stroom/compare/v7.0-beta.45...v6.0-beta.46
 [v6.0-beta.45]: https://github.com/gchq/stroom/compare/v7.0-beta.44...v6.0-beta.45
 [v6.0-beta.44]: https://github.com/gchq/stroom/compare/v7.0-beta.43...v6.0-beta.44
