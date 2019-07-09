@@ -21,14 +21,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.util.XMLMarshallerUtil;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
-import stroom.explorer.server.ExplorerService;
+import stroom.feed.server.FeedService;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.StroomPropertyService;
+import stroom.pipeline.server.PipelineService;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -46,6 +46,7 @@ import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.sql.DataSource;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -89,6 +90,8 @@ public class DataRetentionExecutor {
     private final StroomPropertyService propertyService;
     private final ExpressionMatcherFactory expressionMatcherFactory;
     private final DataSource dataSource;
+    private final FeedService feedService;
+    private final PipelineService pipelineService;
     private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
@@ -97,13 +100,17 @@ public class DataRetentionExecutor {
                           final DataRetentionService dataRetentionService,
                           final StroomPropertyService propertyService,
                           final ExpressionMatcherFactory expressionMatcherFactory,
-                          final DataSource dataSource) {
+                          final DataSource dataSource,
+                          @Named("cachedFeedService") final FeedService feedService,
+                          @Named("cachedPipelineService") final PipelineService pipelineService) {
         this.taskMonitor = taskMonitor;
         this.clusterLockService = clusterLockService;
         this.dataRetentionService = dataRetentionService;
         this.propertyService = propertyService;
         this.expressionMatcherFactory = expressionMatcherFactory;
         this.dataSource = dataSource;
+        this.feedService = feedService;
+        this.pipelineService = pipelineService;
     }
 
     @StroomSimpleCronSchedule(cron = "0 0 *")
@@ -231,7 +238,7 @@ public class DataRetentionExecutor {
         // Ignore rules if none are active.
         if (activeRules.getActiveRules().size() > 0) {
             // Create an object that can find streams with prepared statements and see if they match rules.
-            try (final DataRetentionStreamFinder finder = new DataRetentionStreamFinder(connection, expressionMatcherFactory)) {
+            try (final DataRetentionStreamFinder finder = new DataRetentionStreamFinder(connection, expressionMatcherFactory, feedService, pipelineService)) {
 
                 // Find out how many rows we are likely to examine.
                 final long rowCount = finder.getRowCount(ageRange, activeRules.getFieldSet());

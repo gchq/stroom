@@ -42,13 +42,13 @@ class StreamAttributeMapUtil {
             }
             final Feed feed = stream.getFeed();
             if (feed != null) {
-                attributeMap.put(StreamDataSource.FEED_NAME, feed.getName());
+                attributeMap.put(StreamDataSource.FEED_NAME, DocRefUtil.create(feed));
             }
             final StreamProcessor streamProcessor = stream.getStreamProcessor();
             if (streamProcessor != null) {
                 final PipelineEntity pipeline = streamProcessor.getPipeline();
                 if (pipeline != null) {
-                    attributeMap.put(StreamDataSource.PIPELINE_UUID, pipeline.getUuid());
+                    attributeMap.put(StreamDataSource.PIPELINE_UUID, DocRefUtil.create(pipeline));
                 }
             }
         }
@@ -65,8 +65,6 @@ class StreamAttributeMapUtil {
                             attributeMap.put(field.getName(), DateUtil.parseNormalDateTimeString(value));
                             break;
                         case DOC_REF:
-                            attributeMap.put(field.getName(), value);
-                            break;
                         case ID:
                         case NUMERIC_FIELD:
                             attributeMap.put(field.getName(), Long.valueOf(value));

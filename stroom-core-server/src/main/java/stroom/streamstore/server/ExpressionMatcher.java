@@ -240,9 +240,9 @@ public class ExpressionMatcher {
         } else {
             switch (condition) {
                 case EQUALS:
-                    return isStringMatch(termValue, attribute.toString());
+                    return isStringMatch(termValue, attribute);
                 case CONTAINS:
-                    return isStringMatch(termValue, attribute.toString());
+                    return isStringMatch(termValue, attribute);
                 case IN:
                     return isIn(fieldName, termValue, attribute);
                 case IN_DICTIONARY:
@@ -287,19 +287,26 @@ public class ExpressionMatcher {
     }
 
     private boolean isIn(final String fieldName, final Object termValue, final Object attribute) {
-        final String string = attribute.toString();
         final String[] termValues = termValue.toString().split(" ");
         for (final String tv : termValues) {
-            if (isStringMatch(tv, string)) {
+            if (isStringMatch(tv, attribute)) {
                 return true;
             }
         }
         return false;
     }
 
-    private boolean isStringMatch(final String termValue, final String attribute) {
+    private boolean isStringMatch(final String termValue, final Object attribute) {
         final Pattern pattern = patternMap.computeIfAbsent(termValue, t -> Pattern.compile(t.replaceAll("\\*", ".*")));
-        return pattern.matcher(attribute).matches();
+
+        if (attribute instanceof DocRef) {
+            final DocRef docRef = (DocRef) attribute;
+            if (pattern.matcher(docRef.getUuid()).matches()) {
+                return true;
+            }
+            return pattern.matcher(docRef.getName()).matches();
+        }
+        return pattern.matcher(attribute.toString()).matches();
     }
 
     private boolean isInDictionary(final String fieldName, final DocRef docRef,
