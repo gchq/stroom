@@ -126,7 +126,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private final NodeCache nodeCache;
     private final StroomPropertyService stroomPropertyService;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
-    private final AtomicReference<List<Volume>> currentVolumeState = new AtomicReference<>();
+    private final AtomicReference<VolumeList> currentVolumeList = new AtomicReference<>();
 
     private volatile boolean createdDefaultVolumes;
     private boolean creatingDefaultVolumes;
@@ -171,7 +171,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
                                      final VolumeUseStatus indexStatus, final LocalVolumeUse localVolumeUse, final Set<Volume> allowedVolumes,
                                      final int requiredNumber) {
         final VolumeSelector volumeSelector = getVolumeSelector();
-        final List<Volume> allVolumeList = getCurrentState();
+        final List<Volume> allVolumeList = getCurrentVolumeList().list;
         final List<Volume> freeVolumes = VolumeListUtil.removeFullVolumes(allVolumeList);
         Set<Volume> set = Collections.emptySet();
 
@@ -299,26 +299,25 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
 
     @Override
     public void onChange(final EntityEvent event) {
-        currentVolumeState.set(null);
+        currentVolumeList.set(null);
     }
 
     @Override
     public void clear() {
-        currentVolumeState.set(null);
+        currentVolumeList.set(null);
     }
 
-    private List<Volume> getCurrentState() {
-        List<Volume> state = currentVolumeState.get();
-        if (state == null) {
+    private VolumeList getCurrentVolumeList() {
+        VolumeList volumeList = currentVolumeList.get();
+        if (volumeList == null) {
             synchronized (this) {
-                state = currentVolumeState.get();
-                if (state == null) {
-                    state = refresh();
-                    currentVolumeState.set(state);
+                volumeList = currentVolumeList.get();
+                if (volumeList == null) {
+                    volumeList = refresh();
                 }
             }
         }
-        return state;
+        return volumeList;
     }
 
     @StroomFrequencySchedule("5m")
@@ -328,9 +327,11 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         refresh();
     }
 
-    public List<Volume> refresh() {
+    private VolumeList refresh() {
+        final long now = System.currentTimeMillis();
+
         final Node node = nodeCache.getDefaultNode();
-        final List<Volume> newState = new ArrayList<>();
+        final List<Volume> volumes = new ArrayList<>();
 
         final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
         findVolumeCriteria.addSort(FindVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
@@ -344,10 +345,18 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
                 // Record some statistics for the use of this volume.
                 recordStats(volume);
             }
-            newState.add(volume);
+            volumes.add(volume);
         }
 
-        return newState;
+        final VolumeList newList = new VolumeList(now, volumes);
+        synchronized (this) {
+            final VolumeList currentList = currentVolumeList.get();
+            if (currentList == null || currentList.createTime < newList.createTime) {
+                currentVolumeList.set(newList);
+            }
+        }
+
+        return newList;
     }
 
     private void recordStats(final Volume volume) {
@@ -534,7 +543,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             boolean isEnabled = stroomPropertyService.getBooleanProperty(PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, false);
 
             if (isEnabled) {
-                final List<Volume> existingVolumes = getCurrentState();
+                final List<Volume> existingVolumes = getCurrentVolumeList().list;
                 if (existingVolumes.size() == 0) {
                     final Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
 
@@ -660,4 +669,13 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         }
     }
 
+    private static class VolumeList {
+        private final long createTime;
+        private final List<Volume> list;
+
+        VolumeList(final long createTime, final List<Volume> list) {
+            this.createTime = createTime;
+            this.list = list;
+        }
+    }
 }

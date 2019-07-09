@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1186** : Volume status is now refreshed every 5 minutes.
+
+
 ## [v6.0-beta.51] - 2019-06-28
 
 * Fix incorrect default keystore in proxy config yaml.
