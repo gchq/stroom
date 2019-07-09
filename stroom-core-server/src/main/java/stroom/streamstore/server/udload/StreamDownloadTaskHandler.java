@@ -115,7 +115,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
                     metaMap.put(StroomHeaderArguments.FEED, feed.getName());
                     metaMap.put("streamType", streamType.getName());
                     metaMap.put("streamId", String.valueOf(stream.getId()));
-                    final String possibleFilename = StroomFileNameUtil.constructFilename(0, task.getFormat(), metaMap, ZIP_EXTENSION);
+                    final String possibleFilename = StroomFileNameUtil.constructFilename(null, 0, task.getFormat(), metaMap, ZIP_EXTENSION);
                     if (stroomZipOutputStream != null && !possibleFilename.equals(lastPossibleFileName)) {
                         stroomZipOutputStream.close();
                         stroomZipOutputStream = null;
@@ -294,7 +294,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
 
     private StroomZipOutputStream getStroomZipOutputStream(final Path outputDir, final String format, final MetaMap metaMap)
             throws IOException {
-        final String filename = StroomFileNameUtil.constructFilename(fileCount.incrementAndGet(), format,
+        final String filename = StroomFileNameUtil.constructFilename(null, fileCount.incrementAndGet(), format,
                 metaMap, ZIP_EXTENSION);
         final Path file = outputDir.resolve(filename);
 

@@ -3,6 +3,7 @@ package stroom.proxy.repo;
 import com.codahale.metrics.health.HealthCheck;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.feed.MetaMap;
 import stroom.util.HasHealthCheck;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileNameUtil;
@@ -32,7 +33,7 @@ public class ProxyRepositoryManager implements HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryManager.class);
 
     private final AtomicReference<StroomZipRepository> activeRepository = new AtomicReference<>();
-    private final LinkedBlockingDeque<StroomZipRepository> rolledRepository = new LinkedBlockingDeque<>();
+    private final LinkedBlockingDeque<StroomZipRepository> rolledRepositoryQueue = new LinkedBlockingDeque<>();
     private final Path rootRepoDir;
     private final String repositoryFormat;
     private final Scheduler scheduler;
@@ -151,15 +152,25 @@ public class ProxyRepositoryManager implements HasHealthCheck {
                                         try {
                                             Files.move(file, expectedDir);
                                             LOGGER.info("Unlocking old locked repository: " + expectedDir);
-                                            rolledRepository.add(new StroomZipRepository(FileUtil.getCanonicalPath(expectedDir), repositoryFormat, false,
-                                                    lockDeleteAgeMs, false));
+                                            new StroomZipRepository(FileUtil.getCanonicalPath(expectedDir),
+                                                    repositoryFormat,
+                                                    false,
+                                                    lockDeleteAgeMs,
+                                                    true,
+                                                    rolledRepositoryQueue)
+                                                    .roll();
                                         } catch (final IOException e) {
                                             LOGGER.warn("Failed to rename locked repository: " + file);
                                         }
                                     } else {
                                         LOGGER.info("Picking up old rolled repository: " + expectedDir);
-                                        rolledRepository.add(
-                                                new StroomZipRepository(FileUtil.getCanonicalPath(expectedDir), repositoryFormat, false, lockDeleteAgeMs, false));
+                                        new StroomZipRepository(FileUtil.getCanonicalPath(expectedDir),
+                                                repositoryFormat,
+                                                false,
+                                                lockDeleteAgeMs,
+                                                true,
+                                                rolledRepositoryQueue)
+                                                .roll();
                                     }
                                 }
                             }
@@ -174,37 +185,63 @@ public class ProxyRepositoryManager implements HasHealthCheck {
         }
     }
 
-    public StroomZipRepository getActiveRepository() {
-        if (activeRepository.get() == null) {
-            synchronized (ProxyRepositoryManager.class) {
-                if (activeRepository.get() == null) {
-                    if (scheduler == null) {
-                        // Open a static repository
-                        activeRepository
-                                .set(new StroomZipRepository(FileUtil.getCanonicalPath(rootRepoDir), repositoryFormat, false, lockDeleteAgeMs, false));
-                    } else {
-                        final String dir = FileUtil.getCanonicalPath(rootRepoDir) + "/"
-                                + DateUtil.createFileDateTimeString(System.currentTimeMillis());
-                        // Open a rolling repository
-                        activeRepository.set(new StroomZipRepository(dir, repositoryFormat, true, lockDeleteAgeMs, false));
-                    }
-                }
-            }
-        }
-        return activeRepository.get();
+    public StroomZipOutputStream getStroomZipOutputStream() throws IOException {
+        return getStroomZipOutputStream(null);
     }
 
-    Path getRootRepoDir() {
-        return rootRepoDir;
+    public StroomZipOutputStream getStroomZipOutputStream(final MetaMap metaMap)
+            throws IOException {
+        StroomZipOutputStream outputStream = getActiveRepository().getStroomZipOutputStream(metaMap);
+        while (outputStream == null) {
+            outputStream = getActiveRepository().getStroomZipOutputStream(metaMap);
+        }
+        return outputStream;
+    }
+
+    private StroomZipRepository getActiveRepository() {
+        StroomZipRepository stroomZipRepository = activeRepository.get();
+        if (stroomZipRepository == null) {
+            stroomZipRepository = getOrCreateActiveRepository();
+        }
+        return stroomZipRepository;
+    }
+
+    private synchronized StroomZipRepository getOrCreateActiveRepository() {
+        StroomZipRepository stroomZipRepository = activeRepository.get();
+        if (stroomZipRepository == null) {
+            if (scheduler == null) {
+                // Open a static repository
+                stroomZipRepository = new StroomZipRepository(
+                        FileUtil.getCanonicalPath(rootRepoDir),
+                        repositoryFormat,
+                        false,
+                        lockDeleteAgeMs,
+                        false,
+                        rolledRepositoryQueue);
+            } else {
+                final String dir = FileUtil.getCanonicalPath(rootRepoDir) + "/"
+                        + DateUtil.createFileDateTimeString(System.currentTimeMillis());
+                // Open a rolling repository
+                stroomZipRepository = new StroomZipRepository(
+                        dir,
+                        repositoryFormat,
+                        true,
+                        lockDeleteAgeMs,
+                        false,
+                        rolledRepositoryQueue);
+            }
+            activeRepository.set(stroomZipRepository);
+        }
+        return stroomZipRepository;
     }
 
     List<StroomZipRepository> getReadableRepository() {
         final List<StroomZipRepository> rtnList = new ArrayList<>();
 
         // Add rolled repos unless they have already been deleted.
-        rolledRepository.forEach(repo -> {
+        rolledRepositoryQueue.forEach(repo -> {
             if (!Files.isDirectory(repo.getRootDir())) {
-                rolledRepository.remove(repo);
+                rolledRepositoryQueue.remove(repo);
             } else {
                 rtnList.add(repo);
             }
@@ -231,14 +268,13 @@ public class ProxyRepositoryManager implements HasHealthCheck {
         }
     }
 
-    private synchronized void rollCurrentRepo() {
+    private void rollCurrentRepo() {
         final StroomZipRepository proxyRepository = activeRepository.getAndSet(null);
         if (proxyRepository != null) {
             LOGGER.info("Rolling repository");
 
-            // Tell the current repo to finish.
-            proxyRepository.finish();
-            rolledRepository.add(proxyRepository);
+            // Tell the current repo to roll when it can.
+            proxyRepository.roll();
         }
     }
 

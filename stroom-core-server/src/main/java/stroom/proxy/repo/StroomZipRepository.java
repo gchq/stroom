@@ -23,7 +23,6 @@ import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileVisitOption;
@@ -36,7 +35,8 @@ import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.UUID;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 
@@ -49,13 +49,12 @@ import java.util.function.BiConsumer;
 public class StroomZipRepository {
     final static String LOCK_EXTENSION = ".lock";
     public final static String ZIP_EXTENSION = ".zip";
-    private final static String ERROR_EXTENSION = ".err";
-    final static String BAD_EXTENSION = ".bad";
 
     private final static Logger LOGGER = LoggerFactory.getLogger(StroomZipRepository.class);
 
     private static final String DEFAULT_REPOSITORY_FORMAT = "${pathId}/${id}";
     private static final String ID_VAR = "${id}";
+    private static final String EXECUTION_UUID_PARAM = "${" + StroomFileNameUtil.EXECUTION_UUID + "}";
 
     // 1 hour
     private final static int DEFAULT_LOCK_AGE_MS = 1000 * 60 * 60;
@@ -63,7 +62,6 @@ public class StroomZipRepository {
     private final static int TEN_SECONDS = 1000 * 10;
 
     private final AtomicLong fileCount = new AtomicLong(0);
-    private final AtomicBoolean finish = new AtomicBoolean(false);
     private final int lockDeleteAgeMs;
 
     private final String repositoryFormat;
@@ -79,9 +77,15 @@ public class StroomZipRepository {
     private Path baseResultantDir;
 
     private final boolean readOnly;
+    private final String executionUuid;
+
+    private final LinkedBlockingDeque<StroomZipRepository> rolledRepositoryQueue;
+    private int openStreamCount;
+    private boolean rolled;
+    private boolean finished;
 
     public StroomZipRepository(final String dir, final boolean readOnly) {
-        this(dir, null, false, DEFAULT_LOCK_AGE_MS, readOnly);
+        this(dir, null, false, DEFAULT_LOCK_AGE_MS, readOnly, null);
     }
 
 //    /**
@@ -91,11 +95,27 @@ public class StroomZipRepository {
 //        this(dir, null, lock, lockDeleteAgeMs);
 //    }
 
+
+    StroomZipRepository(final String dir,
+                        final String repositoryFormat,
+                        final boolean lock,
+                        final int lockDeleteAgeMs,
+                        final boolean readOnly) {
+        this(dir, repositoryFormat, lock, lockDeleteAgeMs, readOnly, null);
+    }
+
     /**
      * Open a repository (with or without locking).
      */
-    StroomZipRepository(final String dir, final String repositoryFormat, final boolean lock, final int lockDeleteAgeMs, final boolean readOnly) {
+    StroomZipRepository(final String dir,
+                        final String repositoryFormat,
+                        final boolean lock,
+                        final int lockDeleteAgeMs,
+                        final boolean readOnly,
+                        final LinkedBlockingDeque<StroomZipRepository> rolledRepositoryQueue) {
         this.readOnly = readOnly;
+        this.executionUuid = UUID.randomUUID().toString();
+        this.rolledRepositoryQueue = rolledRepositoryQueue;
 
         if (repositoryFormat == null || repositoryFormat.trim().length() == 0) {
             LOGGER.info("Using default repository format: {} in directory {}", DEFAULT_REPOSITORY_FORMAT, dir);
@@ -147,11 +167,16 @@ public class StroomZipRepository {
 
         // We may be an existing repository so check for the last ID.
         if (!readOnly) {
-            scanRepository((min, max) -> {
-                LOGGER.info("First repository id = " + min);
-                LOGGER.info("Last repository id = " + max);
-                fileCount.set(max);
-            });
+            // If we have a unique repository then there is no need to calculate the current max id as it will be unique
+            // for each execution.
+            final boolean uniqueRepo = this.repositoryFormat.contains(EXECUTION_UUID_PARAM);
+            if (!uniqueRepo) {
+                scanRepository((min, max) -> {
+                    LOGGER.info("First repository id = " + min);
+                    LOGGER.info("Last repository id = " + max);
+                    fileCount.set(max);
+                });
+            }
         }
 
         LOGGER.debug("() - Opened REPO {} lastId = {}", currentDir, fileCount.get());
@@ -230,12 +255,12 @@ public class StroomZipRepository {
         }
     }
 
-    /**
-     * @return last sequence or count in this repository.
-     */
-    long getFileCount() {
-        return fileCount.get();
-    }
+//    /**
+//     * @return last sequence or count in this repository.
+//     */
+//    long getFileCount() {
+//        return fileCount.get();
+//    }
 
     /**
      * @param newCount new higher sequencer (used during testing)
@@ -278,89 +303,92 @@ public class StroomZipRepository {
         return currentDir;
     }
 
-    synchronized void finish() {
-        if (!finish.get()) {
-            finish.set(true);
-            removeLock();
-        }
-    }
-
     StroomZipOutputStream getStroomZipOutputStream() throws IOException {
         return getStroomZipOutputStream(null);
     }
 
-    public StroomZipOutputStream getStroomZipOutputStream(final MetaMap metaMap)
+    StroomZipOutputStream getStroomZipOutputStream(final MetaMap metaMap)
             throws IOException {
-        if (finish.get()) {
-            throw new RuntimeException("No longer allowed to write new streams to a finished repository");
-        }
         if (readOnly) {
             throw new RuntimeException("This is a read only repository");
         }
 
-        final String filename = StroomFileNameUtil.constructFilename(fileCount.incrementAndGet(), repositoryFormat,
+        final String filename = StroomFileNameUtil.constructFilename(executionUuid, fileCount.incrementAndGet(), repositoryFormat,
                 metaMap, ZIP_EXTENSION);
         final Path file = currentDir.resolve(filename);
 
-        // Check that we aren't going to clash with the directories and files made by the zip fragmentation process that is part of proxy aggregation.
+        // Check that we aren't going to clash with the directories and files made by the zip fragmentation process
+        // that is part of proxy aggregation.
         PartsPathUtil.checkPath(filename);
-
-        StroomZipOutputStreamImpl outputStream;
 
         // Create directories and files in a synchronized way so that the clean() method will not remove empty
         // directories that we are just about to write to.
-        synchronized (StroomZipRepository.this) {
-            final Path dir = file.getParent();
-            // Ensure parent dir's exist
-            Files.createDirectories(dir);
+        return createStroomZipOutputStream(file);
+    }
 
-            outputStream = new StroomZipOutputStreamImpl(file);
+    private synchronized StroomZipOutputStreamImpl createStroomZipOutputStream(final Path file) throws IOException {
+        StroomZipOutputStreamImpl outputStream;
+
+        // If this repo has been marked as rolled then make attempt to finish and return null.
+        if (rolled) {
+            finish();
+            return null;
         }
 
+        final Path dir = file.getParent();
+        // Ensure parent dir's exist
+        Files.createDirectories(dir);
+
+        outputStream = new StroomZipOutputStreamImpl(file) {
+            private boolean closed = false;
+
+            @Override
+            public void close() throws IOException {
+                if (!closed) {
+                    closed = true;
+                    closeStream();
+                    super.close();
+                }
+            }
+
+            @Override
+            public void closeDelete() throws IOException {
+                if (!closed) {
+                    closed = true;
+                    closeStream();
+                    super.closeDelete();
+                }
+            }
+        };
+
+        openStreamCount++;
         return outputStream;
     }
 
-    private Path getErrorFile(final StroomZipFile zipFile) {
-        final Path file = zipFile.getFile();
-        final String fileName = file.getFileName().toString();
-        if (fileName.endsWith(BAD_EXTENSION)) {
-            return file.getParent().resolve(fileName.substring(0, fileName.length() - ZIP_EXTENSION.length() - BAD_EXTENSION.length())
-                    + ERROR_EXTENSION + BAD_EXTENSION);
-        } else {
-            return file.getParent().resolve(fileName.substring(0, fileName.length() - ZIP_EXTENSION.length()) + ERROR_EXTENSION);
+    private synchronized void closeStream() {
+        openStreamCount--;
+        if (rolled) {
+            finish();
         }
     }
 
-    @SuppressWarnings(value = "DM_DEFAULT_ENCODING")
-    public void addErrorMessage(final StroomZipFile zipFile, final String msg, final boolean bad) {
-        final Path file = zipFile.getFile();
+    synchronized void roll() {
+        if (!rolled) {
+            rolled = true;
+        }
+        if (openStreamCount == 0) {
+            finish();
+        }
+    }
 
-        try {
-            Path errorFile = getErrorFile(zipFile);
-            if (!Files.isRegularFile(file)) {
-                return;
+    private synchronized void finish() {
+        if (rolled && openStreamCount == 0 && !finished) {
+            finished = true;
+            removeLock();
+
+            if (rolledRepositoryQueue != null) {
+                rolledRepositoryQueue.add(this);
             }
-
-            if (bad) {
-                final Path renamedFile = file.getParent().resolve(file.getFileName().toString() + BAD_EXTENSION);
-                try {
-                    zipFile.renameTo(renamedFile);
-                } catch (final Exception e) {
-                    LOGGER.warn("Failed to rename zip file to " + renamedFile);
-                }
-                if (Files.isRegularFile(errorFile)) {
-                    final Path renamedErrorFile = errorFile.getParent().resolve(errorFile.getFileName().toString() + BAD_EXTENSION);
-                    Files.move(errorFile, renamedErrorFile);
-                    errorFile = renamedErrorFile;
-                }
-            }
-
-            try (final OutputStream os = Files.newOutputStream(errorFile)) {
-                os.write(msg.getBytes(CharsetConstants.DEFAULT_CHARSET));
-            }
-
-        } catch (final IOException ex) {
-            LOGGER.warn("Failed to write to file " + zipFile + " message " + msg);
         }
     }
 
@@ -430,7 +458,7 @@ public class StroomZipRepository {
                 // chance to create dirs and place files inside them before this method cleans them up.
                 synchronized (StroomZipRepository.this) {
                     // Have a go at deleting this directory if it is empty and not just about to be written to.
-                    delete(dir);
+                    deleteDir(dir);
                 }
             } else if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("attemptDirDeletion() - Dir too young for deletion: " + FileUtil.getCanonicalPath(dir));
@@ -504,38 +532,34 @@ public class StroomZipRepository {
         return success;
     }
 
-    private boolean delete(final Path path) {
+    private void deleteDir(final Path path) {
         try {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("delete() - Attempting to delete: " + path.toString());
             }
 
             Files.delete(path);
-
-            return true;
         } catch (final DirectoryNotEmptyException e) {
             LOGGER.trace("delete() - Unable to delete dir as it was not empty: " + path.toString());
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
-
-        return false;
     }
 
-    void delete(final StroomZipFile zipFile) {
-        try {
-            // Delete the file.
-            final Path errorfile = getErrorFile(zipFile);
-            zipFile.delete();
-            if (Files.isRegularFile(errorfile)) {
-                Files.delete(errorfile);
-            }
-        } catch (final IOException ioEx) {
-            LOGGER.error("delete() - Unable to delete zip file " + zipFile.getFile(), ioEx);
-        }
-    }
+//    public void deleteFile(final Path zipFile) {
+//        try {
+//            // Delete the file.
+//            final Path errorfile = ErrorFileUtil.getErrorFile(zipFile);
+//            Files.delete(zipFile);
+//            if (Files.isRegularFile(errorfile)) {
+//                Files.delete(errorfile);
+//            }
+//        } catch (final IOException ioEx) {
+//            LOGGER.error("delete() - Unable to delete zip file " + zipFile, ioEx);
+//        }
+//    }
 
-    public List<Path> listAllZipFiles() {
+    List<Path> listAllZipFiles() {
         final List<Path> list = new ArrayList<>();
         try {
             Files.walkFileTree(getRootDir(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {

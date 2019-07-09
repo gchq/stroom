@@ -67,7 +67,7 @@ public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
     }
 
     @Override
-    public void process(final StroomZipRepository stroomZipRepository, final FileSet fileSet) {
+    public void process(final FileSet fileSet) {
         if (fileSet.getFiles().size() > 0) {
             final String feedName = fileSet.getFeed();
             final long thisPostId = proxyForwardId.incrementAndGet();
@@ -109,7 +109,7 @@ public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
                         break;
                     }
 
-                    sequenceId = proxyFileHandler.processFeedFile(handlers, stroomZipRepository, file, streamProgress, sequenceId);
+                    sequenceId = proxyFileHandler.processFeedFile(handlers, file, streamProgress, sequenceId);
                 }
 
                 for (final StreamHandler streamHandler : handlers) {
@@ -117,7 +117,7 @@ public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
                 }
 
                 // Delete all of the files we have processed and their parent directories if possible.
-                cleanup(stroomZipRepository, fileSet.getFiles());
+                cleanup(fileSet.getFiles());
 
             } catch (final IOException ex) {
                 LOGGER.warn("processFeedFiles() - Failed to send to feed " + feedName + " ( " + ex + ")");
@@ -135,8 +135,10 @@ public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
         }
     }
 
-    private void cleanup(final StroomZipRepository stroomZipRepository, final List<Path> deleteList) {
-        proxyFileHandler.deleteFiles(stroomZipRepository, deleteList);
+    private void cleanup(final List<Path> deleteList) {
+        for (final Path file : deleteList) {
+            ErrorFileUtil.deleteFileAndErrors(file);
+        }
 
         // Delete any parent directories if we can.
         final Set<Path> parentDirs = deleteList.stream().map(Path::getParent).collect(Collectors.toSet());

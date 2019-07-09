@@ -31,8 +31,8 @@ import java.util.List;
 public final class ProxyFileHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyFileHandler.class);
 
-     public Long processFeedFile(final List<? extends StroomStreamHandler> stroomStreamHandlerList,
-                                final StroomZipRepository stroomZipRepository, final Path file,
+    public Long processFeedFile(final List<? extends StroomStreamHandler> stroomStreamHandlerList,
+                                final Path file,
                                 final StreamProgressMonitor streamProgress,
                                 final long startSequence) throws IOException {
         long entrySequence = startSequence;
@@ -43,6 +43,7 @@ public final class ProxyFileHandler {
             LOGGER.debug("processFeedFile() - " + file);
         }
 
+        IOException exception = null;
         try {
             stroomZipFile = new StroomZipFile(file);
 
@@ -59,11 +60,16 @@ public final class ProxyFileHandler {
                         new StroomZipEntry(null, targetName, StroomZipFileType.Data));
             }
         } catch (final IOException io) {
-            stroomZipRepository.addErrorMessage(stroomZipFile, io.getMessage(), bad);
-            throw io;
+            exception = io;
         } finally {
             CloseableUtil.close(stroomZipFile);
         }
+
+        if (exception != null) {
+            ErrorFileUtil.addErrorMessage(file, exception.getMessage(), bad);
+            throw exception;
+        }
+
         return entrySequence;
     }
 
@@ -102,15 +108,15 @@ public final class ProxyFileHandler {
 //    }
 
     private void sendEntry(final List<? extends StroomStreamHandler> requestHandlerList, final StroomZipFile stroomZipFile,
-                             final String sourceName, final StreamProgressMonitor streamProgress,
-                             final StroomZipEntry targetEntry)
+                           final String sourceName, final StreamProgressMonitor streamProgress,
+                           final StroomZipEntry targetEntry)
             throws IOException {
         final InputStream inputStream = stroomZipFile.getInputStream(sourceName, targetEntry.getStroomZipFileType());
         sendEntry(requestHandlerList, inputStream, streamProgress, targetEntry);
     }
 
     private void sendEntry(final List<? extends StroomStreamHandler> stroomStreamHandlerList, final InputStream inputStream,
-                          final StreamProgressMonitor streamProgress, final StroomZipEntry targetEntry)
+                           final StreamProgressMonitor streamProgress, final StroomZipEntry targetEntry)
             throws IOException {
         if (inputStream != null) {
             if (LOGGER.isDebugEnabled()) {
@@ -141,35 +147,6 @@ public final class ProxyFileHandler {
             }
             LOGGER.debug("sendEntry() - {} size is {}", targetEntry, totalRead);
 
-        }
-    }
-
-//    private void sendEntry(final List<? extends StroomStreamHandler> stroomStreamHandlerList, final MetaMap metaMap,
-//                          final StroomZipEntry targetEntry) throws IOException {
-//        if (LOGGER.isDebugEnabled()) {
-//            LOGGER.debug("sendEntry() - " + targetEntry);
-//        }
-//        final byte[] buffer = BufferFactory.create();
-//        for (final StroomStreamHandler stroomStreamHandler : stroomStreamHandlerList) {
-//            if (stroomStreamHandler instanceof StroomHeaderStreamHandler) {
-//                ((StroomHeaderStreamHandler) stroomStreamHandler).handleHeader(metaMap);
-//            }
-//            stroomStreamHandler.handleEntryStart(targetEntry);
-//        }
-//        final InitialByteArrayOutputStream initialByteArrayOutputStream = new InitialByteArrayOutputStream(buffer);
-//        metaMap.write(initialByteArrayOutputStream, false);
-//        final BufferPos bufferPos = initialByteArrayOutputStream.getBufferPos();
-//        for (final StroomStreamHandler stroomStreamHandler : stroomStreamHandlerList) {
-//            stroomStreamHandler.handleEntryData(bufferPos.getBuffer(), 0, bufferPos.getBufferPos());
-//        }
-//        for (final StroomStreamHandler stroomStreamHandler : stroomStreamHandlerList) {
-//            stroomStreamHandler.handleEntryEnd();
-//        }
-//    }
-
-    public void deleteFiles(final StroomZipRepository stroomZipRepository, final List<Path> fileList) {
-        for (final Path file : fileList) {
-            stroomZipRepository.delete(new StroomZipFile(file));
         }
     }
 }

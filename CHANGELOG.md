@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1160** : Proxy repositories now only roll if all output streams for a repository are closed. Proxy repositories also only calculate the current max id if the `executionUuid` repo format param is not used.
+
 * Issue **#1186** : Volume status is now refreshed every 5 minutes.
 
 

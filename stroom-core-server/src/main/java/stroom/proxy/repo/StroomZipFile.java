@@ -115,13 +115,13 @@ public class StroomZipFile implements Closeable {
         return getZipFile().getEntry(fullName);
     }
 
-    void renameTo(Path newFileName) throws IOException {
-        close();
-        Files.move(file, newFileName);
-    }
-
-    void delete() throws IOException {
-        close();
-        Files.delete(file);
-    }
+//    void renameTo(Path newFileName) throws IOException {
+//        close();
+//        Files.move(file, newFileName);
+//    }
+//
+//    void delete() throws IOException {
+//        close();
+//        Files.delete(file);
+//    }
 }

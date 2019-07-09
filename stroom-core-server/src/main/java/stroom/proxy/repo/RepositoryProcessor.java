@@ -23,7 +23,6 @@ import stroom.task.server.TaskContext;
 import stroom.task.server.ThreadPoolImpl;
 import stroom.util.date.DateUtil;
 import stroom.util.io.AbstractFileVisitor;
-import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
@@ -35,6 +34,7 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Comparator;
@@ -64,8 +64,8 @@ public final class RepositoryProcessor {
     private final int maxConcurrentMappedFiles;
     private final int maxFilesPerAggregate;
     private final long maxUncompressedFileSize;
-
-    private final StroomZipRepository stroomZipRepository;
+    private final Path repoPath;
+    private final String repoDir;
 
     public RepositoryProcessor(final TaskContext taskContext,
                                final ExecutorProvider executorProvider,
@@ -84,8 +84,8 @@ public final class RepositoryProcessor {
         this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
         this.maxFilesPerAggregate = maxFilesPerAggregate;
         this.maxUncompressedFileSize = maxUncompressedFileSize;
-
-        stroomZipRepository = new StroomZipRepository(proxyDir, true);
+        repoPath = Paths.get(proxyDir);
+        repoDir = FileUtil.getCanonicalPath(repoPath);
     }
 
     /**
@@ -103,27 +103,32 @@ public final class RepositoryProcessor {
                 ModelStringUtil.formatIECByteSizeString(maxUncompressedFileSize));
 
         try {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Scanning " + stroomZipRepository.getRootDir());
+            if (Files.isDirectory(repoPath)) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Scanning " + repoDir);
+                }
+
+                final ErrorReceiver errorReceiver = (path, message) ->
+                        addErrorMessage(path, message, true);
+
+                // Keep processing until we no longer reach the maximum file scan limit.
+                boolean reachedFileScanLimit;
+                do {
+                    // Break down the zip repository so that all zip files only contain a single stream.
+                    // We do this so that we can form new aggregates that contain less files than the
+                    // maximum number or are smaller than the maximum size
+                    reachedFileScanLimit = fragmentZipFiles(taskContext, executorProvider, threadCount, errorReceiver);
+
+                    // Aggregate the zip files.
+                    aggregateZipFiles(taskContext, executorProvider, threadCount, errorReceiver);
+
+                } while (reachedFileScanLimit);
+
+                LOGGER.debug("Completed");
+
+            } else {
+                LOGGER.debug("Repo dir " + repoDir + " not found");
             }
-
-            final ErrorReceiver errorReceiver = (path, message) ->
-                    addErrorMessage(path, message, true);
-
-            // Keep processing until we no longer reach the maximum file scan limit.
-            boolean reachedFileScanLimit;
-            do {
-                // Break down the zip repository so that all zip files only contain a single stream.
-                // We do this so that we can form new aggregates that contain less files than the
-                // maximum number or are smaller than the maximum size
-                reachedFileScanLimit = fragmentZipFiles(taskContext, executorProvider, threadCount, errorReceiver);
-
-                // Aggregate the zip files.
-                aggregateZipFiles(taskContext, executorProvider, threadCount, errorReceiver);
-
-            } while (reachedFileScanLimit);
-
-            LOGGER.debug("Completed");
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -135,14 +140,14 @@ public final class RepositoryProcessor {
                                      final ExecutorProvider executorProvider,
                                      final int threadCount,
                                      final ErrorReceiver errorReceiver) {
-        taskContext.setName("Fragmenting Repository - " + FileUtil.getCanonicalPath(stroomZipRepository.getRootDir()));
+        taskContext.setName("Fragmenting Repository - " + repoDir);
 
         final ZipFragmenterFileProcessor zipFragmenter = new ZipFragmenterFileProcessor(
                 taskContext, executorProvider, threadCount, errorReceiver);
 
         final AtomicInteger fileCount = new AtomicInteger();
         try {
-            Files.walkFileTree(stroomZipRepository.getRootDir(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+            Files.walkFileTree(repoPath, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                     if (PartsPathUtil.isPartsDir(dir)) {
@@ -185,10 +190,8 @@ public final class RepositoryProcessor {
                                    final ExecutorProvider executorProvider,
                                    final int threadCount,
                                    final ErrorReceiver errorReceiver) {
-        taskContext.setName("Aggregating Repository - " + FileUtil.getCanonicalPath(stroomZipRepository.getRootDir()));
-
+        taskContext.setName("Aggregating Repository - " + repoDir);
         final ZipInfoConsumer zipInfoConsumer = new ZipInfoConsumer(
-                stroomZipRepository,
                 maxFilesPerAggregate,
                 maxConcurrentMappedFiles,
                 maxUncompressedFileSize,
@@ -205,7 +208,7 @@ public final class RepositoryProcessor {
                 threadCount);
 
         try {
-            Files.walkFileTree(stroomZipRepository.getRootDir(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+            Files.walkFileTree(repoPath, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                     if (PartsPathUtil.isPartsDir(dir)) {
@@ -247,17 +250,10 @@ public final class RepositoryProcessor {
     }
 
     private void addErrorMessage(final Path path, final String msg, final boolean bad) {
-        StroomZipFile stroomZipFile = null;
-        try {
-            stroomZipFile = new StroomZipFile(path);
-            stroomZipRepository.addErrorMessage(stroomZipFile, msg, bad);
-        } finally {
-            CloseableUtil.closeLogAndIgnoreException(stroomZipFile);
-        }
+        ErrorFileUtil.addErrorMessage(path, msg, bad);
     }
 
     private static class ZipInfoConsumer implements Consumer<ZipInfo> {
-        private final StroomZipRepository stroomZipRepository;
         private final int maxFilesPerAggregate;
         private final int maxConcurrentMappedFiles;
         private final long maxUncompressedFileSize;
@@ -270,15 +266,13 @@ public final class RepositoryProcessor {
 
         private int totalMappedFiles;
 
-        ZipInfoConsumer(final StroomZipRepository stroomZipRepository,
-                        final int maxFilesPerAggregate,
+        ZipInfoConsumer(final int maxFilesPerAggregate,
                         final int maxConcurrentMappedFiles,
                         final long maxUncompressedFileSize,
                         final ErrorReceiver errorReceiver,
                         final Provider<FileSetProcessor> fileSetProcessorProvider,
                         final ExecutorProvider executorProvider,
                         final int threadCount) {
-            this.stroomZipRepository = stroomZipRepository;
             this.maxFilesPerAggregate = maxFilesPerAggregate;
             this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
             this.maxUncompressedFileSize = maxUncompressedFileSize;
@@ -358,7 +352,7 @@ public final class RepositoryProcessor {
             try {
                 final Runnable runnable = () -> {
                     final FileSetProcessor fileSetProcessor = fileSetProcessorProvider.get();
-                    fileSetProcessor.process(stroomZipRepository, fileSet);
+                    fileSetProcessor.process(fileSet);
                 };
                 final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
                 completableFuture.thenAccept(r -> futures.remove(completableFuture));

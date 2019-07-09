@@ -25,10 +25,10 @@ import stroom.feed.StroomHeaderArguments;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.internalstatistics.MetaDataStatistic;
+import stroom.proxy.repo.ErrorFileUtil;
 import stroom.proxy.repo.FileSet;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.proxy.repo.ProxyFileHandler;
-import stroom.proxy.repo.StroomZipRepository;
 import stroom.streamstore.server.StreamStore;
 import stroom.task.server.TaskContext;
 import stroom.util.io.StreamProgressMonitor;
@@ -68,7 +68,6 @@ public final class StreamStoreFileSetProcessor implements FileSetProcessor {
     private final FeedService feedService;
     private final MetaDataStatistic metaDataStatistic;
     private final boolean aggregate = true;
-    private final ProxyFileHandler proxyFileHandler = new ProxyFileHandler();
     private final TaskContext taskContext;
 
     @Inject
@@ -83,7 +82,7 @@ public final class StreamStoreFileSetProcessor implements FileSetProcessor {
     }
 
     @Override
-    public void process(final StroomZipRepository stroomZipRepository, final FileSet fileSet) {
+    public void process(final FileSet fileSet) {
         if (fileSet.getFiles().size() > 0) {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
@@ -127,7 +126,7 @@ public final class StreamStoreFileSetProcessor implements FileSetProcessor {
                         handlers = closeStreamHandlers(handlers);
 
                         // Delete the done files
-                        cleanup(stroomZipRepository, deleteFileList);
+                        cleanup(deleteFileList);
 
                         // Start new batch
                         deleteFileList = new ArrayList<>();
@@ -135,7 +134,7 @@ public final class StreamStoreFileSetProcessor implements FileSetProcessor {
                         sequence = 1;
                     }
 
-                    sequence = feedFileProcessorHelper.processFeedFile(handlers, stroomZipRepository, file, streamProgressMonitor, sequence);
+                    sequence = feedFileProcessorHelper.processFeedFile(handlers, file, streamProgressMonitor, sequence);
                     deleteFileList.add(file);
 
                 } catch (final Throwable t) {
@@ -143,7 +142,7 @@ public final class StreamStoreFileSetProcessor implements FileSetProcessor {
                 }
             }
             closeStreamHandlers(handlers);
-            cleanup(stroomZipRepository, deleteFileList);
+            cleanup(deleteFileList);
             LOGGER.info("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime);
         }
     }
@@ -188,8 +187,10 @@ public final class StreamStoreFileSetProcessor implements FileSetProcessor {
         return null;
     }
 
-    private void cleanup(final StroomZipRepository stroomZipRepository, final List<Path> deleteList) {
-        proxyFileHandler.deleteFiles(stroomZipRepository, deleteList);
+    private void cleanup(final List<Path> deleteList) {
+        for (final Path file : deleteList) {
+            ErrorFileUtil.deleteFileAndErrors(file);
+        }
 
         // Delete any parent directories if we can.
         final Set<Path> parentDirs = deleteList.stream().map(Path::getParent).collect(Collectors.toSet());

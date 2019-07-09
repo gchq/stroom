@@ -93,23 +93,23 @@ public class ProxyRepositoryCreator {
             if (feed.isReference() == mandateEffectiveDate) {
                 LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
 
-                final StroomZipOutputStream zipOutputStream = repository.getStroomZipOutputStream();
+                try (final StroomZipOutputStream zipOutputStream = repository.getStroomZipOutputStream()) {
 
-                int i = 0;
-                i++;
-                String newName = Integer.toString(i);
-                newName = StringUtils.leftPad(newName, 3, '0');
+                    int i = 0;
+                    i++;
+                    String newName = Integer.toString(i);
+                    newName = StringUtils.leftPad(newName, 3, '0');
 
-                // Add meta data.
-                OutputStream zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Meta).getFullName());
-                final MetaMap map = createMap(feed, effectiveMs);
-                map.write(zipPart, true);
+                    // Add meta data.
+                    OutputStream zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Meta).getFullName());
+                    final MetaMap map = createMap(feed, effectiveMs);
+                    map.write(zipPart, true);
 
-                // Add data.
-                zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Data).getFullName());
-                StreamUtil.streamToStream(new BufferedInputStream(Files.newInputStream(file)), zipPart);
+                    // Add data.
+                    zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Data).getFullName());
+                    StreamUtil.streamToStream(new BufferedInputStream(Files.newInputStream(file)), zipPart);
 
-                zipOutputStream.close();
+                }
             }
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -123,9 +123,7 @@ public class ProxyRepositoryCreator {
         if (feed.isReference() == mandateEffectiveDate) {
             LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
 
-            try {
-                final StroomZipOutputStream zipOutputStream = repository.getStroomZipOutputStream();
-
+            try (final StroomZipOutputStream zipOutputStream = repository.getStroomZipOutputStream()) {
                 final StroomZipFile stroomZipFile = new StroomZipFile(file);
 
                 int i = 0;
@@ -160,8 +158,6 @@ public class ProxyRepositoryCreator {
                 }
 
                 stroomZipFile.close();
-                zipOutputStream.close();
-
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
