@@ -25,7 +25,7 @@ import stroom.meta.shared.MetaService;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.dictionary.api.DictionaryStore;
+import stroom.dictionary.impl.DictionaryStore;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Period;
 import stroom.data.shared.StreamTypeNames;

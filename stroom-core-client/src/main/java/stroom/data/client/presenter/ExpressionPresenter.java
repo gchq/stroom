@@ -21,7 +21,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
@@ -45,7 +45,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
-    public void read(final ExpressionOperator expression, final DocRef dataSource, final List<DataSourceField> fields) {
+    public void read(final ExpressionOperator expression, final DocRef dataSource, final List<AbstractField> fields) {
         editExpressionPresenter.init(dispatcher, dataSource, fields);
 
         if (expression != null) {

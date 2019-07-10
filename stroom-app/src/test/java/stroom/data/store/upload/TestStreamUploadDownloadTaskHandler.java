@@ -30,9 +30,9 @@ import stroom.data.store.impl.StreamUploadTask;
 import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
-import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
@@ -72,7 +72,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         }
 
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-        findMetaCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
+        findMetaCriteria.setExpression(MetaExpressionUtil.createFeedExpression(feedName));
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(entryCount);
 
@@ -105,7 +105,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
     void testUploadFlatFile() throws IOException {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-        findMetaCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
+        findMetaCriteria.setExpression(MetaExpressionUtil.createFeedExpression(feedName));
 
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".dat");
         Files.write(file, "TEST".getBytes());
@@ -148,7 +148,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         }
 
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-        findMetaCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
+        findMetaCriteria.setExpression(MetaExpressionUtil.createFeedExpression(feedName));
         final DataDownloadSettings streamDownloadSettings = new DataDownloadSettings();
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(1);

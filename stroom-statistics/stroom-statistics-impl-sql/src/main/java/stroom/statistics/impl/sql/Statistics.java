@@ -16,7 +16,7 @@
 
 package stroom.statistics.impl.sql;
 
-import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.statistics.impl.sql.shared.StatisticStore;
 
 import java.util.List;
@@ -68,7 +68,7 @@ public interface Statistics {
      */
     List<String> getValuesByTagAndPartialValue(String tagName, String partialValue);
 
-    List<DataSourceField> getSupportedFields(final List<DataSourceField> indexFields);
+    List<AbstractField> getSupportedFields(final List<AbstractField> indexFields);
 
     /**
      * Flushes all events currently held in memory down to the persistent event

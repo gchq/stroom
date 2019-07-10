@@ -34,7 +34,7 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaProperties;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
@@ -52,6 +52,7 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.FindProcessorCriteria;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -206,10 +207,10 @@ public final class StoreCreationTool {
 
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
-                    .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
+                    .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                            .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                            .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                            .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                             .build())
                     .build();
             processorFilterService.create(pipelineRef, findStreamQueryData, 2, true);
@@ -364,14 +365,14 @@ public final class StoreCreationTool {
         final DocRef pipelineRef = getEventPipeline(feedName, translationTextConverterType,
                 translationTextConverterLocation, translationXsltLocation, flatteningXsltLocation, pipelineReferences);
 
-        final Processor streamProcessor = processorService.find(new FindProcessorCriteria(pipelineRef)).getFirst();
+        final Processor streamProcessor = processorService.find(new FindProcessorCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineRef))).getFirst();
         if (streamProcessor == null) {
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
-                    .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
+                    .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, docRef.getName())
-                            .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                            .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, docRef.getName())
+                            .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                             .build())
                     .build();
 
@@ -595,14 +596,14 @@ public final class StoreCreationTool {
         // Create the indexing pipeline.
         final DocRef pipelineRef = getIndexingPipeline(indexRef, translationXsltLocation);
 
-        final Processor streamProcessor = processorService.find(new FindProcessorCriteria(pipelineRef))
+        final Processor streamProcessor = processorService.find(new FindProcessorCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineRef)))
                 .getFirst();
         if (streamProcessor == null) {
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
-                    .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
+                    .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                            .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                             .build())
                     .build();
             processorFilterService.create(pipelineRef, findStreamQueryData, 1, true);

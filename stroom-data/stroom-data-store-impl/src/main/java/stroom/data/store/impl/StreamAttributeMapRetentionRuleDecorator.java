@@ -21,10 +21,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.dictionary.api.DictionaryStore;
 import stroom.meta.api.ExpressionMatcher;
+import stroom.meta.api.ExpressionMatcherFactory;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
@@ -47,9 +47,9 @@ class StreamAttributeMapRetentionRuleDecorator {
     private final ExpressionMatcher expressionMatcher;
 
     @Inject
-    public StreamAttributeMapRetentionRuleDecorator(final DictionaryStore dictionaryStore,
+    public StreamAttributeMapRetentionRuleDecorator(final ExpressionMatcherFactory expressionMatcherFactory,
                                                     final Provider<DataRetentionRules> dataRetentionRulesProvider) {
-        expressionMatcher = new ExpressionMatcher(MetaFieldNames.getFieldMap(), dictionaryStore);
+        expressionMatcher = expressionMatcherFactory.create(MetaFields.getFieldMap());
 
         final DataRetentionRules dataRetentionRules = dataRetentionRulesProvider.get();
         if (dataRetentionRules != null) {

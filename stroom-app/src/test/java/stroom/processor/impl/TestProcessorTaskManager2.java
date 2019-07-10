@@ -21,10 +21,12 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaService;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.query.api.v2.ExpressionOperator;
@@ -71,13 +73,13 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
         ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND).build();
         assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
 
-        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName).build();
+        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName).build();
         assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
 
-        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, "otherFed").build();
+        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFields.FEED_NAME, Condition.EQUALS, "otherFed").build();
         assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
 
-        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFieldNames.PIPELINE_UUID, Condition.EQUALS, "1234").build();
+        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFields.PIPELINE, Condition.EQUALS, new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234")).build();
         assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
     }
 

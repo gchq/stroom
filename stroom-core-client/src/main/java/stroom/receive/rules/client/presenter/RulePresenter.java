@@ -21,12 +21,12 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.receive.rules.client.presenter.RulePresenter.RuleView;
-import stroom.receive.rules.shared.RuleAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
+import stroom.receive.rules.shared.RuleAction;
 
 import java.util.List;
 
@@ -43,7 +43,7 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
-    void read(final ReceiveDataRule rule, final List<DataSourceField> fields) {
+    void read(final ReceiveDataRule rule, final List<AbstractField> fields) {
         editExpressionPresenter.init(null, null, fields);
         this.originalRule = rule;
         getView().setName(rule.getName());

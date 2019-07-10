@@ -1,29 +1,38 @@
 package stroom.processor.impl.db;
 
 import org.jooq.Condition;
+import stroom.db.util.ExpressionMapper;
+import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 import stroom.processor.shared.FindProcessorCriteria;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorDataSource;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
+import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 
 class ProcessorDaoImpl implements ProcessorDao {
     private final ConnectionProvider connectionProvider;
     private final GenericDao<ProcessorRecord, Processor, Integer> genericDao;
+    private final ExpressionMapper expressionMapper;
 
     @Inject
-    public ProcessorDaoImpl(final ConnectionProvider connectionProvider) {
+    public ProcessorDaoImpl(final ConnectionProvider connectionProvider,
+                            final ExpressionMapperFactory expressionMapperFactory) {
         this.connectionProvider = connectionProvider;
         this.genericDao = new GenericDao<>(PROCESSOR, PROCESSOR.ID, Processor.class, connectionProvider);
+
+        expressionMapper = expressionMapperFactory.create();
+        expressionMapper.map(ProcessorDataSource.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
+        expressionMapper.map(ProcessorDataSource.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
     }
 
     @Override
@@ -86,13 +95,15 @@ class ProcessorDaoImpl implements ProcessorDao {
 
     @Override
     public BaseResultList<Processor> find(final FindProcessorCriteria criteria) {
-        final Collection<Condition> conditions = JooqUtil.conditions(
-                JooqUtil.getStringCondition(PROCESSOR.PIPELINE_UUID, criteria.getPipelineUuidCriteria()));
+        final Condition condition = expressionMapper.apply(criteria.getExpression());
+
+//        final Collection<Condition> conditions = JooqUtil.conditions(
+//                JooqUtil.getStringCondition(PROCESSOR.PIPELINE_UUID, criteria.getPipelineUuidCriteria()));
 
         final List<Processor> list = JooqUtil.contextResult(connectionProvider, context -> context
                 .select()
                 .from(PROCESSOR)
-                .where(conditions)
+                .where(condition)
                 .limit(JooqUtil.getLimit(criteria.getPageRequest()))
                 .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                 .fetch()

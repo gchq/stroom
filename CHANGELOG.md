@@ -6,6 +6,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1154** : Search now terminates during result creation if it is asked to do so.
+
+* Issue **#1167** : Fix for proxy to deal with lack of explorer folder based collections.
+
+* Issue **#1172** : Fixed logging detail for viewing docs.
+
+* Issue **#1166** : Fixed issue where users with only read permission could not copy items.
+
+* Issue **#1174** : Reduced hits on the document permission cache.
+
+* Issue **#1168** : Statistics searches now work when user only has `Use` permission.
+
+* Issue **#1170** : Extra validation to check valid feed provided for stream appender.
+
+* Issue **#1174** : The size of the document permissions cache is now configurable via the `stroom.security.documentPermissions.maxCacheSize` property.
+
+* Issue **#1176** : Created index on document permissions to improve performance.
+
+* Issue **#1175** : Dropping unnecessary index `explorerTreePath_descendant_idx`.
+
+* Issue **#747** : XSLT can now reference dictionaries by UUID.
+
+* Issue **#1167** : Use of folders to include child feeds and pipelines is now supported.
+
 * Issue **#1153** : The explorer tree is now built with fewer DB queries.
 
 * Issue **#1163** : Added indexes to the DB to improve explorer performance.

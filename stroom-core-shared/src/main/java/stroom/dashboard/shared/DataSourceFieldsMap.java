@@ -16,24 +16,24 @@
 
 package stroom.dashboard.shared;
 
-import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.AbstractField;
 
 import java.util.HashMap;
 import java.util.List;
 
-public class DataSourceFieldsMap extends HashMap<String, DataSourceField> {
+public class DataSourceFieldsMap extends HashMap<String, AbstractField> {
     private static final long serialVersionUID = -7687167987530520359L;
 
     public DataSourceFieldsMap() {
     }
 
-    public DataSourceFieldsMap(final List<DataSourceField> fields) {
-        for (final DataSourceField indexField : fields) {
+    public DataSourceFieldsMap(final List<AbstractField> fields) {
+        for (final AbstractField indexField : fields) {
             put(indexField);
         }
     }
 
-    public void put(final DataSourceField field) {
+    public void put(final AbstractField field) {
         put(field.getName(), field);
     }
 }

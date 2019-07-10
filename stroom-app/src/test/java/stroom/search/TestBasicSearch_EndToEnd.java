@@ -20,8 +20,8 @@ package stroom.search;
 
 import org.junit.jupiter.api.Test;
 import stroom.dashboard.shared.DataSourceFieldsMap;
-import stroom.datasource.api.v2.DataSourceField;
-import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardUtil;
@@ -61,14 +61,9 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
 
         // Create a map of index fields keyed by name.
         final DataSourceFieldsMap dataSourceFieldsMap = new DataSourceFieldsMap(IndexDataSourceFieldUtil.getDataSourceFields(index));
-        final DataSourceField actual = dataSourceFieldsMap.get("Action");
+        final AbstractField actual = dataSourceFieldsMap.get("Action");
 
-        final DataSourceField expected = new DataSourceField.Builder()
-                .type(DataSourceFieldType.FIELD)
-                .name("Action")
-                .queryable(true)
-                .addConditions(actual.getConditions().toArray(new Condition[0]))
-                .build();
+        final AbstractField expected = new TextField("Action", true, actual.getConditions());
 
         assertThat(actual).as("Expected to index action").isEqualTo(expected);
     }

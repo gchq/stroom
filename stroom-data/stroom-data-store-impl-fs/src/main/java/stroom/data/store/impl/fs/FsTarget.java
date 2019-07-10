@@ -21,11 +21,12 @@ import org.slf4j.LoggerFactory;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Target;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.util.io.SeekableOutputStream;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.util.io.FileUtil;
@@ -178,9 +179,9 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
         }
     }
 
-    private void updateAttribute(final FsTarget target, final String key, final String value) {
-        if (!target.getAttributes().containsKey(key)) {
-            target.getAttributes().put(key, value);
+    private void updateAttribute(final FsTarget target, final AbstractField key, final String value) {
+        if (!target.getAttributes().containsKey(key.getName())) {
+            target.getAttributes().put(key.getName(), value);
         }
     }
 
@@ -227,8 +228,8 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
                 // Only write meta for the root target.
                 if (parent == null) {
                     // Update attributes and write the manifest.
-                    updateAttribute(this, MetaFieldNames.RAW_SIZE, String.valueOf(getStreamSize()));
-                    updateAttribute(this, MetaFieldNames.FILE_SIZE, String.valueOf(getTotalFileSize()));
+                    updateAttribute(this, MetaFields.RAW_SIZE, String.valueOf(getStreamSize()));
+                    updateAttribute(this, MetaFields.FILE_SIZE, String.valueOf(getTotalFileSize()));
                     writeManifest();
 
                     if (streamCloseException == null) {

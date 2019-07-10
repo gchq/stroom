@@ -18,23 +18,24 @@ package stroom.statistics.impl.sql;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.datasource.api.v2.TextField;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
-import stroom.statistics.impl.sql.shared.CustomRollUpMask;
-import stroom.statistics.impl.sql.shared.StatisticField;
-import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.impl.sql.search.FilterTermsTree;
 import stroom.statistics.impl.sql.search.FindEventCriteria;
 import stroom.statistics.impl.sql.search.StatStoreCriteriaBuilder;
-import stroom.util.date.DateUtil;
+import stroom.statistics.impl.sql.shared.CustomRollUpMask;
+import stroom.statistics.impl.sql.shared.StatisticField;
+import stroom.statistics.impl.sql.shared.StatisticRollUpType;
+import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.date.DateUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -357,7 +358,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             final String dateTerm = fromDateStr + "," + toDateStr;
 
             rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
-            rootOperator.addTerm(null, Condition.EQUALS, "xxx");
+            rootOperator.addTerm(new TextField(null), Condition.EQUALS, "xxx");
 
             final Query query = new Query(null, rootOperator.build());
             final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);

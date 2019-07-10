@@ -69,61 +69,61 @@ class TestDocumentPermissionsServiceImpl {
         final DocumentPermissions documentPermissions = documentPermissionService
                 .getPermissionsForDocument(docRef.getUuid());
 
-        addPermissions(docRef.getUuid(), userGroup1, c1, p1);
-        addPermissions(docRef.getUuid(), userGroup2, c1, p2);
-        addPermissions(docRef.getUuid(), userGroup3, c1);
+        addPermissions(docRef, userGroup1, c1, p1);
+        addPermissions(docRef, userGroup2, c1, p2);
+        addPermissions(docRef, userGroup3, c1);
 
-        checkDocumentPermissions(docRef.getUuid(), userGroup1, c1, p1);
-        checkDocumentPermissions(docRef.getUuid(), userGroup2, c1, p2);
-        checkDocumentPermissions(docRef.getUuid(), userGroup3, c1);
+        checkDocumentPermissions(docRef, userGroup1, c1, p1);
+        checkDocumentPermissions(docRef, userGroup2, c1, p2);
+        checkDocumentPermissions(docRef, userGroup3, c1);
 
-        removePermissions(docRef.getUuid(), userGroup2, p2);
-        checkDocumentPermissions(docRef.getUuid(), userGroup2, c1);
+        removePermissions(docRef, userGroup2, p2);
+        checkDocumentPermissions(docRef, userGroup2, c1);
 
         // Check user permissions.
         final User user = createUser(FileSystemTestUtil.getUniqueTestString());
         userService.addUserToGroup(user.getUuid(), userGroup1.getUuid());
         userService.addUserToGroup(user.getUuid(), userGroup3.getUuid());
-        checkUserPermissions(docRef.getUuid(), user, c1, p1);
+        checkUserPermissions(docRef, user, c1, p1);
 
-        addPermissions(docRef.getUuid(), userGroup2, c1, p2);
+        addPermissions(docRef, userGroup2, c1, p2);
 
         userService.addUserToGroup(user.getUuid(), userGroup2.getUuid());
-        checkUserPermissions(docRef.getUuid(), user, c1, p1, p2);
+        checkUserPermissions(docRef, user, c1, p1, p2);
 
-        removePermissions(docRef.getUuid(), userGroup2, p2);
-        checkUserPermissions(docRef.getUuid(), user, c1, p1);
+        removePermissions(docRef, userGroup2, p2);
+        checkUserPermissions(docRef, user, c1, p1);
     }
 
-    private void addPermissions(final String docRefUuid, final User user, final String... permissions) {
+    private void addPermissions(final DocRef docRef, final User user, final String... permissions) {
         for (final String permission : permissions) {
             try {
-                documentPermissionService.addPermission(docRefUuid, user.getUuid(), permission);
+                documentPermissionService.addPermission(docRef.getUuid(), user.getUuid(), permission);
             } catch (final Exception e) {
                 LOGGER.info(e.getMessage());
             }
         }
     }
 
-    private void removePermissions(final String docRefUuid, final User user, final String... permissions) {
+    private void removePermissions(final DocRef docRef, final User user, final String... permissions) {
         for (final String permission : permissions) {
-            documentPermissionService.removePermission(docRefUuid, user.getUuid(), permission);
+            documentPermissionService.removePermission(docRef.getUuid(), user.getUuid(), permission);
         }
     }
 
-    private void checkDocumentPermissions(final String docRefUuid, final User user, final String... permissions) {
+    private void checkDocumentPermissions(final DocRef docRef, final User user, final String... permissions) {
         final DocumentPermissions documentPermissions = documentPermissionService
-                .getPermissionsForDocument(docRefUuid);
+                .getPermissionsForDocument(docRef.getUuid());
         final Set<String> permissionSet = documentPermissions.getPermissionsForUser(user.getUuid());
         assertThat(permissionSet.size()).isEqualTo(permissions.length);
         for (final String permission : permissions) {
             assertThat(permissionSet.contains(permission)).isTrue();
         }
 
-        checkUserPermissions(docRefUuid, user, permissions);
+        checkUserPermissions(docRef, user, permissions);
     }
 
-    private void checkUserPermissions(final String docRefUuid,
+    private void checkUserPermissions(final DocRef docRef,
                                       final User user,
                                       final String... permissions) {
         final Set<User> allUsers = new HashSet<>();
@@ -132,7 +132,7 @@ class TestDocumentPermissionsServiceImpl {
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final User userRef : allUsers) {
-            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(docRefUuid);
+            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(docRef.getUuid());
             final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef.getUuid());
             combinedPermissions.addAll(userPermissions);
         }
@@ -142,10 +142,10 @@ class TestDocumentPermissionsServiceImpl {
             assertThat(combinedPermissions.contains(permission)).isTrue();
         }
 
-        checkUserCachePermissions(docRefUuid, user, permissions);
+        checkUserCachePermissions(docRef, user, permissions);
     }
 
-    private void checkUserCachePermissions(final String docRefUuid,
+    private void checkUserCachePermissions(final DocRef docRef,
                                            final User user,
                                            final String... permissions) {
         userGroupsCache.clear();
@@ -157,7 +157,7 @@ class TestDocumentPermissionsServiceImpl {
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final User userRef : allUsers) {
-            final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRefUuid);
+            final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
             final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef.getUuid());
             combinedPermissions.addAll(userPermissions);
         }

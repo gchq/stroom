@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,17 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dictionary.impl;
 
-import com.google.inject.AbstractModule;
-import stroom.dictionary.api.DictionaryStore;
+import stroom.dictionary.shared.DictionaryDoc;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentStore;
 
+import java.util.List;
 
-public class MockDictionaryModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        bind(DictionaryStore.class).to(DictionaryStoreImpl.class);
-    }
+public interface DictionaryStore extends DocumentStore<DictionaryDoc> {
+    List<DocRef> list();
 }

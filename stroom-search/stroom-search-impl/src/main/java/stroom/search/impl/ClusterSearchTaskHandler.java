@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
-import stroom.dictionary.api.DictionaryStore;
+import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
@@ -84,7 +84,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchTaskHandler.class);
 
     private final IndexStore indexStore;
-    private final DictionaryStore dictionaryStore;
+    private final WordListProvider wordListProvider;
     private final TaskContext taskContext;
     private final CoprocessorFactory coprocessorFactory;
     private final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor;
@@ -107,7 +107,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
     @Inject
     ClusterSearchTaskHandler(final IndexStore indexStore,
-                             final DictionaryStore dictionaryStore,
+                             final WordListProvider wordListProvider,
                              final TaskContext taskContext,
                              final CoprocessorFactory coprocessorFactory,
                              final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor,
@@ -121,7 +121,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                              final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
                              final ExecutorProvider executorProvider) {
         this.indexStore = indexStore;
-        this.dictionaryStore = dictionaryStore;
+        this.wordListProvider = wordListProvider;
         this.taskContext = taskContext;
         this.coprocessorFactory = coprocessorFactory;
         this.indexShardSearchTaskExecutor = indexShardSearchTaskExecutor;
@@ -387,7 +387,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 SearchExpressionQuery query1 = null;
                 try {
                     final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                            dictionaryStore,
+                            wordListProvider,
                             indexFieldsMap1,
                             maxBooleanClauseCount,
                             task.getDateTimeLocale(),

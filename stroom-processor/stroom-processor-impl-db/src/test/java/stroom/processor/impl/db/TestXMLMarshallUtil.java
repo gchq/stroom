@@ -17,7 +17,7 @@
 package stroom.processor.impl.db;
 
 import org.junit.jupiter.api.Test;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
@@ -33,18 +33,18 @@ class TestXMLMarshallUtil {
         final String createdPeriod = String.format("%d%s%d", 1L, ExpressionTerm.Condition.IN_CONDITION_DELIMITER, 2L);
 
         final QueryData queryData1 = new QueryData.Builder()
-                .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                         .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(MetaFieldNames.ID, ExpressionTerm.Condition.EQUALS, Long.toString(999L))
-                                .addTerm(MetaFieldNames.ID, ExpressionTerm.Condition.EQUALS, Long.toString(7L))
-                                .addTerm(MetaFieldNames.ID, ExpressionTerm.Condition.EQUALS, Long.toString(77L))
+                                .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, 999L)
+                                .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, 7L)
+                                .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, 77L)
                                 .build())
                         .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, Long.toString(88L))
-                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, Long.toString(889L))
+                                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, Long.toString(88L))
+                                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, Long.toString(889L))
                                 .build())
-                        .addTerm(MetaFieldNames.CREATE_TIME, ExpressionTerm.Condition.BETWEEN, createdPeriod)
+                        .addTerm(MetaFields.CREATE_TIME, ExpressionTerm.Condition.BETWEEN, createdPeriod)
                         .build())
                 .build();
 

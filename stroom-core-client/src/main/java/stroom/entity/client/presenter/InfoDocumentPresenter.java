@@ -53,21 +53,36 @@ public class InfoDocumentPresenter
     public void onCreate(final ShowInfoDocumentDialogEvent event) {
         final SharedDocRefInfo info = event.getInfo();
 
-        String string = "";
+        final StringBuilder sb = new StringBuilder();
         if (info.getOtherInfo() != null) {
-            string += info.getOtherInfo() + "\n";
+            sb.append(info.getOtherInfo());
+            sb.append("\n");
         }
 
-        string += "" +
-                "UUID: " + info.getUuid() +
-                "\nType: " + info.getType() +
-                "\nName: " + info.getName() +
-                "\nCreated By: " + info.getCreateUser() +
-                "\nCreated On: " + ClientDateUtil.toISOString(info.getCreateTime()) +
-                "\nUpdated By: " + info.getUpdateUser() +
-                "\nUpdated On: " + ClientDateUtil.toISOString(info.getUpdateTime());
+        sb.append("UUID: ");
+        sb.append(info.getUuid());
+        sb.append("\nType: ");
+        sb.append(info.getType());
+        sb.append("\nName: ");
+        sb.append(info.getName());
+        if (info.getCreateUser() != null) {
+            sb.append("\nCreated By: ");
+            sb.append(info.getCreateUser());
+        }
+        if (info.getCreateTime() != null) {
+            sb.append("\nCreated On: ");
+            sb.append(ClientDateUtil.toISOString(info.getCreateTime()));
+        }
+        if (info.getUpdateUser() != null) {
+            sb.append("\nUpdated By: ");
+            sb.append(info.getUpdateUser());
+        }
+        if (info.getUpdateTime() != null) {
+            sb.append("\nUpdated On: ");
+            sb.append(ClientDateUtil.toISOString(info.getUpdateTime()));
+        }
 
-        getView().setInfo(string);
+        getView().setInfo(sb.toString());
 
         forceReveal();
     }

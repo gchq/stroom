@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.pipeline.task.SupersededOutputHelper;
@@ -58,8 +58,8 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
 
             if (!superseded) {
                 final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                        .addTerm(MetaFieldNames.PARENT_ID, Condition.EQUALS, String.valueOf(sourceMeta.getId()))
-                        .addTerm(MetaFieldNames.PROCESSOR_ID, Condition.EQUALS, String.valueOf(streamProcessor.getId()))
+                        .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, sourceMeta.getId())
+                        .addTerm(MetaFields.PROCESSOR_ID, Condition.EQUALS, streamProcessor.getId())
                         .build();
                 final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
                 final List<Meta> streamList = dataMetaService.find(findMetaCriteria);

@@ -31,6 +31,7 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.table.client.Refreshable;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
@@ -414,11 +415,11 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         return resultList;
     }
 
-    void addAttributeColumn(final String name, final String attribute, final Function<String, String> formatter, final int size) {
+    void addAttributeColumn(final String name, final AbstractField attribute, final Function<String, String> formatter, final int size) {
         final Column<MetaRow, String> column = new Column<MetaRow, String>(new TextCell()) {
             @Override
             public String getValue(final MetaRow row) {
-                final String value = row.getAttributeValue(attribute);
+                final String value = row.getAttributeValue(attribute.getName());
                 if (value == null) {
                     return null;
                 }

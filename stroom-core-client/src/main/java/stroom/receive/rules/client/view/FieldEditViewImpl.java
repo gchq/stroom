@@ -23,21 +23,20 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
-import stroom.item.client.ItemListBox;
+import stroom.datasource.api.v2.FieldTypes;
+import stroom.item.client.StringListBox;
 import stroom.receive.rules.client.presenter.FieldEditPresenter.FieldEditView;
 
 public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
     private final Widget widget;
     @UiField
-    ItemListBox<DataSourceFieldType> type;
+    StringListBox type;
     @UiField
     TextBox name;
     @Inject
     public FieldEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-
-        type.addItems(DataSourceFieldType.values());
+        type.addItems(FieldTypes.TYPES);
     }
 
     @Override
@@ -46,13 +45,13 @@ public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
     }
 
     @Override
-    public DataSourceFieldType getType() {
-        return type.getSelectedItem();
+    public String getType() {
+        return type.getSelected();
     }
 
     @Override
-    public void setType(final DataSourceFieldType type) {
-        this.type.setSelectedItem(type);
+    public void setType(final String type) {
+        this.type.setSelected(type);
     }
 
     @Override

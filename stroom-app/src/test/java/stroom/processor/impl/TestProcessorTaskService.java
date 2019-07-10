@@ -17,21 +17,22 @@
 
 package stroom.processor.impl;
 
-
 import org.junit.jupiter.api.Test;
+import stroom.data.shared.StreamTypeNames;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.node.shared.Node;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskDataSource;
 import stroom.processor.shared.TaskStatus;
-import stroom.data.shared.StreamTypeNames;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
-import stroom.util.shared.Period;
 
 import javax.inject.Inject;
 import java.time.Instant;
@@ -69,18 +70,33 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         assertThat(ps1).isNotNull();
         processorTaskDao.changeTaskStatus(ps1, ps1.getNodeName(), TaskStatus.COMPLETE, ps1.getStartTimeMs(), ps1.getEndTimeMs());
 
-        FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria();
-        criteria.obtainTaskStatusSet().add(TaskStatus.COMPLETE);
+        final ExpressionOperator expressionOperator1 = new ExpressionOperator.Builder()
+                .addTerm(ProcessorTaskDataSource.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
+                .build();
+        FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria(expressionOperator1);
+//        criteria.obtainTaskStatusSet().add(TaskStatus.COMPLETE);
 
         assertThat(processorTaskService.find(criteria).size()).isEqualTo(1);
 
         // Check the date filter works
-        criteria.setCreatePeriod(new Period(file1.getCreateMs() - 10000, file1.getCreateMs() + 10000));
+        final ExpressionOperator expressionOperator2 = new ExpressionOperator.Builder()
+                .addTerm(ProcessorTaskDataSource.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
+                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, file1.getCreateMs() - 10000)
+                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.LESS_THAN, file1.getCreateMs() + 10000)
+                .build();
+        criteria.setExpression(expressionOperator2);
+        //setCreatePeriod(new Period(file1.getCreateMs() - 10000, file1.getCreateMs() + 10000));
         assertThat(processorTaskService.find(criteria).size()).isEqualTo(1);
 
-        criteria.setCreatePeriod(
-                new Period(Instant.ofEpochMilli(criteria.getCreatePeriod().getFrom()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli(),
-                        Instant.ofEpochMilli(criteria.getCreatePeriod().getTo()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli()));
+        final ExpressionOperator expressionOperator3 = new ExpressionOperator.Builder()
+                .addTerm(ProcessorTaskDataSource.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
+                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, Instant.ofEpochMilli(file1.getCreateMs() - 10000).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli())
+                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.LESS_THAN, Instant.ofEpochMilli(file1.getCreateMs() + 10000).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli())
+                .build();
+        criteria.setExpression(expressionOperator3);
+//        criteria.setCreatePeriod(
+//                new Period(Instant.ofEpochMilli(criteria.getCreatePeriod().getFrom()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli(),
+//                        Instant.ofEpochMilli(criteria.getCreatePeriod().getTo()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli()));
         assertThat(processorTaskService.find(criteria).size()).isEqualTo(0);
 
         assertThat(metaService.getMeta(file1.getId())).isNotNull();
@@ -97,16 +113,23 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         final Node testNode = new Node();
         testNode.setId(1);
 
-        final FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria();
-        criteria.obtainNodeNameCriteria().setString("Node name");
+        final ExpressionOperator expression = new ExpressionOperator.Builder()
+                .addTerm(ProcessorTaskDataSource.NODE_NAME, Condition.EQUALS, "Node name")
+                .addTerm(ProcessorTaskDataSource.TASK_ID, Condition.EQUALS, 1)
+                .addTerm(ProcessorTaskDataSource.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
+                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, System.currentTimeMillis())
+                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.LESS_THAN, System.currentTimeMillis())
+                .build();
+        final FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria(expression);
+//        criteria.obtainNodeNameCriteria().setString("Node name");
         criteria.setSort(FindProcessorTaskCriteria.FIELD_CREATE_TIME);
-        criteria.obtainProcessorTaskIdSet().add(1L);
+//        criteria.obtainProcessorTaskIdSet().add(1L);
 //        criteria.obtainFeedNameSet().add(feedName);
-        criteria.obtainMetaIdSet().add(1L);
+//        criteria.obtainMetaIdSet().add(1L);
 //        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.RAW_EVENTS);
-        criteria.obtainTaskStatusSet().add(TaskStatus.COMPLETE);
+//        criteria.obtainTaskStatusSet().add(TaskStatus.COMPLETE);
 
-        criteria.setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
+//        criteria.setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
 //        criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
 //        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.CONTEXT);
 
@@ -120,16 +143,23 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         final Node testNode = new Node();
         testNode.setId(1);
 
-        final FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria();
-        criteria.obtainNodeNameCriteria().setString("Node name");
-        criteria.setSort(FindProcessorTaskCriteria.FIELD_CREATE_TIME);
-        criteria.obtainProcessorTaskIdSet().add(1L);
+        final ExpressionOperator expression = new ExpressionOperator.Builder()
+                .addTerm(ProcessorTaskDataSource.NODE_NAME, Condition.EQUALS, "Node name")
+                .addTerm(ProcessorTaskDataSource.TASK_ID, Condition.EQUALS, 1)
+                .addTerm(ProcessorTaskDataSource.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
+                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, System.currentTimeMillis())
+                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.LESS_THAN, System.currentTimeMillis())
+                .build();
+        final FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria(expression);
+//        criteria.obtainNodeNameCriteria().setString("Node name");
+//        criteria.setSort(FindProcessorTaskCriteria.FIELD_CREATE_TIME);
+//        criteria.obtainProcessorTaskIdSet().add(1L);
 //        criteria.obtainFeedNameSet().add(feedName);
-        criteria.obtainMetaIdSet().add(1L);
+//        criteria.obtainMetaIdSet().add(1L);
 //        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.RAW_EVENTS);
-        criteria.obtainTaskStatusSet().add(TaskStatus.COMPLETE);
+//        criteria.obtainTaskStatusSet().add(TaskStatus.COMPLETE);
 
-        criteria.setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
+//        criteria.setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
 //        criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
 //        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.CONTEXT);
 

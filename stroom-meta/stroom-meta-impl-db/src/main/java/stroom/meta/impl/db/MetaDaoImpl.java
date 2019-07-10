@@ -6,18 +6,20 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
+import stroom.collection.api.CollectionService;
+import stroom.db.util.ExpressionMapper;
+import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
+import stroom.dictionary.api.WordListProvider;
 import stroom.meta.impl.MetaDao;
 import stroom.meta.impl.MetaKeyDao;
-import stroom.meta.impl.db.ExpressionMapper.TermHandler;
-import stroom.meta.impl.db.MetaExpressionMapper.MetaTermHandler;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
 import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
@@ -28,9 +30,7 @@ import stroom.util.shared.Sort;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -68,7 +68,6 @@ class MetaDaoImpl implements MetaDao {
     private final MetaFeedDaoImpl feedDao;
     private final MetaTypeDaoImpl metaTypeDao;
     private final MetaProcessorDaoImpl metaProcessorDao;
-    private final MetaKeyDao metaKeyDao;
 
     private final ExpressionMapper expressionMapper;
     private final MetaExpressionMapper metaExpressionMapper;
@@ -78,54 +77,52 @@ class MetaDaoImpl implements MetaDao {
                 final MetaFeedDaoImpl feedDao,
                 final MetaTypeDaoImpl metaTypeDao,
                 final MetaProcessorDaoImpl metaProcessorDao,
-                final MetaKeyDao metaKeyDao) {
+                final MetaKeyDao metaKeyDao,
+                final ExpressionMapperFactory expressionMapperFactory,
+                final WordListProvider wordListProvider,
+                final CollectionService collectionService) {
         this.connectionProvider = connectionProvider;
         this.feedDao = feedDao;
         this.metaTypeDao = metaTypeDao;
         this.metaProcessorDao = metaProcessorDao;
-        this.metaKeyDao = metaKeyDao;
 
         // Standard fields.
-        final Map<String, TermHandler<?>> termHandlers = new HashMap<>();
-        termHandlers.put(MetaFieldNames.ID, new TermHandler<>(meta.ID, Long::valueOf));
-        termHandlers.put(MetaFieldNames.FEED_NAME, new TermHandler<>(meta.FEED_ID, feedDao::getOrCreate));
-        termHandlers.put(MetaFieldNames.FEED_ID, new TermHandler<>(meta.FEED_ID, Integer::valueOf));
-        termHandlers.put(MetaFieldNames.TYPE_NAME, new TermHandler<>(meta.TYPE_ID, metaTypeDao::getOrCreate));
-        termHandlers.put(MetaFieldNames.PIPELINE_UUID, new TermHandler<>(metaProcessor.PIPELINE_UUID, value -> value));
-        termHandlers.put(MetaFieldNames.PARENT_ID, new TermHandler<>(meta.PARENT_ID, Long::valueOf));
-        termHandlers.put(MetaFieldNames.TASK_ID, new TermHandler<>(meta.TASK_ID, Long::valueOf));
-        termHandlers.put(MetaFieldNames.PROCESSOR_ID, new TermHandler<>(meta.PROCESSOR_ID, Integer::valueOf));
-        termHandlers.put(MetaFieldNames.STATUS, new TermHandler<>(meta.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase()))));
-        termHandlers.put(MetaFieldNames.STATUS_TIME, new TermHandler<>(meta.STATUS_TIME, DateUtil::parseNormalDateTimeString));
-        termHandlers.put(MetaFieldNames.CREATE_TIME, new TermHandler<>(meta.CREATE_TIME, DateUtil::parseNormalDateTimeString));
-        termHandlers.put(MetaFieldNames.EFFECTIVE_TIME, new TermHandler<>(meta.EFFECTIVE_TIME, DateUtil::parseNormalDateTimeString));
-        expressionMapper = new ExpressionMapper(termHandlers);
-
+        expressionMapper = expressionMapperFactory.create();
+        expressionMapper.map(MetaFields.ID, meta.ID, Long::valueOf);
+        expressionMapper.map(MetaFields.FEED, meta.FEED_ID, feedDao::getOrCreate, true);
+        expressionMapper.map(MetaFields.FEED_NAME, meta.FEED_ID, feedDao::getOrCreate);
+        expressionMapper.map(MetaFields.FEED_ID, meta.FEED_ID, Integer::valueOf);
+        expressionMapper.map(MetaFields.TYPE_NAME, meta.TYPE_ID, metaTypeDao::getOrCreate);
+        expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
+        expressionMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, Long::valueOf);
+        expressionMapper.map(MetaFields.TASK_ID, meta.TASK_ID, Long::valueOf);
+        expressionMapper.map(MetaFields.PROCESSOR_ID, meta.PROCESSOR_ID, Integer::valueOf);
+        expressionMapper.map(MetaFields.STATUS, meta.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
+        expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, DateUtil::parseNormalDateTimeString);
+        expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, DateUtil::parseNormalDateTimeString);
+        expressionMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, DateUtil::parseNormalDateTimeString);
+        expressionMapper.ignoreField(MetaFields.REC_READ);
+        expressionMapper.ignoreField(MetaFields.REC_WRITE);
+        expressionMapper.ignoreField(MetaFields.REC_INFO);
+        expressionMapper.ignoreField(MetaFields.REC_WARN);
+        expressionMapper.ignoreField(MetaFields.REC_ERROR);
+        expressionMapper.ignoreField(MetaFields.REC_FATAL);
+        expressionMapper.ignoreField(MetaFields.DURATION);
+        expressionMapper.ignoreField(MetaFields.FILE_SIZE);
+        expressionMapper.ignoreField(MetaFields.RAW_SIZE);
 
         // Extended meta fields.
-        final Map<String, MetaTermHandler> metaTermHandlers = new HashMap<>();
-
+        metaExpressionMapper = new MetaExpressionMapper(metaKeyDao, metaVal.META_KEY_ID, metaVal.VAL, wordListProvider, collectionService);
 //        metaTermHandlers.put(StreamDataSource.NODE, createMetaTermHandler(StreamDataSource.NODE));
-        addMetaTermHandler(metaTermHandlers, MetaFieldNames.REC_READ);
-        addMetaTermHandler(metaTermHandlers, MetaFieldNames.REC_WRITE);
-        addMetaTermHandler(metaTermHandlers, MetaFieldNames.REC_INFO);
-        addMetaTermHandler(metaTermHandlers, MetaFieldNames.REC_WARN);
-        addMetaTermHandler(metaTermHandlers, MetaFieldNames.REC_ERROR);
-        addMetaTermHandler(metaTermHandlers, MetaFieldNames.REC_FATAL);
-        addMetaTermHandler(metaTermHandlers, MetaFieldNames.DURATION);
-        addMetaTermHandler(metaTermHandlers, MetaFieldNames.FILE_SIZE);
-        addMetaTermHandler(metaTermHandlers, MetaFieldNames.RAW_SIZE);
-
-        metaExpressionMapper = new MetaExpressionMapper(metaTermHandlers);
-    }
-
-    private void addMetaTermHandler(final Map<String, MetaTermHandler> metaTermHandlers, final String fieldName) {
-        final MetaTermHandler handler = new MetaTermHandler(
-                metaKeyDao,
-                metaVal.META_KEY_ID,
-                fieldName,
-                new TermHandler<>(metaVal.VAL, Long::valueOf));
-        metaTermHandlers.put(fieldName, handler);
+        metaExpressionMapper.map(MetaFields.REC_READ);
+        metaExpressionMapper.map(MetaFields.REC_WRITE);
+        metaExpressionMapper.map(MetaFields.REC_INFO);
+        metaExpressionMapper.map(MetaFields.REC_WARN);
+        metaExpressionMapper.map(MetaFields.REC_ERROR);
+        metaExpressionMapper.map(MetaFields.REC_FATAL);
+        metaExpressionMapper.map(MetaFields.DURATION);
+        metaExpressionMapper.map(MetaFields.FILE_SIZE);
+        metaExpressionMapper.map(MetaFields.RAW_SIZE);
     }
 
     @Override

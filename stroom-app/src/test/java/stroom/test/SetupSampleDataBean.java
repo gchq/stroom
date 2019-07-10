@@ -29,7 +29,7 @@ import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineStore;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
@@ -204,12 +204,12 @@ public final class SetupSampleDataBean {
 
                 // Create a processor for this feed.
                 final QueryData criteria = new QueryData.Builder()
-                        .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
+                        .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed.getName())
+                                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed.getName())
                                 .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                        .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                                        .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                                        .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                                        .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                                         .build())
                                 .build())
                         .build();
@@ -242,16 +242,16 @@ public final class SetupSampleDataBean {
 
             final ExpressionOperator.Builder expressionBuilder = new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                     .addTerm(
-                            MetaFieldNames.TYPE_NAME,
+                            MetaFields.TYPE_NAME,
                             ExpressionTerm.Condition.EQUALS,
                             sourceStreamType);
 
             optFeedName.ifPresent(feedName ->
-                    expressionBuilder.addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName));
+                    expressionBuilder.addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName));
 
             // Create a processor for this index.
             final QueryData criteria = new QueryData.Builder()
-                    .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
+                    .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                     .expression(expressionBuilder.build())
                     .build();
 

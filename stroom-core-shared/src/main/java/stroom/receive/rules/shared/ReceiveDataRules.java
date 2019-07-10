@@ -20,7 +20,7 @@ package stroom.receive.rules.shared;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.SharedObject;
 import stroom.docstore.shared.Doc;
 
@@ -33,18 +33,18 @@ public class ReceiveDataRules extends Doc implements SharedObject {
 
     public static final String DOCUMENT_TYPE = "ReceiveDataRuleSet";
 
-    private List<DataSourceField> fields;
+    private List<AbstractField> fields;
     private List<ReceiveDataRule> rules;
 
     public ReceiveDataRules() {
         // Default constructor for GWT serialisation.
     }
 
-    public List<DataSourceField> getFields() {
+    public List<AbstractField> getFields() {
         return fields;
     }
 
-    public void setFields(final List<DataSourceField> fields) {
+    public void setFields(final List<AbstractField> fields) {
         this.fields = fields;
     }
 

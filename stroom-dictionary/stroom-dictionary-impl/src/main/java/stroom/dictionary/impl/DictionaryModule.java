@@ -17,7 +17,7 @@
 package stroom.dictionary.impl;
 
 import com.google.inject.AbstractModule;
-import stroom.dictionary.api.DictionaryStore;
+import stroom.dictionary.api.WordListProvider;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.RestResource;
 
@@ -25,6 +25,7 @@ public class DictionaryModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DictionaryStore.class).to(DictionaryStoreImpl.class);
+        bind(WordListProvider.class).to(DictionaryStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(DictionaryResource.class)

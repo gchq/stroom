@@ -17,9 +17,11 @@
 
 package stroom.meta.api;
 
-import stroom.datasource.api.v2.DataSourceField;
-import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
-import stroom.dictionary.api.DictionaryStore;
+import stroom.collection.api.CollectionService;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DocRefField;
+import stroom.datasource.api.v2.FieldTypes;
+import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -29,19 +31,24 @@ import stroom.util.date.DateUtil;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class ExpressionMatcher {
     private static final String DELIMITER = ",";
 
-    private final Map<String, DataSourceField> fieldMap;
-    private final DictionaryStore dictionaryStore;
+    private final Map<String, AbstractField> fieldMap;
+    private final WordListProvider wordListProvider;
+    private final CollectionService collectionService;
     private final Map<DocRef, String[]> wordMap = new HashMap<>();
     private final Map<String, Pattern> patternMap = new HashMap<>();
 
-    public ExpressionMatcher(final Map<String, DataSourceField> fieldMap, final DictionaryStore dictionaryStore) {
+    public ExpressionMatcher(final Map<String, AbstractField> fieldMap,
+                             final WordListProvider wordListProvider,
+                             final CollectionService collectionService) {
         this.fieldMap = fieldMap;
-        this.dictionaryStore = dictionaryStore;
+        this.wordListProvider = wordListProvider;
+        this.collectionService = collectionService;
     }
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
@@ -86,7 +93,6 @@ public class ExpressionMatcher {
         String termField = term.getField();
         final Condition condition = term.getCondition();
         String termValue = term.getValue();
-        final DocRef dictionary = term.getDictionary();
         final DocRef docRef = term.getDocRef();
 
         // Clean strings to remove unwanted whitespace that the user may have
@@ -102,16 +108,18 @@ public class ExpressionMatcher {
         if (termField == null || termField.length() == 0) {
             throw new MatchException("Field not set");
         }
-        final DataSourceField field = fieldMap.get(termField);
+        final AbstractField field = fieldMap.get(termField);
         if (field == null) {
             throw new MatchException("Field not found in index: " + termField);
         }
         final String fieldName = field.getName();
 
         // Ensure an appropriate termValue has been provided for the condition type.
-        if (Condition.IN_DICTIONARY.equals(condition)) {
-            if (dictionary == null || dictionary.getUuid() == null) {
-                throw new MatchException("Dictionary not set for field: " + termField);
+        if (Condition.IN_DICTIONARY.equals(condition) ||
+                Condition.IN_FOLDER.equals(condition) ||
+                Condition.IS_DOC_REF.equals(condition)) {
+            if (docRef == null || docRef.getUuid() == null) {
+                throw new MatchException("DocRef not set for field: " + termField);
             }
         } else {
             if (termValue == null || termValue.length() == 0) {
@@ -119,19 +127,21 @@ public class ExpressionMatcher {
             }
         }
 
-        if (Condition.IS_DOC_REF.equals(condition)) {
-            if (docRef == null || docRef.getUuid() == null) {
-                throw new MatchException("Entity not set for field: " + termField);
-            }
+        final Object attribute = attributeMap.get(term.getField());
+
+        // Perform null/not null equality if required.
+        if (Condition.IS_NULL.equals(condition)) {
+            return attribute == null;
+        } else if (Condition.IS_NOT_NULL.equals(condition)) {
+            return attribute != null;
         }
 
-        final Object attribute = attributeMap.get(term.getField());
         if (attribute == null) {
             throw new MatchException("Attribute '" + term.getField() + "' not found");
         }
 
         // Create a query based on the field type and condition.
-        if (field.getType().isNumeric()) {
+        if (field.isNumeric()) {
             switch (condition) {
                 case EQUALS: {
                     final long num1 = getNumber(fieldName, attribute);
@@ -177,12 +187,12 @@ public class ExpressionMatcher {
                 case IN:
                     return isNumericIn(fieldName, termValue, attribute);
                 case IN_DICTIONARY:
-                    return isInDictionary(fieldName, dictionary, field, attribute);
+                    return isInDictionary(fieldName, docRef, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getType().getDisplayValue() + " field type");
+                            + field.getType() + " field type");
             }
-        } else if (DataSourceFieldType.DATE_FIELD.equals(field.getType())) {
+        } else if (FieldTypes.DATE.equals(field.getType())) {
             switch (condition) {
                 case EQUALS: {
                     final long date1 = getDate(fieldName, attribute);
@@ -228,13 +238,10 @@ public class ExpressionMatcher {
                 case IN:
                     return isDateIn(fieldName, termValue, attribute);
                 case IN_DICTIONARY:
-                    return isInDictionary(fieldName, dictionary, field, attribute);
-                case IS_DOC_REF:
-                    throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getType().getDisplayValue() + " field type");
+                    return isInDictionary(fieldName, docRef, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getType().getDisplayValue() + " field type");
+                            + field.getType() + " field type");
             }
         } else {
             switch (condition) {
@@ -244,13 +251,15 @@ public class ExpressionMatcher {
                     return isStringMatch(termValue, attribute.toString());
                 case IN:
                     return isIn(fieldName, termValue, attribute);
+                case IN_DICTIONARY:
+                    return isInDictionary(fieldName, docRef, field, attribute);
+                case IN_FOLDER:
+                    return isInFolder(fieldName, docRef, field, attribute);
                 case IS_DOC_REF:
                     return isDocRef(fieldName, docRef, field, attribute);
-                case IN_DICTIONARY:
-                    return isInDictionary(fieldName, dictionary, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getType().getDisplayValue() + " field type");
+                            + field.getType() + " field type");
             }
         }
     }
@@ -299,26 +308,16 @@ public class ExpressionMatcher {
         return pattern.matcher(attribute).matches();
     }
 
-    private boolean isDocRef(final String fieldName, final DocRef docRef,
-                             final DataSourceField field, final Object attribute) {
-        if (attribute instanceof DocRef) {
-            final String uuid = ((DocRef) attribute).getUuid();
-            return (null != uuid && uuid.equals(docRef.getUuid()));
-        }
-
-        return false;
-    }
-
     private boolean isInDictionary(final String fieldName, final DocRef docRef,
-                                   final DataSourceField field, final Object attribute) {
+                                   final AbstractField field, final Object attribute) {
         final String[] lines = loadWords(docRef);
         if (lines != null) {
             for (final String line : lines) {
-                if (field.getType().isNumeric()) {
+                if (field.isNumeric()) {
                     if (isNumericIn(fieldName, line, attribute)) {
                         return true;
                     }
-                } else if (DataSourceFieldType.DATE_FIELD.equals(field.getType())) {
+                } else if (FieldTypes.DATE.equals(field.getType())) {
                     if (isDateIn(fieldName, line, attribute)) {
                         return true;
                     }
@@ -333,15 +332,49 @@ public class ExpressionMatcher {
         return false;
     }
 
+    private boolean isInFolder(final String fieldName, final DocRef docRef,
+                               final AbstractField field, final Object attribute) {
+        if (field instanceof DocRefField) {
+            final String type = ((DocRefField) field).getDocRefType();
+            if (type != null && collectionService != null) {
+                final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);
+                if (descendants != null && descendants.size() > 0) {
+                    if (attribute instanceof DocRef) {
+                        final String uuid = ((DocRef) attribute).getUuid();
+                        if (uuid != null) {
+                            for (final DocRef descendant : descendants) {
+                                if (uuid.equals(descendant.getUuid())) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean isDocRef(final String fieldName, final DocRef docRef,
+                             final AbstractField field, final Object attribute) {
+        if (attribute instanceof DocRef) {
+            final String uuid = ((DocRef) attribute).getUuid();
+            return (null != uuid && uuid.equals(docRef.getUuid()));
+        }
+
+        return false;
+    }
+
     private String[] loadWords(final DocRef docRef) {
-        if (dictionaryStore == null) {
+        if (wordListProvider == null) {
             return null;
         }
 
         return wordMap.computeIfAbsent(docRef, k -> {
-            final String words = dictionaryStore.getCombinedData(docRef);
+            final String[] words = wordListProvider.getWords(docRef);
             if (words != null) {
-                return words.trim().split("\n");
+                return words;
             }
 
             return null;

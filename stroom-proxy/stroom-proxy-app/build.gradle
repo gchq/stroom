@@ -17,6 +17,7 @@ dependencies {
     compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-docstore:stroom-docstore-impl-fs')
     compile project(':stroom-dropwizard-common')
+    compile project(':stroom-explorer:stroom-collection-api')
     compile project(':stroom-pipeline')
     compile project(':stroom-proxy:stroom-proxy-repo')
     compile project(':stroom-receive:stroom-receive-common')

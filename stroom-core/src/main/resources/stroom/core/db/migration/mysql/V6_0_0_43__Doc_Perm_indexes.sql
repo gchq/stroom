@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,4 @@
  * limitations under the License.
  */
 
-package stroom.processor.shared;
-
-import stroom.entity.shared.FindAction;
-
-public class FindProcessorTaskSummaryAction extends FindAction<FindProcessorTaskCriteria, ProcessorTaskSummaryRow> {
-    private static final long serialVersionUID = -6808045615241590297L;
-
-    public FindProcessorTaskSummaryAction() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public FindProcessorTaskSummaryAction(final FindProcessorTaskCriteria criteria) {
-        super(criteria);
-    }
-}
+CREATE INDEX DOC_PERM_DOC_TP_DOC_UUID on DOC_PERM (DOC_TP, DOC_UUID);

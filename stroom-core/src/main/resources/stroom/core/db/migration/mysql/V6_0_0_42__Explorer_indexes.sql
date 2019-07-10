@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,21 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.dictionary.api;
-
-import stroom.dictionary.shared.DictionaryDoc;
-import stroom.docref.DocRef;
-import stroom.docstore.api.DocumentStore;
-
-import java.util.List;
-
-public interface DictionaryStore extends DocumentStore<DictionaryDoc> {
-    List<DocRef> findByName(String name);
-
-    List<DocRef> list();
-
-    String getCombinedData(DocRef docRef);
-}
+ALTER TABLE explorerTreePath DROP INDEX explorerTreePath_descendant_idx;

@@ -22,9 +22,10 @@ import org.slf4j.LoggerFactory;
 import stroom.index.api.EventRef;
 import stroom.index.api.EventRefs;
 import stroom.index.api.EventSearch;
+import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
@@ -34,14 +35,15 @@ import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.Limits;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterDataSource;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskDataSource;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
-import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.security.api.Security;
@@ -394,9 +396,12 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         // Get an up to date list of all enabled stream processor filters.
         LOGGER.trace("Getting enabled stream processor filters");
-        final FindProcessorFilterCriteria findProcessorFilterCriteria = new FindProcessorFilterCriteria();
-        findProcessorFilterCriteria.setProcessorEnabled(true);
-        findProcessorFilterCriteria.setProcessorFilterEnabled(true);
+        final ExpressionOperator expression = new Builder()
+                .addTerm(ProcessorFilterDataSource.PROCESSOR_ENABLED, Condition.EQUALS, true)
+                .addTerm(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, true)
+                .build();
+
+        final FindProcessorFilterCriteria findProcessorFilterCriteria = new FindProcessorFilterCriteria(expression);
         final List<ProcessorFilter> filters = processorFilterService
                 .find(findProcessorFilterCriteria);
         LOGGER.trace("Found {} stream processor filters", filters.size());
@@ -506,7 +511,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                             final int requiredTasks = tasksToCreate;
                             if (requiredTasks > 0 && !Thread.currentThread().isInterrupted()) {
                                 final QueryData queryData = loadedFilter.getQueryData();
-                                final boolean isStreamStoreSearch = queryData.getDataSource() != null && queryData.getDataSource().getType().equals(MetaFieldNames.STREAM_STORE_TYPE);
+                                final boolean isStreamStoreSearch = queryData.getDataSource() != null && queryData.getDataSource().getType().equals(MetaFields.STREAM_STORE_TYPE);
 
                                 // Record the time before we are going to query for
                                 // streams for tracking purposes.
@@ -623,10 +628,15 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         try {
             // First look for any items that are no-longer locked etc
-            final FindProcessorTaskCriteria findProcessorTaskCriteria = new FindProcessorTaskCriteria();
-            findProcessorTaskCriteria.obtainTaskStatusSet().add(TaskStatus.UNPROCESSED);
-            findProcessorTaskCriteria.obtainNodeNameCriteria().setMatchNull(true);
-            findProcessorTaskCriteria.obtainProcessorFilterIdSet().add(filter.getId());
+            final ExpressionOperator findProcessorTaskExpression = new ExpressionOperator.Builder()
+                    .addTerm(ProcessorTaskDataSource.STATUS, Condition.EQUALS, TaskStatus.UNPROCESSED.getDisplayValue())
+                    .addTerm(ProcessorTaskDataSource.NODE_NAME, Condition.IS_NULL, null)
+                    .addTerm(ProcessorTaskDataSource.PROCESSOR_FILTER_ID, Condition.EQUALS, filter.getId())
+                    .build();
+            final FindProcessorTaskCriteria findProcessorTaskCriteria = new FindProcessorTaskCriteria(findProcessorTaskExpression);
+//            findProcessorTaskCriteria.obtainTaskStatusSet().add(TaskStatus.UNPROCESSED);
+//            findProcessorTaskCriteria.obtainNodeNameCriteria().setMatchNull(true);
+//            findProcessorTaskCriteria.obtainProcessorFilterIdSet().add(filter.getId());
             findProcessorTaskCriteria.obtainPageRequest().setLength(tasksToCreate);
 
             final BaseResultList<ProcessorTask> processorTasks = processorTaskDao.find(findProcessorTaskCriteria);
@@ -637,16 +647,15 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             if (processorTasks.size() > 0) {
                 // Find unlocked meta data corresponding to this list of unowned tasks.
                 final ExpressionOperator.Builder metaIdExpressionBuilder = new ExpressionOperator.Builder(Op.OR);
-                processorTasks.forEach(task -> metaIdExpressionBuilder.addTerm(MetaFieldNames.ID, Condition.EQUALS, task.getMetaId().toString()));
+                processorTasks.forEach(task -> metaIdExpressionBuilder.addTerm(MetaFields.ID, Condition.EQUALS, task.getMetaId()));
 
-                final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                final ExpressionOperator findMetaExpression = new ExpressionOperator.Builder(Op.AND)
                         .addOperator(metaIdExpressionBuilder.build())
-                        .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                         .build();
 
-                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-                findMetaCriteria.setExpression(expression);
-                findMetaCriteria.setSort(MetaFieldNames.ID, Direction.ASCENDING, false);
+                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
+                findMetaCriteria.setSort(MetaFields.ID.getName(), Direction.ASCENDING, false);
                 final BaseResultList<Meta> metaList = metaService.find(findMetaCriteria);
 
                 if (metaList.size() > 0) {
@@ -859,25 +868,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         if (queryData == null || queryData.getExpression() == null) {
             return 0;
         }
-        return termCount(queryData.getExpression());
-    }
-
-    private int termCount(final ExpressionOperator expressionOperator) {
-        int count = 0;
-        if (expressionOperator.enabled()) {
-            for (final ExpressionItem item : expressionOperator.getChildren()) {
-                if (item.enabled()) {
-                    if (item instanceof ExpressionTerm) {
-//                        if (field.equals(((ExpressionTerm) item).getField())) {
-                            count++;
-//                        }
-                    } else if (item instanceof ExpressionOperator) {
-                        count += termCount((ExpressionOperator) item);
-                    }
-                }
-            }
-        }
-        return count;
+        return ExpressionUtil.termCount(queryData.getExpression());
     }
 
     private Map<Meta, InclusiveRanges> createStreamMap(final EventRefs eventRefs) {
@@ -938,20 +929,20 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                   final int max) {
         // Don't select deleted streams.
         final ExpressionOperator statusExpression = new ExpressionOperator.Builder(Op.OR)
-                .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                 .build();
 
         final ExpressionOperator streamIdExpression = new ExpressionOperator.Builder(Op.AND)
                 .addOperator(expression)
-                .addTerm(MetaFieldNames.ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(minStreamId))
+                .addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minStreamId)
                 .addOperator(statusExpression)
                 .build();
 
         // Copy the filter
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(streamIdExpression);
 //        findStreamCriteria.copyFrom(criteria);
-        findMetaCriteria.setSort(MetaFieldNames.ID, Direction.ASCENDING, false);
+        findMetaCriteria.setSort(MetaFields.ID.getName(), Direction.ASCENDING, false);
 //        findStreamCriteria.setStreamIdRange(new IdRange(minStreamId, null));
 //        // Don't care about status
 //        findStreamCriteria.obtainStatusSet().add(StreamStatus.LOCKED);

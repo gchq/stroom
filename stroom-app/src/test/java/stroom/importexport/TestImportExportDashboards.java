@@ -26,7 +26,7 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.dictionary.api.DictionaryStore;
+import stroom.dictionary.impl.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
@@ -260,7 +260,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
         // Verify all entity references have been restored.
         assertThat(loadedQueryData.getDataSource()).isEqualTo(loadedIndex);
-        assertThat(((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDictionary()).isEqualTo(stroom.docstore.shared.DocRefUtil.create(loadedDictionary));
+        assertThat(((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDocRef()).isEqualTo(stroom.docstore.shared.DocRefUtil.create(loadedDictionary));
         assertThat(loadedTableSettings.getExtractionPipeline()).isEqualTo(loadedPipeline);
 
         if (!skipVisExport || skipVisCreation) {
@@ -293,7 +293,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private ExpressionOperator.Builder createExpression(final DictionaryDoc dictionary) {
         final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.AND);
         root.addTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z");
-        root.addDictionaryTerm("User", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dictionary));
+        root.addTerm("User", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dictionary));
         return root;
     }
 }

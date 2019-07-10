@@ -16,9 +16,8 @@
 
 package stroom.processor.shared;
 
-import stroom.docref.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.StringCriteria;
 
 /**
  * Class used to find translations.
@@ -26,24 +25,21 @@ import stroom.util.shared.StringCriteria;
 public class FindProcessorCriteria extends BaseCriteria {
     private static final long serialVersionUID = 1L;
 
-    private StringCriteria pipelineUuidCriteria = null;
+    private ExpressionOperator expression;
 
     public FindProcessorCriteria() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FindProcessorCriteria(final DocRef pipeline) {
-        obtainPipelineUuidCriteria().setString(pipeline.getUuid());
+    public FindProcessorCriteria(final ExpressionOperator expression) {
+        this.expression = expression;
     }
 
-    public StringCriteria getPipelineUuidCriteria() {
-        return pipelineUuidCriteria;
+    public ExpressionOperator getExpression() {
+        return expression;
     }
 
-    public StringCriteria obtainPipelineUuidCriteria() {
-        if (pipelineUuidCriteria == null) {
-            pipelineUuidCriteria = new StringCriteria();
-        }
-        return pipelineUuidCriteria;
+    public void setExpression(final ExpressionOperator expression) {
+        this.expression = expression;
     }
 }

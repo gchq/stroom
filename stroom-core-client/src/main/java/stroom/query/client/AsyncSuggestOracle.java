@@ -18,7 +18,7 @@ package stroom.query.client;
 
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
 import com.google.gwt.user.client.ui.SuggestOracle;
-import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.query.shared.FetchSuggestionsAction;
@@ -30,7 +30,7 @@ import java.util.List;
 public class AsyncSuggestOracle extends SuggestOracle {
     private ClientDispatchAsync dispatcher;
     private DocRef dataSource;
-    private DataSourceField field;
+    private AbstractField field;
 
     public void setDispatcher(final ClientDispatchAsync dispatcher) {
         this.dispatcher = dispatcher;
@@ -40,7 +40,7 @@ public class AsyncSuggestOracle extends SuggestOracle {
         this.dataSource = dataSource;
     }
 
-    public void setField(final DataSourceField field) {
+    public void setField(final AbstractField field) {
         this.field = field;
     }
 

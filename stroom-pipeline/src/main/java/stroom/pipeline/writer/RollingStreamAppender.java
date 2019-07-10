@@ -17,12 +17,13 @@
 
 package stroom.pipeline.writer;
 
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaProperties;
+import com.google.common.base.Strings;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaProperties;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingDestinationFactory;
@@ -48,7 +49,6 @@ import javax.inject.Inject;
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class RollingStreamAppender extends AbstractRollingAppender implements RollingDestinationFactory {
-
     private final Store streamStore;
     private final MetaHolder metaHolder;
     private final NodeInfo nodeInfo;
@@ -123,7 +123,10 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
             }
         }
 
-        if (streamType == null) {
+        if (Strings.isNullOrEmpty(feed)) {
+            throw new ProcessException("Feed not specified or not found");
+        }
+        if (Strings.isNullOrEmpty(streamType)) {
             throw new ProcessException("Stream type not specified");
         }
     }

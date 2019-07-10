@@ -27,7 +27,7 @@ import stroom.docref.DocRef;
 import stroom.job.api.JobManager;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
@@ -38,7 +38,9 @@ import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.FindProcessorCriteria;
 import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -229,10 +231,10 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private Processor initProcessor(final DocRef pipelineDoc) {
         // Clear off any old processor filters
         for (final ProcessorFilter processorFilter : processorFilterService
-                .find(new FindProcessorFilterCriteria(pipelineDoc))) {
+                .find(new FindProcessorFilterCriteria(ProcessorTaskExpressionUtil.createPipelineExpression(pipelineDoc)))) {
             processorFilterService.delete(processorFilter.getId());
         }
-        Processor streamProcessor = streamProcessorService.find(new FindProcessorCriteria(pipelineDoc))
+        Processor streamProcessor = streamProcessorService.find(new FindProcessorCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineDoc)))
                 .getFirst();
         if (streamProcessor == null) {
             streamProcessor = new Processor(pipelineDoc);
@@ -299,9 +301,9 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
                 final ExpressionOperator rawExpression = new ExpressionOperator.Builder(Op.AND)
-                        .addTerm(MetaFieldNames.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
-                        .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName)
-                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, rawStreamType)
+                        .addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
+                        .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName)
+                        .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, rawStreamType)
                         .build();
                 final QueryData rawCriteria = new QueryData();
                 rawCriteria.setExpression(rawExpression);
@@ -312,10 +314,10 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
                 // Wait for the cluster to stop processing.
                 final ExpressionOperator processedExpression = new ExpressionOperator.Builder(Op.AND)
-                        .addTerm(MetaFieldNames.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(startTime))
-                        .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName)
-                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, processedStreamType)
-                        .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(startTime))
+                        .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName)
+                        .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, processedStreamType)
+                        .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                         .build();
                 final FindMetaCriteria processedCriteria = new FindMetaCriteria();
                 processedCriteria.setExpression(processedExpression);
@@ -438,11 +440,11 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         // StreamAttributeValueFlush.class));
 
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName)
-                .addTerm(MetaFieldNames.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
+                .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName)
+                .addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS)
-                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE)
+                        .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS)
+                        .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE)
                         .build())
                 .build();
 
@@ -486,7 +488,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
     private void checkPeriod(final Period period, final MetaRow row) {
         final long streamStartMs = row.getMeta().getCreateMs();
-        final long streamDuration = getLong(row, MetaFieldNames.DURATION);
+        final long streamDuration = getLong(row, MetaFields.DURATION.getName());
         final long streamEndMs = streamStartMs + streamDuration;
 
         if (period.getFromMs() == null) {

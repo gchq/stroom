@@ -30,7 +30,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.util.Version;
-import stroom.dictionary.api.DictionaryStore;
+import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.index.impl.analyzer.AnalyzerFactory;
 import stroom.index.shared.AnalyzerType;
@@ -60,14 +60,14 @@ public class SearchExpressionQueryBuilder {
     private static final Pattern MULTIPLE_WILDCARD = Pattern.compile("[+]+");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile("[ ]+");
     private final IndexFieldsMap indexFieldsMap;
-    private final DictionaryStore dictionaryStore;
+    private final WordListProvider wordListProvider;
     private final int maxBooleanClauseCount;
     private final String timeZoneId;
     private final long nowEpochMilli;
 
-    public SearchExpressionQueryBuilder(final DictionaryStore dictionaryStore, final IndexFieldsMap indexFieldsMap,
+    public SearchExpressionQueryBuilder(final WordListProvider wordListProvider, final IndexFieldsMap indexFieldsMap,
                                         final int maxBooleanClauseCount, final String timeZoneId, final long nowEpochMilli) {
-        this.dictionaryStore = dictionaryStore;
+        this.wordListProvider = wordListProvider;
         this.indexFieldsMap = indexFieldsMap;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
         this.timeZoneId = timeZoneId;
@@ -202,7 +202,6 @@ public class SearchExpressionQueryBuilder {
         String field = term.getField();
         final Condition condition = term.getCondition();
         String value = term.getValue();
-        final DocRef dictionary = term.getDictionary();
         final DocRef docRef = term.getDocRef();
 
         // Clean strings to remove unwanted whitespace that the user may have
@@ -226,19 +225,19 @@ public class SearchExpressionQueryBuilder {
 
         // Ensure an appropriate value has been provided for the condition type.
         if (Condition.IN_DICTIONARY.equals(condition)) {
-            if (dictionary == null || dictionary.getUuid() == null) {
+            if (docRef == null || docRef.getUuid() == null) {
                 throw new SearchException("Dictionary not set for field: " + field);
+            }
+        } else if (Condition.IS_DOC_REF.equals(condition)) {
+            if (docRef == null || docRef.getUuid() == null) {
+                throw new SearchException("Doc Ref not set for field: " + field);
             }
         } else {
             if (value == null || value.length() == 0) {
                 return null;
             }
         }
-        if (Condition.IS_DOC_REF.equals(condition)) {
-            if (docRef == null || docRef.getUuid() == null) {
-                throw new SearchException("Doc Ref not set for field: " + field);
-            }
-        }
+
 
         // Create a query based on the field type and condition.
         if (indexField.getFieldType().isNumeric()) {
@@ -272,7 +271,7 @@ public class SearchExpressionQueryBuilder {
                 case IN:
                     return getNumericIn(fieldName, value);
                 case IN_DICTIONARY:
-                    return getDictionary(fieldName, dictionary, indexField, matchVersion, terms);
+                    return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
                 default:
                     throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + indexField.getFieldType().getDisplayValue() + " field type");
@@ -308,7 +307,7 @@ public class SearchExpressionQueryBuilder {
                 case IN:
                     return getDateIn(fieldName, value);
                 case IN_DICTIONARY:
-                    return getDictionary(fieldName, dictionary, indexField, matchVersion, terms);
+                    return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
                 default:
                     throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + indexField.getFieldType().getDisplayValue() + " field type");
@@ -322,7 +321,7 @@ public class SearchExpressionQueryBuilder {
                 case IN:
                     return getIn(fieldName, value, indexField, matchVersion, terms);
                 case IN_DICTIONARY:
-                    return getDictionary(fieldName, dictionary, indexField, matchVersion, terms);
+                    return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
                 case IS_DOC_REF:
                     return getSubQuery(matchVersion, indexField, docRef.getUuid(), terms, false);
                 default:
@@ -432,12 +431,12 @@ public class SearchExpressionQueryBuilder {
     }
 
     private String[] loadWords(final DocRef docRef) {
-        final String words = dictionaryStore.getCombinedData(docRef);
+        final String[] words = wordListProvider.getWords(docRef);
         if (words == null) {
             throw new SearchException("Dictionary \"" + docRef + "\" not found");
         }
 
-        return words.trim().split("\n");
+        return words;
     }
 
     private Occur getOccur(final ExpressionOperator operator) {

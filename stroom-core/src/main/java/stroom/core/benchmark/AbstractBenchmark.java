@@ -19,10 +19,11 @@ package stroom.core.benchmark;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.store.api.SourceUtil;
-import stroom.meta.shared.ExpressionUtil;
+import stroom.docref.DocRef;
+import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.Status;
@@ -133,11 +134,11 @@ public abstract class AbstractBenchmark {
 
     protected void verifyData(final FeedDoc feed, final String verificationString) throws IOException {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
-        builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feed.getName());
+        builder.addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feed.getName());
         if (feed.isReference()) {
-            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE);
+            builder.addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE);
         } else {
-            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS);
+            builder.addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS);
         }
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(builder.build());
@@ -160,9 +161,9 @@ public abstract class AbstractBenchmark {
         }
     }
 
-    protected void deleteData(final String... feeds) {
+    protected void deleteData(final String... feedNames) {
         final FindMetaCriteria criteria = new FindMetaCriteria();
-        criteria.setExpression(ExpressionUtil.createFeedsExpression(feeds));
+        criteria.setExpression(MetaExpressionUtil.createFeedsExpression(feedNames));
         metaService.updateStatus(criteria, Status.DELETED);
     }
 

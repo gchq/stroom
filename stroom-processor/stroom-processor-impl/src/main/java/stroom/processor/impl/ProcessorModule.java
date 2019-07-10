@@ -23,8 +23,8 @@ import stroom.processor.api.ProcessorService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.CreateProcessorFilterAction;
 import stroom.processor.shared.FetchProcessorAction;
-import stroom.processor.shared.FindProcessorTaskAction;
-import stroom.processor.shared.FindProcessorTaskSummaryAction;
+import stroom.processor.shared.FetchProcessorTaskAction;
+import stroom.processor.shared.FetchProcessorTaskSummaryAction;
 import stroom.processor.shared.ReprocessDataAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.RestResource;
@@ -43,8 +43,8 @@ public class ProcessorModule extends AbstractModule {
                 .bind(CreateProcessorFilterAction.class, CreateProcessorHandler.class)
                 .bind(CreateStreamTasksTask.class, CreateStreamTasksTaskHandler.class)
                 .bind(FetchProcessorAction.class, FetchProcessorHandler.class)
-                .bind(FindProcessorTaskAction.class, FindProcessorTaskHandler.class)
-                .bind(FindProcessorTaskSummaryAction.class, FindProcessorTaskSummaryHandler.class)
+                .bind(FetchProcessorTaskAction.class, FetchProcessorTaskHandler.class)
+                .bind(FetchProcessorTaskSummaryAction.class, FetchProcessorTaskSummaryHandler.class)
                 .bind(ReprocessDataAction.class, ReprocessDataHandler.class)
                 .bind(DataProcessorTask.class, DataProcessorTaskHandler.class);
 

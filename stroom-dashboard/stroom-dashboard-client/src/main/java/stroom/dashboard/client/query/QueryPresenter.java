@@ -43,7 +43,7 @@ import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.dashboard.shared.DownloadQueryAction;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.SearchRequest;
-import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.docref.DocRef;
@@ -298,15 +298,15 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void loadedDataSource(final DocRef dataSourceRef, final DataSourceFieldsMap dataSourceFieldsMap) {
         // Create a list of index fields.
-        final List<DataSourceField> fields = new ArrayList<>();
+        final List<AbstractField> fields = new ArrayList<>();
         if (dataSourceFieldsMap != null) {
-            for (final DataSourceField field : dataSourceFieldsMap.values()) {
+            for (final AbstractField field : dataSourceFieldsMap.values()) {
                 if (field.getQueryable()) {
                     fields.add(field);
                 }
             }
         }
-        fields.sort(Comparator.comparing(DataSourceField::getName));
+        fields.sort(Comparator.comparing(AbstractField::getName));
         expressionPresenter.init(dispatcher, dataSourceRef, fields);
 
         final EqualsBuilder builder = new EqualsBuilder();

@@ -5,19 +5,18 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.ExpressionUtil;
+import stroom.meta.shared.MetaFields;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.shared.CreateProcessorFilterAction;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.UpdateProcessorFilterAction;
-import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.receive.rules.client.presenter.EditExpressionPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -46,7 +45,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
-    public void read(final ExpressionOperator expression, final DocRef dataSource, final List<DataSourceField> fields) {
+    public void read(final ExpressionOperator expression, final DocRef dataSource, final List<AbstractField> fields) {
         editExpressionPresenter.init(dispatcher, dataSource, fields);
 
         if (expression != null) {
@@ -65,14 +64,14 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         this.consumer = consumer;
 
         final QueryData queryData = getOrCreateQueryData(filter);
-        read(queryData.getExpression(), MetaFieldNames.STREAM_STORE_DOC_REF, MetaFieldNames.getFields());
+        read(queryData.getExpression(), MetaFields.STREAM_STORE_DOC_REF, MetaFields.getFields());
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
                     final ExpressionOperator expression = write();
-                    queryData.setDataSource(MetaFieldNames.STREAM_STORE_DOC_REF);
+                    queryData.setDataSource(MetaFields.STREAM_STORE_DOC_REF);
                     queryData.setExpression(expression);
 
                     if (filter != null) {
@@ -122,9 +121,9 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     }
 
     private void validateFeed(final ProcessorFilter filter, final QueryData queryData) {
-        final int feedCount = termCount(queryData, MetaFieldNames.FEED_NAME);
-        final int streamIdCount = termCount(queryData, MetaFieldNames.ID);
-        final int parentStreamIdCount = termCount(queryData, MetaFieldNames.PARENT_ID);
+        final int feedCount = termCount(queryData, MetaFields.FEED_NAME);
+        final int streamIdCount = termCount(queryData, MetaFields.ID);
+        final int parentStreamIdCount = termCount(queryData, MetaFields.PARENT_ID);
 
         if (streamIdCount == 0
                 && parentStreamIdCount == 0
@@ -141,9 +140,9 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     }
 
     private void validateStreamType(final ProcessorFilter filter, final QueryData queryData) {
-        final int streamTypeCount = termCount(queryData, MetaFieldNames.TYPE_NAME);
-        final int streamIdCount = termCount(queryData, MetaFieldNames.ID);
-        final int parentStreamIdCount = termCount(queryData, MetaFieldNames.PARENT_ID);
+        final int streamTypeCount = termCount(queryData, MetaFields.TYPE_NAME);
+        final int streamIdCount = termCount(queryData, MetaFields.ID);
+        final int parentStreamIdCount = termCount(queryData, MetaFields.PARENT_ID);
 
         if (streamIdCount == 0
                 && parentStreamIdCount == 0
@@ -160,29 +159,11 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         }
     }
 
-    private int termCount(final QueryData queryData, final String field) {
+    private int termCount(final QueryData queryData, final AbstractField field) {
         if (queryData == null || queryData.getExpression() == null) {
             return 0;
         }
-        return termCount(queryData.getExpression(), field);
-    }
-
-    private int termCount(final ExpressionOperator expressionOperator, final String field) {
-        int count = 0;
-        if (expressionOperator.enabled()) {
-            for (final ExpressionItem item : expressionOperator.getChildren()) {
-                if (item.enabled()) {
-                    if (item instanceof ExpressionTerm) {
-                        if (field.equals(((ExpressionTerm) item).getField())) {
-                            count++;
-                        }
-                    } else if (item instanceof ExpressionOperator) {
-                        count += termCount((ExpressionOperator) item, field);
-                    }
-                }
-            }
-        }
-        return count;
+        return ExpressionUtil.termCount(queryData.getExpression(), field);
     }
 
     private void createOrUpdateProcessor(final ProcessorFilter filter,

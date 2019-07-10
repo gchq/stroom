@@ -16,8 +16,9 @@
 
 package stroom.processor.shared;
 
-import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
+import stroom.meta.shared.ExpressionUtil;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.task.shared.Action;
 import stroom.util.shared.HasIsConstrained;
 import stroom.util.shared.ResultList;
@@ -30,28 +31,28 @@ public class FetchProcessorAction extends Action<ResultList<SharedObject>>
         implements TreeAction<SharedObject>, HasIsConstrained {
     private static final long serialVersionUID = -1773544031158236156L;
 
-    private DocRef pipelineRef;
+    private ExpressionOperator expression;
     private Set<SharedObject> expandedRows;
 
     public FetchProcessorAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchProcessorAction(final DocRef pipelineRef) {
-        this.pipelineRef = pipelineRef;
+    public FetchProcessorAction(final ExpressionOperator expression) {
+        this.expression = expression;
     }
 
     @Override
     public boolean isConstrained() {
-        return pipelineRef != null;
+        return ExpressionUtil.termCount(expression) > 0;
     }
 
-    public DocRef getPipeline() {
-        return pipelineRef;
+    public ExpressionOperator getExpression() {
+        return expression;
     }
 
-    public void setPipeline(final DocRef pipelineRef) {
-        this.pipelineRef = pipelineRef;
+    public void setExpression(final ExpressionOperator expression) {
+        this.expression = expression;
     }
 
     @Override

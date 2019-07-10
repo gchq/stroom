@@ -20,6 +20,8 @@ import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.cluster.lock.mock.MockClusterLockModule;
+import stroom.collection.mock.MockCollectionModule;
+import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.security.mock.MockSecurityContextModule;
 
 import javax.inject.Inject;
@@ -35,7 +37,13 @@ class TestMetaFeedDaoImpl {
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(new MetaDbModule(), new MockClusterLockModule(), new MockSecurityContextModule()).injectMembers(this);
+        Guice.createInjector(
+                new MetaDbModule(),
+                new MockClusterLockModule(),
+                new MockSecurityContextModule(),
+                new MockCollectionModule(),
+                new MockWordListProviderModule())
+                .injectMembers(this);
         // Delete everything
         cleanup.clear();
     }

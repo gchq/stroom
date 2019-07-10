@@ -20,7 +20,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
@@ -42,14 +42,14 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
         addFeedColumn();
         addPipelineColumn();
 
-        addAttributeColumn("Raw", MetaFieldNames.RAW_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Disk", MetaFieldNames.FILE_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Read", MetaFieldNames.REC_READ, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Write", MetaFieldNames.REC_WRITE, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Fatal", MetaFieldNames.REC_FATAL, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Error", MetaFieldNames.REC_ERROR, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Warn", MetaFieldNames.REC_WARN, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Info", MetaFieldNames.REC_INFO, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Raw", MetaFields.RAW_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Disk", MetaFields.FILE_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Read", MetaFields.REC_READ, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Write", MetaFields.REC_WRITE, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Fatal", MetaFields.REC_FATAL, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Error", MetaFields.REC_ERROR, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Warn", MetaFields.REC_WARN, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Info", MetaFields.REC_INFO, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
 
         // TODO : @66 Add data retention column back into the table.
 //        addAttributeColumn("Retention", StreamDataSource.RETENTION_AGE, ColumnSizeConstants.SMALL_COL);

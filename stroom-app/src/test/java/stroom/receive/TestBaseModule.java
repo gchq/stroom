@@ -1,7 +1,11 @@
 package stroom.receive;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import stroom.cache.impl.CacheModule;
+import stroom.collection.api.CollectionService;
+import stroom.collection.mock.MockCollectionModule;
+import stroom.docref.DocRef;
 import stroom.receive.common.RemoteFeedModule;
 import stroom.core.receive.ReceiveDataModule;
 import stroom.data.store.mock.MockStreamStoreModule;
@@ -16,6 +20,9 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
 import stroom.util.pipeline.scope.PipelineScopeModule;
+
+import java.util.Collections;
+import java.util.Set;
 
 public class TestBaseModule extends AbstractModule {
     @Override
@@ -32,6 +39,7 @@ public class TestBaseModule extends AbstractModule {
         install(new PipelineScopeModule());
         install(new ReceiveDataModule());
         install(new ReceiveDataRulesetModule());
+        install(new MockCollectionModule());
 
         bind(TaskContext.class).to(SimpleTaskContext.class);
     }

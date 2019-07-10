@@ -1,0 +1,5 @@
+ext.moduleName = 'stroom.collection.api'
+
+dependencies {
+    compile libs.stroomDocRef
+}

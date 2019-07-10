@@ -44,14 +44,14 @@ public class FindMetaCriteria extends BaseCriteria implements SharedObject, HasI
 
     public static FindMetaCriteria createFromMeta(final Meta meta) {
         final FindMetaCriteria criteria = new FindMetaCriteria();
-        criteria.setExpression(ExpressionUtil.createSimpleExpression());
+        criteria.setExpression(MetaExpressionUtil.createSimpleExpression());
         criteria.obtainSelectedIdSet().add(meta.getId());
         return criteria;
     }
 
     public static FindMetaCriteria createWithType(final String typeName) {
         final FindMetaCriteria criteria = new FindMetaCriteria();
-        criteria.setExpression(ExpressionUtil.createTypeExpression(typeName));
+        criteria.setExpression(MetaExpressionUtil.createTypeExpression(typeName));
         return criteria;
     }
 
@@ -65,7 +65,7 @@ public class FindMetaCriteria extends BaseCriteria implements SharedObject, HasI
 
     public ExpressionOperator obtainExpression() {
         if (expression == null) {
-            expression = ExpressionUtil.createSimpleExpression();
+            expression = MetaExpressionUtil.createSimpleExpression();
         }
         return expression;
     }

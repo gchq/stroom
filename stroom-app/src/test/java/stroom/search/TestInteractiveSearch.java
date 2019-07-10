@@ -19,7 +19,7 @@ package stroom.search;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.dictionary.api.DictionaryStore;
+import stroom.dictionary.impl.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.index.api.EventRef;
@@ -300,7 +300,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
         dictionaryStore.writeDocument(dic);
 
         final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
-        and.addDictionaryTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic));
+        and.addTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic));
 
         test(and, 15);
 
@@ -323,8 +323,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
         dictionaryStore.writeDocument(dic2);
 
         final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
-        and.addDictionaryTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
-        and.addDictionaryTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
+        and.addTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
+        and.addTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
 
         test(and, 10);
 
@@ -348,8 +348,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
         dictionaryStore.writeDocument(dic2);
 
         final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
-        and.addDictionaryTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
-        and.addDictionaryTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
+        and.addTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
+        and.addTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
 
         test(and, 10);
 

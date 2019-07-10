@@ -1,0 +1,8 @@
+ext.moduleName = 'stroom.collection.mock'
+
+dependencies {
+    compile project(':stroom-explorer:stroom-collection-api')
+    
+    compile libs.guice4
+    compile libs.stroomDocRef
+}

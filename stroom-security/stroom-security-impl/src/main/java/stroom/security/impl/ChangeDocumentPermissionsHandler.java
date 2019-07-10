@@ -20,7 +20,6 @@ package stroom.security.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.util.shared.EntityServiceException;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
@@ -32,6 +31,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserPermission;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -71,20 +71,20 @@ class ChangeDocumentPermissionsHandler
             // Check that the current user has permission to change the permissions of the document.
             if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.OWNER)) {
                 // Record what documents and what users are affected by these changes so we can clear the relevant caches.
-                final Set<String> affectedDocRefUuids = new HashSet<>();
+                final Set<DocRef> affectedDocRefs = new HashSet<>();
                 final Set<String> affectedUserUuids = new HashSet<>();
 
                 // Change the permissions of the document.
                 final ChangeSet<UserPermission> changeSet = action.getChangeSet();
-                changeDocPermissions(docRef, changeSet, affectedDocRefUuids, affectedUserUuids, false);
+                changeDocPermissions(docRef, changeSet, affectedDocRefs, affectedUserUuids, false);
 
                 // Cascade changes if this is a folder and we have been asked to do so.
                 if (action.getCascade() != null) {
-                    cascadeChanges(docRef, changeSet, affectedDocRefUuids, affectedUserUuids, action.getCascade());
+                    cascadeChanges(docRef, changeSet, affectedDocRefs, affectedUserUuids, action.getCascade());
                 }
 
                 // Force refresh of cached permissions.
-                affectedDocRefUuids.forEach(documentPermissionsCache::remove);
+                affectedDocRefs.forEach(documentPermissionsCache::remove);
 
                 return VoidResult.INSTANCE;
             }
@@ -95,7 +95,7 @@ class ChangeDocumentPermissionsHandler
 
     private void changeDocPermissions(final DocRef docRef,
                                       final ChangeSet<UserPermission> changeSet,
-                                      final Set<String> affectedDocRefUuids,
+                                      final Set<DocRef> affectedDocRefs,
                                       final Set<String> affectedUserUuids,
                                       final boolean clear) {
         if (clear) {
@@ -107,7 +107,7 @@ class ChangeDocumentPermissionsHandler
                     try {
                         documentPermissionService.removePermission(docRef.getUuid(), userUUid, permission);
                         // Remember the affected documents and users so we can clear the relevant caches.
-                        affectedDocRefUuids.add(docRef.getUuid());
+                        affectedDocRefs.add(docRef);
                         affectedUserUuids.add(userUUid);
                     } catch (final RuntimeException e) {
                         // Expected.
@@ -123,7 +123,7 @@ class ChangeDocumentPermissionsHandler
                 try {
                     documentPermissionService.removePermission(docRef.getUuid(), userUuid, userPermission.getPermission());
                     // Remember the affected documents and users so we can clear the relevant caches.
-                    affectedDocRefUuids.add(docRef.getUuid());
+                    affectedDocRefs.add(docRef);
                     affectedUserUuids.add(userUuid);
                 } catch (final RuntimeException e) {
                     // Expected.
@@ -140,7 +140,7 @@ class ChangeDocumentPermissionsHandler
                 try {
                     documentPermissionService.addPermission(docRef.getUuid(), userUuid, userPermission.getPermission());
                     // Remember the affected documents and users so we can clear the relevant caches.
-                    affectedDocRefUuids.add(docRef.getUuid());
+                    affectedDocRefs.add(docRef);
                     affectedUserUuids.add(userUuid);
                 } catch (final RuntimeException e) {
                     // Expected.
@@ -204,14 +204,14 @@ class ChangeDocumentPermissionsHandler
 
     private void cascadeChanges(final DocRef docRef,
                                 final ChangeSet<UserPermission> changeSet,
-                                final Set<String> affectedDocRefUuids,
+                                final Set<DocRef> affectedDocRefs,
                                 final Set<String> affectedUserUuids,
                                 final ChangeDocumentPermissionsAction.Cascade cascade) {
         if (DocumentTypes.isFolder(docRef.getType())) {
             switch (cascade) {
                 case CHANGES_ONLY:
                     // We are only cascading changes so just pass on the change set.
-                    changeDescendantPermissions(docRef, changeSet, affectedDocRefUuids, affectedUserUuids, false);
+                    changeDescendantPermissions(docRef, changeSet, affectedDocRefs, affectedUserUuids, false);
                     break;
 
                 case ALL:
@@ -226,7 +226,7 @@ class ChangeDocumentPermissionsHandler
                     }
 
                     // Set child permissions to that of the parent folder after clearing all permissions from child documents.
-                    changeDescendantPermissions(docRef, fullChangeSet, affectedDocRefUuids, affectedUserUuids, true);
+                    changeDescendantPermissions(docRef, fullChangeSet, affectedDocRefs, affectedUserUuids, true);
 
                     break;
 
@@ -239,7 +239,7 @@ class ChangeDocumentPermissionsHandler
 
     private void changeDescendantPermissions(final DocRef folder,
                                              final ChangeSet<UserPermission> changeSet,
-                                             final Set<String> affectedDocRefUuids,
+                                             final Set<DocRef> affectedDocRefs,
                                              final Set<String> affectedUserUuids,
                                              final boolean clear) {
         final List<ExplorerNode> descendants = explorerNodeService.getDescendants(folder);
@@ -247,7 +247,7 @@ class ChangeDocumentPermissionsHandler
             for (final ExplorerNode descendant : descendants) {
                 // Ensure that the user has permission to change the permissions of this child.
                 if (securityContext.hasDocumentPermission(descendant.getType(), descendant.getUuid(), DocumentPermissionNames.OWNER)) {
-                    changeDocPermissions(descendant.getDocRef(), changeSet, affectedDocRefUuids, affectedUserUuids, clear);
+                    changeDocPermissions(descendant.getDocRef(), changeSet, affectedDocRefs, affectedUserUuids, clear);
                 } else {
                     LOGGER.debug("User does not have permission to change permissions on " + descendant.toString());
                 }

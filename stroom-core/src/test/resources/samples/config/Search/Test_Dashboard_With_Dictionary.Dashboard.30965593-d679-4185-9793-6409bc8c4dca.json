@@ -23,8 +23,7 @@
           "type" : "term",
           "field" : "UserId",
           "condition" : "IN_DICTIONARY",
-          "value" : "Test Dictionary",
-          "dictionary" : {
+          "docRef" : {
             "type" : "Dictionary",
             "uuid" : "352082ae-5b7c-4105-8d34-39ec7c713523",
             "name" : "Test Dictionary"

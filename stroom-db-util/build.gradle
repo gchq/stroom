@@ -2,6 +2,8 @@ ext.moduleName = 'stroom.db.util'
 
 dependencies {
     compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-dictionary:stroom-dictionary-api')
+    compile project(':stroom-explorer:stroom-collection-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 //
@@ -21,6 +23,7 @@ dependencies {
 //    compile libs.javax_inject
 //    compile libs.jaxb_api
     compile libs.jooq
+    compile libs.stroomQueryApi
 //    compile libs.saxon_he
     compile libs.slf4j_api
 //

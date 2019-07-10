@@ -19,7 +19,7 @@ package stroom.dictionary.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.api.DictionaryStore;
+import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -49,7 +49,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Singleton
-class DictionaryStoreImpl implements DictionaryStore {
+class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryStoreImpl.class);
 
     private final Store<DictionaryDoc> store;
@@ -291,6 +291,18 @@ class DictionaryStoreImpl implements DictionaryStore {
     @Override
     public String getCombinedData(final DocRef docRef) {
         return doGetCombinedData(docRef, new HashSet<>());
+    }
+
+    @Override
+    public String[] getWords(final DocRef dictionaryRef) {
+//            return wordMap.computeIfAbsent(docRef, k -> {
+        final String words = getCombinedData(dictionaryRef);
+        if (words != null) {
+            return words.trim().split("\n");
+        }
+
+        return null;
+//            });
     }
 
     private String doGetCombinedData(final DocRef docRef, final Set<DocRef> visited) {

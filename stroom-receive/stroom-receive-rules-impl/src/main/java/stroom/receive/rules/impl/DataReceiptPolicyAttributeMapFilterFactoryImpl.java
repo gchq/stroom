@@ -17,8 +17,8 @@
 
 package stroom.receive.rules.impl;
 
-import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
+import stroom.meta.api.ExpressionMatcherFactory;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 
@@ -28,16 +28,16 @@ import javax.inject.Singleton;
 @Singleton
 public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataReceiptPolicyAttributeMapFilterFactory {
     private final ReceiveDataRuleSetService ruleSetService;
-    private final DictionaryStore dictionaryStore;
+    private final ExpressionMatcherFactory expressionMatcherFactory;
 
     @Inject
-    public DataReceiptPolicyAttributeMapFilterFactoryImpl(final ReceiveDataRuleSetService ruleSetService, final DictionaryStore dictionaryStore) {
+    public DataReceiptPolicyAttributeMapFilterFactoryImpl(final ReceiveDataRuleSetService ruleSetService, final ExpressionMatcherFactory expressionMatcherFactory) {
         this.ruleSetService = ruleSetService;
-        this.dictionaryStore = dictionaryStore;
+        this.expressionMatcherFactory = expressionMatcherFactory;
     }
 
     @Override
     public AttributeMapFilter create(final DocRef policyRef) {
-        return new DataReceiptPolicyAttributeMapFilter(new ReceiveDataPolicyChecker(ruleSetService, dictionaryStore, policyRef));
+        return new DataReceiptPolicyAttributeMapFilter(new ReceiveDataPolicyChecker(ruleSetService, expressionMatcherFactory, policyRef));
     }
 }

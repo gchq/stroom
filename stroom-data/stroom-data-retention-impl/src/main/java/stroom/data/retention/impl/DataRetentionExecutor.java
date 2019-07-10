@@ -22,8 +22,9 @@ import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionItem;
@@ -201,9 +202,9 @@ public class DataRetentionExecutor {
 
         final Builder outer = new ExpressionOperator.Builder(Op.AND)
                 .addOperator(new ExpressionOperator.Builder(Op.NOT).addOperator(inner.build()).build())
-                .addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                .addTerm(MetaFieldNames.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(period.getFromMs()))
-                .addTerm(MetaFieldNames.CREATE_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(period.getToMs()));
+                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(period.getFromMs()))
+                .addTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(period.getToMs()));
 
 
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
@@ -359,21 +360,21 @@ public class DataRetentionExecutor {
     }
 
     public static class ActiveRules {
-        private final Set<String> fieldSet;
+        private final Set<AbstractField> fieldSet;
         private final List<DataRetentionRule> activeRules;
 
         ActiveRules(final List<DataRetentionRule> rules) {
-            final Set<String> fieldSet = new HashSet<>();
+            final Set<AbstractField> fieldSet = new HashSet<>();
             final List<DataRetentionRule> activeRules = new ArrayList<>();
 
             // Find out which fields are used by the expressions so we don't have to do unnecessary joins.
-            fieldSet.add(MetaFieldNames.ID);
-            fieldSet.add(MetaFieldNames.CREATE_TIME);
+            fieldSet.add(MetaFields.ID);
+            fieldSet.add(MetaFields.CREATE_TIME);
 
             // Also make sure we create a list of rules that are enabled and have at least one enabled term.
             rules.forEach(rule -> {
                 if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().getEnabled()) {
-                    final Set<String> fields = new HashSet<>();
+                    final Set<AbstractField> fields = new HashSet<>();
 //                    addToFieldSet(rule, fields);
                     if (fields.size() > 0) {
                         fieldSet.addAll(fields);

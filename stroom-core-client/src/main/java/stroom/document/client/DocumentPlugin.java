@@ -18,6 +18,7 @@
 package stroom.document.client;
 
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.SelectContentTabEvent;
@@ -27,6 +28,7 @@ import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.entity.shared.DocumentServiceWriteAction;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
@@ -88,8 +90,8 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
      * 4. This method will open an document and show it in the content pane.
      */
     @SuppressWarnings("unchecked")
-    public DocumentEditPresenter<?, D> open(final DocRef docRef, final boolean forceOpen) {
-        DocumentEditPresenter<?, D> presenter = null;
+    public MyPresenterWidget<?> open(final DocRef docRef, final boolean forceOpen) {
+        MyPresenterWidget<?> presenter = null;
 
         final DocumentTabData existing = documentToTabDataMap.get(docRef);
         // If we already have a tab item for this document then make sure it is
@@ -114,7 +116,7 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
 
             // If the item isn't already open but we are forcing it open then,
             // create a new presenter and register it as open.
-            final DocumentEditPresenter<?, D> documentEditPresenter = (DocumentEditPresenter<?, D>) createEditor();
+            final MyPresenterWidget<?> documentEditPresenter = createEditor();
             presenter = documentEditPresenter;
 
             if (documentEditPresenter instanceof DocumentTabData) {
@@ -137,7 +139,7 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
         return presenter;
     }
 
-    protected void showTab(final DocRef docRef, final DocumentEditPresenter<?, D> documentEditPresenter, final CloseHandler closeHandler, final DocumentTabData tabData) {
+    protected void showTab(final DocRef docRef, final MyPresenterWidget<?> documentEditPresenter, final CloseHandler closeHandler, final DocumentTabData tabData) {
         // Load the document and show the tab.
         load(docRef)
                 .onSuccess(doc -> {
@@ -146,7 +148,9 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
                             AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
                         } else {
                             // Read the newly loaded document.
-                            documentEditPresenter.read(getDocRef(doc), doc);
+                            if (documentEditPresenter instanceof HasDocumentRead) {
+                                ((HasDocumentRead<D>) documentEditPresenter).read(getDocRef(doc), doc);
+                            }
 
                             // Open the tab.
                             contentManager.open(closeHandler, tabData, documentEditPresenter);
@@ -423,7 +427,7 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
         HighlightExplorerNodeEvent.fire(DocumentPlugin.this, documentData);
     }
 
-    protected abstract DocumentEditPresenter<?, ?> createEditor();
+    protected abstract MyPresenterWidget<?> createEditor();
 
     public Future<D> load(final DocRef docRef) {
         return dispatcher.exec(new DocumentServiceReadAction<>(docRef));
@@ -447,16 +451,23 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
         @Override
         @SuppressWarnings("unchecked")
         public void onCloseRequest(final CloseCallback callback) {
-            if (tabData != null && tabData instanceof DocumentEditPresenter<?, ?>) {
-                final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
-                if (presenter.isDirty()) {
-                    final DocRef docRef = getDocRef(presenter.getEntity());
-                    ConfirmEvent.fire(DocumentPlugin.this,
-                            docRef.getType() + " '" + docRef.getName()
-                                    + "' has unsaved changes. Are you sure you want to close this item?",
-                            result -> actuallyClose(tabData, callback, presenter, result));
+            if (tabData != null) {
+                if (tabData instanceof DocumentEditPresenter<?, ?>) {
+                    final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
+                    if (presenter.isDirty()) {
+                        final DocRef docRef = getDocRef(presenter.getEntity());
+                        ConfirmEvent.fire(DocumentPlugin.this,
+                                docRef.getType() + " '" + docRef.getName()
+                                        + "' has unsaved changes. Are you sure you want to close this item?",
+                                result -> actuallyClose(tabData, callback, presenter, result));
+                    } else {
+                        actuallyClose(tabData, callback, presenter, true);
+                    }
                 } else {
-                    actuallyClose(tabData, callback, presenter, true);
+                    // Cleanup reference to this tab data.
+                    removeTabData(tabData);
+                    // Tell the callback to close the tab.
+                    callback.closeTab(true);
                 }
             }
         }

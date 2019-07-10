@@ -23,7 +23,6 @@ public final class Term extends Item {
     private String field;
     private Condition condition;
     private String value;
-    private DocRef dictionary;
     private DocRef docRef;
 
     public String getField() {
@@ -50,14 +49,6 @@ public final class Term extends Item {
         this.value = value;
     }
 
-    public DocRef getDictionary() {
-        return dictionary;
-    }
-
-    public void setDictionary(final DocRef dictionary) {
-        this.dictionary = dictionary;
-    }
-
     public DocRef getDocRef() {
         return docRef;
     }
@@ -78,8 +69,12 @@ public final class Term extends Item {
             sb.append(" ");
         }
         if (Condition.IN_DICTIONARY.equals(condition)) {
-            if (dictionary != null && dictionary.getName() != null) {
-                sb.append(dictionary.getName());
+            if (docRef != null && docRef.getName() != null) {
+                sb.append(docRef.getName());
+            }
+        } else if (Condition.IN_FOLDER.equals(condition)) {
+            if (docRef != null && docRef.getName() != null) {
+                sb.append(docRef.getName());
             }
         } else if (Condition.IS_DOC_REF.equals(condition)) {
             if (docRef != null && docRef.getName() != null) {

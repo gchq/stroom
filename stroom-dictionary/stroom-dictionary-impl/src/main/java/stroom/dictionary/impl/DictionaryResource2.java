@@ -20,7 +20,6 @@ import com.codahale.metrics.annotation.Timed;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.importexport.api.DocRefs;
 import stroom.importexport.api.DocumentData;

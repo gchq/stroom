@@ -16,21 +16,24 @@
 
 package stroom.processor.shared;
 
+import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
 
-public class ProcessorTaskSummaryRow implements SharedObject {
+import java.util.Objects;
+
+public class ProcessorTaskSummary implements SharedObject {
     private static final long serialVersionUID = 5631193345714122209L;
 
-    private String pipeline;
-    private String feed;
+    private DocRef pipeline;
+    private DocRef feed;
     private int priority;
     private TaskStatus status;
     private long count;
 
-    public ProcessorTaskSummaryRow() {
+    public ProcessorTaskSummary() {
     }
 
-    public ProcessorTaskSummaryRow(final String pipeline, final String feed, final int priority, final TaskStatus status, final long count) {
+    public ProcessorTaskSummary(final DocRef pipeline, final DocRef feed, final int priority, final TaskStatus status, final long count) {
         this.pipeline = pipeline;
         this.feed = feed;
         this.priority = priority;
@@ -38,11 +41,11 @@ public class ProcessorTaskSummaryRow implements SharedObject {
         this.count = count;
     }
 
-    public String getPipeline() {
+    public DocRef getPipeline() {
         return pipeline;
     }
 
-    public String getFeed() {
+    public DocRef getFeed() {
         return feed;
     }
 
@@ -56,5 +59,22 @@ public class ProcessorTaskSummaryRow implements SharedObject {
 
     public long getCount() {
         return count;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ProcessorTaskSummary that = (ProcessorTaskSummary) o;
+        return Objects.equals(pipeline, that.pipeline) &&
+                Objects.equals(feed, that.feed) &&
+                Objects.equals(priority, that.priority) &&
+                status == that.status &&
+                Objects.equals(count, that.count);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pipeline, feed, priority, status, count);
     }
 }

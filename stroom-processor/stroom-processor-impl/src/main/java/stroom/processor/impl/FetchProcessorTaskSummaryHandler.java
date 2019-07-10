@@ -6,8 +6,8 @@ import event.logging.Query.Advanced;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.FindProcessorTaskCriteria;
-import stroom.processor.shared.FindProcessorTaskSummaryAction;
-import stroom.processor.shared.ProcessorTaskSummaryRow;
+import stroom.processor.shared.FetchProcessorTaskSummaryAction;
+import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.BaseResultList;
@@ -15,25 +15,25 @@ import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 
-class FindProcessorTaskSummaryHandler extends AbstractTaskHandler<FindProcessorTaskSummaryAction, ResultList<ProcessorTaskSummaryRow>> {
+class FetchProcessorTaskSummaryHandler extends AbstractTaskHandler<FetchProcessorTaskSummaryAction, ResultList<ProcessorTaskSummary>> {
     private final ProcessorTaskService processorTaskService;
     private final DocumentEventLog entityEventLog;
     private final Security security;
 
     @Inject
-    FindProcessorTaskSummaryHandler(final ProcessorTaskService processorTaskService,
-                                    final DocumentEventLog entityEventLog,
-                                    final Security security) {
+    FetchProcessorTaskSummaryHandler(final ProcessorTaskService processorTaskService,
+                                     final DocumentEventLog entityEventLog,
+                                     final Security security) {
         this.processorTaskService = processorTaskService;
         this.entityEventLog = entityEventLog;
         this.security = security;
     }
 
     @Override
-    public ResultList<ProcessorTaskSummaryRow> exec(final FindProcessorTaskSummaryAction action) {
+    public ResultList<ProcessorTaskSummary> exec(final FetchProcessorTaskSummaryAction action) {
         final FindProcessorTaskCriteria criteria = action.getCriteria();
         return security.secureResult(() -> {
-            BaseResultList<ProcessorTaskSummaryRow> result;
+            BaseResultList<ProcessorTaskSummary> result;
 
             final Query query = new Query();
             final Advanced advanced = new Advanced();

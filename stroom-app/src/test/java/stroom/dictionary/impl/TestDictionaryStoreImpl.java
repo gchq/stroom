@@ -15,11 +15,12 @@
  *
  */
 
-package stroom.search;
+package stroom.dictionary.impl;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.dictionary.api.DictionaryStore;
+import stroom.dictionary.api.WordListProvider;
+import stroom.dictionary.impl.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -33,6 +34,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
     @Inject
     private DictionaryStore dictionaryStore;
+    @Inject
+    private WordListProvider wordListProvider;
 
     @Test
     void test() {
@@ -46,7 +49,7 @@ class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
         final DictionaryDoc loaded = dictionaryStore.readDocument(docRef);
         assertThat(loaded).isNotNull();
         assertThat(loaded.getData()).isEqualTo(dictionary.getData());
-        assertThat(dictionaryStore.getCombinedData(docRef)).isEqualTo(dictionary.getData());
+        assertThat(wordListProvider.getCombinedData(docRef)).isEqualTo(dictionary.getData());
     }
 
     @Test
@@ -72,9 +75,9 @@ class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
         dictionaryStore.writeDocument(dictionary3);
 
         // Make sure we can get it back.
-        assertThat(dictionaryStore.getCombinedData(docRef1)).isEqualTo("dic1");
-        assertThat(dictionaryStore.getCombinedData(docRef2)).isEqualTo("dic1\ndic2");
-        assertThat(dictionaryStore.getCombinedData(docRef3)).isEqualTo("dic1\ndic2\ndic3");
+        assertThat(wordListProvider.getCombinedData(docRef1)).isEqualTo("dic1");
+        assertThat(wordListProvider.getCombinedData(docRef2)).isEqualTo("dic1\ndic2");
+        assertThat(wordListProvider.getCombinedData(docRef3)).isEqualTo("dic1\ndic2\ndic3");
     }
 
     @Test
@@ -93,13 +96,13 @@ class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
         dictionaryStore.writeDocument(dictionary2);
 
         // Make sure we can get it back.
-        assertThat(dictionaryStore.getCombinedData(docRef1)).isEqualTo("dic1");
-        assertThat(dictionaryStore.getCombinedData(docRef2)).isEqualTo("dic1\ndic2");
+        assertThat(wordListProvider.getCombinedData(docRef1)).isEqualTo("dic1");
+        assertThat(wordListProvider.getCombinedData(docRef2)).isEqualTo("dic1\ndic2");
 
-        List<DocRef> dictionary1Results = dictionaryStore.findByName("dic1_name");
+        List<DocRef> dictionary1Results = wordListProvider.findByName("dic1_name");
         assertThat(dictionary1Results.size()).isOne();
 
-        List<DocRef> badResults = dictionaryStore.findByName("BAD NAME");
+        List<DocRef> badResults = wordListProvider.findByName("BAD NAME");
         assertThat(badResults.size()).isZero();
     }
 }

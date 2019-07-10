@@ -27,8 +27,9 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
@@ -72,7 +73,7 @@ class FsStore implements Store {
 
         final FsVolume volume = volumeService.getVolume();
         if (volume == null) {
-            throw new DataException("Failed to get lock as no writeable volumes");
+            throw new DataException("Failed to get lock as no writable volumes");
         }
 
         // First time call (no file yet exists)
@@ -182,7 +183,7 @@ class FsStore implements Store {
         try {
             ((FsTarget)target).delete();
         } catch (final RuntimeException e) {
-            LOGGER.error("Unable to delete stream target!", e.getMessage(), e);
+            LOGGER.error("Unable to delete stream target! {}", e.getMessage(), e);
         }
         return target;
     }
@@ -305,24 +306,24 @@ class FsStore implements Store {
 //    }
 
     private void syncAttributes(final Meta meta, final FsTarget target) {
-        updateAttribute(target, MetaFieldNames.ID, String.valueOf(meta.getId()));
+        updateAttribute(target, MetaFields.ID, String.valueOf(meta.getId()));
 
         if (meta.getParentMetaId() != null) {
-            updateAttribute(target, MetaFieldNames.PARENT_ID,
+            updateAttribute(target, MetaFields.PARENT_ID,
                     String.valueOf(meta.getParentMetaId()));
         }
 
-        updateAttribute(target, MetaFieldNames.FEED_NAME, meta.getFeedName());
-        updateAttribute(target, MetaFieldNames.TYPE_NAME, meta.getTypeName());
-        updateAttribute(target, MetaFieldNames.CREATE_TIME, DateUtil.createNormalDateTimeString(meta.getCreateMs()));
+        updateAttribute(target, MetaFields.FEED_NAME, meta.getFeedName());
+        updateAttribute(target, MetaFields.TYPE_NAME, meta.getTypeName());
+        updateAttribute(target, MetaFields.CREATE_TIME, DateUtil.createNormalDateTimeString(meta.getCreateMs()));
         if (meta.getEffectiveMs() != null) {
-            updateAttribute(target, MetaFieldNames.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(meta.getEffectiveMs()));
+            updateAttribute(target, MetaFields.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(meta.getEffectiveMs()));
         }
     }
 
-    private void updateAttribute(final FsTarget target, final String key, final String value) {
-        if (!target.getAttributes().containsKey(key)) {
-            target.getAttributes().put(key, value);
+    private void updateAttribute(final FsTarget target, final AbstractField key, final String value) {
+        if (!target.getAttributes().containsKey(key.getName())) {
+            target.getAttributes().put(key.getName(), value);
         }
     }
 

@@ -16,139 +16,154 @@
 
 package stroom.processor.shared;
 
-import stroom.docref.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.CriteriaSet;
-import stroom.util.shared.Period;
-import stroom.util.shared.Range;
-import stroom.util.shared.StringCriteria;
 
 public class FindProcessorFilterCriteria extends BaseCriteria {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * The range you care about
-     */
-    private Range<Integer> priorityRange = null;
-    private Period lastPollPeriod = null;
-    private CriteriaSet<Integer> processorIdSet = null;
-    private StringCriteria pipelineUuidCriteria = null;
-    private Boolean processorEnabled = null;
-    private Boolean processorFilterEnabled = null;
-    private String createUser;
-//    private String pipelineNameFilter;
-//    private String status;
+    private ExpressionOperator expression;
 
     public FindProcessorFilterCriteria() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FindProcessorFilterCriteria(final DocRef pipeline) {
-        obtainPipelineUuidCriteria().setString(pipeline.getUuid());
+    public FindProcessorFilterCriteria(final ExpressionOperator expression) {
+        this.expression = expression;
     }
 
-    public FindProcessorFilterCriteria(final Processor processor) {
-        obtainStreamProcessorIdSet().add(processor.getId());
+    public ExpressionOperator getExpression() {
+        return expression;
     }
 
-    public Range<Integer> getPriorityRange() {
-        return priorityRange;
+    public void setExpression(final ExpressionOperator expression) {
+        this.expression = expression;
     }
 
-    public void setPriorityRange(Range<Integer> priorityRange) {
-        this.priorityRange = priorityRange;
-    }
-
-    public Range<Integer> obtainPriorityRange() {
-        if (priorityRange == null) {
-            priorityRange = new Range<>();
-        }
-        return priorityRange;
-    }
-
-    public Period getLastPollPeriod() {
-        return lastPollPeriod;
-    }
-
-    public void setLastPollPeriod(Period lastPollPeriod) {
-        this.lastPollPeriod = lastPollPeriod;
-    }
-
-    public Period obtainLastPollPeriod() {
-        if (lastPollPeriod == null) {
-            lastPollPeriod = new Period();
-        }
-        return lastPollPeriod;
-    }
-
-    public StringCriteria getPipelineUuidCriteria() {
-        return pipelineUuidCriteria;
-    }
-
-    public void setPipelineUuidCriteria(final StringCriteria pipelineUuidCriteria) {
-        this.pipelineUuidCriteria = pipelineUuidCriteria;
-    }
-
-    public StringCriteria obtainPipelineUuidCriteria() {
-        if (pipelineUuidCriteria == null) {
-            pipelineUuidCriteria = new StringCriteria();
-        }
-        return pipelineUuidCriteria;
-    }
-
-    public CriteriaSet<Integer> getProcessorIdSet() {
-        return processorIdSet;
-    }
-
-    public void setProcessorIdSet(CriteriaSet<Integer> processorIdSet) {
-        this.processorIdSet = processorIdSet;
-    }
-
-    public CriteriaSet<Integer> obtainStreamProcessorIdSet() {
-        if (processorIdSet == null) {
-            processorIdSet = new CriteriaSet<>();
-        }
-        return processorIdSet;
-    }
-
-    public Boolean getProcessorEnabled() {
-        return processorEnabled;
-    }
-
-    public void setProcessorEnabled(Boolean processorEnabled) {
-        this.processorEnabled = processorEnabled;
-    }
-
-    public Boolean getProcessorFilterEnabled() {
-        return processorFilterEnabled;
-    }
-
-    public void setProcessorFilterEnabled(Boolean processorFilterEnabled) {
-        this.processorFilterEnabled = processorFilterEnabled;
-    }
-
-    public String getCreateUser() {
-        return createUser;
-    }
-
-    public void setCreateUser(String createUser) {
-        this.createUser = createUser;
-    }
-
-//    public String getPipelineNameFilter() {
-//        return pipelineNameFilter;
+//
+//    /**
+//     * The range you care about
+//     */
+//    private Range<Integer> priorityRange = null;
+//    private Period lastPollPeriod = null;
+//    private CriteriaSet<Integer> processorIdSet = null;
+//    private StringCriteria pipelineUuidCriteria = null;
+//    private Boolean processorEnabled = null;
+//    private Boolean processorFilterEnabled = null;
+//    private String createUser;
+////    private String pipelineNameFilter;
+////    private String status;
+//
+//    public FindProcessorFilterCriteria() {
+//        // Default constructor necessary for GWT serialisation.
 //    }
 //
-//    public void setPipelineNameFilter(String pipelineNameFilter) {
-//        this.pipelineNameFilter = pipelineNameFilter;
+//    public FindProcessorFilterCriteria(final DocRef pipeline) {
+//        obtainPipelineUuidCriteria().setString(pipeline.getUuid());
 //    }
 //
-//    public void setStatus(String status) {
-//        this.status = status;
+//    public FindProcessorFilterCriteria(final Processor processor) {
+//        obtainStreamProcessorIdSet().add(processor.getId());
 //    }
 //
-//    public String getStatus() {
-//        return status;
+//    public Range<Integer> getPriorityRange() {
+//        return priorityRange;
 //    }
+//
+//    public void setPriorityRange(Range<Integer> priorityRange) {
+//        this.priorityRange = priorityRange;
+//    }
+//
+//    public Range<Integer> obtainPriorityRange() {
+//        if (priorityRange == null) {
+//            priorityRange = new Range<>();
+//        }
+//        return priorityRange;
+//    }
+//
+//    public Period getLastPollPeriod() {
+//        return lastPollPeriod;
+//    }
+//
+//    public void setLastPollPeriod(Period lastPollPeriod) {
+//        this.lastPollPeriod = lastPollPeriod;
+//    }
+//
+//    public Period obtainLastPollPeriod() {
+//        if (lastPollPeriod == null) {
+//            lastPollPeriod = new Period();
+//        }
+//        return lastPollPeriod;
+//    }
+//
+//    public StringCriteria getPipelineUuidCriteria() {
+//        return pipelineUuidCriteria;
+//    }
+//
+//    public void setPipelineUuidCriteria(final StringCriteria pipelineUuidCriteria) {
+//        this.pipelineUuidCriteria = pipelineUuidCriteria;
+//    }
+//
+//    public StringCriteria obtainPipelineUuidCriteria() {
+//        if (pipelineUuidCriteria == null) {
+//            pipelineUuidCriteria = new StringCriteria();
+//        }
+//        return pipelineUuidCriteria;
+//    }
+//
+//    public CriteriaSet<Integer> getProcessorIdSet() {
+//        return processorIdSet;
+//    }
+//
+//    public void setProcessorIdSet(CriteriaSet<Integer> processorIdSet) {
+//        this.processorIdSet = processorIdSet;
+//    }
+//
+//    public CriteriaSet<Integer> obtainStreamProcessorIdSet() {
+//        if (processorIdSet == null) {
+//            processorIdSet = new CriteriaSet<>();
+//        }
+//        return processorIdSet;
+//    }
+//
+//    public Boolean getProcessorEnabled() {
+//        return processorEnabled;
+//    }
+//
+//    public void setProcessorEnabled(Boolean processorEnabled) {
+//        this.processorEnabled = processorEnabled;
+//    }
+//
+//    public Boolean getProcessorFilterEnabled() {
+//        return processorFilterEnabled;
+//    }
+//
+//    public void setProcessorFilterEnabled(Boolean processorFilterEnabled) {
+//        this.processorFilterEnabled = processorFilterEnabled;
+//    }
+//
+//    public String getCreateUser() {
+//        return createUser;
+//    }
+//
+//    public void setCreateUser(String createUser) {
+//        this.createUser = createUser;
+//    }
+//
+////    public String getPipelineNameFilter() {
+////        return pipelineNameFilter;
+////    }
+////
+////    public void setPipelineNameFilter(String pipelineNameFilter) {
+////        this.pipelineNameFilter = pipelineNameFilter;
+////    }
+////
+////    public void setStatus(String status) {
+////        this.status = status;
+////    }
+////
+////    public String getStatus() {
+////        return status;
+////    }
 
 }

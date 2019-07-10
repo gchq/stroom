@@ -3,13 +3,17 @@ package stroom.meta.impl.db;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
+import stroom.collection.api.CollectionService;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.db.util.ExpressionMapper.TermHandler;
+import stroom.dictionary.api.WordListProvider;
 import stroom.meta.impl.MetaKeyDao;
-import stroom.meta.impl.db.ExpressionMapper.TermHandler;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -19,10 +23,36 @@ import static org.jooq.impl.DSL.not;
 import static org.jooq.impl.DSL.or;
 
 class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
-    private final Map<String, MetaTermHandler> termHandlers;
+    private final MetaKeyDao metaKeyDao;
+    private final Field<Integer> keyField;
+    private final Field<Long> valueField;
+    private final WordListProvider wordListProvider;
+    private final CollectionService collectionService;
 
-    MetaExpressionMapper(final Map<String, MetaTermHandler> termHandlers) {
-        this.termHandlers = termHandlers;
+    private final Map<String, MetaTermHandler> termHandlers = new HashMap<>();
+
+    MetaExpressionMapper(final MetaKeyDao metaKeyDao,
+                         final Field<Integer> keyField,
+                         final Field<Long> valueField,
+                         final WordListProvider wordListProvider,
+                         final CollectionService collectionService) {
+        this.metaKeyDao = metaKeyDao;
+        this.keyField = keyField;
+        this.valueField = valueField;
+        this.wordListProvider = wordListProvider;
+        this.collectionService = collectionService;
+    }
+
+    public void map(final AbstractField dataSourceField) {
+        final TermHandler<Long> termHandler = new TermHandler<>(dataSourceField, valueField, Long::valueOf, wordListProvider, collectionService);
+
+        final MetaTermHandler handler = new MetaTermHandler(
+                metaKeyDao,
+                keyField,
+                dataSourceField.getName(),
+                termHandler);
+
+        termHandlers.put(dataSourceField.getName(), handler);
     }
 
     @Override

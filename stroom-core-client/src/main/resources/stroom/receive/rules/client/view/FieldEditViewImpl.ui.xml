@@ -6,7 +6,7 @@
         <g:row>
             <g:cell>Type:</g:cell>
             <g:customCell>
-                <l:ItemListBox ui:field="type" width="100%"/>
+                <l:StringListBox ui:field="type" width="100%"/>
             </g:customCell>
         </g:row>
         <g:row>

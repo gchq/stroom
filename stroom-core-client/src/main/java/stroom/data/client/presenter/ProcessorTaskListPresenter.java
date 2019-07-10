@@ -28,15 +28,16 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
-import stroom.entity.client.presenter.FindActionDataProvider;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.NamedEntity;
-import stroom.feed.shared.FeedDoc;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.FindProcessorTaskAction;
+import stroom.processor.shared.ProcessorTaskExpressionUtil;
+import stroom.processor.shared.FetchProcessorTaskAction;
 import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorTask;
-import stroom.util.shared.Sort.Direction;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.util.shared.ResultList;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -47,15 +48,23 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import java.util.ArrayList;
 
 public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<ProcessorTask>> implements HasDocumentRead<SharedObject> {
-    private final FindActionDataProvider<FindProcessorTaskCriteria, ProcessorTask> dataProvider;
-
-    private FindProcessorTaskCriteria criteria;
+    private final ActionDataProvider<ProcessorTask> dataProvider;
+    private final FetchProcessorTaskAction action;
+    private boolean doneDataDisplay = false;
 
     @Inject
     public ProcessorTaskListPresenter(final EventBus eventBus,
                                       final ClientDispatchAsync dispatcher,
                                       final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(false));
+
+        action = new FetchProcessorTaskAction();
+        dataProvider = new ActionDataProvider<ProcessorTask>(dispatcher, action) {
+            @Override
+            protected void changeData(final ResultList<ProcessorTask> data) {
+                super.changeData(data);
+            }
+        };
 
         // Info column.
         getView().addColumn(new InfoColumn<ProcessorTask>() {
@@ -180,9 +189,6 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                 }, "End Time", ColumnSizeConstants.DATE_COL);
 
         getView().addEndColumn(new EndColumn<>());
-
-        this.dataProvider = new FindActionDataProvider<>(dispatcher,
-                getView());
     }
 
     private String toDateString(final Long ms) {
@@ -201,60 +207,35 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         }
     }
 
-    public FindActionDataProvider<FindProcessorTaskCriteria, ProcessorTask> getDataProvider() {
-        return dataProvider;
+    @Override
+    public void read(final DocRef docRef, final SharedObject entity) {
+        if (docRef == null) {
+            setExpression(null);
+        } else if (PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
+            setExpression(ProcessorTaskExpressionUtil.createPipelineExpression(docRef));
+//        } else if (FeedDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
+//            setExpression(ExpressionUtil.createFeedExpression(docRef));
+        } else if (ExplorerConstants.FOLDER.equals(docRef.getType())) {
+            setExpression(ProcessorTaskExpressionUtil.createFolderExpression(docRef));
+        }
     }
 
-    private void setFeedCriteria(final String feedName) {
-        criteria = initCriteria(feedName, null);
-        dataProvider.setAction(new FindProcessorTaskAction(criteria));
+    private void doDataDisplay() {
+        if (!doneDataDisplay) {
+            doneDataDisplay = true;
+            dataProvider.addDataDisplay(getView().getDataDisplay());
+        } else {
+            dataProvider.refresh();
+        }
     }
 
-    public FindProcessorTaskCriteria getCriteria() {
-        return criteria;
-    }
-
-    private void setPipelineCriteria(final DocRef pipelineRef) {
-        criteria = initCriteria(null, pipelineRef);
-        dataProvider.setAction(new FindProcessorTaskAction(criteria));
-    }
-
-    private void setNullCriteria() {
-        criteria = initCriteria(null, null);
-        dataProvider.setAction(new FindProcessorTaskAction(criteria));
+    public void setExpression(final ExpressionOperator expression) {
+        action.getCriteria().setExpression(expression);
+        doDataDisplay();
     }
 
     public void clear() {
         getView().setRowData(0, new ArrayList<>(0));
         getView().setRowCount(0, true);
-    }
-
-    @Override
-    public void read(final DocRef docRef, final SharedObject entity) {
-        if (entity instanceof FeedDoc) {
-            setFeedCriteria(docRef.getName());
-        } else if (entity instanceof PipelineDoc) {
-            setPipelineCriteria(docRef);
-        } else {
-            setNullCriteria();
-        }
-    }
-
-    private FindProcessorTaskCriteria initCriteria(final String feedName, final DocRef pipelineRef) {
-        final FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria();
-        criteria.setSort(FindProcessorTaskCriteria.FIELD_CREATE_TIME, Direction.DESCENDING, false);
-        criteria.obtainTaskStatusSet().setMatchAll(Boolean.FALSE);
-
-        // Only show owned stuff, i.e. tasks that are ready for processing or have been processed, not ones that belong to LOCKED meta.
-        criteria.obtainNodeNameCriteria().setMatchNull(false);
-
-//        if (feedName != null) {
-//            criteria.obtainFeedNameSet().add(feedName);
-//        }
-        if (pipelineRef != null) {
-            criteria.obtainPipelineUuidCriteria().setString(pipelineRef.getUuid());
-        }
-
-        return criteria;
     }
 }

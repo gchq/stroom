@@ -25,7 +25,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
@@ -65,13 +65,13 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
         } else {
             final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
             if (!showSystemFiles) {
-                builder.addTerm(MetaFieldNames.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
+                builder.addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
             }
-            builder.addTerm(MetaFieldNames.ID, Condition.EQUALS, String.valueOf(metaRow.getMeta().getId()));
+            builder.addTerm(MetaFields.ID, Condition.EQUALS, metaRow.getMeta().getId());
 
             final FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setExpression(builder.build());
-            criteria.setSort(MetaFieldNames.CREATE_TIME, Direction.ASCENDING, false);
+            criteria.setSort(MetaFields.CREATE_TIME.getName(), Direction.ASCENDING, false);
             criteria.setFetchRelationships(true);
 
             setCriteria(criteria);
@@ -163,14 +163,14 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
         addFeedColumn();
         addPipelineColumn();
 
-        addAttributeColumn("Raw", MetaFieldNames.RAW_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Disk", MetaFieldNames.FILE_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Read", MetaFieldNames.REC_READ, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Write", MetaFieldNames.REC_WRITE, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Fatal", MetaFieldNames.REC_FATAL, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Error", MetaFieldNames.REC_ERROR, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Warn", MetaFieldNames.REC_WARN, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Info", MetaFieldNames.REC_INFO, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Raw", MetaFields.RAW_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Disk", MetaFields.FILE_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Read", MetaFields.REC_READ, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Write", MetaFields.REC_WRITE, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Fatal", MetaFields.REC_FATAL, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Error", MetaFields.REC_ERROR, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Warn", MetaFields.REC_WARN, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Info", MetaFields.REC_INFO, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
 
         // TODO : @66 Add data retention column back into the table.
 //        addAttributeColumn("Retention", StreamAttributeConstants.RETENTION_AGE, ColumnSizeConstants.SMALL_COL);

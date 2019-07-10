@@ -4,10 +4,12 @@ import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.cluster.lock.mock.MockClusterLockModule;
+import stroom.collection.mock.MockCollectionModule;
+import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.meta.impl.MetaModule;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
@@ -30,7 +32,14 @@ class TestMetaServiceImpl {
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(new MetaModule(), new MetaDbModule(), new MockClusterLockModule(), new MockSecurityContextModule()).injectMembers(this);
+        Guice.createInjector(
+                new MetaModule(),
+                new MetaDbModule(),
+                new MockClusterLockModule(),
+                new MockSecurityContextModule(),
+                new MockCollectionModule(),
+                new MockWordListProviderModule())
+                .injectMembers(this);
         // Delete everything
         cleanup.clear();
     }
@@ -41,7 +50,7 @@ class TestMetaServiceImpl {
         final Meta meta2 = metaService.create(createProperties("FEED2"));
 
         final ExpressionOperator expression = new Builder(Op.AND)
-                .addTerm(MetaFieldNames.ID, Condition.EQUALS, String.valueOf(meta2.getId()))
+                .addTerm(MetaFields.ID, Condition.EQUALS, meta2.getId())
                 .build();
         final FindMetaCriteria criteria = new FindMetaCriteria(expression);
 

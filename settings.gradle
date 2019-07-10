@@ -81,6 +81,7 @@ include 'stroom-db-util'
 // Dictionary
 include 'stroom-dictionary:stroom-dictionary-api'
 include 'stroom-dictionary:stroom-dictionary-impl'
+include 'stroom-dictionary:stroom-dictionary-mock'
 
 // Docstore
 include 'stroom-docstore:stroom-docstore-api'
@@ -92,15 +93,6 @@ include 'stroom-docstore:stroom-docstore-impl-memory'
 // Common dropwizard supporting code
 include 'stroom-dropwizard-common'
 
-// Data Meta projects
-include 'stroom-meta:stroom-meta-api'
-include 'stroom-meta:stroom-meta-impl'
-include 'stroom-meta:stroom-meta-impl-db'
-include 'stroom-meta:stroom-meta-impl-db-jooq'
-include 'stroom-meta:stroom-meta-mock'
-include 'stroom-meta:stroom-meta-statistics-api'
-include 'stroom-meta:stroom-meta-statistics-impl'
-
 // Elastic
 include 'stroom-elastic:stroom-elastic-api'
 include 'stroom-elastic:stroom-elastic-impl'
@@ -111,6 +103,8 @@ include 'stroom-event-logging:stroom-event-logging-api'
 include 'stroom-event-logging:stroom-event-logging-impl'
 
 // Explorer
+include 'stroom-explorer:stroom-collection-api'
+include 'stroom-explorer:stroom-collection-mock'
 include 'stroom-explorer:stroom-explorer-api'
 include 'stroom-explorer:stroom-explorer-impl'
 include 'stroom-explorer:stroom-explorer-impl-db'
@@ -135,9 +129,28 @@ include 'stroom-index:stroom-index-mock'
 include 'stroom-index:stroom-index-impl-db'
 include 'stroom-index:stroom-index-impl-db-jooq'
 
+// Scheduled jobs
+include 'stroom-job:stroom-job-api'
+include 'stroom-job:stroom-job-impl'
+include 'stroom-job:stroom-job-impl-db'
+include 'stroom-job:stroom-job-impl-db-jooq'
+
 // Kafka
 include 'stroom-kafka:stroom-kafka-impl'
 include 'stroom-kafka:stroom-kafka-pipeline'
+
+// Lifecycle
+include 'stroom-lifecycle:stroom-lifecycle-api'
+include 'stroom-lifecycle:stroom-lifecycle-impl'
+
+// Data Meta projects
+include 'stroom-meta:stroom-meta-api'
+include 'stroom-meta:stroom-meta-impl'
+include 'stroom-meta:stroom-meta-impl-db'
+include 'stroom-meta:stroom-meta-impl-db-jooq'
+include 'stroom-meta:stroom-meta-mock'
+include 'stroom-meta:stroom-meta-statistics-api'
+include 'stroom-meta:stroom-meta-statistics-impl'
 
 // Node
 include 'stroom-node:stroom-node-api'
@@ -145,10 +158,6 @@ include 'stroom-node:stroom-node-impl'
 include 'stroom-node:stroom-node-mock'
 include 'stroom-node:stroom-node-impl-db'
 include 'stroom-node:stroom-node-impl-db-jooq'
-
-// Lifecycle
-include 'stroom-lifecycle:stroom-lifecycle-api'
-include 'stroom-lifecycle:stroom-lifecycle-impl'
 
 // Pipeline
 include 'stroom-pipeline'
@@ -203,17 +212,9 @@ include 'stroom-statistics:stroom-statistics-impl-sql'
 include 'stroom-task:stroom-task-api'
 include 'stroom-task:stroom-task-impl'
 
-// Scheduled jobs
-include 'stroom-job:stroom-job-api'
-include 'stroom-job:stroom-job-impl'
-include 'stroom-job:stroom-job-impl-db'
-include 'stroom-job:stroom-job-impl-db-jooq'
-
 // Test project
 include 'stroom-test-common'
 
 // Util
 include 'stroom-util'
 include 'stroom-util-shared'
-include 'stroom-index:stroom-index-app'
-

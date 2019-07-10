@@ -19,7 +19,7 @@ package stroom.core.query;
 
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.docref.DocRef;
 import stroom.pipeline.PipelineStore;
 import stroom.query.shared.FetchSuggestionsAction;
@@ -52,12 +52,12 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
     public SharedList<SharedString> exec(final FetchSuggestionsAction task) {
         return security.secureResult(() -> {
             if (task.getDataSource() != null) {
-                if (MetaFieldNames.STREAM_STORE_DOC_REF.equals(task.getDataSource())) {
-                    if (task.getField().getName().equals(MetaFieldNames.FEED_NAME)) {
+                if (MetaFields.STREAM_STORE_DOC_REF.equals(task.getDataSource())) {
+                    if (task.getField().getName().equals(MetaFields.FEED_NAME)) {
                         return createFeedList(task.getText());
                     }
 
-                    if (task.getField().getName().equals(MetaFieldNames.PIPELINE_UUID)) {
+                    if (task.getField().getName().equals(MetaFields.PIPELINE)) {
                         return new SharedList<>(pipelineStore.list().stream()
                                 .filter(docRef -> docRef.getName().contains(task.getText()))
                                 .map(DocRef::getName)
@@ -66,11 +66,11 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
                                 .collect(Collectors.toList()));
                     }
 
-                    if (task.getField().getName().equals(MetaFieldNames.TYPE_NAME)) {
+                    if (task.getField().getName().equals(MetaFields.TYPE_NAME)) {
                         return createStreamTypeList(task.getText());
                     }
 
-                    if (task.getField().getName().equals(MetaFieldNames.STATUS)) {
+                    if (task.getField().getName().equals(MetaFields.STATUS)) {
                         return new SharedList<>(Arrays.stream(Status.values())
                                 .map(Status::getDisplayValue)
                                 .map(SharedString::wrap)

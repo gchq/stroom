@@ -19,8 +19,13 @@
 package stroom.processor.impl;
 
 import com.google.common.base.Strings;
+import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.FindProcessorTaskCriteria;
+import stroom.processor.shared.ProcessorFilterDataSource;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.Sort;
 
 import java.util.Arrays;
@@ -46,39 +51,51 @@ public class SearchKeywords {
 
     static final String SORT_NEXT = SORT + DELIMITER + NEXT;
 
-    static void addFiltering(String filter, FindProcessorFilterCriteria criteria) {
+    static void addFiltering(String filter, ExpressionOperator.Builder builder) {
         if (filter != null) {
             String[] keywords = filter.split(" ");
 
             Arrays.stream(keywords)
                     .filter(keyword -> keyword.contains(DELIMITER))
-                    .forEach(special -> add(special, criteria));
+                    .forEach(special -> doAddFiltering(special, builder));
 
             String plainOldFilter = Arrays.stream(keywords)
                     .filter(keyword -> !keyword.contains(DELIMITER))
                     .collect(joining());
 
             if (!Strings.isNullOrEmpty(plainOldFilter)) {
-                criteria.obtainPipelineUuidCriteria().setString(plainOldFilter);
+                builder.addTerm(ProcessorFilterDataSource.PIPELINE, Condition.EQUALS, new DocRef(PipelineDoc.DOCUMENT_TYPE, plainOldFilter));
             }
         }
     }
 
-    private static void add(String special, FindProcessorFilterCriteria criteria) {
+    private static void doAddFiltering(String special, ExpressionOperator.Builder builder) {
         String[] terms = special.split(DELIMITER);
         if (terms.length == 2) {
             if (terms[0].equalsIgnoreCase(IS)) {
                 if (terms[1].equalsIgnoreCase(ENABLED)) {
-                    criteria.setProcessorFilterEnabled(true);
+                    builder.addTerm(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, true);
                 } else if (terms[1].equalsIgnoreCase(DISABLED)) {
-                    criteria.setProcessorFilterEnabled(false);
+                    builder.addTerm(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, false);
                 }
-//                else if (terms[1].equalsIgnoreCase(COMPLETE)) {
-//                    criteria.setStatus(ProcessorFilterTracker.COMPLETE);
-//                } else if (terms[1].equalsIgnoreCase(INCOMPLETE)) {
-//                    criteria.setStatus("");
-//                }
-            } else if (terms[0].equalsIgnoreCase(SORT)) {
+            }
+        }
+    }
+
+    static void addSorting(String filter, FindProcessorFilterCriteria criteria) {
+        if (filter != null) {
+            String[] keywords = filter.split(" ");
+
+            Arrays.stream(keywords)
+                    .filter(keyword -> keyword.contains(DELIMITER))
+                    .forEach(special -> doAddSorting(special, criteria));
+        }
+    }
+
+    private static void doAddSorting(String special, FindProcessorFilterCriteria criteria) {
+        String[] terms = special.split(DELIMITER);
+        if (terms.length == 2) {
+            if (terms[0].equalsIgnoreCase(SORT)) {
                 if (terms[1].equalsIgnoreCase(NEXT)) {
                     // We don't want any other sorts happening here, so we'll get rid of them.
                     criteria.removeSorts();

@@ -28,7 +28,8 @@ import event.logging.Search;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.api.DictionaryStore;
+import stroom.collection.api.CollectionService;
+import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.query.api.v2.ExpressionOperator;
@@ -41,15 +42,18 @@ public class SearchEventLogImpl implements SearchEventLog {
 
     private final StroomEventLoggingService eventLoggingService;
     private final Security security;
-    private final DictionaryStore dictionaryStore;
+    private final WordListProvider wordListProvider;
+    private final CollectionService collectionService;
 
     @Inject
     public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
                               final Security security,
-                              final DictionaryStore dictionaryStore) {
+                              final WordListProvider wordListProvider,
+                              final CollectionService collectionService) {
         this.eventLoggingService = eventLoggingService;
         this.security = security;
-        this.dictionaryStore = dictionaryStore;
+        this.wordListProvider = wordListProvider;
+        this.collectionService = collectionService;
     }
 
     @Override
@@ -194,7 +198,7 @@ public class SearchEventLogImpl implements SearchEventLog {
         final Query query = new Query();
         final Advanced advanced = new Advanced();
         query.setAdvanced(advanced);
-        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), dictionaryStore, expression);
+        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), wordListProvider, collectionService, expression);
         return query;
     }
 }
