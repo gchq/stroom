@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.52] - 2019-07-10
+
 * Issue **#1177** : Data retention now works with is doc refs.
 
 * Issue **#1160** : Proxy repositories now only roll if all output streams for a repository are closed. Proxy repositories also only calculate the current max id if the `executionUuid` repo format param is not used.
@@ -1692,7 +1695,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.51...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.52...6.0
+[v6.0-beta.52]: https://github.com/gchq/stroom/compare/v7.0-beta.51...v6.0-beta.52
 [v6.0-beta.51]: https://github.com/gchq/stroom/compare/v7.0-beta.50...v6.0-beta.51
 [v6.0-beta.50]: https://github.com/gchq/stroom/compare/v7.0-beta.49...v6.0-beta.50
 [v6.0-beta.49]: https://github.com/gchq/stroom/compare/v7.0-beta.48...v6.0-beta.49
