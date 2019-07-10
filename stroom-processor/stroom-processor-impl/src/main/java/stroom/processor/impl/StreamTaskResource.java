@@ -130,7 +130,7 @@ public class StreamTaskResource implements RestResource {
             } catch (IllegalArgumentException exception) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("Invalid sortDirection field").build();
             }
-            if (sortBy.equalsIgnoreCase(FindProcessorTaskCriteria.FIELD_PIPELINE_UUID)
+            if (sortBy.equalsIgnoreCase(FindProcessorTaskCriteria.FIELD_PIPELINE)
                     || sortBy.equalsIgnoreCase(FindProcessorTaskCriteria.FIELD_PRIORITY)) {
                 criteria.setSort(sortBy, direction, false);
             } else if (sortBy.equalsIgnoreCase(FIELD_PROGRESS)) {

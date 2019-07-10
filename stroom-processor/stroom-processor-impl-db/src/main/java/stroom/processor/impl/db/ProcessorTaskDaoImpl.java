@@ -79,7 +79,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             FindProcessorTaskCriteria.FIELD_CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS,
             FindProcessorTaskCriteria.FIELD_END_TIME_DATE, PROCESSOR_TASK.END_TIME_MS,
             FindProcessorTaskCriteria.FIELD_NODE, PROCESSOR_NODE.NAME,
-            FindProcessorTaskCriteria.FIELD_PIPELINE_UUID, PROCESSOR.PIPELINE_UUID,
+            FindProcessorTaskCriteria.FIELD_PIPELINE, PROCESSOR.PIPELINE_UUID,
             FindProcessorTaskCriteria.FIELD_POLL_AGE, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS,
             FindProcessorTaskCriteria.FIELD_PRIORITY, PROCESSOR_FILTER.PRIORITY,
             FindProcessorTaskCriteria.FIELD_START_TIME, PROCESSOR_TASK.START_TIME_MS,

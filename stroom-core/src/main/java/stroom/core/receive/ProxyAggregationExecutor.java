@@ -55,7 +55,7 @@ public class ProxyAggregationExecutor {
         );
     }
 
-    ProxyAggregationExecutor(final TaskContext taskContext,
+    public ProxyAggregationExecutor(final TaskContext taskContext,
                              final ExecutorProvider executorProvider,
                              final Provider<FileSetProcessor> fileSetProcessorProvider,
                              final String proxyDir,

@@ -87,7 +87,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         getView().addResizableColumn(new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(),
-                FindProcessorTaskCriteria.FIELD_PIPELINE_UUID, true) {
+                FindProcessorTaskCriteria.FIELD_PIPELINE, true) {
             @Override
             public String getValue(final ProcessorTaskSummary row) {
                 return row.getPipeline().getName();
@@ -95,7 +95,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         }, "Pipeline", 250);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_FEED_NAME, true) {
+                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_FEED, true) {
                     @Override
                     public String getValue(final ProcessorTaskSummary row) {
                         return row.getFeed().getName();

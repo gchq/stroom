@@ -20,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.task.shared.ThreadPool;
+import stroom.task.shared.ThreadPoolImpl;
 import stroom.util.date.DateUtil;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
@@ -158,7 +160,7 @@ public final class RepositoryProcessor {
                 public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                     taskContext.info(FileUtil.getCanonicalPath(file));
 
-                    if (taskContext.isTerminated() || fileCount.get() >= maxFileScan) {
+                    if (Thread.currentThread().isInterrupted() || fileCount.get() >= maxFileScan) {
                         return FileVisitResult.TERMINATE;
                     }
 
@@ -224,7 +226,7 @@ public final class RepositoryProcessor {
                 public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                     taskContext.info(FileUtil.getCanonicalPath(file));
 
-                    if (taskContext.isTerminated()) {
+                    if (Thread.currentThread().isInterrupted()) {
                         return FileVisitResult.TERMINATE;
                     }
 
@@ -403,7 +405,7 @@ public final class RepositoryProcessor {
                     taskContext.setName("Fragment");
                     taskContext.info(FileUtil.getCanonicalPath(file));
 
-                    if (!taskContext.isTerminated()) {
+                    if (!Thread.currentThread().isInterrupted()) {
                         zipFragmenter.fragment(file);
                     }
                 };
@@ -452,7 +454,7 @@ public final class RepositoryProcessor {
                     taskContext.setName("Extract Zip Info");
                     taskContext.info(FileUtil.getCanonicalPath(file));
 
-                    if (!taskContext.isTerminated()) {
+                    if (!Thread.currentThread().isInterrupted()) {
                         final ZipInfo zipInfo = zipInfoExtractor.extract(file, attrs);
                         if (zipInfo != null) {
                             if (LOGGER.isTraceEnabled()) {

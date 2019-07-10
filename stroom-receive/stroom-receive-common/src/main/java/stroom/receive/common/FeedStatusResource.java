@@ -17,11 +17,13 @@
 package stroom.receive.common;
 
 import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
+import stroom.util.HasHealthCheck;
 import stroom.util.RestResource;
 
 import javax.inject.Inject;
@@ -34,7 +36,7 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "feedStatus - /v1")
 @Path("/feedStatus/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class FeedStatusResource implements RestResource {
+public class FeedStatusResource implements RestResource, HasHealthCheck {
     private final FeedStatusService feedStatusService;
 
     @Inject
@@ -53,5 +55,10 @@ public class FeedStatusResource implements RestResource {
     // TODO This should really be a GET with the feedName and senderDn as params
     public GetFeedStatusResponse getFeedStatus(@ApiParam("GetFeedStatusRequest") final GetFeedStatusRequest request) {
         return feedStatusService.getFeedStatus(request);
+    }
+
+    @Override
+    public Result getHealth() {
+        return Result.healthy();
     }
 }
