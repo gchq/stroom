@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Enumeration;
 
@@ -113,15 +112,5 @@ public class StroomZipFile implements Closeable {
             return null;
         }
         return getZipFile().getEntry(fullName);
-    }
-
-    public void renameTo(Path newFileName) throws IOException {
-        close();
-        Files.move(file, newFileName);
-    }
-
-    public void delete() throws IOException {
-        close();
-        Files.delete(file);
     }
 }

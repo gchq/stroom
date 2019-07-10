@@ -93,10 +93,14 @@ public class ProxyModule extends AbstractModule {
 
         HealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
+                .bind(DictionaryResource.class)
+                .bind(FeedStatusResource.class)
                 .bind(ForwardStreamHandlerFactory.class)
                 .bind(LogLevelInspector.class)
                 .bind(ProxyConfigHealthCheck.class)
-                .bind(RemoteFeedStatusService.class);
+                .bind(ProxyRepositoryManager.class)
+                .bind(RemoteFeedStatusService.class)
+                .bind(RulesetResource.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), "/*"), ProxySecurityFilter.class);

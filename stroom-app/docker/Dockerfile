@@ -63,8 +63,8 @@ WORKDIR /stroom
 EXPOSE 8080
 EXPOSE 8081
 
-# The config.yml file is driven by the environment variable substitution so
-# no need to expose it as a volume
+# A Bind mount volume RO to the container for config files.
+VOLUME /stroom/config/
 
 # Create Docker volume for SLF4J output
 VOLUME /stroom/logs/
@@ -82,7 +82,7 @@ VOLUME /stroom/volumes/
 # see https://github.com/krallin/tini/issues/8
 ENTRYPOINT ["/sbin/tini", "--", "/stroom/docker-entrypoint.sh"]
 
-#start the app
+#start the app, the config file will be supplied by a bind mount volume.
 CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar stroom-app-all.jar server config/config.yml"]
 
 # https://github.com/gchq/stroom/issues/884
@@ -110,10 +110,8 @@ RUN \
 COPY --chown=stroom:stroom ./build/contentPacks /stroom/contentPackImport
 
 # Copy all the fat jars for the application and connectors
-# Most likely to have changed last
+# Those that are most likely to have changed get copied last to speed up build
 COPY --chown=stroom:stroom *.sh /stroom/
-COPY --chown=stroom:stroom ./build/prod.yml /stroom/config/config.yml
-
 COPY --chown=stroom:stroom --from=fat-jar-stage /stroom-app-all.jar /stroom/
 
 # Label the image so we can see what commit/tag it came from

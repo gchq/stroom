@@ -17,6 +17,10 @@ public final class StroomFileNameUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomFileNameUtil.class);
 
+    public static final String EXECUTION_UUID = "executionUuid";
+    public static final String PATH_ID = "pathId";
+    public static final String ID = "id";
+
     private static final String MISSING_VALUE = "_";
     private static final char TRUNCATED_VALUE = '_';
     private static final char INVALID_CHAR_REPLACEMENT = '_';
@@ -104,9 +108,11 @@ public final class StroomFileNameUtil {
         return new String(out, 0, outIndex);
     }
 
-    public static String constructFilename(long id, final String template,
-                                    final AttributeMap attributeMap,
-                                    String... fileExtensions) {
+    public static String constructFilename(final String executionUuid,
+                                           final long id,
+                                           final String template,
+                                           final AttributeMap attributeMap,
+                                           final String... fileExtensions) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Using" +
                     " template " +
@@ -121,10 +127,12 @@ public final class StroomFileNameUtil {
         String path = template;
         // Replace path template with header and time values.
         path = PathCreator.replaceAll(path, attributeMap);
+        // Replace executionUuid variable with execution UUID.
+        path = PathCreator.replace(path, EXECUTION_UUID, executionUuid);
         // Replace pathId variable with path id.
-        path = PathCreator.replace(path, "pathId", pathIdStr);
+        path = PathCreator.replace(path, PATH_ID, pathIdStr);
         // Replace id variable with file id.
-        path = PathCreator.replace(path, "id", idStr);
+        path = PathCreator.replace(path, ID, idStr);
 
         // Check for any remaining variables.
         final String[] remainingVars = PathCreator.findVars(path);

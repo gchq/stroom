@@ -34,9 +34,9 @@ public final class FindProcessorTaskCriteria extends BaseCriteria implements Has
     public static final String FIELD_CREATE_TIME = "Created";
     public static final String FIELD_START_TIME = "Start Time";
     public static final String FIELD_END_TIME_DATE = "End Time";
-    public static final String FIELD_FEED_NAME = MetaFields.FEED_NAME.getName();
+    public static final String FIELD_FEED = "Feed";
     public static final String FIELD_PRIORITY = "Priority";
-    public static final String FIELD_PIPELINE_UUID = MetaFields.PIPELINE.getName();
+    public static final String FIELD_PIPELINE = "Pipeline";
     public static final String FIELD_STATUS = "Status";
     public static final String FIELD_COUNT = "Count";
     public static final String FIELD_NODE = "Node";

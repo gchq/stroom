@@ -18,30 +18,32 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.zip.StroomZipFile;
-import stroom.proxy.repo.FileWalker.FileFilter;
-import stroom.proxy.repo.FileWalker.FileProcessor;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
-import stroom.task.shared.ThreadPool;
-import stroom.task.shared.ThreadPoolImpl;
 import stroom.util.date.DateUtil;
-import stroom.util.io.CloseableUtil;
+import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Provider;
+import java.io.IOException;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -56,29 +58,32 @@ public final class RepositoryProcessor {
     private final Provider<FileSetProcessor> fileSetProcessorProvider;
 
     private final int threadCount;
-    private final int maxFilesPerAggregate;
+    private final int maxFileScan;
     private final int maxConcurrentMappedFiles;
+    private final int maxFilesPerAggregate;
     private final long maxUncompressedFileSize;
-
-    private final StroomZipRepository stroomZipRepository;
+    private final Path repoPath;
+    private final String repoDir;
 
     public RepositoryProcessor(final TaskContext taskContext,
                                final ExecutorProvider executorProvider,
                                final Provider<FileSetProcessor> fileSetProcessorProvider,
                                final String proxyDir,
                                final int threadCount,
-                               final int maxFilesPerAggregate,
+                               final int maxFileScan,
                                final int maxConcurrentMappedFiles,
+                               final int maxFilesPerAggregate,
                                final long maxUncompressedFileSize) {
         this.taskContext = taskContext;
         this.executorProvider = executorProvider;
         this.fileSetProcessorProvider = fileSetProcessorProvider;
         this.threadCount = threadCount;
-        this.maxFilesPerAggregate = maxFilesPerAggregate;
+        this.maxFileScan = maxFileScan;
         this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
+        this.maxFilesPerAggregate = maxFilesPerAggregate;
         this.maxUncompressedFileSize = maxUncompressedFileSize;
-
-        stroomZipRepository = new StroomZipRepository(proxyDir, true);
+        repoPath = Paths.get(proxyDir);
+        repoDir = FileUtil.getCanonicalPath(repoPath);
     }
 
     /**
@@ -88,30 +93,40 @@ public final class RepositoryProcessor {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.info("Started");
 
-        taskContext.info("Process started {}, maxFilesPerAggregate {}, " +
-                        "maxConcurrentMappedFiles {}, maxUncompressedFileSize {}",
+        taskContext.info("Process started {}, maxFileScan {}, maxConcurrentMappedFiles {}, maxFilesPerAggregate {}, maxUncompressedFileSize {}",
                 DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
-                ModelStringUtil.formatCsv(maxFilesPerAggregate),
+                ModelStringUtil.formatCsv(maxFileScan),
                 ModelStringUtil.formatCsv(maxConcurrentMappedFiles),
+                ModelStringUtil.formatCsv(maxFilesPerAggregate),
                 ModelStringUtil.formatIECByteSizeString(maxUncompressedFileSize));
 
         try {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Scanning " + stroomZipRepository.getRootDir());
+            if (Files.isDirectory(repoPath)) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Scanning " + repoDir);
+                }
+
+                final ErrorReceiver errorReceiver = (path, message) ->
+                        addErrorMessage(path, message, true);
+
+                // Keep processing until we no longer reach the maximum file scan limit.
+                boolean reachedFileScanLimit;
+                do {
+                    // Break down the zip repository so that all zip files only contain a single stream.
+                    // We do this so that we can form new aggregates that contain less files than the
+                    // maximum number or are smaller than the maximum size
+                    reachedFileScanLimit = fragmentZipFiles(taskContext, executorProvider, threadCount, errorReceiver);
+
+                    // Aggregate the zip files.
+                    aggregateZipFiles(taskContext, executorProvider, threadCount, errorReceiver);
+
+                } while (reachedFileScanLimit);
+
+                LOGGER.debug("Completed");
+
+            } else {
+                LOGGER.debug("Repo dir " + repoDir + " not found");
             }
-
-            final ErrorReceiver errorReceiver = (path, message) ->
-                    addErrorMessage(path, message, true);
-
-            // Break down the zip repository so that all zip files only contain a single stream.
-            // We do this so that we can form new aggregates that contain less files than the
-            // maximum number or are smaller than the maximum size
-            fragmentZipFiles(taskContext, executorProvider, threadCount, errorReceiver);
-
-            // Aggregate the zip files.
-            aggregateZipFiles(taskContext, executorProvider, threadCount, errorReceiver);
-
-            LOGGER.debug("Completed");
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -119,38 +134,62 @@ public final class RepositoryProcessor {
         LOGGER.info("Completed in {}", logExecutionTime);
     }
 
-    private void fragmentZipFiles(final TaskContext taskContext,
-                                  final ExecutorProvider executorProvider,
-                                  final int threadCount,
-                                  final ErrorReceiver errorReceiver) {
-        // Process only raw zip repo files, i.e. files that have not already been created by the fragmenting process.
-        final FileFilter filter = (file, attrs) -> {
-            final String fileName = file.getFileName().toString();
-            return fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) && !fileName.contains(PathConstants.PART);
-        };
+    private boolean fragmentZipFiles(final TaskContext taskContext,
+                                     final ExecutorProvider executorProvider,
+                                     final int threadCount,
+                                     final ErrorReceiver errorReceiver) {
+        taskContext.setName("Fragmenting Repository - " + repoDir);
 
         final ZipFragmenterFileProcessor zipFragmenter = new ZipFragmenterFileProcessor(
                 taskContext, executorProvider, threadCount, errorReceiver);
 
-        final FileWalker fileWalker = new FileWalker();
-        fileWalker.walk(stroomZipRepository.getRootDir(), filter, zipFragmenter, taskContext, true);
+        final AtomicInteger fileCount = new AtomicInteger();
+        try {
+            Files.walkFileTree(repoPath, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                    if (PartsPathUtil.isPartsDir(dir)) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    return super.preVisitDirectory(dir, attrs);
+                }
+
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                    taskContext.info(FileUtil.getCanonicalPath(file));
+
+                    if (taskContext.isTerminated() || fileCount.get() >= maxFileScan) {
+                        return FileVisitResult.TERMINATE;
+                    }
+
+                    // Process only raw zip repo files, i.e. files that have not already been created by the fragmenting process.
+                    final String fileName = file.getFileName().toString();
+                    if (fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) &&
+                            !PartsPathUtil.isPart(file)) {
+                        fileCount.incrementAndGet();
+                        zipFragmenter.process(file);
+                    }
+
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
 
         // Wait for the fragmenter to complete.
         zipFragmenter.await();
+
+        // Did we reach the file scan limit?
+        return fileCount.get() >= maxFileScan;
     }
 
     private void aggregateZipFiles(final TaskContext taskContext,
                                    final ExecutorProvider executorProvider,
                                    final int threadCount,
                                    final ErrorReceiver errorReceiver) {
-        // Process only part files, i.e. files that have been created by the fragmenting process.
-        final FileFilter filter = (file, attrs) -> {
-            final String fileName = file.getFileName().toString();
-            return fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) && fileName.contains(PathConstants.PART);
-        };
-
+        taskContext.setName("Aggregating Repository - " + repoDir);
         final ZipInfoConsumer zipInfoConsumer = new ZipInfoConsumer(
-                stroomZipRepository,
                 maxFilesPerAggregate,
                 maxConcurrentMappedFiles,
                 maxUncompressedFileSize,
@@ -165,8 +204,41 @@ public final class RepositoryProcessor {
                 taskContext,
                 executorProvider,
                 threadCount);
-        final FileWalker fileWalker = new FileWalker();
-        fileWalker.walk(stroomZipRepository.getRootDir(), filter, fileProcessor, taskContext, false);
+
+        try {
+            Files.walkFileTree(repoPath, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                    if (PartsPathUtil.isPartsDir(dir)) {
+                        final Path originalZipFile = PartsPathUtil.createParentPartsZipFile(dir);
+
+                        // Make sure the parts directory that this file is in is not a partially fragmented output directory.
+                        if (Files.exists(originalZipFile)) {
+                            return FileVisitResult.SKIP_SUBTREE;
+                        }
+                    }
+                    return super.preVisitDirectory(dir, attrs);
+                }
+
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                    taskContext.info(FileUtil.getCanonicalPath(file));
+
+                    if (taskContext.isTerminated()) {
+                        return FileVisitResult.TERMINATE;
+                    }
+
+                    // Process only part files, i.e. files that have been created by the fragmenting process.
+                    if (PartsPathUtil.isPart(file)) {
+                        fileProcessor.process(file, attrs);
+                    }
+
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
 
         // Wait for the file processor to complete.
         fileProcessor.await();
@@ -176,17 +248,10 @@ public final class RepositoryProcessor {
     }
 
     private void addErrorMessage(final Path path, final String msg, final boolean bad) {
-        StroomZipFile stroomZipFile = null;
-        try {
-            stroomZipFile = new StroomZipFile(path);
-            stroomZipRepository.addErrorMessage(stroomZipFile, msg, bad);
-        } finally {
-            CloseableUtil.closeLogAndIgnoreException(stroomZipFile);
-        }
+        ErrorFileUtil.addErrorMessage(path, msg, bad);
     }
 
     private static class ZipInfoConsumer implements Consumer<ZipInfo> {
-        private final StroomZipRepository stroomZipRepository;
         private final int maxFilesPerAggregate;
         private final int maxConcurrentMappedFiles;
         private final long maxUncompressedFileSize;
@@ -199,15 +264,13 @@ public final class RepositoryProcessor {
 
         private int totalMappedFiles;
 
-        ZipInfoConsumer(final StroomZipRepository stroomZipRepository,
-                        final int maxFilesPerAggregate,
+        ZipInfoConsumer(final int maxFilesPerAggregate,
                         final int maxConcurrentMappedFiles,
                         final long maxUncompressedFileSize,
                         final ErrorReceiver errorReceiver,
                         final Provider<FileSetProcessor> fileSetProcessorProvider,
                         final ExecutorProvider executorProvider,
                         final int threadCount) {
-            this.stroomZipRepository = stroomZipRepository;
             this.maxFilesPerAggregate = maxFilesPerAggregate;
             this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
             this.maxUncompressedFileSize = maxUncompressedFileSize;
@@ -286,12 +349,8 @@ public final class RepositoryProcessor {
 
             try {
                 final Runnable runnable = () -> {
-                    try {
-                        final FileSetProcessor fileSetProcessor = fileSetProcessorProvider.get();
-                        fileSetProcessor.process(stroomZipRepository, fileSet);
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
+                    final FileSetProcessor fileSetProcessor = fileSetProcessorProvider.get();
+                    fileSetProcessor.process(fileSet);
                 };
                 final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
                 completableFuture.thenAccept(r -> futures.remove(completableFuture));
@@ -314,7 +373,7 @@ public final class RepositoryProcessor {
         }
     }
 
-    private static class ZipFragmenterFileProcessor implements FileProcessor {
+    private static class ZipFragmenterFileProcessor {
         private final ZipFragmenter zipFragmenter;
         private final TaskContext taskContext;
         private final Executor executor;
@@ -337,16 +396,15 @@ public final class RepositoryProcessor {
             zipFragmenter = new ZipFragmenter(errorReceiver);
         }
 
-        @Override
-        public void process(final Path file, final BasicFileAttributes attrs) {
+        public void process(final Path file) {
             try {
                 final Runnable runnable = () -> {
                     // Process the file to extract ZipInfo
                     taskContext.setName("Fragment");
                     taskContext.info(FileUtil.getCanonicalPath(file));
 
-                    if (!Thread.currentThread().isInterrupted()) {
-                        zipFragmenter.fragment(file, attrs);
+                    if (!taskContext.isTerminated()) {
+                        zipFragmenter.fragment(file);
                     }
                 };
                 final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
@@ -357,7 +415,7 @@ public final class RepositoryProcessor {
             }
         }
 
-        void await() {
+        public void await() {
             try {
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
             } catch (final RuntimeException e) {
@@ -367,7 +425,7 @@ public final class RepositoryProcessor {
         }
     }
 
-    private static class ZipInfoExtractorFileProcessor implements FileProcessor {
+    private static class ZipInfoExtractorFileProcessor {
         private final ZipInfoExtractor zipInfoExtractor;
         private final TaskContext taskContext;
         private final Executor executor;
@@ -387,7 +445,6 @@ public final class RepositoryProcessor {
             executor = executorProvider.getExecutor(fileInspectorThreadPool);
         }
 
-        @Override
         public void process(final Path file, final BasicFileAttributes attrs) {
             try {
                 final Runnable runnable = () -> {
@@ -395,7 +452,7 @@ public final class RepositoryProcessor {
                     taskContext.setName("Extract Zip Info");
                     taskContext.info(FileUtil.getCanonicalPath(file));
 
-                    if (!Thread.currentThread().isInterrupted()) {
+                    if (!taskContext.isTerminated()) {
                         final ZipInfo zipInfo = zipInfoExtractor.extract(file, attrs);
                         if (zipInfo != null) {
                             if (LOGGER.isTraceEnabled()) {
@@ -422,7 +479,7 @@ public final class RepositoryProcessor {
             zipInfoConsumer.accept(zipInfo);
         }
 
-        void await() {
+        public void await() {
             try {
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
             } catch (final RuntimeException e) {

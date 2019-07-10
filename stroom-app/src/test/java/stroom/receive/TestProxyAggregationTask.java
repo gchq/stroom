@@ -110,8 +110,9 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                 filePackProcessorProvider,
                 proxyDir,
                 10,
-                maxAggregation,
                 10000,
+                10000,
+                maxAggregation,
                 maxStreamSize);
         proxyAggregationExecutor.exec();
     }

@@ -110,7 +110,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     @Override
     protected void validateSpecificSettings() {
         if (feed == null) {
-            if (feedRef != null) {
+            if (feedRef != null && !Strings.isNullOrEmpty(feedRef.getName())) {
                 feed = feedRef.getName();
             } else {
                 final Meta parentMeta = metaHolder.getMeta();

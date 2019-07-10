@@ -3,7 +3,6 @@ package stroom.proxy.repo;
 import org.junit.jupiter.api.Test;
 import stroom.data.zip.CharsetConstants;
 import stroom.data.zip.StroomZipEntry;
-import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.data.zip.StroomZipOutputStreamImpl;
@@ -30,19 +29,19 @@ class TestStroomZipRepository {
 
         final StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, null, true, 100, false);
 
-        final StroomZipOutputStream out1 = stroomZipRepository.getStroomZipOutputStream();
-        StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),
-                "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
-        out1.close();
+        try (final StroomZipOutputStream out1 = stroomZipRepository.getStroomZipOutputStream()) {
+            StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),
+                    "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
+        }
 
         stroomZipRepository.setCount(10000000000L);
 
-        final StroomZipOutputStream out2 = stroomZipRepository.getStroomZipOutputStream();
-        StroomZipOutputStreamUtil.addSimpleEntry(out2, new StroomZipEntry(null, "file", StroomZipFileType.Data),
-                "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
-        out2.close();
+        try (final StroomZipOutputStream out2 = stroomZipRepository.getStroomZipOutputStream()) {
+            StroomZipOutputStreamUtil.addSimpleEntry(out2, new StroomZipEntry(null, "file", StroomZipFileType.Data),
+                    "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
+        }
 
-        stroomZipRepository.finish();
+        stroomZipRepository.roll();
 
         // Re open.
         final StroomZipRepository reopenStroomZipRepository = new StroomZipRepository(repoDir, null, false, 100, false);
@@ -55,7 +54,7 @@ class TestStroomZipRepository {
         final List<Path> allZips = reopenStroomZipRepository.listAllZipFiles();
         assertThat(allZips.size()).isEqualTo(2);
         try (final Stream<Path> stream = allZips.stream()) {
-            stream.forEach(p -> reopenStroomZipRepository.delete(new StroomZipFile(p)));
+            stream.forEach(ErrorFileUtil::deleteFileAndErrors);
         }
 
         assertThat(reopenStroomZipRepository.deleteIfEmpty()).isTrue();
@@ -68,11 +67,13 @@ class TestStroomZipRepository {
 
         StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, null, false, 10000, false);
 
-        final StroomZipOutputStreamImpl out1 = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream();
-        StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),
-                "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
-        assertThat(Files.isRegularFile(out1.getFile())).isFalse();
-        out1.close();
+        StroomZipOutputStreamImpl out1;
+        try (final StroomZipOutputStreamImpl out = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream()) {
+            StroomZipOutputStreamUtil.addSimpleEntry(out, new StroomZipEntry(null, "file", StroomZipFileType.Data),
+                    "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
+            assertThat(Files.isRegularFile(out1.getFile())).isFalse();
+            out1 = out;
+        }
         assertThat(Files.isRegularFile(out1.getFile())).isTrue();
 
         final StroomZipOutputStreamImpl out2 = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream();
@@ -119,12 +120,13 @@ class TestStroomZipRepository {
         attributeMap.put("key2", "myKey2");
         attributeMap.put("key3", "myKey3");
 
-        final StroomZipOutputStreamImpl out1 = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(attributeMap);
-
-        StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),
-                "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
-        assertThat(Files.isRegularFile(out1.getFile())).isFalse();
-        out1.close();
+        StroomZipOutputStreamImpl out1;
+        try (final StroomZipOutputStreamImpl out = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(metaMap)) {
+            StroomZipOutputStreamUtil.addSimpleEntry(out, new StroomZipEntry(null, "file", StroomZipFileType.Data),
+                    "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
+            assertThat(Files.isRegularFile(out1.getFile())).isFalse();
+            out1 = out;
+        }
         Path zipFile = out1.getFile();
         assertThat(Files.isRegularFile(zipFile)).isTrue();
         final String expectedFilename = "001_myFeed_myKey2_myKey1_myKey3.zip";
@@ -148,12 +150,13 @@ class TestStroomZipRepository {
         AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("feed", FEED_NAME);
 
-        final StroomZipOutputStreamImpl out1 = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(attributeMap);
-
-        StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),
-                "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
-        assertThat(Files.isRegularFile(out1.getFile())).isFalse();
-        out1.close();
+        StroomZipOutputStreamImpl out1;
+        try (final StroomZipOutputStreamImpl out = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(metaMap)) {
+            StroomZipOutputStreamUtil.addSimpleEntry(out, new StroomZipEntry(null, "file", StroomZipFileType.Data),
+                    "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
+            assertThat(Files.isRegularFile(out1.getFile())).isFalse();
+            out1 = out;
+        }
         Path zipFile = out1.getFile();
         Path feedDir = zipFile.getParent();
         Path dateDir = feedDir.getParent();
@@ -179,12 +182,13 @@ class TestStroomZipRepository {
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
 
         final StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000, false);
-        final StroomZipOutputStreamImpl out1 = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(attributeMap);
-
-        StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),
-                "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
-        assertThat(Files.isRegularFile(out1.getFile())).isFalse();
-        out1.close();
+        StroomZipOutputStreamImpl out1;
+        try (final StroomZipOutputStreamImpl out = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(metaMap)) {
+            StroomZipOutputStreamUtil.addSimpleEntry(out, new StroomZipEntry(null, "file", StroomZipFileType.Data),
+                    "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
+            assertThat(Files.isRegularFile(out1.getFile())).isFalse();
+            out1 = out;
+        }
         Path zipFile = out1.getFile();
         assertThat(Files.isRegularFile(zipFile)).isTrue();
         final String expectedFilename = "__id__001_myFeed_myKey1.zip";

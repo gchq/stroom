@@ -3,6 +3,7 @@ package stroom.data.store.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.FieldTypes;
+import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.util.date.DateUtil;
@@ -40,7 +41,9 @@ class StreamAttributeMapUtil {
                 map.put(MetaFields.FEED_NAME.getName(), feedName);
             }
             final String pipelineUuid = meta.getPipelineUuid();
-            map.put(MetaFields.PIPELINE.getName(), pipelineUuid);
+            if (pipelineUuid != null) {
+                map.put(MetaFields.PIPELINE.getName(), new DocRef("Pipeline", pipelineUuid));
+            }
 //            if (streamProcessor != null) {
 //                final String pipelineUuid = streamProcessor.getPipelineUuid();
 //                if (pipelineUuid != null) {

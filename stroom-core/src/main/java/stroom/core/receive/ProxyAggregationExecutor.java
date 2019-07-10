@@ -48,27 +48,31 @@ public class ProxyAggregationExecutor {
                 fileSetProcessorProvider,
                 proxyAggregationConfig.getProxyDir(),
                 proxyAggregationConfig.getProxyThreads(),
-                proxyAggregationConfig.getMaxFilesPerAggregate(),
+                proxyAggregationConfig.getMaxFileScan(),
                 proxyAggregationConfig.getMaxConcurrentMappedFiles(),
+                proxyAggregationConfig.getMaxFilesPerAggregate(),
                 proxyAggregationConfig.getMaxUncompressedFileSizeBytes()
         );
     }
 
-    public ProxyAggregationExecutor(final TaskContext taskContext,
+    ProxyAggregationExecutor(final TaskContext taskContext,
                              final ExecutorProvider executorProvider,
                              final Provider<FileSetProcessor> fileSetProcessorProvider,
                              final String proxyDir,
                              final int threadCount,
-                             final int maxFilesPerAggregate,
+                             final int maxFileScan,
                              final int maxConcurrentMappedFiles,
+                             final int maxFilesPerAggregate,
                              final long maxUncompressedFileSize) {
-        this.repositoryProcessor = new RepositoryProcessor(taskContext,
+        this.repositoryProcessor = new RepositoryProcessor(
+                taskContext,
                 executorProvider,
                 fileSetProcessorProvider,
                 proxyDir,
                 threadCount,
-                maxFilesPerAggregate,
+                maxFileScan,
                 maxConcurrentMappedFiles,
+                maxFilesPerAggregate,
                 maxUncompressedFileSize);
     }
 

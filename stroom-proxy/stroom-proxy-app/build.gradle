@@ -56,7 +56,6 @@ dependencies {
     testCompile project(':stroom-test-common')
 
     testCompile libs.assertj_core
-    testCompile libs.mockito_core
     testCompile libs.mockito_junit_jupiter
 
     testCompile libs.junit_jupiter_api

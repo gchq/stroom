@@ -17,6 +17,7 @@
 
 package stroom.processor.impl;
 
+import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.shared.Meta;
@@ -133,7 +134,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
 //        criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
 //        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.CONTEXT);
 
-        assertThat(processorTaskService.find(criteria).size()).isEqualTo(0);
+        assertThat(processorTaskService.find(criteria).size()).isZero();
     }
 
     @Test
@@ -163,6 +164,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
 //        criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
 //        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.CONTEXT);
 
+        assertThat(processorTaskService.findSummary(criteria).size()).isZero();
     }
 
     private void createTasks() {

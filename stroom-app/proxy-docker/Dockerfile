@@ -69,7 +69,7 @@ VOLUME /stroom-proxy/logs/
 # see https://github.com/krallin/tini/issues/8
 ENTRYPOINT ["/sbin/tini", "--", "/stroom-proxy/docker-entrypoint.sh"]
 
-# start the app
+#start the app, the config file will be supplied by a bind mount volume.
 CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar stroom-app-all.jar server /stroom-proxy/config/config.yml"]
 
 # The following line can be used as a temproary hack in dev if the build can't
@@ -95,8 +95,6 @@ RUN \
 # Order matters for COPY/ADD operations, least likely to change go first so cache is used
 # Copy all the fat jars for the application and connectors
 COPY --chown=proxy:proxy *.sh /stroom-proxy/
-COPY --chown=proxy:proxy ./build/proxy-prod.yml /stroom-proxy/config/config.yml
-
 COPY --chown=proxy:proxy --from=fat-jar-stage /stroom-app-all.jar /stroom-proxy/
 
 # Label the image so we can see what commit/tag it came from

@@ -6,6 +6,28 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1177** : Data retention now works with is doc refs.
+
+* Issue **#1160** : Proxy repositories now only roll if all output streams for a repository are closed. Proxy repositories also only calculate the current max id if the `executionUuid` repo format param is not used.
+
+* Issue **#1186** : Volume status is now refreshed every 5 minutes.
+
+* Fix incorrect default keystore in proxy config yaml.
+
+* Rename environment variables in proxy config yaml.
+
+* Issue **#1170** : The UI should now treat the `None` tree node as a null selection.
+
+* Issue **#1184** : Remove dropwizard yaml files from docker images.
+
+* Issue **#1181** : Remove dropwizard config yaml from the docker images.
+
+* Issue **#1152** : You can now control the maximum number of files that are fragmented prior to proxy aggregation with `stroom.maxFileScan`.
+
+* Issue **#1182** : Fixed use of `in folder` for data retention and receipt policies.
+
+* Updated to allow stacks to be built at this version.
+
 * Issue **#1154** : Search now terminates during result creation if it is asked to do so.
 
 * Issue **#1167** : Fix for proxy to deal with lack of explorer folder based collections.

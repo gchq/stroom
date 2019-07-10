@@ -97,8 +97,14 @@ public class StreamAppender extends AbstractAppender {
     protected OutputStream createOutputStream() {
         final Meta parentMeta = metaHolder.getMeta();
 
-        if (feed == null && parentMeta != null && parentMeta.getFeedName() != null) {
-            feed = parentMeta.getFeedName();
+        if (Strings.isNullOrEmpty(feed)) {
+            if (parentMeta == null) {
+                fatal("Unable to determine feed as no parent set");
+            } else if (Strings.isNullOrEmpty(parentMeta.getFeedName())) {
+                fatal("Parent has no feed name");
+            } else {
+                feed = parentMeta.getFeedName();
+            }
         }
 
         if (Strings.isNullOrEmpty(feed)) {

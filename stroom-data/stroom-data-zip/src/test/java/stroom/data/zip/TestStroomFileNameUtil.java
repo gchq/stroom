@@ -29,10 +29,10 @@ class TestStroomFileNameUtil {
         final String extension1 = ".zip";
         final String extension2 = ".bad";
 
-        assertThat(StroomFileNameUtil.constructFilename(1, standardTemplate, attributeMap, extension1, extension2)).isEqualTo("001.zip.bad");
-        assertThat(StroomFileNameUtil.constructFilename(3000, standardTemplate, attributeMap, extension1)).isEqualTo("003/003000.zip");
-        assertThat(StroomFileNameUtil.constructFilename(3000, dynamicTemplate, attributeMap, extension1)).isEqualTo("003000_myVar1_myFeed.zip");
-        assertThat(StroomFileNameUtil.constructFilename(3000, staticTemplate, attributeMap, extension1)).isEqualTo("003/003000_someStaticText.zip");
-        assertThat(StroomFileNameUtil.constructFilename(3000, staticTemplate, attributeMap)).isEqualTo("003/003000_someStaticText");
+        assertThat(StroomFileNameUtil.constructFilename(null, 1, standardTemplate, attributeMap, extension1, extension2)).isEqualTo("001.zip.bad");
+        assertThat(StroomFileNameUtil.constructFilename(null, 3000, standardTemplate, attributeMap, extension1)).isEqualTo("003/003000.zip");
+        assertThat(StroomFileNameUtil.constructFilename(null, 3000, dynamicTemplate, attributeMap, extension1)).isEqualTo("003000_myVar1_myFeed.zip");
+        assertThat(StroomFileNameUtil.constructFilename(null, 3000, staticTemplate, attributeMap, extension1)).isEqualTo("003/003000_someStaticText.zip");
+        assertThat(StroomFileNameUtil.constructFilename(null, 3000, staticTemplate, attributeMap)).isEqualTo("003/003000_someStaticText");
     }
 }

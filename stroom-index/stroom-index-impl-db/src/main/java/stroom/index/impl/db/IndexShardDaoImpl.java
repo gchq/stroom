@@ -180,6 +180,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                              final String volumeGroupName,
                              final String ownerNodeName,
                              final String indexVersion) {
+        // TODO : @66 Add volume selection based on strategy for using least full etc, like we do for data store.
         final List<IndexVolume> indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
 
         IndexVolume indexVolume;
