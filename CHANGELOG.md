@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.55] - 2019-07-11
+
 * Issue **#1193** : Added optional validation to activities.
 
 
@@ -1713,7 +1716,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.54...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.55...6.0
+[v6.0-beta.55]: https://github.com/gchq/stroom/compare/v7.0-beta.54...v6.0-beta.55
 [v6.0-beta.54]: https://github.com/gchq/stroom/compare/v7.0-beta.53...v6.0-beta.54
 [v6.0-beta.53]: https://github.com/gchq/stroom/compare/v7.0-beta.52...v6.0-beta.53
 [v6.0-beta.52]: https://github.com/gchq/stroom/compare/v7.0-beta.51...v6.0-beta.52
