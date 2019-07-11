@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.53] - 2019-07-11
+
 * Issue **#1190** : Copied indexes now retain associated index volumes.
 
 
@@ -1697,7 +1700,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.52...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.53...6.0
+[v6.0-beta.53]: https://github.com/gchq/stroom/compare/v7.0-beta.52...v6.0-beta.53
 [v6.0-beta.52]: https://github.com/gchq/stroom/compare/v7.0-beta.51...v6.0-beta.52
 [v6.0-beta.51]: https://github.com/gchq/stroom/compare/v7.0-beta.50...v6.0-beta.51
 [v6.0-beta.50]: https://github.com/gchq/stroom/compare/v7.0-beta.49...v6.0-beta.50
