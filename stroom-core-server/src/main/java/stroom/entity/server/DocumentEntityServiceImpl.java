@@ -355,23 +355,28 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                    final String copyUuid,
                    final String parentFolderUUID) {
         try {
-            // Ensure we are working with effectively a 'new document'
-            entityManager.detach(document);
-
             // Check create permissions of the parent folder.
             checkCreatePermission(parentFolderUUID);
 
-            // This is going to be a copy so clear the persistence so save will create a new DB entry.
-            document.clearPersistence();
-
-            document.setUuid(copyUuid);
-
-            return entityServiceHelper.save(document, queryAppender);
+            return entityServiceHelper.save(createCopy(document, copyUuid), queryAppender);
         } catch (final RuntimeException e) {
             throw e;
         } catch (final Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    protected E createCopy(final E document,
+                           final String copyUuid) {
+        // Ensure we are working with effectively a 'new document'
+        entityManager.detach(document);
+
+        // This is going to be a copy so clear the persistence so save will create a new DB entry.
+        document.clearPersistence();
+
+        document.setUuid(copyUuid);
+
+        return document;
     }
 
     private E move(final E document, final String parentFolderUUID) {

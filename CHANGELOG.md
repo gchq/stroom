@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1190** : Copied indexes now retain associated index volumes.
+
 
 ## [v6.0-beta.52] - 2019-07-10
 
