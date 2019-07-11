@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1192** : Executors provided by the executor provider now run tasks as the current user.
+
 
 ## [v6.0-beta.53] - 2019-07-11
 
