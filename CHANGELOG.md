@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change default config for proxy repositoryFormat to "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"
+
 
 ## [v6.0-beta.53] - 2019-07-11
 

@@ -118,7 +118,7 @@ proxyConfig:
   proxyRepositoryConfig:
     storingEnabled: ${STORING_ENABLED:-true}
     repoDir: "${REPO_DIR:-/stroom-proxy/repo}"
-    repositoryFormat: "${pathId}/${id}"
+    repositoryFormat: "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"
     rollCron: "* * *"
   proxyRepositoryReaderConfig:
     readCron: "* * *"
