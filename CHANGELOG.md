@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1194** : Fixed NPE in FindTaskProgressCriteria.
+
 * Issue **#1191** : SQL statistics search tasks now show appropriate information in the server tasks pane.
 
 * Issue **#1192** : Executor provider tasks now run as the current user.
