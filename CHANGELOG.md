@@ -1660,7 +1660,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#24** : Header and footer strings are now unescaped so that character sequences such as '\n' are translated into single characters as with standard Java strings, e.g. '\n' will become a new line and '\t' a tab.
 
-* Issue **#40** : Changed Stroom docker conatiner to be based on Alpine linux to save space
+* Issue **#40** : Changed Stroom docker container to be based on Alpine linux to save space
 
 * Issue **#40** : Auto import of content packs on Stroom startup and added default content packs into the docker build for Stroom.
 
