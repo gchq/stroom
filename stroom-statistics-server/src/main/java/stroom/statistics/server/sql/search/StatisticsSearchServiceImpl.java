@@ -233,7 +233,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                         final StatisticType statisticType = statisticStoreEntity.getStatisticType();
                         if (statisticType.equals(StatisticType.COUNT)) {
                             extractor = buildLongValueExtractor(SQLStatisticNames.COUNT, idx);
-                        } else if (statisticType.equals(StatisticType.VALUE)){
+                        } else if (statisticType.equals(StatisticType.VALUE)) {
                             // value stat
                             extractor = buildStatValueExtractor(idx);
                         } else {
@@ -360,7 +360,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     }
 
     private Flowable<Val[]> getFlowableQueryResults(final SqlBuilder sql,
-                                                       final Function<ResultSet, Val[]> resultSetMapper) {
+                                                    final Function<ResultSet, Val[]> resultSetMapper) {
 
         //Not thread safe as each onNext will get the same ResultSet instance, however its position
         // will have mode on each time.
@@ -373,7 +373,11 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                             PreparedStatement ps = factory.getPreparedStatement();
                             return Flowable.generate(
                                     () -> {
-                                        LAMBDA_LOGGER.debug(() -> String.format("Executing query %s", ps.toString()));
+                                        final String message = String.format("Executing query %s", sql.toString());
+                                        taskContext.setName(SqlStatisticsStore.TASK_NAME);
+                                        taskContext.info(message);
+                                        LAMBDA_LOGGER.debug(() -> message);
+
                                         try {
                                             return ps.executeQuery();
                                         } catch (SQLException e) {
