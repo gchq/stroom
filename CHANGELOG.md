@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1193** : Added optional validation to activities.
+
 
 ## [v6.0-beta.54] - 2019-07-11
 

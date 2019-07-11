@@ -873,7 +873,7 @@ public class DefaultProperties {
                 .value("Activity Code:</br>" +
                         "<input type=\"text\" name=\"code\"></input></br></br>" +
                         "Activity Description:</br>" +
-                        "<textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"description\"></textarea>" +
+                        "<textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"description\" validation=\".{80,}\" validationMessage=\"The activity description must be at least 80 characters long.\" ></textarea>" +
                         "Explain what the activity is")
                 .description("The HTML to display in the activity editor popup.")
                 .editable(true)
