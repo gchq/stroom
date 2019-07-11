@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v6.0-beta.54] - 2019-07-11
 
+* Change default config for proxy repositoryFormat to "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"
+
 * Issue **#1194** : Fixed NPE in FindTaskProgressCriteria.
 
 * Issue **#1191** : SQL statistics search tasks now show appropriate information in the server tasks pane.
