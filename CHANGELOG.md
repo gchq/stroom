@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.54] - 2019-07-11
+
 * Issue **#1194** : Fixed NPE in FindTaskProgressCriteria.
 
 * Issue **#1191** : SQL statistics search tasks now show appropriate information in the server tasks pane.
@@ -1706,7 +1709,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.53...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.54...6.0
+[v6.0-beta.54]: https://github.com/gchq/stroom/compare/v7.0-beta.53...v6.0-beta.54
 [v6.0-beta.53]: https://github.com/gchq/stroom/compare/v7.0-beta.52...v6.0-beta.53
 [v6.0-beta.52]: https://github.com/gchq/stroom/compare/v7.0-beta.51...v6.0-beta.52
 [v6.0-beta.51]: https://github.com/gchq/stroom/compare/v7.0-beta.50...v6.0-beta.51
