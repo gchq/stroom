@@ -12,6 +12,7 @@ import stroom.proxy.repo.ProxyRepositoryStreamHandlerFactory;
 import stroom.proxy.repo.StreamHandler;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.BuildInfo;
 
 import javax.inject.Provider;
 import java.util.ArrayList;
@@ -88,8 +89,9 @@ class TestProxyHandlerFactory extends StroomUnitTest {
         final ProxyRepositoryStreamHandlerFactory proxyRepositoryStreamHandlerFactory =
                 new ProxyRepositoryStreamHandlerFactory(proxyRepositoryConfig, proxyRepositoryRequestHandlerProvider);
 
+        final BuildInfo buildInfo = new BuildInfo("now", "test version", "now");
         final ForwardStreamHandlerFactory forwardStreamHandlerFactory = new ForwardStreamHandlerFactory(
-                logStream, forwardRequestConfig, proxyRepositoryConfig, null);
+                logStream, forwardRequestConfig, proxyRepositoryConfig, () -> buildInfo);
 
         return new MasterStreamHandlerFactory(proxyRepositoryStreamHandlerFactory, forwardStreamHandlerFactory);
     }
