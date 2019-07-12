@@ -38,14 +38,21 @@ public class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, Voi
     private final UserAppPermissionService userAppPermissionService;
     private final AuthorisationEventLog authorisationEventLog;
     private final UserGroupsCache userGroupsCache;
+    private final UserDocumentPermissionsCache userDocumentPermissionsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
 
     @Inject
-    ChangeUserHandler(final UserService userService, final UserAppPermissionService userAppPermissionService, final AuthorisationEventLog authorisationEventLog, final UserGroupsCache userGroupsCache, final UserAppPermissionsCache userAppPermissionsCache) {
+    ChangeUserHandler(final UserService userService,
+                      final UserAppPermissionService userAppPermissionService,
+                      final AuthorisationEventLog authorisationEventLog,
+                      final UserGroupsCache userGroupsCache,
+                      final UserDocumentPermissionsCache userDocumentPermissionsCache,
+                      final UserAppPermissionsCache userAppPermissionsCache) {
         this.userService = userService;
         this.userAppPermissionService = userAppPermissionService;
         this.authorisationEventLog = authorisationEventLog;
         this.userGroupsCache = userGroupsCache;
+        this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
     }
 
@@ -114,6 +121,9 @@ public class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, Voi
                 userAppPermissionsCache.remove(userRef);
             }
         }
+
+        // Clear everything from the user document permissions cache.
+        userDocumentPermissionsCache.removeAll();
 
         return VoidResult.INSTANCE;
     }

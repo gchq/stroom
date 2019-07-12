@@ -648,6 +648,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
     }
 
     @Override
+    public void clear() {
+        explorerTreeModel.clear();
+    }
+
+    @Override
     public List<DocumentType> getNonSystemTypes() {
         return explorerActionHandlers.getNonSystemTypes();
     }

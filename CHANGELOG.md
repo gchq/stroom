@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1153** : Changed the way document permissions are retrieved and cached to improve explorer performance.
+
 
 ## [v6.0-beta.55] - 2019-07-11
 
