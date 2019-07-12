@@ -18,16 +18,16 @@ package stroom.activity.shared;
 
 import stroom.task.shared.Action;
 
-public class ActivityValidationAction extends Action<ActivityValidationResult> {
+public class ValidateActivityAction extends Action<ActivityValidationResult> {
     private static final long serialVersionUID = 800905016214418723L;
 
     private Activity activity;
 
-    public ActivityValidationAction() {
+    public ValidateActivityAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ActivityValidationAction(final Activity activity) {
+    public ValidateActivityAction(final Activity activity) {
         this.activity = activity;
     }
 

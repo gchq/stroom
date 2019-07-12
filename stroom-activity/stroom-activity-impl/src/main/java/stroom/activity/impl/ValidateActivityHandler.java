@@ -17,13 +17,13 @@
 package stroom.activity.impl;
 
 import stroom.activity.api.ActivityService;
-import stroom.activity.shared.ActivityValidationAction;
+import stroom.activity.shared.ValidateActivityAction;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 
-class ValidateActivityHandler extends AbstractTaskHandler<ActivityValidationAction, ActivityValidationResult> {
+class ValidateActivityHandler extends AbstractTaskHandler<ValidateActivityAction, ActivityValidationResult> {
     private final ActivityService activityService;
 
     @Inject
@@ -32,7 +32,7 @@ class ValidateActivityHandler extends AbstractTaskHandler<ActivityValidationActi
     }
 
     @Override
-    public ActivityValidationResult exec(final ActivityValidationAction action) {
+    public ActivityValidationResult exec(final ValidateActivityAction action) {
         return activityService.validate(action.getActivity());
     }
 }

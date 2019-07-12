@@ -34,7 +34,7 @@ import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.CreateActivityAction;
 import stroom.activity.shared.UpdateActivityAction;
-import stroom.activity.shared.ActivityValidationAction;
+import stroom.activity.shared.ValidateActivityAction;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.ui.config.client.UiConfigCache;
@@ -220,7 +220,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         activity.setDetails(details);
 
         // Validate the activity.
-        dispatcher.exec(new ActivityValidationAction(activity)).onSuccess(validationResult -> {
+        dispatcher.exec(new ValidateActivityAction(activity)).onSuccess(validationResult -> {
             if (!validationResult.isValid()) {
                 AlertEvent.fireWarn(ActivityEditPresenter.this, "Validation Error", validationResult.getMessages(), null);
 
