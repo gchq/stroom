@@ -16,8 +16,11 @@
 
 package stroom.task.impl;
 
-import stroom.security.shared.UserToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.security.api.SecurityContext;
 import stroom.security.api.UserTokenUtil;
+import stroom.security.shared.UserToken;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskManager;
@@ -28,11 +31,15 @@ import javax.inject.Inject;
 import java.util.concurrent.Executor;
 
 class ExecutorProviderImpl implements ExecutorProvider {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExecutorProviderImpl.class);
+
     private final TaskManager taskManager;
+    private final SecurityContext securityContext;
 
     @Inject
-    ExecutorProviderImpl(final TaskManager taskManager) {
+    ExecutorProviderImpl(final TaskManager taskManager, final SecurityContext securityContext) {
         this.taskManager = taskManager;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -52,6 +59,16 @@ class ExecutorProviderImpl implements ExecutorProvider {
             return parentTask.getUserToken();
         }
 
+        try {
+            final String userId = securityContext.getUserId();
+            if (userId != null) {
+                return UserTokenUtil.create(securityContext.getUserId(), null);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Error getting user id", e);
+        }
+
+        LOGGER.debug("Using internal processing user");
         return UserTokenUtil.processingUser();
     }
 

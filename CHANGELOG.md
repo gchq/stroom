@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1193** : Added optional validation to activities.
+
+* Change default config for proxy repositoryFormat to "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"
+
+* Issue **#1194** : Fixed NPE in FindTaskProgressCriteria.
+
+* Issue **#1191** : SQL statistics search tasks now show appropriate information in the server tasks pane.
+
+* Issue **#1192** : Executor provider tasks now run as the current user.
+
+* Issue **#1190** : Copied indexes now retain associated index volumes.
+
 * Issue **#1177** : Data retention now works with is doc refs.
 
 * Issue **#1160** : Proxy repositories now only roll if all output streams for a repository are closed. Proxy repositories also only calculate the current max id if the `executionUuid` repo format param is not used.
@@ -1570,7 +1582,7 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#24** : Header and footer strings are now unescaped so that character sequences such as '\n' are translated into single characters as with standard Java strings, e.g. '\n' will become a new line and '\t' a tab.
 
-* Issue **#40** : Changed Stroom docker conatiner to be based on Alpine linux to save space
+* Issue **#40** : Changed Stroom docker container to be based on Alpine linux to save space
 
 * Issue **#40** : Auto import of content packs on Stroom startup and added default content packs into the docker build for Stroom.
 

@@ -34,6 +34,7 @@ import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.CreateActivityAction;
 import stroom.activity.shared.UpdateActivityAction;
+import stroom.activity.shared.ActivityValidationAction;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.ui.config.client.UiConfigCache;
@@ -218,25 +219,33 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         }
         activity.setDetails(details);
 
-        // Save the activity.
-        if (activity.getId() == null) {
-            dispatcher.exec(new CreateActivityAction()).onSuccess(result -> {
-                activity = result;
-                activity.setDetails(details);
+        // Validate the activity.
+        dispatcher.exec(new ActivityValidationAction(activity)).onSuccess(validationResult -> {
+            if (!validationResult.isValid()) {
+                AlertEvent.fireWarn(ActivityEditPresenter.this, "Validation Error", validationResult.getMessages(), null);
 
-                dispatcher.exec(new UpdateActivityAction(activity)).onSuccess(r -> {
-                    activity = r;
-                    consumer.accept(r);
-                    hide();
-                });
-            });
-        } else {
-            dispatcher.exec(new UpdateActivityAction(activity)).onSuccess(result -> {
-                activity = result;
-                consumer.accept(result);
-                hide();
-            });
-        }
+            } else {
+                // Save the activity.
+                if (activity.getId() == null) {
+                    dispatcher.exec(new CreateActivityAction()).onSuccess(result -> {
+                        activity = result;
+                        activity.setDetails(details);
+
+                        dispatcher.exec(new UpdateActivityAction(activity)).onSuccess(r -> {
+                            activity = r;
+                            consumer.accept(r);
+                            hide();
+                        });
+                    });
+                } else {
+                    dispatcher.exec(new UpdateActivityAction(activity)).onSuccess(result -> {
+                        activity = result;
+                        consumer.accept(result);
+                        hide();
+                    });
+                }
+            }
+        });
     }
 
     private void findInputElements(final NodeList<Node> nodes, final List<Element> inputElements) {
@@ -276,6 +285,8 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         final Prop prop = new Prop();
         prop.setId(getId(element));
         prop.setName(getName(element));
+        prop.setValidation(getValidation(element));
+        prop.setValidationMessage(getValidationMessage(element));
         prop.setShowInSelection(isShowInSelection(element));
         prop.setShowInList(isShowInList(element));
 
@@ -307,6 +318,28 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         final String name = element.getAttribute("name");
         if (name != null) {
             final String trimmed = name.trim();
+            if (trimmed.length() > 0) {
+                return trimmed;
+            }
+        }
+        return null;
+    }
+
+    private String getValidation(final Element element) {
+        final String validation = element.getAttribute("validation");
+        if (validation != null) {
+            final String trimmed = validation.trim();
+            if (trimmed.length() > 0) {
+                return trimmed;
+            }
+        }
+        return null;
+    }
+
+    private String getValidationMessage(final Element element) {
+        final String validationMessage = element.getAttribute("validationMessage");
+        if (validationMessage != null) {
+            final String trimmed = validationMessage.trim();
             if (trimmed.length() > 0) {
                 return trimmed;
             }

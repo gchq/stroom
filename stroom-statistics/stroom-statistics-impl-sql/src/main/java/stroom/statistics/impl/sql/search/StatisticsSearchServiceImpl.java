@@ -12,15 +12,16 @@ import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.statistics.impl.sql.ConnectionProvider;
+import stroom.statistics.impl.sql.PreparedStatementUtil;
 import stroom.statistics.impl.sql.SQLStatisticConstants;
 import stroom.statistics.impl.sql.SQLStatisticNames;
 import stroom.statistics.impl.sql.SqlBuilder;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
+import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.statistics.impl.sql.PreparedStatementUtil;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -56,6 +57,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     private final ConnectionProvider connectionProvider;
     private final SearchConfig searchConfig;
+    private final TaskContext taskContext;
 
     //defines how the entity fields relate to the table columns
     private static final Map<String, List<String>> STATIC_FIELDS_TO_COLUMNS_MAP = ImmutableMap.<String, List<String>>builder()
@@ -68,9 +70,11 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     @SuppressWarnings("unused") // Called by DI
     @Inject
     StatisticsSearchServiceImpl(final ConnectionProvider connectionProvider,
-                                final SearchConfig searchConfig) {
+                                final SearchConfig searchConfig,
+                                final TaskContext taskContext) {
         this.connectionProvider = connectionProvider;
         this.searchConfig = searchConfig;
+        this.taskContext = taskContext;
     }
 
     @Override
@@ -361,7 +365,11 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                             PreparedStatement ps = factory.getPreparedStatement();
                             return Flowable.generate(
                                     () -> {
-                                        LAMBDA_LOGGER.debug(() -> String.format("Executing query %s", ps.toString()));
+                                        final String message = String.format("Executing query %s", sql.toString());
+                                        taskContext.setName(SqlStatisticsStore.TASK_NAME);
+                                        taskContext.info(message);
+                                        LAMBDA_LOGGER.debug(() -> message);
+
                                         try {
                                             return ps.executeQuery();
                                         } catch (SQLException e) {

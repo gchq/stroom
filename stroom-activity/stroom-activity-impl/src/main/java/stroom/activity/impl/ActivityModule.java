@@ -9,6 +9,7 @@ import stroom.activity.shared.FetchActivityAction;
 import stroom.activity.shared.FindActivityAction;
 import stroom.activity.shared.SetCurrentActivityAction;
 import stroom.activity.shared.UpdateActivityAction;
+import stroom.dashboard.shared.ValidateExpressionAction;
 import stroom.task.api.TaskHandlerBinder;
 
 public class ActivityModule extends AbstractModule {
@@ -23,7 +24,8 @@ public class ActivityModule extends AbstractModule {
                 .bind(DeleteActivityAction.class, DeleteActivityHandler.class)
                 .bind(FetchActivityAction.class, FetchActivityHandler.class)
                 .bind(FindActivityAction.class, FindActivityHandler.class)
-                .bind(SetCurrentActivityAction.class, SetCurrentActivityHandler.class);
+                .bind(SetCurrentActivityAction.class, SetCurrentActivityHandler.class)
+                .bind(ValidateExpressionAction.class, ValidateActivityHandler.class);
     }
 
     @Override

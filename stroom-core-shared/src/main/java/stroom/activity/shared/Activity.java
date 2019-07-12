@@ -169,6 +169,8 @@ public class Activity implements HasAuditInfo, SharedObject {
     public static class Prop implements SharedObject {
         private String id;
         private String name;
+        private String validation;
+        private String validationMessage;
         private String value;
         private boolean showInSelection = true;
         private boolean showInList = true;
@@ -190,6 +192,22 @@ public class Activity implements HasAuditInfo, SharedObject {
 
         public void setName(final String name) {
             this.name = name;
+        }
+
+        public String getValidation() {
+            return validation;
+        }
+
+        public void setValidation(final String validation) {
+            this.validation = validation;
+        }
+
+        public String getValidationMessage() {
+            return validationMessage;
+        }
+
+        public void setValidationMessage(String validationMessage) {
+            this.validationMessage = validationMessage;
         }
 
         public String getValue() {
