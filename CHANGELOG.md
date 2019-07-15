@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1198** : Filtering by empty folders now works correctly.
+
 
 ## [v6.0-beta.56] - 2019-07-15
 
