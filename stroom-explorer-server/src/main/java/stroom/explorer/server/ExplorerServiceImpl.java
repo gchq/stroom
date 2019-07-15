@@ -85,6 +85,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
 
         final Set<ExplorerNode> allOpenItems = new HashSet<>();
         allOpenItems.addAll(criteria.getOpenItems());
+        allOpenItems.addAll(criteria.getTemporaryOpenedItems());
         allOpenItems.addAll(forcedOpenItems);
 
         final TreeModel filteredModel = new TreeModelImpl();
@@ -156,7 +157,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                                                  final FindExplorerNodeCriteria criteria) {
         final Set<ExplorerNode> forcedOpen = new HashSet<>();
 
-        // Add parents of  nodes that we have been requested to ensure are visible.
+        // Add parents of nodes that we have been requested to ensure are visible.
         if (criteria.getEnsureVisible() != null && criteria.getEnsureVisible().size() > 0) {
             for (final ExplorerNode ensureVisible : criteria.getEnsureVisible()) {
 
@@ -197,14 +198,14 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                                    final TreeModel treeModelOut,
                                    final ExplorerTreeFilter filter,
                                    final boolean ignoreNameFilter,
-                                   final Set<ExplorerNode> allOpenItemns,
+                                   final Set<ExplorerNode> allOpenItems,
                                    final int currentDepth) {
         int added = 0;
 
         final List<ExplorerNode> children = treeModelIn.getChildMap().get(parent);
         if (children != null) {
             // Add all children if the name filter has changed or the parent item is open.
-            final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null) || allOpenItemns.contains(parent);
+            final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null) || allOpenItems.contains(parent);
 
             // We need to add add least one item to the tree to be able to determine if the parent is a leaf node.
             final Iterator<ExplorerNode> iterator = children.iterator();
@@ -215,7 +216,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                 final boolean ignoreChildNameFilter = checkName(child, filter.getNameFilter());
 
                 // Recurse right down to find out if a descendant is being added and therefore if we need to include this as an ancestor.
-                final boolean hasChildren = addDescendants(child, treeModelIn, treeModelOut, filter, ignoreChildNameFilter, allOpenItemns, currentDepth + 1);
+                final boolean hasChildren = addDescendants(child, treeModelIn, treeModelOut, filter, ignoreChildNameFilter, allOpenItems, currentDepth + 1);
                 if (hasChildren) {
                     treeModelOut.add(parent, child);
                     added++;

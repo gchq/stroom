@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Change swagger UI at gchq.github.io/stroom to work off 6.0 branch
 
+* Issue **#1195** : Fixed issue where combination of quick filter and type filter were not displaying explorer items correctly.
+
 
 ## [v6.0-beta.55] - 2019-07-11
 
