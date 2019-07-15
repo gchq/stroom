@@ -28,6 +28,8 @@ import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.util.io.FileUtil;
 import stroom.util.test.IntegrationTest;
 import stroom.util.test.StroomSpringJUnit4ClassRunner;
@@ -66,6 +68,9 @@ public abstract class StroomIntegrationTest implements StroomTest {
     @Resource
     private ContentImportService contentImportService;
 
+    @Resource
+    private SecurityContext securityContext;
+
     @BeforeClass
     public static void beforeClass() throws IOException {
         final State state = TestState.getState();
@@ -87,24 +92,26 @@ public abstract class StroomIntegrationTest implements StroomTest {
      */
     @Before
     public final void before() {
-        final State state = TestState.getState();
-        state.incrementTestCount();
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+            final State state = TestState.getState();
+            state.incrementTestCount();
 
-        // Setup the database if this is the first test running for this test
-        // class or if we always want to recreate the DB between tests.
-        if (teardownEnabled() && (TEAR_DOWN_DATABASE_BETWEEEN_TESTS || getTestCount() == 1)) {
-            if (!state.isDoneSetup()) {
-                LOGGER.info("before() - commonTestControl.setup()");
-                commonTestControl.teardown();
-                commonTestControl.setup();
+            // Setup the database if this is the first test running for this test
+            // class or if we always want to recreate the DB between tests.
+            if (teardownEnabled() && (TEAR_DOWN_DATABASE_BETWEEEN_TESTS || getTestCount() == 1)) {
+                if (!state.isDoneSetup()) {
+                    LOGGER.info("before() - commonTestControl.setup()");
+                    commonTestControl.teardown();
+                    commonTestControl.setup();
 
-                // Some test classes only want the DB to be created once so they
-                // return true here.
-                state.setDoneSetup(doSingleSetup());
+                    // Some test classes only want the DB to be created once so they
+                    // return true here.
+                    state.setDoneSetup(doSingleSetup());
+                }
             }
-        }
 
-        onBefore();
+            onBefore();
+        }
     }
 
     /**

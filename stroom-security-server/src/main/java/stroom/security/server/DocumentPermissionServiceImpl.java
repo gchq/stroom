@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 @Component
@@ -233,6 +234,40 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
         final String[] permissions = documentTypePermissions.getPermissions(document.getType());
         return new DocumentPermissions(document, permissions, userPermissions);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public UserDocumentPermissions getPermissionsForUsers(final Set<String> users) {
+        final StringBuilder sql = new StringBuilder();
+        sql.append("SELECT DISTINCT");
+        sql.append(" doc.");
+        sql.append(DocumentPermission.DOC_UUID);
+        sql.append(", doc.");
+        sql.append(DocumentPermission.PERMISSION);
+
+        sql.append(" FROM ");
+        sql.append(DocumentPermission.TABLE_NAME);
+        sql.append(" AS ");
+        sql.append("doc");
+
+        sql.append(" WHERE ");
+        sql.append(DocumentPermission.USER_UUID);
+        sql.append(" IN (");
+        sql.append(toCommaSeparatedList(users));
+        sql.append(")");
+
+        Map<String, Set<String>> map = new HashMap<>();
+        final List results = entityManager.executeNativeQueryResultList(new SqlBuilder(sql.toString()));
+        results.forEach(r -> {
+            final Object[] o = (Object[]) r;
+            map.computeIfAbsent(o[0].toString(), k -> new HashSet<>()).add(o[1].toString());
+        });
+        return new UserDocumentPermissionsImpl(map);
+    }
+
+    private String toCommaSeparatedList(Set<String> set) {
+        return set.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(","));
     }
 
     @Override

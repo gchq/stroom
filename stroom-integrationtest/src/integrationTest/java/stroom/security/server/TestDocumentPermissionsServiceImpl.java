@@ -54,7 +54,7 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
     @Resource
     private UserGroupsCache userGroupsCache;
     @Resource
-    private DocumentPermissionsCache documentPermissionsCache;
+    private UserDocumentPermissionsCache userDocumentPermissionsCache;
 
     @Test
     public void test() {
@@ -155,22 +155,11 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
         final DocRef docRef = DocRefUtil.create(entity);
 
         userGroupsCache.clear();
-        documentPermissionsCache.clear();
+        userDocumentPermissionsCache.clear();
 
-        final Set<UserRef> allUsers = new HashSet<>();
-        allUsers.add(user);
-        allUsers.addAll(userGroupsCache.get(user));
-
-        final Set<String> combinedPermissions = new HashSet<>();
-        for (final UserRef userRef : allUsers) {
-            final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
-            final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef);
-            combinedPermissions.addAll(userPermissions);
-        }
-
-        Assert.assertEquals(permissions.length, combinedPermissions.size());
+        final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(user);
         for (final String permission : permissions) {
-            Assert.assertTrue(combinedPermissions.contains(permission));
+            Assert.assertTrue(userDocumentPermissions.hasDocumentPermission(docRef.getUuid(), permission));
         }
     }
 

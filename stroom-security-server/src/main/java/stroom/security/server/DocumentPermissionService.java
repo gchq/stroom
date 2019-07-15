@@ -20,8 +20,12 @@ import stroom.query.api.v2.DocRef;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserRef;
 
+import java.util.Set;
+
 public interface DocumentPermissionService {
     DocumentPermissions getPermissionsForDocument(DocRef document);
+
+    UserDocumentPermissions getPermissionsForUsers(Set<String> users);
 
     void addPermission(UserRef userRef, DocRef document, String permission);
 

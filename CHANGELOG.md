@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1195** : Fixed issue where combination of quick filter and type filter were not displaying explorer items correctly.
 
+* Issue **#1153** : Changed the way document permissions are retrieved and cached to improve explorer performance.
+
 
 ## [v6.0-beta.55] - 2019-07-11
 
