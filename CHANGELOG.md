@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Comment out rollCron in proxy-prod.yml
+
 * Change swagger UI at gchq.github.io/stroom to work off 6.0 branch
 
 
