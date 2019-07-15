@@ -167,4 +167,8 @@ class ExplorerTreeModel {
 
         explorerSession.setMinExplorerTreeModelBuildTime(now);
     }
+
+    void clear() {
+        currentModel = null;
+    }
 }

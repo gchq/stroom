@@ -31,7 +31,9 @@ import org.slf4j.LoggerFactory;
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.explorer.api.ExplorerService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.api.Security;
 
@@ -44,16 +46,19 @@ public class SearchEventLogImpl implements SearchEventLog {
     private final Security security;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
+    private final ExplorerService explorerService;
 
     @Inject
     public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
                               final Security security,
                               final WordListProvider wordListProvider,
-                              final CollectionService collectionService) {
+                              final CollectionService collectionService,
+                              final ExplorerService explorerService) {
         this.eventLoggingService = eventLoggingService;
         this.security = security;
         this.wordListProvider = wordListProvider;
         this.collectionService = collectionService;
+        this.explorerService = explorerService;
     }
 
     @Override
@@ -174,10 +179,10 @@ public class SearchEventLogImpl implements SearchEventLog {
             return null;
         }
 
-//        final DataSource dataSource = dataSourceProviderRegistry.getDataSource(docRef);
-//        if (dataSource == null) {
-//            return null;
-//        }
+        final DocRefInfo docRefInfo = explorerService.info(docRef);
+        if (docRefInfo != null) {
+            return docRefInfo.getDocRef().getName();
+        }
 
         return docRef.getName();
     }

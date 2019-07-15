@@ -9,6 +9,8 @@ public interface DocumentPermissionDao {
 
     DocumentPermissionJooq getPermissionsForDocument(String docRefUuid);
 
+    UserDocumentPermissions getPermissionsForUsers(Set<String> users);
+
     void addPermission(String docRefUuid, String userUuid, String permission);
 
     void removePermission(String docRefUuid, String userUuid, String permission);
@@ -16,5 +18,4 @@ public interface DocumentPermissionDao {
     void clearDocumentPermissionsForUser(String docRefUuid, String userUuid);
 
     void clearDocumentPermissions(String docRefUuid);
-
 }

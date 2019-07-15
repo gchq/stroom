@@ -85,6 +85,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
 
         final Set<ExplorerNode> allOpenItems = new HashSet<>();
         allOpenItems.addAll(criteria.getOpenItems());
+        allOpenItems.addAll(criteria.getTemporaryOpenedItems());
         allOpenItems.addAll(forcedOpenItems);
 
         final TreeModel filteredModel = new TreeModel();
@@ -654,6 +655,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
     @Override
     public void rebuildTree() {
         explorerTreeModel.rebuild();
+    }
+
+    @Override
+    public void clear() {
+        explorerTreeModel.clear();
     }
 
     @Override

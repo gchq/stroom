@@ -42,7 +42,7 @@ class TestDocumentPermissionsServiceImpl {
     private static UserService userService;
     private static DocumentPermissionService documentPermissionService;
     private static UserGroupsCache userGroupsCache;
-    private static DocumentPermissionsCache documentPermissionsCache;
+    private static UserDocumentPermissionsCache userDocumentPermissionsCache;
 
     @BeforeAll
     static void beforeAll() {
@@ -51,7 +51,7 @@ class TestDocumentPermissionsServiceImpl {
         userService = injector.getInstance(UserService.class);
         documentPermissionService = injector.getInstance(DocumentPermissionService.class);
         userGroupsCache = injector.getInstance(UserGroupsCache.class);
-        documentPermissionsCache = injector.getInstance(DocumentPermissionsCache.class);
+        userDocumentPermissionsCache = injector.getInstance(UserDocumentPermissionsCache.class);
     }
 
     @Test
@@ -149,22 +149,11 @@ class TestDocumentPermissionsServiceImpl {
                                            final User user,
                                            final String... permissions) {
         userGroupsCache.clear();
-        documentPermissionsCache.clear();
+        userDocumentPermissionsCache.clear();
 
-        final Set<User> allUsers = new HashSet<>();
-        allUsers.add(user);
-        allUsers.addAll(userGroupsCache.get(user.getUuid()));
-
-        final Set<String> combinedPermissions = new HashSet<>();
-        for (final User userRef : allUsers) {
-            final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
-            final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef.getUuid());
-            combinedPermissions.addAll(userPermissions);
-        }
-
-        assertThat(combinedPermissions.size()).isEqualTo(permissions.length);
+        final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(user.getUuid());
         for (final String permission : permissions) {
-            assertThat(combinedPermissions.contains(permission)).isTrue();
+            assertThat(userDocumentPermissions.hasDocumentPermission(docRef.getUuid(), permission)).isTrue();
         }
     }
 

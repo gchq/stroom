@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Comment out rollCron in proxy-prod.yml
+
+* Change swagger UI at gchq.github.io/stroom to work off 6.0 branch
+
+* Issue **#1195** : Fixed issue where combination of quick filter and type filter were not displaying explorer items correctly.
+
+* Issue **#1153** : Changed the way document permissions are retrieved and cached to improve explorer performance.
+
+* Issue **#1196** : Added code to resolve data source names from doc refs if the name is missing when logging.
+
+* Issue **#1165** : Fixed corruption of pipeline structure when adding items to Source.
+
 * Issue **#1193** : Added optional validation to activities.
 
 * Change default config for proxy repositoryFormat to "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"

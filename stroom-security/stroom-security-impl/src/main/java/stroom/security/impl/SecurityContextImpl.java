@@ -47,7 +47,7 @@ class SecurityContextImpl implements SecurityContext {
             .group(false)
             .build();
 
-    private final DocumentPermissionsCache documentPermissionsCache;
+    private final UserDocumentPermissionsCache userDocumentPermissionsCache;
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
     private final UserCache userCache;
@@ -57,14 +57,14 @@ class SecurityContextImpl implements SecurityContext {
 
     @Inject
     SecurityContextImpl(
-            final DocumentPermissionsCache documentPermissionsCache,
+            final UserDocumentPermissionsCache userDocumentPermissionsCache,
             final UserGroupsCache userGroupsCache,
             final UserAppPermissionsCache userAppPermissionsCache,
             final UserCache userCache,
             final DocumentPermissionService documentPermissionService,
             final DocumentTypePermissions documentTypePermissions,
             final ApiTokenCache apiTokenCache) {
-        this.documentPermissionsCache = documentPermissionsCache;
+        this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userCache = userCache;
@@ -230,58 +230,12 @@ class SecurityContextImpl implements SecurityContext {
             throw new AuthenticationException("No user is currently logged in");
         }
 
-        final DocRef docRef = new DocRef(documentType, documentId);
-
-        // Get the permissions for the document.
-        final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
-        if (documentPermissions != null) {
-            // Test the supplied permission.
-            if (hasDocumentPermission(documentPermissions, userRef, permission)) {
-                return true;
-            }
-
-            // If the user doesn't have read permission then check to see if the current task has been set to have elevated permissions.
-            if (DocumentPermissionNames.READ.equals(permission)) {
-                if (CurrentUserState.isElevatePermissions()) {
-                    return hasDocumentPermission(documentPermissions, userRef, DocumentPermissionNames.USE);
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean hasDocumentPermission(final DocumentPermissions documentPermissions, final User userRef, final String permission) {
-        // See if the user has an explicit permission.
-        if (hasUserDocumentPermission(documentPermissions, userRef, permission)) {
-            return true;
+        final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userRef.getUuid());
+        if (userDocumentPermissions == null) {
+            return false;
         }
 
-        // See if the user belongs to a group that has permission.
-        final List<User> userGroups = userGroupsCache.get(userRef.getUuid());
-        if (userGroups != null) {
-            for (final User userGroup : userGroups) {
-                if (hasUserDocumentPermission(documentPermissions, userGroup, permission)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean hasUserDocumentPermission(final DocumentPermissions documentPermissions, final User userRef, final String permission) {
-        final Set<String> permissions = documentPermissions.getPermissionsForUser(userRef.getUuid());
-        if (permissions != null) {
-            String perm = permission;
-            while (perm != null) {
-                if (permissions.contains(perm)) {
-                    return true;
-                }
-
-                // If the user doesn't explicitly have this permission then see if they have a higher permission that infers this one.
-                perm = DocumentPermissionNames.getHigherPermission(perm);
-            }
-        }
-        return false;
+        return userDocumentPermissions.hasDocumentPermission(documentId, permission);
     }
 
     @Override
@@ -295,8 +249,8 @@ class SecurityContextImpl implements SecurityContext {
                 final DocRef docRef = new DocRef(documentType, documentUuid);
                 documentPermissionService.clearDocumentPermissions(documentUuid);
 
-                // Make sure cache updates for the document.
-                documentPermissionsCache.remove(docRef);
+                // Clear everything from the user document permissions cache.
+                userDocumentPermissionsCache.removeAll();
             }
         }
     }
@@ -326,8 +280,8 @@ class SecurityContextImpl implements SecurityContext {
                 // TODO : This should be part of the explorer service.
                 copyPermissions(sourceType, sourceUuid, documentType, documentUuid);
 
-                // Make sure cache updates for the document.
-                documentPermissionsCache.remove(docRef);
+                // Clear everything from the user document permissions cache.
+                userDocumentPermissionsCache.removeAll();
             }
         }
     }

@@ -56,7 +56,7 @@ public class SecurityModule extends AbstractModule {
 
         // Provide object info to the logging service.
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(DocumentPermissionsCache.class)
+                .addBinding(UserDocumentPermissionsCache.class)
                 .addBinding(UserAppPermissionsCache.class)
                 .addBinding(UserGroupsCache.class)
                 .addBinding(UserCache.class);
@@ -77,7 +77,7 @@ public class SecurityModule extends AbstractModule {
                 .bind(LogoutAction.class, LogoutHandler.class);
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(DocumentPermissionsCache.class);
+        entityEventHandlerBinder.addBinding().to(UserDocumentPermissionsCache.class);
         entityEventHandlerBinder.addBinding().to(UserGroupsCache.class);
 
         HealthCheckBinder.create(binder())

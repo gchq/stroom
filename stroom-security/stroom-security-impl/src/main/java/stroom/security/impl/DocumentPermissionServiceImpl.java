@@ -35,15 +35,12 @@ class DocumentPermissionServiceImpl implements DocumentPermissionService {
 
     private final DocumentPermissionDao documentPermissionDao;
     private final UserDao userDao;
-    private final DocumentTypePermissions documentTypePermissions;
 
     @Inject
     public DocumentPermissionServiceImpl(final DocumentPermissionDao documentPermissionDao,
-                                         final UserDao userDao,
-                                         final DocumentTypePermissions documentTypePermissions) {
+                                         final UserDao userDao) {
         this.documentPermissionDao = documentPermissionDao;
         this.userDao = userDao;
-        this.documentTypePermissions = documentTypePermissions;
     }
 
     @Override
@@ -71,6 +68,11 @@ class DocumentPermissionServiceImpl implements DocumentPermissionService {
         }
 
         return new DocumentPermissions(docRefUuid, userPermissions);
+    }
+
+    @Override
+    public UserDocumentPermissions getPermissionsForUsers(final Set<String> users) {
+        return documentPermissionDao.getPermissionsForUsers(users);
     }
 
     @Override

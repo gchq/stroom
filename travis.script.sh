@@ -20,6 +20,8 @@ BRANCH_WHITELIST_REGEX='(^dev$|^master$|^[0-9]+\.[0-9]+$)'
 RELEASE_VERSION_REGEX='^v[0-9]+\.[0-9]+\.[0-9].*$'
 CRON_TAG_SUFFIX="DAILY"
 LATEST_SUFFIX="-LATEST"
+# This is the branch containing the current release of stroom
+CURRENT_STROOM_RELEASE_BRANCH="6.0"
 doDockerBuild=false
 
 # Shell Colour constants for use in 'echo -e'
@@ -175,14 +177,14 @@ else
 fi
 
 # Dump all the travis env vars to the console for debugging
-echo -e "TRAVIS_BUILD_NUMBER: [${GREEN}${TRAVIS_BUILD_NUMBER}${NC}]"
-echo -e "TRAVIS_COMMIT:       [${GREEN}${TRAVIS_COMMIT}${NC}]"
-echo -e "TRAVIS_BRANCH:       [${GREEN}${TRAVIS_BRANCH}${NC}]"
-echo -e "TRAVIS_TAG:          [${GREEN}${TRAVIS_TAG}${NC}]"
-echo -e "TRAVIS_PULL_REQUEST: [${GREEN}${TRAVIS_PULL_REQUEST}${NC}]"
-echo -e "TRAVIS_EVENT_TYPE:   [${GREEN}${TRAVIS_EVENT_TYPE}${NC}]"
-echo -e "STROOM_VERSION:      [${GREEN}${STROOM_VERSION}${NC}]"
-
+echo -e "TRAVIS_BUILD_NUMBER:           [${GREEN}${TRAVIS_BUILD_NUMBER}${NC}]"
+echo -e "TRAVIS_COMMIT:                 [${GREEN}${TRAVIS_COMMIT}${NC}]"
+echo -e "TRAVIS_BRANCH:                 [${GREEN}${TRAVIS_BRANCH}${NC}]"
+echo -e "TRAVIS_TAG:                    [${GREEN}${TRAVIS_TAG}${NC}]"
+echo -e "TRAVIS_PULL_REQUEST:           [${GREEN}${TRAVIS_PULL_REQUEST}${NC}]"
+echo -e "TRAVIS_EVENT_TYPE:             [${GREEN}${TRAVIS_EVENT_TYPE}${NC}]"
+echo -e "STROOM_VERSION:                [${GREEN}${STROOM_VERSION}${NC}]"
+echo -e "CURRENT_STROOM_RELEASE_BRANCH: [${GREEN}${CURRENT_STROOM_RELEASE_BRANCH}${NC}]"
 
 if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
     echo "This is a cron build so just tag the commit if we need to and exit"
@@ -283,7 +285,7 @@ else
 
     # Deploy the generated swagger specs and swagger UI (obtained from github)
     # to gh-pages
-    if [ "$TRAVIS_BRANCH" = "master" ]; then
+    if [ "$TRAVIS_BRANCH" = "${CURRENT_STROOM_RELEASE_BRANCH}" ]; then
         echo "Deploying swagger-ui to gh-pages"
         ghPagesDir=$TRAVIS_BUILD_DIR/gh-pages
         swaggerUiCloneDir=$TRAVIS_BUILD_DIR/swagger-ui
