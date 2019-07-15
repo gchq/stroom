@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1153** : Changed the way document permissions are retrieved and cached to improve explorer performance.
 
+* Issue **#1196** : Added code to resolve data source names from doc refs if the name is missing when logging.
+
 
 ## [v6.0-beta.55] - 2019-07-11
 

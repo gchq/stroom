@@ -31,8 +31,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.QueryDataLogUtil;
+import stroom.explorer.server.ExplorerService;
 import stroom.logging.StroomEventLoggingService;
 import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.DocRefInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.Insecure;
 import stroom.streamstore.server.CollectionService;
@@ -47,14 +49,17 @@ public class SearchEventLogImpl implements SearchEventLog {
     private final StroomEventLoggingService eventLoggingService;
     private final DictionaryStore dictionaryStore;
     private final CollectionService collectionService;
+    private final ExplorerService explorerService;
 
     @Inject
     public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
                               final DictionaryStore dictionaryStore,
-                              final CollectionService collectionService) {
+                              final CollectionService collectionService,
+                              final ExplorerService explorerService) {
         this.eventLoggingService = eventLoggingService;
         this.dictionaryStore = dictionaryStore;
         this.collectionService = collectionService;
+        this.explorerService = explorerService;
     }
 
     @Override
@@ -171,10 +176,10 @@ public class SearchEventLogImpl implements SearchEventLog {
             return null;
         }
 
-//        final DataSource dataSource = dataSourceProviderRegistry.getDataSource(docRef);
-//        if (dataSource == null) {
-//            return null;
-//        }
+        final DocRefInfo docRefInfo = explorerService.info(docRef);
+        if (docRefInfo != null) {
+            return docRefInfo.getDocRef().getName();
+        }
 
         return docRef.getName();
     }
