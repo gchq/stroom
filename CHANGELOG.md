@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1196** : Added code to resolve data source names from doc refs if the name is missing when logging.
 
+* Issue **#1165** : Fixed corruption of pipeline structure when adding items to Source.
+
 
 ## [v6.0-beta.55] - 2019-07-11
 
