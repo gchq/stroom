@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.57] - 2019-07-15
+
 * Issue **#1198** : Filtering by empty folders now works correctly.
 
 
@@ -1733,7 +1736,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.56...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.57...6.0
+[v6.0-beta.57]: https://github.com/gchq/stroom/compare/v7.0-beta.56...v6.0-beta.57
 [v6.0-beta.56]: https://github.com/gchq/stroom/compare/v7.0-beta.55...v6.0-beta.56
 [v6.0-beta.55]: https://github.com/gchq/stroom/compare/v7.0-beta.54...v6.0-beta.55
 [v6.0-beta.54]: https://github.com/gchq/stroom/compare/v7.0-beta.53...v6.0-beta.54
