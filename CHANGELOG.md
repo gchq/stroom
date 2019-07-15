@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change swagger UI at gchq.github.io/stroom to work off 6.0 branch
+
 
 ## [v6.0-beta.55] - 2019-07-11
 
