@@ -74,6 +74,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers {
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final ButtonView saveButton;
+    private final ButtonView saveAsButton;
     private final DashboardLayoutPresenter layoutPresenter;
     private final Provider<ComponentAddPresenter> addPresenterProvider;
     private final Components components;
@@ -103,11 +104,18 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         this.queryInfoPresenterProvider = queryInfoPresenterProvider;
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
+        saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
         saveButton.setEnabled(false);
+        saveAsButton.setEnabled(false);
 
         registerHandler(saveButton.addClickHandler(event -> {
             if (saveButton.isEnabled()) {
                 WriteDocumentEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
+            }
+        }));
+        registerHandler(saveAsButton.addClickHandler(event -> {
+            if (saveAsButton.isEnabled()) {
+                ShowSaveAsEntityDialogEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
             }
         }));
 
@@ -306,6 +314,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         super.onReadOnly(readOnly);
 
         saveButton.setEnabled(isDirty() && !readOnly);
+        saveAsButton.setEnabled(true);
 
         addButton.setEnabled(!readOnly);
         if (!readOnly) {
