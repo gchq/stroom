@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1200** : Removed blocking queue that was causing search to hang when full.
+
 
 ## [v6.0-beta.57] - 2019-07-15
 
