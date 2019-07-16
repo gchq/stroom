@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.58] - 2019-07-16
+
 * Issue **#1200** : Removed blocking queue that was causing search to hang when full.
 
 
@@ -1738,7 +1741,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.57...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.58...6.0
+[v6.0-beta.58]: https://github.com/gchq/stroom/compare/v7.0-beta.57...v6.0-beta.58
 [v6.0-beta.57]: https://github.com/gchq/stroom/compare/v7.0-beta.56...v6.0-beta.57
 [v6.0-beta.56]: https://github.com/gchq/stroom/compare/v7.0-beta.55...v6.0-beta.56
 [v6.0-beta.55]: https://github.com/gchq/stroom/compare/v7.0-beta.54...v6.0-beta.55
