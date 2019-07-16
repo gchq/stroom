@@ -55,6 +55,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     private final ButtonView upButton;
     private final ButtonView downButton;
     private IndexFields indexFields;
+    private IndexFieldDataProvider<IndexField> dataProvider;
 
     private boolean readOnly = true;
 
@@ -367,17 +368,20 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
         if (indexFields == null) {
             indexFields = new IndexFields(new ArrayList<>());
         }
-
-        getView().setRowData(0, indexFields.getIndexFields());
-        getView().setRowCount(indexFields.getIndexFields().size());
+        if (dataProvider == null) {
+            this.dataProvider = new IndexFieldDataProvider<>();
+            dataProvider.addDataDisplay(getView().getDataDisplay());
+        }
+        dataProvider.setList(indexFields.getIndexFields());
+        dataProvider.refresh();
     }
 
     @Override
     public void read(final DocRef docRef, final Index index) {
         if (index != null) {
             indexFields = index.getIndexFieldsObject();
-            refresh();
         }
+        refresh();
     }
 
     @Override

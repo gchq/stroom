@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1199** : The index fields page now copes with more than 100 index fields.
+
 
 ## [v6.0-beta.58] - 2019-07-16
 
