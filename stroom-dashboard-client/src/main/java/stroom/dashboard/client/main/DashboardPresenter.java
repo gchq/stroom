@@ -46,6 +46,7 @@ import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.WriteDocumentEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.shared.DocumentType;
@@ -85,6 +86,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private String lastLabel;
     private boolean loaded;
     private String customTitle;
+    private DocRef docRef;
 
     private String currentParams;
     private String lastUsedQueryInfo;
@@ -115,7 +117,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         }));
         registerHandler(saveAsButton.addClickHandler(event -> {
             if (saveAsButton.isEnabled()) {
-                ShowSaveAsEntityDialogEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
+                SaveAsDocumentEvent.fire(DashboardPresenter.this, docRef);
             }
         }));
 
@@ -180,6 +182,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     @Override
     protected void onRead(final DocRef docRef, final Dashboard dashboard) {
+        this.docRef = docRef;
         if (!loaded) {
             loaded = true;
 
@@ -398,8 +401,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     public String getTitle() {
         String title = "";
-        if (getEntity() != null) {
-            title = getEntity().getName();
+        if (docRef != null) {
+            title = docRef.getName();
         }
         if (customTitle != null && customTitle.length() > 0) {
             title = customTitle.replaceAll("\\$\\{name\\}", title);

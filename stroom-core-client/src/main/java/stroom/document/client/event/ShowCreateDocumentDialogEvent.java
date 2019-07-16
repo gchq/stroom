@@ -21,6 +21,9 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.query.api.v2.DocRef;
+
+import java.util.function.Consumer;
 
 public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDialogEvent.Handler> {
     private static Type<Handler> TYPE;
@@ -28,17 +31,28 @@ public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDi
     private final String docType;
     private final String docDisplayType;
     private final boolean allowNullFolder;
+    private final Consumer<DocRef> newDocConsumer;
 
-    private ShowCreateDocumentDialogEvent(final ExplorerNode selected, final String docType, final String docDisplayType, final boolean allowNullFolder) {
+    private ShowCreateDocumentDialogEvent(final ExplorerNode selected,
+                                          final String docType,
+                                          final String docDisplayType,
+                                          final boolean allowNullFolder,
+                                          final Consumer<DocRef> newDocConsumer) {
         this.selected = selected;
         this.docType = docType;
         this.docDisplayType = docDisplayType;
         this.allowNullFolder = allowNullFolder;
+        this.newDocConsumer = newDocConsumer;
     }
 
-    public static void fire(final HasHandlers handlers, final ExplorerNode selected, final String docType, final String docDisplayType, final boolean allowNullFolder) {
+    public static void fire(final HasHandlers handlers,
+                            final ExplorerNode selected,
+                            final String docType,
+                            final String docDisplayType,
+                            final boolean allowNullFolder,
+                            final Consumer<DocRef> newDocConsumer) {
         handlers.fireEvent(
-                new ShowCreateDocumentDialogEvent(selected, docType, docDisplayType, allowNullFolder));
+                new ShowCreateDocumentDialogEvent(selected, docType, docDisplayType, allowNullFolder, newDocConsumer));
     }
 
     public static Type<Handler> getType() {
@@ -72,6 +86,10 @@ public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDi
 
     public boolean isAllowNullFolder() {
         return allowNullFolder;
+    }
+
+    public Consumer<DocRef> getNewDocConsumer() {
+        return newDocConsumer;
     }
 
     public interface Handler extends EventHandler {

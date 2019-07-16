@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1197** : Restored Save As functionality.
+
 
 ## [v6.0-beta.57] - 2019-07-15
 
