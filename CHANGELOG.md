@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1197** : Restored Save As functionality.
+
+* Issue **#1199** : The index fields page now copes with more than 100 index fields.
+
+* Issue **#1200** : Removed blocking queue that was causing search to hang when full.
+
 * Issue **#1198** : Filtering by empty folders now works correctly.
 
 * Comment out rollCron in proxy-prod.yml

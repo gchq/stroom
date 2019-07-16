@@ -27,6 +27,7 @@ import stroom.core.client.ContentManager.CloseCallback;
 import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.DocumentServiceReadAction;
@@ -41,6 +42,7 @@ import stroom.widget.util.client.Future;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
     private final ClientDispatchAsync dispatcher;
@@ -180,6 +182,40 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
                 presenter.write(document);
                 save(getDocRef(document), document).onSuccess(doc -> presenter.read(getDocRef(doc), doc));
             }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void saveAs(final DocRef docRef) {
+        final DocumentTabData tabData = documentToTabDataMap.get(docRef);
+        if (tabData instanceof DocumentEditPresenter<?, ?>) {
+            final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
+
+            final Consumer<DocRef> newDocumentConsumer = newDocRef -> {
+                // If the user has created a new document then load it.
+                load(newDocRef).onSuccess(document -> {
+                    // Write to the newly created document.
+                    presenter.write(document);
+                    // Save the new document and read it back into the presenter.
+                    save(newDocRef, document).onSuccess(saved -> {
+                        // Read the new document into this presenter.
+                        presenter.read(newDocRef, saved);
+                        // Record that the open document has been switched.
+                        documentToTabDataMap.remove(docRef);
+                        documentToTabDataMap.put(newDocRef, tabData);
+                        tabDataToDocumentMap.put(tabData, newDocRef);
+                    });
+                });
+            };
+
+            // Ask the user to create a new document.
+            ShowCreateDocumentDialogEvent.fire(
+                    DocumentPlugin.this,
+                    ExplorerNode.create(docRef),
+                    docRef.getType(),
+                    docRef.getType(),
+                    true,
+                    newDocumentConsumer);
         }
     }
 

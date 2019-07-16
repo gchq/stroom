@@ -42,6 +42,8 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import java.util.function.Consumer;
+
 public class CreateDocumentPresenter
         extends MyPresenter<CreateDocumentView, CreateDocumentProxy>
         implements ShowCreateDocumentDialogEvent.Handler, PopupUiHandlers {
@@ -49,6 +51,7 @@ public class CreateDocumentPresenter
     private String docType;
     private String caption;
     private boolean allowNullFolder;
+    private Consumer<DocRef> newDocConsumer;
 
     @Inject
     public CreateDocumentPresenter(final EventBus eventBus, final CreateDocumentView view, final CreateDocumentProxy proxy,
@@ -67,6 +70,7 @@ public class CreateDocumentPresenter
     @Override
     public void onCreate(final ShowCreateDocumentDialogEvent event) {
         docType = event.getDocType();
+        newDocConsumer = event.getNewDocConsumer();
 
         entityTreePresenter.setSelectedItem(null);
 
@@ -125,7 +129,7 @@ public class CreateDocumentPresenter
                     AlertEvent.fireWarn(CreateDocumentPresenter.this,
                             "You must provide a name for the new " + docType.toLowerCase(), null);
                 } else {
-                    CreateDocumentEvent.fire(this, this, docType, docName, destinationFolderRef, getView().getPermissionInheritance());
+                    CreateDocumentEvent.fire(this, this, docType, docName, destinationFolderRef, getView().getPermissionInheritance(), newDocConsumer);
                 }
             }
         } else {

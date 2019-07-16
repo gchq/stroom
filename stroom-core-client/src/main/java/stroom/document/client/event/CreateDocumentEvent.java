@@ -24,6 +24,8 @@ import com.gwtplatform.mvp.client.MyPresenter;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.docref.DocRef;
 
+import java.util.function.Consumer;
+
 public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
     private static Type<Handler> TYPE;
 
@@ -32,17 +34,20 @@ public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
     private final String docName;
     private final DocRef destinationFolderRef;
     private final PermissionInheritance permissionInheritance;
+    private final Consumer<DocRef> newDocConsumer;
 
     private CreateDocumentEvent(final MyPresenter<?, ?> presenter,
                                 final String docType,
                                 final String docName,
                                 final DocRef destinationFolderRef,
-                                final PermissionInheritance permissionInheritance) {
+                                final PermissionInheritance permissionInheritance,
+                                final Consumer<DocRef> newDocConsumer) {
         this.presenter = presenter;
         this.docType = docType;
         this.docName = docName;
         this.destinationFolderRef = destinationFolderRef;
         this.permissionInheritance = permissionInheritance;
+        this.newDocConsumer = newDocConsumer;
     }
 
     public static void fire(final HasHandlers handlers,
@@ -50,8 +55,9 @@ public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
                             final String docType,
                             final String docName,
                             final DocRef destinationFolderRef,
-                            final PermissionInheritance permissionInheritance) {
-        handlers.fireEvent(new CreateDocumentEvent(presenter, docType, docName, destinationFolderRef, permissionInheritance));
+                            final PermissionInheritance permissionInheritance,
+                            final Consumer<DocRef> newDocConsumer) {
+        handlers.fireEvent(new CreateDocumentEvent(presenter, docType, docName, destinationFolderRef, permissionInheritance, newDocConsumer));
     }
 
     public static Type<Handler> getType() {
@@ -89,6 +95,10 @@ public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
 
     public PermissionInheritance getPermissionInheritance() {
         return permissionInheritance;
+    }
+
+    public Consumer<DocRef> getNewDocConsumer() {
+        return newDocConsumer;
     }
 
     public interface Handler extends EventHandler {
