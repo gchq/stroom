@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.59] - 2019-07-16
+
 * Issue **#1199** : The index fields page now copes with more than 100 index fields.
 
 
@@ -1743,7 +1746,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.58...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.59...6.0
+[v6.0-beta.59]: https://github.com/gchq/stroom/compare/v7.0-beta.58...v6.0-beta.59
 [v6.0-beta.58]: https://github.com/gchq/stroom/compare/v7.0-beta.57...v6.0-beta.58
 [v6.0-beta.57]: https://github.com/gchq/stroom/compare/v7.0-beta.56...v6.0-beta.57
 [v6.0-beta.56]: https://github.com/gchq/stroom/compare/v7.0-beta.55...v6.0-beta.56
