@@ -20,13 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Period;
 import stroom.feed.MetaMap;
 import stroom.io.SeekableInputStream;
-import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeMap;
@@ -45,10 +43,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Component
 @Profile(StroomSpringProfiles.TEST)
@@ -350,7 +345,7 @@ public class MockStreamStore implements StreamStore, Clearable {
 
     @Override
     public BaseResultList<Stream> find(final FindStreamCriteria criteria) throws RuntimeException {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getExtendedFieldMap(), null, null);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getAllFieldMap(), null, null);
         final List<Stream> list = new ArrayList<>();
         for (final Stream stream : fileData.keySet()) {
             final StreamAttributeMap streamAttributeMap = new StreamAttributeMap(stream);

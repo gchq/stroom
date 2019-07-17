@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1153** : Changed security context to be a Spring singleton to improve explorer performance.
 
+* Issue **#1202** : Fixed NumberFormatException in StreamAttributeMapUtil.
+
 
 ## [v6.0-beta.60] - 2019-07-16
 

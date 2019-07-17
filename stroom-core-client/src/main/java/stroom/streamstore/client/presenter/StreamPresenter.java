@@ -228,7 +228,9 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
         registerHandler(streamListFilter.addClickHandler(event -> {
             final ExpressionPresenter presenter = streamListFilterPresenter.get();
-            presenter.read(findStreamAttributeMapCriteria.obtainFindStreamCriteria().obtainExpression(), StreamDataSource.STREAM_STORE_DOC_REF, StreamDataSource.getExtendedFields());
+            presenter.read(findStreamAttributeMapCriteria.obtainFindStreamCriteria().obtainExpression(),
+                    StreamDataSource.STREAM_STORE_DOC_REF,
+                    StreamDataSource.getAllFields());
 
             final PopupUiHandlers streamFilterPUH = new DefaultPopupUiHandlers() {
                 @Override

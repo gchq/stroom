@@ -1,11 +1,9 @@
 package stroom.streamstore.shared;
 
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,7 +23,8 @@ public class StreamDataSource {
     private static final List<DataSourceField> FIELDS = new ArrayList<>();
     private static final Map<String, DataSourceField> FIELD_MAP;
     private static final List<DataSourceField> EXTENDED_FIELDS = new ArrayList<>();
-    private static final Map<String, DataSourceField> EXTENDED_FIELD_MAP;
+    private static final List<DataSourceField> ALL_FIELDS = new ArrayList<>();
+    private static final Map<String, DataSourceField> ALL_FIELD_MAP;
     private static final Map<String, String> STREAM_FIELDS = new HashMap<>();
     private static final Map<String, String> STREAM_TYPE_FIELDS = new HashMap<>();
 
@@ -55,6 +54,7 @@ public class StreamDataSource {
         STREAM_FIELDS.put(STREAM_ID, Stream.ID);
         STREAM_FIELDS.put(PARENT_STREAM_ID, Stream.PARENT_STREAM_ID);
         STREAM_FIELDS.put(CREATE_TIME, Stream.CREATE_MS);
+        STREAM_FIELDS.put(EFFECTIVE_TIME, Stream.EFFECTIVE_MS);
         STREAM_TYPE_FIELDS.put(STREAM_TYPE_NAME, StreamType.NAME);
 
         // Non grouped fields
@@ -75,16 +75,8 @@ public class StreamDataSource {
 
 
         // Single Items
-        EXTENDED_FIELDS.add(DataSourceUtil.createDocRefField(FEED_NAME, Feed.ENTITY_TYPE));
         EXTENDED_FIELDS.add(DataSourceUtil.createNumField(DURATION));
         EXTENDED_FIELDS.add(DataSourceUtil.createStringField(NODE));
-        EXTENDED_FIELDS.add(DataSourceUtil.createDocRefField(PIPELINE_UUID, PipelineEntity.ENTITY_TYPE));
-        EXTENDED_FIELDS.add(DataSourceUtil.createStringField(STATUS));
-        EXTENDED_FIELDS.add(DataSourceUtil.createStringField(STREAM_TYPE_NAME));
-
-        // Id's
-        EXTENDED_FIELDS.add(DataSourceUtil.createIdField(STREAM_ID));
-        EXTENDED_FIELDS.add(DataSourceUtil.createIdField(PARENT_STREAM_ID));
 
         // Counts
         EXTENDED_FIELDS.add(DataSourceUtil.createNumField(REC_READ));
@@ -94,15 +86,13 @@ public class StreamDataSource {
         EXTENDED_FIELDS.add(DataSourceUtil.createNumField(REC_WARN));
         EXTENDED_FIELDS.add(DataSourceUtil.createNumField(REC_INFO));
 
-        // Times
-        EXTENDED_FIELDS.add(DataSourceUtil.createDateField(CREATE_TIME));
-        EXTENDED_FIELDS.add(DataSourceUtil.createDateField(EFFECTIVE_TIME));
-        EXTENDED_FIELDS.add(DataSourceUtil.createDateField(STATUS_TIME));
-
         // Sizes
         EXTENDED_FIELDS.add(DataSourceUtil.createNumField(FILE_SIZE));
         EXTENDED_FIELDS.add(DataSourceUtil.createNumField(STREAM_SIZE));
-        EXTENDED_FIELD_MAP = EXTENDED_FIELDS.stream().collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
+
+        ALL_FIELDS.addAll(FIELDS);
+        ALL_FIELDS.addAll(EXTENDED_FIELDS);
+        ALL_FIELD_MAP = ALL_FIELDS.stream().collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
     }
 
     public static List<DataSourceField> getFields() {
@@ -113,19 +103,23 @@ public class StreamDataSource {
         return FIELD_MAP;
     }
 
-    public static List<DataSourceField> getExtendedFields() {
-        return new ArrayList<>(EXTENDED_FIELDS);
-    }
-
-    public static Map<String, DataSourceField> getExtendedFieldMap() {
-        return EXTENDED_FIELD_MAP;
-    }
-
     public static Map<String, String> getStreamFields() {
         return STREAM_FIELDS;
     }
 
     public static Map<String, String> getStreamTypeFields() {
         return STREAM_TYPE_FIELDS;
+    }
+
+    public static List<DataSourceField> getAllFields() {
+        return ALL_FIELDS;
+    }
+
+    public static Map<String, DataSourceField> getAllFieldMap() {
+        return ALL_FIELD_MAP;
+    }
+
+    public static List<DataSourceField> getExtendedFields() {
+        return EXTENDED_FIELDS;
     }
 }
