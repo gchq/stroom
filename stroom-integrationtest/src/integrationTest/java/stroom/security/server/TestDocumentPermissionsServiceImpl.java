@@ -37,6 +37,7 @@ import stroom.util.test.FileSystemTestUtil;
 import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -157,10 +158,21 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
         userGroupsCache.clear();
         userDocumentPermissionsCache.clear();
 
-        final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(user.getUuid());
-        for (final String permission : permissions) {
-            Assert.assertTrue(userDocumentPermissions.hasDocumentPermission(docRef.getUuid(), permission));
+        final Set<UserRef> allUsers = new HashSet<>();
+        allUsers.add(user);
+        allUsers.addAll(userGroupsCache.get(user));
+
+        Set<String> missingPermissions = new HashSet<>(Arrays.asList(permissions));
+        for (final UserRef userRef : allUsers) {
+            final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userRef.getUuid());
+            for (final String permission : permissions) {
+                if (userDocumentPermissions.hasDocumentPermission(docRef.getUuid(), permission)) {
+                    missingPermissions.remove(permission);
+                }
+            }
         }
+
+        Assert.assertEquals(0, missingPermissions.size());
     }
 
     private UserRef createUser(final String name) {
