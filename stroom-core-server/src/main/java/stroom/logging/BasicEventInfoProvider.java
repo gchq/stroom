@@ -23,6 +23,7 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import stroom.docstore.shared.Doc;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Document;
@@ -59,6 +60,14 @@ public class BasicEventInfoProvider implements EventInfoProvider {
             object.setType(docRef.getType());
             object.setId(docRef.getUuid());
             object.setName(docRef.getName());
+            return object;
+
+        } else if (obj instanceof Doc) {
+            final Doc doc = (Doc) obj;
+            final Object object = new Object();
+            object.setType(doc.getType());
+            object.setId(doc.getUuid());
+            object.setName(doc.getName());
             return object;
 
         } else if (obj instanceof BaseEntity) {

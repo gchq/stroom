@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1202** : Fixed NumberFormatException in StreamAttributeMapUtil.
 
+* Issue **#1203** : Fixed event logging detail for dictionaries.
+
 
 ## [v6.0-beta.60] - 2019-07-16
 
