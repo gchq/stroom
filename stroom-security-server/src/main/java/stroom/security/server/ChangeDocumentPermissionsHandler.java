@@ -52,17 +52,14 @@ public class ChangeDocumentPermissionsHandler
     private static final Logger LOGGER = LoggerFactory.getLogger(ChangeDocumentPermissionsHandler.class);
 
     private final DocumentPermissionService documentPermissionService;
-    private final UserDocumentPermissionsCache userDocumentPermissionsCache;
     private final SecurityContext securityContext;
     private final ExplorerNodeService explorerNodeService;
 
     @Inject
     ChangeDocumentPermissionsHandler(final DocumentPermissionService documentPermissionService,
-                                     final UserDocumentPermissionsCache userDocumentPermissionsCache,
                                      final SecurityContext securityContext,
                                      final ExplorerNodeService explorerNodeService) {
         this.documentPermissionService = documentPermissionService;
-        this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.securityContext = securityContext;
         this.explorerNodeService = explorerNodeService;
     }
@@ -85,9 +82,6 @@ public class ChangeDocumentPermissionsHandler
             if (action.getCascade() != null) {
                 cascadeChanges(docRef, changeSet, affectedDocRefs, affectedUserRefs, action.getCascade());
             }
-
-            // Clear everything from the user document permissions cache.
-            userDocumentPermissionsCache.removeAll();
 
             return VoidResult.INSTANCE;
         }

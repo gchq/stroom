@@ -26,6 +26,11 @@ import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.query.api.v2.DocRef;
+import stroom.security.server.event.AddPermissionEvent;
+import stroom.security.server.event.ClearDocumentPermissionsEvent;
+import stroom.security.server.event.ClearUserPermissionsEvent;
+import stroom.security.server.event.PermissionChangeEventBus;
+import stroom.security.server.event.RemovePermissionEvent;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserRef;
 
@@ -35,7 +40,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 @Component
@@ -45,6 +49,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     private static final String SQL_INSERT_PERMISSION;
     private static final String SQL_DELETE_PERMISSION;
     private static final String SQL_GET_PERMISSION_FOR_DOCUMENT;
+    private static final String SQL_GET_PERMISSIONS_FOR_USER;
     private static final String SQL_GET_PERMISSION_KEYSET_FOR_USER;
     private static final String SQL_DELETE_DOCUMENT_PERMISSIONS;
     private static final String SQL_DELETE_USER_PERMISSIONS;
@@ -165,6 +170,22 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     }
 
     static {
+        SQL_GET_PERMISSIONS_FOR_USER = "" +
+                "SELECT DISTINCT" +
+                " doc." +
+                DocumentPermission.DOC_UUID +
+                ", doc." +
+                DocumentPermission.PERMISSION +
+                " FROM " +
+                DocumentPermission.TABLE_NAME +
+                " AS " +
+                "doc" +
+                " WHERE " +
+                DocumentPermission.USER_UUID +
+                " = ?";
+    }
+
+    static {
         final StringBuilder sql = new StringBuilder();
         sql.append("SELECT ");
         sql.append("doc.");
@@ -198,12 +219,15 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
     protected final StroomEntityManager entityManager;
     private final DocumentTypePermissions documentTypePermissions;
+    private final PermissionChangeEventBus permissionChangeEventBus;
 
     @Inject
     DocumentPermissionServiceImpl(final StroomEntityManager entityManager,
-                                  final DocumentTypePermissions documentTypePermissions) {
+                                  final DocumentTypePermissions documentTypePermissions,
+                                  final PermissionChangeEventBus permissionChangeEventBus) {
         this.entityManager = entityManager;
         this.documentTypePermissions = documentTypePermissions;
+        this.permissionChangeEventBus = permissionChangeEventBus;
     }
 
     @Override
@@ -238,36 +262,22 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
     @Override
     @SuppressWarnings("unchecked")
-    public UserDocumentPermissions getPermissionsForUsers(final Set<String> users) {
-        final StringBuilder sql = new StringBuilder();
-        sql.append("SELECT DISTINCT");
-        sql.append(" doc.");
-        sql.append(DocumentPermission.DOC_UUID);
-        sql.append(", doc.");
-        sql.append(DocumentPermission.PERMISSION);
+    public UserDocumentPermissions getPermissionsForUser(final String userUuid) {
+        final UserDocumentPermissions userDocumentPermissions = new UserDocumentPermissions();
 
-        sql.append(" FROM ");
-        sql.append(DocumentPermission.TABLE_NAME);
-        sql.append(" AS ");
-        sql.append("doc");
+        try {
+            final SqlBuilder sqlBuilder = new SqlBuilder(SQL_GET_PERMISSIONS_FOR_USER, userUuid);
+            final List list = entityManager.executeNativeQueryResultList(sqlBuilder);
+            list.forEach(o -> {
+                final Object[] arr = (Object[]) o;
+                userDocumentPermissions.addPermission(arr[0].toString(), arr[1].toString());
+            });
+        } catch (final RuntimeException e) {
+            LOGGER.error("getPermissionsForUser()", e);
+            throw e;
+        }
 
-        sql.append(" WHERE ");
-        sql.append(DocumentPermission.USER_UUID);
-        sql.append(" IN (");
-        sql.append(toCommaSeparatedList(users));
-        sql.append(")");
-
-        Map<String, Set<String>> map = new HashMap<>();
-        final List results = entityManager.executeNativeQueryResultList(new SqlBuilder(sql.toString()));
-        results.forEach(r -> {
-            final Object[] o = (Object[]) r;
-            map.computeIfAbsent(o[0].toString(), k -> new HashSet<>()).add(o[1].toString());
-        });
-        return new UserDocumentPermissionsImpl(map);
-    }
-
-    private String toCommaSeparatedList(Set<String> set) {
-        return set.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(","));
+        return userDocumentPermissions;
     }
 
     @Override
@@ -287,10 +297,12 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                                 "permission [{}], nothing inserted",
                         userRef.getUuid(), document.getType(), document.getUuid(), permission);
             } else {
-               LOGGER.debug("Inserted {} row with userRef [{}], document type [{}], document ref [{}], " +
+                LOGGER.debug("Inserted {} row with userRef [{}], document type [{}], document ref [{}], " +
                                 "permission [{}]",
                         insertCount, userRef.getUuid(), document.getType(), document.getUuid(), permission);
             }
+
+            permissionChangeEventBus.fire(new AddPermissionEvent(userRef.getUuid(), document.getUuid(), permission));
         } catch (final RuntimeException e) {
             LOGGER.error("addPermission()", e);
             throw e;
@@ -302,6 +314,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         try {
             final SqlBuilder sqlBuilder = new SqlBuilder(SQL_DELETE_PERMISSION, userRef.getUuid(), document.getType(), document.getUuid(), permission);
             entityManager.executeNativeUpdate(sqlBuilder);
+
+            permissionChangeEventBus.fire(new RemovePermissionEvent(userRef.getUuid(), document.getUuid(), permission));
         } catch (final RuntimeException e) {
             LOGGER.error("removePermission()", e);
             throw e;
@@ -313,6 +327,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         try {
             final SqlBuilder sqlBuilder = new SqlBuilder(SQL_DELETE_DOCUMENT_PERMISSIONS, document.getType(), document.getUuid());
             entityManager.executeNativeUpdate(sqlBuilder);
+
+            permissionChangeEventBus.fire(new ClearDocumentPermissionsEvent(document.getUuid()));
         } catch (final RuntimeException e) {
             LOGGER.error("clearDocumentPermissions()", e);
             throw e;
@@ -324,6 +340,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         try {
             final SqlBuilder sqlBuilder = new SqlBuilder(SQL_DELETE_USER_PERMISSIONS, userRef.getUuid());
             entityManager.executeNativeUpdate(sqlBuilder);
+
+            permissionChangeEventBus.fire(new ClearUserPermissionsEvent(userRef.getUuid()));
         } catch (final RuntimeException e) {
             LOGGER.error("clearUserPermissions()", e);
             throw e;

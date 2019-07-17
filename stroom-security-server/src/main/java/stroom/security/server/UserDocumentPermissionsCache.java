@@ -20,62 +20,46 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.springframework.stereotype.Component;
-import stroom.entity.server.event.EntityEvent;
-import stroom.entity.server.event.EntityEventBus;
-import stroom.entity.server.event.EntityEventHandler;
-import stroom.entity.shared.EntityAction;
 import stroom.node.server.StroomPropertyService;
-import stroom.query.api.v2.DocRef;
-import stroom.security.shared.UserRef;
+import stroom.security.server.event.AddPermissionEvent;
+import stroom.security.server.event.ClearDocumentPermissionsEvent;
+import stroom.security.server.event.ClearUserPermissionsEvent;
+import stroom.security.server.event.PermissionChangeEvent;
+import stroom.security.server.event.PermissionChangeEventHandler;
+import stroom.security.server.event.RemovePermissionEvent;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Component
-@EntityEventHandler(action = EntityAction.CLEAR_CACHE)
-public class UserDocumentPermissionsCache implements EntityEvent.Handler {
+@PermissionChangeEventHandler
+public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handler {
     private static final String MAXIMUM_SIZE_PROPERTY = "stroom.security.documentPermissions.maxCacheSize";
 
-    private static final int DEFAULT_MAXIMUM_SIZE = 100000;
+    private static final int DEFAULT_MAXIMUM_SIZE = 1000;
+    private static final String CACHE_NAME = "User Document Permissions Cache";
 
-    private final Provider<EntityEventBus> eventBusProvider;
     private final StroomPropertyService stroomPropertyService;
-    private final UserGroupsCache userGroupsCache;
 
     private final CacheManager cacheManager;
     private final DocumentPermissionService documentPermissionService;
 
     private volatile Integer lastMaximumSize;
-    private volatile LoadingCache<UserRef, UserDocumentPermissions> cache;
+    private volatile LoadingCache<String, UserDocumentPermissions> cache;
 
     @Inject
     public UserDocumentPermissionsCache(final CacheManager cacheManager,
                                         final DocumentPermissionService documentPermissionService,
-                                        final Provider<EntityEventBus> eventBusProvider,
-                                        final StroomPropertyService stroomPropertyService,
-                                        final UserGroupsCache userGroupsCache) {
+                                        final StroomPropertyService stroomPropertyService) {
         this.cacheManager = cacheManager;
         this.documentPermissionService = documentPermissionService;
-        this.eventBusProvider = eventBusProvider;
         this.stroomPropertyService = stroomPropertyService;
-        this.userGroupsCache = userGroupsCache;
     }
 
-    UserDocumentPermissions get(final UserRef userRef) {
-        return getCache().getUnchecked(userRef);
-    }
-
-    void removeAll() {
-        clear();
-        final EntityEventBus entityEventBus = eventBusProvider.get();
-        EntityEvent.fire(entityEventBus, null, EntityAction.CLEAR_CACHE);
+    UserDocumentPermissions get(final String userUuid) {
+        return getCache().getUnchecked(userUuid);
     }
 
     void clear() {
@@ -85,10 +69,34 @@ public class UserDocumentPermissionsCache implements EntityEvent.Handler {
     }
 
     @Override
-    public void onChange(final EntityEvent event) {
+    public void onChange(final PermissionChangeEvent event) {
         if (cache != null) {
-            clear();
-//            cache.invalidate(event.getDocRef());
+            if (event instanceof AddPermissionEvent) {
+                final AddPermissionEvent addPermissionEvent = (AddPermissionEvent) event;
+                final UserDocumentPermissions userDocumentPermissions = getCache().asMap().get(addPermissionEvent.getUserUuid());
+                if (userDocumentPermissions != null) {
+                    userDocumentPermissions.addPermission(addPermissionEvent.getDocUuid(), addPermissionEvent.getPermission());
+                }
+
+            } else if (event instanceof RemovePermissionEvent) {
+                final RemovePermissionEvent removePermissionEvent = (RemovePermissionEvent) event;
+                final UserDocumentPermissions userDocumentPermissions = getCache().asMap().get(removePermissionEvent.getUserUuid());
+                if (userDocumentPermissions != null) {
+                    userDocumentPermissions.removePermission(removePermissionEvent.getDocUuid(), removePermissionEvent.getPermission());
+                }
+
+            } else if (event instanceof ClearDocumentPermissionsEvent) {
+                final ClearDocumentPermissionsEvent clearDocumentPermissionsEvent = (ClearDocumentPermissionsEvent) event;
+                getCache().asMap().values().forEach(userDocumentPermissions -> {
+                    if (userDocumentPermissions != null) {
+                        userDocumentPermissions.clearDocumentPermissions(clearDocumentPermissionsEvent.getDocUuid());
+                    }
+                });
+
+            } else if (event instanceof ClearUserPermissionsEvent) {
+                final ClearUserPermissionsEvent clearUserPermissionsEvent = (ClearUserPermissionsEvent) event;
+                getCache().invalidate(clearUserPermissionsEvent.getUserUuid());
+            }
         }
     }
 
@@ -96,7 +104,7 @@ public class UserDocumentPermissionsCache implements EntityEvent.Handler {
         return stroomPropertyService.getIntProperty(MAXIMUM_SIZE_PROPERTY, DEFAULT_MAXIMUM_SIZE);
     }
 
-    private LoadingCache<UserRef, UserDocumentPermissions> getCache() {
+    private LoadingCache<String, UserDocumentPermissions> getCache() {
         if (lastMaximumSize == null || lastMaximumSize != getMaximumSize()) {
             createCache();
         }
@@ -107,21 +115,15 @@ public class UserDocumentPermissionsCache implements EntityEvent.Handler {
     private synchronized void createCache() {
         final int maximumSize = getMaximumSize();
         if (lastMaximumSize == null || lastMaximumSize != maximumSize) {
-            final CacheLoader<UserRef, UserDocumentPermissions> cacheLoader = CacheLoader.from(userRef -> {
-                final List<UserRef> userGroups = userGroupsCache.get(userRef);
-                final Set<String> users = new HashSet<>();
-                users.add(userRef.getUuid());
-                users.addAll(userGroups.stream().map(DocRef::getUuid).collect(Collectors.toSet()));
-                return documentPermissionService.getPermissionsForUsers(users);
-            });
+            final CacheLoader<String, UserDocumentPermissions> cacheLoader = CacheLoader.from(documentPermissionService::getPermissionsForUser);
             final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                     .maximumSize(maximumSize)
                     .expireAfterAccess(10, TimeUnit.MINUTES);
-            final LoadingCache<UserRef, UserDocumentPermissions> cache = cacheBuilder.build(cacheLoader);
+            final LoadingCache<String, UserDocumentPermissions> cache = cacheBuilder.build(cacheLoader);
             if (lastMaximumSize == null) {
-                cacheManager.registerCache("User Document Permissions Cache", cacheBuilder, cache);
+                cacheManager.registerCache(CACHE_NAME, cacheBuilder, cache);
             } else {
-                cacheManager.replaceCache("User Document Permissions Cache", cacheBuilder, cache);
+                cacheManager.replaceCache(CACHE_NAME, cacheBuilder, cache);
             }
             lastMaximumSize = maximumSize;
             this.cache = cache;

@@ -157,7 +157,7 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
         userGroupsCache.clear();
         userDocumentPermissionsCache.clear();
 
-        final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(user);
+        final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(user.getUuid());
         for (final String permission : permissions) {
             Assert.assertTrue(userDocumentPermissions.hasDocumentPermission(docRef.getUuid(), permission));
         }

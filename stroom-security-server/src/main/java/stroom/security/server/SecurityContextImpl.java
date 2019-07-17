@@ -199,23 +199,16 @@ class SecurityContextImpl implements SecurityContext {
 
     private boolean hasAppPermission(final UserRef userRef, final String permission) {
         // See if the user has an explicit permission.
-        boolean result = hasUserAppPermission(userRef, permission);
-
-        // See if the user belongs to a group that has permission.
-        if (!result) {
-            final List<UserRef> userGroups = userGroupsCache.get(userRef);
-            result = hasUserGroupsAppPermission(userGroups, permission);
+        if (hasUserAppPermission(userRef, permission)) {
+            return true;
         }
 
-        return result;
-    }
-
-    private boolean hasUserGroupsAppPermission(final List<UserRef> userGroups, final String permission) {
+        // See if the user belongs to a group that has permission.
+        final List<UserRef> userGroups = userGroupsCache.get(userRef);
         if (userGroups != null) {
             for (final UserRef userGroup : userGroups) {
-                final boolean result = hasUserAppPermission(userGroup, permission);
-                if (result) {
-                    return result;
+                if (hasUserAppPermission(userGroup, permission)) {
+                    return true;
                 }
             }
         }
@@ -224,14 +217,14 @@ class SecurityContextImpl implements SecurityContext {
 
     private boolean hasUserAppPermission(final UserRef userRef, final String permission) {
         final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
-        if (userAppPermissions != null) {
-            return userAppPermissions.getUserPermissons().contains(permission);
+        if (userAppPermissions == null) {
+            return false;
         }
-        return false;
+        return userAppPermissions.getUserPermissons().contains(permission);
     }
 
     @Override
-    public boolean hasDocumentPermission(final String documentType, final String documentId, final String permission) {
+    public boolean hasDocumentPermission(final String documentType, final String documentUuid, final String permission) {
         // Let administrators do anything.
         if (isAdmin()) {
             return true;
@@ -245,12 +238,34 @@ class SecurityContextImpl implements SecurityContext {
             throw new AuthenticationException("No user is currently logged in");
         }
 
-        final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userRef);
+        return hasDocumentPermission(userRef, documentUuid, permission);
+    }
+
+    private boolean hasDocumentPermission(final UserRef userRef, final String documentUuid, final String permission) {
+        // See if the user has an explicit permission.
+        if (hasUserDocumentPermission(userRef.getUuid(), documentUuid, permission)) {
+            return true;
+        }
+
+        // See if the user belongs to a group that has permission.
+        final List<UserRef> userGroups = userGroupsCache.get(userRef);
+        if (userGroups != null) {
+            for (final UserRef userGroup : userGroups) {
+                if (hasUserDocumentPermission(userGroup.getUuid(), documentUuid, permission)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasUserDocumentPermission(final String userUuid, final String documentUuid, final String permission) {
+        final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userUuid);
         if (userDocumentPermissions == null) {
             return false;
         }
 
-        return userDocumentPermissions.hasDocumentPermission(documentId, permission);
+        return userDocumentPermissions.hasDocumentPermission(documentUuid, permission);
     }
 
     @Override
@@ -263,9 +278,6 @@ class SecurityContextImpl implements SecurityContext {
             if (hasDocumentPermission(documentType, documentUuid, DocumentPermissionNames.OWNER)) {
                 final DocRef docRef = new DocRef(documentType, documentUuid);
                 documentPermissionService.clearDocumentPermissions(docRef);
-
-                // Clear everything from the user document permissions cache.
-                userDocumentPermissionsCache.removeAll();
             }
         }
     }
@@ -294,9 +306,6 @@ class SecurityContextImpl implements SecurityContext {
                 // Inherit permissions from the parent folder if there is one.
                 // TODO : This should be part of the explorer service.
                 copyPermissions(sourceType, sourceUuid, documentType, documentUuid);
-
-                // Clear everything from the user document permissions cache.
-                userDocumentPermissionsCache.removeAll();
             }
         }
     }

@@ -1098,7 +1098,7 @@ public class DefaultProperties {
                 .build());
         list.add(new GlobalProperty.Builder()
                 .name("stroom.security.documentPermissions.maxCacheSize")
-                .value("100000")
+                .value("1000")
                 .description("The maximum size of the document permissions cache")
                 .editable(true)
                 .build());

@@ -25,7 +25,7 @@ import java.util.Set;
 public interface DocumentPermissionService {
     DocumentPermissions getPermissionsForDocument(DocRef document);
 
-    UserDocumentPermissions getPermissionsForUsers(Set<String> users);
+    UserDocumentPermissions getPermissionsForUser(String userUuid);
 
     void addPermission(UserRef userRef, DocRef document, String permission);
 

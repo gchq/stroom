@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1201** : Document permission changes now mutate the user document permissions cache rather than clearing it.
+
 
 ## [v6.0-beta.60] - 2019-07-16
 
