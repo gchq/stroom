@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.61] - 2019-07-17
+
 * Issue **#1201** : Document permission changes now mutate the user document permissions cache rather than clearing it.
 
 * Issue **#1153** : Changed security context to be a Spring singleton to improve explorer performance.
@@ -1759,7 +1762,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.60...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.61...6.0
+[v6.0-beta.61]: https://github.com/gchq/stroom/compare/v7.0-beta.60...v6.0-beta.61
 [v6.0-beta.60]: https://github.com/gchq/stroom/compare/v7.0-beta.59...v6.0-beta.60
 [v6.0-beta.59]: https://github.com/gchq/stroom/compare/v7.0-beta.58...v6.0-beta.59
 [v6.0-beta.58]: https://github.com/gchq/stroom/compare/v7.0-beta.57...v6.0-beta.58
