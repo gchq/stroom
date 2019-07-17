@@ -45,7 +45,7 @@ import java.util.Set;
 
 @Component
 @Profile(SecurityConfiguration.PROD_SECURITY)
-@Scope(value = StroomScope.PROTOTYPE, proxyMode = ScopedProxyMode.INTERFACES)
+@Scope(value = StroomScope.SINGLETON, proxyMode = ScopedProxyMode.INTERFACES)
 class SecurityContextImpl implements SecurityContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
     private static final String INTERNAL = "INTERNAL";

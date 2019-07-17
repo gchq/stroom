@@ -39,6 +39,7 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
     private static final String MAXIMUM_SIZE_PROPERTY = "stroom.security.documentPermissions.maxCacheSize";
 
     private static final int DEFAULT_MAXIMUM_SIZE = 1000;
+    private static final long TEN_MINUTES = 10 * 60 * 1000;
     private static final String CACHE_NAME = "User Document Permissions Cache";
 
     private final StroomPropertyService stroomPropertyService;
@@ -47,6 +48,7 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
     private final DocumentPermissionService documentPermissionService;
 
     private volatile Integer lastMaximumSize;
+    private volatile long lastMaximumSizeCheck;
     private volatile LoadingCache<String, UserDocumentPermissions> cache;
 
     @Inject
@@ -101,7 +103,13 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
     }
 
     private int getMaximumSize() {
-        return stroomPropertyService.getIntProperty(MAXIMUM_SIZE_PROPERTY, DEFAULT_MAXIMUM_SIZE);
+        int size = DEFAULT_MAXIMUM_SIZE;
+        final long now = System.currentTimeMillis();
+        if (lastMaximumSize == null || lastMaximumSizeCheck + TEN_MINUTES < now) {
+            size = stroomPropertyService.getIntProperty(MAXIMUM_SIZE_PROPERTY, DEFAULT_MAXIMUM_SIZE);
+            lastMaximumSizeCheck = now;
+        }
+        return size;
     }
 
     private LoadingCache<String, UserDocumentPermissions> getCache() {

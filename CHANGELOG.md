@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1201** : Document permission changes now mutate the user document permissions cache rather than clearing it.
 
+* Issue **#1153** : Changed security context to be a Spring singleton to improve explorer performance.
+
 
 ## [v6.0-beta.60] - 2019-07-16
 
