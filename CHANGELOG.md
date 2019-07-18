@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1205** : Change proxy repo clean to not delete configured rootRepoDir.
+
 
 ## [v6.0-beta.63] - 2019-07-17
 

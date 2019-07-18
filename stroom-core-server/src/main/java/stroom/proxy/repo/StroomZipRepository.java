@@ -58,11 +58,14 @@ public class StroomZipRepository {
 
     // 1 hour
     private final static int DEFAULT_LOCK_AGE_MS = 1000 * 60 * 60;
-    // Ten seconds
-    private final static int TEN_SECONDS = 1000 * 10;
+
+    // A somewhat hacky way of preventing a directory from being deleted before data can be written to it
+    // which assumes the data is written within 10s.
+    private final static int DEFAULT_CLEAN_DELAY = 1000 * 10; // Ten seconds
 
     private final AtomicLong fileCount = new AtomicLong(0);
     private final int lockDeleteAgeMs;
+    private final int cleanDelayMs;
 
     private final String repositoryFormat;
 
@@ -85,7 +88,13 @@ public class StroomZipRepository {
     private boolean finished;
 
     public StroomZipRepository(final String dir, final boolean readOnly) {
-        this(dir, null, false, DEFAULT_LOCK_AGE_MS, readOnly, null);
+        this(dir,
+                null,
+                false,
+                DEFAULT_LOCK_AGE_MS,
+                DEFAULT_CLEAN_DELAY,
+                readOnly,
+                null);
     }
 
 //    /**
@@ -96,12 +105,23 @@ public class StroomZipRepository {
 //    }
 
 
+    // For use in tests
     StroomZipRepository(final String dir,
                         final String repositoryFormat,
                         final boolean lock,
                         final int lockDeleteAgeMs,
+                        final int cleanDelayMs,
                         final boolean readOnly) {
-        this(dir, repositoryFormat, lock, lockDeleteAgeMs, readOnly, null);
+        this(dir, repositoryFormat, lock, lockDeleteAgeMs, cleanDelayMs, readOnly, null);
+    }
+
+    StroomZipRepository(final String dir,
+                        final String repositoryFormat,
+                        final boolean lock,
+                        final int lockDeleteAgeMs,
+                        final boolean readOnly,
+                        final LinkedBlockingDeque<StroomZipRepository> rolledRepositoryQueue) {
+        this(dir, repositoryFormat, lock, lockDeleteAgeMs, DEFAULT_CLEAN_DELAY, readOnly, null);
     }
 
     /**
@@ -111,6 +131,7 @@ public class StroomZipRepository {
                         final String repositoryFormat,
                         final boolean lock,
                         final int lockDeleteAgeMs,
+                        final int cleanDelayMs,
                         final boolean readOnly,
                         final LinkedBlockingDeque<StroomZipRepository> rolledRepositoryQueue) {
         this.readOnly = readOnly;
@@ -146,6 +167,7 @@ public class StroomZipRepository {
         }
 
         this.lockDeleteAgeMs = lockDeleteAgeMs;
+        this.cleanDelayMs = cleanDelayMs;
         if (lock) {
             currentDir = Paths.get(dir + LOCK_EXTENSION);
             baseResultantDir = Paths.get(dir);
@@ -392,25 +414,28 @@ public class StroomZipRepository {
         }
     }
 
-    void clean() {
+    void clean(final boolean deleteRootDirectory) {
         LOGGER.info("clean() " + currentDir);
-        clean(currentDir);
+        clean(currentDir, deleteRootDirectory);
     }
 
-    private void clean(final Path path) {
+    private void clean(final Path path, final boolean deleteRootDirectory) {
         try {
             if (path != null && Files.isDirectory(path)) {
-                final long tenSecondsAgoMs = System.currentTimeMillis() - TEN_SECONDS;
+                final long oldestDirMs = System.currentTimeMillis() - cleanDelayMs;
                 final long oldestLockFileMs = System.currentTimeMillis() - lockDeleteAgeMs;
 
-                cleanDir(path, tenSecondsAgoMs, oldestLockFileMs);
+                cleanDir(path, oldestDirMs, oldestLockFileMs, deleteRootDirectory);
             }
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
 
-    private void cleanDir(final Path dir, final long tenSecondsAgoMs, final long oldestLockFileMs) {
+    private void cleanDir(final Path dir,
+                          final long oldestDirMs,
+                          final long oldestLockFileMs,
+                          final boolean deleteRootDirectory) {
         try {
             Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
                 @Override
@@ -435,7 +460,11 @@ public class StroomZipRepository {
 
                 @Override
                 public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
-                    attemptDirDeletion(dir, tenSecondsAgoMs);
+                    if (getRootDir().equals(dir) && !deleteRootDirectory) {
+                        LOGGER.debug("Won't delete directory {} as it is the root", dir);
+                    } else {
+                        attemptDirDeletion(dir, oldestDirMs);
+                    }
                     return super.postVisitDirectory(dir, exc);
                 }
             });
@@ -444,7 +473,7 @@ public class StroomZipRepository {
         }
     }
 
-    private void attemptDirDeletion(final Path dir, final long tenSecondsAgoMs) {
+    private void attemptDirDeletion(final Path dir, final long oldestDirMs) {
         try {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("attemptDirDeletion() - " + FileUtil.getCanonicalPath(dir));
@@ -453,7 +482,7 @@ public class StroomZipRepository {
             // Only try and delete directories that are at least 10 seconds old.
             final BasicFileAttributes attr = Files.readAttributes(dir, BasicFileAttributes.class);
             final FileTime creationTime = attr.creationTime();
-            if (creationTime.toMillis() < tenSecondsAgoMs) {
+            if (creationTime.toMillis() < oldestDirMs) {
                 // Synchronize deletion of directories so that the getStroomOutputStream() method has a
                 // chance to create dirs and place files inside them before this method cleans them up.
                 synchronized (StroomZipRepository.this) {
