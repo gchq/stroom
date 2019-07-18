@@ -6,7 +6,6 @@ public class MetaProperties {
     private String feedName;
     private String processorUuid;
     private String pipelineUuid;
-    private Long processorTaskId;
     private Long createMs;
     private Long effectiveMs;
     private Long statusMs;
@@ -29,10 +28,6 @@ public class MetaProperties {
 
     public String getPipelineUuid() {
         return pipelineUuid;
-    }
-
-    public Long getProcessorTaskId() {
-        return processorTaskId;
     }
 
     public Long getCreateMs() {
@@ -99,11 +94,6 @@ public class MetaProperties {
             return this;
         }
 
-        public Builder processorTaskId(final Long processorTaskId) {
-            dp.processorTaskId = processorTaskId;
-            return this;
-        }
-
         public Builder createMs(final Long createMs) {
             dp.createMs = createMs;
             return this;
@@ -126,7 +116,6 @@ public class MetaProperties {
             properties.feedName = dp.feedName;
             properties.processorUuid = dp.processorUuid;
             properties.pipelineUuid = dp.pipelineUuid;
-            properties.processorTaskId = dp.processorTaskId;
             properties.createMs = dp.createMs;
             properties.effectiveMs = dp.effectiveMs;
             properties.statusMs = dp.statusMs;

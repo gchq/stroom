@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1207** : Removed task id from meta to reduce DB size and complexity especially given the fact tasks are transient. Superseded output is now found by querying the processor task service when new output is written rather than using task ids on meta.
+
 * Issue **#1197** : Restored Save As functionality.
 
 * Issue **#1199** : The index fields page now copes with more than 100 index fields.

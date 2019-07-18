@@ -224,9 +224,9 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private void testCriteria(final FindMetaCriteria criteria, final int expectedStreams) throws IOException {
         metaService.updateStatus(new FindMetaCriteria(), Status.DELETED);
 
-        createMeta(FEED1, 1L, null);
-        createMeta(FEED2, 1L, null);
-        createMeta(FEED3, 1L, null);
+        createMeta(FEED1, null);
+        createMeta(FEED2, null);
+        createMeta(FEED3, null);
 
 //        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
         final BaseResultList<Meta> streams = metaService.find(criteria);
@@ -288,7 +288,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testFindDeleteAndUndelete() throws IOException {
-        final Meta meta = createMeta(FEED1, 1L, null);
+        final Meta meta = createMeta(FEED1, null);
 
         FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
         findMetaCriteria.obtainSelectedIdSet().add(meta.getId());
@@ -317,13 +317,12 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(1L);
     }
 
-    private Meta createMeta(final String feedName, final Long streamTaskId, final Long parentStreamId) throws IOException {
+    private Meta createMeta(final String feedName, final Long parentStreamId) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
         final MetaProperties metaProperties = new MetaProperties.Builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
-                .processorTaskId(streamTaskId)
                 .parentId(parentStreamId)
                 .build();
 

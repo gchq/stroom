@@ -57,7 +57,6 @@ class MetaDaoImpl implements MetaDao {
             .processorUuid(record.get(metaProcessor.PROCESSOR_UUID))
             .pipelineUuid(record.get(metaProcessor.PIPELINE_UUID))
             .parentDataId(record.get(meta.PARENT_ID))
-            .processorTaskId(record.get(meta.TASK_ID))
             .status(MetaStatusId.getStatus(record.get(meta.STATUS)))
             .statusMs(record.get(meta.STATUS_TIME))
             .createMs(record.get(meta.CREATE_TIME))
@@ -148,7 +147,6 @@ class MetaDaoImpl implements MetaDao {
                         META.PARENT_ID,
                         META.STATUS,
                         META.STATUS_TIME,
-                        META.TASK_ID,
                         META.FEED_ID,
                         META.TYPE_ID,
                         META.PROCESSOR_ID)
@@ -158,7 +156,6 @@ class MetaDaoImpl implements MetaDao {
                         metaProperties.getParentId(),
                         MetaStatusId.LOCKED,
                         metaProperties.getStatusMs(),
-                        metaProperties.getProcessorTaskId(),
                         feedId,
                         typeId,
                         processorId)
@@ -173,7 +170,6 @@ class MetaDaoImpl implements MetaDao {
                 .processorUuid(metaProperties.getProcessorUuid())
                 .pipelineUuid(metaProperties.getPipelineUuid())
                 .parentDataId(metaProperties.getParentId())
-                .processorTaskId(metaProperties.getProcessorTaskId())
                 .status(Status.LOCKED)
                 .statusMs(metaProperties.getStatusMs())
                 .createMs(metaProperties.getCreateMs())

@@ -54,7 +54,6 @@ public class MockMetaService implements MetaService, Clearable {
         builder.feedName(properties.getFeedName());
         builder.typeName(properties.getTypeName());
         builder.processorUuid(properties.getProcessorUuid());
-        builder.processorTaskId(properties.getProcessorTaskId());
         builder.createMs(properties.getCreateMs());
         builder.effectiveMs(properties.getEffectiveMs());
         builder.statusMs(properties.getStatusMs());

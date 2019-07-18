@@ -183,6 +183,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         expressionMapper.map(ProcessorTaskDataSource.NODE_NAME, PROCESSOR_NODE.NAME, value -> value);
         expressionMapper.map(ProcessorTaskDataSource.PIPELINE_UUID, PROCESSOR.PIPELINE_UUID, value -> value);
         expressionMapper.map(ProcessorTaskDataSource.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, Integer::valueOf);
+        expressionMapper.map(ProcessorTaskDataSource.PROCESSOR_ID, PROCESSOR.ID, Integer::valueOf);
 //        expressionMapper.map(ProcessorTaskDataSource.FEED_UUID, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
         expressionMapper.map(ProcessorTaskDataSource.STATUS, PROCESSOR_TASK.STATUS, value -> TaskStatus.valueOf(value.toUpperCase()).getPrimitiveValue());
         expressionMapper.map(ProcessorTaskDataSource.TASK_ID, PROCESSOR_TASK.ID, Long::valueOf);

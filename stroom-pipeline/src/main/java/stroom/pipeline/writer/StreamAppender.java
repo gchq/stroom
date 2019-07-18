@@ -133,10 +133,9 @@ public class StreamAppender extends AbstractAppender {
                 .parent(parentMeta)
                 .processorUuid(processorUuid)
                 .pipelineUuid(pipelineUuid)
-                .processorTaskId(streamTaskId)
                 .build();
 
-        streamTarget = streamStore.openTarget(metaProperties);
+        streamTarget = supersededOutputHelper.addTarget(() -> streamStore.openTarget(metaProperties));
 
         wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.next().get()) {
             @Override
