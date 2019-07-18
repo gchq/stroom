@@ -9,7 +9,7 @@ buildscript {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
 
         // A fork of https://github.com/wfhartford/gradle-dependency-analyze that works with Java 10
-        classpath 'stroom:gradle-dependency-analyze:v2.2.5'
+        classpath 'stroom:gradle-dependency-analyze:v2.2.6'
 
         // The following are required to put JAXB on the Gradle classpath for the purpose of JOOQ code generation in J9+.
         // Later versions of the JOOQ Gradle plugin should make this unnecessary.
@@ -40,15 +40,15 @@ plugins {
 }
 
 wrapper{
-    gradleVersion = '5.3.1'
+    gradleVersion = '5.5.1'
 }
 
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'de.undercouch.download'
 apply plugin: 'ca.cutterslade.analyze'
 
-if (!JavaVersion.current().isJava10()) {
-    throw new GradleException("This build must be run with Java 10 (current = " + JavaVersion.current() + ")")
+if (!JavaVersion.current().isJava12()) {
+    throw new GradleException("This build must be run with Java 12 (current = " + JavaVersion.current() + ")")
 }
 
 ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
@@ -316,8 +316,8 @@ subprojects {
 ////        rules +=  'all-dependency'
 //    }
 
-    sourceCompatibility = JavaVersion.VERSION_1_10
-    targetCompatibility = JavaVersion.VERSION_1_10
+    sourceCompatibility = JavaVersion.VERSION_12
+    targetCompatibility = JavaVersion.VERSION_12
 
     // This bit makes all sub projects have access to the BOMs for the dependency versions
     dependencies {
