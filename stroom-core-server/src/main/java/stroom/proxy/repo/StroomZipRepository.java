@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -461,7 +462,7 @@ public class StroomZipRepository {
                 @Override
                 public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
                     if (getRootDir().equals(dir) && !deleteRootDirectory) {
-                        LOGGER.debug("Won't delete directory {} as it is the root", dir);
+                        LOGGER.debug("Won't attempt to delete directory {} as it is the root", dir);
                     } else {
                         attemptDirDeletion(dir, oldestDirMs);
                     }
@@ -475,13 +476,16 @@ public class StroomZipRepository {
 
     private void attemptDirDeletion(final Path dir, final long oldestDirMs) {
         try {
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("attemptDirDeletion() - " + FileUtil.getCanonicalPath(dir));
-            }
 
             // Only try and delete directories that are at least 10 seconds old.
             final BasicFileAttributes attr = Files.readAttributes(dir, BasicFileAttributes.class);
             final FileTime creationTime = attr.creationTime();
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("attemptDirDeletion({}, {}) creationTime: {}",
+                        FileUtil.getCanonicalPath(dir),
+                        Instant.ofEpochMilli(oldestDirMs),
+                        creationTime);
+            }
             if (creationTime.toMillis() < oldestDirMs) {
                 // Synchronize deletion of directories so that the getStroomOutputStream() method has a
                 // chance to create dirs and place files inside them before this method cleans them up.
