@@ -31,7 +31,8 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
+import stroom.entity.client.presenter.FindActionDataProvider;
+import stroom.entity.shared.EntityServiceFindAction;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -39,7 +40,7 @@ import stroom.widget.util.client.MultiSelectionModel;
 public class ActivityListPresenter
         extends MyPresenterWidget<DataGridView<Activity>>
         implements Refreshable {
-    protected EntityServiceFindActionDataProvider<FindActivityCriteria, Activity> dataProvider;
+    protected FindActionDataProvider<FindActivityCriteria, Activity> dataProvider;
 
     @Inject
     public ActivityListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
@@ -75,7 +76,7 @@ public class ActivityListPresenter
         }, "Activity", 600);
         getView().addEndColumn(new EndColumn<Activity>());
 
-        dataProvider = new EntityServiceFindActionDataProvider<FindActivityCriteria, Activity>(dispatcher, getView());
+        dataProvider = new FindActionDataProvider<FindActivityCriteria, Activity>(dispatcher, getView(), new EntityServiceFindAction<>());
     }
 
     public ButtonView addButton(final SvgPreset preset) {

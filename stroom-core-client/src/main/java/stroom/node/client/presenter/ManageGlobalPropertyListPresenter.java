@@ -22,8 +22,9 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
+import stroom.entity.client.presenter.FindActionDataProvider;
 import stroom.entity.client.presenter.ManageEntityListPresenter;
+import stroom.entity.shared.EntityServiceFindAction;
 import stroom.node.shared.FindGlobalPropertyCriteria;
 import stroom.node.shared.GlobalProperty;
 
@@ -77,8 +78,7 @@ public class ManageGlobalPropertyListPresenter
         getView().addEndColumn(new EndColumn<>());
 
         criteria = new FindGlobalPropertyCriteria();
-        dataProvider = new EntityServiceFindActionDataProvider<>(dispatcher,
-                getView());
+        dataProvider = new FindActionDataProvider<>(dispatcher, getView(), new EntityServiceFindAction<>());
         dataProvider.setCriteria(criteria);
     }
 

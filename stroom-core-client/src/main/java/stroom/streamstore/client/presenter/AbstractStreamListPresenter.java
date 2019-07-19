@@ -32,7 +32,7 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
+import stroom.entity.client.presenter.FindActionDataProvider;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
@@ -70,7 +70,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
     private final IdSet entityIdSet = new IdSet();
     private final ClientDispatchAsync dispatcher;
-    protected EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamAttributeMap> dataProvider;
+    protected FindActionDataProvider<FindStreamAttributeMapCriteria, StreamAttributeMap> dataProvider;
     private ResultList<StreamAttributeMap> resultList = null;
 
     AbstractStreamListPresenter(final EventBus eventBus,
@@ -85,8 +85,8 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
         addColumns(allowSelectAll);
 
-        this.dataProvider = new EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamAttributeMap>(
-                dispatcher, getView()) {
+        this.dataProvider = new FindActionDataProvider<FindStreamAttributeMapCriteria, StreamAttributeMap>(
+                dispatcher, getView(), new EntityServiceFindAction<>()) {
             @Override
             protected ResultList<StreamAttributeMap> processData(final ResultList<StreamAttributeMap> data) {
                 return onProcessData(data);
@@ -94,7 +94,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         };
     }
 
-    public EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamAttributeMap> getDataProvider() {
+    public FindActionDataProvider<FindStreamAttributeMapCriteria, StreamAttributeMap> getDataProvider() {
         return dataProvider;
     }
 

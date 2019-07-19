@@ -32,9 +32,10 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntitySaveTask;
 import stroom.entity.client.SaveQueue;
-import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
+import stroom.entity.client.presenter.FindActionDataProvider;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityRow;
+import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
@@ -49,7 +50,7 @@ import java.util.List;
 
 public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
     private final SaveQueue<Job> jobSaver;
-    private EntityServiceFindActionDataProvider<FindJobCriteria, Job> dataProvider;
+    private FindActionDataProvider<FindJobCriteria, Job> dataProvider;
 
     @Inject
     public JobListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
@@ -127,7 +128,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
 
         getView().addEndColumn(new EndColumn<>());
 
-        this.dataProvider = new EntityServiceFindActionDataProvider<FindJobCriteria, Job>(dispatcher, getView()) {
+        this.dataProvider = new FindActionDataProvider<FindJobCriteria, Job>(dispatcher, getView(), new EntityServiceFindAction<>()) {
             // Add in extra blank item
             @Override
             protected ResultList<Job> processData(final ResultList<Job> data) {

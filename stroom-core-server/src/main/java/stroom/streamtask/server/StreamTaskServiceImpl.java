@@ -93,7 +93,8 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
         sql.append(StreamProcessorFilter.PRIORITY);
         sql.append(" PRIORITY, ST.");
         sql.append(StreamTask.STATUS);
-        sql.append(" STAT_ID, COUNT(*)");
+        sql.append(" STAT_ID, COUNT(*) ");
+        sql.append(SQLNameConstants.COUNT);
         sql.append(" FROM ");
         sql.append(StreamTask.TABLE_NAME);
         sql.append(" ST JOIN ");

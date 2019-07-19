@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1211** : Added a quick filter to the server tasks page.
 
+* Issue **#1206** : Fixed sorting active tasks when clicking column header.
+
 
 ## [v6.0-beta.63] - 2019-07-17
 

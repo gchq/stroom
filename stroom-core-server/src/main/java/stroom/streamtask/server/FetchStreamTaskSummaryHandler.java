@@ -43,7 +43,7 @@ public class FetchStreamTaskSummaryHandler extends AbstractTaskHandler<FetchStre
 
     @Override
     public ResultList<StreamTaskSummary> exec(final FetchStreamTaskSummaryAction action) {
-        final FindStreamTaskCriteria criteria = expressionToFindStreamTaskCriteria.convert(action.getExpression());
+        final FindStreamTaskCriteria criteria = expressionToFindStreamTaskCriteria.convert(action.getCriteria());
         criteria.obtainStatusSet().setSingleItem(StreamStatus.UNLOCKED);
         criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
         criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);

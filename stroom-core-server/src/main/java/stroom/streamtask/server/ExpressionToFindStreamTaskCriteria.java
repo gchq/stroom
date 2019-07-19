@@ -22,6 +22,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.server.CollectionService;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamDataSource;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.ProcessTaskDataSource;
 import stroom.streamtask.shared.TaskStatus;
@@ -66,14 +67,20 @@ public class ExpressionToFindStreamTaskCriteria {
         this.collectionService = collectionService;
     }
 
-    public FindStreamTaskCriteria convert(final ExpressionOperator findStreamCriteria) {
-        return this.convert(findStreamCriteria, Context.now());
+    public FindStreamTaskCriteria convert(final ExpressionCriteria expressionCriteria) {
+        return this.convert(expressionCriteria, Context.now());
     }
 
-    public FindStreamTaskCriteria convert(final ExpressionOperator expression, final Context context) {
+    public FindStreamTaskCriteria convert(final ExpressionCriteria expressionCriteria, final Context context) {
         final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
 
-        convertExpression(expression, criteria, context);
+        convertExpression(expressionCriteria.getExpression(), criteria, context);
+
+        if (expressionCriteria.getSortList() != null) {
+            expressionCriteria.getSortList().forEach(criteria::addSort);
+        }
+        criteria.setFetchSet(expressionCriteria.getFetchSet());
+        criteria.setPageRequest(expressionCriteria.getPageRequest());
 
         return criteria;
     }

@@ -26,10 +26,11 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.client.presenter.FindActionDataProvider;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.BaseEntity;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.ResultList;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
@@ -47,24 +48,15 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import java.util.ArrayList;
 
-public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<StreamTask>> implements HasDocumentRead<BaseEntity> {
-    private final ActionDataProvider<StreamTask> dataProvider;
-    private final FetchStreamTaskAction action;
-    private boolean doneDataDisplay = false;
+public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<StreamTask>>
+        implements HasDocumentRead<BaseEntity> {
+    private final FindActionDataProvider<ExpressionCriteria, StreamTask> dataProvider;
+    private final ExpressionCriteria criteria;
 
     @Inject
     public StreamTaskListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                                    final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(false));
-
-        action = new FetchStreamTaskAction();
-        dataProvider = new ActionDataProvider<StreamTask>(dispatcher, action) {
-            @Override
-            protected void changeData(final ResultList<StreamTask> data) {
-                super.changeData(data);
-//                onChangeData(data);
-            }
-        };
 
         // Info column.
         getView().addColumn(new InfoColumn<StreamTask>() {
@@ -188,18 +180,11 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
                 }, "End Time", ColumnSizeConstants.DATE_COL);
 
         getView().addEndColumn(new EndColumn<>());
-    }
 
-//    private void onChangeData(final ResultList<StreamTask> data) {
-//        final StreamTask selected = getView().getSelectionModel().getSelected();
-//        if (selected != null) {
-//            // Reselect the task set.
-//            getView().getSelectionModel().clear();
-//            if (data != null && data.contains(selected)) {
-//                getView().getSelectionModel().setSelected(selected);
-//            }
-//        }
-//    }
+
+        criteria = new ExpressionCriteria();
+        dataProvider = new FindActionDataProvider<>(dispatcher, getView(), new FetchStreamTaskAction());
+    }
 
     private String toDateString(final Long ms) {
         if (ms != null) {
@@ -230,18 +215,9 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
         }
     }
 
-    private void doDataDisplay() {
-        if (!doneDataDisplay) {
-            doneDataDisplay = true;
-            dataProvider.addDataDisplay(getView().getDataDisplay());
-        } else {
-            dataProvider.refresh();
-        }
-    }
-
     public void setExpression(final ExpressionOperator expression) {
-        action.setExpression(expression);
-        doDataDisplay();
+        criteria.setExpression(expression);
+        dataProvider.setCriteria(criteria);
     }
 
     public void clear() {

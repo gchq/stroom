@@ -30,7 +30,7 @@ import stroom.widget.button.client.ButtonView;
 
 public class ManageEntityListPresenter<C extends BaseCriteria, E extends BaseEntity>
         extends MyPresenterWidget<DataGridView<E>> implements Refreshable {
-    protected EntityServiceFindActionDataProvider<C, E> dataProvider;
+    protected FindActionDataProvider<C, E> dataProvider;
 
     @Inject
     public ManageEntityListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {

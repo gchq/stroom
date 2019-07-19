@@ -48,7 +48,7 @@ public class FetchStreamTaskHandler extends AbstractTaskHandler<FetchStreamTaskA
 
     @Override
     public ResultList<StreamTask> exec(final FetchStreamTaskAction action) {
-        final FindStreamTaskCriteria criteria = expressionToFindStreamTaskCriteria.convert(action.getExpression());
+        final FindStreamTaskCriteria criteria = expressionToFindStreamTaskCriteria.convert(action.getCriteria());
         criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME, Direction.DESCENDING, false);
         criteria.getFetchSet().add(Stream.ENTITY_TYPE);
         criteria.getFetchSet().add(StreamType.ENTITY_TYPE);

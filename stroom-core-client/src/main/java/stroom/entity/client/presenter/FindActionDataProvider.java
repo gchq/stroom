@@ -22,23 +22,24 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.EntityServiceFindAction;
+import stroom.entity.shared.FindAction;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.Sort.Direction;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.util.shared.SharedObject;
 
-public class EntityServiceFindActionDataProvider<C extends BaseCriteria, E extends SharedObject>
+public class FindActionDataProvider<C extends BaseCriteria, E extends SharedObject>
         implements Refreshable, ColumnSortEvent.Handler {
     private final ClientDispatchAsync dispatcher;
     private final DataGridView<E> view;
-    private EntityServiceFindAction<C, E> findAction;
+    private final FindAction<C, E> findAction;
     private ActionDataProvider<E> dataProvider;
     private Boolean allowNoConstraint = null;
 
-    public EntityServiceFindActionDataProvider(final ClientDispatchAsync dispatcher, final DataGridView<E> view) {
+    public FindActionDataProvider(final ClientDispatchAsync dispatcher, final DataGridView<E> view, final FindAction<C, E> findAction) {
         this.dispatcher = dispatcher;
         this.view = view;
+        this.findAction = findAction;
         view.addColumnSortHandler(this);
     }
 
@@ -50,11 +51,7 @@ public class EntityServiceFindActionDataProvider<C extends BaseCriteria, E exten
     }
 
     public void setCriteria(final C criteria) {
-        if (findAction == null) {
-            findAction = new EntityServiceFindAction<>(criteria);
-        } else {
-            findAction.setCriteria(criteria);
-        }
+        findAction.setCriteria(criteria);
         if (dataProvider == null) {
             this.dataProvider = new ActionDataProvider<E>(dispatcher, findAction) {
                 // We override the default set data functionality to allow the

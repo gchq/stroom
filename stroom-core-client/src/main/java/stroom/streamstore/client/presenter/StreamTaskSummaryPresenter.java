@@ -26,8 +26,10 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.client.presenter.FindActionDataProvider;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.BaseEntity;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.entity.shared.ResultList;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
@@ -46,23 +48,13 @@ import stroom.widget.util.client.MultiSelectionModel;
 
 public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<StreamTaskSummary>>
         implements HasDocumentRead<BaseEntity> {
-    private final ActionDataProvider<StreamTaskSummary> dataProvider;
-    private final FetchStreamTaskSummaryAction action;
-    private boolean doneDataDisplay = false;
+    private final FindActionDataProvider<ExpressionCriteria, StreamTaskSummary> dataProvider;
+    private final ExpressionCriteria criteria;
 
     @Inject
     public StreamTaskSummaryPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                                       final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(true, false));
-
-        action = new FetchStreamTaskSummaryAction();
-        dataProvider = new ActionDataProvider<StreamTaskSummary>(dispatcher, action) {
-            @Override
-            protected void changeData(final ResultList<StreamTaskSummary> data) {
-                super.changeData(data);
-                onChangeData(data);
-            }
-        };
 
         // Info column.
         final InfoColumn<StreamTaskSummary> infoColumn = new InfoColumn<StreamTaskSummary>() {
@@ -128,50 +120,46 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
                 }, "Count", 100);
 
         getView().addEndColumn(new EndColumn<>());
-    }
 
-    private void onChangeData(final ResultList<StreamTaskSummary> data) {
-        final StreamTaskSummary selected = getView().getSelectionModel().getSelected();
-        if (selected != null) {
-            // Reselect the task set.
-            getView().getSelectionModel().clear();
-            if (data != null && data.contains(selected)) {
-                getView().getSelectionModel().setSelected(selected);
+        criteria = new ExpressionCriteria();
+        dataProvider = new FindActionDataProvider<ExpressionCriteria, StreamTaskSummary>(dispatcher, getView(), new FetchStreamTaskSummaryAction()) {
+            @Override
+            protected ResultList<StreamTaskSummary> processData(final ResultList<StreamTaskSummary> data) {
+                final StreamTaskSummary selected = getView().getSelectionModel().getSelected();
+                if (selected != null) {
+                    // Reselect the task set.
+                    getView().getSelectionModel().clear();
+                    if (data != null && data.contains(selected)) {
+                        getView().getSelectionModel().setSelected(selected);
+                    }
+                }
+                return super.processData(data);
             }
-        }
+        };
     }
 
     public MultiSelectionModel<StreamTaskSummary> getSelectionModel() {
         return getView().getSelectionModel();
     }
 
-    private void doDataDisplay() {
-        if (!doneDataDisplay) {
-            doneDataDisplay = true;
-            dataProvider.addDataDisplay(getView().getDataDisplay());
-        } else {
-            dataProvider.refresh();
-        }
-    }
-
     private void setPipeline(final PipelineEntity pipelineEntity) {
-        action.setExpression(ExpressionUtil.createPipelineExpression(pipelineEntity));
-        doDataDisplay();
+        criteria.setExpression(ExpressionUtil.createPipelineExpression(pipelineEntity));
+        dataProvider.setCriteria(criteria);
     }
 
     private void setFeed(final Feed feed) {
-        action.setExpression(ExpressionUtil.createFeedExpression(feed));
-        doDataDisplay();
+        criteria.setExpression(ExpressionUtil.createFeedExpression(feed));
+        dataProvider.setCriteria(criteria);
     }
 
     private void setFolder(final DocRef folder) {
-        action.setExpression(ExpressionUtil.createFolderExpression(folder));
-        doDataDisplay();
+        criteria.setExpression(ExpressionUtil.createFolderExpression(folder));
+        dataProvider.setCriteria(criteria);
     }
 
     private void setNullCriteria() {
-        action.setExpression(null);
-        doDataDisplay();
+        criteria.setExpression(null);
+        dataProvider.setCriteria(criteria);
     }
 
     @Override

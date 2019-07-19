@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.streamtask.shared;
+package stroom.entity.shared;
 
-import stroom.entity.shared.ExpressionCriteria;
-import stroom.entity.shared.FindAction;
+import stroom.query.api.v2.ExpressionOperator;
 
-public class FetchStreamTaskAction extends FindAction<ExpressionCriteria, StreamTask> {
-    private static final long serialVersionUID = -1773544031158236156L;
+public class ExpressionCriteria extends BaseCriteria {
+    private ExpressionOperator expression;
 
-    public FetchStreamTaskAction() {
-        // Default constructor necessary for GWT serialisation.
+    public ExpressionCriteria() {
     }
 
-    public FetchStreamTaskAction(final ExpressionCriteria criteria) {
-        super(criteria);
+    public ExpressionCriteria(final ExpressionOperator expression) {
+        this.expression = expression;
     }
 
-    @Override
-    public String getTaskName() {
-        return "FetchStreamTaskAction - fetch()";
+    public ExpressionOperator getExpression() {
+        return expression;
+    }
+
+    public void setExpression(final ExpressionOperator expression) {
+        this.expression = expression;
     }
 }
