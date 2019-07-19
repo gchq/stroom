@@ -147,6 +147,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createDateFunctions(item++, "Date"));
         children.add(createLogicFunctions(item++, "Logic"));
         children.add(createMathematicsFunctions(item++, "Mathematics"));
+        children.add(createParamFunctions(item++, "Param"));
         children.add(createRoundingFunctions(item++, "Rounding"));
         children.add(createStringFunctions(item++, "String"));
         children.add(createTypeCheckingFunctions(item++, "Type Checking"));
@@ -217,6 +218,14 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "random()", "random()"));
         children.add(createFunction(item++, "subtract($)", "subtract("));
         children.add(createFunction(item++, "sum($)", "sum("));
+        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+    }
+
+    private Item createParamFunctions(final int pos, final String func) {
+        final List<Item> children = new ArrayList<>();
+        int item = 0;
+        children.add(createFunction(item++, "params()", "params()"));
+        children.add(createFunction(item++, "param($)", "param("));
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 

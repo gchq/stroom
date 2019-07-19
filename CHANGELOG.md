@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1143** : Added mechanism to inject dashboard parameters into expressions using the `param` and `params` functions so that dashboard parameters can be echoed by expressions to create dashboard links.
+
 
 ## [v6.0-beta.64] - 2019-07-19
 
