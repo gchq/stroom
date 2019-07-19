@@ -121,7 +121,7 @@ public class StroomZipRepository {
                         final int lockDeleteAgeMs,
                         final boolean readOnly,
                         final LinkedBlockingDeque<StroomZipRepository> rolledRepositoryQueue) {
-        this(dir, repositoryFormat, lock, lockDeleteAgeMs, DEFAULT_CLEAN_DELAY, readOnly, null);
+        this(dir, repositoryFormat, lock, lockDeleteAgeMs, DEFAULT_CLEAN_DELAY, readOnly, rolledRepositoryQueue);
     }
 
     /**
