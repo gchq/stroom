@@ -43,7 +43,7 @@ import stroom.cluster.server.ClusterCallServiceRPC;
 import stroom.connectors.elastic.StroomElasticProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.content.ContentSyncService;
-import stroom.content.ProxySecurityFilter;
+import stroom.proxy.security.ProxySecurityFilter;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.datafeed.server.DataFeedServlet;
 import stroom.dictionary.server.DictionaryResource;

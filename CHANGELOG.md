@@ -7,6 +7,92 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+## [v6.0-beta.64] - 2019-07-19
+
+* Issue **#1205** : Change proxy repo clean to not delete configured rootRepoDir.
+
+* Issue **#1204** : Fix ProxySecurityFilter to use correct API key on feedStatus requests.
+
+* Issue **#1211** : Added a quick filter to the server tasks page.
+
+
+## [v6.0-beta.63] - 2019-07-17
+
+* Issue **#1201** : Fixed dependencies.
+
+
+## [v6.0-beta.62] - 2019-07-17
+
+* Issue **#1201** : Fixed tests.
+
+
+## [v6.0-beta.61] - 2019-07-17
+
+* Issue **#1201** : Document permission changes now mutate the user document permissions cache rather than clearing it.
+
+* Issue **#1153** : Changed security context to be a Spring singleton to improve explorer performance.
+
+* Issue **#1202** : Fixed NumberFormatException in StreamAttributeMapUtil.
+
+* Issue **#1203** : Fixed event logging detail for dictionaries.
+
+
+## [v6.0-beta.60] - 2019-07-16
+
+* Issue **#1197** : Restored Save As functionality.
+
+
+## [v6.0-beta.59] - 2019-07-16
+
+* Issue **#1199** : The index fields page now copes with more than 100 index fields.
+
+
+## [v6.0-beta.58] - 2019-07-16
+
+* Issue **#1200** : Removed blocking queue that was causing search to hang when full.
+
+
+## [v6.0-beta.57] - 2019-07-15
+
+* Issue **#1198** : Filtering by empty folders now works correctly.
+
+
+## [v6.0-beta.56] - 2019-07-15
+
+* Comment out rollCron in proxy-prod.yml
+
+* Change swagger UI at gchq.github.io/stroom to work off 6.0 branch
+
+* Issue **#1195** : Fixed issue where combination of quick filter and type filter were not displaying explorer items correctly.
+
+* Issue **#1153** : Changed the way document permissions are retrieved and cached to improve explorer performance.
+
+* Issue **#1196** : Added code to resolve data source names from doc refs if the name is missing when logging.
+
+* Issue **#1165** : Fixed corruption of pipeline structure when adding items to Source.
+
+
+## [v6.0-beta.55] - 2019-07-11
+
+* Issue **#1193** : Added optional validation to activities.
+
+
+## [v6.0-beta.54] - 2019-07-11
+
+* Change default config for proxy repositoryFormat to "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"
+
+* Issue **#1194** : Fixed NPE in FindTaskProgressCriteria.
+
+* Issue **#1191** : SQL statistics search tasks now show appropriate information in the server tasks pane.
+
+* Issue **#1192** : Executor provider tasks now run as the current user.
+
+
+## [v6.0-beta.53] - 2019-07-11
+
+* Issue **#1190** : Copied indexes now retain associated index volumes.
+
+
 ## [v6.0-beta.52] - 2019-07-10
 
 * Issue **#1177** : Data retention now works with is doc refs.
@@ -1653,7 +1739,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#24** : Header and footer strings are now unescaped so that character sequences such as '\n' are translated into single characters as with standard Java strings, e.g. '\n' will become a new line and '\t' a tab.
 
-* Issue **#40** : Changed Stroom docker conatiner to be based on Alpine linux to save space
+* Issue **#40** : Changed Stroom docker container to be based on Alpine linux to save space
 
 * Issue **#40** : Auto import of content packs on Stroom startup and added default content packs into the docker build for Stroom.
 
@@ -1695,7 +1781,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.52...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.64...6.0
+[v6.0-beta.64]: https://github.com/gchq/stroom/compare/v7.0-beta.63...v6.0-beta.64
+[v6.0-beta.63]: https://github.com/gchq/stroom/compare/v7.0-beta.62...v6.0-beta.63
+[v6.0-beta.62]: https://github.com/gchq/stroom/compare/v7.0-beta.61...v6.0-beta.62
+[v6.0-beta.61]: https://github.com/gchq/stroom/compare/v7.0-beta.60...v6.0-beta.61
+[v6.0-beta.60]: https://github.com/gchq/stroom/compare/v7.0-beta.59...v6.0-beta.60
+[v6.0-beta.59]: https://github.com/gchq/stroom/compare/v7.0-beta.58...v6.0-beta.59
+[v6.0-beta.58]: https://github.com/gchq/stroom/compare/v7.0-beta.57...v6.0-beta.58
+[v6.0-beta.57]: https://github.com/gchq/stroom/compare/v7.0-beta.56...v6.0-beta.57
+[v6.0-beta.56]: https://github.com/gchq/stroom/compare/v7.0-beta.55...v6.0-beta.56
+[v6.0-beta.55]: https://github.com/gchq/stroom/compare/v7.0-beta.54...v6.0-beta.55
+[v6.0-beta.54]: https://github.com/gchq/stroom/compare/v7.0-beta.53...v6.0-beta.54
+[v6.0-beta.53]: https://github.com/gchq/stroom/compare/v7.0-beta.52...v6.0-beta.53
 [v6.0-beta.52]: https://github.com/gchq/stroom/compare/v7.0-beta.51...v6.0-beta.52
 [v6.0-beta.51]: https://github.com/gchq/stroom/compare/v7.0-beta.50...v6.0-beta.51
 [v6.0-beta.50]: https://github.com/gchq/stroom/compare/v7.0-beta.49...v6.0-beta.50

@@ -14,10 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.content;
+package stroom.proxy.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.content.ContentSyncConfig;
+import stroom.dictionary.server.DictionaryResource;
+import stroom.feed.server.FeedStatusResource;
+import stroom.proxy.handler.FeedStatusConfig;
+import stroom.ruleset.server.RuleSetResource;
+import stroom.servicediscovery.ResourcePaths;
+import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
 import javax.servlet.Filter;
@@ -45,13 +52,16 @@ public class ProxySecurityFilter implements Filter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxySecurityFilter.class);
 
-    private final ContentSyncConfig config;
+    private final ContentSyncConfig contentSyncConfig;
+    private final FeedStatusConfig feedStatusConfig;
 
     private Pattern pattern = null;
 
     @Inject
-    public ProxySecurityFilter(final ContentSyncConfig config) {
-        this.config = config;
+    public ProxySecurityFilter(final ContentSyncConfig contentSyncConfig,
+                               final FeedStatusConfig feedStatusConfig) {
+        this.contentSyncConfig = contentSyncConfig;
+        this.feedStatusConfig = feedStatusConfig;
     }
 
     @Override
@@ -98,18 +108,19 @@ public class ProxySecurityFilter implements Filter {
             // We need to distinguish between requests from an API client and from the UI.
             // If a request is from the UI and fails authentication then we need to redirect to the login page.
             // If a request is from an API client and fails authentication then we need to return HTTP 403 UNAUTHORIZED.
-            final String servletPath = request.getServletPath();
-            final boolean isApiRequest = servletPath.contains("/api");
+            final String requestURI = request.getRequestURI();
+            final boolean isApiRequest = requestURI.contains(ResourcePaths.API_PATH);
 
             if (isApiRequest) {
                 try {
-                    if (config.getApiKey() == null) {
-                        throw new RuntimeException("No API key has been configured");
-                    }
+                    final String configuredApiKey = getConfiguredApiKey(requestURI);
+                    final String requestApiKey = getJWS(request);
 
-                    final String jws = getJWS(request);
-                    if (!config.getApiKey().equals(jws)) {
-                        throw new RuntimeException("Supplied API key from " + request.getRemoteHost() + " is invalid");
+                    if (!configuredApiKey.equals(requestApiKey)) {
+                        throw new RuntimeException(
+                                LambdaLogger.buildMessage(
+                                        "Supplied API key from {} to {} is invalid",
+                                        request.getRemoteHost(), requestURI));
                     }
 
                     chain.doFilter(request, response);
@@ -123,6 +134,26 @@ public class ProxySecurityFilter implements Filter {
                 chain.doFilter(request, response);
             }
         }
+    }
+
+    private String getConfiguredApiKey(final String requestUri) {
+        // TODO it could be argued that we should have a single API key to use for all of these resources.
+        final String apiKey;
+        if (requestUri.startsWith(ResourcePaths.API_PATH + FeedStatusResource.BASE_RESOURCE_PATH)){
+            apiKey = feedStatusConfig.getApiKey();
+        }else if (requestUri.startsWith(ResourcePaths.API_PATH + DictionaryResource.BASE_RESOURCE_PATH)) {
+            apiKey = contentSyncConfig.getApiKey();
+        } else if (requestUri.startsWith(ResourcePaths.API_PATH + RuleSetResource.BASE_RESOURCE_PATH)) {
+            apiKey = contentSyncConfig.getApiKey();
+        } else {
+            throw new RuntimeException(LambdaLogger.buildMessage(
+                    "Unable to determine which config to get API key from for requestURI {}", requestUri));
+        }
+        if (apiKey == null || apiKey.isEmpty()) {
+            throw new RuntimeException(LambdaLogger.buildMessage(
+                    "API key is empty, requestURI {}", requestUri));
+        }
+        return apiKey;
     }
 
     private boolean ignoreUri(final String uri) {

@@ -16,6 +16,8 @@
 
 package stroom.task.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.security.SecurityContext;
 import stroom.security.UserTokenUtil;
@@ -27,6 +29,8 @@ import java.util.concurrent.Executor;
 
 @Component
 class ExecutorProviderImpl implements ExecutorProvider {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExecutorProviderImpl.class);
+
     private final TaskManager taskManager;
     private final SecurityContext securityContext;
 
@@ -53,6 +57,16 @@ class ExecutorProviderImpl implements ExecutorProvider {
             return parentTask.getUserToken();
         }
 
+        try {
+            final String userId = securityContext.getUserId();
+            if (userId != null) {
+                return UserTokenUtil.create(securityContext.getUserId(), null);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Error getting user id", e);
+        }
+
+        LOGGER.debug("Using internal processing user");
         return UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN;
     }
 

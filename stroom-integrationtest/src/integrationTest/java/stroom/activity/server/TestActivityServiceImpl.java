@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
+import stroom.activity.shared.ActivityValidationResult;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -73,10 +74,33 @@ public class TestActivityServiceImpl extends AbstractCoreIntegrationTest {
         Assert.assertEquals(0, list5.size());
     }
 
+    @Test
+    public void testValidation() {
+        // Save 1
+        Activity activity1 = new Activity();
+        activity1.getDetails().add(createProp("foo", "\\w{3,}"), "bar");
+        activity1.getDetails().add(createProp("this", "\\w{4,}"), "that");
+        activity1.setUserId("test");
+        final ActivityValidationResult activityValidationResult1 = activityService.validate(activity1);
+        Assert.assertTrue(activityValidationResult1.isValid());
+
+        Activity activity2 = new Activity();
+        activity2.getDetails().add(createProp("foo", ".{3,}"), "bar");
+        activity2.getDetails().add(createProp("this", ".{80,}"), "that");
+        activity2.setUserId("test");
+        final ActivityValidationResult activityValidationResult2 = activityService.validate(activity2);
+        Assert.assertFalse(activityValidationResult2.isValid());
+    }
+
     private Prop createProp(final String name) {
+        return createProp(name, null);
+    }
+
+    private Prop createProp(final String name, final String validation) {
         final Prop prop = new Prop();
         prop.setId(name);
         prop.setName(name);
+        prop.setValidation(validation);
         return prop;
     }
 }

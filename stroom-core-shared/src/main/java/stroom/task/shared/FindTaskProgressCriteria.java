@@ -16,7 +16,7 @@
 
 package stroom.task.shared;
 
-import stroom.entity.shared.FindNamedEntityCriteria;
+import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.util.shared.CompareUtil;
@@ -26,7 +26,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
-public class FindTaskProgressCriteria extends FindNamedEntityCriteria implements Comparator<TaskProgress> {
+public class FindTaskProgressCriteria extends BaseCriteria implements Comparator<TaskProgress> {
     private static final long serialVersionUID = 2014515855795611224L;
 
     public static final String FIELD_NODE = "Node";
@@ -39,6 +39,7 @@ public class FindTaskProgressCriteria extends FindNamedEntityCriteria implements
     private FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
     private String sessionId;
     private Set<TaskProgress> expandedTasks;
+    private String nameFilter;
 
     public String getSessionId() {
         return sessionId;
@@ -50,6 +51,14 @@ public class FindTaskProgressCriteria extends FindNamedEntityCriteria implements
 
     public FindTaskCriteria getFindTaskCriteria() {
         return findTaskCriteria;
+    }
+
+    public String getNameFilter() {
+        return nameFilter;
+    }
+
+    public void setNameFilter(final String nameFilter) {
+        this.nameFilter = nameFilter;
     }
 
     public boolean matches(final TaskProgress taskProgress) {
@@ -86,7 +95,15 @@ public class FindTaskProgressCriteria extends FindNamedEntityCriteria implements
                         compare = CompareUtil.compareString(o1.getTaskInfo(), o2.getTaskInfo());
                         break;
                     case FIELD_NODE:
-                        compare = CompareUtil.compareString(o1.getNode().getName(), o2.getNode().getName());
+                        String name1 = null;
+                        String name2 = null;
+                        if (o1.getNode() != null) {
+                            name1 = o1.getNode().getName();
+                        }
+                        if (o2.getNode() != null) {
+                            name2 = o2.getNode().getName();
+                        }
+                        compare = CompareUtil.compareString(name1, name2);
                         break;
                 }
 

@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
@@ -68,9 +69,64 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     }
 
     public void build() throws PipelineModelException {
+        fixSourceNodes();
         buildBaseData();
         buildCombinedData();
         refresh();
+    }
+
+    private void fixSourceNodes() {
+        boolean first = true;
+        if (baseStack != null) {
+            for (final PipelineData base : baseStack) {
+                fixSourceNode(base, first);
+                first = false;
+            }
+        }
+        fixSourceNode(pipelineData, first);
+    }
+
+    private void fixSourceNode(final PipelineData pipelineData, final boolean root) {
+        if (pipelineData != null) {
+            final boolean exists = pipelineData.getAddedElements().contains(SOURCE_ELEMENT);
+            if (!exists) {
+                pipelineData.addElement(SOURCE_ELEMENT);
+                if (root) {
+                    // See if there is a link from source.
+                    final List<PipelineLink> links = pipelineData.getAddedLinks();
+                    final Set<String> allFrom = new HashSet<>();
+                    final Set<String> allTo = new HashSet<>();
+                    final Map<String, String> mapToFrom = new HashMap<>();
+                    for (final PipelineLink link : links) {
+                        allFrom.add(link.getFrom());
+                        allTo.add(link.getTo());
+                        mapToFrom.put(link.getTo(), link.getFrom());
+                    }
+
+                    if (!allFrom.contains(SOURCE)) {
+                        // If there is no source provided then we need to attach a parser to source as this is an old pipeline config.
+                        final Optional<String> optionalParserId = pipelineData.getAddedElements()
+                                .stream()
+                                .filter(e -> e.getType().toLowerCase().contains("parser"))
+                                .map(PipelineElement::getId)
+                                .findFirst();
+
+                        optionalParserId.ifPresent(parserId -> {
+                            String parentId = parserId;
+
+                            // Track back up any links that might point to the parser.
+                            String parent = parserId;
+                            while (parent != null) {
+                                parentId = parent;
+                                parent = mapToFrom.get(parent);
+                            }
+
+                            links.add(new PipelineLink(SOURCE, parentId));
+                        });
+                    }
+                }
+            }
+        }
     }
 
     private void buildCombinedData() throws PipelineModelException {

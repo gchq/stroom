@@ -17,6 +17,7 @@
 
 package stroom.explorer.server;
 
+import stroom.entity.shared.Clearable;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
@@ -27,7 +28,7 @@ import stroom.query.api.v2.DocRefInfo;
 
 import java.util.List;
 
-public interface ExplorerService {
+public interface ExplorerService extends Clearable {
     FetchExplorerNodeResult getData(FindExplorerNodeCriteria criteria);
 
     DocRef create(String docType, String docName, DocRef destinationFolderRef, PermissionInheritance permissionInheritance);

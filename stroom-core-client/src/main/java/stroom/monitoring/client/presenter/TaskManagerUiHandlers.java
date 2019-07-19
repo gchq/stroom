@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.task.client.presenter;
+package stroom.monitoring.client.presenter;
 
 import com.gwtplatform.mvp.client.UiHandlers;
-import stroom.util.shared.TaskId;
 
-public interface TaskUiHandlers extends UiHandlers {
-    void onTerminate(TaskId terminateId, String taskName);
+public interface TaskManagerUiHandlers extends UiHandlers {
+    void changeNameFilter(String name);
 }

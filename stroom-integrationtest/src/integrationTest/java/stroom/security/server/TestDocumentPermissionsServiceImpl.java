@@ -37,6 +37,7 @@ import stroom.util.test.FileSystemTestUtil;
 import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -54,7 +55,7 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
     @Resource
     private UserGroupsCache userGroupsCache;
     @Resource
-    private DocumentPermissionsCache documentPermissionsCache;
+    private UserDocumentPermissionsCache userDocumentPermissionsCache;
 
     @Test
     public void test() {
@@ -155,23 +156,23 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
         final DocRef docRef = DocRefUtil.create(entity);
 
         userGroupsCache.clear();
-        documentPermissionsCache.clear();
+        userDocumentPermissionsCache.clear();
 
         final Set<UserRef> allUsers = new HashSet<>();
         allUsers.add(user);
         allUsers.addAll(userGroupsCache.get(user));
 
-        final Set<String> combinedPermissions = new HashSet<>();
+        Set<String> missingPermissions = new HashSet<>(Arrays.asList(permissions));
         for (final UserRef userRef : allUsers) {
-            final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
-            final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef);
-            combinedPermissions.addAll(userPermissions);
+            final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userRef.getUuid());
+            for (final String permission : permissions) {
+                if (userDocumentPermissions.hasDocumentPermission(docRef.getUuid(), permission)) {
+                    missingPermissions.remove(permission);
+                }
+            }
         }
 
-        Assert.assertEquals(permissions.length, combinedPermissions.size());
-        for (final String permission : permissions) {
-            Assert.assertTrue(combinedPermissions.contains(permission));
-        }
+        Assert.assertEquals(0, missingPermissions.size());
     }
 
     private UserRef createUser(final String name) {

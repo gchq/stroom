@@ -41,7 +41,11 @@ public class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, Voi
     private final UserAppPermissionsCache userAppPermissionsCache;
 
     @Inject
-    ChangeUserHandler(final UserService userService, final UserAppPermissionService userAppPermissionService, final AuthorisationEventLog authorisationEventLog, final UserGroupsCache userGroupsCache, final UserAppPermissionsCache userAppPermissionsCache) {
+    ChangeUserHandler(final UserService userService,
+                      final UserAppPermissionService userAppPermissionService,
+                      final AuthorisationEventLog authorisationEventLog,
+                      final UserGroupsCache userGroupsCache,
+                      final UserAppPermissionsCache userAppPermissionsCache) {
         this.userService = userService;
         this.userAppPermissionService = userAppPermissionService;
         this.authorisationEventLog = authorisationEventLog;

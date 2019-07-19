@@ -576,7 +576,7 @@ public class ExpressionToFindStreamCriteria {
         }
 
         final EntityIdSet<T> entityIdSet = new EntityIdSet<>();
-        final Set<Long> set = entityIdSet.getSet();
+        entityIdSet.setMatchAll(false);
         for (final String value : values) {
             if (value == null) {
                 final String errorMsg = "Null value used for " + field;
@@ -597,10 +597,6 @@ public class ExpressionToFindStreamCriteria {
             }
         }
 
-        if (set.size() == 0) {
-            return null;
-        }
-
         return entityIdSet;
     }
 
@@ -611,7 +607,7 @@ public class ExpressionToFindStreamCriteria {
         }
 
         final EntityIdSet<T> entityIdSet = new EntityIdSet<>();
-        final Set<Long> set = entityIdSet.getSet();
+        entityIdSet.setMatchAll(false);
         for (final String value : values) {
             if (value == null) {
                 final String errorMsg = "Null value used for " + field;
@@ -630,10 +626,6 @@ public class ExpressionToFindStreamCriteria {
                 final String errorMsg = String.format("Unexpected value '%s' used for %s: %s", value, field, e.getLocalizedMessage());
                 throw new EntityServiceException(errorMsg);
             }
-        }
-
-        if (set.size() == 0) {
-            return null;
         }
 
         return entityIdSet;

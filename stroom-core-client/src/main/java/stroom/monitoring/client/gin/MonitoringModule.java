@@ -23,10 +23,13 @@ import stroom.jobsystem.client.view.JobViewImpl;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
-import stroom.monitoring.client.TaskProgressMonitoringPlugin;
+import stroom.monitoring.client.TaskManagerPlugin;
 import stroom.monitoring.client.presenter.SchedulePresenter;
 import stroom.monitoring.client.presenter.SchedulePresenter.ScheduleView;
+import stroom.monitoring.client.presenter.TaskManagerPresenter;
+import stroom.monitoring.client.presenter.TaskManagerPresenter.TaskManagerView;
 import stroom.monitoring.client.view.ScheduleViewImpl;
+import stroom.monitoring.client.view.TaskManagerViewImpl;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.client.ManageNodeToolsPlugin;
 import stroom.node.client.presenter.ManageGlobalPropertyEditPresenter;
@@ -74,6 +77,7 @@ public class MonitoringModule extends PluginModule {
         bindPresenterWidget(ManageGlobalPropertyEditPresenter.class,
                 ManageGlobalPropertyEditPresenter.GlobalPropertyEditView.class, GlobalPropertyEditViewImpl.class);
 
-        bindPlugin(TaskProgressMonitoringPlugin.class);
+        bindPlugin(TaskManagerPlugin.class);
+        bindPresenterWidget(TaskManagerPresenter.class, TaskManagerView.class, TaskManagerViewImpl.class);
     }
 }

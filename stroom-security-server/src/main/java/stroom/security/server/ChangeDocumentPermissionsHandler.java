@@ -21,9 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.EntityServiceException;
-import stroom.explorer.shared.DocumentTypes;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.server.ExplorerNodeService;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v2.DocRef;
 import stroom.security.Insecure;
@@ -53,14 +52,14 @@ public class ChangeDocumentPermissionsHandler
     private static final Logger LOGGER = LoggerFactory.getLogger(ChangeDocumentPermissionsHandler.class);
 
     private final DocumentPermissionService documentPermissionService;
-    private final DocumentPermissionsCache documentPermissionsCache;
     private final SecurityContext securityContext;
     private final ExplorerNodeService explorerNodeService;
 
     @Inject
-    ChangeDocumentPermissionsHandler(final DocumentPermissionService documentPermissionService, final DocumentPermissionsCache documentPermissionsCache, final SecurityContext securityContext, final ExplorerNodeService explorerNodeService) {
+    ChangeDocumentPermissionsHandler(final DocumentPermissionService documentPermissionService,
+                                     final SecurityContext securityContext,
+                                     final ExplorerNodeService explorerNodeService) {
         this.documentPermissionService = documentPermissionService;
-        this.documentPermissionsCache = documentPermissionsCache;
         this.securityContext = securityContext;
         this.explorerNodeService = explorerNodeService;
     }
@@ -83,9 +82,6 @@ public class ChangeDocumentPermissionsHandler
             if (action.getCascade() != null) {
                 cascadeChanges(docRef, changeSet, affectedDocRefs, affectedUserRefs, action.getCascade());
             }
-
-            // Force refresh of cached permissions.
-            affectedDocRefs.forEach(documentPermissionsCache::remove);
 
             return VoidResult.INSTANCE;
         }

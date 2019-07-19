@@ -19,7 +19,6 @@ package stroom.index.server;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.logging.DocumentEventLog;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
@@ -31,6 +30,7 @@ import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
+import java.util.HashSet;
 
 @Profile(StroomSpringProfiles.PROD)
 @Component("indexService")
@@ -57,6 +57,28 @@ public class IndexServiceImpl extends DocumentEntityServiceImpl<Index, FindIndex
     @Override
     protected QueryAppender<Index, FindIndexCriteria> createQueryAppender(final StroomEntityManager entityManager) {
         return new IndexQueryAppender(entityManager);
+    }
+
+    @Override
+    protected Index createCopy(final Index document, String copyUuid) {
+        final Index index = new Index();
+        index.setUuid(copyUuid);
+        index.setName(document.getName());
+        index.setDescription(document.getDescription());
+        index.setIndexFieldsObject(document.getIndexFieldsObject());
+        index.setIndexFields(document.getIndexFields());
+        index.setMaxDocsPerShard(document.getMaxDocsPerShard());
+        index.setShardsPerPartition(document.getShardsPerPartition());
+        index.setPartitionBy(document.getPartitionBy());
+        index.setPartitionSize(document.getPartitionSize());
+
+        if (document.getVolumes() != null) {
+            index.setVolumes(new HashSet<>(document.getVolumes()));
+        }
+
+        index.setRetentionDayAge(document.getRetentionDayAge());
+        index.setPPartitionBy(document.getPPartitionBy());
+        return index;
     }
 
     private static class IndexQueryAppender extends QueryAppender<Index, FindIndexCriteria> {
