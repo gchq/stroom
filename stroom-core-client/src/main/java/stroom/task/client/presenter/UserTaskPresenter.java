@@ -24,13 +24,14 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
 import stroom.task.shared.TaskProgress;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TaskId;
 
-public class TaskPresenter extends MyPresenterWidget<TaskPresenter.TaskView> {
+public class UserTaskPresenter extends MyPresenterWidget<UserTaskView> {
     @Inject
-    public TaskPresenter(final EventBus eventBus, final TaskView view) {
+    public UserTaskPresenter(final EventBus eventBus, final UserTaskView view) {
         super(eventBus, view);
     }
 
@@ -45,11 +46,11 @@ public class TaskPresenter extends MyPresenterWidget<TaskPresenter.TaskView> {
         getView().setTerminateVisible(visible);
     }
 
-    public void setUiHandlers(final TaskUiHandlers uiHandlers) {
+    public void setUiHandlers(final UserTaskUiHandlers uiHandlers) {
         getView().setUiHandlers(uiHandlers);
     }
 
-    public interface TaskView extends View, HasUiHandlers<TaskUiHandlers> {
+    public interface UserTaskView extends View, HasUiHandlers<UserTaskUiHandlers> {
         void setTaskName(String taskName);
 
         HasText getTaskAge();

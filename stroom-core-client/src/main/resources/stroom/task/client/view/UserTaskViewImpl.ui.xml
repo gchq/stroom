@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:p="urn:import:stroom.widget.button.client">
 
-  <ui:with field="res" type="stroom.task.client.presenter.TaskPresenter.Resources" />
+  <ui:with field="res" type="stroom.task.client.presenter.UserTaskPresenter.Resources" />
 
   <ui:style>
     .layout {

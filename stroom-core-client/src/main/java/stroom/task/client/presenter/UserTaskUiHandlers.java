@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.task.client.gin;
+package stroom.task.client.presenter;
 
-import com.google.gwt.inject.client.AsyncProvider;
-import stroom.task.client.presenter.UserTaskManagerPresenter;
+import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.util.shared.TaskId;
 
-public interface TaskGinjector {
-    AsyncProvider<UserTaskManagerPresenter> getUserTaskManagerPresenter();
+public interface UserTaskUiHandlers extends UiHandlers {
+    void onTerminate(TaskId terminateId, String taskName);
 }

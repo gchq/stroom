@@ -29,7 +29,9 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseResultList;
 import stroom.task.client.event.OpenTaskManagerEvent;
-import stroom.task.client.event.OpenTaskManagerHandler;
+import stroom.task.client.event.OpenUserTaskManagerHandler;
+import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerProxy;
+import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerView;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindUserTaskProgressAction;
 import stroom.task.shared.TaskProgress;
@@ -46,20 +48,20 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class TaskManagerPresenter
-        extends Presenter<TaskManagerPresenter.TaskManagerView, TaskManagerPresenter.TaskManagerProxy>
-        implements OpenTaskManagerHandler, TaskUiHandlers {
-    private final Provider<TaskPresenter> taskPresenterProvider;
+public class UserTaskManagerPresenter
+        extends Presenter<UserTaskManagerView, UserTaskManagerProxy>
+        implements OpenUserTaskManagerHandler, UserTaskUiHandlers {
+    private final Provider<UserTaskPresenter> taskPresenterProvider;
     private final ClientDispatchAsync dispatcher;
-    private final Map<TaskProgress, TaskPresenter> taskPresenterMap = new HashMap<>();
+    private final Map<TaskProgress, UserTaskPresenter> taskPresenterMap = new HashMap<>();
     private final Map<TaskId, TaskProgress> idMap = new HashMap<>();
     private final Set<TaskId> requestTaskKillSet = new HashSet<>();
     private final Timer refreshTimer;
     private boolean visible;
     private boolean refreshing;
     @Inject
-    public TaskManagerPresenter(final EventBus eventBus, final TaskManagerView view, final TaskManagerProxy proxy,
-                                final Provider<TaskPresenter> taskPresenterProvider, final ClientDispatchAsync dispatcher) {
+    public UserTaskManagerPresenter(final EventBus eventBus, final UserTaskManagerView view, final UserTaskManagerProxy proxy,
+                                    final Provider<UserTaskPresenter> taskPresenterProvider, final ClientDispatchAsync dispatcher) {
         super(eventBus, view, proxy);
         this.taskPresenterProvider = taskPresenterProvider;
         this.dispatcher = dispatcher;
@@ -87,7 +89,7 @@ public class TaskManagerPresenter
                 refreshing = false;
                 visible = false;
 
-                HidePopupEvent.fire(TaskManagerPresenter.this, TaskManagerPresenter.this);
+                HidePopupEvent.fire(UserTaskManagerPresenter.this, UserTaskManagerPresenter.this);
             }
         };
 
@@ -119,7 +121,7 @@ public class TaskManagerPresenter
 
     private void refresh(final BaseResultList<TaskProgress> result) {
         if (visible) {
-            final Set<TaskPresenter> tasksToRemove = new HashSet<>(taskPresenterMap.values());
+            final Set<UserTaskPresenter> tasksToRemove = new HashSet<>(taskPresenterMap.values());
 
             idMap.clear();
             if (result != null) {
@@ -131,7 +133,7 @@ public class TaskManagerPresenter
                     }
 
                     // Get the associated task presenter.
-                    TaskPresenter taskPresenter = taskPresenterMap.get(taskProgress);
+                    UserTaskPresenter taskPresenter = taskPresenterMap.get(taskProgress);
 
                     // If there isn't one then create a new one and add it to
                     // the display.
@@ -153,7 +155,7 @@ public class TaskManagerPresenter
             }
 
             // Remove old tasks.
-            for (final TaskPresenter actionPresenter : tasksToRemove) {
+            for (final UserTaskPresenter actionPresenter : tasksToRemove) {
                 getView().removeTask(actionPresenter.getView());
             }
         }
@@ -165,7 +167,7 @@ public class TaskManagerPresenter
         if (requestTaskKillSet.contains(terminateId)) {
             message = "Are you sure you want to kill this task?";
         }
-        ConfirmEvent.fire(TaskManagerPresenter.this, message, result -> {
+        ConfirmEvent.fire(UserTaskManagerPresenter.this, message, result -> {
             final boolean kill = requestTaskKillSet.contains(terminateId);
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
             findTaskCriteria.addId(terminateId);
@@ -181,13 +183,13 @@ public class TaskManagerPresenter
     protected void revealInParent() {
     }
 
-    public interface TaskManagerView extends View {
+    public interface UserTaskManagerView extends View {
         void addTask(View task);
 
         void removeTask(View task);
     }
 
     @ProxyCodeSplit
-    public interface TaskManagerProxy extends Proxy<TaskManagerPresenter> {
+    public interface UserTaskManagerProxy extends Proxy<UserTaskManagerPresenter> {
     }
 }

@@ -16,6 +16,7 @@
 
 package stroom.task.server;
 
+import com.google.common.base.Strings;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -559,6 +560,9 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindTaskProgressCriteria criteria) {
         CriteriaLoggingUtil.appendStringTerm(items, "sessionId", criteria.getSessionId());
+        if (!Strings.isNullOrEmpty(criteria.getNameFilter())) {
+            CriteriaLoggingUtil.appendStringTerm(items, "name", criteria.getNameFilter());
+        }
     }
 
     private static class AsyncTaskCallback<R> extends TaskCallbackAdaptor<R> {

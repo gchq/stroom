@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1211** : Added a quick filter to the server tasks page.
+
 
 ## [v6.0-beta.63] - 2019-07-17
 

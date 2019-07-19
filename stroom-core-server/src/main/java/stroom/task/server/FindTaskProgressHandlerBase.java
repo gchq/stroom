@@ -17,6 +17,7 @@
 package stroom.task.server;
 
 import com.google.common.base.Functions;
+import com.google.common.base.Strings;
 import stroom.entity.cluster.FindServiceClusterTask;
 import stroom.entity.shared.Action;
 import stroom.entity.shared.BaseResultList;
@@ -28,6 +29,7 @@ import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
+import stroom.util.date.DateUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.Task;
@@ -111,12 +113,78 @@ abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedOb
             }
         });
 
+        // Filter the child map.
+        Map<TaskId, Set<TaskProgress>> filteredMap = childMap;
+        if (!Strings.isNullOrEmpty(criteria.getNameFilter())) {
+            final String name = criteria.getNameFilter().toLowerCase();
+            filteredMap = filter(completeIdMap, childMap, name);
+        }
+
         final List<TaskProgress> returnList = new ArrayList<>();
-        buildTree(childMap, null, -1, returnList, criteria);
+        buildTree(filteredMap, null, -1, returnList, criteria);
 
         return returnList;
     }
 
+    private Map<TaskId, Set<TaskProgress>> filter(final Map<TaskId, TaskProgress> completeIdMap,
+                                                  final Map<TaskId, Set<TaskProgress>> childMapIn,
+                                                  final String name) {
+        final Map<TaskId, Set<TaskProgress>> childMapOut = new HashMap<>();
+
+        childMapIn.forEach((taskId, set) -> set.forEach(taskProgress -> {
+            if (checkName(taskProgress, name)) {
+                childMapOut.computeIfAbsent(taskId, k -> new HashSet<>()).add(taskProgress);
+
+                // Add children
+                addChildren(taskProgress.getId(), childMapIn, childMapOut);
+
+                // Add parents.
+                TaskId parent = taskId;
+                while (parent != null) {
+                    childMapOut.computeIfAbsent(parent.getParentId(), k -> new HashSet<>()).add(completeIdMap.get(parent));
+                    parent = parent.getParentId();
+                }
+            }
+        }));
+
+        return childMapOut;
+    }
+
+    private void addChildren(final TaskId parentId, final Map<TaskId, Set<TaskProgress>> childMapIn, final Map<TaskId, Set<TaskProgress>> childMapOut) {
+        final Set<TaskProgress> children = childMapIn.get(parentId);
+        if (children != null) {
+            children.forEach(child -> {
+                childMapOut.computeIfAbsent(parentId, k -> new HashSet<>()).add(child);
+                addChildren(child.getId(), childMapIn, childMapOut);
+            });
+        }
+    }
+
+    private boolean checkName(final TaskProgress taskProgress, final String name) {
+        if (taskProgress.getNode() != null && checkName(taskProgress.getNode().getName(), name)) {
+            return true;
+        }
+        if (checkName(taskProgress.getTaskName(), name)) {
+            return true;
+        }
+        if (checkName(DateUtil.createNormalDateTimeString(taskProgress.getSubmitTimeMs()), name)) {
+            return true;
+        }
+        if (checkName(taskProgress.getUserName(), name)) {
+            return true;
+        }
+        if (checkName(taskProgress.getSessionId(), name)) {
+            return true;
+        }
+        if (checkName(taskProgress.getTaskInfo(), name)) {
+            return true;
+        }
+        return checkName(taskProgress.getThreadName(), name);
+    }
+
+    private boolean checkName(final String value, final String name) {
+        return value != null && value.toLowerCase().contains(name);
+    }
 
     private void buildTree(final Map<TaskId, Set<TaskProgress>> childMap,
                            final TaskProgress parent,

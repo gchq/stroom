@@ -17,19 +17,19 @@
 package stroom.task.client.gin;
 
 import stroom.core.client.gin.PluginModule;
-import stroom.task.client.presenter.TaskManagerPresenter;
-import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerProxy;
-import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
-import stroom.task.client.presenter.TaskPresenter;
-import stroom.task.client.presenter.TaskPresenter.TaskView;
-import stroom.task.client.view.TaskManagerViewImpl;
-import stroom.task.client.view.TaskViewImpl;
+import stroom.task.client.presenter.UserTaskManagerPresenter;
+import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerProxy;
+import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerView;
+import stroom.task.client.presenter.UserTaskPresenter;
+import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
+import stroom.task.client.view.UserTaskManagerViewImpl;
+import stroom.task.client.view.UserTaskViewImpl;
 
 public class TaskModule extends PluginModule {
     @Override
     protected void configure() {
-        bindPresenter(TaskManagerPresenter.class, TaskManagerView.class, TaskManagerViewImpl.class,
-                TaskManagerProxy.class);
-        bindPresenterWidget(TaskPresenter.class, TaskView.class, TaskViewImpl.class);
+        bindPresenter(UserTaskManagerPresenter.class, UserTaskManagerView.class, UserTaskManagerViewImpl.class,
+                UserTaskManagerProxy.class);
+        bindPresenterWidget(UserTaskPresenter.class, UserTaskView.class, UserTaskViewImpl.class);
     }
 }

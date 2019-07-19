@@ -22,17 +22,17 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.monitoring.client.presenter.TaskProgressMonitoringPresenter;
+import stroom.monitoring.client.presenter.TaskManagerPresenter;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.task.shared.FindTaskProgressAction;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
-public class TaskProgressMonitoringPlugin extends MonitoringPlugin<TaskProgressMonitoringPresenter> {
+public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
     @Inject
-    public TaskProgressMonitoringPlugin(final EventBus eventBus, final ContentManager eventManager,
-                                        final Provider<TaskProgressMonitoringPresenter> presenterProvider,
-                                        final ClientSecurityContext securityContext) {
+    public TaskManagerPlugin(final EventBus eventBus, final ContentManager eventManager,
+                             final Provider<TaskManagerPresenter> presenterProvider,
+                             final ClientSecurityContext securityContext) {
         super(eventBus, eventManager, presenterProvider, securityContext);
     }
 

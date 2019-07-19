@@ -27,12 +27,12 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.task.client.presenter.TaskPresenter.TaskView;
-import stroom.task.client.presenter.TaskUiHandlers;
+import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
+import stroom.task.client.presenter.UserTaskUiHandlers;
 import stroom.util.shared.TaskId;
 import stroom.widget.button.client.ImageButton;
 
-public class TaskViewImpl extends ViewWithUiHandlers<TaskUiHandlers> implements TaskView {
+public class UserTaskViewImpl extends ViewWithUiHandlers<UserTaskUiHandlers> implements UserTaskView {
     private final Widget widget;
     @UiField
     HorizontalPanel layout;
@@ -47,7 +47,7 @@ public class TaskViewImpl extends ViewWithUiHandlers<TaskUiHandlers> implements 
     private TaskId id;
     private String taskNameString;
     @Inject
-    public TaskViewImpl(final Binder binder) {
+    public UserTaskViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         layout.setCellWidth(terminate, "18px");
         layout.setCellVerticalAlignment(terminate, HorizontalPanel.ALIGN_MIDDLE);
@@ -93,6 +93,6 @@ public class TaskViewImpl extends ViewWithUiHandlers<TaskUiHandlers> implements 
         }
     }
 
-    public interface Binder extends UiBinder<Widget, TaskViewImpl> {
+    public interface Binder extends UiBinder<Widget, UserTaskViewImpl> {
     }
 }
