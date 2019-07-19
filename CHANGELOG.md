@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.65] - 2019-07-19
+
 * Issue **#1143** : Added mechanism to inject dashboard parameters into expressions using the `param` and `params` functions so that dashboard parameters can be echoed by expressions to create dashboard links.
 
 
@@ -1785,7 +1788,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.64...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.65...6.0
+[v6.0-beta.65]: https://github.com/gchq/stroom/compare/v7.0-beta.64...v6.0-beta.65
 [v6.0-beta.64]: https://github.com/gchq/stroom/compare/v7.0-beta.63...v6.0-beta.64
 [v6.0-beta.63]: https://github.com/gchq/stroom/compare/v7.0-beta.62...v6.0-beta.63
 [v6.0-beta.62]: https://github.com/gchq/stroom/compare/v7.0-beta.61...v6.0-beta.62
