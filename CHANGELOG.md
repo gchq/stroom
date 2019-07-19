@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1205** : Change proxy repo clean to not delete configured rootRepoDir.
 
+* Issue **#1204** : Fix ProxySecurityFilter to use correct API key on feedStatus requests.
+
 
 ## [v6.0-beta.63] - 2019-07-17
 
