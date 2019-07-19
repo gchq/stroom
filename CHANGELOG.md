@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1204** : Fix ProxySecurityFilter to use correct API key on feedStatus requests.
+
 * Issue **#1211** : Added a quick filter to the server tasks page.
 
 

@@ -43,10 +43,12 @@ import java.util.Set;
 @Api(
         value = "ruleset - /v1",
         description = "Ruleset API")
-@Path("/ruleset/v1")
+@Path(RuleSetResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Component
 public class RuleSetResource implements HasHealthCheck {
+    public static final String BASE_RESOURCE_PATH = "/ruleset/v1";
+
     private final RuleSetService ruleSetService;
 
     @Inject

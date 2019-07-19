@@ -43,10 +43,13 @@ import java.util.Set;
 @Api(
         value = "dictionary - /v1",
         description = "Dictionary API")
-@Path("/dictionary/v1")
+@Path(DictionaryResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Component
 public class DictionaryResource implements HasHealthCheck {
+
+    public static final String BASE_RESOURCE_PATH = "/dictionary/v1";
+
     private final DictionaryStore dictionaryStore;
 
     @Inject
