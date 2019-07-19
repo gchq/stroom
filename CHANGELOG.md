@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-beta.64] - 2019-07-19
+
 * Issue **#1205** : Change proxy repo clean to not delete configured rootRepoDir.
 
 * Issue **#1204** : Fix ProxySecurityFilter to use correct API key on feedStatus requests.
@@ -1778,7 +1781,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.63...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.64...6.0
+[v6.0-beta.64]: https://github.com/gchq/stroom/compare/v7.0-beta.63...v6.0-beta.64
 [v6.0-beta.63]: https://github.com/gchq/stroom/compare/v7.0-beta.62...v6.0-beta.63
 [v6.0-beta.62]: https://github.com/gchq/stroom/compare/v7.0-beta.61...v6.0-beta.62
 [v6.0-beta.61]: https://github.com/gchq/stroom/compare/v7.0-beta.60...v6.0-beta.61
