@@ -8,16 +8,9 @@
         </encoder>
     </appender>
 
-    <logger name="stroom" level="debug"/>
+    <logger name="stroom" level="trace" />
 
-    <logger name="stroom.statistics" level="debug" />
-
-    <logger name="event-logging" level="error" additivity="false" />
-
-    <logger name="stroom.xml.converter" level="debug" additivity="false" />
-
-    <root>
-        <level value="info" />
+    <root level="error">
         <appender-ref ref="STDOUT" />
     </root>
 
