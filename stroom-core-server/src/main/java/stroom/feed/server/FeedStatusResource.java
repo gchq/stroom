@@ -34,10 +34,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 @Api(value = "feedStatus - /v1")
-@Path("/feedStatus/v1")
+@Path(FeedStatusResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Component
 public class FeedStatusResource implements HasHealthCheck {
+    public static final String BASE_RESOURCE_PATH = "/feedStatus/v1";
     private final FeedStatusService feedStatusService;
 
     @Inject
