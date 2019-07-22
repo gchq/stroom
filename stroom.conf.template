@@ -64,7 +64,7 @@ stroom.plugins.lib.dir=HOME_DIR/.stroom/plugins
 #~~~~~
 #Set this to blank to prevent stroom from trying to establish a connection
 stroom.connectors.kafka.default.bootstrap.servers=IP_ADDRESS:9092
-stroom.connectors.kafka.default.connector.version=0.10.0.1
+stroom.connectors.kafka.default.connector.version=2.1.1
 
 # Elastic
 #~~~~~~~~
