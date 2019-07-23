@@ -5,7 +5,6 @@ import stroom.index.impl.IndexVolumeResource;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.UpdateVolumeDTO;
 import stroom.index.shared.IndexVolume;
-import stroom.index.shared.IndexVolumeGroup;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;

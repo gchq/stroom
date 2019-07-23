@@ -1,5 +1,6 @@
 package stroom.index.impl.service;
 
+import com.google.common.base.Strings;
 import stroom.index.impl.CreateVolumeDTO;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeService;
@@ -10,9 +11,13 @@ import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
+import stroom.util.NextNameGenerator;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 public class IndexVolumeServiceImpl implements IndexVolumeService {
     private final IndexVolumeDao indexVolumeDao;
@@ -32,8 +37,13 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
     public IndexVolume create(CreateVolumeDTO createVolumeDTO) {
         final IndexVolume indexVolume = new IndexVolume();
         AuditUtil.stamp(securityContext.getUserId(), indexVolume);
-        indexVolume.setNodeName(createVolumeDTO.getNodeName());
-        indexVolume.setPath(createVolumeDTO.getPath());
+
+        var names = indexVolumeDao.getAll().stream().map(i -> isNullOrEmpty(i.getNodeName()) ? "" : i.getNodeName())
+                .collect(Collectors.toList());
+        indexVolume.setNodeName(isNullOrEmpty(createVolumeDTO.getNodeName())
+                ? NextNameGenerator.getNextName(names, "New index volume")
+                : createVolumeDTO.getNodeName());
+        indexVolume.setPath(isNullOrEmpty(createVolumeDTO.getPath()) ? null : createVolumeDTO.getPath());
         indexVolume.setIndexVolumeGroupId(createVolumeDTO.getIndexVolumeGroupId());
 
         return security.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,

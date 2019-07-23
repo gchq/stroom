@@ -1,7 +1,12 @@
 package stroom.index.impl;
 
+
+import javax.annotation.Nullable;
+
 public class CreateVolumeDTO {
+    @Nullable
     private String nodeName;
+    @Nullable
     private String path;
     private int indexVolumeGroupId;
 
