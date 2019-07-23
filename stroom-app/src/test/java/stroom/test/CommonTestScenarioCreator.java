@@ -113,7 +113,7 @@ public class CommonTestScenarioCreator {
         final DocRef indexRef = indexStore.createDocument(name);
         final IndexDoc index = indexStore.readDocument(indexRef);
         final String volumeGroupName = UUID.randomUUID().toString();
-        indexVolumeGroupService.create(volumeGroupName);
+        indexVolumeGroupService.create();
 
         index.setMaxDocsPerShard(maxDocsPerShard);
         index.setIndexFields(indexFields);
@@ -126,7 +126,9 @@ public class CommonTestScenarioCreator {
                 .findAny()
                 .orElseThrow(() -> new AssertionError("Could not get Index Volume"));
 
-        indexVolumeService.addVolumeToGroup(indexVolume.getId(), volumeGroupName);
+
+        //TODO:
+//        indexVolumeService.addVolumeToGroup(indexVolume.getId(), volumeGroupName);
 
         return indexRef;
     }

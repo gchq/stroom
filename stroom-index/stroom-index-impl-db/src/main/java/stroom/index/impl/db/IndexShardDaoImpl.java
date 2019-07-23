@@ -18,6 +18,7 @@ import stroom.index.shared.IndexVolume;
 import stroom.util.shared.CriteriaSet;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -181,7 +182,8 @@ class IndexShardDaoImpl implements IndexShardDao {
                              final String ownerNodeName,
                              final String indexVersion) {
         // TODO : @66 Add volume selection based on strategy for using least full etc, like we do for data store.
-        final List<IndexVolume> indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
+//        final List<IndexVolume> indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
+        final List<IndexVolume> indexVolumes = new ArrayList<>();
 
         IndexVolume indexVolume;
         try {

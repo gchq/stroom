@@ -14,9 +14,7 @@ import org.jooq.impl.Internal;
 import stroom.index.impl.db.jooq.tables.IndexShard;
 import stroom.index.impl.db.jooq.tables.IndexVolume;
 import stroom.index.impl.db.jooq.tables.IndexVolumeGroup;
-import stroom.index.impl.db.jooq.tables.IndexVolumeGroupLink;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
-import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupLinkRecord;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeRecord;
 
@@ -52,15 +50,13 @@ public class Keys {
     public static final UniqueKey<IndexVolumeRecord> KEY_INDEX_VOLUME_NODE_NAME_PATH = UniqueKeys0.KEY_INDEX_VOLUME_NODE_NAME_PATH;
     public static final UniqueKey<IndexVolumeGroupRecord> KEY_INDEX_VOLUME_GROUP_PRIMARY = UniqueKeys0.KEY_INDEX_VOLUME_GROUP_PRIMARY;
     public static final UniqueKey<IndexVolumeGroupRecord> KEY_INDEX_VOLUME_GROUP_INDEX_VOLUME_GROUP_NAME = UniqueKeys0.KEY_INDEX_VOLUME_GROUP_INDEX_VOLUME_GROUP_NAME;
-    public static final UniqueKey<IndexVolumeGroupLinkRecord> KEY_INDEX_VOLUME_GROUP_LINK_INDEX_VOLUME_GROUP_LINK_UNIQUE = UniqueKeys0.KEY_INDEX_VOLUME_GROUP_LINK_INDEX_VOLUME_GROUP_LINK_UNIQUE;
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
     public static final ForeignKey<IndexShardRecord, IndexVolumeRecord> INDEX_SHARD_FK_VOLUME_ID = ForeignKeys0.INDEX_SHARD_FK_VOLUME_ID;
-    public static final ForeignKey<IndexVolumeGroupLinkRecord, IndexVolumeGroupRecord> INDEX_VOLUME_GROUP_LINK_FK_GROUP_ID = ForeignKeys0.INDEX_VOLUME_GROUP_LINK_FK_GROUP_ID;
-    public static final ForeignKey<IndexVolumeGroupLinkRecord, IndexVolumeRecord> INDEX_VOLUME_GROUP_LINK_FK_VOLUME_ID = ForeignKeys0.INDEX_VOLUME_GROUP_LINK_FK_VOLUME_ID;
+    public static final ForeignKey<IndexVolumeRecord, IndexVolumeGroupRecord> INDEX_VOLUME_GROUP_LINK_FK_GROUP_ID = ForeignKeys0.INDEX_VOLUME_GROUP_LINK_FK_GROUP_ID;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
@@ -78,12 +74,10 @@ public class Keys {
         public static final UniqueKey<IndexVolumeRecord> KEY_INDEX_VOLUME_NODE_NAME_PATH = Internal.createUniqueKey(IndexVolume.INDEX_VOLUME, "KEY_index_volume_node_name_path", IndexVolume.INDEX_VOLUME.NODE_NAME, IndexVolume.INDEX_VOLUME.PATH);
         public static final UniqueKey<IndexVolumeGroupRecord> KEY_INDEX_VOLUME_GROUP_PRIMARY = Internal.createUniqueKey(IndexVolumeGroup.INDEX_VOLUME_GROUP, "KEY_index_volume_group_PRIMARY", IndexVolumeGroup.INDEX_VOLUME_GROUP.ID);
         public static final UniqueKey<IndexVolumeGroupRecord> KEY_INDEX_VOLUME_GROUP_INDEX_VOLUME_GROUP_NAME = Internal.createUniqueKey(IndexVolumeGroup.INDEX_VOLUME_GROUP, "KEY_index_volume_group_index_volume_group_name", IndexVolumeGroup.INDEX_VOLUME_GROUP.NAME);
-        public static final UniqueKey<IndexVolumeGroupLinkRecord> KEY_INDEX_VOLUME_GROUP_LINK_INDEX_VOLUME_GROUP_LINK_UNIQUE = Internal.createUniqueKey(IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK, "KEY_index_volume_group_link_index_volume_group_link_unique", IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_GROUP_ID, IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_ID);
     }
 
     private static class ForeignKeys0 {
         public static final ForeignKey<IndexShardRecord, IndexVolumeRecord> INDEX_SHARD_FK_VOLUME_ID = Internal.createForeignKey(stroom.index.impl.db.jooq.Keys.KEY_INDEX_VOLUME_PRIMARY, IndexShard.INDEX_SHARD, "index_shard_fk_volume_id", IndexShard.INDEX_SHARD.FK_VOLUME_ID);
-        public static final ForeignKey<IndexVolumeGroupLinkRecord, IndexVolumeGroupRecord> INDEX_VOLUME_GROUP_LINK_FK_GROUP_ID = Internal.createForeignKey(stroom.index.impl.db.jooq.Keys.KEY_INDEX_VOLUME_GROUP_PRIMARY, IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK, "index_volume_group_link_fk_group_id", IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_GROUP_ID);
-        public static final ForeignKey<IndexVolumeGroupLinkRecord, IndexVolumeRecord> INDEX_VOLUME_GROUP_LINK_FK_VOLUME_ID = Internal.createForeignKey(stroom.index.impl.db.jooq.Keys.KEY_INDEX_VOLUME_PRIMARY, IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK, "index_volume_group_link_fk_volume_id", IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_ID);
+        public static final ForeignKey<IndexVolumeRecord, IndexVolumeGroupRecord> INDEX_VOLUME_GROUP_LINK_FK_GROUP_ID = Internal.createForeignKey(stroom.index.impl.db.jooq.Keys.KEY_INDEX_VOLUME_GROUP_PRIMARY, IndexVolume.INDEX_VOLUME, "index_volume_group_link_fk_group_id", IndexVolume.INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID);
     }
 }

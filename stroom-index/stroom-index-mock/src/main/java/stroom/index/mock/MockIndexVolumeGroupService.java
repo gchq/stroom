@@ -1,6 +1,7 @@
 package stroom.index.mock;
 
 import stroom.index.impl.IndexVolumeGroupService;
+import stroom.index.impl.UpdateIndexVolumeGroupDTO;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.util.AuditUtil;
 
@@ -25,12 +26,17 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
     }
 
     @Override
-    public IndexVolumeGroup create(final String name) {
+    public IndexVolumeGroup create() {
         final IndexVolumeGroup group = new IndexVolumeGroup();
-        group.setName(name);
+        group.setName("New name");
         AuditUtil.stamp(TEST_USER, group);
         groups.add(group);
         return group;
+    }
+
+    @Override
+    public IndexVolumeGroup update(UpdateIndexVolumeGroupDTO updateIndexVolumeGroupDTO) {
+        return null;
     }
 
     @Override

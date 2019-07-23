@@ -9,7 +9,6 @@ import javax.annotation.Generated;
 import stroom.index.impl.db.jooq.tables.IndexShard;
 import stroom.index.impl.db.jooq.tables.IndexVolume;
 import stroom.index.impl.db.jooq.tables.IndexVolumeGroup;
-import stroom.index.impl.db.jooq.tables.IndexVolumeGroupLink;
 
 
 /**
@@ -39,9 +38,4 @@ public class Tables {
      * The table <code>stroom.index_volume_group</code>.
      */
     public static final IndexVolumeGroup INDEX_VOLUME_GROUP = stroom.index.impl.db.jooq.tables.IndexVolumeGroup.INDEX_VOLUME_GROUP;
-
-    /**
-     * The table <code>stroom.index_volume_group_link</code>.
-     */
-    public static final IndexVolumeGroupLink INDEX_VOLUME_GROUP_LINK = stroom.index.impl.db.jooq.tables.IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK;
 }

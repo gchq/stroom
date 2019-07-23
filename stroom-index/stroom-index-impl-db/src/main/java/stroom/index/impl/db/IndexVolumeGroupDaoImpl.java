@@ -14,7 +14,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
-import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP_LINK;
 
 class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     private static final Function<Record, IndexVolumeGroup> RECORD_TO_INDEX_VOLUME_GROUP_MAPPER = record -> {
@@ -80,6 +79,11 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     }
 
     @Override
+    public IndexVolumeGroup update(IndexVolumeGroup indexVolumeGroup) {
+        return genericDao.update(indexVolumeGroup);
+    }
+
+    @Override
     public IndexVolumeGroup get(final String name) {
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .select()
@@ -108,18 +112,13 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     }
 
     @Override
+    public void delete(final int id) {
+        genericDao.delete(id);
+    }
+
+    @Override
     public void delete(final String name) {
-        JooqUtil.transaction(connectionProvider, context -> {
-            context
-                    .deleteFrom(INDEX_VOLUME_GROUP_LINK)
-                    .where(INDEX_VOLUME_GROUP_LINK.FK_INDEX_VOLUME_GROUP_ID.in(
-                            context
-                                    .select(INDEX_VOLUME_GROUP.ID)
-                                    .from(INDEX_VOLUME_GROUP)
-                                    .where(INDEX_VOLUME_GROUP.NAME.eq(name))))
-                    .execute();
-            context.deleteFrom(INDEX_VOLUME_GROUP)
-                    .where(INDEX_VOLUME_GROUP.NAME.eq(name)).execute();
-        });
+        final var indexVolumeGroup = this.get(name);
+        genericDao.delete(indexVolumeGroup.getId());
     }
 }

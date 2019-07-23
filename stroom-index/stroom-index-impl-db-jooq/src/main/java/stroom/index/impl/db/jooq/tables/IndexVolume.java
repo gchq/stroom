@@ -41,7 +41,7 @@ import stroom.index.impl.db.jooq.tables.records.IndexVolumeRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexVolume extends TableImpl<IndexVolumeRecord> {
 
-    private static final long serialVersionUID = -1183407900;
+    private static final long serialVersionUID = -2023614813;
 
     /**
      * The reference instance of <code>stroom.index_volume</code>
@@ -95,6 +95,11 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
      * The column <code>stroom.index_volume.path</code>.
      */
     public final TableField<IndexVolumeRecord, String> PATH = createField("path", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
+
+    /**
+     * The column <code>stroom.index_volume.fk_index_volume_group_id</code>.
+     */
+    public final TableField<IndexVolumeRecord, Integer> FK_INDEX_VOLUME_GROUP_ID = createField("fk_index_volume_group_id", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>stroom.index_volume.state</code>.
@@ -172,7 +177,7 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
      */
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.INDEX_VOLUME_NODE_NAME_PATH, Indexes.INDEX_VOLUME_PRIMARY);
+        return Arrays.<Index>asList(Indexes.INDEX_VOLUME_INDEX_VOLUME_GROUP_LINK_FK_GROUP_ID, Indexes.INDEX_VOLUME_NODE_NAME_PATH, Indexes.INDEX_VOLUME_PRIMARY);
     }
 
     /**
@@ -197,6 +202,18 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
     @Override
     public List<UniqueKey<IndexVolumeRecord>> getKeys() {
         return Arrays.<UniqueKey<IndexVolumeRecord>>asList(Keys.KEY_INDEX_VOLUME_PRIMARY, Keys.KEY_INDEX_VOLUME_NODE_NAME_PATH);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<ForeignKey<IndexVolumeRecord, ?>> getReferences() {
+        return Arrays.<ForeignKey<IndexVolumeRecord, ?>>asList(Keys.INDEX_VOLUME_GROUP_LINK_FK_GROUP_ID);
+    }
+
+    public IndexVolumeGroup indexVolumeGroup() {
+        return new IndexVolumeGroup(this, Keys.INDEX_VOLUME_GROUP_LINK_FK_GROUP_ID);
     }
 
     /**

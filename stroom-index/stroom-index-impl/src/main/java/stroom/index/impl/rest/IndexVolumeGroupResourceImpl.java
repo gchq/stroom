@@ -2,6 +2,7 @@ package stroom.index.impl.rest;
 
 import stroom.index.impl.IndexVolumeGroupResource;
 import stroom.index.impl.IndexVolumeGroupService;
+import stroom.index.impl.UpdateIndexVolumeGroupDTO;
 import stroom.index.shared.IndexVolumeGroup;
 
 import javax.inject.Inject;
@@ -43,8 +44,14 @@ public class IndexVolumeGroupResourceImpl implements IndexVolumeGroupResource {
     }
 
     @Override
-    public Response create(final String name) {
-        final IndexVolumeGroup group = indexVolumeGroupService.create(name);
+    public Response create() {
+        final IndexVolumeGroup group = indexVolumeGroupService.create();
+        return Response.ok(group).build();
+    }
+
+    @Override
+    public Response update(UpdateIndexVolumeGroupDTO updateIndexVolumeGroupDTO){
+        final var group = indexVolumeGroupService.update(updateIndexVolumeGroupDTO);
         return Response.ok(group).build();
     }
 

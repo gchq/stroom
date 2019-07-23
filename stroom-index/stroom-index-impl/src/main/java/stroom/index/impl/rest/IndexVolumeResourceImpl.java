@@ -3,6 +3,7 @@ package stroom.index.impl.rest;
 import stroom.index.impl.CreateVolumeDTO;
 import stroom.index.impl.IndexVolumeResource;
 import stroom.index.impl.IndexVolumeService;
+import stroom.index.impl.UpdateVolumeDTO;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 
@@ -32,10 +33,14 @@ public class IndexVolumeResourceImpl implements IndexVolumeResource {
 
     @Override
     public Response create(final CreateVolumeDTO createVolumeDTO) {
-        final IndexVolume indexVolume = indexVolumeService.create(
-                createVolumeDTO.getNodeName(),
-                createVolumeDTO.getPath());
+        final IndexVolume indexVolume = indexVolumeService.create(createVolumeDTO);
         return Response.ok(indexVolume).build();
+    }
+
+    @Override
+    public Response update(final UpdateVolumeDTO updateVolumeDTO) {
+        final var updatedIndexVolume = indexVolumeService.update(updateVolumeDTO);
+        return Response.ok(updatedIndexVolume).build();
     }
 
     @Override
@@ -44,33 +49,33 @@ public class IndexVolumeResourceImpl implements IndexVolumeResource {
         return Response.noContent().build();
     }
 
-    @Override
-    public Response getVolumesInGroup(final String groupName) {
-        final List<IndexVolume> volumes = indexVolumeService.getVolumesInGroup(groupName);
+//    @Override
+//    public Response getVolumesInGroup(final String groupName) {
+//        final List<IndexVolume> volumes = indexVolumeService.getVolumesInGroup(groupName);
+//
+//        return Response.ok(volumes).build();
+//    }
 
-        return Response.ok(volumes).build();
-    }
+//    @Override
+//    public Response getGroupsForVolume(final int id) {
+//        final List<IndexVolumeGroup> groups = indexVolumeService.getGroupsForVolume(id);
+//
+//        return Response.ok(groups).build();
+//    }
+//
+//    @Override
+//    public Response addVolumeToGroup(final int volumeId,
+//                                     final String groupName) {
+//        indexVolumeService.addVolumeToGroup(volumeId, groupName);
+//
+//        return Response.noContent().build();
+//    }
 
-    @Override
-    public Response getGroupsForVolume(final int id) {
-        final List<IndexVolumeGroup> groups = indexVolumeService.getGroupsForVolume(id);
-
-        return Response.ok(groups).build();
-    }
-
-    @Override
-    public Response addVolumeToGroup(final int volumeId,
-                                     final String groupName) {
-        indexVolumeService.addVolumeToGroup(volumeId, groupName);
-
-        return Response.noContent().build();
-    }
-
-    @Override
-    public Response removeVolumeFromGroup(final int volumeId,
-                                          final String groupName) {
-        indexVolumeService.removeVolumeFromGroup(volumeId, groupName);
-
-        return Response.noContent().build();
-    }
+//    @Override
+//    public Response removeVolumeFromGroup(final int volumeId,
+//                                          final String groupName) {
+//        indexVolumeService.removeVolumeFromGroup(volumeId, groupName);
+//
+//        return Response.noContent().build();
+//    }
 }
