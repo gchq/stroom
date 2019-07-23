@@ -35,7 +35,7 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
     }
 
     @Override
-    public IndexVolumeGroup update(UpdateIndexVolumeGroupDTO updateIndexVolumeGroupDTO) {
+    public IndexVolumeGroup update(IndexVolumeGroup indexVolumeGroup) {
         return null;
     }
 

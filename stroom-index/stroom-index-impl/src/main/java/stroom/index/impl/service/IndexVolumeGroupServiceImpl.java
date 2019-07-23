@@ -48,8 +48,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     }
 
     @Override
-    public IndexVolumeGroup update(UpdateIndexVolumeGroupDTO updateIndexVolumeGroupDTO) {
-        final var indexVolumeGroup = security.secureResult(() -> indexVolumeGroupDao.get(updateIndexVolumeGroupDTO.getOldName()));
+    public IndexVolumeGroup update(IndexVolumeGroup indexVolumeGroup) {
         AuditUtil.stamp(securityContext.getUserId(), indexVolumeGroup);
         return security.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.update(indexVolumeGroup));

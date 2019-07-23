@@ -11,6 +11,8 @@ public interface IndexVolumeGroupDao {
 
     IndexVolumeGroup get(String name);
 
+    IndexVolumeGroup get(int id);
+
     List<String> getNames();
 
     List<IndexVolumeGroup> getAll();

@@ -1,24 +1,24 @@
 package stroom.index.impl;
 
 public class UpdateIndexVolumeGroupDTO {
-    private String oldName;
-    private String newName;
+    private int id;
+    private String name;
 
     public UpdateIndexVolumeGroupDTO(){}
 
-    public String getOldName() {
-        return oldName;
+    public int getId() {
+        return id;
     }
 
-    public void setOldName(String oldName) {
-        this.oldName = oldName;
+    public void setId(int id) {
+        this.id = id;
     }
 
-    public String getNewName() {
-        return newName;
+    public String getName() {
+        return name;
     }
 
-    public void setNewName(String newName) {
-        this.newName = newName;
+    public void setName(String name) {
+        this.name = name;
     }
 }

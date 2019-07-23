@@ -84,6 +84,17 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     }
 
     @Override
+    public IndexVolumeGroup get(final int id) {
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select()
+                .from(INDEX_VOLUME_GROUP)
+                .where(INDEX_VOLUME_GROUP.ID.eq(id))
+                .fetchOptional()
+                .map(RECORD_TO_INDEX_VOLUME_GROUP_MAPPER)
+                .orElse(null));
+    }
+
+    @Override
     public IndexVolumeGroup get(final String name) {
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .select()

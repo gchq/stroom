@@ -1,6 +1,7 @@
 package stroom.index.impl;
 
 import io.swagger.annotations.Api;
+import stroom.index.shared.IndexVolumeGroup;
 import stroom.util.RestResource;
 
 import javax.ws.rs.DELETE;
@@ -33,7 +34,7 @@ public interface IndexVolumeGroupResource extends RestResource {
     Response create();
 
     @PUT
-    Response update(UpdateIndexVolumeGroupDTO updateIndexVolumeGroupDTO);
+    Response update(IndexVolumeGroup indexVolumeGroup);
 
     @DELETE
     @Path("/{name}")

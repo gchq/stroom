@@ -50,8 +50,8 @@ public class IndexVolumeGroupResourceImpl implements IndexVolumeGroupResource {
     }
 
     @Override
-    public Response update(UpdateIndexVolumeGroupDTO updateIndexVolumeGroupDTO){
-        final var group = indexVolumeGroupService.update(updateIndexVolumeGroupDTO);
+    public Response update(IndexVolumeGroup indexVolumeGroup){
+        final var group = indexVolumeGroupService.update(indexVolumeGroup);
         return Response.ok(group).build();
     }
 
