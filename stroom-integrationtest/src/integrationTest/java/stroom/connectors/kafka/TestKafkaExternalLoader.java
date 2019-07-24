@@ -21,7 +21,7 @@ public class TestKafkaExternalLoader {
 
     @Before
     public void setup(){
-        mockPropertyService.setProperty("stroom.connectors.kafka.default.connector.version","0.10.0.1");
+        mockPropertyService.setProperty("stroom.connectors.kafka.default.connector.version","2.1.1");
         mockPropertyService.setProperty("stroom.connectors.kafka.default.bootstrap.servers","localhost:9092");
         mockPropertyService.setProperty("stroom.plugins.lib.dir", DEV_EXTERNAL_LIB_DIR);
     }
