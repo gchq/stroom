@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Uplift Kafka to 2.1.1 and refactor code accordingly
 
+* Uplift Curator to 4.2.0
+
 
 ## [v6.0-beta.64] - 2019-07-19
 
