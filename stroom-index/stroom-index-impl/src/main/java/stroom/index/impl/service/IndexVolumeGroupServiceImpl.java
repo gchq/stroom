@@ -1,8 +1,8 @@
 package stroom.index.impl.service;
 
+import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.impl.IndexVolumeGroupService;
-import stroom.index.impl.UpdateIndexVolumeGroupDTO;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
@@ -12,17 +12,21 @@ import stroom.util.NextNameGenerator;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     private final IndexVolumeGroupDao indexVolumeGroupDao;
+    private IndexVolumeDao indexVolumeDao;
     private final Security security;
     private final SecurityContext securityContext;
 
     @Inject
     public IndexVolumeGroupServiceImpl(final IndexVolumeGroupDao indexVolumeGroupDao,
+                                       final IndexVolumeDao indexVolumeDao,
                                        final Security security,
                                        final SecurityContext securityContext) {
         this.indexVolumeGroupDao = indexVolumeGroupDao;
+        this.indexVolumeDao = indexVolumeDao;
         this.security = security;
         this.securityContext = securityContext;
     }
@@ -60,10 +64,14 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     }
 
     @Override
-    public void delete(final String name) {
-        //TODO
-//        security.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
-//                () -> indexVolumeGroupDao.delete(name));
+    public void delete(final String id) {
+        security.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+                () -> {
+                    //TODO Transaction?
+                    var indexVolumesInGroup = indexVolumeDao.getAll().stream().filter( indexVolume -> indexVolume.getIndexVolumeGroupId().equals(id)).collect(Collectors.toList());
+                    indexVolumesInGroup.forEach(indexVolume -> indexVolumeDao.delete(indexVolume.getId()));
+                    indexVolumeGroupDao.delete(id);
+                });
     }
 
 

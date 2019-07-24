@@ -65,7 +65,6 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
         final var indexVolume = security.secureResult(() -> indexVolumeDao.fetch(updateVolumeDTO.getId()).orElse(null));
 
         // Map from DTO to entity
-        // TODO Do we have a pattern for doing this yet?
         indexVolume.setIndexVolumeGroupId(updateVolumeDTO.getIndexVolumeGroupId());
         indexVolume.setPath((updateVolumeDTO.getPath()));
         indexVolume.setNodeName(updateVolumeDTO.getNodeName());
