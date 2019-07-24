@@ -6,7 +6,7 @@ import stroom.connectors.ConnectorProperties;
 
 public class StroomKafkaProducerFactoryImpl implements StroomKafkaProducerFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomKafkaProducerFactoryImpl.class);
-    private static final String VERSION = "0.10.0.1";
+    private static final String VERSION = "2.1.1";
 
     @Override
     public StroomKafkaProducer createConnector(final String version, final ConnectorProperties properties) {

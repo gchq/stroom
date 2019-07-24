@@ -53,7 +53,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
                              final String url) {
         this.securityContext = securityContext;
         this.url = url;
-        LOGGER.trace("Creating RemoteDataSourceProvider for url {}", url);
+        LOGGER.debug("Creating RemoteDataSourceProvider for url {}", url);
     }
 
     @Override
@@ -121,7 +121,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(LambdaLogger.buildMessage("Error sending request {} to {}/{}",
+            throw new RuntimeException(LambdaLogger.buildMessage("Error sending request {} to {}{}",
                     request, url, path), e);
         }
     }

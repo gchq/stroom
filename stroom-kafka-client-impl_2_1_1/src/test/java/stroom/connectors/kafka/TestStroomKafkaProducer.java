@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestStroomKafkaProducer {
-    private static final String KAFKA_VERSION = "0.10.0.1";
+    private static final String KAFKA_VERSION = "2.1.1";
 
     public static final Consumer<Exception> DEFAULT_CALLBACK = ex -> {
         throw new RuntimeException(String.format("Exception during send"), ex);
