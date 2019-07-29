@@ -16,6 +16,9 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.v2.TableSettings;
 import stroom.security.api.Security;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -173,6 +176,21 @@ public class MetaServiceImpl implements MetaService {
         // Ensure the user has permission to delete this data.
         final long now = System.currentTimeMillis();
         return updateStatus(id, Status.DELETED, null, now, DocumentPermissionNames.DELETE);
+    }
+
+    public SearchResponse search(final SearchRequest request) {
+        // Find out what fields we need.
+        request.getResultRequests().forEach(req -> {
+            if (req.getMappings().size() > 0) {
+                final TableSettings tableSettings = req.getMappings().get(0);
+                tableSettings.getFields().forEach(field -> {
+                    field.getExpression()
+                });
+            }
+        });
+
+
+
     }
 
     @Override
