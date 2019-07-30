@@ -35,7 +35,7 @@ public class FindReplaceFilter extends FilterReader {
     private final ErrorReceiver errorReceiver;
     private final String elementId;
 
-    private boolean firstPass = true;
+    private boolean allowMatchFromStart = true;
     private int replacementCount;
     private int totalReplacementCount;
     private final BufferedReader inBuffer;
@@ -89,14 +89,14 @@ public class FindReplaceFilter extends FilterReader {
         boolean doneReplacement = false;
         final Matcher matcher = pattern.matcher(inBuffer);
         if (matcher.find()) {
-            final boolean matchedBufferStart = matcher.start() == 0 && !firstPass;
+            final boolean matchedBufferStart = matcher.start() == 0;
             final boolean matchedBufferEnd = matcher.end() == inBuffer.length() && !inBuffer.isEof();
 
             if (matchedBufferStart && matchedBufferEnd) {
                 // If we matched all text in the buffer but aren't actually at the start of the stream or at the end then this is not likely to be correct.
                 error("The pattern matched all text in the buffer. Consider changing your match expression or making the buffer bigger.");
             }
-            if (matchedBufferStart) {
+            if (matchedBufferStart && !allowMatchFromStart) {
                 // If we matched from the start of the buffer but aren't actually at the start of the text then this is not likely to be correct.
                 error("The pattern matched text at the start of the buffer when we are not at the start of the stream. Consider changing your match expression or making the buffer bigger.");
             } else if (matchedBufferEnd) {
@@ -123,7 +123,8 @@ public class FindReplaceFilter extends FilterReader {
             }
         }
 
-        firstPass = false;
+        // Allow matches from the start of the buffer next time if we have done a replacement.
+        allowMatchFromStart = doneReplacement;
     }
 
     private void copyBuffer(int length) {
@@ -208,8 +209,8 @@ public class FindReplaceFilter extends FilterReader {
     }
 
     void clear() {
-        // Be ready to start matching from teh start again.
-        firstPass = true;
+        // Be ready to start matching from the start again.
+        allowMatchFromStart = true;
         // Reset the replacement count.
         replacementCount = 0;
         // Clear out buffer.

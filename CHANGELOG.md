@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1217** : Find replace filter now allows expressions to match the start of a buffer if we are at the start of the input or have just performed a replacement.
+
 ## [v5.5.10] - 2019-04-26
 
 * Issue **#1129** : Fixed stream download from the UI.
