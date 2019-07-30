@@ -82,6 +82,10 @@ public class ProxyRepositoryManager implements HasHealthCheck {
         return null;
     }
 
+    public Path getRootRepoDir() {
+        return rootRepoDir;
+    }
+
     public synchronized void start() {
         LOGGER.info("Using repository format: " + repositoryFormat);
 

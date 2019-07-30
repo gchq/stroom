@@ -20,18 +20,21 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
+import stroom.data.client.presenter.ActionDataProvider;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
@@ -39,20 +42,17 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.TreeRowHandler;
-import stroom.util.shared.ResultList;
-import stroom.util.shared.Sort.Direction;
-import stroom.data.client.presenter.ActionDataProvider;
-import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressAction;
 import stroom.task.shared.FindTaskProgressCriteria;
+import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
 import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
-import stroom.task.shared.TaskId;
+import stroom.util.shared.ResultList;
+import stroom.util.shared.Sort.Direction;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -62,9 +62,11 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
-public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGridView<TaskProgress>>
+public class TaskManagerListPresenter
+        extends MyPresenterWidget<DataGridView<TaskProgress>>
         implements HasDataSelectionHandlers<Set<String>>, Refreshable, ColumnSortEvent.Handler {
     private final ClientDispatchAsync dispatcher;
     private final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
@@ -73,17 +75,18 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
     private final Set<TaskProgress> selectedTaskProgress = new HashSet<>();
     private final Set<TaskProgress> requestedTerminateTaskProgress = new HashSet<>();
     private final TooltipPresenter tooltipPresenter;
-    private final ButtonView terminateButton;
+    private final NameFilterTimer timer = new NameFilterTimer();
 
     @Inject
-    public TaskProgressMonitoringPresenter(final EventBus eventBus,
-                                           final ClientDispatchAsync dispatcher, final TooltipPresenter tooltipPresenter) {
+    public TaskManagerListPresenter(final EventBus eventBus,
+                                    final ClientDispatchAsync dispatcher,
+                                    final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(false, 1000));
         this.dispatcher = dispatcher;
         this.tooltipPresenter = tooltipPresenter;
         this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
 
-        terminateButton = getView().addButton(SvgPresets.DELETE);
+        final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE);
         terminateButton.addClickHandler(event -> endSelectedTask());
         terminateButton.setEnabled(true);
 
@@ -102,10 +105,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
     }
 
     private void onChangeData(final ResultList<TaskProgress> data) {
-        final HashSet<TaskProgress> currentTaskSet = new HashSet<>();
-        for (final TaskProgress value : data) {
-            currentTaskSet.add(value);
-        }
+        final HashSet<TaskProgress> currentTaskSet = new HashSet<>(data);
         selectedTaskProgress.retainAll(currentTaskSet);
         requestedTerminateTaskProgress.retainAll(currentTaskSet);
     }
@@ -167,7 +167,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                 tooltipPresenter.setHTML(html.toString());
 
                 final PopupPosition popupPosition = new PopupPosition(x, y);
-                ShowPopupEvent.fire(TaskProgressMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
+                ShowPopupEvent.fire(TaskManagerListPresenter.this, tooltipPresenter, PopupType.POPUP,
                         popupPosition, null);
             }
         };
@@ -262,14 +262,17 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         dataProvider.refresh();
     }
 
-    @Override
-    public String getLabel() {
-        return "Server Tasks";
-    }
-
-    @Override
-    public Icon getIcon() {
-        return SvgPresets.JOBS;
+    /**
+     * This sets the name filter to be used when fetching items. This method
+     * returns false is the filter is set to the same value that is already set.
+     *
+     * @param nameFilter
+     * @return
+     */
+    public void setNameFilter(final String name) {
+        timer.setName(name);
+        timer.cancel();
+        timer.schedule(300);
     }
 
     private void endSelectedTask() {
@@ -318,6 +321,30 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                 action.getCriteria().setSort(orderByColumn.getField(), Direction.DESCENDING, orderByColumn.isIgnoreCase());
             }
             refresh();
+        }
+    }
+
+    private class NameFilterTimer extends Timer {
+        private String name;
+
+        @Override
+        public void run() {
+            String filter = name;
+            if (filter != null) {
+                filter = filter.trim();
+                if (filter.length() == 0) {
+                    filter = null;
+                }
+            }
+
+            if (!Objects.equals(filter, criteria.getNameFilter())) {
+                criteria.setNameFilter(filter);
+                refresh();
+            }
+        }
+
+        public void setName(final String name) {
+            this.name = name;
         }
     }
 }

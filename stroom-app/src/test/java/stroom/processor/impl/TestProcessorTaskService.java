@@ -17,16 +17,16 @@
 
 package stroom.processor.impl;
 
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.node.shared.Node;
 import stroom.processor.api.ProcessorTaskService;
-import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -67,14 +67,14 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         // Create all required tasks.
         createTasks();
 
-        final ProcessorTask ps1 = processorTaskService.find(FindProcessorTaskCriteria.createWithStream(file1)).getFirst();
+        final ProcessorTask ps1 = processorTaskService.find(new ExpressionCriteria(ProcessorTaskExpressionUtil.createWithStream(file1))).getFirst();
         assertThat(ps1).isNotNull();
         processorTaskDao.changeTaskStatus(ps1, ps1.getNodeName(), TaskStatus.COMPLETE, ps1.getStartTimeMs(), ps1.getEndTimeMs());
 
         final ExpressionOperator expressionOperator1 = new ExpressionOperator.Builder()
                 .addTerm(ProcessorTaskDataSource.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
                 .build();
-        FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria(expressionOperator1);
+        ExpressionCriteria criteria = new ExpressionCriteria(expressionOperator1);
 //        criteria.obtainTaskStatusSet().add(TaskStatus.COMPLETE);
 
         assertThat(processorTaskService.find(criteria).size()).isEqualTo(1);
@@ -103,7 +103,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         assertThat(metaService.getMeta(file1.getId())).isNotNull();
         assertThat(metaService.getMeta(file2.getId())).isNotNull();
 
-        criteria = new FindProcessorTaskCriteria();
+        criteria = new ExpressionCriteria();
         assertThat(processorTaskService.findSummary(criteria)).isNotNull();
     }
 
@@ -121,9 +121,9 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
                 .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, System.currentTimeMillis())
                 .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.LESS_THAN, System.currentTimeMillis())
                 .build();
-        final FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria(expression);
+        final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 //        criteria.obtainNodeNameCriteria().setString("Node name");
-        criteria.setSort(FindProcessorTaskCriteria.FIELD_CREATE_TIME);
+        criteria.setSort(ProcessorTaskDataSource.FIELD_CREATE_TIME);
 //        criteria.obtainProcessorTaskIdSet().add(1L);
 //        criteria.obtainFeedNameSet().add(feedName);
 //        criteria.obtainMetaIdSet().add(1L);
@@ -151,7 +151,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
                 .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, System.currentTimeMillis())
                 .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.LESS_THAN, System.currentTimeMillis())
                 .build();
-        final FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria(expression);
+        final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 //        criteria.obtainNodeNameCriteria().setString("Node name");
 //        criteria.setSort(FindProcessorTaskCriteria.FIELD_CREATE_TIME);
 //        criteria.obtainProcessorTaskIdSet().add(1L);

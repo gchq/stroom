@@ -18,6 +18,18 @@ public class ProcessorTaskDataSource {
     private static final List<AbstractField> FIELDS = new ArrayList<>();
     private static final Map<String, AbstractField> FIELD_MAP;
 
+    public static final String FIELD_ID = "Id";
+    public static final String FIELD_CREATE_TIME = "Created";
+    public static final String FIELD_START_TIME = "Start Time";
+    public static final String FIELD_END_TIME_DATE = "End Time";
+    public static final String FIELD_FEED = "Feed";
+    public static final String FIELD_PRIORITY = "Priority";
+    public static final String FIELD_PIPELINE = "Pipeline";
+    public static final String FIELD_STATUS = "Status";
+    public static final String FIELD_COUNT = "Count";
+    public static final String FIELD_NODE = "Node";
+    public static final String FIELD_POLL_AGE = "Poll Age";
+
     public static final DateField CREATE_TIME = new DateField("Create Time");
     public static final LongField CREATE_TIME_MS = new LongField("Create Time Ms");
     public static final IdField META_ID = new IdField("Meta Id");

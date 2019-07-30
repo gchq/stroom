@@ -33,6 +33,8 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.table.client.Refreshable;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.client.presenter.FindActionDataProvider;
+import stroom.meta.shared.FindMetaRowAction;
 import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultList;
@@ -62,7 +64,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
     private final IdSet entityIdSet = new IdSet();
     private final ClientDispatchAsync dispatcher;
-    protected FindStreamActionDataProvider dataProvider;
+    protected FindActionDataProvider<FindMetaCriteria, MetaRow> dataProvider;
     private ResultList<MetaRow> resultList = null;
 
     AbstractMetaListPresenter(final EventBus eventBus,
@@ -77,7 +79,8 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
         addColumns(allowSelectAll);
 
-        this.dataProvider = new FindStreamActionDataProvider(dispatcher, getView()) {
+        this.dataProvider = new FindActionDataProvider<FindMetaCriteria, MetaRow>(
+                dispatcher, getView(), new FindMetaRowAction()) {
             @Override
             protected ResultList<MetaRow> processData(final ResultList<MetaRow> data) {
                 return onProcessData(data);
@@ -85,7 +88,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         };
     }
 
-    public FindStreamActionDataProvider getDataProvider() {
+    public FindActionDataProvider<FindMetaCriteria, MetaRow> getDataProvider() {
         return dataProvider;
     }
 

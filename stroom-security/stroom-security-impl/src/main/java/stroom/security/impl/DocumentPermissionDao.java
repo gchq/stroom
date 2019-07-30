@@ -9,7 +9,7 @@ public interface DocumentPermissionDao {
 
     DocumentPermissionJooq getPermissionsForDocument(String docRefUuid);
 
-    UserDocumentPermissions getPermissionsForUsers(Set<String> users);
+    UserDocumentPermissions getPermissionsForUser(String userUuid);
 
     void addPermission(String docRefUuid, String userUuid, String permission);
 

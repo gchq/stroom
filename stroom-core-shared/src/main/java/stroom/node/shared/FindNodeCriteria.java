@@ -21,4 +21,5 @@ import stroom.util.shared.FindNamedEntityCriteria;
 public class FindNodeCriteria extends FindNamedEntityCriteria {
     private static final long serialVersionUID = 7492425814517445433L;
 
+    public static final String FIELD_ID = "Id";
 }

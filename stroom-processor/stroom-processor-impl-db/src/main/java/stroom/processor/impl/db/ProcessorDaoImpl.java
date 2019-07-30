@@ -5,9 +5,9 @@ import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
-import stroom.processor.shared.FindProcessorCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
 import stroom.util.shared.BaseResultList;
@@ -94,7 +94,7 @@ class ProcessorDaoImpl implements ProcessorDao {
     }
 
     @Override
-    public BaseResultList<Processor> find(final FindProcessorCriteria criteria) {
+    public BaseResultList<Processor> find(final ExpressionCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 
 //        final Collection<Condition> conditions = JooqUtil.conditions(

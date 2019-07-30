@@ -156,7 +156,7 @@ public class MockMetaService implements MetaService, Clearable {
 
     @Override
     public BaseResultList<Meta> find(final FindMetaCriteria criteria) {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(MetaFields.getExtendedFieldMap(), null, null);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(MetaFields.getAllFieldMap(), null, null);
         final List<Meta> list = new ArrayList<>();
         for (final Entry<Long, Meta> entry : metaMap.entrySet()) {
             try {

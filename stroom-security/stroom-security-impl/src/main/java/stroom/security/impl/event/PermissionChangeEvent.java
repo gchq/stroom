@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.task.client.presenter;
+package stroom.security.impl.event;
 
-import com.gwtplatform.mvp.client.UiHandlers;
-import stroom.task.shared.TaskId;
+import java.io.Serializable;
 
-public interface TaskUiHandlers extends UiHandlers {
-    void onTerminate(TaskId terminateId, String taskName);
+public interface PermissionChangeEvent extends Serializable {
+    interface Handler {
+        void onChange(PermissionChangeEvent event);
+    }
 }

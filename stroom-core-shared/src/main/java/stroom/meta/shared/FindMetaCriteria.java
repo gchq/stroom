@@ -17,21 +17,16 @@
 package stroom.meta.shared;
 
 import stroom.docref.SharedObject;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.Copyable;
-import stroom.util.shared.HasIsConstrained;
 import stroom.util.shared.IdSet;
 
 import java.util.Objects;
 
-public class FindMetaCriteria extends BaseCriteria implements SharedObject, HasIsConstrained, Copyable<FindMetaCriteria> {
+public class FindMetaCriteria extends ExpressionCriteria implements SharedObject, Copyable<FindMetaCriteria> {
     private static final long serialVersionUID = -4777723504698304778L;
 
-    public static final String FIELD_FEED = "Feed";
-    public static final String FIELD_TYPE = "Type";
-
-    private ExpressionOperator expression;
     private IdSet selectedIdSet;
     private boolean fetchRelationships;
 
@@ -39,7 +34,7 @@ public class FindMetaCriteria extends BaseCriteria implements SharedObject, HasI
     }
 
     public FindMetaCriteria(final ExpressionOperator expression) {
-        this.expression = expression;
+        super(expression);
     }
 
     public static FindMetaCriteria createFromMeta(final Meta meta) {
@@ -53,21 +48,6 @@ public class FindMetaCriteria extends BaseCriteria implements SharedObject, HasI
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(MetaExpressionUtil.createTypeExpression(typeName));
         return criteria;
-    }
-
-    public ExpressionOperator getExpression() {
-        return expression;
-    }
-
-    public void setExpression(final ExpressionOperator expression) {
-        this.expression = expression;
-    }
-
-    public ExpressionOperator obtainExpression() {
-        if (expression == null) {
-            expression = MetaExpressionUtil.createSimpleExpression();
-        }
-        return expression;
     }
 
     public IdSet getSelectedIdSet() {
@@ -93,16 +73,16 @@ public class FindMetaCriteria extends BaseCriteria implements SharedObject, HasI
         return fetchRelationships;
     }
 
-    @Override
-    public boolean isConstrained() {
-        return (selectedIdSet != null && selectedIdSet.isConstrained()) || ExpressionUtil.termCount(expression) > 0;
-    }
+//    @Override
+//    public boolean isConstrained() {
+//        return (selectedIdSet != null && selectedIdSet.isConstrained()) || ExpressionUtil.termCount(expression) > 0;
+//    }
 
     @Override
     public void copyFrom(final FindMetaCriteria other) {
         super.copyFrom(other);
         if (other != null) {
-            this.expression = ExpressionUtil.copyOperator(other.expression);
+            this.setExpression(ExpressionUtil.copyOperator(other.getExpression()));
             if (other.selectedIdSet == null) {
                 this.selectedIdSet = null;
             } else {
@@ -115,15 +95,15 @@ public class FindMetaCriteria extends BaseCriteria implements SharedObject, HasI
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof FindMetaCriteria)) return false;
         if (!super.equals(o)) return false;
         final FindMetaCriteria that = (FindMetaCriteria) o;
-        return Objects.equals(expression, that.expression) &&
+        return fetchRelationships == that.fetchRelationships &&
                 Objects.equals(selectedIdSet, that.selectedIdSet);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), expression, selectedIdSet);
+        return Objects.hash(super.hashCode(), selectedIdSet, fetchRelationships);
     }
 }

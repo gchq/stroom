@@ -22,11 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.db.util.JooqUtil;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
 import stroom.processor.impl.ProcessorTaskManager;
-import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterDataSource;
 import stroom.processor.shared.ProcessorFilterTracker;
@@ -150,7 +150,7 @@ class ProcessorTaskDeleteExecutorImpl extends AbstractBatchDeleteExecutor implem
             final ExpressionOperator expression = new ExpressionOperator.Builder()
                     .addTerm(ProcessorFilterDataSource.LAST_POLL_MS, ExpressionTerm.Condition.LESS_THAN, age)
                     .build();
-            final FindProcessorFilterCriteria criteria = new FindProcessorFilterCriteria(expression);
+            final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 //            criteria.setLastPollPeriod(new Period(null, age));
             final List<ProcessorFilter> filters = processorFilterDao.find(criteria);
             for (final ProcessorFilter filter : filters) {

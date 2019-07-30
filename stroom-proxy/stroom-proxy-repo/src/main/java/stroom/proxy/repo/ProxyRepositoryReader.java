@@ -212,7 +212,13 @@ public final class ProxyRepositoryReader {
                 repositoryProcessor.process();
             }
             // Otherwise just clean.
-            readyToProcess.clean();
+
+            // If the root of this repo is also our configured rootRepoDir then we don't want to delete the
+            // repo's root on clean as it causes problems in docker containers. Deleting a configured directory
+            // may also cause confusion for admins.
+            final boolean deleteRootDirectory = !readyToProcess.getRootDir()
+                    .equals(proxyRepositoryManager.getRootRepoDir());
+            readyToProcess.clean(deleteRootDirectory);
         }
     }
 

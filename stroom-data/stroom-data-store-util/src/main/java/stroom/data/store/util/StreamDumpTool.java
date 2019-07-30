@@ -166,8 +166,8 @@ public class StreamDumpTool extends AbstractCommandLineTool {
 
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(builder.build());
-        criteria.addSort(FindMetaCriteria.FIELD_FEED, Direction.ASCENDING, true);
-        criteria.addSort(FindMetaCriteria.FIELD_ID, Direction.ASCENDING, true);
+        criteria.addSort(MetaFields.FIELD_FEED, Direction.ASCENDING, true);
+        criteria.addSort(MetaFields.FIELD_ID, Direction.ASCENDING, true);
 
         final DataDownloadSettings dataDownloadSettings = new DataDownloadSettings();
         dataDownloadSettings.setMultipleFiles(true);

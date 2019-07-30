@@ -41,9 +41,11 @@ import java.util.Map;
 import java.util.Set;
 
 @Api(value = "dictionary - /v2")
-@Path("/dictionary/v2")
+@Path(DictionaryResource2.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public class DictionaryResource2 implements RestResource, HasHealthCheck {
+    public static final String BASE_RESOURCE_PATH = "/dictionary/v2";
+
     private final DictionaryStore dictionaryStore;
 
     @Inject

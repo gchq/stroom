@@ -28,16 +28,17 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
+import stroom.entity.client.presenter.FindActionDataProvider;
 import stroom.entity.client.presenter.HasDocumentRead;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.entity.shared.NamedEntity;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.ProcessorTaskExpressionUtil;
-import stroom.processor.shared.FetchProcessorTaskAction;
-import stroom.processor.shared.FindProcessorTaskCriteria;
+import stroom.processor.shared.FindProcessorTaskAction;
 import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.util.shared.ResultList;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -48,23 +49,14 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import java.util.ArrayList;
 
 public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<ProcessorTask>> implements HasDocumentRead<SharedObject> {
-    private final ActionDataProvider<ProcessorTask> dataProvider;
-    private final FetchProcessorTaskAction action;
-    private boolean doneDataDisplay = false;
+    private final FindActionDataProvider<ExpressionCriteria, ProcessorTask> dataProvider;
+    private final ExpressionCriteria criteria;
 
     @Inject
     public ProcessorTaskListPresenter(final EventBus eventBus,
                                       final ClientDispatchAsync dispatcher,
                                       final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(false));
-
-        action = new FetchProcessorTaskAction();
-        dataProvider = new ActionDataProvider<ProcessorTask>(dispatcher, action) {
-            @Override
-            protected void changeData(final ResultList<ProcessorTask> data) {
-                super.changeData(data);
-            }
-        };
 
         // Info column.
         getView().addColumn(new InfoColumn<ProcessorTask>() {
@@ -122,7 +114,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         }, "<br/>", ColumnSizeConstants.ICON_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTask, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_CREATE_TIME, false) {
+                new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_CREATE_TIME, false) {
                     @Override
                     public String getValue(final ProcessorTask row) {
                         return ClientDateUtil.toISOString(row.getCreateTimeMs());
@@ -130,7 +122,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                 }, "Create", ColumnSizeConstants.DATE_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTask, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_STATUS, false) {
+                new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_STATUS, false) {
                     @Override
                     public String getValue(final ProcessorTask row) {
                         return row.getStatus().getDisplayValue();
@@ -138,7 +130,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                 }, "Status", 80);
 
         getView()
-                .addColumn(new OrderByColumn<ProcessorTask, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_NODE, true) {
+                .addColumn(new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_NODE, true) {
                     @Override
                     public String getValue(final ProcessorTask row) {
                         if (row.getNodeName() != null) {
@@ -148,7 +140,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                         }
                     }
                 }, "Node", 100);
-        getView().addColumn(new OrderByColumn<ProcessorTask, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_PRIORITY, false) {
+        getView().addColumn(new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_PRIORITY, false) {
             @Override
             public String getValue(final ProcessorTask row) {
                 if (row.getProcessorFilter() != null) {
@@ -159,7 +151,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
             }
         }, "Priority", 100);
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTask, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_PIPELINE, true) {
+                new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_PIPELINE, true) {
                     @Override
                     public String getValue(final ProcessorTask row) {
                         if (row.getProcessorFilter() != null) {
@@ -174,14 +166,14 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                     }
                 }, "Pipeline", 200);
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTask, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_START_TIME, false) {
+                new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_START_TIME, false) {
                     @Override
                     public String getValue(final ProcessorTask row) {
                         return ClientDateUtil.toISOString(row.getStartTimeMs());
                     }
                 }, "Start Time", ColumnSizeConstants.DATE_COL);
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTask, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_END_TIME_DATE, false) {
+                new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_END_TIME_DATE, false) {
                     @Override
                     public String getValue(final ProcessorTask row) {
                         return ClientDateUtil.toISOString(row.getEndTimeMs());
@@ -189,6 +181,9 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                 }, "End Time", ColumnSizeConstants.DATE_COL);
 
         getView().addEndColumn(new EndColumn<>());
+
+        criteria = new ExpressionCriteria();
+        dataProvider = new FindActionDataProvider<ExpressionCriteria, ProcessorTask>(dispatcher, getView(), new FindProcessorTaskAction());
     }
 
     private String toDateString(final Long ms) {
@@ -220,18 +215,9 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         }
     }
 
-    private void doDataDisplay() {
-        if (!doneDataDisplay) {
-            doneDataDisplay = true;
-            dataProvider.addDataDisplay(getView().getDataDisplay());
-        } else {
-            dataProvider.refresh();
-        }
-    }
-
     public void setExpression(final ExpressionOperator expression) {
-        action.getCriteria().setExpression(expression);
-        doDataDisplay();
+        criteria.setExpression(expression);
+        dataProvider.setCriteria(criteria);
     }
 
     public void clear() {

@@ -122,7 +122,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
 
         getView().addEndColumn(new EndColumn<>());
 
-        this.dataProvider = new FindActionDataProvider<FindJobCriteria, Job>(dispatcher, getView()) {
+        this.dataProvider = new FindActionDataProvider<FindJobCriteria, Job>(dispatcher, getView(), new FindJobAction()) {
             // Add in extra blank item
             @Override
             protected ResultList<Job> processData(final ResultList<Job> data) {
@@ -143,8 +143,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
         final FindJobCriteria findJobCriteria = new FindJobCriteria();
         findJobCriteria.setSort(FindJobCriteria.FIELD_ADVANCED);
         findJobCriteria.addSort(FindJobCriteria.FIELD_NAME);
-        final FindJobAction action = new FindJobAction(findJobCriteria);
-        this.dataProvider.setAction(action);
+        this.dataProvider.setCriteria(findJobCriteria);
     }
 
     public MultiSelectionModel<Job> getSelectionModel() {

@@ -6,6 +6,34 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift HBase to 2.1.5 and refactor code accordingly
+
+* Uplift Kafka to 2.1.1 and refactor code accordingly
+
+* Uplift Curator to 4.2.0
+
+* Issue **#1143** : Added mechanism to inject dashboard parameters into expressions using the `param` and `params` functions so that dashboard parameters can be echoed by expressions to create dashboard links.
+
+* Issue **#1205** : Change proxy repo clean to not delete configured rootRepoDir.
+
+* Issue **#1204** : Fix ProxySecurityFilter to use correct API key on feedStatus requests.
+
+* Issue **#1211** : Added a quick filter to the server tasks page.
+
+* Issue **#1206** : Fixed sorting active tasks when clicking column header.
+
+* Issue **#1201** : Fixed dependencies.
+
+* Issue **#1201** : Fixed tests.
+
+* Issue **#1201** : Document permission changes now mutate the user document permissions cache rather than clearing it.
+
+* Issue **#1153** : Changed security context to be a Spring singleton to improve explorer performance.
+
+* Issue **#1202** : Fixed NumberFormatException in StreamAttributeMapUtil.
+
+* Issue **#1203** : Fixed event logging detail for dictionaries.
+
 * Issue **#1197** : Restored Save As functionality.
 
 * Issue **#1199** : The index fields page now copes with more than 100 index fields.

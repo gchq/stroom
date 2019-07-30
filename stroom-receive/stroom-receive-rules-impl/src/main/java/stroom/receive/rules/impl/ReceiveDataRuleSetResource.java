@@ -44,9 +44,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Api(value = "ruleset - /v1")
-@Path("/ruleset/v1")
+@Path(ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public class ReceiveDataRuleSetResource implements RestResource, HasHealthCheck {
+    public static final String BASE_RESOURCE_PATH = "/ruleset/v1";
+
     private final ReceiveDataRuleSetService ruleSetService;
 
     @Inject

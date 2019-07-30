@@ -21,12 +21,11 @@ package stroom.processor.impl;
 import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.shared.FindProcessorCriteria;
-import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterDataSource;
@@ -63,12 +62,12 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
 
     private void deleteAll() {
         final List<ProcessorFilter> filters = processorFilterService
-                .find(new FindProcessorFilterCriteria());
+                .find(new ExpressionCriteria());
         for (final ProcessorFilter filter : filters) {
             processorFilterService.delete(filter.getId());
         }
 
-        final List<Processor> streamProcessors = processorService.find(new FindProcessorCriteria());
+        final List<Processor> streamProcessors = processorService.find(new ExpressionCriteria());
         for (final Processor processor : streamProcessors) {
             processorService.delete(processor.getId());
         }
@@ -77,14 +76,14 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
     @Test
     void testBasic() {
         final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345", "Test Pipeline");
-        final FindProcessorFilterCriteria findProcessorFilterCriteria = new FindProcessorFilterCriteria();
+        final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria();
 
         processorFilterService.create(pipelineRef, new QueryData(), 1, true);
-        assertThat(processorService.find(new FindProcessorCriteria()).size()).isEqualTo(1);
+        assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(1);
 
         processorFilterService.create(pipelineRef, new QueryData(), 10, true);
-        assertThat(processorService.find(new FindProcessorCriteria()).size()).isEqualTo(1);
+        assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(2);
 
         final ExpressionOperator expression1 = new ExpressionOperator.Builder()
@@ -123,10 +122,10 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                         .build())
                 .build();
 
-        final FindProcessorFilterCriteria findProcessorFilterCriteria = new FindProcessorFilterCriteria();
+        final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria();
 
         processorFilterService.create(pipelineRef, findStreamQueryData, 1, true);
-        assertThat(processorService.find(new FindProcessorCriteria()).size()).isEqualTo(1);
+        assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
 
         final BaseResultList<ProcessorFilter> filters = processorFilterService
                 .find(findProcessorFilterCriteria);
@@ -215,7 +214,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                 .addTerm(ProcessorFilterDataSource.LAST_POLL_MS, Condition.LESS_THAN, 1)
                 .addTerm(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, true)
                 .build();
-        final FindProcessorFilterCriteria findProcessorFilterCriteria = new FindProcessorFilterCriteria(expression);
+        final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
 //        findProcessorFilterCriteria.setLastPollPeriod(new Period(1L, 1L));
 //        findProcessorFilterCriteria.setProcessorFilterEnabled(true);
         assertThat(processorFilterService.find(findProcessorFilterCriteria).getSize()).isEqualTo(0);

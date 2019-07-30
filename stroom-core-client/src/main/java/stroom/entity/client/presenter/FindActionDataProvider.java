@@ -17,36 +17,43 @@
 package stroom.entity.client.presenter;
 
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
+import stroom.data.client.presenter.ActionDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.util.shared.BaseCriteria;
+import stroom.docref.SharedObject;
 import stroom.entity.shared.FindAction;
+import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.ResultList;
 import stroom.util.shared.Sort.Direction;
-import stroom.data.client.presenter.ActionDataProvider;
-import stroom.docref.SharedObject;
-import stroom.task.shared.Action;
 
 public class FindActionDataProvider<C extends BaseCriteria, E extends SharedObject>
         implements Refreshable, ColumnSortEvent.Handler {
     private final ClientDispatchAsync dispatcher;
     private final DataGridView<E> view;
-    private Action<ResultList<E>> action;
+    private final FindAction<C, E> findAction;
     private ActionDataProvider<E> dataProvider;
     private Boolean allowNoConstraint = null;
 
-    public FindActionDataProvider(final ClientDispatchAsync dispatcher, final DataGridView<E> view) {
+    public FindActionDataProvider(final ClientDispatchAsync dispatcher, final DataGridView<E> view, final FindAction<C, E> findAction) {
         this.dispatcher = dispatcher;
         this.view = view;
+        this.findAction = findAction;
         view.addColumnSortHandler(this);
     }
 
-    public void setAction(final Action<ResultList<E>> action) {
-        this.action = action;
+    public C getCriteria() {
+        if (findAction != null) {
+            return findAction.getCriteria();
+        }
+        return null;
+    }
+
+    public void setCriteria(final C criteria) {
+        findAction.setCriteria(criteria);
         if (dataProvider == null) {
-            this.dataProvider = new ActionDataProvider<E>(dispatcher, action) {
+            this.dataProvider = new ActionDataProvider<E>(dispatcher, findAction) {
                 // We override the default set data functionality to allow the
                 // examination and modification of data prior to setting it in
                 // the display.
@@ -90,9 +97,7 @@ public class FindActionDataProvider<C extends BaseCriteria, E extends SharedObje
     public void onColumnSort(final ColumnSortEvent event) {
         if (event.getColumn() instanceof OrderByColumn<?, ?>) {
             final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-            if (action instanceof FindAction) {
-                final FindAction findAction = (FindAction) action;
-
+            if (findAction != null) {
                 if (event.isSortAscending()) {
                     findAction.getCriteria().setSort(orderByColumn.getField(), Direction.ASCENDING, orderByColumn.isIgnoreCase());
                 } else {

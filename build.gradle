@@ -9,7 +9,7 @@ buildscript {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
 
         // A fork of https://github.com/wfhartford/gradle-dependency-analyze that works with Java 10
-        classpath 'stroom:gradle-dependency-analyze:v2.2.5'
+        classpath 'stroom:gradle-dependency-analyze:v2.2.6'
 
         // The following are required to put JAXB on the Gradle classpath for the purpose of JOOQ code generation in J9+.
         // Later versions of the JOOQ Gradle plugin should make this unnecessary.
@@ -40,15 +40,15 @@ plugins {
 }
 
 wrapper{
-    gradleVersion = '5.3.1'
+    gradleVersion = '5.5.1'
 }
 
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'de.undercouch.download'
 apply plugin: 'ca.cutterslade.analyze'
 
-if (!JavaVersion.current().isJava10()) {
-    throw new GradleException("This build must be run with Java 10 (current = " + JavaVersion.current() + ")")
+if (!JavaVersion.current().isJava12()) {
+    throw new GradleException("This build must be run with Java 12 (current = " + JavaVersion.current() + ")")
 }
 
 ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
@@ -86,9 +86,9 @@ ext.versions = [
         hadoopCommonShaded: 'v2.6.4-5',
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v1.0-beta.8',
-        stroomExpression  : 'v2.0.7',
+        stroomExpression  : 'v2.0.8',
         stroomProxyApi    : 'v5.1.2',
-        stroomQuery       : 'v4.0-beta.33', // same version for both stroom-query-api and stroom-query-common
+        stroomQuery       : 'v4.0-beta.35', // same version for both stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
@@ -107,7 +107,7 @@ ext.versions = [
         // 6.1.x - https://www.cloudera.com/documentation/enterprise/6/release-notes/topics/rg_cdh_61_maven_artifacts.html
 
         //------------3rd-party------------
-        curator           : '2.12.0', // See NOTE above. You MUST exclude its zk dep
+        curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
         dropwizard        : '1.3.8', // used to set the dropwizard-bom version, that controls lots of dependency versions
         guice4            : '4.2.0',
         gwt               : '2.8.2',
@@ -119,7 +119,7 @@ ext.versions = [
         rxjava            : '2.1.10',
         swagger           : '1.5.21',
         unirest           : '1.4.9',
-        zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
+        zookeeper         :         '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
         zzDUMMYzz         : 'makes sorting easier'
 ]
 
@@ -183,7 +183,7 @@ ext.libs = [
         gwt_servlet                    : "com.google.gwt:gwt-servlet:$versions.gwt",
         gwt_user                       : "com.google.gwt:gwt-user:$versions.gwt",
         gwtp_mvp_client                : "com.gwtplatform:gwtp-mvp-client:0.7",
-        hbase                          : "org.apache.hbase:hbase-common:1.2.1", //should be set to be consistent with CDH version
+        hbase                          : "org.apache.hbase:hbase-common:2.1.5", //should be set to be consistent with CDH version
         hessian                        : "com.caucho:hessian:4.0.51",
         hikari                         : "com.zaxxer:HikariCP:$versions.hikari",
         hsqldb                         : "org.hsqldb:hsqldb", // version controlled by DW BOM
@@ -316,8 +316,8 @@ subprojects {
 ////        rules +=  'all-dependency'
 //    }
 
-    sourceCompatibility = JavaVersion.VERSION_1_10
-    targetCompatibility = JavaVersion.VERSION_1_10
+    sourceCompatibility = JavaVersion.VERSION_12
+    targetCompatibility = JavaVersion.VERSION_12
 
     // This bit makes all sub projects have access to the BOMs for the dependency versions
     dependencies {

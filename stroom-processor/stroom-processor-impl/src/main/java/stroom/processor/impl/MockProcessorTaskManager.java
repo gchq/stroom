@@ -17,11 +17,11 @@
 
 package stroom.processor.impl;
 
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.QueryData;
@@ -58,7 +58,7 @@ public class MockProcessorTaskManager implements ProcessorTaskManager, Clearable
     @Override
     public List<ProcessorTask> assignTasks(final String nodeName, final int count) {
         List<ProcessorTask> taskList = Collections.emptyList();
-        final FindProcessorFilterCriteria criteria = new FindProcessorFilterCriteria();
+        final ExpressionCriteria criteria = new ExpressionCriteria();
         final BaseResultList<ProcessorFilter> processorFilters = processorFilterService
                 .find(criteria);
         if (processorFilters != null && processorFilters.size() > 0) {

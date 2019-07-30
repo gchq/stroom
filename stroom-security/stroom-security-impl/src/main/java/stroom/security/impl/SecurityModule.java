@@ -19,6 +19,9 @@ package stroom.security.impl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.EntityEvent;
+import stroom.security.impl.event.PermissionChangeEvent;
+import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
+import stroom.security.impl.event.PermissionChangeEventModule;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.CheckDocumentPermissionAction;
@@ -44,6 +47,9 @@ public class SecurityModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new PermissionChangeEventModule());
+        install(new PermissionChangeEventLifecycleModule());
+
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
         bind(AuthenticationService.class).to(AuthenticationServiceImpl.class);
         bind(AuthorisationService.class).to(AuthorisationServiceImpl.class);
@@ -77,8 +83,10 @@ public class SecurityModule extends AbstractModule {
                 .bind(LogoutAction.class, LogoutHandler.class);
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(UserDocumentPermissionsCache.class);
         entityEventHandlerBinder.addBinding().to(UserGroupsCache.class);
+
+        final Multibinder<PermissionChangeEvent.Handler> permissionChangeEventHandlerBinder = Multibinder.newSetBinder(binder(), PermissionChangeEvent.Handler.class);
+        permissionChangeEventHandlerBinder.addBinding().to(UserDocumentPermissionsCache.class);
 
         HealthCheckBinder.create(binder())
                 .bind(JWTService.class);

@@ -19,6 +19,7 @@ package stroom.processor.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.api.EventRef;
 import stroom.index.api.EventRefs;
 import stroom.index.api.EventSearch;
@@ -31,8 +32,6 @@ import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.shared.FindProcessorFilterCriteria;
-import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.Limits;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterDataSource;
@@ -401,7 +400,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 .addTerm(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, true)
                 .build();
 
-        final FindProcessorFilterCriteria findProcessorFilterCriteria = new FindProcessorFilterCriteria(expression);
+        final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
         final List<ProcessorFilter> filters = processorFilterService
                 .find(findProcessorFilterCriteria);
         LOGGER.trace("Found {} stream processor filters", filters.size());
@@ -633,7 +632,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     .addTerm(ProcessorTaskDataSource.NODE_NAME, Condition.IS_NULL, null)
                     .addTerm(ProcessorTaskDataSource.PROCESSOR_FILTER_ID, Condition.EQUALS, filter.getId())
                     .build();
-            final FindProcessorTaskCriteria findProcessorTaskCriteria = new FindProcessorTaskCriteria(findProcessorTaskExpression);
+            final ExpressionCriteria findProcessorTaskCriteria = new ExpressionCriteria(findProcessorTaskExpression);
 //            findProcessorTaskCriteria.obtainTaskStatusSet().add(TaskStatus.UNPROCESSED);
 //            findProcessorTaskCriteria.obtainNodeNameCriteria().setMatchNull(true);
 //            findProcessorTaskCriteria.obtainProcessorFilterIdSet().add(filter.getId());

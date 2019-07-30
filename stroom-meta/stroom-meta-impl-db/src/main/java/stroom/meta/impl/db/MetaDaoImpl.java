@@ -341,11 +341,11 @@ class MetaDaoImpl implements MetaDao {
 
         return criteria.getSortList().stream().map(sort -> {
             Field field = meta.ID;
-            if (FindMetaCriteria.FIELD_ID.equals(sort.getField())) {
+            if (MetaFields.FIELD_ID.equals(sort.getField())) {
                 field = meta.ID;
-            } else if (FindMetaCriteria.FIELD_FEED.equals(sort.getField())) {
+            } else if (MetaFields.FIELD_FEED.equals(sort.getField())) {
                 field = metaFeed.NAME;
-            } else if (FindMetaCriteria.FIELD_TYPE.equals(sort.getField())) {
+            } else if (MetaFields.FIELD_TYPE.equals(sort.getField())) {
                 field = metaType.NAME;
             }
 

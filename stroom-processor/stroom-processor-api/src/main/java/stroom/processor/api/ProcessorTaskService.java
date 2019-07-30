@@ -17,13 +17,13 @@
 
 package stroom.processor.api;
 
-import stroom.processor.shared.FindProcessorTaskCriteria;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.util.shared.BaseResultList;
 
 public interface ProcessorTaskService {
-    BaseResultList<ProcessorTask> find(final FindProcessorTaskCriteria criteria);
+    BaseResultList<ProcessorTask> find(final ExpressionCriteria criteria);
 
-    BaseResultList<ProcessorTaskSummary> findSummary(final FindProcessorTaskCriteria criteria);
+    BaseResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria);
 }
