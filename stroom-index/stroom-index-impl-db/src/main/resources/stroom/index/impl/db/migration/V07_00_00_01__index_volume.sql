@@ -6,8 +6,7 @@ CREATE TABLE IF NOT EXISTS index_volume_group (
   update_time_ms        bigint(20) NOT NULL,
   update_user           varchar(255) NOT NULL,
   name                  varchar(255) NOT NULL,
-  PRIMARY KEY (id),
-  UNIQUE KEY index_volume_group_name (name)
+  PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS index_volume (
