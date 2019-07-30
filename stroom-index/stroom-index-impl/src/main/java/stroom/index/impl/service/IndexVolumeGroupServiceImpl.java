@@ -64,7 +64,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     }
 
     @Override
-    public void delete(final String id) {
+    public void delete(final int id) {
         security.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> {
                     //TODO Transaction?

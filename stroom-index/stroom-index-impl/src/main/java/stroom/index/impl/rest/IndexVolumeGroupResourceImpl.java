@@ -56,8 +56,8 @@ public class IndexVolumeGroupResourceImpl implements IndexVolumeGroupResource {
     }
 
     @Override
-    public Response delete(final String name) {
-        indexVolumeGroupService.delete(name);
+    public Response delete(final String id) {
+        indexVolumeGroupService.delete(Integer.parseInt(id));
         return Response.noContent().build();
     }
 }
