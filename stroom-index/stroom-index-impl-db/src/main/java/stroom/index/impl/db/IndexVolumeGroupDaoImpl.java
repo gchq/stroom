@@ -74,6 +74,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
         return optional.map(id -> {
             indexVolumeGroup.setId(id);
+            indexVolumeGroup.setVersion(1);
             return indexVolumeGroup;
         }).orElse(get(indexVolumeGroup.getName()));
     }
