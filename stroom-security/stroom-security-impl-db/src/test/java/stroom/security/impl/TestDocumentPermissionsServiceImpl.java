@@ -20,7 +20,6 @@ package stroom.security.impl;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -167,7 +166,7 @@ class TestDocumentPermissionsServiceImpl {
             }
         }
 
-        Assert.assertEquals(0, missingPermissions.size());
+        assertThat(missingPermissions.size()).isZero();
     }
 
     private User createUser(final String name) {

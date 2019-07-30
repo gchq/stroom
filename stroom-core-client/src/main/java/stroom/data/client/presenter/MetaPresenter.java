@@ -165,11 +165,11 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         setStreamRelationListSelectableEnabled(null, Status.UNLOCKED);
     }
 
-    public static FindMetaCriteria createFindMetaCriteria() {
-        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-        findMetaCriteria.obtainExpression();
-        return findMetaCriteria;
-    }
+//    public static FindMetaCriteria createFindMetaCriteria() {
+//        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+//        findMetaCriteria.obtainExpression();
+//        return findMetaCriteria;
+//    }
 
     private static Meta getMeta(final AbstractMetaListPresenter streamListPresenter, final long id) {
         final ResultList<MetaRow> list = streamListPresenter.getResultList();
@@ -228,7 +228,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
 
         registerHandler(streamListFilter.addClickHandler(event -> {
             final ExpressionPresenter presenter = streamListFilterPresenter.get();
-            presenter.read(findMetaCriteria.obtainExpression(),
+            presenter.read(findMetaCriteria.getExpression(),
                     MetaFields.STREAM_STORE_DOC_REF,
                     MetaFields.getAllFields());
 
@@ -238,7 +238,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
                     if (ok) {
                         final ExpressionOperator expression = presenter.write();
 
-                        if (!expression.equals(findMetaCriteria.obtainExpression())) {
+                        if (!expression.equals(findMetaCriteria.getExpression())) {
                             if (hasAdvancedCriteria(expression)) {
                                 ConfirmEvent.fire(MetaPresenter.this,
                                         "You are setting advanced filters!  It is recommendend you constrain your filter (e.g. by 'Created') to avoid an expensive query.  "
@@ -432,8 +432,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
             showStreamListButtons(true);
             showStreamRelationListButtons(true);
 
-            findMetaCriteria = createFindMetaCriteria();
-            findMetaCriteria.setExpression(MetaExpressionUtil.createFolderExpression(folder));
+            findMetaCriteria = new FindMetaCriteria(MetaExpressionUtil.createFolderExpression(folder));
 
             initCriteria();
         }
@@ -447,8 +446,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
             showStreamListButtons(true);
             showStreamRelationListButtons(true);
 
-            findMetaCriteria = createFindMetaCriteria();
-            findMetaCriteria.setExpression(MetaExpressionUtil.createFeedExpression(feedRef.getName()));
+            findMetaCriteria = new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(feedRef.getName()));
 
             initCriteria();
         }
@@ -461,8 +459,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
             showStreamListButtons(false);
             showStreamRelationListButtons(false);
 
-            findMetaCriteria = createFindMetaCriteria();
-            findMetaCriteria.setExpression(MetaExpressionUtil.createPipelineExpression(pipelineRef));
+            findMetaCriteria = new FindMetaCriteria(MetaExpressionUtil.createPipelineExpression(pipelineRef));
 
             initCriteria();
         }
@@ -471,7 +468,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     private void setNullCriteria() {
         showStreamListButtons(false);
         showStreamRelationListButtons(false);
-        findMetaCriteria = createFindMetaCriteria();
+        findMetaCriteria = new FindMetaCriteria();
 
         initCriteria();
     }
@@ -639,7 +636,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
             if (Boolean.TRUE.equals(idSet.getMatchAll()) || idSet.size() > 0) {
                 // Only use match all if we are allowed to use criteria.
                 if (useCriteria && Boolean.TRUE.equals(idSet.getMatchAll())) {
-                    final FindMetaCriteria criteria = createFindMetaCriteria();
+                    final FindMetaCriteria criteria = new FindMetaCriteria();
                     criteria.copyFrom(metaPresenter.getCriteria());
                     // Paging is NA
                     criteria.obtainPageRequest().setLength(null);
@@ -649,7 +646,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
                 } else if (idSet.size() > 0) {
                     // If we aren't matching all then create a criteria that
                     // only includes the selected streams.
-                    final FindMetaCriteria criteria = createFindMetaCriteria();
+                    final FindMetaCriteria criteria = new FindMetaCriteria();
                     // Copy the current filter status
                     final Status status = getSingleStatus(metaPresenter.getCriteria());
                     if (status != null) {
