@@ -22,14 +22,15 @@ public class MetaFields {
             .name(STREAM_STORE_TYPE)
             .build();
 
+    public static final String FIELD_ID = "Id";
+    public static final String FIELD_FEED = "Feed";
+    public static final String FIELD_TYPE = "Type";
+
     private static final List<AbstractField> FIELDS = new ArrayList<>();
     private static final Map<String, AbstractField> FIELD_MAP;
     private static final List<AbstractField> EXTENDED_FIELDS = new ArrayList<>();
-    private static final Map<String, AbstractField> EXTENDED_FIELD_MAP;
-//    private static final Map<String, String> STREAM_FIELDS = new HashMap<>();
-//    private static final Map<String, String> FEED_FIELDS = new HashMap<>();
-//    private static final Map<String, String> STREAM_TYPE_FIELDS = new HashMap<>();
-//    private static final Map<String, String> PIPELINE_FIELDS = new HashMap<>();
+    private static final List<AbstractField> ALL_FIELDS = new ArrayList<>();
+    private static final Map<String, AbstractField> ALL_FIELD_MAP;
 
     // Non grouped fields
     public static final TextField FEED_NAME = new TextField("Feed Name");
@@ -65,14 +66,6 @@ public class MetaFields {
     public static final IdField TASK_ID = new IdField("Task Id");
 
     static {
-//        STREAM_FIELDS.put(ID, StreamEntity.ID);
-//        STREAM_FIELDS.put(PARENT_ID, StreamEntity.PARENT_ID);
-//        STREAM_FIELDS.put(CREATE_TIME, StreamEntity.CREATE_MS);
-//        FEED_FIELDS.put(FEED, FeedEntity.NAME);
-//        STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamTypeEntity.NAME);
-//        PIPELINE_FIELDS.put(PIPELINE, PipelineDoc.NAME);
-
-
         // Non grouped fields
         FIELDS.add(FEED_NAME);
         FIELDS.add(FEED);
@@ -93,18 +86,7 @@ public class MetaFields {
         FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));
 
         // Single Items
-        EXTENDED_FIELDS.add(FEED_NAME);
-        EXTENDED_FIELDS.add(FEED);
         EXTENDED_FIELDS.add(DURATION);
-        //        EXTENDED_FIELDS.add(createStringField(NODE));
-        EXTENDED_FIELDS.add(PIPELINE);
-        EXTENDED_FIELDS.add(STATUS);
-        EXTENDED_FIELDS.add(TYPE_NAME);
-
-        // Id's
-        EXTENDED_FIELDS.add(ID);
-        EXTENDED_FIELDS.add(PARENT_ID);
-        EXTENDED_FIELDS.add(PROCESSOR_ID);
 
         // Counts
         EXTENDED_FIELDS.add(REC_READ);
@@ -114,15 +96,13 @@ public class MetaFields {
         EXTENDED_FIELDS.add(REC_WARN);
         EXTENDED_FIELDS.add(REC_INFO);
 
-        // Times
-        EXTENDED_FIELDS.add(CREATE_TIME);
-        EXTENDED_FIELDS.add(EFFECTIVE_TIME);
-        EXTENDED_FIELDS.add(STATUS_TIME);
-
         // Sizes
         EXTENDED_FIELDS.add(FILE_SIZE);
         EXTENDED_FIELDS.add(RAW_SIZE);
-        EXTENDED_FIELD_MAP = EXTENDED_FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+
+        ALL_FIELDS.addAll(FIELDS);
+        ALL_FIELDS.addAll(EXTENDED_FIELDS);
+        ALL_FIELD_MAP = ALL_FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));
     }
 
     public static List<AbstractField> getFields() {
@@ -133,11 +113,15 @@ public class MetaFields {
         return FIELD_MAP;
     }
 
-    public static List<AbstractField> getExtendedFields() {
-        return new ArrayList<>(EXTENDED_FIELDS);
+    public static List<AbstractField> getAllFields() {
+        return ALL_FIELDS;
     }
 
-    public static Map<String, AbstractField> getExtendedFieldMap() {
-        return EXTENDED_FIELD_MAP;
+    public static Map<String, AbstractField> getAllFieldMap() {
+        return ALL_FIELD_MAP;
+    }
+
+    public static List<AbstractField> getExtendedFields() {
+        return EXTENDED_FIELDS;
     }
 }

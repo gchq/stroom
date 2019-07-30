@@ -17,8 +17,8 @@
 package stroom.processor.impl;
 
 
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.api.ProcessorTaskService;
-import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.security.api.Security;
@@ -43,13 +43,13 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService {
     }
 
     @Override
-    public BaseResultList<ProcessorTask> find(final FindProcessorTaskCriteria criteria) {
+    public BaseResultList<ProcessorTask> find(final ExpressionCriteria criteria) {
         return security.secureResult(PERMISSION, () ->
                 processorTaskDao.find(criteria));
     }
 
     @Override
-    public BaseResultList<ProcessorTaskSummary> findSummary(final FindProcessorTaskCriteria criteria) {
+    public BaseResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         return security.secureResult(PERMISSION, () ->
                 processorTaskDao.findSummary(criteria));
     }

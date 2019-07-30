@@ -8,9 +8,6 @@ import stroom.security.impl.db.jooq.tables.records.DocPermissionRecord;
 import stroom.security.shared.DocumentPermissionJooq;
 
 import javax.inject.Inject;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import static stroom.security.impl.db.jooq.tables.DocPermission.DOC_PERMISSION;
@@ -38,7 +35,6 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
 
     @Override
     public DocumentPermissionJooq getPermissionsForDocument(final String docRefUuid) {
-
         final DocumentPermissionJooq.Builder permissions = new DocumentPermissionJooq.Builder()
                 //.docType(document.getType())
                 .docUuid(docRefUuid);
@@ -55,20 +51,18 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
     }
 
     @Override
-    public UserDocumentPermissions getPermissionsForUsers(final Set<String> users) {
-        final Map<String, Set<String>> map = new HashMap<>();
+    public UserDocumentPermissions getPermissionsForUser(final String userUuid) {
+        final UserDocumentPermissions userDocumentPermissions = new UserDocumentPermissions();
 
-        JooqUtil.context(connectionProvider, context -> {
-            context.selectDistinct(DOC_PERMISSION.DOC_UUID, DOC_PERMISSION.PERMISSION)
-                    .from(DOC_PERMISSION)
-                    .where(DOC_PERMISSION.USER_UUID.in(users))
-                    .fetch()
-                    .forEach(r -> {
-                        map.computeIfAbsent(r.value1(), k -> new HashSet<>()).add(r.value2());
-                    });
-        });
+        JooqUtil.context(connectionProvider, context ->
+                context.selectDistinct(DOC_PERMISSION.DOC_UUID, DOC_PERMISSION.PERMISSION)
+                        .from(DOC_PERMISSION)
+                        .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
+                        .fetch()
+                        .forEach(r -> userDocumentPermissions.addPermission(r.get(DOC_PERMISSION.DOC_UUID), r.get(DOC_PERMISSION.PERMISSION)))
+        );
 
-        return new UserDocumentPermissionsImpl(map);
+        return userDocumentPermissions;
     }
 
     @Override

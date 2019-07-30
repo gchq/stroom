@@ -1,10 +1,10 @@
 package stroom.processor.impl;
 
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.processor.api.InclusiveRanges;
-import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
@@ -124,7 +124,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public BaseResultList<ProcessorTask> find(final FindProcessorTaskCriteria criteria) {
+    public BaseResultList<ProcessorTask> find(final ExpressionCriteria criteria) {
         final List<ProcessorTask> list = dao
                 .getMap()
                 .values()
@@ -150,7 +150,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public BaseResultList<ProcessorTaskSummary> findSummary(final FindProcessorTaskCriteria criteria) {
+    public BaseResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         return null;
     }
 

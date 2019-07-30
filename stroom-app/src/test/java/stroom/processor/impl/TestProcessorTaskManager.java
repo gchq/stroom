@@ -18,15 +18,15 @@ package stroom.processor.impl;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.data.shared.StreamTypeNames;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.MetaFields;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.ProcessorTaskService;
-import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.data.shared.StreamTypeNames;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -155,7 +155,7 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
     }
 
     private int getTaskCount() {
-        return processorTaskService.find(new FindProcessorTaskCriteria()).size();
+        return processorTaskService.find(new ExpressionCriteria()).size();
     }
 
     @Test

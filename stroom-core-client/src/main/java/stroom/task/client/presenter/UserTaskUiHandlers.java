@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.task.client.event;
+package stroom.task.client.presenter;
 
-import com.google.gwt.event.shared.EventHandler;
+import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.task.shared.TaskId;
 
-public interface OpenTaskManagerHandler extends EventHandler {
-    void onOpen(OpenTaskManagerEvent event);
+public interface UserTaskUiHandlers extends UiHandlers {
+    void onTerminate(TaskId terminateId, String taskName);
 }

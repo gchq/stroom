@@ -9,10 +9,10 @@ import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord;
-import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterDataSource;
@@ -36,7 +36,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
     private static final Map<String, Field> FIELD_MAP = Map.of(
-            FindProcessorFilterCriteria.FIELD_ID, PROCESSOR_FILTER.ID);
+            ProcessorFilterDataSource.FIELD_ID, PROCESSOR_FILTER.ID);
 
     private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
     private static final Function<Record, ProcessorFilter> RECORD_TO_PROCESSOR_FILTER_MAPPER = new RecordToProcessorFilterMapper();
@@ -136,11 +136,11 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     @Override
-    public BaseResultList<ProcessorFilter> find(final FindProcessorFilterCriteria criteria) {
+    public BaseResultList<ProcessorFilter> find(final ExpressionCriteria criteria) {
         return JooqUtil.contextResult(connectionProvider, context -> find(context, criteria));
     }
 
-    private BaseResultList<ProcessorFilter> find(final DSLContext context, final FindProcessorFilterCriteria criteria) {
+    private BaseResultList<ProcessorFilter> find(final DSLContext context, final ExpressionCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);

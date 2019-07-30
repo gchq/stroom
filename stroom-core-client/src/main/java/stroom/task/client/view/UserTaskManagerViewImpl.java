@@ -23,15 +23,15 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
+import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerView;
 
-public class TaskManagerViewImpl extends ViewImpl implements TaskManagerView {
+public class UserTaskManagerViewImpl extends ViewImpl implements UserTaskManagerView {
     private final Widget widget;
     @UiField
     FlowPanel taskList;
 
     @Inject
-    public TaskManagerViewImpl(final Binder binder) {
+    public UserTaskManagerViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -50,6 +50,6 @@ public class TaskManagerViewImpl extends ViewImpl implements TaskManagerView {
         taskList.remove(task.asWidget());
     }
 
-    public interface Binder extends UiBinder<Widget, TaskManagerViewImpl> {
+    public interface Binder extends UiBinder<Widget, UserTaskManagerViewImpl> {
     }
 }

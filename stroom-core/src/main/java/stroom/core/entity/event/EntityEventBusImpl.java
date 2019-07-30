@@ -66,23 +66,27 @@ class EntityEventBusImpl implements EntityEventBus {
      * Fires the entity change to all nodes in the cluster.
      */
     private void fireGlobally(final EntityEvent event) {
-        // Make sure there are some handlers that care about this event.
-        boolean handlerExists = handlerExists(event, event.getDocRef().getType());
-        if (!handlerExists) {
-            // Look for handlers that cater for all types.
-            handlerExists = handlerExists(event, "*");
-        }
-
-        // If there are registered handlers then go ahead and fire the event.
-        if (handlerExists) {
-            // Force a local update so that changes are immediately reflected
-            // for the current user.
-            fireLocally(event);
-
-            if (started) {
-                // Dispatch the entity event to all nodes in the cluster.
-                taskManager.execAsync(new DispatchEntityEventTask(event));
+        try {
+            // Make sure there are some handlers that care about this event.
+            boolean handlerExists = handlerExists(event, event.getDocRef().getType());
+            if (!handlerExists) {
+                // Look for handlers that cater for all types.
+                handlerExists = handlerExists(event, "*");
             }
+
+            // If there are registered handlers then go ahead and fire the event.
+            if (handlerExists) {
+                // Force a local update so that changes are immediately reflected
+                // for the current user.
+                fireLocally(event);
+
+                if (started) {
+                    // Dispatch the entity event to all nodes in the cluster.
+                    taskManager.execAsync(new DispatchEntityEventTask(event));
+                }
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 

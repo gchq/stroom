@@ -22,8 +22,10 @@ import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.TargetType;
 import stroom.core.entity.cluster.ClearServiceClusterTask;
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.job.api.JobManager;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -35,8 +37,6 @@ import stroom.pipeline.PipelineStore;
 import stroom.processor.api.JobNames;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.shared.FindProcessorCriteria;
-import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.processor.shared.ProcessorFilter;
@@ -47,7 +47,6 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticsReceiver;
-import stroom.data.shared.StreamTypeNames;
 import stroom.task.api.AsyncExecutorHelper;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -231,10 +230,10 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private Processor initProcessor(final DocRef pipelineDoc) {
         // Clear off any old processor filters
         for (final ProcessorFilter processorFilter : processorFilterService
-                .find(new FindProcessorFilterCriteria(ProcessorTaskExpressionUtil.createPipelineExpression(pipelineDoc)))) {
+                .find(new ExpressionCriteria(ProcessorTaskExpressionUtil.createPipelineExpression(pipelineDoc)))) {
             processorFilterService.delete(processorFilter.getId());
         }
-        Processor streamProcessor = streamProcessorService.find(new FindProcessorCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineDoc)))
+        Processor streamProcessor = streamProcessorService.find(new ExpressionCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineDoc)))
                 .getFirst();
         if (streamProcessor == null) {
             streamProcessor = new Processor(pipelineDoc);

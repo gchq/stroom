@@ -22,13 +22,13 @@ import stroom.util.shared.Sort.Direction;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
  * Base criteria object used to aid getting pages of data.
  */
 public abstract class BaseCriteria implements SharedObject {
-    public static final String FIELD_ID = "Id";
     private static final long serialVersionUID = 779306892977183446L;
     private PageRequest pageRequest = null;
     private List<Sort> sortList;
@@ -112,43 +112,13 @@ public abstract class BaseCriteria implements SharedObject {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (!(o instanceof BaseCriteria)) return false;
-
         final BaseCriteria that = (BaseCriteria) o;
-
-        if (pageRequest != null ? !pageRequest.equals(that.pageRequest) : that.pageRequest != null) return false;
-        return sortList != null ? sortList.equals(that.sortList) : that.sortList == null;
+        return Objects.equals(pageRequest, that.pageRequest) &&
+                Objects.equals(sortList, that.sortList);
     }
-
-//    /**
-//     * TEMPORARY TO MAINTAIN COMPATIBILITY
-//     */
-//    public OrderBy getOrderBy() {
-//        final Sort orderBySetting = getFirstOrderBy();
-//        if (orderBySetting == null) {
-//            return null;
-//        }
-//        return orderBySetting.getOrderBy();
-//    }
-//
-//    public OrderByDirection getOrderByDirection() {
-//        final Sort orderBySetting = getFirstOrderBy();
-//        if (orderBySetting == null) {
-//            return Direction.ASCENDING;
-//        }
-//        return orderBySetting.getDirection();
-//    }
-//
-//    private Sort getFirstOrderBy() {
-//        if (sortList == null || sortList.size() == 0) {
-//            return null;
-//        }
-//        return sortList.get(0);
-//    }
 
     @Override
     public int hashCode() {
-        int result = pageRequest != null ? pageRequest.hashCode() : 0;
-        result = 31 * result + (sortList != null ? sortList.hashCode() : 0);
-        return result;
+        return Objects.hash(pageRequest, sortList);
     }
 }

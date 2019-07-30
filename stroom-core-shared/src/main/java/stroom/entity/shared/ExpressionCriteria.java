@@ -14,24 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.processor.shared;
+package stroom.entity.shared;
 
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.BaseCriteria;
 
-/**
- * Class used to find translations.
- */
-public class FindProcessorCriteria extends BaseCriteria {
-    private static final long serialVersionUID = 1L;
+import java.util.Objects;
 
+public class ExpressionCriteria extends BaseCriteria {
     private ExpressionOperator expression;
 
-    public FindProcessorCriteria() {
-        // Default constructor necessary for GWT serialisation.
+    public ExpressionCriteria() {
     }
 
-    public FindProcessorCriteria(final ExpressionOperator expression) {
+    public ExpressionCriteria(final ExpressionOperator expression) {
         this.expression = expression;
     }
 
@@ -41,5 +37,25 @@ public class FindProcessorCriteria extends BaseCriteria {
 
     public void setExpression(final ExpressionOperator expression) {
         this.expression = expression;
+    }
+
+//    @Override
+//    public boolean isConstrained() {
+//        return ExpressionUtil.termCount(expression) > 0;
+//    }
+
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ExpressionCriteria)) return false;
+        if (!super.equals(o)) return false;
+        final ExpressionCriteria that = (ExpressionCriteria) o;
+        return Objects.equals(expression, that.expression);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), expression);
     }
 }

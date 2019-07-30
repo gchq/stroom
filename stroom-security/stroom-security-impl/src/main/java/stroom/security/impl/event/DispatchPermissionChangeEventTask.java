@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-package stroom.processor.shared;
+package stroom.security.impl.event;
 
-import stroom.entity.shared.FindAction;
+import stroom.task.api.ServerTask;
+import stroom.util.shared.VoidResult;
 
-public class FetchProcessorTaskAction extends FindAction<FindProcessorTaskCriteria, ProcessorTask> {
-    private static final long serialVersionUID = -6808045615241590297L;
+import java.io.Serializable;
 
-    public FetchProcessorTaskAction() {
-        // Default constructor necessary for GWT serialisation.
+public class DispatchPermissionChangeEventTask extends ServerTask<VoidResult> implements Serializable {
+    private static final long serialVersionUID = -1305243739417365803L;
+
+    private final PermissionChangeEvent event;
+
+    public DispatchPermissionChangeEventTask(final PermissionChangeEvent event) {
+        this.event = event;
     }
 
-    public FetchProcessorTaskAction(final FindProcessorTaskCriteria criteria) {
-        super(criteria);
+    public PermissionChangeEvent getEvent() {
+        return event;
     }
 }

@@ -15,7 +15,7 @@ import java.util.Optional;
 class KafkaProducerFactoryImpl implements KafkaProducerFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaProducerFactoryImpl.class);
 
-    private static final String VERSION = "0.10.0.1";
+    private static final String VERSION = "2.1.1";
 
     private final KafkaConfigStore kafkaConfigStore;
 

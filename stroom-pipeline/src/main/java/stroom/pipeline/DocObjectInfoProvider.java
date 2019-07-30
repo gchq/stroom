@@ -27,13 +27,10 @@ class DocObjectInfoProvider implements ObjectInfoProvider {
     public BaseObject createBaseObject(final java.lang.Object obj) {
         final Doc doc = (Doc) obj;
 
-        String description = null;
-
         final Object object = new Object();
         object.setType(doc.getType());
         object.setId(doc.getUuid());
         object.setName(doc.getName());
-        object.setDescription(description);
 
         return object;
     }

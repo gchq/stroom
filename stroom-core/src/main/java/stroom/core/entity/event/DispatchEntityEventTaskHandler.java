@@ -29,7 +29,6 @@ import stroom.util.shared.VoidResult;
 import javax.inject.Inject;
 import java.util.Set;
 
-
 class DispatchEntityEventTaskHandler extends AbstractTaskHandler<DispatchEntityEventTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DispatchEntityEventTaskHandler.class);
 

@@ -22,18 +22,21 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.config.global.api.ConfigProperty;
+import stroom.config.global.api.FetchGlobalConfigAction;
+import stroom.config.global.api.FindGlobalConfigAction;
 import stroom.config.global.api.FindGlobalConfigCriteria;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.client.presenter.FindActionDataProvider;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonView;
 
 public class ManageGlobalPropertyListPresenter
         extends MyPresenterWidget<DataGridView<ConfigProperty>> implements Refreshable {
-    private final FetchGlobalConfigActionDataProvider dataProvider;
+    private final FindActionDataProvider<FindGlobalConfigCriteria, ConfigProperty> dataProvider;
 
     @Inject
     public ManageGlobalPropertyListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
@@ -81,8 +84,9 @@ public class ManageGlobalPropertyListPresenter
         getView().addEndColumn(new EndColumn<>());
 
 
-        this.dataProvider = new FetchGlobalConfigActionDataProvider(dispatcher, getView());
-        this.dataProvider.setCriteria(new FindGlobalConfigCriteria());
+        this.dataProvider = new FindActionDataProvider(dispatcher, getView(),
+                new FindGlobalConfigAction(
+                        new FindGlobalConfigCriteria()));
 
 //        dataProvider = new EntityServiceFindActionDataProvider<>(dispatcher,
 //                getView());

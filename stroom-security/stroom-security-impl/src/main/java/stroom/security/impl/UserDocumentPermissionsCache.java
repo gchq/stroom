@@ -21,28 +21,24 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
-import stroom.entity.shared.EntityAction;
-import stroom.entity.shared.EntityEvent;
-import stroom.entity.shared.EntityEventBus;
-import stroom.entity.shared.EntityEventHandler;
-import stroom.security.shared.User;
+import stroom.security.impl.event.AddPermissionEvent;
+import stroom.security.impl.event.ClearDocumentPermissionsEvent;
+import stroom.security.impl.event.ClearUserPermissionsEvent;
+import stroom.security.impl.event.PermissionChangeEvent;
+import stroom.security.impl.event.PermissionChangeEventHandler;
+import stroom.security.impl.event.RemovePermissionEvent;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Singleton
-@EntityEventHandler(action = EntityAction.CLEAR_CACHE)
-public class UserDocumentPermissionsCache implements EntityEvent.Handler, Clearable {
-    private final Provider<EntityEventBus> eventBusProvider;
+@PermissionChangeEventHandler
+public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handler, Clearable {
+    private static final String CACHE_NAME = "User Document Permissions Cache";
+
     private final AuthorisationConfig authorisationConfig;
-    private final UserGroupsCache userGroupsCache;
 
     private final CacheManager cacheManager;
     private final DocumentPermissionService documentPermissionService;
@@ -53,24 +49,14 @@ public class UserDocumentPermissionsCache implements EntityEvent.Handler, Cleara
     @Inject
     public UserDocumentPermissionsCache(final CacheManager cacheManager,
                                         final DocumentPermissionService documentPermissionService,
-                                        final Provider<EntityEventBus> eventBusProvider,
-                                        final AuthorisationConfig authorisationConfig,
-                                        final UserGroupsCache userGroupsCache) {
+                                        final AuthorisationConfig authorisationConfig) {
         this.cacheManager = cacheManager;
         this.documentPermissionService = documentPermissionService;
-        this.eventBusProvider = eventBusProvider;
         this.authorisationConfig = authorisationConfig;
-        this.userGroupsCache = userGroupsCache;
     }
 
     UserDocumentPermissions get(final String userUuid) {
         return getCache().getUnchecked(userUuid);
-    }
-
-    void removeAll() {
-        clear();
-        final EntityEventBus entityEventBus = eventBusProvider.get();
-        EntityEvent.fire(entityEventBus, null, EntityAction.CLEAR_CACHE);
     }
 
     @Override
@@ -81,10 +67,34 @@ public class UserDocumentPermissionsCache implements EntityEvent.Handler, Cleara
     }
 
     @Override
-    public void onChange(final EntityEvent event) {
+    public void onChange(final PermissionChangeEvent event) {
         if (cache != null) {
-            clear();
-//            cache.invalidate(event.getDocRef());
+            if (event instanceof AddPermissionEvent) {
+                final AddPermissionEvent addPermissionEvent = (AddPermissionEvent) event;
+                final UserDocumentPermissions userDocumentPermissions = getCache().asMap().get(addPermissionEvent.getUserUuid());
+                if (userDocumentPermissions != null) {
+                    userDocumentPermissions.addPermission(addPermissionEvent.getDocUuid(), addPermissionEvent.getPermission());
+                }
+
+            } else if (event instanceof RemovePermissionEvent) {
+                final RemovePermissionEvent removePermissionEvent = (RemovePermissionEvent) event;
+                final UserDocumentPermissions userDocumentPermissions = getCache().asMap().get(removePermissionEvent.getUserUuid());
+                if (userDocumentPermissions != null) {
+                    userDocumentPermissions.removePermission(removePermissionEvent.getDocUuid(), removePermissionEvent.getPermission());
+                }
+
+            } else if (event instanceof ClearDocumentPermissionsEvent) {
+                final ClearDocumentPermissionsEvent clearDocumentPermissionsEvent = (ClearDocumentPermissionsEvent) event;
+                getCache().asMap().values().forEach(userDocumentPermissions -> {
+                    if (userDocumentPermissions != null) {
+                        userDocumentPermissions.clearDocumentPermissions(clearDocumentPermissionsEvent.getDocUuid());
+                    }
+                });
+
+            } else if (event instanceof ClearUserPermissionsEvent) {
+                final ClearUserPermissionsEvent clearUserPermissionsEvent = (ClearUserPermissionsEvent) event;
+                getCache().invalidate(clearUserPermissionsEvent.getUserUuid());
+            }
         }
     }
 
@@ -103,21 +113,15 @@ public class UserDocumentPermissionsCache implements EntityEvent.Handler, Cleara
     private synchronized void createCache() {
         final int maximumSize = getMaximumSize();
         if (lastMaximumSize == null || lastMaximumSize != maximumSize) {
-            final CacheLoader<String, UserDocumentPermissions> cacheLoader = CacheLoader.from(userUuid -> {
-                final List<User> userGroups = userGroupsCache.get(userUuid);
-                final Set<String> users = new HashSet<>();
-                users.add(userUuid);
-                users.addAll(userGroups.stream().map(User::getUuid).collect(Collectors.toSet()));
-                return documentPermissionService.getPermissionsForUsers(users);
-            });
+            final CacheLoader<String, UserDocumentPermissions> cacheLoader = CacheLoader.from(documentPermissionService::getPermissionsForUser);
             final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                     .maximumSize(maximumSize)
                     .expireAfterAccess(10, TimeUnit.MINUTES);
             final LoadingCache<String, UserDocumentPermissions> cache = cacheBuilder.build(cacheLoader);
             if (lastMaximumSize == null) {
-                cacheManager.registerCache("User Document Permissions Cache", cacheBuilder, cache);
+                cacheManager.registerCache(CACHE_NAME, cacheBuilder, cache);
             } else {
-                cacheManager.replaceCache("User Document Permissions Cache", cacheBuilder, cache);
+                cacheManager.replaceCache(CACHE_NAME, cacheBuilder, cache);
             }
             lastMaximumSize = maximumSize;
             this.cache = cache;
