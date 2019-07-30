@@ -3,10 +3,10 @@ package stroom.processor.impl;
 import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.processor.api.ProcessorTaskService;
-import stroom.processor.shared.FindProcessorTaskCriteria;
-import stroom.processor.shared.FetchProcessorTaskSummaryAction;
+import stroom.processor.shared.FindProcessorTaskSummaryAction;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.security.api.Security;
 import stroom.task.api.AbstractTaskHandler;
@@ -15,7 +15,7 @@ import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 
-class FetchProcessorTaskSummaryHandler extends AbstractTaskHandler<FetchProcessorTaskSummaryAction, ResultList<ProcessorTaskSummary>> {
+class FetchProcessorTaskSummaryHandler extends AbstractTaskHandler<FindProcessorTaskSummaryAction, ResultList<ProcessorTaskSummary>> {
     private final ProcessorTaskService processorTaskService;
     private final DocumentEventLog entityEventLog;
     private final Security security;
@@ -30,8 +30,8 @@ class FetchProcessorTaskSummaryHandler extends AbstractTaskHandler<FetchProcesso
     }
 
     @Override
-    public ResultList<ProcessorTaskSummary> exec(final FetchProcessorTaskSummaryAction action) {
-        final FindProcessorTaskCriteria criteria = action.getCriteria();
+    public ResultList<ProcessorTaskSummary> exec(final FindProcessorTaskSummaryAction action) {
+        final ExpressionCriteria criteria = action.getCriteria();
         return security.secureResult(() -> {
             BaseResultList<ProcessorTaskSummary> result;
 

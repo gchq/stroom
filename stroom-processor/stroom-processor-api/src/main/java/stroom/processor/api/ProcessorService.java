@@ -18,7 +18,7 @@
 package stroom.processor.api;
 
 import stroom.docref.DocRef;
-import stroom.processor.shared.FindProcessorCriteria;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.shared.Processor;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.HasIntCrud;
@@ -34,5 +34,5 @@ public interface ProcessorService extends HasIntCrud<Processor> {
 //                        LogUtil.message("Could not find processor with UUID {}", uuid)));
 //    }
 
-    BaseResultList<Processor> find(FindProcessorCriteria criteria);
+    BaseResultList<Processor> find(ExpressionCriteria criteria);
 }

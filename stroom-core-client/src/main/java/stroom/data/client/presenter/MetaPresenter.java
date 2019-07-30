@@ -228,7 +228,9 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
 
         registerHandler(streamListFilter.addClickHandler(event -> {
             final ExpressionPresenter presenter = streamListFilterPresenter.get();
-            presenter.read(findMetaCriteria.obtainExpression(), MetaFields.STREAM_STORE_DOC_REF, MetaFields.getExtendedFields());
+            presenter.read(findMetaCriteria.obtainExpression(),
+                    MetaFields.STREAM_STORE_DOC_REF,
+                    MetaFields.getAllFields());
 
             final PopupUiHandlers streamFilterPUH = new DefaultPopupUiHandlers() {
                 @Override

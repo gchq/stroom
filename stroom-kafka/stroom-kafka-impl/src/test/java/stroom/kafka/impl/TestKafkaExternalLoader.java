@@ -36,7 +36,7 @@ class TestKafkaExternalLoader {
     void setup() {
         final KafkaConfigDoc kafkaConfigDoc = new KafkaConfigDoc();
         final Properties properties = kafkaConfigDoc.getProperties();
-        properties.put("default.connector.version", "0.10.0.1");
+        properties.put("default.connector.version", "2.1.1");
         properties.put("stroom.connectors.kafka.default.bootstrap.servers", "localhost:9092");
 
         Mockito.when(kafkaConfigStore.readDocument(Mockito.any())).thenReturn(kafkaConfigDoc);

@@ -20,6 +20,7 @@ package stroom.security.impl;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.junit.Assert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -30,6 +31,7 @@ import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -151,10 +153,21 @@ class TestDocumentPermissionsServiceImpl {
         userGroupsCache.clear();
         userDocumentPermissionsCache.clear();
 
-        final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(user.getUuid());
-        for (final String permission : permissions) {
-            assertThat(userDocumentPermissions.hasDocumentPermission(docRef.getUuid(), permission)).isTrue();
+        final Set<User> allUsers = new HashSet<>();
+        allUsers.add(user);
+        allUsers.addAll(userGroupsCache.get(user.getUuid()));
+
+        Set<String> missingPermissions = new HashSet<>(Arrays.asList(permissions));
+        for (final User userRef : allUsers) {
+            final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userRef.getUuid());
+            for (final String permission : permissions) {
+                if (userDocumentPermissions.hasDocumentPermission(docRef.getUuid(), permission)) {
+                    missingPermissions.remove(permission);
+                }
+            }
         }
+
+        Assert.assertEquals(0, missingPermissions.size());
     }
 
     private User createUser(final String name) {

@@ -17,6 +17,7 @@
 package stroom.test;
 
 
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.Source;
@@ -25,6 +26,7 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
@@ -50,13 +52,11 @@ import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.shared.FindProcessorCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.data.shared.StreamTypeNames;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
@@ -365,7 +365,7 @@ public final class StoreCreationTool {
         final DocRef pipelineRef = getEventPipeline(feedName, translationTextConverterType,
                 translationTextConverterLocation, translationXsltLocation, flatteningXsltLocation, pipelineReferences);
 
-        final Processor streamProcessor = processorService.find(new FindProcessorCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineRef))).getFirst();
+        final Processor streamProcessor = processorService.find(new ExpressionCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineRef))).getFirst();
         if (streamProcessor == null) {
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
@@ -596,7 +596,7 @@ public final class StoreCreationTool {
         // Create the indexing pipeline.
         final DocRef pipelineRef = getIndexingPipeline(indexRef, translationXsltLocation);
 
-        final Processor streamProcessor = processorService.find(new FindProcessorCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineRef)))
+        final Processor streamProcessor = processorService.find(new ExpressionCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineRef)))
                 .getFirst();
         if (streamProcessor == null) {
             // Setup the stream processor filter.

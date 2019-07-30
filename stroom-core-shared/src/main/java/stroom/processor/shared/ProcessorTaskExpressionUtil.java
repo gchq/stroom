@@ -1,6 +1,7 @@
 package stroom.processor.shared;
 
 import stroom.docref.DocRef;
+import stroom.meta.shared.Meta;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -8,6 +9,13 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 public final class ProcessorTaskExpressionUtil {
     private ProcessorTaskExpressionUtil() {
         // Utility class.
+    }
+
+    public static ExpressionOperator createWithStream(final Meta meta) {
+        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                .addTerm(ProcessorTaskDataSource.META_ID, Condition.EQUALS, meta.getId())
+                .build();
+        return expression;
     }
 
     public static ExpressionOperator createFolderExpression(final DocRef folder) {

@@ -71,8 +71,8 @@ class DocumentPermissionServiceImpl implements DocumentPermissionService {
     }
 
     @Override
-    public UserDocumentPermissions getPermissionsForUsers(final Set<String> users) {
-        return documentPermissionDao.getPermissionsForUsers(users);
+    public UserDocumentPermissions getPermissionsForUser(final String userUuid) {
+        return documentPermissionDao.getPermissionsForUser(userUuid);
     }
 
     @Override

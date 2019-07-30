@@ -1,8 +1,8 @@
 package stroom.processor.impl;
 
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.ExpressionUtil;
-import stroom.processor.shared.FindProcessorCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
 import stroom.query.api.v2.ExpressionOperator;
@@ -24,7 +24,7 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
         final ExpressionOperator findProcessorExpression = new ExpressionOperator.Builder()
                 .addTerm(ProcessorDataSource.PIPELINE, Condition.EQUALS, new DocRef("Pipeline", processor.getPipelineUuid()))
                 .build();
-        final FindProcessorCriteria findProcessorCriteria = new FindProcessorCriteria(findProcessorExpression);
+        final ExpressionCriteria findProcessorCriteria = new ExpressionCriteria(findProcessorExpression);
 //        findProcessorCriteria.obtainPipelineUuidCriteria().setString(processor.getPipelineUuid());
         final BaseResultList<Processor> list = find(findProcessorCriteria);
         final Processor existingProcessor = list.getFirst();
@@ -51,7 +51,7 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
     }
 
     @Override
-    public BaseResultList<Processor> find(final FindProcessorCriteria criteria) {
+    public BaseResultList<Processor> find(final ExpressionCriteria criteria) {
         final List<Processor> list = dao
                 .getMap()
                 .values()

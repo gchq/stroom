@@ -25,6 +25,8 @@ import stroom.util.shared.StringCriteria;
 public class FindJobNodeCriteria extends BaseCriteria {
     private static final long serialVersionUID = 71512228011037748L;
 
+    public static final String FIELD_ID = "Id";
+
     private StringCriteria jobName = new StringCriteria();
     private StringCriteria nodeName = new StringCriteria();
 

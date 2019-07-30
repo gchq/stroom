@@ -13,6 +13,7 @@ import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
@@ -22,7 +23,6 @@ import stroom.processor.impl.CreatedTasks;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
-import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
@@ -74,16 +74,16 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private static final Field<Integer> COUNT = DSL.count();
 
     private static final Map<String, Field> FIELD_MAP = Map.of(
-            FindProcessorTaskCriteria.FIELD_ID, PROCESSOR_TASK.ID,
-            FindProcessorTaskCriteria.FIELD_COUNT, COUNT,
-            FindProcessorTaskCriteria.FIELD_CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS,
-            FindProcessorTaskCriteria.FIELD_END_TIME_DATE, PROCESSOR_TASK.END_TIME_MS,
-            FindProcessorTaskCriteria.FIELD_NODE, PROCESSOR_NODE.NAME,
-            FindProcessorTaskCriteria.FIELD_PIPELINE, PROCESSOR.PIPELINE_UUID,
-            FindProcessorTaskCriteria.FIELD_POLL_AGE, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS,
-            FindProcessorTaskCriteria.FIELD_PRIORITY, PROCESSOR_FILTER.PRIORITY,
-            FindProcessorTaskCriteria.FIELD_START_TIME, PROCESSOR_TASK.START_TIME_MS,
-            FindProcessorTaskCriteria.FIELD_STATUS, PROCESSOR_TASK.STATUS);
+            ProcessorTaskDataSource.FIELD_ID, PROCESSOR_TASK.ID,
+            ProcessorTaskDataSource.FIELD_COUNT, COUNT,
+            ProcessorTaskDataSource.FIELD_CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS,
+            ProcessorTaskDataSource.FIELD_END_TIME_DATE, PROCESSOR_TASK.END_TIME_MS,
+            ProcessorTaskDataSource.FIELD_NODE, PROCESSOR_NODE.NAME,
+            ProcessorTaskDataSource.FIELD_PIPELINE, PROCESSOR.PIPELINE_UUID,
+            ProcessorTaskDataSource.FIELD_POLL_AGE, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS,
+            ProcessorTaskDataSource.FIELD_PRIORITY, PROCESSOR_FILTER.PRIORITY,
+            ProcessorTaskDataSource.FIELD_START_TIME, PROCESSOR_TASK.START_TIME_MS,
+            ProcessorTaskDataSource.FIELD_STATUS, PROCESSOR_TASK.STATUS);
 
 
     private static final Field[] PROCESSOR_TASK_COLUMNS = new Field[]{
@@ -428,7 +428,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                             .addTerm(ProcessorTaskDataSource.STATUS, ExpressionTerm.Condition.EQUALS, TaskStatus.UNPROCESSED.getDisplayValue())
                             .addTerm(ProcessorTaskDataSource.PROCESSOR_FILTER_ID, ExpressionTerm.Condition.EQUALS, filter.getId())
                             .build();
-                    final FindProcessorTaskCriteria findStreamTaskCriteria = new FindProcessorTaskCriteria(expression);
+                    final ExpressionCriteria findStreamTaskCriteria = new ExpressionCriteria(expression);
 //                    findStreamTaskCriteria.obtainNodeNameCriteria().setString(thisNodeName);
 //                    findStreamTaskCriteria.setCreateMs(streamTaskCreateMs);
 //                    findStreamTaskCriteria.obtainTaskStatusSet().add(TaskStatus.UNPROCESSED);
@@ -813,11 +813,11 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     @Override
-    public BaseResultList<ProcessorTask> find(final FindProcessorTaskCriteria criteria) {
+    public BaseResultList<ProcessorTask> find(final ExpressionCriteria criteria) {
         return JooqUtil.contextResult(connectionProvider, context -> find(context, criteria));
     }
 
-    BaseResultList<ProcessorTask> find(final DSLContext context, final FindProcessorTaskCriteria criteria) {
+    BaseResultList<ProcessorTask> find(final DSLContext context, final ExpressionCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 //        final Collection<Condition> conditions = convertCriteria(criteria);
 
@@ -857,7 +857,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     @Override
-    public BaseResultList<ProcessorTaskSummary> findSummary(final FindProcessorTaskCriteria criteria) {
+    public BaseResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 //        final Collection<Condition> conditions = convertCriteria(criteria);
 
@@ -905,10 +905,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     @Override
     public ProcessorTask changeTaskStatus(final ProcessorTask processorTask,
-                                                final String nodeName,
-                                                final TaskStatus status,
-                                                final Long startTime,
-                                                final Long endTime) {
+                                          final String nodeName,
+                                          final TaskStatus status,
+                                          final Long startTime,
+                                          final Long endTime) {
         // Do everything within a single transaction.
         return JooqUtil.transactionResult(connectionProvider, context -> {
             LOGGER.debug(LambdaLogUtil.message("changeTaskStatus() - Changing task status of {} to node={}, status={}", processorTask, nodeName, status));

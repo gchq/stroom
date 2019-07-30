@@ -19,6 +19,7 @@ package stroom.processor.impl;
 
 import com.google.common.base.Strings;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -26,7 +27,6 @@ import stroom.meta.shared.MetaService;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.shared.FindProcessorCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
 import stroom.processor.shared.QueryData;
@@ -98,7 +98,7 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                     for (final Meta meta : metaList) {
                         // We can only reprocess streams that have a stream processor and a parent stream id.
                         if (meta.getProcessorUuid() != null && meta.getParentMetaId() != null) {
-                            final FindProcessorCriteria findProcessorCriteria = new FindProcessorCriteria(new ExpressionOperator.Builder()
+                            final ExpressionCriteria findProcessorCriteria = new ExpressionCriteria(new ExpressionOperator.Builder()
                                     .addTerm(ProcessorDataSource.PIPELINE, Condition.EQUALS, new DocRef(PipelineDoc.DOCUMENT_TYPE, meta.getPipelineUuid()))
                                     .build());
 //                            findProcessorCriteria.obtainPipelineUuidCriteria().setString(meta.getPipelineUuid());

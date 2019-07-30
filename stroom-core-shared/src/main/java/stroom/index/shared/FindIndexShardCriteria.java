@@ -23,8 +23,11 @@ import stroom.util.shared.Range;
 import stroom.util.shared.StringCriteria;
 
 public class FindIndexShardCriteria extends BaseCriteria {
-    public static final String FIELD_PARTITION = "Partition";
     private static final long serialVersionUID = 3552286394659242683L;
+
+    public static final String FIELD_ID = "Id";
+    public static final String FIELD_PARTITION = "Partition";
+
     private Range<Integer> documentCountRange = new Range<>();
     private CriteriaSet<String> nodeNameSet = new CriteriaSet<>();
     private CriteriaSet<Integer> volumeIdSet = new CriteriaSet<>();

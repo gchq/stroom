@@ -7,7 +7,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class AuthorisationConfig implements IsConfig {
-    private int maxDocumentPermissionCacheSize = 100000;
+    private int maxDocumentPermissionCacheSize = 1000;
 
     @JsonPropertyDescription("The maximum size of the document permissions cache")
     public int getMaxDocumentPermissionCacheSize() {

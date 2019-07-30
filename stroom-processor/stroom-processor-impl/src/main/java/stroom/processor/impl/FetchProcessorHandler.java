@@ -20,12 +20,11 @@ package stroom.processor.impl;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.SharedObject;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.api.ExplorerService;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.FetchProcessorAction;
-import stroom.processor.shared.FindProcessorCriteria;
-import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
 import stroom.processor.shared.ProcessorFilter;
@@ -77,8 +76,8 @@ public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAct
         return security.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () -> {
             final List<SharedObject> values = new ArrayList<>();
 
-            final FindProcessorFilterCriteria criteria = new FindProcessorFilterCriteria(action.getExpression());
-            final FindProcessorCriteria criteriaRoot = new FindProcessorCriteria(action.getExpression());
+            final ExpressionCriteria criteria = new ExpressionCriteria(action.getExpression());
+            final ExpressionCriteria criteriaRoot = new ExpressionCriteria(action.getExpression());
 //            if (action.getPipeline() != null) {
 //                criteria.obtainPipelineUuidCriteria().setString(action.getPipeline().getUuid());
 //                criteriaRoot.obtainPipelineUuidCriteria().setString(action.getPipeline().getUuid());

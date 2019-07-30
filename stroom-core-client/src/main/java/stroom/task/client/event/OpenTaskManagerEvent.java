@@ -19,8 +19,8 @@ package stroom.task.client.event;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-public class OpenTaskManagerEvent extends GwtEvent<OpenTaskManagerHandler> {
-    private static Type<OpenTaskManagerHandler> TYPE;
+public class OpenTaskManagerEvent extends GwtEvent<OpenUserTaskManagerHandler> {
+    private static Type<OpenUserTaskManagerHandler> TYPE;
 
     private OpenTaskManagerEvent() {
         // Private constructor.
@@ -30,7 +30,7 @@ public class OpenTaskManagerEvent extends GwtEvent<OpenTaskManagerHandler> {
         handlers.fireEvent(new OpenTaskManagerEvent());
     }
 
-    public static Type<OpenTaskManagerHandler> getType() {
+    public static Type<OpenUserTaskManagerHandler> getType() {
         if (TYPE == null) {
             TYPE = new Type<>();
         }
@@ -38,12 +38,12 @@ public class OpenTaskManagerEvent extends GwtEvent<OpenTaskManagerHandler> {
     }
 
     @Override
-    public Type<OpenTaskManagerHandler> getAssociatedType() {
+    public Type<OpenUserTaskManagerHandler> getAssociatedType() {
         return getType();
     }
 
     @Override
-    protected void dispatch(final OpenTaskManagerHandler handler) {
+    protected void dispatch(final OpenUserTaskManagerHandler handler) {
         handler.onOpen(this);
     }
 }

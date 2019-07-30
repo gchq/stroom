@@ -16,17 +16,17 @@
 
 package stroom.processor.impl;
 
-import stroom.util.AuditUtil;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.util.AuditUtil;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
@@ -163,7 +163,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 //    }
 
     @Override
-    public BaseResultList<ProcessorFilter> find(final FindProcessorFilterCriteria criteria) {
+    public BaseResultList<ProcessorFilter> find(final ExpressionCriteria criteria) {
         return security.secureResult(PERMISSION, () ->
                 processorFilterDao.find(criteria));
     }

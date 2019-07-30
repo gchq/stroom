@@ -23,6 +23,8 @@ import stroom.util.shared.CriteriaSet;
 public class FindFsVolumeCriteria extends BaseCriteria {
     private static final long serialVersionUID = 3581257401217841946L;
 
+    public static final String FIELD_ID = "Id";
+
     private CriteriaSet<VolumeUseStatus> statusSet = new CriteriaSet<>();
 
     public CriteriaSet<VolumeUseStatus> getStatusSet() {

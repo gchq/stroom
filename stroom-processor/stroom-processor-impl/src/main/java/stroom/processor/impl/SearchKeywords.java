@@ -20,10 +20,10 @@ package stroom.processor.impl;
 
 import com.google.common.base.Strings;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.FindProcessorFilterCriteria;
-import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorFilterDataSource;
+import stroom.processor.shared.ProcessorTaskDataSource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.Sort;
@@ -82,7 +82,7 @@ public class SearchKeywords {
         }
     }
 
-    static void addSorting(String filter, FindProcessorFilterCriteria criteria) {
+    static void addSorting(String filter, ExpressionCriteria criteria) {
         if (filter != null) {
             String[] keywords = filter.split(" ");
 
@@ -92,15 +92,15 @@ public class SearchKeywords {
         }
     }
 
-    private static void doAddSorting(String special, FindProcessorFilterCriteria criteria) {
+    private static void doAddSorting(String special, ExpressionCriteria criteria) {
         String[] terms = special.split(DELIMITER);
         if (terms.length == 2) {
             if (terms[0].equalsIgnoreCase(SORT)) {
                 if (terms[1].equalsIgnoreCase(NEXT)) {
                     // We don't want any other sorts happening here, so we'll get rid of them.
                     criteria.removeSorts();
-                    criteria.addSort(FindProcessorTaskCriteria.FIELD_PRIORITY, DESCENDING, false);
-                    criteria.addSort(FindProcessorTaskCriteria.FIELD_POLL_AGE, Sort.Direction.ASCENDING, false);
+                    criteria.addSort(ProcessorTaskDataSource.FIELD_PRIORITY, DESCENDING, false);
+                    criteria.addSort(ProcessorTaskDataSource.FIELD_POLL_AGE, Sort.Direction.ASCENDING, false);
                 }
             }
         }
