@@ -16,8 +16,10 @@
 
 package stroom.pipeline.server.reader;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -43,6 +45,7 @@ import java.io.Reader;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STREAM)
 public class FindReplaceFilterElement extends AbstractReaderElement {
+    private final LocationFactory locationFactory;
     private final ErrorReceiver errorReceiver;
 
     private FindReplaceFilter textReplacementFilterReader;
@@ -56,7 +59,9 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
     private boolean showReplacementCount = true;
 
     @Inject
-    public FindReplaceFilterElement(final ErrorReceiverProxy errorReceiver) {
+    public FindReplaceFilterElement(final LocationFactory locationFactory,
+                                    final ErrorReceiverProxy errorReceiver) {
+        this.locationFactory = locationFactory;
         this.errorReceiver = errorReceiver;
     }
 
@@ -73,6 +78,7 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
                     .regex(regex)
                     .dotAll(dotAll)
                     .bufferSize(bufferSize)
+                    .locationFactory(locationFactory)
                     .errorReceiver(errorReceiver)
                     .elementId(getElementId())
                     .build();
@@ -105,16 +111,17 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
             // Reset some of the variables so we can find/replace again in the next stream.
             textReplacementFilterReader.clear();
         }
+        super.endStream();
     }
 
     @PipelineProperty(description = "The text or regex pattern to find and replace.")
     public void setFind(final String find) {
-        this.find = find;
+        this.find = StringEscapeUtils.unescapeJava(find);
     }
 
     @PipelineProperty(description = "The replacement text.")
     public void setReplacement(final String replacement) {
-        this.replacement = replacement;
+        this.replacement = StringEscapeUtils.unescapeJava(replacement);
     }
 
     @PipelineProperty(description = "The maximum number of times to try and replace text. There is no limit by default.")

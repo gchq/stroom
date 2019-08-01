@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#1217** : Find replace filter now allows expressions to match the start of a buffer if we are at the start of the input or have just performed a replacement.
+* Issue **#913** : BREAKING CHANGE - Back port change to FindReplaceFilter to cope with more complex conditions. Find and replacement strings are now Java escaped to allow for `\n` as a new line, therefore all previous find expressions and replacements using '\' must now use `\\`.
 
 ## [v5.5.10] - 2019-04-26
 
