@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.11] - 2019-08-01
+
 * Issue **#913** : BREAKING CHANGE - Back port change to FindReplaceFilter to cope with more complex conditions. Find and replacement strings are now Java escaped to allow for `\n` as a new line, therefore all previous find expressions and replacements using '\' must now use `\\`.
 
 ## [v5.5.10] - 2019-04-26
@@ -994,7 +996,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.11...HEAD
+[v5.5.11]: https://github.com/gchq/stroom/compare/v5.5.10...v5.5.11
 [v5.5.10]: https://github.com/gchq/stroom/compare/v5.5.9...v5.5.10
 [v5.5.9]: https://github.com/gchq/stroom/compare/v5.5.8...v5.5.9
 [v5.5.8]: https://github.com/gchq/stroom/compare/v5.5.7...v5.5.8
