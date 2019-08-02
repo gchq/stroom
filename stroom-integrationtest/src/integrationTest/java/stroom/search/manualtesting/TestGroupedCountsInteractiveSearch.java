@@ -187,7 +187,7 @@ public class TestGroupedCountsInteractiveSearch {
     public void testGroupedCounts() {
         //we want all data here
         final ExpressionOperator.Builder expressionBuilder = new ExpressionOperator.Builder();
-        expressionBuilder.addTerm("UserId", ExpressionTerm.Condition.CONTAINS, "*");
+        expressionBuilder.addTerm("UserId", ExpressionTerm.Condition.EQUALS, "*");
 
         final List<String> componentIds = Collections.singletonList("table-1");
 

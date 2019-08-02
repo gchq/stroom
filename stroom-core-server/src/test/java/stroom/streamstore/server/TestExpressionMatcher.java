@@ -58,7 +58,7 @@ public class TestExpressionMatcher extends StroomUnitTest {
 
     private ExpressionOperator createExpression(final Op op, final String feedName) {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, op);
-        builder.addTerm(StreamDataSource.FEED_NAME, Condition.CONTAINS, feedName);
+        builder.addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feedName);
         return builder.build();
     }
 

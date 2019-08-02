@@ -43,7 +43,6 @@ public class DataSourceUtil {
                 .type(DataSourceFieldType.DOC_REF)
                 .addConditions(Condition.IS_DOC_REF)
                 .addConditions(Condition.EQUALS)
-                .addConditions(Condition.CONTAINS)
                 .addConditions(Condition.IN)
                 .addConditions(Condition.IN_DICTIONARY)
                 .addConditions(Condition.IN_FOLDER)

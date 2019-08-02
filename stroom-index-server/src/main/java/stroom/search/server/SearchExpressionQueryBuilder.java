@@ -321,7 +321,8 @@ public class SearchExpressionQueryBuilder {
         } else {
             switch (condition) {
                 case EQUALS:
-                    return getSubQuery(matchVersion, indexField, value, terms, false);
+                    return getContains(fieldName, value, indexField, matchVersion, terms);
+//                    return getSubQuery(matchVersion, indexField, value, terms, false);
                 case CONTAINS:
                     return getContains(fieldName, value, indexField, matchVersion, terms);
                 case IN:

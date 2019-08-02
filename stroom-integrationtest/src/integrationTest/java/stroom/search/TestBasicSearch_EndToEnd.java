@@ -74,7 +74,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Test
     public void testTermQuery() throws Exception {
         final ExpressionOperator.Builder expression = new ExpressionOperator.Builder();
-        expression.addTerm("UserId", Condition.CONTAINS, "user5");
+        expression.addTerm("UserId", Condition.EQUALS, "user5");
 
         test(expression, 1, 5);
     }
@@ -84,10 +84,10 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         final String field = "Command";
 
         final ExpressionOperator.Builder expression = new ExpressionOperator.Builder();
-        expression.addTerm(field, Condition.CONTAINS, "service");
-        expression.addTerm(field, Condition.CONTAINS, "cwhp");
-        expression.addTerm(field, Condition.CONTAINS, "authorize");
-        expression.addTerm(field, Condition.CONTAINS, "deviceGroup");
+        expression.addTerm(field, Condition.EQUALS, "service");
+        expression.addTerm(field, Condition.EQUALS, "cwhp");
+        expression.addTerm(field, Condition.EQUALS, "authorize");
+        expression.addTerm(field, Condition.EQUALS, "deviceGroup");
 
         test(expression, 1, 23);
     }
@@ -97,12 +97,12 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         final String field = "Command";
         final ExpressionOperator.Builder expression = new ExpressionOperator.Builder()
                 .addOperator(new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(field, Condition.CONTAINS, "service")
-                    .addTerm(field, Condition.CONTAINS, "cwhp")
-                    .addTerm(field, Condition.CONTAINS, "authorize")
-                    .addTerm(field, Condition.CONTAINS, "deviceGroup")
+                    .addTerm(field, Condition.EQUALS, "service")
+                    .addTerm(field, Condition.EQUALS, "cwhp")
+                    .addTerm(field, Condition.EQUALS, "authorize")
+                    .addTerm(field, Condition.EQUALS, "deviceGroup")
                     .build())
-                .addTerm("UserId", Condition.CONTAINS, "user5");
+                .addTerm("UserId", Condition.EQUALS, "user5");
         test(expression, 1, 5);
     }
 
@@ -110,17 +110,17 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     public void testNestedBooleanQuery() throws Exception {
         // Create an or query.
         final ExpressionOperator.Builder orCondition = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-        orCondition.addTerm("UserId", Condition.CONTAINS, "user6");
+        orCondition.addTerm("UserId", Condition.EQUALS, "user6");
 
         final ExpressionOperator.Builder andCondition = orCondition.addOperator(new ExpressionOperator.Builder(Op.AND)
-                .addTerm("UserId", Condition.CONTAINS, "user1")
+                .addTerm("UserId", Condition.EQUALS, "user1")
                 .build());
 
         // Check there are 4 events.
         test(andCondition, 1, 4);
 
         // Create an and query.
-        andCondition.addTerm("HostName", Condition.CONTAINS, "e6sm01");
+        andCondition.addTerm("HostName", Condition.EQUALS, "e6sm01");
 
         // There should be two events.
         test(andCondition, 1, 2);

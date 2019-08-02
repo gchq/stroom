@@ -180,8 +180,8 @@ public class TestEventSearch extends AbstractSearchTest {
                                                        final String wordsField,
                                                        final String wordsTerm) {
         return new ExpressionOperator.Builder()
-                .addTerm(userField, Condition.CONTAINS, userTerm)
+                .addTerm(userField, Condition.EQUALS, userTerm)
                 .addTerm("EventTime", Condition.BETWEEN, from + "," + to)
-                .addTerm(wordsField, Condition.CONTAINS, wordsTerm);
+                .addTerm(wordsField, Condition.EQUALS, wordsTerm);
     }
 }

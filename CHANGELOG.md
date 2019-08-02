@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#1220** : Fixed attempt to open newly created index shards as if they were old existing shards. 
+* Issue **#1230** : Search expressions no longer have the `contains` condition. 
+
+* Issue **#1220** : Fixed attempt to open newly created index shards as if they were old existing shards.
 
 * Issue **#1232** : Fixed handling of enter key on pipeline element editor dialog.
 

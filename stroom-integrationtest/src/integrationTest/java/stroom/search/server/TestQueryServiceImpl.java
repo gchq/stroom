@@ -85,7 +85,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         ThreadUtil.sleep(1000);
 
         final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.OR);
-        root.addTerm("Some field", Condition.CONTAINS, "Some value");
+        root.addTerm("Some field", Condition.EQUALS, "Some value");
 
         LOGGER.info(root.toString());
 

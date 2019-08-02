@@ -498,16 +498,16 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     private ExpressionOperator.Builder buildExpression(final String userField, final String userTerm, final String from,
                                                        final String to, final String wordsField, final String wordsTerm) {
         final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
-        operator.addTerm(userField, Condition.CONTAINS, userTerm);
+        operator.addTerm(userField, Condition.EQUALS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
-        operator.addTerm(wordsField, Condition.CONTAINS, wordsTerm);
+        operator.addTerm(wordsField, Condition.EQUALS, wordsTerm);
         return operator;
     }
 
     private ExpressionOperator.Builder buildInExpression(final String userField, final String userTerm, final String from,
                                                          final String to, final String wordsField, final String wordsTerm) {
         final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
-        operator.addTerm(userField, Condition.CONTAINS, userTerm);
+        operator.addTerm(userField, Condition.EQUALS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
         operator.addTerm(wordsField, Condition.IN, wordsTerm);
 

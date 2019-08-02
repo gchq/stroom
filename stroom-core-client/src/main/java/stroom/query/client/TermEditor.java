@@ -240,7 +240,7 @@ public class TermEditor extends Composite {
 
         if (field == null) {
             conditions = Arrays.asList(
-                    Condition.CONTAINS,
+                    Condition.EQUALS,
                     Condition.IN,
                     Condition.IN_DICTIONARY
             );
@@ -251,14 +251,12 @@ public class TermEditor extends Composite {
             if (DataSourceFieldType.DOC_REF.equals(field.getType())) {
                 conditions = Arrays.asList(
                         Condition.EQUALS,
-                        Condition.CONTAINS,
                         Condition.IN,
                         Condition.IN_DICTIONARY,
                         Condition.IS_DOC_REF);
             } else if (field.getType().isNumeric()) {
                 conditions = Arrays.asList(
                         Condition.EQUALS,
-                        Condition.CONTAINS,
                         Condition.GREATER_THAN,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
                         Condition.LESS_THAN,
@@ -271,7 +269,6 @@ public class TermEditor extends Composite {
             } else if (DataSourceFieldType.DATE_FIELD.equals(field.getType())) {
                 conditions = Arrays.asList(
                         Condition.EQUALS,
-                        Condition.CONTAINS,
                         Condition.GREATER_THAN,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
                         Condition.LESS_THAN,
@@ -284,7 +281,6 @@ public class TermEditor extends Composite {
             } else {
                 conditions = Arrays.asList(
                         Condition.EQUALS,
-                        Condition.CONTAINS,
                         Condition.IN,
                         Condition.IN_DICTIONARY
                 );
@@ -313,9 +309,9 @@ public class TermEditor extends Composite {
                         enterTextMode();
                     }
                     break;
-                case CONTAINS:
-                    enterTextMode();
-                    break;
+//                case CONTAINS:
+//                    enterTextMode();
+//                    break;
                 case IN:
                     enterTextMode();
                     break;
