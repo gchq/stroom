@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.1] - 2019-08-02
+
 * Issue **#1230** : Search expressions no longer have the `contains` condition. 
 
 * Issue **#1220** : Fixed attempt to open newly created index shards as if they were old existing shards.
@@ -1805,36 +1808,37 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.66...6.0
-[v6.0-beta.66]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v6.0-beta.66
-[v6.0-beta.65]: https://github.com/gchq/stroom/compare/v7.0-beta.64...v6.0-beta.65
-[v6.0-beta.64]: https://github.com/gchq/stroom/compare/v7.0-beta.63...v6.0-beta.64
-[v6.0-beta.63]: https://github.com/gchq/stroom/compare/v7.0-beta.62...v6.0-beta.63
-[v6.0-beta.62]: https://github.com/gchq/stroom/compare/v7.0-beta.61...v6.0-beta.62
-[v6.0-beta.61]: https://github.com/gchq/stroom/compare/v7.0-beta.60...v6.0-beta.61
-[v6.0-beta.60]: https://github.com/gchq/stroom/compare/v7.0-beta.59...v6.0-beta.60
-[v6.0-beta.59]: https://github.com/gchq/stroom/compare/v7.0-beta.58...v6.0-beta.59
-[v6.0-beta.58]: https://github.com/gchq/stroom/compare/v7.0-beta.57...v6.0-beta.58
-[v6.0-beta.57]: https://github.com/gchq/stroom/compare/v7.0-beta.56...v6.0-beta.57
-[v6.0-beta.56]: https://github.com/gchq/stroom/compare/v7.0-beta.55...v6.0-beta.56
-[v6.0-beta.55]: https://github.com/gchq/stroom/compare/v7.0-beta.54...v6.0-beta.55
-[v6.0-beta.54]: https://github.com/gchq/stroom/compare/v7.0-beta.53...v6.0-beta.54
-[v6.0-beta.53]: https://github.com/gchq/stroom/compare/v7.0-beta.52...v6.0-beta.53
-[v6.0-beta.52]: https://github.com/gchq/stroom/compare/v7.0-beta.51...v6.0-beta.52
-[v6.0-beta.51]: https://github.com/gchq/stroom/compare/v7.0-beta.50...v6.0-beta.51
-[v6.0-beta.50]: https://github.com/gchq/stroom/compare/v7.0-beta.49...v6.0-beta.50
-[v6.0-beta.49]: https://github.com/gchq/stroom/compare/v7.0-beta.48...v6.0-beta.49
-[v6.0-beta.48]: https://github.com/gchq/stroom/compare/v7.0-beta.47...v6.0-beta.48
-[v6.0-beta.47]: https://github.com/gchq/stroom/compare/v7.0-beta.46...v6.0-beta.47
-[v6.0-beta.46]: https://github.com/gchq/stroom/compare/v7.0-beta.45...v6.0-beta.46
-[v6.0-beta.45]: https://github.com/gchq/stroom/compare/v7.0-beta.44...v6.0-beta.45
-[v6.0-beta.44]: https://github.com/gchq/stroom/compare/v7.0-beta.43...v6.0-beta.44
-[v6.0-beta.43]: https://github.com/gchq/stroom/compare/v7.0-beta.42...v6.0-beta.43
-[v6.0-beta.42]: https://github.com/gchq/stroom/compare/v7.0-beta.41...v6.0-beta.42
-[v6.0-beta.41]: https://github.com/gchq/stroom/compare/v7.0-beta.40...v6.0-beta.41
-[v6.0-beta.40]: https://github.com/gchq/stroom/compare/v7.0-beta.39...v6.0-beta.40
-[v6.0-beta.39]: https://github.com/gchq/stroom/compare/v7.0-beta.38...v6.0-beta.39
-[v6.0-beta.38]: https://github.com/gchq/stroom/compare/v7.0-beta.36...v6.0-beta.38
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.1...6.0
+[v6.0.1]: https://github.com/gchq/stroom/compare/v6.0-beta.66...v6.0.1
+[v6.0-beta.66]: https://github.com/gchq/stroom/compare/v6.0-beta.65...v6.0-beta.66
+[v6.0-beta.65]: https://github.com/gchq/stroom/compare/v6.0-beta.64...v6.0-beta.65
+[v6.0-beta.64]: https://github.com/gchq/stroom/compare/v6.0-beta.63...v6.0-beta.64
+[v6.0-beta.63]: https://github.com/gchq/stroom/compare/v6.0-beta.62...v6.0-beta.63
+[v6.0-beta.62]: https://github.com/gchq/stroom/compare/v6.0-beta.61...v6.0-beta.62
+[v6.0-beta.61]: https://github.com/gchq/stroom/compare/v6.0-beta.60...v6.0-beta.61
+[v6.0-beta.60]: https://github.com/gchq/stroom/compare/v6.0-beta.59...v6.0-beta.60
+[v6.0-beta.59]: https://github.com/gchq/stroom/compare/v6.0-beta.58...v6.0-beta.59
+[v6.0-beta.58]: https://github.com/gchq/stroom/compare/v6.0-beta.57...v6.0-beta.58
+[v6.0-beta.57]: https://github.com/gchq/stroom/compare/v6.0-beta.56...v6.0-beta.57
+[v6.0-beta.56]: https://github.com/gchq/stroom/compare/v6.0-beta.55...v6.0-beta.56
+[v6.0-beta.55]: https://github.com/gchq/stroom/compare/v6.0-beta.54...v6.0-beta.55
+[v6.0-beta.54]: https://github.com/gchq/stroom/compare/v6.0-beta.53...v6.0-beta.54
+[v6.0-beta.53]: https://github.com/gchq/stroom/compare/v6.0-beta.52...v6.0-beta.53
+[v6.0-beta.52]: https://github.com/gchq/stroom/compare/v6.0-beta.51...v6.0-beta.52
+[v6.0-beta.51]: https://github.com/gchq/stroom/compare/v6.0-beta.50...v6.0-beta.51
+[v6.0-beta.50]: https://github.com/gchq/stroom/compare/v6.0-beta.49...v6.0-beta.50
+[v6.0-beta.49]: https://github.com/gchq/stroom/compare/v6.0-beta.48...v6.0-beta.49
+[v6.0-beta.48]: https://github.com/gchq/stroom/compare/v6.0-beta.47...v6.0-beta.48
+[v6.0-beta.47]: https://github.com/gchq/stroom/compare/v6.0-beta.46...v6.0-beta.47
+[v6.0-beta.46]: https://github.com/gchq/stroom/compare/v6.0-beta.45...v6.0-beta.46
+[v6.0-beta.45]: https://github.com/gchq/stroom/compare/v6.0-beta.44...v6.0-beta.45
+[v6.0-beta.44]: https://github.com/gchq/stroom/compare/v6.0-beta.43...v6.0-beta.44
+[v6.0-beta.43]: https://github.com/gchq/stroom/compare/v6.0-beta.42...v6.0-beta.43
+[v6.0-beta.42]: https://github.com/gchq/stroom/compare/v6.0-beta.41...v6.0-beta.42
+[v6.0-beta.41]: https://github.com/gchq/stroom/compare/v6.0-beta.40...v6.0-beta.41
+[v6.0-beta.40]: https://github.com/gchq/stroom/compare/v6.0-beta.39...v6.0-beta.40
+[v6.0-beta.39]: https://github.com/gchq/stroom/compare/v6.0-beta.38...v6.0-beta.39
+[v6.0-beta.38]: https://github.com/gchq/stroom/compare/v6.0-beta.37...v6.0-beta.38
 [v6.0-beta.37]: https://github.com/gchq/stroom/compare/v6.0-beta.36...v6.0-beta.37
 [v6.0-beta.36]: https://github.com/gchq/stroom/compare/v6.0-beta.35...v6.0-beta.36
 [v6.0-beta.35]: https://github.com/gchq/stroom/compare/v6.0-beta.34...v6.0-beta.35

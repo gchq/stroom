@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="SetupSampleData" type="Application" factoryName="Application" nameIsGenerated="true">
     <option name="MAIN_CLASS_NAME" value="stroom.test.SetupSampleData" />
-    <module name="stroom-integrationtest_integrationTest" />
+    <module name="stroom.stroom-integrationtest.integrationTest" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="stroom.test.*" />
