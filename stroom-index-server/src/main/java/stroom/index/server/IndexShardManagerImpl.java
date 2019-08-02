@@ -313,13 +313,13 @@ public class IndexShardManagerImpl implements IndexShardManager {
                     // Only allow certain state transitions.
                     final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
                     if (allowed == null) {
-                        LOGGER.debug(() -> "No state transitions are defined for " + indexShard.getStatus());
+                        throw new RuntimeException("No state transitions are defined for " + indexShard.getStatus());
                     } else {
                         if (allowed.contains(status)) {
                             indexShard.setStatus(status);
                             indexShardService.save(indexShard);
                         } else {
-                            LOGGER.debug(() -> "State transition from " + indexShard.getStatus() + " to " + status + " was attempted but is not allowed");
+                            throw new RuntimeException("State transition from " + indexShard.getStatus() + " to " + status + " was attempted but is not allowed");
                         }
                     }
                 }

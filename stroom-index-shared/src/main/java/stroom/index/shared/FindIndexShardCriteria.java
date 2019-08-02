@@ -27,6 +27,8 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.query.api.v2.DocRef;
 
+import java.util.Objects;
+
 public class FindIndexShardCriteria extends BaseCriteria {
     public static final String FIELD_PARTITION = "Partition";
     private static final long serialVersionUID = 3552286394659242683L;
@@ -91,5 +93,25 @@ public class FindIndexShardCriteria extends BaseCriteria {
         sb.append("indexSet=");
         sb.append(indexSet);
         return sb.toString();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof FindIndexShardCriteria)) return false;
+        if (!super.equals(o)) return false;
+        final FindIndexShardCriteria that = (FindIndexShardCriteria) o;
+        return Objects.equals(documentCountRange, that.documentCountRange) &&
+                Objects.equals(nodeIdSet, that.nodeIdSet) &&
+                Objects.equals(volumeIdSet, that.volumeIdSet) &&
+                Objects.equals(indexSet, that.indexSet) &&
+                Objects.equals(indexShardSet, that.indexShardSet) &&
+                Objects.equals(indexShardStatusSet, that.indexShardStatusSet) &&
+                Objects.equals(partition, that.partition);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), documentCountRange, nodeIdSet, volumeIdSet, indexSet, indexShardSet, indexShardStatusSet, partition);
     }
 }
