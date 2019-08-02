@@ -125,7 +125,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         sb.append("    <children>\n");
         sb.append("        <term>\n");
         sb.append("            <field>Some field</field>\n");
-        sb.append("            <condition>CONTAINS</condition>\n");
+        sb.append("            <condition>EQUALS</condition>\n");
         sb.append("            <value>Some value</value>\n");
         sb.append("        </term>\n");
         sb.append("    </children>\n");
