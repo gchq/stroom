@@ -238,7 +238,13 @@ class SecurityContextImpl implements SecurityContext {
             throw new AuthenticationException("No user is currently logged in");
         }
 
-        return hasDocumentPermission(userRef, documentUuid, permission);
+        // If we are currently allowing users with only `Use` permission to `Read` (elevate permissions) then test for `Use` instead of `Read`.
+        String perm = permission;
+        if (CurrentUserState.isElevatePermissions() && DocumentPermissionNames.READ.equals(perm)) {
+            perm = DocumentPermissionNames.USE;
+        }
+
+        return hasDocumentPermission(userRef, documentUuid, perm);
     }
 
     private boolean hasDocumentPermission(final UserRef userRef, final String documentUuid, final String permission) {
@@ -262,14 +268,7 @@ class SecurityContextImpl implements SecurityContext {
     private boolean hasUserDocumentPermission(final String userUuid, final String documentUuid, final String permission) {
         final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userUuid);
         if (userDocumentPermissions != null) {
-            if (userDocumentPermissions.hasDocumentPermission(documentUuid, permission)) {
-                return true;
-            }
-
-            // If we are currently treating `Use` as `Read` (elevate permissions) then test for `Use` instead of `Read`.
-            if (DocumentPermissionNames.READ.equals(permission) && CurrentUserState.isElevatePermissions()) {
-                return userDocumentPermissions.hasDocumentPermission(documentUuid, DocumentPermissionNames.USE);
-            }
+            return userDocumentPermissions.hasDocumentPermission(documentUuid, permission);
         }
         return false;
     }
