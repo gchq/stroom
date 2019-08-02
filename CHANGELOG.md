@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fixed test.
+
 
 ## [v6.0.2] - 2019-08-02
 

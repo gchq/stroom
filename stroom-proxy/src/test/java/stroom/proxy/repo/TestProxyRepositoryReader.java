@@ -189,7 +189,10 @@ public class TestProxyRepositoryReader extends StroomUnitTest {
             @Override
             public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
                 try {
-                    FileTime newCreateTime = FileTime.from(Instant.now().minus(10, ChronoUnit.MINUTES));
+                    // Need to truncate to seconds here as some OSes don't support millisecond precision.
+                    FileTime newCreateTime = FileTime.from(Instant.now()
+                            .minus(10, ChronoUnit.MINUTES)
+                            .truncatedTo(ChronoUnit.SECONDS));
                     Files.setLastModifiedTime(dir, newCreateTime);
                     final BasicFileAttributes attr = Files.readAttributes(dir, BasicFileAttributes.class);
                     final FileTime readCreateTime = attr.creationTime();
