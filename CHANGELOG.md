@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1220** : Fixed attempt to open newly created index shards as if they were old existing shards. 
+
 * Issue **#1232** : Fixed handling of enter key on pipeline element editor dialog.
 
 * Issue **#1229** : Fixed issue where users needed `Read` permission on an index instead of just `Use` permission to search it.

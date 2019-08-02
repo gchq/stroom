@@ -84,8 +84,12 @@ public class IndexShardManagerImpl implements IndexShardManager {
         this.nodeCache = nodeCache;
         this.taskManager = taskManager;
 
-        allowedStateTransitions.put(IndexShardStatus.CLOSED, new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
-        allowedStateTransitions.put(IndexShardStatus.OPEN, new HashSet<>(Arrays.asList(IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
+        // Ensure all but deleted and corrupt states can be set to closed on clean.
+        allowedStateTransitions.put(IndexShardStatus.NEW, new HashSet<>(Arrays.asList(IndexShardStatus.OPENING, IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
+        allowedStateTransitions.put(IndexShardStatus.OPENING, new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
+        allowedStateTransitions.put(IndexShardStatus.OPEN, new HashSet<>(Arrays.asList(IndexShardStatus.CLOSING, IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
+        allowedStateTransitions.put(IndexShardStatus.CLOSING, new HashSet<>(Arrays.asList(IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
+        allowedStateTransitions.put(IndexShardStatus.CLOSED, new HashSet<>(Arrays.asList(IndexShardStatus.OPENING, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
         allowedStateTransitions.put(IndexShardStatus.DELETED, Collections.emptySet());
         allowedStateTransitions.put(IndexShardStatus.CORRUPT, Collections.singleton(IndexShardStatus.DELETED));
     }
@@ -308,9 +312,15 @@ public class IndexShardManagerImpl implements IndexShardManager {
                 if (indexShard != null) {
                     // Only allow certain state transitions.
                     final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
-                    if (allowed.contains(status)) {
-                        indexShard.setStatus(status);
-                        indexShardService.save(indexShard);
+                    if (allowed == null) {
+                        LOGGER.debug(() -> "No state transitions are defined for " + indexShard.getStatus());
+                    } else {
+                        if (allowed.contains(status)) {
+                            indexShard.setStatus(status);
+                            indexShardService.save(indexShard);
+                        } else {
+                            LOGGER.debug(() -> "State transition from " + indexShard.getStatus() + " to " + status + " was attempted but is not allowed");
+                        }
                     }
                 }
             } catch (final Exception e) {

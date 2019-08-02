@@ -110,7 +110,7 @@ public class IndexShard extends AuditedEntity {
     /**
      * Status
      */
-    private volatile byte pstatus = IndexShardStatus.CLOSED.getPrimitiveValue();
+    private volatile byte pstatus = IndexShardStatus.NEW.getPrimitiveValue();
     private Long fileSize;
     private String indexVersion;
 
@@ -299,6 +299,8 @@ public class IndexShard extends AuditedEntity {
         CLOSING("Closing", 10),
         // Opening - We are in the process of opening an index shard.
         OPENING("Opening", 20),
+        // New - We are a brand new shard that hasn't been opened yet.
+        NEW("New", 30),
         // Deleted - Used to mark shard for deletion
         DELETED("Deleted", 99),
         // Corrupt - Used to mark shard has been corrupted
