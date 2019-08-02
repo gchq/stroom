@@ -217,10 +217,10 @@ class SecurityContextImpl implements SecurityContext {
 
     private boolean hasUserAppPermission(final UserRef userRef, final String permission) {
         final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
-        if (userAppPermissions == null) {
-            return false;
+        if (userAppPermissions != null) {
+            return userAppPermissions.getUserPermissons().contains(permission);
         }
-        return userAppPermissions.getUserPermissons().contains(permission);
+        return false;
     }
 
     @Override
@@ -261,11 +261,17 @@ class SecurityContextImpl implements SecurityContext {
 
     private boolean hasUserDocumentPermission(final String userUuid, final String documentUuid, final String permission) {
         final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userUuid);
-        if (userDocumentPermissions == null) {
-            return false;
-        }
+        if (userDocumentPermissions != null) {
+            if (userDocumentPermissions.hasDocumentPermission(documentUuid, permission)) {
+                return true;
+            }
 
-        return userDocumentPermissions.hasDocumentPermission(documentUuid, permission);
+            // If we are currently treating `Use` as `Read` (elevate permissions) then test for `Use` instead of `Read`.
+            if (DocumentPermissionNames.READ.equals(permission) && CurrentUserState.isElevatePermissions()) {
+                return userDocumentPermissions.hasDocumentPermission(documentUuid, DocumentPermissionNames.USE);
+            }
+        }
+        return false;
     }
 
     @Override

@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1229** : Fixed issue where users needed `Read` permission on an index instead of just `Use` permission to search it.
+
 
 ## [v6.0-beta.66] - 2019-07-24
 
