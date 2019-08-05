@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v6.0-beta.68] - 2019-08-05
+## [v6.0-beta.69] - 2019-08-05
 
 * Test build upload.
 
@@ -1825,6 +1825,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v6.0.3]: https://github.com/gchq/stroom/compare/v6.0.2...v6.0.3
 [v6.0.2]: https://github.com/gchq/stroom/compare/v6.0.1...v6.0.2
 [v6.0.1]: https://github.com/gchq/stroom/compare/v6.0-beta.66...v6.0.1
+[v6.0-beta.69]: https://github.com/gchq/stroom/compare/v6.0-beta.68...v6.0-beta.69
 [v6.0-beta.68]: https://github.com/gchq/stroom/compare/v6.0-beta.67...v6.0-beta.68
 [v6.0-beta.67]: https://github.com/gchq/stroom/compare/v6.0-beta.66...v6.0-beta.67
 [v6.0-beta.66]: https://github.com/gchq/stroom/compare/v6.0-beta.65...v6.0-beta.66

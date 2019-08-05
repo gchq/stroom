@@ -417,7 +417,7 @@ configure(projectsToBePublished) {
             }
         }
         scm {
-            url "https://github.com/stroom/stroom-query"
+            url "https://github.com/stroom/stroom"
         }
     }
 
@@ -426,11 +426,11 @@ configure(projectsToBePublished) {
         from sourceSets.main.allSource
     }
 
-    javadoc {
-        // this switch is needed in java10
-        options.addBooleanOption('html5', true)
-        options.addStringOption('Xdoclint:none', '-quiet')
-    }
+//    javadoc {
+//        // this switch is needed in java10
+//        options.addBooleanOption('html5', true)
+//        options.addStringOption('Xdoclint:none', '-quiet')
+//    }
 
     task javadocJar(type: Jar, dependsOn: javadoc) {
         classifier = 'javadoc'
@@ -442,16 +442,16 @@ configure(projectsToBePublished) {
         archives javadocJar
     }
 
-    afterEvaluate {
-        jar {
-            inputs.property("moduleName", moduleName)
-            manifest {
-                attributes(
-                        "Automatic-Module-Name": moduleName,
-                )
-            }
-        }
-    }
+//    afterEvaluate {
+//        jar {
+//            inputs.property("moduleName", moduleName)
+//            manifest {
+//                attributes(
+//                        "Automatic-Module-Name": moduleName,
+//                )
+//            }
+//        }
+//    }
 
     publishing {
         publications {
