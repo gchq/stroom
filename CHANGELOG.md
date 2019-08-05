@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.67] - 2019-08-05
+
+* Test build upload.
 
 ## [v6.0.3] - 2019-08-02
 

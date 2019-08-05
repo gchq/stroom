@@ -270,7 +270,7 @@ allprojects {
 
 //Configuration applicable to all sub projects
 subprojects {
-    //println "Configuring subproject ${project.path}"
+    //println "Configuring subproject ${project.name}"
 
     apply plugin: 'java'
     apply plugin: 'ca.cutterslade.analyze' //analyze missing dependencies for the code base
@@ -399,8 +399,7 @@ subprojects {
 
 //configures only those projects in publishedProjectsPaths
 configure(projectsToBePublished) {
-
-    println "Configuring ${project.path} for publishing"
+    println "Configuring ${project.name} for publishing"
 
     apply plugin: 'maven'
     apply plugin: 'maven-publish'
@@ -459,18 +458,18 @@ configure(projectsToBePublished) {
         }
     }
 
-    //configuration for the bintray plugin for uploading maven artefacts to bintray
-    //see https://github.com/bintray/gradle-bintray-plugin
-    //run task bintrayUpload to push the files, assuming BINTRAY_USER/KEY are set as env vars
+    // configuration for the bintray plugin for uploading maven artifacts to bintray
+    // see https://github.com/bintray/gradle-bintray-plugin
+    // run task bintrayUpload to push the files, assuming BINTRAY_USER/KEY are set as env vars
     bintray {
-        //Must never write these to log or system out
-        user = System.getenv('BINTRAY_USER') //set in Travis UI
-        key = System.getenv('BINTRAY_KEY') //set in Travis UI
+        // Must never write these to log or system out
+        user = System.getenv('BINTRAY_USER') // set in Travis UI
+        key = System.getenv('BINTRAY_KEY') // set in Travis UI
 
-        //The maven plugin publications to push to bintray
+        // The maven plugin publications to push to bintray
         publications = ['mavenJava']
 
-        //immediately make the artefacts public
+        // immediately make the artifacts public
         publish = true
 
         pkg {
@@ -482,11 +481,11 @@ configure(projectsToBePublished) {
             version {
                 name = "${versions.stroom}"
                 desc = "stroom-${versions.stroom}"
-                released  = new Date()
+                released = new Date()
                 vcsTag = "${versions.stroom}"
                 gpg {
-                    //Bintray will self-sign the files
-                    sign = true //Determines whether to GPG sign the files. The default is false
+                    // Bintray will self-sign the files
+                    sign = true // Determines whether to GPG sign the files. The default is false
                 }
             }
         }
@@ -495,8 +494,7 @@ configure(projectsToBePublished) {
 
 //configuration specific to projects that expose their test jars for other projects to use
 configure(projectsWithSharedTestJars) {
-
-    println "Configuring ${project.path} to expose its test jars"
+    println "Configuring ${project.name} to expose its test jars"
 
     configurations {
         testArtifacts
