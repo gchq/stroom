@@ -2,6 +2,11 @@ package stroom.meta.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.dashboard.expression.v1.Val;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DataSource;
+import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.FindMetaCriteria;
@@ -16,9 +21,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TableSettings;
+import stroom.search.api.Searchable;
 import stroom.security.api.Security;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -38,11 +41,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Singleton
-public class MetaServiceImpl implements MetaService {
+public class MetaServiceImpl implements MetaService, Searchable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaServiceImpl.class);
+
+    private static final DocRef META_STORE_PSEUDO_DOC_REF = new DocRef("Searchable", "Meta Store", "Meta Store");
 
     private final MetaDao metaDao;
     private final MetaFeedDao metaFeedDao;
@@ -178,19 +184,21 @@ public class MetaServiceImpl implements MetaService {
         return updateStatus(id, Status.DELETED, null, now, DocumentPermissionNames.DELETE);
     }
 
-    public SearchResponse search(final SearchRequest request) {
-        // Find out what fields we need.
-        request.getResultRequests().forEach(req -> {
-            if (req.getMappings().size() > 0) {
-                final TableSettings tableSettings = req.getMappings().get(0);
-                tableSettings.getFields().forEach(field -> {
-                    field.getExpression()
-                });
-            }
-        });
+    @Override
+    public DocRef getDocRef() {
+        return META_STORE_PSEUDO_DOC_REF;
+    }
 
+    @Override
+    public DataSource getDataSource() {
+        return new DataSource(MetaFields.getAllFields());
+    }
 
-
+    @Override
+    public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
+        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.READ);
+        criteria.setExpression(expression);
+        metaDao.search(criteria, fields, consumer);
     }
 
     @Override

@@ -1,10 +1,12 @@
 package stroom.meta.impl;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaSecurityFilter;
 import stroom.meta.shared.MetaService;
+import stroom.search.api.Searchable;
 
 public class MetaModule extends AbstractModule {
     @Override
@@ -15,6 +17,9 @@ public class MetaModule extends AbstractModule {
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
                 .bind(Meta.class, MetaObjectInfoProvider.class);
+
+        final Multibinder<Searchable> multibinder = Multibinder.newSetBinder(binder(), Searchable.class);
+        multibinder.addBinding().to(MetaServiceImpl.class);
     }
 
     @Override

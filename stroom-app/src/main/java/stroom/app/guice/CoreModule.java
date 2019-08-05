@@ -78,6 +78,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.processor.impl.ProcessorModule());
         install(new stroom.processor.impl.StreamTaskLifecycleModule());
         install(new stroom.receive.rules.impl.ReceiveDataRulesetModule());
+        install(new stroom.search.db.SearchableModule());
         install(new stroom.search.impl.SearchElementModule());
         install(new stroom.search.impl.SearchModule());
         install(new stroom.search.impl.shard.ShardModule());

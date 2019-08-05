@@ -8,6 +8,7 @@ dependencies {
 //    compile project(':stroom-core-shared')
     compile project(':stroom-meta:stroom-meta-api')
     compile project(':stroom-data:stroom-data-store-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
 //    compile project(':stroom-dictionary:stroom-dictionary-api')
 //    compile project(':stroom-docstore:stroom-docstore-api')
 //    compile project(':stroom-explorer:stroom-explorer-api')

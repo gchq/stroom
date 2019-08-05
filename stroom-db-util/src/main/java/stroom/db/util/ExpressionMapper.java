@@ -28,6 +28,7 @@ import static org.jooq.impl.DSL.not;
 import static org.jooq.impl.DSL.or;
 
 public class ExpressionMapper implements Function<ExpressionItem, Condition> {
+    private final Map<AbstractField, Field<?>> fieldMap = new HashMap<>();
     private final Map<String, TermHandler<?>> termHandlers = new HashMap<>();
     private final Set<String> ignoredFields = new HashSet<>();
     private final WordListProvider wordListProvider;
@@ -40,15 +41,25 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
     }
 
     public <T> void map(final AbstractField dataSourceField, final Field<T> field, final TypeConverter<T> converter) {
+        fieldMap.put(dataSourceField, field);
         termHandlers.put(dataSourceField.getName(), new TermHandler<>(dataSourceField, field, converter, wordListProvider, collectionService));
     }
 
     public <T> void map(final AbstractField dataSourceField, final Field<T> field, final TypeConverter<T> converter, final boolean useName) {
+        fieldMap.put(dataSourceField, field);
         termHandlers.put(dataSourceField.getName(), new TermHandler<>(dataSourceField, field, converter, wordListProvider, collectionService, useName));
     }
 
     public void ignoreField(final AbstractField dataSourceField) {
         ignoredFields.add(dataSourceField.getName());
+    }
+
+    public Field<?>[] getFields(final AbstractField[] fields) {
+        final Field<?>[] arr = new Field<?>[fields.length];
+        for (int i = 0; i < fields.length; i++) {
+            arr[i] = fieldMap.get(fields[i]);
+        }
+        return arr;
     }
 
     @Override
@@ -183,6 +194,8 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
                 case IS_DOC_REF: {
                     if (term.getDocRef() == null || term.getDocRef().getUuid() == null) {
                         return field.isNull();
+                    } else if (useName) {
+                        return field.equal(converter.apply(term.getDocRef().getName()));
                     } else {
                         return field.equal(converter.apply(term.getDocRef().getUuid()));
                     }

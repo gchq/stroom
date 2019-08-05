@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.index.api;
+package stroom.search.api;
 
 import java.io.Serializable;
 import java.util.ArrayList;

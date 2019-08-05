@@ -1,5 +1,8 @@
 package stroom.meta.impl;
 
+import stroom.dashboard.expression.v1.Val;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
@@ -8,6 +11,7 @@ import stroom.util.shared.Clearable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public interface MetaDao extends Clearable {
     Long getMaxId();
@@ -15,6 +19,8 @@ public interface MetaDao extends Clearable {
     Meta create(MetaProperties metaProperties);
 
     List<Meta> find(FindMetaCriteria criteria);
+
+    void search(ExpressionCriteria criteria, AbstractField[] fields, Consumer<Val[]> consumer);
 
     Optional<Long> getMaxId(FindMetaCriteria criteria);
 

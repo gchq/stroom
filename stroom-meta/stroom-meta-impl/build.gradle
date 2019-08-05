@@ -8,16 +8,18 @@ dependencies {
     compile project(':stroom-meta:stroom-meta-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
+    compile project(':stroom-search:stroom-search-api')
     compile project(':stroom-security:stroom-security-api')
-//    compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
-    compile project(':stroom-util-shared')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-job:stroom-job-api')
+    compile project(':stroom-util-shared')
 
     compile libs.guice4
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.slf4j_api
+    compile libs.stroomExpression
+    compile libs.stroomQueryCommon
     compile libs.swagger_annotations
     compile libs.ws_rs_api
 

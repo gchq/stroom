@@ -1,22 +1,33 @@
 package stroom.meta.impl.db;
 
 import org.jooq.Condition;
+import org.jooq.Cursor;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
 import stroom.collection.api.CollectionService;
+import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValInteger;
+import stroom.dashboard.expression.v1.ValLong;
+import stroom.dashboard.expression.v1.ValNull;
+import stroom.dashboard.expression.v1.ValString;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
+import stroom.db.util.ValueMapper;
+import stroom.db.util.ValueMapper.ValHandler;
 import stroom.dictionary.api.WordListProvider;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.impl.MetaDao;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
 import stroom.meta.impl.db.jooq.tables.MetaVal;
+import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -30,9 +41,12 @@ import stroom.util.shared.Sort;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static org.jooq.impl.DSL.max;
 import static org.jooq.impl.DSL.selectDistinct;
@@ -71,6 +85,7 @@ class MetaDaoImpl implements MetaDao {
 
     private final ExpressionMapper expressionMapper;
     private final MetaExpressionMapper metaExpressionMapper;
+    private final ValueMapper valueMapper;
 
     @Inject
     MetaDaoImpl(final ConnectionProvider connectionProvider,
@@ -123,6 +138,23 @@ class MetaDaoImpl implements MetaDao {
         metaExpressionMapper.map(MetaFields.DURATION);
         metaExpressionMapper.map(MetaFields.FILE_SIZE);
         metaExpressionMapper.map(MetaFields.RAW_SIZE);
+
+        valueMapper = new ValueMapper();
+        valueMapper.map(MetaFields.ID, meta.ID, v -> ValLong.create((long) v));
+        valueMapper.map(MetaFields.FEED, metaFeed.NAME, v -> ValString.create((String) v));
+        valueMapper.map(MetaFields.FEED_NAME, metaFeed.NAME, v -> ValString.create((String) v));
+        valueMapper.map(MetaFields.FEED_ID, meta.FEED_ID, v -> ValInteger.create((int) v));
+        valueMapper.map(MetaFields.TYPE_NAME, metaType.NAME, v -> ValString.create((String) v));
+        valueMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, v -> ValString.create((String) v));
+        valueMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, v -> ValLong.create((long) v));
+        valueMapper.map(MetaFields.TASK_ID, meta.TASK_ID, v -> ValLong.create((long) v));
+        valueMapper.map(MetaFields.PROCESSOR_ID, meta.PROCESSOR_ID, v -> ValInteger.create((int) v));
+        valueMapper.map(MetaFields.STATUS, meta.STATUS, v -> Optional.ofNullable(MetaStatusId.getStatus((byte) v))
+                .map(w -> (Val) ValString.create(w.getDisplayValue()))
+                .orElse(ValNull.INSTANCE));
+        valueMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, v -> ValLong.create((long) v));
+        valueMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, v -> ValLong.create((long) v));
+        valueMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, v -> ValLong.create((long) v));
     }
 
     @Override
@@ -259,6 +291,67 @@ class MetaDaoImpl implements MetaDao {
     }
 
     @Override
+    public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
+        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.FEED) +
+                ExpressionUtil.termCount(criteria.getExpression(), MetaFields.FEED_NAME);
+        final boolean feedValueExists = Arrays.stream(fields).anyMatch(Predicate.isEqual(MetaFields.FEED).or(Predicate.isEqual(MetaFields.FEED_NAME)));
+        final int typeTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.TYPE_NAME);
+        final boolean typeValueExists = Arrays.stream(fields).anyMatch(Predicate.isEqual(MetaFields.TYPE_NAME));
+        final int processorTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.PIPELINE);
+        final boolean processorValueExists = Arrays.stream(fields).anyMatch(Predicate.isEqual(MetaFields.PIPELINE));
+
+        final PageRequest pageRequest = criteria.getPageRequest();
+        final Condition condition = expressionMapper.apply(criteria.getExpression());
+        final OrderField[] orderFields = createOrderFields(criteria);
+        final Field<?>[] dbFields = valueMapper.getFields(fields);
+        final ValHandler[] valueHandlers = valueMapper.getHandlers(fields);
+
+        JooqUtil.context(connectionProvider, context -> {
+            int offset = 0;
+            int numberOfRows = 1000000;
+
+            if (pageRequest != null) {
+                offset = pageRequest.getOffset().intValue();
+                numberOfRows = pageRequest.getLength();
+            }
+
+            var select = context.select(dbFields).from(meta);
+            if (feedTermCount > 0 || feedValueExists) {
+                select = select.join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID));
+            }
+            if (typeTermCount > 0 || typeValueExists) {
+                select = select.join(metaType).on(meta.TYPE_ID.eq(metaType.ID));
+            }
+            if (processorTermCount > 0 || processorValueExists) {
+                select = select.leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
+            }
+
+            try (final Cursor<?> cursor = select
+                    .where(condition)
+                    .orderBy(orderFields)
+                    .limit(offset, numberOfRows)
+                    .fetchLazy()) {
+
+                while (cursor.hasNext()) {
+                    final Record r = cursor.fetchNext();
+                    final Val[] arr = new Val[dbFields.length];
+                    for (int i = 0; i < dbFields.length; i++) {
+                        Val val = ValNull.INSTANCE;
+                        final Object o = r.get(i);
+                        if (o != null) {
+                            val = valueHandlers[i].apply(o);
+                        }
+                        arr[i] = val;
+                    }
+
+                    r.intoArray();
+                    consumer.accept(arr);
+                }
+            }
+        });
+    }
+
+    @Override
     public int delete(final FindMetaCriteria criteria) {
         final Condition condition = createCondition(criteria);
         return JooqUtil.contextResult(connectionProvider, context -> context
@@ -334,7 +427,7 @@ class MetaDaoImpl implements MetaDao {
         return c1.and(c2);
     }
 
-    private OrderField[] createOrderFields(final FindMetaCriteria criteria) {
+    private OrderField[] createOrderFields(final ExpressionCriteria criteria) {
         if (criteria.getSortList() == null || criteria.getSortList().size() == 0) {
             return new OrderField[]{meta.ID};
         }

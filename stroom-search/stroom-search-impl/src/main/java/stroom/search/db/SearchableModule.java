@@ -14,30 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.search.impl;
+package stroom.search.db;
 
 import com.google.inject.AbstractModule;
-import stroom.search.api.EventSearch;
-import stroom.task.api.TaskHandlerBinder;
+import stroom.explorer.api.ExplorerDecorator;
+import stroom.search.api.Searchable;
+import stroom.search.api.SearchableProvider;
 import stroom.util.RestResource;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.Clearable;
 
-public class SearchModule extends AbstractModule {
+public class SearchableModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new SearchElementModule());
-
-        bind(EventSearch.class).to(EventSearchImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(LuceneSearchResponseCreatorManager.class);
-
+        bind(SearchableProvider.class).to(SearchableProviderImpl.class);
+        bind(ExplorerDecorator.class).to(SearchableProviderImpl.class);
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(StroomIndexQueryResourceImpl.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(AsyncSearchTask.class, AsyncSearchTaskHandler.class)
-                .bind(ClusterSearchTask.class, ClusterSearchTaskHandler.class)
-                .bind(EventSearchTask.class, EventSearchTaskHandler.class);
+                .addBinding(SearchableResource.class);
     }
 }

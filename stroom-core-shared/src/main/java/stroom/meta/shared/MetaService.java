@@ -46,13 +46,13 @@ public interface MetaService {
 //     * @return The updated meta data.
 //     */
 //    Meta updateStatus(Meta meta, Status newStatus);
-    
+
     /**
      * Change the status of the specified meta data if the current status is as specified.
      *
-     * @param data   The meta data to change the status for.
+     * @param data          The meta data to change the status for.
      * @param currentStatus The current status.
-     * @param newStatus The new status.
+     * @param newStatus     The new status.
      * @return The updated meta data.
      */
     Meta updateStatus(Meta meta, Status currentStatus, Status newStatus);
