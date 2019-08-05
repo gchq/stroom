@@ -7,7 +7,7 @@ buildscript {
     }
     dependencies {
         classpath 'ca.cutterslade.gradle:gradle-dependency-analyze:1.2.0'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
     }
 }
 
@@ -397,7 +397,7 @@ subprojects {
     tasks.integrationTest.mustRunAfter test
 }
 
-//configures only those projects in publishedProjectsPaths
+// configures only those projects in publishedProjectsPaths
 configure(projectsToBePublished) {
     println "Configuring ${project.name} for publishing"
 
@@ -408,9 +408,28 @@ configure(projectsToBePublished) {
     group = 'stroom'
     version = versions.stroom
 
+    def pomConfig = {
+        licenses {
+            license {
+                name "The Apache Software License, Version 2.0"
+                url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                distribution "repo"
+            }
+        }
+        scm {
+            url "https://github.com/stroom/stroom-query"
+        }
+    }
+
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = 'sources'
         from sourceSets.main.allSource
+    }
+
+    javadoc {
+        // this switch is needed in java10
+        options.addBooleanOption('html5', true)
+        options.addStringOption('Xdoclint:none', '-quiet')
     }
 
     task javadocJar(type: Jar, dependsOn: javadoc) {
@@ -423,16 +442,14 @@ configure(projectsToBePublished) {
         archives javadocJar
     }
 
-    def pomConfig = {
-        licenses {
-            license {
-                name "The Apache Software License, Version 2.0"
-                url "http://www.apache.org/licenses/LICENSE-2.0.txt"
-                distribution "repo"
+    afterEvaluate {
+        jar {
+            inputs.property("moduleName", moduleName)
+            manifest {
+                attributes(
+                        "Automatic-Module-Name": moduleName,
+                )
             }
-        }
-        scm {
-           url "https://github.com/stroom/stroom"
         }
     }
 
