@@ -2,18 +2,29 @@ package stroom.processor.impl.db;
 
 import org.jooq.BatchBindStep;
 import org.jooq.Condition;
+import org.jooq.Cursor;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.Result;
 import org.jooq.impl.DSL;
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValInteger;
+import stroom.dashboard.expression.v1.ValLong;
+import stroom.dashboard.expression.v1.ValNull;
+import stroom.dashboard.expression.v1.ValString;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.db.util.ValueMapper;
+import stroom.db.util.ValueMapper.Mapper;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
@@ -38,10 +49,13 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.PageRequest;
 
 import javax.inject.Inject;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,6 +66,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
@@ -132,6 +147,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private final GenericDao<ProcessorTaskRecord, ProcessorTask, Long> genericDao;
     private final ExpressionMapper expressionMapper;
+    private final ValueMapper valueMapper;
 
     @Inject
     ProcessorTaskDaoImpl(final NodeInfo nodeInfo,
@@ -186,6 +202,16 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 //        expressionMapper.map(ProcessorTaskDataSource.FEED_UUID, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
         expressionMapper.map(ProcessorTaskDataSource.STATUS, PROCESSOR_TASK.STATUS, value -> TaskStatus.valueOf(value.toUpperCase()).getPrimitiveValue());
         expressionMapper.map(ProcessorTaskDataSource.TASK_ID, PROCESSOR_TASK.ID, Long::valueOf);
+
+        valueMapper = new ValueMapper();
+        valueMapper.map(ProcessorTaskDataSource.CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskDataSource.CREATE_TIME_MS, PROCESSOR_TASK.CREATE_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskDataSource.META_ID, PROCESSOR_TASK.META_ID, ValLong::create);
+        valueMapper.map(ProcessorTaskDataSource.NODE_NAME, PROCESSOR_NODE.NAME, ValString::create);
+        valueMapper.map(ProcessorTaskDataSource.PIPELINE_UUID, PROCESSOR.PIPELINE_UUID, ValString::create);
+        valueMapper.map(ProcessorTaskDataSource.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, ValInteger::create);
+        valueMapper.map(ProcessorTaskDataSource.STATUS, PROCESSOR_TASK.STATUS, v -> ValString.create(TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(v).getDisplayValue()));
+        valueMapper.map(ProcessorTaskDataSource.TASK_ID, PROCESSOR_TASK.ID, ValLong::create);
     }
 
     /**
@@ -891,7 +917,65 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return BaseResultList.createUnboundedList(list);
     }
 
-//    private Collection<Condition> convertCriteria(final FindProcessorTaskCriteria criteria) {
+    @Override
+    public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
+        final List<AbstractField> fieldList = Arrays.asList(fields);
+        final int nodeTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskDataSource.NODE_NAME);
+        final boolean nodeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskDataSource.NODE_NAME));
+        final int pipelineTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskDataSource.PIPELINE_UUID);
+        final boolean pipelineValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskDataSource.PIPELINE_UUID));
+
+        final PageRequest pageRequest = criteria.getPageRequest();
+        final Condition condition = expressionMapper.apply(criteria.getExpression());
+        final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getFields(fieldList));
+        final Mapper[] mappers = valueMapper.getMappers(fields);
+
+        JooqUtil.context(connectionProvider, context -> {
+            int offset = 0;
+            int numberOfRows = 1000000;
+
+            if (pageRequest != null) {
+                offset = pageRequest.getOffset().intValue();
+                numberOfRows = pageRequest.getLength();
+            }
+
+            var select = context.select(dbFields).from(PROCESSOR_TASK);
+            if (nodeTermCount > 0 || nodeValueExists) {
+                select = select.leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID));
+            }
+            if (pipelineTermCount > 0 || pipelineValueExists) {
+                select = select.join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID));
+                select = select.join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID));
+            }
+
+            try (final Cursor<?> cursor = select
+                    .where(condition)
+                    .orderBy(orderFields)
+                    .limit(offset, numberOfRows)
+                    .fetchLazy()) {
+
+                while (cursor.hasNext()) {
+                    final Result<?> result = cursor.fetchNext(1000);
+
+                    result.forEach(r -> {
+                        final Val[] arr = new Val[fields.length];
+                        for (int i = 0; i < fields.length; i++) {
+                            Val val = ValNull.INSTANCE;
+                            final Mapper<?> mapper = mappers[i];
+                            if (mapper != null) {
+                                val = mapper.map(r);
+                            }
+                            arr[i] = val;
+                        }
+                        consumer.accept(arr);
+                    });
+                }
+            }
+        });
+    }
+
+    //    private Collection<Condition> convertCriteria(final FindProcessorTaskCriteria criteria) {
 //        return JooqUtil.conditions(
 //                JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, CriteriaSet.convert(criteria.getTaskStatusSet(), TaskStatus::getPrimitiveValue)),
 //                JooqUtil.getSetCondition(PROCESSOR_TASK.ID, criteria.getProcessorTaskIdSet()),

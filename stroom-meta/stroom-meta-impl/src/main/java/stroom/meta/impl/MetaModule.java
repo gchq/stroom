@@ -1,12 +1,12 @@
 package stroom.meta.impl;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaSecurityFilter;
 import stroom.meta.shared.MetaService;
 import stroom.search.api.Searchable;
+import stroom.util.guice.GuiceUtil;
 
 public class MetaModule extends AbstractModule {
     @Override
@@ -18,8 +18,8 @@ public class MetaModule extends AbstractModule {
         ObjectInfoProviderBinder.create(binder())
                 .bind(Meta.class, MetaObjectInfoProvider.class);
 
-        final Multibinder<Searchable> multibinder = Multibinder.newSetBinder(binder(), Searchable.class);
-        multibinder.addBinding().to(MetaServiceImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+                .addBinding(MetaServiceImpl.class);
     }
 
     @Override

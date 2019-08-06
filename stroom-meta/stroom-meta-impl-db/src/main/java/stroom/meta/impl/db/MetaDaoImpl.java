@@ -147,21 +147,21 @@ class MetaDaoImpl implements MetaDao {
         metaExpressionMapper.map(MetaFields.RAW_SIZE);
 
         valueMapper = new ValueMapper();
-        valueMapper.map(MetaFields.ID, meta.ID, v -> ValLong.create((long) v));
-        valueMapper.map(MetaFields.FEED, metaFeed.NAME, v -> ValString.create((String) v));
-        valueMapper.map(MetaFields.FEED_NAME, metaFeed.NAME, v -> ValString.create((String) v));
-        valueMapper.map(MetaFields.FEED_ID, meta.FEED_ID, v -> ValInteger.create((int) v));
-        valueMapper.map(MetaFields.TYPE_NAME, metaType.NAME, v -> ValString.create((String) v));
-        valueMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, v -> ValString.create((String) v));
-        valueMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, v -> ValLong.create((long) v));
-        valueMapper.map(MetaFields.TASK_ID, meta.TASK_ID, v -> ValLong.create((long) v));
-        valueMapper.map(MetaFields.PROCESSOR_ID, meta.PROCESSOR_ID, v -> ValInteger.create((int) v));
-        valueMapper.map(MetaFields.STATUS, meta.STATUS, v -> Optional.ofNullable(MetaStatusId.getStatus((byte) v))
+        valueMapper.map(MetaFields.ID, meta.ID, ValLong::create);
+        valueMapper.map(MetaFields.FEED, metaFeed.NAME, ValString::create);
+        valueMapper.map(MetaFields.FEED_NAME, metaFeed.NAME, ValString::create);
+        valueMapper.map(MetaFields.FEED_ID, meta.FEED_ID, ValInteger::create);
+        valueMapper.map(MetaFields.TYPE_NAME, metaType.NAME, ValString::create);
+        valueMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, ValString::create);
+        valueMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, ValLong::create);
+        valueMapper.map(MetaFields.TASK_ID, meta.TASK_ID, ValLong::create);
+        valueMapper.map(MetaFields.PROCESSOR_ID, meta.PROCESSOR_ID, ValInteger::create);
+        valueMapper.map(MetaFields.STATUS, meta.STATUS, v -> Optional.ofNullable(MetaStatusId.getStatus(v))
                 .map(w -> (Val) ValString.create(w.getDisplayValue()))
                 .orElse(ValNull.INSTANCE));
-        valueMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, v -> ValLong.create((long) v));
-        valueMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, v -> ValLong.create((long) v));
-        valueMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, v -> ValLong.create((long) v));
+        valueMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, ValLong::create);
+        valueMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, ValLong::create);
+        valueMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, ValLong::create);
     }
 
     @Override
@@ -302,9 +302,9 @@ class MetaDaoImpl implements MetaDao {
         final List<AbstractField> fieldList = Arrays.asList(fields);
         final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), Set.of(MetaFields.FEED, MetaFields.FEED_NAME));
         final boolean feedValueExists = fieldList.stream().anyMatch(Set.of(MetaFields.FEED, MetaFields.FEED_NAME)::contains);
-        final int typeTermCount = ExpressionUtil.termCount(criteria.getExpression(), Set.of(MetaFields.TYPE_NAME));
+        final int typeTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.TYPE_NAME);
         final boolean typeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.TYPE_NAME));
-        final int processorTermCount = ExpressionUtil.termCount(criteria.getExpression(), Set.of(MetaFields.PIPELINE));
+        final int processorTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.PIPELINE);
         final boolean processorValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.PIPELINE));
 //        final int extendedTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.getExtendedFields());
         final boolean extendedValuesExist = fieldList.stream().anyMatch(MetaFields.getExtendedFields()::contains);
@@ -385,12 +385,10 @@ class MetaDaoImpl implements MetaDao {
 
                         for (int i = 0; i < fields.length; i++) {
                             Val val = ValNull.INSTANCE;
-                            final Mapper mapper = mappers[i];
+                            final Mapper<?> mapper = mappers[i];
                             if (mapper != null) {
-                                final Object o = r.get(mapper.getField());
-                                if (o != null) {
-                                    val = mapper.getHandler().apply(o);
-                                }
+                                val = mapper.map(r);
+
                             } else if (extendedValues != null && extendedFieldKeys[i] != -1) {
                                 final Long o = extendedValues.get(extendedFieldKeys[i]);
                                 if (o != null) {

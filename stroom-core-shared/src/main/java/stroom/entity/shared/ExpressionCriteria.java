@@ -39,12 +39,6 @@ public class ExpressionCriteria extends BaseCriteria {
         this.expression = expression;
     }
 
-//    @Override
-//    public boolean isConstrained() {
-//        return ExpressionUtil.termCount(expression) > 0;
-//    }
-
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

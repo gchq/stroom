@@ -1,5 +1,7 @@
 package stroom.processor.impl;
 
+import stroom.dashboard.expression.v1.Val;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
 import stroom.processor.api.InclusiveRanges;
@@ -51,4 +53,6 @@ public interface ProcessorTaskDao {
     BaseResultList<ProcessorTask> find(final ExpressionCriteria criteria);
 
     BaseResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria);
+
+    void search(ExpressionCriteria criteria, AbstractField[] fields, Consumer<Val[]> consumer);
 }
