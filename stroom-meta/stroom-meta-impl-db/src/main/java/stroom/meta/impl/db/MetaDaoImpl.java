@@ -2,10 +2,12 @@ package stroom.meta.impl.db;
 
 import org.jooq.Condition;
 import org.jooq.Cursor;
+import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
+import org.jooq.Result;
 import org.jooq.SelectConditionStep;
 import stroom.collection.api.CollectionService;
 import stroom.dashboard.expression.v1.Val;
@@ -18,11 +20,10 @@ import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.db.util.ValueMapper;
-import stroom.db.util.ValueMapper.ValHandler;
+import stroom.db.util.ValueMapper.Mapper;
 import stroom.dictionary.api.WordListProvider;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.impl.MetaDao;
-import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
@@ -41,9 +42,13 @@ import stroom.util.shared.Sort;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -82,6 +87,7 @@ class MetaDaoImpl implements MetaDao {
     private final MetaFeedDaoImpl feedDao;
     private final MetaTypeDaoImpl metaTypeDao;
     private final MetaProcessorDaoImpl metaProcessorDao;
+    private final MetaKeyDaoImpl metaKeyDao;
 
     private final ExpressionMapper expressionMapper;
     private final MetaExpressionMapper metaExpressionMapper;
@@ -92,7 +98,7 @@ class MetaDaoImpl implements MetaDao {
                 final MetaFeedDaoImpl feedDao,
                 final MetaTypeDaoImpl metaTypeDao,
                 final MetaProcessorDaoImpl metaProcessorDao,
-                final MetaKeyDao metaKeyDao,
+                final MetaKeyDaoImpl metaKeyDao,
                 final ExpressionMapperFactory expressionMapperFactory,
                 final WordListProvider wordListProvider,
                 final CollectionService collectionService) {
@@ -100,6 +106,7 @@ class MetaDaoImpl implements MetaDao {
         this.feedDao = feedDao;
         this.metaTypeDao = metaTypeDao;
         this.metaProcessorDao = metaProcessorDao;
+        this.metaKeyDao = metaKeyDao;
 
         // Standard fields.
         expressionMapper = expressionMapperFactory.create();
@@ -292,19 +299,46 @@ class MetaDaoImpl implements MetaDao {
 
     @Override
     public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
-        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.FEED) +
-                ExpressionUtil.termCount(criteria.getExpression(), MetaFields.FEED_NAME);
-        final boolean feedValueExists = Arrays.stream(fields).anyMatch(Predicate.isEqual(MetaFields.FEED).or(Predicate.isEqual(MetaFields.FEED_NAME)));
-        final int typeTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.TYPE_NAME);
-        final boolean typeValueExists = Arrays.stream(fields).anyMatch(Predicate.isEqual(MetaFields.TYPE_NAME));
-        final int processorTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.PIPELINE);
-        final boolean processorValueExists = Arrays.stream(fields).anyMatch(Predicate.isEqual(MetaFields.PIPELINE));
+        final List<AbstractField> fieldList = Arrays.asList(fields);
+        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), Set.of(MetaFields.FEED, MetaFields.FEED_NAME));
+        final boolean feedValueExists = fieldList.stream().anyMatch(Set.of(MetaFields.FEED, MetaFields.FEED_NAME)::contains);
+        final int typeTermCount = ExpressionUtil.termCount(criteria.getExpression(), Set.of(MetaFields.TYPE_NAME));
+        final boolean typeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.TYPE_NAME));
+        final int processorTermCount = ExpressionUtil.termCount(criteria.getExpression(), Set.of(MetaFields.PIPELINE));
+        final boolean processorValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.PIPELINE));
+//        final int extendedTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.getExtendedFields());
+        final boolean extendedValuesExist = fieldList.stream().anyMatch(MetaFields.getExtendedFields()::contains);
 
         final PageRequest pageRequest = criteria.getPageRequest();
-        final Condition condition = expressionMapper.apply(criteria.getExpression());
+        final Condition condition = createCondition(criteria.getExpression(), null);
         final OrderField[] orderFields = createOrderFields(criteria);
-        final Field<?>[] dbFields = valueMapper.getFields(fields);
-        final ValHandler[] valueHandlers = valueMapper.getHandlers(fields);
+        final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getFields(fieldList));
+        final Mapper[] mappers = valueMapper.getMappers(fields);
+
+        // Deal with extended fields.
+        final int[] extendedFieldKeys = new int[fields.length];
+        final List<Integer> extendedFieldKeyIdList = new ArrayList<>();
+        final Map<Long, Map<Integer, Long>> extendedFieldValueMap = new HashMap<>();
+        for (int i = 0; i < fields.length; i++) {
+            final int index = i;
+            final AbstractField field = fields[i];
+            extendedFieldKeys[i] = -1;
+
+            if (MetaFields.getExtendedFields().contains(field)) {
+                final Optional<Integer> keyId = metaKeyDao.getIdForName(field.getName());
+                keyId.ifPresent(id -> {
+                    extendedFieldKeys[index] = id;
+                    extendedFieldKeyIdList.add(id);
+                });
+            }
+        }
+
+        // Need to modify requested fields to include id if we are going to fetch extended attributes.
+        if (extendedValuesExist) {
+            if (dbFields.stream().noneMatch(meta.ID::equals)) {
+                dbFields.add(meta.ID);
+            }
+        }
 
         JooqUtil.context(connectionProvider, context -> {
             int offset = 0;
@@ -333,22 +367,65 @@ class MetaDaoImpl implements MetaDao {
                     .fetchLazy()) {
 
                 while (cursor.hasNext()) {
-                    final Record r = cursor.fetchNext();
-                    final Val[] arr = new Val[dbFields.length];
-                    for (int i = 0; i < dbFields.length; i++) {
-                        Val val = ValNull.INSTANCE;
-                        final Object o = r.get(i);
-                        if (o != null) {
-                            val = valueHandlers[i].apply(o);
-                        }
-                        arr[i] = val;
+                    final Result<?> result = cursor.fetchNext(1000);
+
+                    // If we require some extended values then perform another query to get them.
+                    if (extendedValuesExist) {
+                        final List<Long> idList = result.getValues(meta.ID);
+                        fillExtendedFieldValueMap(context, idList, extendedFieldKeyIdList, extendedFieldValueMap);
                     }
 
-                    r.intoArray();
-                    consumer.accept(arr);
+                    result.forEach(r -> {
+                        final Val[] arr = new Val[fields.length];
+
+                        Map<Integer, Long> extendedValues = null;
+                        if (extendedValuesExist) {
+                            extendedValues = extendedFieldValueMap.get(r.get(meta.ID));
+                        }
+
+                        for (int i = 0; i < fields.length; i++) {
+                            Val val = ValNull.INSTANCE;
+                            final Mapper mapper = mappers[i];
+                            if (mapper != null) {
+                                final Object o = r.get(mapper.getField());
+                                if (o != null) {
+                                    val = mapper.getHandler().apply(o);
+                                }
+                            } else if (extendedValues != null && extendedFieldKeys[i] != -1) {
+                                final Long o = extendedValues.get(extendedFieldKeys[i]);
+                                if (o != null) {
+                                    val = ValLong.create(o);
+                                }
+                            }
+                            arr[i] = val;
+                        }
+                        consumer.accept(arr);
+                    });
                 }
             }
         });
+    }
+
+    private void fillExtendedFieldValueMap(final DSLContext context, final List<Long> idList, final List<Integer> extendedFieldKeyIdList, final Map<Long, Map<Integer, Long>> extendedFieldValueMap) {
+        extendedFieldValueMap.clear();
+        context
+                .select(
+                        META_VAL.META_ID,
+                        META_VAL.META_KEY_ID,
+                        META_VAL.VAL
+                )
+                .from(META_VAL)
+                .where(META_VAL.META_ID.in(idList))
+                .and(META_VAL.META_KEY_ID.in(extendedFieldKeyIdList))
+                .fetch()
+                .forEach(r -> {
+                    final long dataId = r.get(META_VAL.META_ID);
+                    final int keyId = r.get(META_VAL.META_KEY_ID);
+                    final long value = r.get(META_VAL.VAL);
+                    extendedFieldValueMap
+                            .computeIfAbsent(dataId, k -> new HashMap<>())
+                            .put(keyId, value);
+                });
     }
 
     @Override
@@ -391,17 +468,11 @@ class MetaDaoImpl implements MetaDao {
     }
 
     private Condition createCondition(final FindMetaCriteria criteria) {
-        Condition condition;
+        return createCondition(criteria.getExpression(), criteria.getSelectedIdSet());
+    }
 
-        IdSet idSet = null;
-        ExpressionOperator expression = null;
-
-        if (criteria != null) {
-            idSet = criteria.getSelectedIdSet();
-            expression = criteria.getExpression();
-        }
-
-        condition = expressionMapper.apply(expression);
+    private Condition createCondition(final ExpressionOperator expression, final IdSet idSet) {
+        Condition condition = expressionMapper.apply(expression);
 
         // If we aren't being asked to match everything then add constraints to the expression.
         if (idSet != null && (idSet.getMatchAll() == null || !idSet.getMatchAll())) {
@@ -433,13 +504,15 @@ class MetaDaoImpl implements MetaDao {
         }
 
         return criteria.getSortList().stream().map(sort -> {
-            Field field = meta.ID;
+            Field field;
             if (MetaFields.FIELD_ID.equals(sort.getField())) {
                 field = meta.ID;
             } else if (MetaFields.FIELD_FEED.equals(sort.getField())) {
                 field = metaFeed.NAME;
             } else if (MetaFields.FIELD_TYPE.equals(sort.getField())) {
                 field = metaType.NAME;
+            } else {
+                field = meta.ID;
             }
 
             OrderField orderField = field;
