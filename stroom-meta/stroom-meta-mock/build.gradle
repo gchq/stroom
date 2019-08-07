@@ -3,6 +3,7 @@ ext.moduleName = 'stroom.meta.mock'
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-search:stroom-expression-matcher')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
 

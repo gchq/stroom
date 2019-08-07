@@ -8,7 +8,7 @@ dependencies {
     compile project(':stroom-meta:stroom-meta-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
-    compile project(':stroom-search:stroom-search-api')
+    compile project(':stroom-search:stroom-searchable-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-job:stroom-job-api')

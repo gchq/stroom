@@ -1,4 +1,4 @@
-package stroom.search.db;
+package stroom.searchable.impl;
 
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
@@ -8,9 +8,8 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
-import stroom.search.api.Searchable;
-import stroom.search.api.SearchableProvider;
-import stroom.search.impl.SearchConfig;
+import stroom.searchable.api.Searchable;
+import stroom.searchable.api.SearchableProvider;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.ui.config.shared.UiConfig;
@@ -28,19 +27,19 @@ class SearchableStoreFactory implements StoreFactory {
 
     private final TaskContext taskContext;
     private final ExecutorProvider executorProvider;
-    private final SearchConfig searchConfig;
+    private final SearchableConfig config;
     private final UiConfig clientConfig;
     private final SearchableProvider searchableProvider;
 
     @Inject
     SearchableStoreFactory(final TaskContext taskContext,
                            final ExecutorProvider executorProvider,
-                           final SearchConfig searchConfig,
+                           final SearchableConfig config,
                            final UiConfig clientConfig,
                            final SearchableProvider searchableProvider) {
         this.taskContext = taskContext;
         this.executorProvider = executorProvider;
-        this.searchConfig = searchConfig;
+        this.config = config;
         this.clientConfig = clientConfig;
         this.searchableProvider = searchableProvider;
     }
@@ -91,7 +90,7 @@ class SearchableStoreFactory implements StoreFactory {
     }
 
     private Sizes getStoreSizes() {
-        final String value = searchConfig.getStoreSize();
+        final String value = config.getStoreSize();
         return extractValues(value);
     }
 

@@ -8,6 +8,7 @@ dependencies {
     compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-meta:stroom-meta-api')
     compile project(':stroom-receive:stroom-receive-common')
+    compile project(':stroom-search:stroom-expression-matcher')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
     

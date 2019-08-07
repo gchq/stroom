@@ -1,16 +1,9 @@
-package stroom.search.db;
+package stroom.searchable.impl;
 
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValBoolean;
-import stroom.dashboard.expression.v1.ValDouble;
-import stroom.dashboard.expression.v1.ValInteger;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValNull;
-import stroom.dashboard.expression.v1.ValString;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.query.api.v2.ExpressionOperator;
@@ -29,7 +22,7 @@ import stroom.query.common.v2.Store;
 import stroom.query.common.v2.TableCoprocessor;
 import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.query.common.v2.TablePayload;
-import stroom.search.api.Searchable;
+import stroom.searchable.api.Searchable;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogUtil;

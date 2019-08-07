@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.search.db;
+package stroom.searchable.impl;
 
 import com.codahale.metrics.annotation.Timed;
 import io.swagger.annotations.Api;

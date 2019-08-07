@@ -1,4 +1,4 @@
-package stroom.search.db;
+package stroom.searchable.impl;
 
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
@@ -14,8 +14,8 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
-import stroom.search.api.Searchable;
-import stroom.search.api.SearchableProvider;
+import stroom.searchable.api.Searchable;
+import stroom.searchable.api.SearchableProvider;
 import stroom.security.api.Security;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -46,7 +46,7 @@ class SearchableService {
         this.security = security;
     }
 
-    public DataSource getDataSource(final DocRef docRef) {
+     DataSource getDataSource(final DocRef docRef) {
         return security.useAsReadResult(() -> {
             LOGGER.debug("getDataSource called for docRef {}", docRef);
             final Searchable searchable = searchableProvider.get(docRef);
@@ -80,7 +80,7 @@ class SearchableService {
         });
     }
 
-    public Boolean destroy(final QueryKey queryKey) {
+     Boolean destroy(final QueryKey queryKey) {
         LOGGER.debug("destroy called for queryKey {}", queryKey);
         // remove the creator from the cache which will trigger the onRemove listener
         // which will call destroy on the store

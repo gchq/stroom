@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.search.db;
+package stroom.searchable.impl;
 
 import com.google.inject.AbstractModule;
 import stroom.explorer.api.ExplorerDecorator;
-import stroom.search.api.Searchable;
-import stroom.search.api.SearchableProvider;
+import stroom.searchable.api.SearchableProvider;
 import stroom.util.RestResource;
 import stroom.util.guice.GuiceUtil;
 

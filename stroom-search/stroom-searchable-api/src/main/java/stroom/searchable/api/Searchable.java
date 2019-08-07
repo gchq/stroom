@@ -1,4 +1,4 @@
-package stroom.search.api;
+package stroom.searchable.api;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.datasource.api.v2.AbstractField;

@@ -5,7 +5,7 @@ import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaSecurityFilter;
 import stroom.meta.shared.MetaService;
-import stroom.search.api.Searchable;
+import stroom.searchable.api.Searchable;
 import stroom.util.guice.GuiceUtil;
 
 public class MetaModule extends AbstractModule {

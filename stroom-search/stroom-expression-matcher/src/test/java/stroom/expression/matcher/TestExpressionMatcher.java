@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.meta.api;
+package stroom.expression.matcher;
 
 import org.junit.jupiter.api.Test;
-import stroom.meta.shared.MetaFields;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.TextField;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -28,6 +29,10 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestExpressionMatcher {
+    private static final TextField FEED_NAME = new TextField("Feed Name");
+    private static final TextField TYPE_NAME = new TextField("Type");
+    private static final Map<String, AbstractField> FIELD_MAP = Map.of(FEED_NAME.getName(), FEED_NAME, TYPE_NAME.getName(), TYPE_NAME);
+
     @Test
     void testSimpleMatch() {
         test(createAttributeMap(), createExpression(Op.AND, "TEST_FEED"), true);
@@ -49,20 +54,20 @@ class TestExpressionMatcher {
     }
 
     private void test(final Map<String, Object> attributeMap, final ExpressionOperator expression, final boolean outcome) {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(MetaFields.getFieldMap(), null, null);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(FIELD_MAP, null, null);
         assertThat(expressionMatcher.match(attributeMap, expression)).isEqualTo(outcome);
     }
 
     private ExpressionOperator createExpression(final Op op, final String feedName) {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, op);
-        builder.addTerm(MetaFields.FEED_NAME, Condition.CONTAINS, feedName);
+        builder.addTerm(FEED_NAME, Condition.CONTAINS, feedName);
         return builder.build();
     }
 
     private Map<String, Object> createAttributeMap() {
         final Map<String, Object> attributeMap = new HashMap<>();
-        attributeMap.put(MetaFields.FEED_NAME.getName(), "TEST_FEED");
-        attributeMap.put(MetaFields.TYPE_NAME.getName(), "Raw Events");
+        attributeMap.put(FEED_NAME.getName(), "TEST_FEED");
+        attributeMap.put(TYPE_NAME.getName(), "Raw Events");
         return attributeMap;
     }
 }

@@ -1,4 +1,4 @@
-package stroom.search.api;
+package stroom.searchable.api;
 
 import stroom.docref.DocRef;
 

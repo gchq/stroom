@@ -21,7 +21,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.search.api.Searchable;
+import stroom.searchable.api.Searchable;
 import stroom.security.api.Security;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
