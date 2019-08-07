@@ -111,10 +111,10 @@ class MetaDaoImpl implements MetaDao {
         // Standard fields.
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(MetaFields.ID, meta.ID, Long::valueOf);
-        expressionMapper.map(MetaFields.FEED, meta.FEED_ID, feedDao::getOrCreate, true);
-        expressionMapper.map(MetaFields.FEED_NAME, meta.FEED_ID, feedDao::getOrCreate);
+        expressionMapper.multiMap(MetaFields.FEED, meta.FEED_ID, feedDao::find, true);
+        expressionMapper.multiMap(MetaFields.FEED_NAME, meta.FEED_ID, feedDao::find);
         expressionMapper.map(MetaFields.FEED_ID, meta.FEED_ID, Integer::valueOf);
-        expressionMapper.map(MetaFields.TYPE_NAME, meta.TYPE_ID, metaTypeDao::getOrCreate);
+        expressionMapper.multiMap(MetaFields.TYPE_NAME, meta.TYPE_ID, metaTypeDao::find);
         expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
         expressionMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, Long::valueOf);
         expressionMapper.map(MetaFields.TASK_ID, meta.TASK_ID, Long::valueOf);
