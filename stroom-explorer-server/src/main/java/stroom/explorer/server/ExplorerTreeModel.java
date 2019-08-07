@@ -17,13 +17,10 @@
 package stroom.explorer.server;
 
 import org.springframework.stereotype.Component;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.ExplorerNode;
 import stroom.security.Insecure;
 import stroom.task.server.ExecutorProvider;
 
 import javax.inject.Inject;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;

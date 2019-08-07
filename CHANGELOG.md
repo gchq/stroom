@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1237** : Fixed issue where explorer model requests were failing outside of user sessions, e.g. when we want to find folder descendants for processing.
+
 
 ## [v6.0.4] - 2019-08-05
 
