@@ -41,7 +41,7 @@ import stroom.meta.impl.db.jooq.tables.records.MetaRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Meta extends TableImpl<MetaRecord> {
 
-    private static final long serialVersionUID = -1862704096;
+    private static final long serialVersionUID = 138222080;
 
     /**
      * The reference instance of <code>stroom.meta</code>
@@ -85,11 +85,6 @@ public class Meta extends TableImpl<MetaRecord> {
      * The column <code>stroom.meta.status_time</code>.
      */
     public final TableField<MetaRecord, Long> STATUS_TIME = createField("status_time", org.jooq.impl.SQLDataType.BIGINT, this, "");
-
-    /**
-     * The column <code>stroom.meta.task_id</code>.
-     */
-    public final TableField<MetaRecord, Long> TASK_ID = createField("task_id", org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
      * The column <code>stroom.meta.feed_id</code>.

@@ -561,10 +561,9 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                         .parent(meta)
                         .processorUuid(processorUuid)
                         .pipelineUuid(pipelineUuid)
-                        .processorTaskId(processorTaskId)
                         .build();
 
-                processInfoStreamTarget = streamStore.openTarget(dataProperties);
+                processInfoStreamTarget = supersededOutputHelper.addTarget(() -> streamStore.openTarget(dataProperties));
                 processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.next().get()) {
                     @Override
                     public void close() throws IOException {

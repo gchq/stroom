@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1207** : Removed task id from meta to reduce DB size and complexity especially given the fact tasks are transient. Superseded output is now found by querying the processor task service when new output is written rather than using task ids on meta.
+
 * Uplift HBase to 2.1.5 and refactor code accordingly
 
 * Uplift Kafka to 2.1.1 and refactor code accordingly
