@@ -24,17 +24,17 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
-import stroom.explorer.shared.SharedDocRef;
 import stroom.explorer.client.presenter.EntityChooser;
+import stroom.explorer.shared.SharedDocRef;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.FindMetaRowAction;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaRow;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForMetaAction;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.FindMetaRowAction;
-import stroom.meta.shared.MetaRow;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
     private final Provider<EntityChooser> pipelineSelection;
@@ -57,16 +57,14 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
 
     @Override
     public void onBegin(final BeginPipelineSteppingEvent event) {
-        if (event.getStreamId() != null) {
-            if (event.getPipelineRef() != null) {
-                choosePipeline(event.getPipelineRef(), event.getStreamId(), event.getEventId(),
-                        event.getChildStreamType());
-            } else {
-                // If we don't have a pipeline id then try to guess one for the
-                // supplied stream.
-                dispatcher.exec(new GetPipelineForMetaAction(event.getStreamId(), event.getChildStreamId())).onSuccess(result ->
-                        choosePipeline(result, event.getStreamId(), event.getEventId(), event.getChildStreamType()));
-            }
+        if (event.getPipelineRef() != null) {
+            choosePipeline(event.getPipelineRef(), event.getStreamId(), event.getEventId(),
+                    event.getChildStreamType());
+        } else {
+            // If we don't have a pipeline id then try to guess one for the
+            // supplied stream.
+            dispatcher.exec(new GetPipelineForMetaAction(event.getStreamId(), event.getChildStreamId())).onSuccess(result ->
+                    choosePipeline(result, event.getStreamId(), event.getEventId(), event.getChildStreamType()));
         }
     }
 
