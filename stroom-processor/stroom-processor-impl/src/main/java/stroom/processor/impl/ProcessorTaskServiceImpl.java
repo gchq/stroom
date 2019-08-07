@@ -17,29 +17,42 @@
 package stroom.processor.impl;
 
 
+import stroom.dashboard.expression.v1.Val;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DataSource;
+import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskDataSource;
 import stroom.processor.shared.ProcessorTaskSummary;
+import stroom.searchable.api.Searchable;
 import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.function.Consumer;
 
 @Singleton
-class ProcessorTaskServiceImpl implements ProcessorTaskService {
+class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     private static final String PERMISSION = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
+
+    private static final DocRef PROCESSOR_TASK_PSEUDO_DOC_REF = new DocRef("Searchable", "Processor Tasks", "Processor Tasks");
 
     private final ProcessorTaskDao processorTaskDao;
     private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     ProcessorTaskServiceImpl(final ProcessorTaskDao processorTaskDao,
-                                   final Security security) {
+                             final Security security,
+                             final SecurityContext securityContext) {
         this.processorTaskDao = processorTaskDao;
         this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -52,5 +65,24 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService {
     public BaseResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         return security.secureResult(PERMISSION, () ->
                 processorTaskDao.findSummary(criteria));
+    }
+
+    @Override
+    public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
+        security.secure(PERMISSION, () ->
+                processorTaskDao.search(criteria, fields, consumer));
+    }
+
+    @Override
+    public DocRef getDocRef() {
+        if (securityContext.hasAppPermission(PERMISSION)) {
+            return PROCESSOR_TASK_PSEUDO_DOC_REF;
+        }
+        return null;
+    }
+
+    @Override
+    public DataSource getDataSource() {
+        return new DataSource(ProcessorTaskDataSource.getFields());
     }
 }

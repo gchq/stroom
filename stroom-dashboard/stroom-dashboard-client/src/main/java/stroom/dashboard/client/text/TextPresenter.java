@@ -228,12 +228,12 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
             final String streamId = tablePresenter.getSelectedStreamId();
             final String eventId = tablePresenter.getSelectedEventId();
 
-            if (streamId != null && eventId != null) {
+            if (streamId != null) {
                 currentStreamId = getLong(streamId);
                 currentEventId = getLong(eventId);
                 currentHighlightStrings = tablePresenter.getHighlights();
 
-                if (currentStreamId != null && currentEventId != null) {
+                if (currentStreamId != null) {
                     final String permissionCheck = checkPermissions();
                     if (permissionCheck != null) {
                         isHtml = false;
@@ -375,7 +375,11 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     @Override
     public void beginStepping() {
-        BeginPipelineSteppingEvent.fire(this, currentStreamId, currentEventId, null, null, null);
+        long eventId = 0L;
+        if (currentEventId != null) {
+            eventId = currentEventId;
+        }
+        BeginPipelineSteppingEvent.fire(this, currentStreamId, eventId, null, null, null);
     }
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {

@@ -5,6 +5,8 @@ import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaSecurityFilter;
 import stroom.meta.shared.MetaService;
+import stroom.searchable.api.Searchable;
+import stroom.util.guice.GuiceUtil;
 
 public class MetaModule extends AbstractModule {
     @Override
@@ -15,6 +17,9 @@ public class MetaModule extends AbstractModule {
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
                 .bind(Meta.class, MetaObjectInfoProvider.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+                .addBinding(MetaServiceImpl.class);
     }
 
     @Override

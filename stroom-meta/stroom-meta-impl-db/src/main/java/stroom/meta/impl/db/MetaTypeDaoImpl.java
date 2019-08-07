@@ -17,6 +17,8 @@
 
 package stroom.meta.impl.db;
 
+import org.jooq.Condition;
+import org.jooq.Field;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaTypeDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
@@ -74,6 +76,25 @@ class MetaTypeDaoImpl implements MetaTypeDao {
                 .from(META_TYPE)
                 .where(META_TYPE.NAME.eq(name))
                 .fetchOptional(META_TYPE.ID));
+    }
+
+    List<Integer> find(final String name) {
+        final Condition condition = createCondition(META_TYPE.NAME, name);
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select(META_TYPE.ID)
+                .from(META_TYPE)
+                .where(condition)
+                .fetch(META_TYPE.ID));
+    }
+
+    private Condition createCondition(final Field<String> field, final String name) {
+        if (name != null) {
+            if (name.contains("*")) {
+                return field.like(name.replaceAll("\\*", "%"));
+            }
+            return field.eq(name);
+        }
+        return null;
     }
 
     private Optional<Integer> create(final String name) {

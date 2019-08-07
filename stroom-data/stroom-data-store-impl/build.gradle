@@ -15,6 +15,7 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-resource:stroom-resource-api')
+    compile project(':stroom-search:stroom-expression-matcher')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util')

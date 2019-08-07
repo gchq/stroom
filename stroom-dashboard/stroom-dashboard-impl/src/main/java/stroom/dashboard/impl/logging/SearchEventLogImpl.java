@@ -179,9 +179,14 @@ public class SearchEventLogImpl implements SearchEventLog {
             return null;
         }
 
-        final DocRefInfo docRefInfo = explorerService.info(docRef);
-        if (docRefInfo != null) {
-            return docRefInfo.getDocRef().getName();
+        try {
+            final DocRefInfo docRefInfo = explorerService.info(docRef);
+            if (docRefInfo != null) {
+                return docRefInfo.getDocRef().getName();
+            }
+        } catch (final RuntimeException e) {
+            // We might not have an explorer handler capable of getting info.
+            LOGGER.debug(e.getMessage(), e);
         }
 
         return docRef.getName();

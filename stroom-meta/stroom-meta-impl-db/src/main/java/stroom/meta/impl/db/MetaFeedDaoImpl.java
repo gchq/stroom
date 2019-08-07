@@ -17,6 +17,8 @@
 
 package stroom.meta.impl.db;
 
+import org.jooq.Condition;
+import org.jooq.Field;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaFeedDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaFeedRecord;
@@ -74,6 +76,25 @@ class MetaFeedDaoImpl implements MetaFeedDao {
                 .from(META_FEED)
                 .where(META_FEED.NAME.eq(name))
                 .fetchOptional(META_FEED.ID));
+    }
+
+    List<Integer> find(final String name) {
+        final Condition condition = createCondition(META_FEED.NAME, name);
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select(META_FEED.ID)
+                .from(META_FEED)
+                .where(condition)
+                .fetch(META_FEED.ID));
+    }
+
+    private Condition createCondition(final Field<String> field, final String name) {
+        if (name != null) {
+            if (name.contains("*")) {
+                return field.like(name.replaceAll("\\*", "%"));
+            }
+            return field.eq(name);
+        }
+        return null;
     }
 
     Optional<Integer> create(final String name) {

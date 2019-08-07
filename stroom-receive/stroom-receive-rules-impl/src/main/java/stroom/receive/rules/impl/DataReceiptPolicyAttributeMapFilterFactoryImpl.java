@@ -18,7 +18,7 @@
 package stroom.receive.rules.impl;
 
 import stroom.docref.DocRef;
-import stroom.meta.api.ExpressionMatcherFactory;
+import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 

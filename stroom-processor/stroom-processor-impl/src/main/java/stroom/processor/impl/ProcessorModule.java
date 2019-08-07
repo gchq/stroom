@@ -26,6 +26,7 @@ import stroom.processor.shared.FetchProcessorAction;
 import stroom.processor.shared.FindProcessorTaskAction;
 import stroom.processor.shared.FindProcessorTaskSummaryAction;
 import stroom.processor.shared.ReprocessDataAction;
+import stroom.searchable.api.Searchable;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.RestResource;
 import stroom.util.guice.GuiceUtil;
@@ -57,5 +58,8 @@ public class ProcessorModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(StreamTaskResource.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+                .addBinding(ProcessorTaskServiceImpl.class);
     }
 }

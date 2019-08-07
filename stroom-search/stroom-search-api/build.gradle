@@ -1,20 +1,20 @@
-ext.moduleName = 'stroom.index.api'
+ext.moduleName = 'stroom.search.api'
 
 dependencies {
-    compile project(':stroom-core-shared')
-    compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-util-shared')
-    compile project(':stroom-util')
-
-    compile libs.javax_inject
-    compile libs.stroomDocRef
+//    compile project(':stroom-core-shared')
+//    compile project(':stroom-importexport:stroom-importexport-api')
+//    compile project(':stroom-util-shared')
+//    compile project(':stroom-util')
+//
+//    compile libs.javax_inject
+//    compile libs.stroomDocRef
     compile libs.stroomQueryApi
-    compile libs.jackson_annotations
-    compile libs.swagger_annotations
-    compile libs.ws_rs_api
-
-    compile libs.jaxb_api
-
-    testRuntimeOnly libs.jaxb_runtime
-    testRuntimeOnly libs.javax_activation
+//    compile libs.jackson_annotations
+//    compile libs.swagger_annotations
+//    compile libs.ws_rs_api
+//
+//    compile libs.jaxb_api
+//
+//    testRuntimeOnly libs.jaxb_runtime
+//    testRuntimeOnly libs.javax_activation
 }

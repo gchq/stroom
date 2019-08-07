@@ -460,12 +460,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private void performRowAction(final Row result) {
         selectedStreamId = null;
         selectedEventId = null;
-        if (result != null && streamIdIndex >= 0 && eventIdIndex >= 0) {
+        if (result != null) {
             final String[] values = result.values;
-            if (values.length > streamIdIndex && values[streamIdIndex] != null) {
+            if (streamIdIndex >= 0 && values.length > streamIdIndex && values[streamIdIndex] != null) {
                 selectedStreamId = values[streamIdIndex];
             }
-            if (values.length > eventIdIndex && values[eventIdIndex] != null) {
+            if (eventIdIndex >= 0 && values.length > eventIdIndex && values[eventIdIndex] != null) {
                 selectedEventId = values[eventIdIndex];
             }
         }
@@ -525,20 +525,23 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         tableSettings.getFields().removeIf(field -> !field.isVisible());
     }
 
-    private int ensureHiddenField(final String indexFieldName) {
+    private Integer ensureHiddenField(final String... indexFieldNames) {
         // Now add new hidden field.
         final DataSourceFieldsMap dataSourceFieldsMap = getIndexFieldsMap();
         if (dataSourceFieldsMap != null) {
-            final AbstractField indexField = dataSourceFieldsMap.get(indexFieldName);
-            if (indexField != null) {
-                final Field field = new Field(indexFieldName);
-                field.setExpression(ParamUtil.makeParam(indexFieldName));
-                field.setVisible(false);
-                tableSettings.addField(field);
+            for (final String indexFieldName : indexFieldNames) {
+                final AbstractField indexField = dataSourceFieldsMap.get(indexFieldName);
+                if (indexField != null) {
+                    final Field field = new Field(indexFieldName);
+                    field.setExpression(ParamUtil.makeParam(indexFieldName));
+                    field.setVisible(false);
+                    tableSettings.addField(field);
+                    return tableSettings.getFields().size() - 1;
+                }
             }
         }
 
-        return tableSettings.getFields().size() - 1;
+        return -1;
     }
 
     private DataSourceFieldsMap getIndexFieldsMap() {
@@ -558,7 +561,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Now make sure hidden fields exist for stream id and event id and get
         // their result index.
-        streamIdIndex = ensureHiddenField(IndexConstants.STREAM_ID);
+        streamIdIndex = ensureHiddenField(IndexConstants.STREAM_ID, "Id");
         eventIdIndex = ensureHiddenField(IndexConstants.EVENT_ID);
 
         // Remove existing columns.

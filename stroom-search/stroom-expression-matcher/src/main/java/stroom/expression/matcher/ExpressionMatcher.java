@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.meta.api;
+package stroom.expression.matcher;
 
 import stroom.collection.api.CollectionService;
 import stroom.datasource.api.v2.AbstractField;
@@ -42,6 +42,12 @@ public class ExpressionMatcher {
     private final CollectionService collectionService;
     private final Map<DocRef, String[]> wordMap = new HashMap<>();
     private final Map<String, Pattern> patternMap = new HashMap<>();
+
+    public ExpressionMatcher(final Map<String, AbstractField> fieldMap) {
+        this.fieldMap = fieldMap;
+        this.wordListProvider = null;
+        this.collectionService = null;
+    }
 
     public ExpressionMatcher(final Map<String, AbstractField> fieldMap,
                              final WordListProvider wordListProvider,

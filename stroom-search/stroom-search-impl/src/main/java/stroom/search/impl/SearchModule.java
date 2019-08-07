@@ -17,7 +17,7 @@
 package stroom.search.impl;
 
 import com.google.inject.AbstractModule;
-import stroom.index.api.EventSearch;
+import stroom.search.api.EventSearch;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.RestResource;
 import stroom.util.guice.GuiceUtil;

@@ -1,4 +1,4 @@
-package stroom.meta.api;
+package stroom.expression.matcher;
 
 import stroom.collection.api.CollectionService;
 import stroom.datasource.api.v2.AbstractField;
@@ -12,7 +12,7 @@ public class ExpressionMatcherFactory {
     private final CollectionService collectionService;
 
     @Inject
-    public ExpressionMatcherFactory(final WordListProvider wordListProvider, final CollectionService collectionService) {
+    ExpressionMatcherFactory(final WordListProvider wordListProvider, final CollectionService collectionService) {
         this.wordListProvider = wordListProvider;
         this.collectionService = collectionService;
     }

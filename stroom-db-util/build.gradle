@@ -23,6 +23,7 @@ dependencies {
 //    compile libs.javax_inject
 //    compile libs.jaxb_api
     compile libs.jooq
+    compile libs.stroomExpression
     compile libs.stroomQueryApi
 //    compile libs.saxon_he
     compile libs.slf4j_api

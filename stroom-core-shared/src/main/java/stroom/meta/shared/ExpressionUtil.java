@@ -7,6 +7,8 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,7 +22,11 @@ public final class ExpressionUtil {
     }
 
     public static int termCount(final ExpressionOperator expressionOperator, final AbstractField field) {
-        return terms(expressionOperator, field).size();
+        return terms(expressionOperator, Collections.singleton(field)).size();
+    }
+
+    public static int termCount(final ExpressionOperator expressionOperator, final Collection<AbstractField> fields) {
+        return terms(expressionOperator, fields).size();
     }
 
     public static List<String> fields(final ExpressionOperator expressionOperator) {
@@ -28,7 +34,11 @@ public final class ExpressionUtil {
     }
 
     public static List<String> fields(final ExpressionOperator expressionOperator, final AbstractField field) {
-        return terms(expressionOperator, field).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
+        return terms(expressionOperator, Collections.singleton(field)).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
+    }
+
+    public static List<String> fields(final ExpressionOperator expressionOperator, final Collection<AbstractField> fields) {
+        return terms(expressionOperator, fields).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
     }
 
     public static List<String> values(final ExpressionOperator expressionOperator) {
@@ -36,26 +46,33 @@ public final class ExpressionUtil {
     }
 
     public static List<String> values(final ExpressionOperator expressionOperator, final AbstractField field) {
-        return terms(expressionOperator, field).stream().map(ExpressionTerm::getValue).collect(Collectors.toList());
+        return terms(expressionOperator, Collections.singleton(field)).stream().map(ExpressionTerm::getValue).collect(Collectors.toList());
     }
 
-    public static List<ExpressionTerm> terms(final ExpressionOperator expressionOperator, final AbstractField field) {
+    public static List<String> values(final ExpressionOperator expressionOperator, final Collection<AbstractField> fields) {
+        return terms(expressionOperator, fields).stream().map(ExpressionTerm::getValue).collect(Collectors.toList());
+    }
+
+    public static List<ExpressionTerm> terms(final ExpressionOperator expressionOperator, final Collection<AbstractField> fields) {
         final List<ExpressionTerm> terms = new ArrayList<>();
-        addTerms(expressionOperator, field, terms);
+        addTerms(expressionOperator, fields, terms);
         return terms;
     }
 
-    private static void addTerms(final ExpressionOperator expressionOperator, final AbstractField field, final List<ExpressionTerm> terms) {
+    private static void addTerms(final ExpressionOperator expressionOperator, final Collection<AbstractField> fields, final List<ExpressionTerm> terms) {
         if (expressionOperator != null && expressionOperator.enabled() && !Op.NOT.equals(expressionOperator.getOp())) {
             for (final ExpressionItem item : expressionOperator.getChildren()) {
                 if (item.enabled()) {
                     if (item instanceof ExpressionTerm) {
                         final ExpressionTerm expressionTerm = (ExpressionTerm) item;
-                        if ((field == null || field.getName().equals(expressionTerm.getField())) && expressionTerm.getValue() != null && expressionTerm.getValue().length() > 0) {
+                        if ((fields == null || fields.stream()
+                                .anyMatch(field -> field.getName().equals(expressionTerm.getField()))) &&
+                                expressionTerm.getValue() != null &&
+                                expressionTerm.getValue().length() > 0) {
                             terms.add(expressionTerm);
                         }
                     } else if (item instanceof ExpressionOperator) {
-                        addTerms((ExpressionOperator) item, field, terms);
+                        addTerms((ExpressionOperator) item, fields, terms);
                     }
                 }
             }

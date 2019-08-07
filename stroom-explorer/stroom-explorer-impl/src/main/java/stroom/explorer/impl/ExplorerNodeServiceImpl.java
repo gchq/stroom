@@ -8,6 +8,7 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.explorer.shared.StandardTagNames;
 import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
@@ -27,9 +28,9 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     private static final Map<String, String> DEFAULT_TAG_MAP = new HashMap<>();
 
     static {
-        DEFAULT_TAG_MAP.put("StatisticStore", "DataSource");
-        DEFAULT_TAG_MAP.put("StroomStatsStore", "DataSource");
-        DEFAULT_TAG_MAP.put("Index", "DataSource");
+        DEFAULT_TAG_MAP.put("StatisticStore", StandardTagNames.DATA_SOURCE);
+        DEFAULT_TAG_MAP.put("StroomStatsStore", StandardTagNames.DATA_SOURCE);
+        DEFAULT_TAG_MAP.put("Index", StandardTagNames.DATA_SOURCE);
     }
 
     private final ExplorerTreeDao explorerTreeDao;

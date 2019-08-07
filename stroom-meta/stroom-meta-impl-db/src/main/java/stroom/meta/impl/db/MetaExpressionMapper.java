@@ -14,6 +14,7 @@ import stroom.query.api.v2.ExpressionTerm;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -44,7 +45,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
     }
 
     public void map(final AbstractField dataSourceField) {
-        final TermHandler<Long> termHandler = new TermHandler<>(dataSourceField, valueField, Long::valueOf, wordListProvider, collectionService);
+        final TermHandler<Long> termHandler = new TermHandler<>(dataSourceField, valueField, value -> List.of(Long.valueOf(value)), wordListProvider, collectionService);
 
         final MetaTermHandler handler = new MetaTermHandler(
                 metaKeyDao,
