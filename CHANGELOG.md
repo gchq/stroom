@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.5] - 2019-08-07
+
 * Issue **#1237** : Fixed issue where explorer model requests were failing outside of user sessions, e.g. when we want to find folder descendants for processing.
 
 
@@ -1825,7 +1828,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.4...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.5...6.0
+[v6.0.5]: https://github.com/gchq/stroom/compare/v6.0.4...v6.0.5
 [v6.0.4]: https://github.com/gchq/stroom/compare/v6.0.3...v6.0.4
 [v6.0.3]: https://github.com/gchq/stroom/compare/v6.0.2...v6.0.3
 [v6.0.2]: https://github.com/gchq/stroom/compare/v6.0.1...v6.0.2
