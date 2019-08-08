@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1238** : During proxy clean task we no longer show a failed attempt to delete an empty directory as an error as this condition is expected.
+
 
 ## [v6.0.5] - 2019-08-07
 

@@ -476,7 +476,6 @@ public class StroomZipRepository {
 
     private void attemptDirDeletion(final Path dir, final long oldestDirMs) {
         try {
-
             // Only try and delete directories that are at least 10 seconds old.
             final BasicFileAttributes attr = Files.readAttributes(dir, BasicFileAttributes.class);
             final FileTime creationTime = attr.creationTime();
@@ -565,17 +564,14 @@ public class StroomZipRepository {
         return success;
     }
 
-    private void deleteDir(final Path path) {
+    private void deleteDir(final Path path) throws IOException {
         try {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("delete() - Attempting to delete: " + path.toString());
             }
-
             Files.delete(path);
         } catch (final DirectoryNotEmptyException e) {
             LOGGER.trace("delete() - Unable to delete dir as it was not empty: " + path.toString());
-        } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
         }
     }
 
