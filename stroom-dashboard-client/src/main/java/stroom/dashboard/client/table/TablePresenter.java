@@ -176,9 +176,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         super.onBind();
         registerHandler(dataGrid.getSelectionModel().addSelectionHandler(event -> performRowAction(dataGrid.getSelectionModel().getSelected())));
         registerHandler(dataGrid.addRangeChangeHandler(event -> {
+            final com.google.gwt.view.client.Range range = event.getNewRange();
+            tableResultRequest.setRange(range.getStart(), range.getLength());
             if (!ignoreRangeChange) {
-                final com.google.gwt.view.client.Range range = event.getNewRange();
-                tableResultRequest.setRange(range.getStart(), range.getLength());
                 refresh();
             }
         }));
@@ -652,7 +652,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public void reset() {
-        tableResultRequest.setRange(0, 100);
+        final int length = Math.max(1, tableResultRequest.getRequestedRange().getLength());
+        dataGrid.setRowData(0, new ArrayList<>());
+        dataGrid.setRowCount(0, true);
+        dataGrid.setVisibleRange(0, length);
+        tableResultRequest.setRange(0, length);
     }
 
     void clearAndRefresh() {

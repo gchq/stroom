@@ -18,7 +18,9 @@ package stroom.data.pager.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.i18n.client.NumberFormat;
@@ -26,6 +28,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.AbstractPager;
+import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -34,6 +37,9 @@ import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.SvgButton;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class Pager extends AbstractPager {
     private static Binder binder;
@@ -62,6 +68,8 @@ public class Pager extends AbstractPager {
     @UiField
     Label lblOfSeparator;
     private boolean editing;
+
+    private final Set<FocusWidget> focussed = new HashSet<>();
 
     public Pager() {
         if (binder == null) {
@@ -132,6 +140,26 @@ public class Pager extends AbstractPager {
         if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             setEditing(false);
         }
+    }
+
+    @UiHandler("txtFrom")
+    void onFocusFrom(final FocusEvent event) {
+        focussed.add(txtFrom);
+    }
+
+    @UiHandler("txtTo")
+    void onFocusTo(final FocusEvent event) {
+        focussed.add(txtTo);
+    }
+
+    @UiHandler("txtFrom")
+    void onBlurFrom(final BlurEvent event) {
+        focussed.remove(txtFrom);
+    }
+
+    @UiHandler("txtTo")
+    void onBlurTo(final BlurEvent event) {
+        focussed.remove(txtTo);
     }
 
     @UiHandler("lblFrom")
@@ -293,6 +321,11 @@ public class Pager extends AbstractPager {
         int endIndex = Math.min(dataSize, pageStart + pageSize - 1);
         endIndex = Math.max(pageStart, endIndex);
         final boolean exact = display.isRowCountExact();
+
+        // If we aren't currently editing from or to values then turn editing off.
+        if (focussed.size() == 0) {
+            setEditing(false);
+        }
 
         lblFrom.setText(formatter.format(pageStart));
         lblTo.setText(formatter.format(endIndex));

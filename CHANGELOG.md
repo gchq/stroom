@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1214** : Fixed issue where the max results setting in dashboard tables was not always being obeyed. Also fixed some dashboard table result page size issues.
+
 
 ## [v6.0.6] - 2019-08-08
 
