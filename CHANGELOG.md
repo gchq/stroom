@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.6] - 2019-08-08
+
 * Issue **#1238** : During proxy clean task we no longer show a failed attempt to delete an empty directory as an error as this condition is expected.
 
 
@@ -1830,7 +1833,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.5...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.6...6.0
+[v6.0.6]: https://github.com/gchq/stroom/compare/v6.0.5...v6.0.6
 [v6.0.5]: https://github.com/gchq/stroom/compare/v6.0.4...v6.0.5
 [v6.0.4]: https://github.com/gchq/stroom/compare/v6.0.3...v6.0.4
 [v6.0.3]: https://github.com/gchq/stroom/compare/v6.0.2...v6.0.3
