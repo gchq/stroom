@@ -152,7 +152,6 @@ class MetaDaoImpl implements MetaDao {
         valueMapper.map(MetaFields.TYPE_NAME, metaType.NAME, ValString::create);
         valueMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, ValString::create);
         valueMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, ValLong::create);
-        valueMapper.map(MetaFields.TASK_ID, meta.TASK_ID, ValLong::create);
         valueMapper.map(MetaFields.PROCESSOR_ID, meta.PROCESSOR_ID, ValInteger::create);
         valueMapper.map(MetaFields.STATUS, meta.STATUS, v -> Optional.ofNullable(MetaStatusId.getStatus(v))
                 .map(w -> (Val) ValString.create(w.getDisplayValue()))
