@@ -40,6 +40,9 @@ class TestExplorerTree extends AbstractCoreIntegrationTest {
         explorerTreeDao.addChild(a, newTreePojo("A1"));
         ExplorerTreeNode c1 = explorerTreeDao.addChild(c, newTreePojo("C1"));
         explorerTreeDao.addChild(c1, newTreePojo("C11"));
+
+        // Check create model.
+        explorerTreeDao.createModel((type) -> type);
     }
 
     private ExplorerTreeNode newTreePojo(final String name) {

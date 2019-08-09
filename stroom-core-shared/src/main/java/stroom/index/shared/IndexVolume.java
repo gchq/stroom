@@ -44,6 +44,7 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
     private Long bytesFree;
     private Long bytesTotal;
     private Long statusMs;
+    private Integer indexVolumeGroupId;
 
     public IndexVolume() {
     }
@@ -100,6 +101,14 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
         this.updateUser = updateUser;
     }
 
+    public void setIndexVolumeGroupId(Integer indexVolumeGroupId) {
+        this.indexVolumeGroupId = indexVolumeGroupId;
+    }
+
+    public Integer getIndexVolumeGroupId() {
+        return indexVolumeGroupId;
+    }
+
     public static class Builder {
         private final IndexVolume instance;
 
@@ -151,6 +160,11 @@ public class IndexVolume implements HasAuditInfo, SharedObject {
 
         public Builder statusMs(final Long value) {
             instance.setStatusMs(value);
+            return this;
+        }
+
+        public Builder indexVolumeGroup(final Integer value) {
+            instance.setIndexVolumeGroupId(value);
             return this;
         }
 

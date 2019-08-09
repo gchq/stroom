@@ -59,7 +59,7 @@ public class ExplorerResource implements RestResource {
         explorerTreeModel.rebuild();
 
         final TreeModel treeModel = explorerTreeModel.getModel();
-        final TreeModel filteredModel = new TreeModelImpl();
+        final TreeModel filteredModel = new TreeModel();
 
         final ExplorerTreeFilter filter = new ExplorerTreeFilter(
                 null,
@@ -84,7 +84,7 @@ public class ExplorerResource implements RestResource {
         explorerTreeModel.rebuild();
 
         final TreeModel treeModel = explorerTreeModel.getModel();
-        final TreeModel filteredModel = new TreeModelImpl();
+        final TreeModel filteredModel = new TreeModel();
 
         final ExplorerTreeFilter filter = new ExplorerTreeFilter(
                 null,

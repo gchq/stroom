@@ -18,13 +18,13 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.PermissionInheritance;
-import stroom.docref.DocRefInfo;
 
 import java.util.List;
 
@@ -66,7 +66,10 @@ class MockExplorerService implements ExplorerService {
 
     @Override
     public void rebuildTree() {
+    }
 
+    @Override
+    public void clear() {
     }
 
     @Override

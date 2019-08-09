@@ -21,11 +21,9 @@ import com.google.gwt.user.server.rpc.SerializationPolicy;
 import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.EntityServiceExceptionUtil;
 import stroom.core.servlet.SessionListListener;
 import stroom.dispatch.shared.DispatchService;
 import stroom.docref.SharedObject;
-import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserTokenUtil;
 import stroom.task.api.TaskHandler;
@@ -33,6 +31,8 @@ import stroom.task.api.TaskIdFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.impl.TaskHandlerRegistry;
 import stroom.task.shared.Action;
+import stroom.util.EntityServiceExceptionUtil;
+import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PermissionException;
@@ -66,24 +66,24 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
     private final TaskHandlerRegistry taskHandlerBeanRegistry;
     private final TaskManager taskManager;
     private final SecurityContext securityContext;
-    private final transient HttpServletRequestHolder httpServletRequestHolder;
+    private final SessionIdProvider sessionIdProvider;
 
     @Inject
     public DispatchServiceImpl(final TaskHandlerRegistry taskHandlerBeanRegistry,
                                final TaskManager taskManager,
                                final SecurityContext securityContext,
-                               final HttpServletRequestHolder httpServletRequestHolder) {
+                               final SessionIdProvider sessionIdProvider) {
         this.taskHandlerBeanRegistry = taskHandlerBeanRegistry;
         this.taskManager = taskManager;
         this.securityContext = securityContext;
-        this.httpServletRequestHolder = httpServletRequestHolder;
+        this.sessionIdProvider = sessionIdProvider;
     }
 
     @Override
     public <R extends SharedObject> R exec(final Action<R> action) {
         final long startTime = System.currentTimeMillis();
 
-        LOGGER.debug("exec() - >> {} {}", action.getClass().getName(), httpServletRequestHolder);
+        LOGGER.debug("exec() - >> {} {}", action.getClass().getName(), sessionIdProvider.get());
 
         final TaskHandler taskHandlerBean = taskHandlerBeanRegistry.findHandler(action);
         if (taskHandlerBean == null) {
@@ -92,7 +92,7 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
         final String userName = securityContext.getUserId();
         // Set the id before we can execute this action.
         action.setId(TaskIdFactory.create());
-        action.setUserToken(UserTokenUtil.create(userName, httpServletRequestHolder.getSessionId()));
+        action.setUserToken(UserTokenUtil.create(userName, sessionIdProvider.get()));
 
         try {
             final R r = taskManager.exec(action);

@@ -4,11 +4,16 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
+import io.dropwizard.client.JerseyClientBuilder;
+import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Environment;
-import stroom.dictionary.api.DictionaryStore;
+import org.glassfish.jersey.logging.LoggingFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.dictionary.impl.DictionaryResource;
 import stroom.dictionary.impl.DictionaryResource2;
+import stroom.dictionary.impl.DictionaryStore;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.fs.FSPersistence;
 import stroom.dropwizard.common.LogLevelInspector;
@@ -29,6 +34,7 @@ import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryReader;
 import stroom.proxy.repo.StreamHandlerFactory;
 import stroom.receive.common.DebugServlet;
+import stroom.receive.common.FeedStatusResource;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.receive.common.RemoteFeedModule;
@@ -45,10 +51,20 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HealthCheckBinder;
 import stroom.util.guice.ResourcePaths;
 import stroom.util.guice.ServletBinder;
+import stroom.util.shared.BuildInfo;
 
+import javax.inject.Provider;
+import javax.ws.rs.client.Client;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 public class ProxyModule extends AbstractModule {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyModule.class);
+
+    // This name is used by dropwizard metrics
+    private static final String PROXY_JERSEY_CLIENT_NAME = "stroom-proxy_jersey_client";
+    private static final String PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX = "stroom-proxy/";
+
     private final Config configuration;
     private final Environment environment;
 
@@ -77,9 +93,15 @@ public class ProxyModule extends AbstractModule {
 
         HealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
+                .bind(DictionaryResource.class)
+                .bind(DictionaryResource2.class)
+                .bind(FeedStatusResource.class)
                 .bind(ForwardStreamHandlerFactory.class)
                 .bind(LogLevelInspector.class)
-                .bind(ProxyConfigHealthCheck.class);
+                .bind(ProxyConfigHealthCheck.class)
+                .bind(ProxyRepositoryManager.class)
+                .bind(RemoteFeedStatusService.class)
+                .bind(ReceiveDataRuleSetResource.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), "/*"), ProxySecurityFilter.class);
@@ -96,7 +118,8 @@ public class ProxyModule extends AbstractModule {
                 .addBinding(DictionaryResource.class)
                 .addBinding(DictionaryResource2.class)
                 .addBinding(ReceiveDataRuleSetResource.class)
-                .addBinding(ReceiveDataRuleSetResource2.class);
+                .addBinding(ReceiveDataRuleSetResource2.class)
+                .addBinding(FeedStatusResource.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(ContentSyncService.class)
@@ -111,5 +134,26 @@ public class ProxyModule extends AbstractModule {
     @Singleton
     Persistence providePersistence() {
         return new FSPersistence(Paths.get(configuration.getProxyConfig().getProxyContentDir()));
+    }
+
+    @Provides
+    @Singleton
+    Client provideJerseyClient(final JerseyClientConfiguration jerseyClientConfiguration,
+                               final Environment environment,
+                               final Provider<BuildInfo> buildInfoProvider) {
+
+        // If the userAgent has not been explicitly set in the config then set it based
+        // on the build version
+        if (!jerseyClientConfiguration.getUserAgent().isPresent()) {
+            final String userAgent = PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX + buildInfoProvider.get().getBuildVersion();
+            LOGGER.info("Setting jersey client user agent string to [{}]", userAgent);
+            jerseyClientConfiguration.setUserAgent(Optional.of(userAgent));
+        }
+
+        LOGGER.info("Creating jersey client {}", PROXY_JERSEY_CLIENT_NAME);
+        return new JerseyClientBuilder(environment)
+                .using(jerseyClientConfiguration)
+                .build(PROXY_JERSEY_CLIENT_NAME)
+                .register(LoggingFeature.class);
     }
 }

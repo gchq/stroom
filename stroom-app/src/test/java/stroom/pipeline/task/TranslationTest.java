@@ -34,7 +34,7 @@ import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.StandardHeaderArguments;
@@ -170,10 +170,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 final String streamType = feed.isReference() ?
                         StreamTypeNames.RAW_REFERENCE : StreamTypeNames.RAW_EVENTS;
                 final QueryData findStreamQueryData = new QueryData.Builder()
-                        .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
+                        .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(Op.AND)
-                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                                .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, streamType)
+                                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                                .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, streamType)
                                 .build())
                         .build();
 
@@ -387,10 +387,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 //        final FeedDoc feed = feeds.get();
 
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName)
+                .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
-                        .addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                        .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 

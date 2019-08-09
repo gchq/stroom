@@ -1,14 +1,18 @@
 package stroom.proxy.app.handler;
 
-
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlerFactory;
 import stroom.proxy.repo.StreamHandler;
-import stroom.util.io.FileUtil;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.io.FileUtil;
+import stroom.util.shared.BuildInfo;
 
 import javax.inject.Provider;
 import java.util.ArrayList;
@@ -16,6 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class TestProxyHandlerFactory extends StroomUnitTest {
     @Test
     void testStoreAndForward() {
@@ -66,15 +72,26 @@ class TestProxyHandlerFactory extends StroomUnitTest {
         proxyRepositoryConfig.setRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()));
         proxyRepositoryConfig.setStoringEnabled(isStoringEnabled);
 
-        forwardRequestConfig.setForwardUrl("https://url1,https://url2");
         forwardRequestConfig.setForwardingEnabled(isForwardingenabled);
+        ForwardDestinationConfig destinationConfig1 = new ForwardDestinationConfig();
+        destinationConfig1.setForwardUrl("https://url1");
+
+        ForwardDestinationConfig destinationConfig2 = new ForwardDestinationConfig();
+        destinationConfig2.setForwardUrl("https://url2");
+        forwardRequestConfig.getForwardDestinations().add(destinationConfig1);
+        forwardRequestConfig.getForwardDestinations().add(destinationConfig2);
 
         final ProxyRepositoryManager proxyRepositoryManager = new ProxyRepositoryManager(proxyRepositoryConfig);
-        final Provider<ProxyRepositoryStreamHandler> proxyRepositoryRequestHandlerProvider = () -> new ProxyRepositoryStreamHandler(proxyRepositoryManager);
+        final Provider<ProxyRepositoryStreamHandler> proxyRepositoryRequestHandlerProvider = () ->
+                new ProxyRepositoryStreamHandler(proxyRepositoryManager);
 
         final LogStream logStream = new LogStream(logRequestConfig);
-        final ProxyRepositoryStreamHandlerFactory proxyRepositoryStreamHandlerFactory = new ProxyRepositoryStreamHandlerFactory(proxyRepositoryConfig, proxyRepositoryRequestHandlerProvider);
-        final ForwardStreamHandlerFactory forwardStreamHandlerFactory = new ForwardStreamHandlerFactory(logStream, forwardRequestConfig, proxyRepositoryConfig);
+        final ProxyRepositoryStreamHandlerFactory proxyRepositoryStreamHandlerFactory =
+                new ProxyRepositoryStreamHandlerFactory(proxyRepositoryConfig, proxyRepositoryRequestHandlerProvider);
+
+        final BuildInfo buildInfo = new BuildInfo("now", "test version", "now");
+        final ForwardStreamHandlerFactory forwardStreamHandlerFactory = new ForwardStreamHandlerFactory(
+                logStream, forwardRequestConfig, proxyRepositoryConfig, () -> buildInfo);
 
         return new MasterStreamHandlerFactory(proxyRepositoryStreamHandlerFactory, forwardStreamHandlerFactory);
     }

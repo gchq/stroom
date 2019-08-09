@@ -26,13 +26,13 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.inject.Provider;
 import stroom.data.grid.client.MouseHelper;
-import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
-import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.htree.client.BracketConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
@@ -180,7 +180,7 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         }
     }
 
-    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<DataSourceField> fields) {
+    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<AbstractField> fields) {
         termEditor.init(dispatcher, dataSource, fields);
     }
 

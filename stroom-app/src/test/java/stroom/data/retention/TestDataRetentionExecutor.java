@@ -28,7 +28,7 @@ import stroom.data.retention.shared.TimeUnit;
 import stroom.docref.DocRef;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
@@ -74,11 +74,11 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         // save two streams, one inside retention period, one outside
         final DataRetentionRule rule1 = createRule(1,
                 new ExpressionOperator.Builder(true, Op.AND)
-                        .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName1)
+                        .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName1)
                         .build(), RETENTION_PERIOD_DAYS, TimeUnit.DAYS);
         final DataRetentionRule rule2 = createForeverRule(2,
                 new ExpressionOperator.Builder(true, Op.AND)
-                        .addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName2)
+                        .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName2)
                         .build());
 
         final Set<DocRef> docs = dataRetentionRulesService.listDocuments();

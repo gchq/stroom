@@ -26,6 +26,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.docref.DocRef;
+import stroom.explorer.shared.StandardTagNames;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
@@ -44,7 +45,7 @@ public class BasicQuerySettingsPresenter
 
 //        final String[] types = dataSourceTypes.getTypes();
 //        dataSourceSelectionPresenter.setIncludedTypes(types);
-        dataSourceSelectionPresenter.setTags("DataSource");
+        dataSourceSelectionPresenter.setTags(StandardTagNames.DATA_SOURCE);
         dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 //        dataSourceSelectionPresenter.setSelectionTypes(types);
     }

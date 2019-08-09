@@ -165,14 +165,14 @@ public final class ProxyRepositoryReader {
                         continue;
                     }
 
-                    if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info("run() - Cron Match at " + DateUtil.createNormalDateTimeString());
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Cron Match at " + DateUtil.createNormalDateTimeString());
                     }
 
                     try {
                         doRunWork();
                     } catch (final RuntimeException e) {
-                        LOGGER.error("run() - Unhandled exception coming out of doRunWork()", e);
+                        LOGGER.error("Unhandled exception coming out of doRunWork()", e);
                     }
                 }
             }
@@ -180,7 +180,7 @@ public final class ProxyRepositoryReader {
             lock.unlock();
         }
 
-        LOGGER.info("run() - Completed ... Thread Exit");
+        LOGGER.info("Completed ... Thread Exit");
     }
 
     void doRunWork() {
@@ -204,14 +204,21 @@ public final class ProxyRepositoryReader {
                         fileSetProcessorProvider,
                         FileUtil.getCanonicalPath(readyToProcess.getRootDir()),
                         proxyRepositoryReaderConfig.getForwardThreadCount(),
-                        proxyRepositoryReaderConfig.getMaxAggregation(),
                         proxyRepositoryReaderConfig.getMaxFileScan(),
+                        proxyRepositoryReaderConfig.getMaxConcurrentMappedFiles(),
+                        proxyRepositoryReaderConfig.getMaxAggregation(),
                         proxyRepositoryReaderConfig.getMaxStreamSize());
 
                 repositoryProcessor.process();
             }
             // Otherwise just clean.
-            readyToProcess.clean();
+
+            // If the root of this repo is also our configured rootRepoDir then we don't want to delete the
+            // repo's root on clean as it causes problems in docker containers. Deleting a configured directory
+            // may also cause confusion for admins.
+            final boolean deleteRootDirectory = !readyToProcess.getRootDir()
+                    .equals(proxyRepositoryManager.getRootRepoDir());
+            readyToProcess.clean(deleteRootDirectory);
         }
     }
 

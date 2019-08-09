@@ -17,9 +17,11 @@
 
 package stroom.explorer.impl;
 
+import stroom.collection.api.CollectionService;
 import stroom.docref.DocRef;
-import stroom.util.shared.PermissionException;
+import stroom.docref.DocRefInfo;
 import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
@@ -30,14 +32,18 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.HasNodeState;
+import stroom.explorer.shared.HasNodeState.NodeState;
 import stroom.explorer.shared.PermissionInheritance;
-import stroom.docref.DocRefInfo;
+import stroom.explorer.shared.StandardTagNames;
+import stroom.index.shared.IndexDoc;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.shared.PermissionException;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -50,24 +56,27 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class ExplorerServiceImpl implements ExplorerService {
+class ExplorerServiceImpl implements ExplorerService, CollectionService {
     private final ExplorerNodeService explorerNodeService;
     private final ExplorerTreeModel explorerTreeModel;
     private final ExplorerActionHandlers explorerActionHandlers;
     private final SecurityContext securityContext;
     private final ExplorerEventLog explorerEventLog;
+    private final ExplorerDecorator explorerDecorator;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
                         final ExplorerTreeModel explorerTreeModel,
                         final ExplorerActionHandlers explorerActionHandlers,
                         final SecurityContext securityContext,
-                        final ExplorerEventLog explorerEventLog) {
+                        final ExplorerEventLog explorerEventLog,
+                        final ExplorerDecorator explorerDecorator) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
         this.securityContext = securityContext;
         this.explorerEventLog = explorerEventLog;
+        this.explorerDecorator = explorerDecorator;
     }
 
     @Override
@@ -83,9 +92,10 @@ class ExplorerServiceImpl implements ExplorerService {
 
         final Set<ExplorerNode> allOpenItems = new HashSet<>();
         allOpenItems.addAll(criteria.getOpenItems());
+        allOpenItems.addAll(criteria.getTemporaryOpenedItems());
         allOpenItems.addAll(forcedOpenItems);
 
-        final TreeModel filteredModel = new TreeModelImpl();
+        final TreeModel filteredModel = new TreeModel();
         addDescendants(null, masterTreeModel, filteredModel, filter, false, allOpenItems, 0);
 
         // If the name filter has changed then we want to temporarily expand all nodes.
@@ -104,7 +114,67 @@ class ExplorerServiceImpl implements ExplorerService {
             addRoots(filteredModel, criteria.getOpenItems(), forcedOpenItems, criteria.getTemporaryOpenedItems(), result);
         }
 
+        if (criteria.getFilter() != null &&
+                criteria.getFilter().getTags() != null &&
+                criteria.getFilter().getTags().contains(StandardTagNames.DATA_SOURCE)) {
+            final List<DocRef> additionalDocRefs = explorerDecorator.list();
+            additionalDocRefs.forEach(docRef -> {
+                final ExplorerNode node = new ExplorerNode(
+                        docRef.getType(),
+                        docRef.getUuid(),
+                        docRef.getName(),
+                        StandardTagNames.DATA_SOURCE);
+                node.setNodeState(NodeState.LEAF);
+                node.setDepth(1);
+                node.setIconUrl(DocumentType.DOC_IMAGE_URL + "searchable.svg");
+                result.getTreeStructure().add(result.getTreeStructure().getRoot(), node);
+            });
+        }
+
         return result;
+    }
+
+    @Override
+    public Set<DocRef> getChildren(final DocRef folder, final String type) {
+        return getDescendants(folder, type, 0);
+    }
+
+    @Override
+    public Set<DocRef> getDescendants(final DocRef folder, final String type) {
+        return getDescendants(folder, type, Integer.MAX_VALUE);
+    }
+
+    private Set<DocRef> getDescendants(final DocRef folder, final String type, final int maxDepth) {
+        final TreeModel masterTreeModel = explorerTreeModel.getModel();
+        if (masterTreeModel != null && masterTreeModel.getChildMap() != null) {
+            final Set<DocRef> refs = new HashSet<>();
+            addChildren(ExplorerNode.create(folder), type, 0, maxDepth, masterTreeModel.getChildMap(), refs);
+            return refs;
+        }
+
+        return Collections.emptySet();
+    }
+
+    private void addChildren(final ExplorerNode parent,
+                             final String type,
+                             final int depth,
+                             final int maxDepth,
+                             final Map<ExplorerNode, List<ExplorerNode>> childMap,
+                             final Set<DocRef> refs) {
+        final List<ExplorerNode> childNodes = childMap.get(parent);
+        if (childNodes != null) {
+            childNodes.forEach(node -> {
+                if (node.getType().equals(type)) {
+                    if (securityContext.hasDocumentPermission(node.getType(), node.getUuid(), DocumentPermissionNames.USE)) {
+                        refs.add(node.getDocRef());
+                    }
+                }
+
+                if (depth < maxDepth) {
+                    addChildren(node, type, depth + 1, maxDepth, childMap, refs);
+                }
+            });
+        }
     }
 
     private Set<ExplorerNode> getForcedOpenItems(final TreeModel masterTreeModel,
@@ -152,14 +222,14 @@ class ExplorerServiceImpl implements ExplorerService {
                                    final TreeModel treeModelOut,
                                    final ExplorerTreeFilter filter,
                                    final boolean ignoreNameFilter,
-                                   final Set<ExplorerNode> allOpenItemns,
+                                   final Set<ExplorerNode> allOpenItems,
                                    final int currentDepth) {
         int added = 0;
 
         final List<ExplorerNode> children = treeModelIn.getChildMap().get(parent);
         if (children != null) {
             // Add all children if the name filter has changed or the parent item is open.
-            final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null) || allOpenItemns.contains(parent);
+            final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null) || allOpenItems.contains(parent);
 
             // We need to add add least one item to the tree to be able to determine if the parent is a leaf node.
             final Iterator<ExplorerNode> iterator = children.iterator();
@@ -170,7 +240,7 @@ class ExplorerServiceImpl implements ExplorerService {
                 final boolean ignoreChildNameFilter = checkName(child, filter.getNameFilter());
 
                 // Recurse right down to find out if a descendant is being added and therefore if we need to include this as an ancestor.
-                final boolean hasChildren = addDescendants(child, treeModelIn, treeModelOut, filter, ignoreChildNameFilter, allOpenItemns, currentDepth + 1);
+                final boolean hasChildren = addDescendants(child, treeModelIn, treeModelOut, filter, ignoreChildNameFilter, allOpenItems, currentDepth + 1);
                 if (hasChildren) {
                     treeModelOut.add(parent, child);
                     added++;
@@ -609,6 +679,11 @@ class ExplorerServiceImpl implements ExplorerService {
     @Override
     public void rebuildTree() {
         explorerTreeModel.rebuild();
+    }
+
+    @Override
+    public void clear() {
+        explorerTreeModel.clear();
     }
 
     @Override

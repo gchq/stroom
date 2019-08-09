@@ -1,12 +1,14 @@
 package stroom.processor.impl;
 
+import stroom.dashboard.expression.v1.Val;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
 import stroom.processor.api.InclusiveRanges;
-import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskSummaryRow;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
 import stroom.util.shared.BaseResultList;
 
@@ -48,7 +50,9 @@ public interface ProcessorTaskDao {
                                          Long startTime,
                                          Long endTime);
 
-    BaseResultList<ProcessorTask> find(final FindProcessorTaskCriteria criteria);
+    BaseResultList<ProcessorTask> find(final ExpressionCriteria criteria);
 
-    BaseResultList<ProcessorTaskSummaryRow> findSummary(final FindProcessorTaskCriteria criteria);
+    BaseResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria);
+
+    void search(ExpressionCriteria criteria, AbstractField[] fields, Consumer<Val[]> consumer);
 }

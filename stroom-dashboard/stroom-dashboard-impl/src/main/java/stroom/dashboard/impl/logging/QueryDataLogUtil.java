@@ -24,7 +24,8 @@ import event.logging.BaseAdvancedQueryOperator.Not;
 import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
-import stroom.dictionary.api.DictionaryStore;
+import stroom.collection.api.CollectionService;
+import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -32,10 +33,13 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class QueryDataLogUtil {
     public static void appendExpressionItem(final List<BaseAdvancedQueryItem> items,
-                                            final DictionaryStore dictionaryStore,
+                                            final WordListProvider wordListProvider,
+                                            final CollectionService collectionService,
                                             final ExpressionItem item) {
         if (item == null) {
             return;
@@ -43,7 +47,7 @@ public class QueryDataLogUtil {
 
         if (item.getEnabled()) {
             if (item instanceof ExpressionOperator) {
-                appendOperator(items, dictionaryStore, (ExpressionOperator) item);
+                appendOperator(items, wordListProvider, collectionService, (ExpressionOperator) item);
             } else {
                 final ExpressionTerm expressionTerm = (ExpressionTerm) item;
 
@@ -75,25 +79,18 @@ public class QueryDataLogUtil {
                     case IN:
                         appendTerm(items, field, TermCondition.CONTAINS, value);
                         break;
-                    case IS_DOC_REF: {
-                        final DocRef docRef = expressionTerm.getDocRef();
-                        if (docRef != null) {
-                            appendTerm(items, field, TermCondition.EQUALS, docRef.toInfoString());
-                        }
-                        break;
-                    }
                     case IN_DICTIONARY:
-                        if (dictionaryStore != null) {
-                            DocRef docRef = expressionTerm.getDictionary();
+                        if (wordListProvider != null) {
+                            DocRef docRef = expressionTerm.getDocRef();
                             if (docRef == null) {
-                                final List<DocRef> docRefs = dictionaryStore.findByName(expressionTerm.getValue());
+                                final List<DocRef> docRefs = wordListProvider.findByName(expressionTerm.getValue());
                                 if (docRefs != null && docRefs.size() > 0) {
                                     docRef = docRefs.get(0);
                                 }
                             }
 
                             if (docRef != null) {
-                                final String words = dictionaryStore.getCombinedData(docRef);
+                                final String words = wordListProvider.getCombinedData(docRef);
                                 if (words != null) {
                                     value += " (" + words + ")";
                                 }
@@ -108,13 +105,39 @@ public class QueryDataLogUtil {
                             appendTerm(items, field, TermCondition.CONTAINS, "dictionary: " + value);
                         }
                         break;
+                    case IN_FOLDER:
+                        if (collectionService != null) {
+                            final Set<DocRef> docRefs = collectionService.getDescendants(expressionTerm.getDocRef(), expressionTerm.getField());
+                            if (docRefs != null && docRefs.size() > 0) {
+                                final String words = docRefs.stream().map(DocRef::getUuid).collect(Collectors.joining(","));
+                                if (words != null) {
+                                    value += " (" + words + ")";
+                                }
+                                appendTerm(items, field, TermCondition.CONTAINS, value);
+
+                            } else {
+                                appendTerm(items, field, TermCondition.CONTAINS, "folder: " + value);
+                            }
+
+                        } else {
+                            appendTerm(items, field, TermCondition.CONTAINS, "folder: " + value);
+                        }
+                        break;
+                    case IS_DOC_REF: {
+                        final DocRef docRef = expressionTerm.getDocRef();
+                        if (docRef != null) {
+                            appendTerm(items, field, TermCondition.EQUALS, docRef.toInfoString());
+                        }
+                        break;
+                    }
                 }
             }
         }
     }
 
     private static void appendOperator(final List<BaseAdvancedQueryItem> items,
-                                       final DictionaryStore dictionaryStore,
+                                       final WordListProvider wordListProvider,
+                                       final CollectionService collectionService,
                                        final ExpressionOperator exp) {
         BaseAdvancedQueryOperator operator;
         if (exp.getOp() == Op.NOT) {
@@ -129,7 +152,7 @@ public class QueryDataLogUtil {
 
         if (exp.getChildren() != null) {
             for (final ExpressionItem child : exp.getChildren()) {
-                appendExpressionItem(operator.getAdvancedQueryItems(), dictionaryStore, child);
+                appendExpressionItem(operator.getAdvancedQueryItems(), wordListProvider, collectionService, child);
             }
         }
     }

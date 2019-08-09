@@ -36,7 +36,7 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.query.api.v2.ExpressionItem;
@@ -211,7 +211,7 @@ public class StreamEventLog {
             }
 
             for (long id : findMetaCriteria.getSelectedIdSet()) {
-                idSetOp.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(MetaFieldNames.ID, TermCondition.EQUALS, String.valueOf(id)));
+                idSetOp.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(MetaFields.ID.getName(), TermCondition.EQUALS, String.valueOf(id)));
             }
 
             appendOperator(and.getAdvancedQueryItems(), findMetaCriteria.getExpression());
@@ -297,7 +297,10 @@ public class StreamEventLog {
                 break;
             }
             case IN_DICTIONARY: {
-                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, "dictionary: " + expressionTerm.getDictionary()));
+                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, "dictionary: " + expressionTerm.getDocRef()));
+            }
+            case IN_FOLDER: {
+                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, "folder: " + expressionTerm.getDocRef()));
             }
             case IS_DOC_REF: {
                 items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, "docRef: " + expressionTerm.getDocRef()));

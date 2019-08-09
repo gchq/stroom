@@ -45,6 +45,7 @@ import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.entity.shared.NamedEntity;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.FetchProcessorAction;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -456,22 +457,28 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     }
 
     private void setPipeline(final DocRef pipelineRef) {
-        action.setPipeline(pipelineRef);
+        action.setExpression(ProcessorTaskExpressionUtil.createPipelineExpression(pipelineRef));
         doDataDisplay();
+    }
 
+    private void setFolder(final DocRef folder) {
+        action.setExpression(ProcessorTaskExpressionUtil.createFolderExpression(folder));
+        doDataDisplay();
     }
 
     private void setNullCriteria() {
-        action.setPipeline(null);
+        action.setExpression(null);
         doDataDisplay();
     }
 
     @Override
     public void read(final DocRef docRef, final SharedObject entity) {
-        if (entity instanceof PipelineDoc) {
+        if (docRef == null) {
+            setNullCriteria();
+        } else if (PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
             setPipeline(docRef);
         } else {
-            setNullCriteria();
+            setFolder(docRef);
         }
     }
 

@@ -18,15 +18,16 @@ package stroom.data.store.util;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import stroom.activity.mock.MockActivityModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
+import stroom.collection.mock.MockCollectionModule;
+import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEvent.Handler;
 import stroom.entity.shared.EntityEventBus;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
-import stroom.util.io.BufferFactory;
+import stroom.util.servlet.MockServletModule;
 
 public class ToolModule extends AbstractModule {
     @Override
@@ -41,6 +42,9 @@ public class ToolModule extends AbstractModule {
         install(new stroom.meta.impl.MetaModule());
         install(new MockSecurityContextModule());
         install(new MockInternalStatisticsModule());
+        install(new MockServletModule());
+        install(new MockCollectionModule());
+        install(new MockWordListProviderModule());
     }
 
     @Provides

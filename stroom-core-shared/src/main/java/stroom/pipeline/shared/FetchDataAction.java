@@ -42,7 +42,11 @@ public class FetchDataAction extends Action<AbstractFetchDataResult> {
         this.streamId = streamId;
 
         streamRange = new OffsetRange<>(0L, 1L);
-        pageRange = new OffsetRange<>(segmentId - 1, 1L);
+        if (segmentId != null) {
+            pageRange = new OffsetRange<>(segmentId - 1, 1L);
+        } else {
+            pageRange = new OffsetRange<>(0L, 100L);
+        }
 
         this.showAsHtml = showAsHtml;
     }

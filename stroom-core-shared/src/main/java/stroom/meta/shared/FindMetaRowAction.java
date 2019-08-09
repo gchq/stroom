@@ -16,30 +16,16 @@
 
 package stroom.meta.shared;
 
-import stroom.task.shared.Action;
-import stroom.util.shared.HasCriteria;
-import stroom.util.shared.ResultList;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaRow;
+import stroom.entity.shared.FindAction;
 
-public class FindMetaRowAction extends Action<ResultList<MetaRow>> implements HasCriteria<FindMetaCriteria> {
+public class FindMetaRowAction extends FindAction<FindMetaCriteria, MetaRow> {
     private static final long serialVersionUID = -3560107233301674555L;
-
-    private FindMetaCriteria criteria;
 
     public FindMetaRowAction() {
     }
 
     public FindMetaRowAction(final FindMetaCriteria criteria) {
-        this.criteria = criteria;
-    }
-
-    public FindMetaCriteria getCriteria() {
-        return criteria;
-    }
-
-    public void setCriteria(FindMetaCriteria criteria) {
-        this.criteria = criteria;
+        super(criteria);
     }
 
     @Override

@@ -5,13 +5,16 @@ set -e
 # This avoids permission denied if the data volume is mounted by root
 #if [ "$1" = 'proxy' -a "$(id -u)" = '0' ]; then
 if [ "$(id -u)" = '0' ]; then
+    # shellcheck disable=SC1091
     . /stroom-proxy/add_container_identity_headers.sh /stroom-proxy/logs/extra_headers.txt
 
-    # Done individually to avoid chown-ing ./certs which is a readonly volume
-    chown -R proxy:proxy ./config
-    chown -R proxy:proxy ./content
-    chown -R proxy:proxy ./logs
-    chown -R proxy:proxy ./repo
+    # change ownership of docker volume directories
+    # WARNING: use chown -R with caution as some dirs (e.g. proxy-repo) can
+    # contain MANY files, resulting in a big delay on container start
+    chown proxy:proxy /stroom-proxy/content
+    chown proxy:proxy /stroom-proxy/logs
+    chown proxy:proxy /stroom-proxy/logs/extra_headers.txt
+    chown proxy:proxy /stroom-proxy/repo
 
     # This is a bit of a cludge to get round "Text file in use" errors
     # See: https://github.com/moby/moby/issues/9547

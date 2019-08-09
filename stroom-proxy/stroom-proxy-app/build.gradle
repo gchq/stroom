@@ -17,6 +17,7 @@ dependencies {
     compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-docstore:stroom-docstore-impl-fs')
     compile project(':stroom-dropwizard-common')
+    compile project(':stroom-explorer:stroom-collection-api')
     compile project(':stroom-pipeline')
     compile project(':stroom-proxy:stroom-proxy-repo')
     compile project(':stroom-receive:stroom-receive-common')
@@ -31,6 +32,7 @@ dependencies {
     compile(libs.dropwizard_core) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
+    compile libs.dropwizard_client
     compile libs.dropwizard_jersey
     compile libs.dropwizard_jetty
     compile libs.dropwizard_metrics_healthchecks
@@ -46,15 +48,16 @@ dependencies {
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.jaxb_api
-    compile libs.jersey_client
     compile libs.jetty_server
     compile libs.slf4j_api
     compile libs.stroomDocRef
     compile libs.stroomProxyRemoteApi
     
     testCompile project(':stroom-test-common')
+
     testCompile libs.assertj_core
-    
+    testCompile libs.mockito_junit_jupiter
+
     testCompile libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard

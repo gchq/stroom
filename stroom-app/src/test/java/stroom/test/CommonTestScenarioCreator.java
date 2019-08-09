@@ -30,7 +30,7 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexVolume;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.node.api.NodeInfo;
@@ -81,10 +81,10 @@ public class CommonTestScenarioCreator {
 
     public void createBasicTranslateStreamProcessor(final String feed) {
         final QueryData findStreamQueryData = new QueryData.Builder()
-                .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                        .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed)
-                        .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed)
+                        .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
@@ -113,7 +113,7 @@ public class CommonTestScenarioCreator {
         final DocRef indexRef = indexStore.createDocument(name);
         final IndexDoc index = indexStore.readDocument(indexRef);
         final String volumeGroupName = UUID.randomUUID().toString();
-        indexVolumeGroupService.create(volumeGroupName);
+        indexVolumeGroupService.create();
 
         index.setMaxDocsPerShard(maxDocsPerShard);
         index.setIndexFields(indexFields);
@@ -126,7 +126,9 @@ public class CommonTestScenarioCreator {
                 .findAny()
                 .orElseThrow(() -> new AssertionError("Could not get Index Volume"));
 
-        indexVolumeService.addVolumeToGroup(indexVolume.getId(), volumeGroupName);
+
+        //TODO:
+//        indexVolumeService.addVolumeToGroup(indexVolume.getId(), volumeGroupName);
 
         return indexRef;
     }

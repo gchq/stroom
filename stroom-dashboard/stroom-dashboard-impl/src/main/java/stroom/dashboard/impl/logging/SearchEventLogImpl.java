@@ -28,9 +28,12 @@ import event.logging.Search;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.api.DictionaryStore;
+import stroom.collection.api.CollectionService;
+import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.explorer.api.ExplorerService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.api.Security;
 
@@ -41,15 +44,21 @@ public class SearchEventLogImpl implements SearchEventLog {
 
     private final StroomEventLoggingService eventLoggingService;
     private final Security security;
-    private final DictionaryStore dictionaryStore;
+    private final WordListProvider wordListProvider;
+    private final CollectionService collectionService;
+    private final ExplorerService explorerService;
 
     @Inject
     public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
                               final Security security,
-                              final DictionaryStore dictionaryStore) {
+                              final WordListProvider wordListProvider,
+                              final CollectionService collectionService,
+                              final ExplorerService explorerService) {
         this.eventLoggingService = eventLoggingService;
         this.security = security;
-        this.dictionaryStore = dictionaryStore;
+        this.wordListProvider = wordListProvider;
+        this.collectionService = collectionService;
+        this.explorerService = explorerService;
     }
 
     @Override
@@ -170,10 +179,15 @@ public class SearchEventLogImpl implements SearchEventLog {
             return null;
         }
 
-//        final DataSource dataSource = dataSourceProviderRegistry.getDataSource(docRef);
-//        if (dataSource == null) {
-//            return null;
-//        }
+        try {
+            final DocRefInfo docRefInfo = explorerService.info(docRef);
+            if (docRefInfo != null) {
+                return docRefInfo.getDocRef().getName();
+            }
+        } catch (final RuntimeException e) {
+            // We might not have an explorer handler capable of getting info.
+            LOGGER.debug(e.getMessage(), e);
+        }
 
         return docRef.getName();
     }
@@ -194,7 +208,7 @@ public class SearchEventLogImpl implements SearchEventLog {
         final Query query = new Query();
         final Advanced advanced = new Advanced();
         query.setAdvanced(advanced);
-        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), dictionaryStore, expression);
+        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), wordListProvider, collectionService, expression);
         return query;
     }
 }

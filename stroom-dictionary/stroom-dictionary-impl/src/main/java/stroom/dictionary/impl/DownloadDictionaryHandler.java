@@ -16,7 +16,6 @@
 
 package stroom.dictionary.impl;
 
-import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DownloadDictionaryAction;
 import stroom.util.shared.EntityServiceException;

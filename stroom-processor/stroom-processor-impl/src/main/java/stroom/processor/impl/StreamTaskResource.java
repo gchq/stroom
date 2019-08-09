@@ -21,10 +21,14 @@ package stroom.processor.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.shared.FindProcessorFilterCriteria;
-import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterDataSource;
+import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Builder;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.util.RestResource;
 import stroom.util.logging.LogUtil;
@@ -48,6 +52,7 @@ import java.util.List;
 import static java.util.Comparator.comparingInt;
 import static stroom.processor.impl.SearchKeywords.SORT_NEXT;
 import static stroom.processor.impl.SearchKeywords.addFiltering;
+import static stroom.processor.impl.SearchKeywords.addSorting;
 
 @Api(value = "stream task - /v1")
 @Path("/streamtasks/v1")
@@ -115,7 +120,7 @@ public class StreamTaskResource implements RestResource {
             @QueryParam("filter") String filter) {
         // TODO: Authorisation
 
-        final FindProcessorFilterCriteria criteria = new FindProcessorFilterCriteria();
+        final ExpressionCriteria criteria = new ExpressionCriteria();
 
         // SORTING
         Sort.Direction direction = Direction.ASCENDING;
@@ -125,8 +130,8 @@ public class StreamTaskResource implements RestResource {
             } catch (IllegalArgumentException exception) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("Invalid sortDirection field").build();
             }
-            if (sortBy.equalsIgnoreCase(FindProcessorTaskCriteria.FIELD_PIPELINE_UUID)
-                    || sortBy.equalsIgnoreCase(FindProcessorTaskCriteria.FIELD_PRIORITY)) {
+            if (sortBy.equalsIgnoreCase(ProcessorTaskDataSource.FIELD_PIPELINE)
+                    || sortBy.equalsIgnoreCase(ProcessorTaskDataSource.FIELD_PRIORITY)) {
                 criteria.setSort(sortBy, direction, false);
             } else if (sortBy.equalsIgnoreCase(FIELD_PROGRESS)) {
                 // Sorting progress is done below -- this is here for completeness.
@@ -145,11 +150,16 @@ public class StreamTaskResource implements RestResource {
             return Response.status(Response.Status.BAD_REQUEST).entity("Page size, if used, must be greater than 1").build();
         }
 
-        addFiltering(filter, criteria);
+        final ExpressionOperator.Builder builder = new Builder();
+        addFiltering(filter, builder);
+
+        addSorting(filter, criteria);
 
         if (!securityContext.isAdmin()) {
-            criteria.setCreateUser(securityContext.getUserId());
+            builder.addTerm(ProcessorFilterDataSource.CREATE_USER, Condition.EQUALS, securityContext.getUserId());
         }
+
+        criteria.setExpression(builder.build());
 
         // We have to load everything because we need to sort by progress, and we can't do that on the database.
         final List<StreamTask> values = find(criteria);
@@ -178,7 +188,7 @@ public class StreamTaskResource implements RestResource {
         return Response.ok(response).build();
     }
 
-    private List<StreamTask> find(final FindProcessorFilterCriteria criteria) {
+    private List<StreamTask> find(final ExpressionCriteria criteria) {
 
         final BaseResultList<ProcessorFilter> processorFilters = processorFilterService
                 .find(criteria);

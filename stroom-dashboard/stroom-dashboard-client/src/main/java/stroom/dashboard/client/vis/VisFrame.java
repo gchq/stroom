@@ -196,7 +196,7 @@ public class VisFrame extends Frame implements VisPane {
         params.set(2, new JSONObject(data));
 
         final JSONObject message = new JSONObject();
-        message.put("functionName", new JSONString("visualisationManager.setMeta"));
+        message.put("functionName", new JSONString("visualisationManager.setData"));
         message.put("params", params);
 
         messageSupport.postMessage(message);

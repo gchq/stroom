@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserTokenUtil;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
@@ -28,7 +29,6 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserToken;
-import stroom.security.api.UserTokenUtil;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -47,7 +47,7 @@ class SecurityContextImpl implements SecurityContext {
             .group(false)
             .build();
 
-    private final DocumentPermissionsCache documentPermissionsCache;
+    private final UserDocumentPermissionsCache userDocumentPermissionsCache;
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
     private final UserCache userCache;
@@ -57,14 +57,14 @@ class SecurityContextImpl implements SecurityContext {
 
     @Inject
     SecurityContextImpl(
-            final DocumentPermissionsCache documentPermissionsCache,
+            final UserDocumentPermissionsCache userDocumentPermissionsCache,
             final UserGroupsCache userGroupsCache,
             final UserAppPermissionsCache userAppPermissionsCache,
             final UserCache userCache,
             final DocumentPermissionService documentPermissionService,
             final DocumentTypePermissions documentTypePermissions,
             final ApiTokenCache apiTokenCache) {
-        this.documentPermissionsCache = documentPermissionsCache;
+        this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userCache = userCache;
@@ -91,7 +91,7 @@ class SecurityContextImpl implements SecurityContext {
             } else if (USER.equals(type)) {
                 if (name.length() > 0) {
                     final Optional<User> optional = userCache.get(name);
-                    if (!optional.isPresent()) {
+                    if (optional.isEmpty()) {
                         final String message = "Unable to push user '" + name + "' as user is unknown";
                         LOGGER.error(message);
                         throw new AuthenticationException(message);
@@ -184,22 +184,15 @@ class SecurityContextImpl implements SecurityContext {
 
     private boolean hasAppPermission(final User userRef, final String permission) {
         // See if the user has an explicit permission.
-        boolean result = hasUserAppPermission(userRef, permission);
-
-        // See if the user belongs to a group that has permission.
-        if (!result) {
-            final List<User> userGroups = userGroupsCache.get(userRef.getUuid());
-            result = hasUserGroupsAppPermission(userGroups, permission);
+        if (hasUserAppPermission(userRef, permission)) {
+            return true;
         }
 
-        return result;
-    }
-
-    private boolean hasUserGroupsAppPermission(final List<User> userGroups, final String permission) {
+        // See if the user belongs to a group that has permission.
+        final List<User> userGroups = userGroupsCache.get(userRef.getUuid());
         if (userGroups != null) {
             for (final User userGroup : userGroups) {
-                final boolean result = hasUserAppPermission(userGroup, permission);
-                if (result) {
+                if (hasUserAppPermission(userGroup, permission)) {
                     return true;
                 }
             }
@@ -209,14 +202,14 @@ class SecurityContextImpl implements SecurityContext {
 
     private boolean hasUserAppPermission(final User userRef, final String permission) {
         final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
-        if (userAppPermissions != null) {
-            return userAppPermissions.getUserPermissons().contains(permission);
+        if (userAppPermissions == null) {
+            return false;
         }
-        return false;
+        return userAppPermissions.getUserPermissons().contains(permission);
     }
 
     @Override
-    public boolean hasDocumentPermission(final String documentType, final String documentId, final String permission) {
+    public boolean hasDocumentPermission(final String documentType, final String documentUuid, final String permission) {
         // Let administrators do anything.
         if (isAdmin()) {
             return true;
@@ -230,37 +223,25 @@ class SecurityContextImpl implements SecurityContext {
             throw new AuthenticationException("No user is currently logged in");
         }
 
-        final DocRef docRef = new DocRef(documentType, documentId);
-        boolean result = hasDocumentPermission(userRef, docRef, permission);
-
-        // If the user doesn't have read permission then check to see if the current task has been set to have elevated permissions.
-        if (!result && DocumentPermissionNames.READ.equals(permission)) {
-            if (CurrentUserState.isElevatePermissions()) {
-                result = hasDocumentPermission(userRef, docRef, DocumentPermissionNames.USE);
-            }
+        final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userRef.getUuid());
+        if (userDocumentPermissions == null) {
+            return false;
         }
 
-        return result;
+        return hasDocumentPermission(userRef, documentUuid, permission);
     }
 
-    private boolean hasDocumentPermission(final User userRef, final DocRef docRef, final String permission) {
+    private boolean hasDocumentPermission(final User userRef, final String documentUuid, final String permission) {
         // See if the user has an explicit permission.
-        boolean result = hasUserDocumentPermission(userRef, docRef, permission);
+        if (hasUserDocumentPermission(userRef.getUuid(), documentUuid, permission)) {
+            return true;
+        }
 
         // See if the user belongs to a group that has permission.
-        if (!result) {
-            final List<User> userGroups = userGroupsCache.get(userRef.getUuid());
-            result = hasUserGroupsDocumentPermission(userGroups, docRef, permission);
-        }
-
-        return result;
-    }
-
-    private boolean hasUserGroupsDocumentPermission(final List<User> userGroups, final DocRef docRef, final String permission) {
+        final List<User> userGroups = userGroupsCache.get(userRef.getUuid());
         if (userGroups != null) {
             for (final User userGroup : userGroups) {
-                final boolean result = hasUserDocumentPermission(userGroup, docRef, permission);
-                if (result) {
+                if (hasUserDocumentPermission(userGroup.getUuid(), documentUuid, permission)) {
                     return true;
                 }
             }
@@ -268,25 +249,13 @@ class SecurityContextImpl implements SecurityContext {
         return false;
     }
 
-    private boolean hasUserDocumentPermission(final User userRef,
-                                              final DocRef docRef,
-                                              final String permission) {
-        final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef.getUuid());
-        if (documentPermissions != null) {
-            final Set<String> permissions = documentPermissions.getPermissionsForUser(userRef.getUuid());
-            if (permissions != null) {
-                String perm = permission;
-                while (perm != null) {
-                    if (permissions.contains(perm)) {
-                        return true;
-                    }
-
-                    // If the user doesn't explicitly have this permission then see if they have a higher permission that infers this one.
-                    perm = DocumentPermissionNames.getHigherPermission(perm);
-                }
-            }
+    private boolean hasUserDocumentPermission(final String userUuid, final String documentUuid, final String permission) {
+        final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userUuid);
+        if (userDocumentPermissions == null) {
+            return false;
         }
-        return false;
+
+        return userDocumentPermissions.hasDocumentPermission(documentUuid, permission);
     }
 
     @Override
@@ -297,11 +266,7 @@ class SecurityContextImpl implements SecurityContext {
         // If no user is present then don't create permissions.
         if (userRef != null) {
             if (hasDocumentPermission(documentType, documentUuid, DocumentPermissionNames.OWNER)) {
-                final DocRef docRef = new DocRef(documentType, documentUuid);
                 documentPermissionService.clearDocumentPermissions(documentUuid);
-
-                // Make sure cache updates for the document.
-                documentPermissionsCache.remove(docRef.getUuid());
             }
         }
     }
@@ -330,9 +295,6 @@ class SecurityContextImpl implements SecurityContext {
                 // Inherit permissions from the parent folder if there is one.
                 // TODO : This should be part of the explorer service.
                 copyPermissions(sourceType, sourceUuid, documentType, documentUuid);
-
-                // Make sure cache updates for the document.
-                documentPermissionsCache.remove(docRef.getUuid());
             }
         }
     }

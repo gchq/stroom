@@ -23,8 +23,11 @@ import com.gwtplatform.mvp.client.View;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.processor.shared.FindProcessorTaskCriteria;
-import stroom.processor.shared.ProcessorTaskSummaryRow;
+import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorTaskSummary;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 
 public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPresenter.StreamTaskView>
         implements HasDocumentRead<SharedObject> {
@@ -53,25 +56,21 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
             // Clear the task list.
             processorTaskListPresenter.clear();
 
-            final ProcessorTaskSummaryRow row = processorTaskSummaryPresenter.getSelectionModel().getSelected();
+            final ProcessorTaskSummary row = processorTaskSummaryPresenter.getSelectionModel().getSelected();
 
             if (row != null) {
-                final FindProcessorTaskCriteria findProcessorTaskCriteria = processorTaskListPresenter.getCriteria();
-
-                final String pipelineUuid = row.getPipeline();
-
-                findProcessorTaskCriteria.obtainPipelineUuidCriteria().clear();
-                if (pipelineUuid != null) {
-                    findProcessorTaskCriteria.obtainPipelineUuidCriteria().setString(pipelineUuid);
+                final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.AND);
+                if (row.getPipeline() != null) {
+                    root.addTerm(ProcessorTaskDataSource.PIPELINE_UUID, Condition.IS_DOC_REF, row.getPipeline());
+                }
+//                if (row.getFeed() != null) {
+//                    root.addTerm(ProcessorTaskDataSource.FEED_UUID, Condition.IS_DOC_REF, row.getFeed());
+//                }
+                if (row.getStatus() != null) {
+                    root.addTerm(ProcessorTaskDataSource.STATUS, Condition.EQUALS, row.getStatus().getDisplayValue());
                 }
 
-//                findStreamTaskCriteria.obtainFeedNameSet().clear();
-//                findStreamTaskCriteria.obtainFeedNameSet().add(row.getLabel().get(FindProcessorTaskCriteria.SUMMARY_POS_FEED));
-
-                findProcessorTaskCriteria.obtainTaskStatusSet().clear();
-                findProcessorTaskCriteria.obtainTaskStatusSet().add(row.getStatus());
-
-                processorTaskListPresenter.getDataProvider().refresh();
+                processorTaskListPresenter.setExpression(root.build());
             }
         }));
     }

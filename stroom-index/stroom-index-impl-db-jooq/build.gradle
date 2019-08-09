@@ -42,7 +42,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         inputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'index_volume|index_volume_group|index_volume_group_link|index_shard'
+                        includes = 'index_volume|index_volume_group|index_shard'
 
                         // We don't want to include flyway versioning
                         excludes = 'index_schema_history'

@@ -14,6 +14,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.security.api.Security;
 import stroom.statistics.impl.sql.SQLStatisticCacheImpl;
 import stroom.statistics.impl.sql.StatisticsQueryService;
 import stroom.statistics.impl.sql.entity.StatisticStoreCache;
@@ -38,44 +39,51 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     private final StatisticsDataSourceProvider statisticsDataSourceProvider;
     private final StatisticStoreCache statisticStoreCache;
     private final SearchResponseCreatorManager searchResponseCreatorManager;
+    private final Security security;
 
     @Inject
     public StatisticsQueryServiceImpl(final StatisticsDataSourceProvider statisticsDataSourceProvider,
                                       final StatisticStoreCache statisticStoreCache,
-                                      final SqlStatisticsSearchResponseCreatorManager searchResponseCreatorManager) {
+                                      final SqlStatisticsSearchResponseCreatorManager searchResponseCreatorManager,
+                                      final Security security) {
         this.statisticsDataSourceProvider = statisticsDataSourceProvider;
         this.statisticStoreCache = statisticStoreCache;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
+        this.security = security;
     }
 
 
     @Override
     public DataSource getDataSource(final DocRef docRef) {
-        LOGGER.debug("getDataSource called for docRef {}", docRef);
-        return statisticsDataSourceProvider.getDataSource(docRef);
+        return security.useAsReadResult(() -> {
+            LOGGER.debug("getDataSource called for docRef {}", docRef);
+            return statisticsDataSourceProvider.getDataSource(docRef);
+        });
     }
 
     @Override
     public SearchResponse search(final SearchRequest searchRequest) {
-        LOGGER.debug("search called for searchRequest {}", searchRequest);
+        return security.useAsReadResult(() -> {
+            LOGGER.debug("search called for searchRequest {}", searchRequest);
 
-        final DocRef docRef = Preconditions.checkNotNull(
-                Preconditions.checkNotNull(
-                        Preconditions.checkNotNull(searchRequest)
-                                .getQuery())
-                        .getDataSource());
-        Preconditions.checkNotNull(searchRequest.getResultRequests(), "searchRequest must have at least one resultRequest");
-        Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(), "searchRequest must have at least one resultRequest");
+            final DocRef docRef = Preconditions.checkNotNull(
+                    Preconditions.checkNotNull(
+                            Preconditions.checkNotNull(searchRequest)
+                                    .getQuery())
+                            .getDataSource());
+            Preconditions.checkNotNull(searchRequest.getResultRequests(), "searchRequest must have at least one resultRequest");
+            Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(), "searchRequest must have at least one resultRequest");
 
-        final StatisticStoreDoc statisticStoreEntity = statisticStoreCache.getStatisticsDataSource(docRef);
+            final StatisticStoreDoc statisticStoreEntity = statisticStoreCache.getStatisticsDataSource(docRef);
 
-        if (statisticStoreEntity == null) {
-            return buildEmptyResponse(
-                    searchRequest,
-                    "Statistic configuration could not be found for uuid " + docRef.getUuid());
-        } else {
-            return buildResponse(searchRequest, statisticStoreEntity);
-        }
+            if (statisticStoreEntity == null) {
+                return buildEmptyResponse(
+                        searchRequest,
+                        "Statistic configuration could not be found for uuid " + docRef.getUuid());
+            } else {
+                return buildResponse(searchRequest, statisticStoreEntity);
+            }
+        });
     }
 
     @Override

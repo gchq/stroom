@@ -6,7 +6,7 @@ import stroom.activity.mock.MockActivityModule;
 import stroom.cache.impl.CacheModule;
 import stroom.core.dataprocess.PipelineStreamTaskModule;
 import stroom.data.store.mock.MockStreamStoreModule;
-import stroom.dictionary.impl.MockDictionaryModule;
+import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.MockFeedModule;
 import stroom.importexport.impl.ImportExportModule;
@@ -22,6 +22,7 @@ import stroom.security.shared.User;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.impl.MockTaskModule;
 import stroom.util.pipeline.scope.PipelineScopeModule;
+import stroom.util.servlet.MockServletModule;
 
 import java.util.List;
 import java.util.UUID;
@@ -37,7 +38,7 @@ public class MockServiceModule extends AbstractModule {
         install(new CacheModule());
         install(new MockMetaModule());
         install(new MockStreamStoreModule());
-        install(new MockDictionaryModule());
+        install(new MockWordListProviderModule());
         install(new stroom.docstore.impl.DocStoreModule());
         install(new stroom.docstore.impl.memory.MemoryPersistenceModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
@@ -63,6 +64,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockProcessorModule());
         install(new MockTaskModule());
         install(new stroom.test.MockTestControlModule());
+        install(new MockServletModule());
         install(new MockXmlSchemaModule());
 //        install(new stroom.document.DocumentModule());
 //        install(new stroom.entity.MockEntityModule());

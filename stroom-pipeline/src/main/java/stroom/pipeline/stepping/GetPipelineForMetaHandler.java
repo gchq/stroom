@@ -17,13 +17,13 @@
 
 package stroom.pipeline.stepping;
 
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.ExpressionUtil;
-import stroom.meta.shared.FindMetaCriteria;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.explorer.shared.SharedDocRef;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
+import stroom.meta.shared.MetaService;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForMetaAction;
@@ -102,7 +102,7 @@ class GetPipelineForMetaHandler extends AbstractTaskHandler<GetPipelineForMetaAc
         }
 
         return security.asProcessingUserResult(() -> {
-            final FindMetaCriteria criteria = new FindMetaCriteria(ExpressionUtil.createDataIdExpression(id));
+            final FindMetaCriteria criteria = new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(id));
             final List<Meta> streamList = metaService.find(criteria);
             if (streamList != null && streamList.size() > 0) {
                 return streamList.get(0);
@@ -118,7 +118,7 @@ class GetPipelineForMetaHandler extends AbstractTaskHandler<GetPipelineForMetaAc
         }
 
         return security.asProcessingUserResult(() -> {
-            final FindMetaCriteria criteria = new FindMetaCriteria(ExpressionUtil.createParentIdExpression(id));
+            final FindMetaCriteria criteria = new FindMetaCriteria(MetaExpressionUtil.createParentIdExpression(id));
             return metaService.find(criteria).getFirst();
         });
     }

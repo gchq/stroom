@@ -2,71 +2,50 @@ package stroom.proxy.app.handler;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ForwardStreamConfig {
     private boolean isForwardingEnabled = false;
-    private String forwardUrl;
-    private Integer forwardTimeoutMs = 30000;
-    private Integer forwardDelayMs;
-    private Integer forwardChunkSize;
+    private String userAgent;
+    private List<ForwardDestinationConfig> forwardDestinations = new ArrayList<>();
 
+    /**
+     * True if received streams should be forwarded to another stroom(-proxy) instance.
+     */
     @JsonProperty
     boolean isForwardingEnabled() {
         return isForwardingEnabled;
     }
 
+    @JsonProperty
     void setForwardingEnabled(final boolean forwardingEnabled) {
         isForwardingEnabled = forwardingEnabled;
     }
 
     /**
-     * The URL's to forward onto. This is pass-through mode if repoDir is not set
+     * The string to use for the User-Agent request property when forwarding data.
      */
     @JsonProperty
-    public String getForwardUrl() {
-        return forwardUrl;
+    String getUserAgent() {
+        return userAgent;
     }
 
     @JsonProperty
-    public void setForwardUrl(final String forwardUrl) {
-        this.forwardUrl = forwardUrl;
+    void setUserAgent(final String userAgent) {
+        this.userAgent = userAgent;
     }
 
     /**
-     * Time out when forwarding
+     * A list of destinations to forward each batch of data to
      */
     @JsonProperty
-    public Integer getForwardTimeoutMs() {
-        return forwardTimeoutMs;
+    List<ForwardDestinationConfig> getForwardDestinations() {
+        return forwardDestinations;
     }
 
     @JsonProperty
-    public void setForwardTimeoutMs(final Integer forwardTimeoutMs) {
-        this.forwardTimeoutMs = forwardTimeoutMs;
-    }
-
-    /**
-     * Debug setting to add a delay
-     */
-    @JsonProperty
-    public Integer getForwardDelayMs() {
-        return forwardDelayMs;
-    }
-
-    @JsonProperty
-    public void setForwardDelayMs(final Integer forwardDelayMs) {
-        this.forwardDelayMs = forwardDelayMs;
-    }
-
-    /**
-     * Chunk size to use over http(s) if not set requires buffer to be fully loaded into memory
-     */
-    @JsonProperty
-    public Integer getForwardChunkSize() {
-        return forwardChunkSize;
-    }
-
-    @JsonProperty
-    public void setForwardChunkSize(final Integer forwardChunkSize) {
-        this.forwardChunkSize = forwardChunkSize;
+    void setForwardDestinations(final List<ForwardDestinationConfig> forwardDestinations) {
+        this.forwardDestinations = forwardDestinations;
     }
 }

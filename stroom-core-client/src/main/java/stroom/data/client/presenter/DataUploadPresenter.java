@@ -26,6 +26,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
 import stroom.item.client.StringListBox;
 import stroom.data.client.view.FileData;
 import stroom.data.client.view.FileData.Status;
@@ -40,7 +41,7 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.DataUploadView> {
-    private String feedName;
+    private DocRef feedRef;
     private MetaPresenter metaPresenter;
 
     @Inject
@@ -70,7 +71,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
                 final Long effectiveMs = getView().getEffectiveDate();
                 final UploadDataAction action = new UploadDataAction(
                         resourceKey,
-                        feedName,
+                        feedRef.getName(),
                         getView().getType().getSelected(),
                         effectiveMs,
                         getView().getMetaData(),
@@ -96,7 +97,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
     }
 
     public boolean valid() {
-        if (feedName == null) {
+        if (feedRef == null) {
             AlertEvent.fireWarn(this, "Feed not set!", null);
             return false;
         }
@@ -123,9 +124,9 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
         getView().getForm().submit();
     }
 
-    public void show(final MetaPresenter streamPresenter, final String feedName) {
+    public void show(final MetaPresenter streamPresenter, final DocRef feedRef) {
         this.metaPresenter = streamPresenter;
-        this.feedName = feedName;
+        this.feedRef = feedRef;
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override

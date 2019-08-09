@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 class TestYamlUtil {
-
     @Test
     void testDevYaml() throws FileNotFoundException {
         // Load dev.yaml

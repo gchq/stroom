@@ -162,10 +162,14 @@ class GlobalConfigService {
                     "Saving property [{}] with new value [{}]",
                     configProperty.getName(), configProperty.getValue()));
 
-
             AuditUtil.stamp(securityContext.getUserId(), configProperty);
 
-            final ConfigProperty result = dao.update(configProperty);
+            ConfigProperty result;
+            if (configProperty.getId() == null) {
+                result = dao.create(configProperty);
+            } else {
+                result = dao.update(configProperty);
+            }
 
 
 //                // Change value in DB

@@ -1,0 +1,8 @@
+ext.moduleName = 'stroom.dictionary.mock'
+
+dependencies {
+    compile project(':stroom-dictionary:stroom-dictionary-api')
+    
+    compile libs.stroomDocRef
+    compile libs.guice4
+}

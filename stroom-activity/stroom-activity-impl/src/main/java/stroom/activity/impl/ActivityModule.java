@@ -3,6 +3,7 @@ package stroom.activity.impl;
 import com.google.inject.AbstractModule;
 import stroom.activity.api.ActivityService;
 import stroom.activity.api.CurrentActivity;
+import stroom.activity.shared.ValidateActivityAction;
 import stroom.activity.shared.CreateActivityAction;
 import stroom.activity.shared.DeleteActivityAction;
 import stroom.activity.shared.FetchActivityAction;
@@ -23,7 +24,8 @@ public class ActivityModule extends AbstractModule {
                 .bind(DeleteActivityAction.class, DeleteActivityHandler.class)
                 .bind(FetchActivityAction.class, FetchActivityHandler.class)
                 .bind(FindActivityAction.class, FindActivityHandler.class)
-                .bind(SetCurrentActivityAction.class, SetCurrentActivityHandler.class);
+                .bind(SetCurrentActivityAction.class, SetCurrentActivityHandler.class)
+                .bind(ValidateActivityAction.class, ValidateActivityHandler.class);
     }
 
     @Override

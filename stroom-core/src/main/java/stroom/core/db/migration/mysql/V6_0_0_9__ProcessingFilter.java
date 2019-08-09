@@ -5,13 +5,17 @@ import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.core.db.migration._V07_00_00.streamstore.shared._V07_00_00_FindStreamCriteria;
-import stroom.dictionary.shared.DictionaryDoc;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DocRefField;
 import stroom.docref.DocRef;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.entity.shared.SQLNameConstants;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.IdRange;
 import stroom.util.shared.Range;
@@ -23,16 +27,10 @@ import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -45,8 +43,6 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
     private JAXBContext queryDataJaxb;
     private JAXBException jaxbException;
     private final boolean writeUpdates;
-
-    private static final String UPGRADE_USER = "upgrade";
 
     public V6_0_0_9__ProcessingFilter() {
         this(true);
@@ -79,18 +75,16 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
                 while (rs.next()) {
                     try {
                         final long id = rs.getLong(1);
-                        final Blob datBlob = rs.getBlob(2);
+                        String dat = rs.getString(2);
 
-                        int blobLength = (int) datBlob.length();
-                        byte[] blobAsBytes = datBlob.getBytes(1, blobLength);
+                        if (dat != null) {
+                            dat = dat.replaceAll("<idSet>", "<id>");
+                            dat = dat.replaceAll("</idSet>", "</id>");
+                        }
 
-                        datBlob.free();
+                        final _V07_00_00_FindStreamCriteria streamCriteria = unmarshalCriteria(dat);
 
-                        final String datAsString = new String(blobAsBytes);
-
-                        final _V07_00_00_FindStreamCriteria streamCriteria = unmarshalCriteria(datAsString);
-
-                        findStreamCriteriaStrById.put(id, datAsString);
+                        findStreamCriteriaStrById.put(id, dat);
                         findStreamCriteriaById.put(id, streamCriteria);
                     } catch (final Exception e) {
                         LOGGER.error("Could not get old stream criteria {}", e.getLocalizedMessage());
@@ -99,6 +93,9 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
                 }
             }
         }
+
+        // Get all the folder ID's to DocRefs
+        final Map<Long, DocRef> folderDocRefsById = getDocRefsById(connection, ExplorerConstants.FOLDER, SQLNameConstants.FOLDER);
 
         // Get all the feed ID's to Names
         final Map<Long, String> feedNamesById = getStringFieldById(connection, "FD", "NAME");
@@ -109,28 +106,17 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
         // Get all the stream type ID's to names
         final Map<Long, DocRef> pipeDocRefsById = getDocRefsById(connection, PipelineDoc.DOCUMENT_TYPE, "PIPE");
 
-        // Get all the feed to folder names
-        final Map<Long, Long> folderByFeedId = getFkById(connection, "FD", "FK_FOLDER_ID");
-
-        // Get all the folder parenting information
-        final Map<Long, IdTreeNode> folders = getIdentifiedTree(connection, "FOLDER", "FK_FOLDER_ID");
-
         // Convert the existing criteria to query data/expression based
         final Map<Long, String> queryDataStrById = new HashMap<>();
 
-        // Keep track of the dictionaries created for folder ID sets
-        final ConcurrentHashMap<Long, Optional<DocRef>> dictionariesByFolder = new ConcurrentHashMap<>();
-
         for (final Map.Entry<Long, _V07_00_00_FindStreamCriteria> criteriaEntry : findStreamCriteriaById.entrySet()) {
             try {
-                final QueryData queryData = this.convertFindStreamCriteria(connection,
+                final QueryData queryData = this.convertFindStreamCriteria(
                         criteriaEntry.getValue(),
                         l -> Optional.ofNullable(feedNamesById.get(l)),
                         l -> Optional.ofNullable(streamTypeNamesById.get(l)),
                         l -> Optional.ofNullable(pipeDocRefsById.get(l)),
-                        folderByFeedId,
-                        l -> Optional.ofNullable(folders.get(l)),
-                        dictionariesByFolder);
+                        l -> Optional.ofNullable(folderDocRefsById.get(l)));
                 final String queryDataStr = this.marshalQueryData(queryData);
                 queryDataStrById.put(criteriaEntry.getKey(), queryDataStr);
 
@@ -176,101 +162,61 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
         }
     }
 
-    private QueryData convertFindStreamCriteria(final Connection connection,
-                                                final _V07_00_00_FindStreamCriteria criteria,
+    private QueryData convertFindStreamCriteria(final _V07_00_00_FindStreamCriteria criteria,
                                                 final Function<Long, Optional<String>> feedNamesById,
                                                 final Function<Long, Optional<String>> streamTypeNamesById,
                                                 final Function<Long, Optional<DocRef>> pipeDocRefsById,
-                                                final Map<Long, Long> folderByFeedId,
-                                                final Function<Long, Optional<IdTreeNode>> folders,
-                                                final ConcurrentHashMap<Long, Optional<DocRef>> dictionariesByFolder) {
+                                                final Function<Long, Optional<DocRef>> folderDocRefsById) {
 
         final ExpressionOperator.Builder rootAnd = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
 
-        // Feed Folders
-        final List<Optional<DocRef>> feedDictionariesToInclude = new ArrayList<>();
+        // Include folders
+        final Set<Long> folderIdSet = criteria.obtainFolderIdSet().getSet();
+        if (folderIdSet.size() > 0) {
+            ExpressionOperator.Builder parent = rootAnd;
 
-        for (final Long folderId : criteria.obtainFolderIdSet()) {
-            final Optional<IdTreeNode> folderNodeOpt = folders.apply(folderId);
+            if (folderIdSet.size() > 1) {
+                parent = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
+            }
 
-            if (folderNodeOpt.isPresent()) {
-                IdTreeNode folderNode = folderNodeOpt.get();
+            for (final Long folderId : folderIdSet) {
+                final DocRef folderDocRef = folderDocRefsById.apply(folderId).orElseGet(() -> {
+                    LOGGER.warn("Could not find folder with id {}", folderId);
+                    return new DocRef(ExplorerConstants.FOLDER, "--missing folder (" + folderId + ")");
+                });
+                parent.addTerm(MetaFields.FEED, Condition.IN_FOLDER, folderDocRef);
+            }
 
-                final List<Long> folderIds = new ArrayList<>();
-                folderNode.recurse(folderIds::add, criteria.obtainFolderIdSet().isDeep());
-
-                final Set<String> feedNames = folderByFeedId.entrySet().stream()
-                        .filter(e -> folderIds.contains(e.getValue()))
-                        .map(Map.Entry::getKey)
-                        .map(feedNamesById)
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .collect(Collectors.toSet());
-
-                final Optional<DocRef> feedIdDict = dictionariesByFolder.computeIfAbsent(folderId,
-                        fid -> createDictionary(connection, fid, criteria.obtainFolderIdSet().isDeep(), feedNames)
-                );
-                feedDictionariesToInclude.add(feedIdDict);
-            } else {
-                LOGGER.warn("Could not find folder for ID {}", folderId);
+            if (folderIdSet.size() > 1) {
+                rootAnd.addOperator(parent.build());
             }
         }
 
         // Include Feeds
-        // Individual ID's AND folders specified, wrap them in an OR
         final Set<Long> includeFeedIds = criteria.obtainFeeds().obtainInclude().getSet();
-        if ((includeFeedIds.size() > 0) && (feedDictionariesToInclude.size() > 0)) {
-            final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-            applyIncludesTerm(or, includeFeedIds, feedNamesById, MetaFieldNames.FEED_NAME);
-            feedDictionariesToInclude.stream()
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .forEach(dict ->
-                            or.addTerm(new ExpressionTerm.Builder()
-                                    .field(MetaFieldNames.FEED_NAME)
-                                    .condition(ExpressionTerm.Condition.IN_DICTIONARY)
-                                    .dictionary(dict)
-                                    .build()
-                            )
-                    );
-            rootAnd.addOperator(or.build());
-        } else if (includeFeedIds.size() > 0) {
-            applyIncludesTerm(rootAnd, includeFeedIds, feedNamesById, MetaFieldNames.FEED_NAME);
-        } else if (feedDictionariesToInclude.size() > 0) {
-            final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-            feedDictionariesToInclude.stream()
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .forEach(dict ->
-                            or.addTerm(new ExpressionTerm.Builder()
-                                    .field(MetaFieldNames.FEED_NAME)
-                                    .condition(ExpressionTerm.Condition.IN_DICTIONARY)
-                                    .dictionary(dict)
-                                    .build()
-                            )
-                    );
-            rootAnd.addOperator(or.build());
+        if (includeFeedIds.size() > 0) {
+            applyIncludesTerm(rootAnd, includeFeedIds, feedNamesById, MetaFields.FEED_NAME);
         }
 
         // Exclude Feeds
         final Set<Long> excludeFeedIds = criteria.obtainFeeds().obtainExclude().getSet();
         if (excludeFeedIds.size() > 0) {
             final ExpressionOperator.Builder not = new ExpressionOperator.Builder(ExpressionOperator.Op.NOT);
-            applyIncludesTerm(not, excludeFeedIds, feedNamesById, MetaFieldNames.FEED_NAME);
+            applyIncludesTerm(not, excludeFeedIds, feedNamesById, MetaFields.FEED_NAME);
             rootAnd.addOperator(not.build());
         }
 
         // Stream Types
         final Set<Long> streamTypeIds = criteria.obtainStreamTypeIdSet().getSet();
-        applyIncludesTerm(rootAnd, streamTypeIds, streamTypeNamesById, MetaFieldNames.TYPE_NAME);
+        applyIncludesTerm(rootAnd, streamTypeIds, streamTypeNamesById, MetaFields.TYPE_NAME);
 
         // Pipeline
         final Set<Long> pipelineIds = criteria.obtainPipelineIdSet().getSet();
-        applyIncludesDocRefTerm(rootAnd, pipelineIds, pipeDocRefsById, MetaFieldNames.PIPELINE_UUID);
+        applyIncludesDocRefTerm(rootAnd, pipelineIds, pipeDocRefsById, MetaFields.PIPELINE);
 
         // Parent Stream ID
         final Set<Long> parentStreamIds = criteria.obtainParentStreamIdSet().getSet();
-        applyIncludesTerm(rootAnd, parentStreamIds, i -> Optional.of(i.toString()), MetaFieldNames.PARENT_ID);
+        applyIncludesTerm(rootAnd, parentStreamIds, i -> Optional.of(i.toString()), MetaFields.PARENT_ID);
 
         // Stream ID, two clauses feed into this, absolute stream ID values and ranges
         final Set<Long> streamIds = criteria.obtainStreamIdSet().getSet();
@@ -278,8 +224,8 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
         if ((streamIds.size() > 0) || streamIdRange.isConstrained()) {
             final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
 
-            applyIncludesTerm(or, streamIds, i -> Optional.of(i.toString()), MetaFieldNames.ID);
-            applyBoundedTerm(or, streamIdRange, MetaFieldNames.ID, Object::toString);
+            applyIncludesTerm(or, streamIds, i -> Optional.of(i.toString()), MetaFields.ID);
+            applyBoundedTerm(or, streamIdRange, MetaFields.ID, Object::toString);
 
             rootAnd.addOperator(or.build());
         }
@@ -290,116 +236,32 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
         });
 
         // Created Period
-        applyBoundedTerm(rootAnd, criteria.obtainCreatePeriod(), MetaFieldNames.CREATE_TIME, DateUtil::createNormalDateTimeString);
+        applyBoundedTerm(rootAnd, criteria.obtainCreatePeriod(), MetaFields.CREATE_TIME, DateUtil::createNormalDateTimeString);
 
         // Effective Period
-        applyBoundedTerm(rootAnd, criteria.obtainEffectivePeriod(), MetaFieldNames.EFFECTIVE_TIME, DateUtil::createNormalDateTimeString);
+        applyBoundedTerm(rootAnd, criteria.obtainEffectivePeriod(), MetaFields.EFFECTIVE_TIME, DateUtil::createNormalDateTimeString);
 
         // Status Time Period
-        applyBoundedTerm(rootAnd, criteria.obtainStatusPeriod(), MetaFieldNames.STATUS_TIME, DateUtil::createNormalDateTimeString);
+        applyBoundedTerm(rootAnd, criteria.obtainStatusPeriod(), MetaFields.STATUS_TIME, DateUtil::createNormalDateTimeString);
 
         // Build and return
         return new QueryData.Builder()
-                .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                 .expression(rootAnd.build())
                 .build();
     }
 
-    private Optional<DocRef> createDictionary(final Connection connection,
-                                              final Long folderId,
-                                              final boolean isDeep,
-                                              final Set<String> feedNames) {
-        final DocRef dict = new DocRef.Builder()
-                .uuid(UUID.randomUUID().toString())
-                .name(String.format("_feeds_folder_%d_%s", folderId, isDeep ? "deep" : "shallow"))
-                .type(DictionaryDoc.ENTITY_TYPE)
-                .build();
-
-        final long now = System.currentTimeMillis();
-
-        final String dictDataStr = feedNames.stream()
-                .map(Object::toString)
-                .collect(Collectors.joining("\n"));
-
-        try {
-            final Blob dictDataBlob = connection.createBlob();
-            dictDataBlob.setBytes(1, dictDataStr.getBytes());
-
-            if (writeUpdates) {
-                final String sql = "INSERT INTO DICT (VER, CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DAT, FK_FOLDER_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
-                    stmt.setInt(1, 0);
-                    stmt.setLong(2, now);
-                    stmt.setString(3, UPGRADE_USER);
-                    stmt.setLong(4, now);
-                    stmt.setString(5, UPGRADE_USER);
-                    stmt.setString(6, dict.getName());
-                    stmt.setString(7, dict.getUuid());
-                    stmt.setBlob(8, dictDataBlob);
-                    stmt.setLong(9, folderId);
-
-                    int rowsAffected = stmt.executeUpdate();
-                    if (rowsAffected != 1) {
-                        throw new Exception(String.format("Wrong number of rows affected by update %d", rowsAffected));
-                    }
-                }
-            } else {
-                LOGGER.info("Creating Dictionary: {}, {}, {}", folderId, dict, dictDataStr);
-            }
-
-
-            return Optional.of(dict);
-
-        } catch (final Exception e) {
-            LOGGER.error("Could not create dictionary for folder Id {}", folderId);
-            return Optional.empty();
-        }
-    }
-
     private <T extends Number> void applyBoundedTerm(final ExpressionOperator.Builder parentTerm,
                                                      final Range<T> range,
-                                                     final String fieldName,
+                                                     final AbstractField fieldName,
                                                      final Function<T, String> toString) {
         if (range.isBounded()) {
             final String boundTerm = String.format("%s,%s", toString.apply(range.getFrom()), toString.apply(range.getTo()));
-            parentTerm.addTerm(fieldName, ExpressionTerm.Condition.BETWEEN, boundTerm);
+            parentTerm.addTerm(fieldName.getName(), ExpressionTerm.Condition.BETWEEN, boundTerm);
         } else if (null != range.getFrom()) {
-            parentTerm.addTerm(fieldName, ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO, toString.apply(range.getFrom()));
+            parentTerm.addTerm(fieldName.getName(), ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO, toString.apply(range.getFrom()));
         } else if (null != range.getTo()) {
-            parentTerm.addTerm(fieldName, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, toString.apply(range.getTo()));
-        }
-    }
-
-    private static class IdTreeNode {
-        private final long id;
-
-        private final List<IdTreeNode> children = new ArrayList<>();
-
-        IdTreeNode(final long id) {
-            this.id = id;
-        }
-
-        void addChild(final IdTreeNode child) {
-            this.children.add(child);
-        }
-
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder("IdTreeNode{");
-            sb.append("id=").append(id);
-            sb.append(", children=").append(children.size()).append(": ");
-
-            children.forEach(child -> sb.append(child.id).append(", "));
-            sb.append('}');
-            return sb.toString();
-        }
-
-        void recurse(final Consumer<Long> consumer,
-                     final boolean deep) {
-            consumer.accept(this.id);
-            if (deep) {
-                this.children.forEach(c -> c.recurse(consumer, deep));
-            }
+            parentTerm.addTerm(fieldName.getName(), ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, toString.apply(range.getTo()));
         }
     }
 
@@ -447,67 +309,28 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
         }
     }
 
-    private Map<Long, Long> getFkById(final Connection connection,
-                                      final String tableName,
-                                      final String fkFieldName) throws SQLException {
-        final Map<Long, Long> results = new HashMap<>();
-
-        final String sql = String.format("SELECT ID, %s FROM %s", fkFieldName, tableName);
-
-        try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            try (final ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    results.put(rs.getLong(1), rs.getLong(2));
-                }
-            }
-        }
-
-        return results;
-    }
-
-    private Map<Long, IdTreeNode> getIdentifiedTree(final Connection connection,
-                                                    final String tableName,
-                                                    final String parentIdFieldName) throws SQLException {
-        final Map<Long, Long> parentsById = getFkById(connection, tableName, parentIdFieldName);
-
-        // First create all the objects
-        final Map<Long, IdTreeNode> objectsById = parentsById.keySet().stream()
-                .collect(Collectors.toMap(o -> o, IdTreeNode::new));
-
-        // Then hook up all the children nodes
-        for (final Map.Entry<Long, IdTreeNode> e : objectsById.entrySet()) {
-            final Long parentId = parentsById.get(e.getKey());
-            if (parentId > 0) {
-                final IdTreeNode parentObj = objectsById.get(parentId);
-                parentObj.addChild(e.getValue());
-            }
-        }
-
-        return objectsById;
-    }
-
     private <T> void applyIncludesDocRefTerm(final ExpressionOperator.Builder parentTerm,
                                              final Set<T> rawTerms,
                                              final Function<T, Optional<DocRef>> toDocRef,
-                                             final String fieldName) {
+                                             final DocRefField field) {
         if (rawTerms.size() > 1) {
             final ExpressionOperator.Builder opOp = new ExpressionOperator.Builder().op(ExpressionOperator.Op.OR);
             rawTerms.stream()
                     .map(l -> {
                         final Optional<DocRef> value = toDocRef.apply(l);
                         if (!value.isPresent()) {
-                            LOGGER.warn("Could not find value for {} in field {}", l, fieldName);
+                            LOGGER.warn("Could not find value for {} in field {}", l, field);
                         }
-                        return value;
+                        return value.orElseGet(() -> {
+                            final String name = "--missing " + field + " (" + l + ")";
+                            return new DocRef(field.getDocRefType(), name, name);
+                        });
                     })
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .forEach(d -> opOp.addDocRefTerm(fieldName, ExpressionTerm.Condition.IS_DOC_REF, d));
+                    .forEach(d -> opOp.addTerm(field, ExpressionTerm.Condition.IS_DOC_REF, d));
             parentTerm.addOperator(opOp.build());
         } else if (rawTerms.size() == 1) {
             toDocRef.apply(rawTerms.iterator().next()).ifPresent(value ->
-                    parentTerm.addDocRefTerm(fieldName, ExpressionTerm.Condition.IS_DOC_REF, value)
+                    parentTerm.addTerm(field, ExpressionTerm.Condition.IS_DOC_REF, value)
             );
         }
     }
@@ -515,23 +338,21 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
     private <T> void applyIncludesTerm(final ExpressionOperator.Builder parentTerm,
                                        final Set<T> rawTerms,
                                        final Function<T, Optional<String>> toString,
-                                       final String fieldName) {
+                                       final AbstractField field) {
         if (rawTerms.size() > 1) {
             final String values = rawTerms.stream()
                     .map(l -> {
                         final Optional<String> value = toString.apply(l);
                         if (!value.isPresent()) {
-                            LOGGER.warn("Could not find value for {} in field {}", l, fieldName);
+                            LOGGER.warn("Could not find value for {} in field {}", l, field);
                         }
-                        return value;
+                        return value.orElseGet(() -> "--missing " + field + " (" + l + ")");
                     })
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
                     .collect(Collectors.joining(IN_CONDITION_DELIMITER));
-            parentTerm.addTerm(fieldName, ExpressionTerm.Condition.IN, values);
+            parentTerm.addTerm(field.getName(), ExpressionTerm.Condition.IN, values);
         } else if (rawTerms.size() == 1) {
             toString.apply(rawTerms.iterator().next()).ifPresent(value ->
-                    parentTerm.addTerm(fieldName, ExpressionTerm.Condition.EQUALS, value)
+                    parentTerm.addTerm(field.getName(), ExpressionTerm.Condition.EQUALS, value)
             );
         }
     }

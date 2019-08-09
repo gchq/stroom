@@ -32,7 +32,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
     private final TaskContext taskContext;
     private final SearchConfig searchConfig;
     private final UiConfig clientConfig;
-    private final Executor executor;
+    private final ExecutorProvider executorProvider;
 
     @Inject
     public SqlStatisticStoreFactory(final StatisticStoreCache statisticStoreCache,
@@ -46,9 +46,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         this.taskContext = taskContext;
         this.searchConfig = searchConfig;
         this.clientConfig = clientConfig;
-
-        // TODO do we want to limit this with a thread pool?
-        this.executor = executorProvider.getExecutor();
+        this.executorProvider = executorProvider;
     }
 
     @Override
@@ -80,6 +78,9 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         final Sizes storeSize = getStoreSizes();
         final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final int resultHandlerBatchSize = getResultHandlerBatchSize();
+
+        // TODO do we want to limit this with a thread pool?
+        final Executor executor = executorProvider.getExecutor();
 
         //wrap the resultHandler in a new store, initiating the search in the process
         return new SqlStatisticsStore(

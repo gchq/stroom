@@ -33,6 +33,7 @@ import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.MoveDocumentEvent;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.document.client.event.RenameDocumentEvent;
+import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
@@ -97,6 +98,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class DocumentPluginEventManager extends Plugin {
@@ -221,6 +223,13 @@ public class DocumentPluginEventManager extends Plugin {
             }
         }));
 
+        // 6. Handle save as events.
+        registerHandler(getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
+            final DocumentPlugin<?> plugin = pluginMap.get(event.getDocRef().getType());
+            if (plugin != null) {
+                plugin.saveAs(event.getDocRef());
+            }
+        }));
 
         //////////////////////////////
         // START EXPLORER EVENTS
@@ -234,11 +243,8 @@ public class DocumentPluginEventManager extends Plugin {
 
                 highlight(docRef);
 
-                // Open the document in the content pane.
-                final DocumentPlugin<?> plugin = pluginMap.get(docRef.getType());
-                if (plugin != null) {
-                    plugin.open(docRef, true);
-                }
+                // The initiator of this event can now do what they want with the docref.
+                event.getNewDocConsumer().accept(docRef);
             });
         }));
 
@@ -536,14 +542,23 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private List<Item> createNewMenuItems(final ExplorerNode explorerNode,
-                                          final ExplorerPermissions documentPermissions, final DocumentTypes documentTypes) {
+                                          final ExplorerPermissions documentPermissions,
+                                          final DocumentTypes documentTypes) {
         final List<Item> children = new ArrayList<>();
 
         for (final DocumentType documentType : documentTypes.getNonSystemTypes()) {
             if (documentPermissions.hasCreatePermission(documentType)) {
+                final Consumer<DocRef> newDocumentConsumer = docRef -> {
+                    // Open the document in the content pane.
+                    final DocumentPlugin<?> plugin = pluginMap.get(docRef.getType());
+                    if (plugin != null) {
+                        plugin.open(docRef, true);
+                    }
+                };
+
                 final Item item = new IconMenuItem(documentType.getPriority(), new SvgIcon(ImageUtil.getImageURL() + documentType.getIconUrl(), 18, 18), null,
                         documentType.getDisplayType(), null, true, () -> ShowCreateDocumentDialogEvent.fire(DocumentPluginEventManager.this,
-                        explorerNode, documentType.getType(), documentType.getDisplayType(), true));
+                        explorerNode, documentType.getType(), documentType.getDisplayType(), true, newDocumentConsumer));
                 children.add(item);
 
                 if (DocumentTypes.isFolder(documentType.getType())) {
@@ -560,17 +575,12 @@ public class DocumentPluginEventManager extends Plugin {
         final List<ExplorerNode> updatableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.UPDATE, false);
         final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.DELETE, false);
 
-        // Folders are not valid items for requesting info
-        final boolean containsFolder = documentPermissionMap.keySet().stream()
-                .findFirst().map(n -> DocumentTypes.isFolder(n.getType()))
-                .orElse(false);
-
         // Actions allowed based on permissions of selection
         final boolean allowRead = readableItems.size() > 0;
         final boolean allowUpdate = updatableItems.size() > 0;
         final boolean allowDelete = deletableItems.size() > 0;
 
-        menuItems.add(createInfoMenuItem(readableItems, 3, singleSelection & allowRead & !containsFolder));
+        menuItems.add(createInfoMenuItem(readableItems, 3, singleSelection & allowRead));
         menuItems.add(createCopyMenuItem(readableItems, 4, allowRead));
         menuItems.add(createMoveMenuItem(updatableItems, 5, allowUpdate));
         menuItems.add(createRenameMenuItem(updatableItems, 6, singleSelection && allowUpdate));
@@ -640,7 +650,6 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem(priority, SvgPresets.SAVE, SvgPresets.SAVE, "Save All",
                 "Ctrl+Shift+S", enabled, command);
     }
-
 
     private MenuItem createInfoMenuItem(final List<ExplorerNode> explorerNodeList, final int priority, final boolean enabled) {
         final Command command = () ->

@@ -147,6 +147,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createDateFunctions(item++, "Date"));
         children.add(createLogicFunctions(item++, "Logic"));
         children.add(createMathematicsFunctions(item++, "Mathematics"));
+        children.add(createParamFunctions(item++, "Param"));
         children.add(createRoundingFunctions(item++, "Rounding"));
         children.add(createStringFunctions(item++, "String"));
         children.add(createTypeCheckingFunctions(item++, "Type Checking"));
@@ -220,6 +221,14 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 
+    private Item createParamFunctions(final int pos, final String func) {
+        final List<Item> children = new ArrayList<>();
+        int item = 0;
+        children.add(createFunction(item++, "params()", "params()"));
+        children.add(createFunction(item++, "param($)", "param("));
+        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+    }
+
     private Item createRoundingFunctions(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
@@ -246,13 +255,16 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, "concat($,$)", "concat("));
+        children.add(createFunction(item++, "dashboard(text,uuid,params)", "dashboard("));
         children.add(createFunction(item++, "decode($,[search,replace]...,otherwise)", "decode("));
+        children.add(createFunction(item++, "decodeUrl($)", "decodeUrl("));
+        children.add(createFunction(item++, "encodeUrl($)", "encodeUrl("));
         children.add(createFunction(item++, "exclude($,[regex...])", "exclude("));
         children.add(createFunction(item++, "hash($,algorithm)", "hash("));
         children.add(createFunction(item++, "include($,[regex...])", "include("));
         children.add(createFunction(item++, "indexOf($,string)", "indexOf("));
         children.add(createFunction(item++, "lastIndexOf($,string)", "lastIndexOf("));
-        children.add(createFunction(item++, "link(title,url,type)", "link("));
+        children.add(createFunction(item++, "link(text,url,type)", "link("));
         children.add(createFunction(item++, "lowerCase($)", "lowerCase("));
         children.add(createFunction(item++, "match($,regex)", "match("));
         children.add(createFunction(item++, "replace($,regex,replacement)", "replace("));

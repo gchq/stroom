@@ -25,6 +25,7 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.security.api.Security;
 import stroom.test.common.util.test.StroomTest;
 import stroom.test.common.util.test.TempDir;
 import stroom.test.common.util.test.TempDirExtension;
@@ -48,9 +49,10 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
     @Inject
     private CommonTestControl commonTestControl;
-
     @Inject
     private ContentImportService contentImportService;
+    @Inject
+    private Security security;
 
     @BeforeAll
     public static void beforeClass() {
@@ -78,31 +80,33 @@ public abstract class StroomIntegrationTest implements StroomTest {
      */
     @BeforeEach
     void before(final TestInfo testInfo, @TempDir final Path tempDir) {
-        LOGGER.info(String.format("Started test: %s::%s", testInfo.getTestClass().get().getName(), testInfo.getDisplayName()));
+        security.asProcessingUser(() -> {
+            LOGGER.info(String.format("Started test: %s::%s", testInfo.getTestClass().get().getName(), testInfo.getDisplayName()));
 
-        final State state = TestState.getState();
-        state.incrementTestCount();
+            final State state = TestState.getState();
+            state.incrementTestCount();
 
-        if (tempDir == null) {
-            throw new NullPointerException("Temp dir is null");
-        }
-        this.testTempDir = tempDir;
-
-        // Setup the database if this is the first test running for this test
-        // class or if we always want to recreate the DB between tests.
-        if (teardownEnabled() && (TEAR_DOWN_DATABASE_BETWEEEN_TESTS || getTestCount() == 1)) {
-            if (!state.isDoneSetup()) {
-                LOGGER.info("before() - commonTestControl.setup()");
-                commonTestControl.teardown();
-                commonTestControl.setup();
-
-                // Some test classes only want the DB to be created once so they
-                // return true here.
-                state.setDoneSetup(doSingleSetup());
+            if (tempDir == null) {
+                throw new NullPointerException("Temp dir is null");
             }
-        }
+            this.testTempDir = tempDir;
 
-        onBefore();
+            // Setup the database if this is the first test running for this test
+            // class or if we always want to recreate the DB between tests.
+            if (teardownEnabled() && (TEAR_DOWN_DATABASE_BETWEEEN_TESTS || getTestCount() == 1)) {
+                if (!state.isDoneSetup()) {
+                    LOGGER.info("before() - commonTestControl.setup()");
+                    commonTestControl.teardown();
+                    commonTestControl.setup();
+
+                    // Some test classes only want the DB to be created once so they
+                    // return true here.
+                    state.setDoneSetup(doSingleSetup());
+                }
+            }
+
+            onBefore();
+        });
     }
 
     /**

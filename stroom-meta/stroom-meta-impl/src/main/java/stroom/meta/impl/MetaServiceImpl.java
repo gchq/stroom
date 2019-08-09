@@ -2,11 +2,16 @@ package stroom.meta.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.dashboard.expression.v1.Val;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DataSource;
+import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.MetaSecurityFilter;
@@ -16,6 +21,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.searchable.api.Searchable;
 import stroom.security.api.Security;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -35,11 +41,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Singleton
-public class MetaServiceImpl implements MetaService {
+public class MetaServiceImpl implements MetaService, Searchable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaServiceImpl.class);
+
+    private static final DocRef META_STORE_PSEUDO_DOC_REF = new DocRef("Searchable", "Meta Store", "Meta Store");
 
     private final MetaDao metaDao;
     private final MetaFeedDao metaFeedDao;
@@ -176,6 +185,23 @@ public class MetaServiceImpl implements MetaService {
     }
 
     @Override
+    public DocRef getDocRef() {
+        return META_STORE_PSEUDO_DOC_REF;
+    }
+
+    @Override
+    public DataSource getDataSource() {
+        return new DataSource(MetaFields.getAllFields());
+    }
+
+    @Override
+    public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
+        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.READ);
+        criteria.setExpression(expression);
+        metaDao.search(criteria, fields, consumer);
+    }
+
+    @Override
     public BaseResultList<Meta> find(final FindMetaCriteria criteria) {
         final boolean fetchRelationships = criteria.isFetchRelationships();
         final PageRequest pageRequest = criteria.getPageRequest();
@@ -254,13 +280,13 @@ public class MetaServiceImpl implements MetaService {
     }
 
     private List<Meta> findChildren(final FindMetaCriteria parentCriteria, final List<Meta> streamList) {
-        final Set<String> excludedFields = Set.of(MetaFieldNames.ID, MetaFieldNames.PARENT_ID);
+        final Set<String> excludedFields = Set.of(MetaFields.ID.getName(), MetaFields.PARENT_ID.getName());
         final Builder builder = copyExpression(parentCriteria.getExpression(), excludedFields);
 
         final String parentIds = streamList.stream()
                 .map(meta -> String.valueOf(meta.getId()))
                 .collect(Collectors.joining(","));
-        builder.addTerm(MetaFieldNames.PARENT_ID, ExpressionTerm.Condition.IN, parentIds);
+        builder.addTerm(MetaFields.PARENT_ID.getName(), ExpressionTerm.Condition.IN, parentIds);
 
         return simpleFind(builder.build());
     }
@@ -268,7 +294,7 @@ public class MetaServiceImpl implements MetaService {
 
     private Meta findParent(final Meta meta) {
         final ExpressionOperator expression = new ExpressionOperator.Builder()
-                .addTerm(MetaFieldNames.ID, ExpressionTerm.Condition.EQUALS, String.valueOf(meta.getParentMetaId()))
+                .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, meta.getParentMetaId())
                 .build();
         final List<Meta> parentList = simpleFind(expression);
         if (parentList != null && parentList.size() > 0) {
@@ -319,7 +345,7 @@ public class MetaServiceImpl implements MetaService {
         if (optionalId.isPresent()) {
             // Get the data that occurs just before or ast the start of the period.
             final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(MetaFieldNames.ID, ExpressionTerm.Condition.EQUALS, String.valueOf(optionalId.get()))
+                    .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, optionalId.get())
                     .build();
             // There is no need to apply security here are is has been applied when finding the data id above.
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
@@ -329,11 +355,11 @@ public class MetaServiceImpl implements MetaService {
 
         // Now add all data that occurs within the requested period.
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFieldNames.EFFECTIVE_TIME, ExpressionTerm.Condition.GREATER_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
-                .addTerm(MetaFieldNames.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getToMs()))
-                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
-                .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
-                .addTerm(MetaFieldNames.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTerm(MetaFields.EFFECTIVE_TIME, ExpressionTerm.Condition.GREATER_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
+                .addTerm(MetaFields.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getToMs()))
+                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
+                .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
+                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
 
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
@@ -346,10 +372,10 @@ public class MetaServiceImpl implements MetaService {
 
     private Optional<Long> getMaxEffectiveDataIdBeforePeriod(final EffectiveMetaDataCriteria criteria) {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFieldNames.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
-                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
-                .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
-                .addTerm(MetaFieldNames.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTerm(MetaFields.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
+                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
+                .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
+                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
 
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
@@ -379,7 +405,7 @@ public class MetaServiceImpl implements MetaService {
 
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
             findMetaCriteria.copyFrom(criteria);
-            findMetaCriteria.setSort(MetaFieldNames.CREATE_TIME, Direction.DESCENDING, false);
+            findMetaCriteria.setSort(MetaFields.CREATE_TIME.getName(), Direction.DESCENDING, false);
 
 //            findDataCriteria.setFetchSet(new HashSet<>());
 
@@ -468,26 +494,26 @@ public class MetaServiceImpl implements MetaService {
     private ExpressionOperator getIdExpression(final long id, final boolean anyStatus) {
         if (anyStatus) {
             return new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(MetaFieldNames.ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
+                    .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, id)
                     .build();
         }
 
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFieldNames.ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
-                .addTerm(MetaFieldNames.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, id)
+                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
     private ExpressionOperator getParentIdExpression(final long id, final boolean anyStatus) {
         if (anyStatus) {
             return new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(MetaFieldNames.PARENT_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
+                    .addTerm(MetaFields.PARENT_ID, ExpressionTerm.Condition.EQUALS, id)
                     .build();
         }
 
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFieldNames.PARENT_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(id))
-                .addTerm(MetaFieldNames.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTerm(MetaFields.PARENT_ID, ExpressionTerm.Condition.EQUALS, id)
+                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 

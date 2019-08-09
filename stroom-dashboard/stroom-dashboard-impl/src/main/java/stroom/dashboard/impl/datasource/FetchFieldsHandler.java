@@ -16,7 +16,7 @@
 
 package stroom.dashboard.impl.datasource;
 
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.datasource.shared.DataSourceFields;
 import stroom.datasource.shared.FetchFieldsAction;
 import stroom.security.api.Security;
@@ -35,6 +35,6 @@ class FetchFieldsHandler extends AbstractTaskHandler<FetchFieldsAction, DataSour
 
     @Override
     public DataSourceFields exec(final FetchFieldsAction task) {
-        return security.secureResult(() -> new DataSourceFields(MetaFieldNames.getFields()));
+        return security.secureResult(() -> new DataSourceFields(MetaFields.getFields()));
     }
 }

@@ -17,7 +17,7 @@
 package stroom.search.impl;
 
 import stroom.docref.DocRef;
-import stroom.index.api.EventRef;
+import stroom.search.api.EventRef;
 import stroom.query.common.v2.CoprocessorSettings;
 
 class EventCoprocessorSettings implements CoprocessorSettings {

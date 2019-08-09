@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.query.api.v2.ExpressionOperator;
@@ -76,8 +75,6 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     private CommonIndexingTestHelper commonIndexingTestHelper;
     @Inject
     private IndexStore indexStore;
-    @Inject
-    private DictionaryStore dictionaryStore;
     @Inject
     private TaskManager taskManager;
     @Inject

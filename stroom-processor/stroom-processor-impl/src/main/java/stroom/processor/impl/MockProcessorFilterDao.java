@@ -1,6 +1,6 @@
 package stroom.processor.impl;
 
-import stroom.processor.shared.FindProcessorFilterCriteria;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.util.shared.BaseResultList;
@@ -39,7 +39,7 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     }
 
     @Override
-    public BaseResultList<ProcessorFilter> find(final FindProcessorFilterCriteria criteria) {
+    public BaseResultList<ProcessorFilter> find(final ExpressionCriteria criteria) {
         final List<ProcessorFilter> list = dao
                 .getMap()
                 .values()

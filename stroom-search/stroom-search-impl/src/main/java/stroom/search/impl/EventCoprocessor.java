@@ -18,8 +18,8 @@ package stroom.search.impl;
 
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
-import stroom.index.api.EventRef;
-import stroom.index.api.EventRefs;
+import stroom.search.api.EventRef;
+import stroom.search.api.EventRefs;
 import stroom.index.shared.IndexConstants;
 import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.Payload;

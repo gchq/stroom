@@ -18,7 +18,7 @@
 package stroom.processor.api;
 
 import stroom.docref.DocRef;
-import stroom.processor.shared.FindProcessorFilterCriteria;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
@@ -36,5 +36,5 @@ public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
                            final int priority,
                            final boolean enabled);
 
-    BaseResultList<ProcessorFilter> find(FindProcessorFilterCriteria criteria);
+    BaseResultList<ProcessorFilter> find(ExpressionCriteria criteria);
 }

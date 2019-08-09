@@ -22,17 +22,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.db.util.JooqUtil;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
 import stroom.processor.impl.ProcessorTaskManager;
-import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterDataSource;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.TaskStatus;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.Period;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -55,11 +57,11 @@ class ProcessorTaskDeleteExecutorImpl extends AbstractBatchDeleteExecutor implem
 
     @Inject
     ProcessorTaskDeleteExecutorImpl(final ConnectionProvider connectionProvider,
-                                          final ClusterLockService clusterLockService,
-                                          final ProcessorConfig processorConfig,
-                                          final TaskContext taskContext,
-                                          final ProcessorFilterDao processorFilterDao,
-                                          final ProcessorTaskManager processorTaskManager) {
+                                    final ClusterLockService clusterLockService,
+                                    final ProcessorConfig processorConfig,
+                                    final TaskContext taskContext,
+                                    final ProcessorFilterDao processorFilterDao,
+                                    final ProcessorTaskManager processorTaskManager) {
         super(clusterLockService, taskContext, TASK_NAME, LOCK_NAME, processorConfig, TEMP_STRM_TASK_ID_TABLE);
 
         this.connectionProvider = connectionProvider;
@@ -145,8 +147,11 @@ class ProcessorTaskDeleteExecutorImpl extends AbstractBatchDeleteExecutor implem
     private void deleteOldFilters(final long age) {
         try {
             // Get all filters that have not been polled for a while.
-            final FindProcessorFilterCriteria criteria = new FindProcessorFilterCriteria();
-            criteria.setLastPollPeriod(new Period(null, age));
+            final ExpressionOperator expression = new ExpressionOperator.Builder()
+                    .addTerm(ProcessorFilterDataSource.LAST_POLL_MS, ExpressionTerm.Condition.LESS_THAN, age)
+                    .build();
+            final ExpressionCriteria criteria = new ExpressionCriteria(expression);
+//            criteria.setLastPollPeriod(new Period(null, age));
             final List<ProcessorFilter> filters = processorFilterDao.find(criteria);
             for (final ProcessorFilter filter : filters) {
                 final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();

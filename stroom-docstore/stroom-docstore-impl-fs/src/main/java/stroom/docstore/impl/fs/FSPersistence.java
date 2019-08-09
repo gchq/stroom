@@ -132,6 +132,7 @@ public class FSPersistence implements Persistence, Clearable {
                 final String fileName = file.getFileName().toString();
                 final int index = fileName.indexOf(".");
                 final String uuid = fileName.substring(0, index);
+                // TODO : @66 gh-1151  We need to return doc refs that include names to support DictionaryStoreImpl.findByName() or find another way of implementing.
                 list.add(new DocRef(type, uuid));
             });
         } catch (final IOException e) {

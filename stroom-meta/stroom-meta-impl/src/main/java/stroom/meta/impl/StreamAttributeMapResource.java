@@ -21,21 +21,21 @@ package stroom.meta.impl;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.FindMetaCriteria;
 import stroom.datasource.api.v2.DataSource;
-import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.DocRefField;
+import stroom.feed.shared.FeedDoc;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.MetaService;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.security.api.Security;
+import stroom.util.RestResource;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.Sort;
-import stroom.feed.shared.FeedDoc;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.security.api.Security;
-import stroom.util.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -46,10 +46,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Arrays;
 import java.util.List;
 
-import static stroom.datasource.api.v2.DataSourceField.DataSourceFieldType.FIELD;
 import static stroom.query.api.v2.ExpressionTerm.Condition;
 
 @Api(value = "stream attribute map - /v1")
@@ -143,15 +141,7 @@ public class StreamAttributeMapResource implements RestResource {
     @Path("/dataSource")
     @Produces(MediaType.APPLICATION_JSON)
     public Response dataSource() {
-        DataSource dataSource = new DataSource(
-                ImmutableList.of(new DataSourceField(
-                        FIELD,
-                        FeedDoc.DOCUMENT_TYPE,
-                        "Feed",
-                        true,
-                        Arrays.asList(Condition.EQUALS, Condition.CONTAINS)
-                )));
-
+        final DataSource dataSource = new DataSource(ImmutableList.of(new DocRefField(FeedDoc.DOCUMENT_TYPE, "Feed")));
         return Response.ok(dataSource).build();
     }
 

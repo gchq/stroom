@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@XmlAccessorType(XmlAccessType.FIELD)
+@XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlRootElement(name = "data")
 @JsonPropertyOrder({"field", "customRollUpMask"})
 @JsonInclude(Include.NON_EMPTY)

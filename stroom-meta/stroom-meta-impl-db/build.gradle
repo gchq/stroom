@@ -28,6 +28,8 @@ dependencies {
 //
 //    runtimeOnly libs.mysql_connector_java
 //    
+    testCompile project(':stroom-dictionary:stroom-dictionary-mock')
+    testCompile project(':stroom-explorer:stroom-collection-mock')
     testCompile project(':stroom-security:stroom-security-mock')
 
     testCompile libs.assertj_core

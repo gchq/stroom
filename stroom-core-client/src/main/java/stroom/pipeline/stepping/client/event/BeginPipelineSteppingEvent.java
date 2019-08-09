@@ -23,13 +23,13 @@ import stroom.explorer.shared.SharedDocRef;
 
 public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEvent.Handler> {
     private static Type<Handler> TYPE;
-    private final Long streamId;
-    private final Long eventId;
+    private final long streamId;
+    private final long eventId;
     private final Long childStreamId;
     private final String childStreamType;
     private final SharedDocRef pipelineRef;
 
-    private BeginPipelineSteppingEvent(final Long streamId, final Long eventId, final Long childStreamId,
+    private BeginPipelineSteppingEvent(final long streamId, final long eventId, final Long childStreamId,
                                        final String childStreamType, final SharedDocRef pipelineRef) {
         this.streamId = streamId;
         this.eventId = eventId;
@@ -38,7 +38,7 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
         this.pipelineRef = pipelineRef;
     }
 
-    public static void fire(final HasHandlers source, final Long streamId, final Long eventId, final Long childStreamId,
+    public static void fire(final HasHandlers source, final long streamId, final long eventId, final Long childStreamId,
                             final String childStreamType, final SharedDocRef pipelineRef) {
         source.fireEvent(new BeginPipelineSteppingEvent(streamId, eventId, childStreamId, childStreamType, pipelineRef));
     }
@@ -60,11 +60,11 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
         handler.onBegin(this);
     }
 
-    public Long getStreamId() {
+    public long getStreamId() {
         return streamId;
     }
 
-    public Long getEventId() {
+    public long getEventId() {
         return eventId;
     }
 

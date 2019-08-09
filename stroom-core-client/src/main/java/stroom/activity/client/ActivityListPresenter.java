@@ -76,7 +76,7 @@ public class ActivityListPresenter
         }, "Activity", 600);
         getView().addEndColumn(new EndColumn<Activity>());
 
-        dataProvider = new FindActionDataProvider<FindActivityCriteria, Activity>(dispatcher, getView());
+        dataProvider = new FindActionDataProvider<FindActivityCriteria, Activity>(dispatcher, getView(), new FindActivityAction());
     }
 
     public ButtonView addButton(final SvgPreset preset) {
@@ -92,7 +92,7 @@ public class ActivityListPresenter
         return getView().getSelectionModel();
     }
 
-    void setAction(final FindActivityAction action) {
-        dataProvider.setAction(action);
+    void setCriteria(final FindActivityCriteria criteria) {
+        dataProvider.setCriteria(criteria);
     }
 }

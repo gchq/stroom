@@ -19,24 +19,23 @@ package stroom.processor.impl;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.shared.FindProcessorCriteria;
-import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterDataSource;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.data.shared.StreamTypeNames;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.shared.BaseResultList;
-import stroom.util.shared.Period;
-import stroom.util.shared.Range;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -63,12 +62,12 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
 
     private void deleteAll() {
         final List<ProcessorFilter> filters = processorFilterService
-                .find(new FindProcessorFilterCriteria());
+                .find(new ExpressionCriteria());
         for (final ProcessorFilter filter : filters) {
             processorFilterService.delete(filter.getId());
         }
 
-        final List<Processor> streamProcessors = processorService.find(new FindProcessorCriteria());
+        final List<Processor> streamProcessors = processorService.find(new ExpressionCriteria());
         for (final Processor processor : streamProcessors) {
             processorService.delete(processor.getId());
         }
@@ -77,20 +76,28 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
     @Test
     void testBasic() {
         final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345", "Test Pipeline");
-        final FindProcessorFilterCriteria findProcessorFilterCriteria = new FindProcessorFilterCriteria();
+        final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria();
 
         processorFilterService.create(pipelineRef, new QueryData(), 1, true);
-        assertThat(processorService.find(new FindProcessorCriteria()).size()).isEqualTo(1);
+        assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(1);
 
         processorFilterService.create(pipelineRef, new QueryData(), 10, true);
-        assertThat(processorService.find(new FindProcessorCriteria()).size()).isEqualTo(1);
+        assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(2);
 
-        findProcessorFilterCriteria.setPriorityRange(new Range<>(10, null));
+        final ExpressionOperator expression1 = new ExpressionOperator.Builder()
+                .addTerm(ProcessorFilterDataSource.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 10)
+                .build();
+        findProcessorFilterCriteria.setExpression(expression1);
+        //PriorityRange(new Range<>(10, null));
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(1);
 
-        findProcessorFilterCriteria.setPriorityRange(new Range<>(1, null));
+        final ExpressionOperator expression2 = new ExpressionOperator.Builder()
+                .addTerm(ProcessorFilterDataSource.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
+                .build();
+        findProcessorFilterCriteria.setExpression(expression2);
+//        findProcessorFilterCriteria.setPriorityRange(new Range<>(1, null));
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(2);
     }
 
@@ -102,23 +109,23 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
 
         final QueryData findStreamQueryData = new QueryData.Builder()
-                .dataSource(MetaFieldNames.STREAM_STORE_DOC_REF)
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                         .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName1)
-                                .addTerm(MetaFieldNames.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
+                                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName1)
+                                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())
                         .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                                .addTerm(MetaFieldNames.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                                .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                                .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                                 .build())
                         .build())
                 .build();
 
-        final FindProcessorFilterCriteria findProcessorFilterCriteria = new FindProcessorFilterCriteria();
+        final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria();
 
         processorFilterService.create(pipelineRef, findStreamQueryData, 1, true);
-        assertThat(processorService.find(new FindProcessorCriteria()).size()).isEqualTo(1);
+        assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
 
         final BaseResultList<ProcessorFilter> filters = processorFilterService
                 .find(findProcessorFilterCriteria);
@@ -165,7 +172,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
             for (final String feed : include) {
                 xml += "" +
                         "               <term>\n" +
-                        "                  <field>" + MetaFieldNames.FEED_NAME + "</field>\n" +
+                        "                  <field>" + MetaFields.FEED_NAME + "</field>\n" +
                         "                  <condition>EQUALS</condition>\n" +
                         "                  <value>" + feed + "</value>\n" +
                         "               </term>\n";
@@ -182,12 +189,12 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                 "            <op>OR</op>\n" +
                 "            <children>\n" +
                 "               <term>\n" +
-                "                  <field>" + MetaFieldNames.TYPE_NAME + "</field>\n" +
+                "                  <field>" + MetaFields.TYPE_NAME + "</field>\n" +
                 "                  <condition>EQUALS</condition>\n" +
                 "                  <value>Raw Events</value>\n" +
                 "               </term>\n" +
                 "               <term>\n" +
-                "                  <field>" + MetaFieldNames.TYPE_NAME + "</field>\n" +
+                "                  <field>" + MetaFields.TYPE_NAME + "</field>\n" +
                 "                  <condition>EQUALS</condition>\n" +
                 "                  <value>Raw Reference</value>\n" +
                 "               </term>\n" +
@@ -202,9 +209,14 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
 
     @Test
     void testApplyAllCriteria() {
-        final FindProcessorFilterCriteria findProcessorFilterCriteria = new FindProcessorFilterCriteria();
-        findProcessorFilterCriteria.setLastPollPeriod(new Period(1L, 1L));
-        findProcessorFilterCriteria.setProcessorFilterEnabled(true);
+        final ExpressionOperator expression = new ExpressionOperator.Builder()
+                .addTerm(ProcessorFilterDataSource.LAST_POLL_MS, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
+                .addTerm(ProcessorFilterDataSource.LAST_POLL_MS, Condition.LESS_THAN, 1)
+                .addTerm(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, true)
+                .build();
+        final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
+//        findProcessorFilterCriteria.setLastPollPeriod(new Period(1L, 1L));
+//        findProcessorFilterCriteria.setProcessorFilterEnabled(true);
         assertThat(processorFilterService.find(findProcessorFilterCriteria).getSize()).isEqualTo(0);
     }
 }

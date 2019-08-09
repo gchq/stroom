@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.TimeUnit;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -37,8 +37,8 @@ class TestDataRetentionPolicySerialisation {
     @Test
     void test() throws JAXBException {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
-        builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, "Raw Events");
-        builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, "TEST_FEED");
+        builder.addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, "Raw Events");
+        builder.addTerm(MetaFields.FEED_NAME, Condition.EQUALS, "TEST_FEED");
         final ExpressionOperator expression = builder.build();
 
         final List<DataRetentionRule> list = new ArrayList<>();

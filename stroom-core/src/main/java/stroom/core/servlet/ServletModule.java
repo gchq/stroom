@@ -17,6 +17,7 @@
 package stroom.core.servlet;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.task.api.TaskHandlerBinder;
@@ -25,7 +26,10 @@ import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.ResourcePaths;
 import stroom.util.guice.ServletBinder;
+import stroom.util.servlet.HttpServletRequestHolder;
+import stroom.util.servlet.SessionIdProvider;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSessionListener;
 
 public class ServletModule extends AbstractModule {
@@ -34,6 +38,8 @@ public class ServletModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(SessionListService.class).to(SessionListListener.class);
+        bind(HttpServletRequest.class).toProvider(HttpServletRequestHolder.class);
+        bind(SessionIdProvider.class).to(SessionIdProviderImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
                 .addBinding(SessionListListener.class);

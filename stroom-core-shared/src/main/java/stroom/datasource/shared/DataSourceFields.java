@@ -16,22 +16,22 @@
 
 package stroom.datasource.shared;
 
-import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.SharedObject;
 
 import java.util.List;
 
 public class DataSourceFields implements SharedObject {
-    private List<DataSourceField> fields;
+    private List<AbstractField> fields;
 
     public DataSourceFields() {
     }
 
-    public DataSourceFields(final List<DataSourceField> fields) {
+    public DataSourceFields(final List<AbstractField> fields) {
         this.fields = fields;
     }
 
-    public List<DataSourceField> getFields() {
+    public List<AbstractField> getFields() {
         return fields;
     }
 }

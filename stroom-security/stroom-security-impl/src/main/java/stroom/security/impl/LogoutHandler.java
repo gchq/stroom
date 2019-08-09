@@ -16,7 +16,6 @@
 
 package stroom.security.impl;
 
-import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.security.api.Security;
 import stroom.security.shared.LogoutAction;
 import stroom.security.shared.User;
@@ -24,18 +23,20 @@ import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 class LogoutHandler extends AbstractTaskHandler<LogoutAction, VoidResult> {
-    private final HttpServletRequestHolder httpServletRequestHolder;
+    private final Provider<HttpServletRequest> httpServletRequestProvider;
     private final AuthenticationEventLog eventLog;
     private final Security security;
 
     @Inject
-    LogoutHandler(final HttpServletRequestHolder httpServletRequestHolder,
+    LogoutHandler(final Provider<HttpServletRequest> httpServletRequestProvider,
                   final AuthenticationEventLog eventLog,
                   final Security security) {
-        this.httpServletRequestHolder = httpServletRequestHolder;
+        this.httpServletRequestProvider = httpServletRequestProvider;
         this.eventLog = eventLog;
         this.security = security;
     }
@@ -43,7 +44,7 @@ class LogoutHandler extends AbstractTaskHandler<LogoutAction, VoidResult> {
     @Override
     public VoidResult exec(final LogoutAction task) {
         return security.insecureResult(() -> {
-            final HttpSession session = httpServletRequestHolder.get().getSession();
+            final HttpSession session = httpServletRequestProvider.get().getSession();
             final User userRef = UserSessionUtil.get(session);
             if (session != null) {
                 // Invalidate the current user session

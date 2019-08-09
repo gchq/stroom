@@ -19,7 +19,7 @@ package stroom.statistics.impl.sql.filter;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
@@ -441,7 +441,7 @@ class TestStatisticsFilter implements Statistics {
     }
 
     @Override
-    public List<DataSourceField> getSupportedFields(final List<DataSourceField> indexFields) {
+    public List<AbstractField> getSupportedFields(final List<AbstractField> indexFields) {
         throw new UnsupportedOperationException("Not used in this test class");
     }
 

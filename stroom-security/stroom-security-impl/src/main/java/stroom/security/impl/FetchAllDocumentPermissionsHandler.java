@@ -16,28 +16,28 @@
 
 package stroom.security.impl;
 
-import stroom.util.shared.EntityServiceException;
 import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsAction;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
 
 
 class FetchAllDocumentPermissionsHandler
         extends AbstractTaskHandler<FetchAllDocumentPermissionsAction, DocumentPermissions> {
-    private final DocumentPermissionsCache documentPermissionsCache;
+    private final DocumentPermissionService documentPermissionService;
     private final SecurityContext securityContext;
     private final Security security;
 
     @Inject
-    FetchAllDocumentPermissionsHandler(final DocumentPermissionsCache documentPermissionsCache,
+    FetchAllDocumentPermissionsHandler(final DocumentPermissionService documentPermissionService,
                                        final SecurityContext securityContext,
                                        final Security security) {
-        this.documentPermissionsCache = documentPermissionsCache;
+        this.documentPermissionService = documentPermissionService;
         this.securityContext = securityContext;
         this.security = security;
     }
@@ -46,7 +46,7 @@ class FetchAllDocumentPermissionsHandler
     public DocumentPermissions exec(final FetchAllDocumentPermissionsAction action) {
         return security.insecureResult(() -> {
             if (securityContext.hasDocumentPermission(action.getDocRef().getType(), action.getDocRef().getUuid(), DocumentPermissionNames.OWNER)) {
-                return documentPermissionsCache.get(action.getDocRef().getUuid());
+                return documentPermissionService.getPermissionsForDocument(action.getDocRef().getUuid());
             }
 
             throw new EntityServiceException("You do not have sufficient privileges to fetch permissions for this document");

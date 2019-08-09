@@ -21,10 +21,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.Security;
-import stroom.util.BuildInfoProvider;
 import stroom.util.shared.BuildInfo;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -54,12 +54,12 @@ public class StatusServlet extends HttpServlet {
     private static final String AREA_VOLUME = "VOLUME";
     private static final String MSG_OK = "OK";
 
-    private final BuildInfoProvider buildInfoProvider;
+    private final Provider<BuildInfo> buildInfoProvider;
     private final NodeInfo nodeInfo;
     private final Security security;
 
     @Inject
-    StatusServlet(final BuildInfoProvider buildInfoProvider,
+    StatusServlet(final Provider<BuildInfo> buildInfoProvider,
                   final NodeInfo nodeInfo,
                   final Security security) {
         this.buildInfoProvider = buildInfoProvider;

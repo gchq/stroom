@@ -107,7 +107,7 @@ public class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTas
                     metaMap.put(StandardHeaderArguments.FEED, meta.getFeedName());
                     metaMap.put("streamType", meta.getTypeName());
                     metaMap.put("streamId", String.valueOf(meta.getId()));
-                    final String possibleFilename = StroomFileNameUtil.constructFilename(0, task.getFormat(), metaMap, ZIP_EXTENSION);
+                    final String possibleFilename = StroomFileNameUtil.constructFilename(null, 0, task.getFormat(), metaMap, ZIP_EXTENSION);
                     if (stroomZipOutputStream != null && (!possibleFilename.equals(lastPossibleFileName) || !meta.getFeedName().equals(lastFeedName))) {
                         stroomZipOutputStream.close();
                         stroomZipOutputStream = null;
@@ -250,7 +250,7 @@ public class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTas
 
     private StroomZipOutputStream getStroomZipOutputStream(final Path outputDir, final String format, final AttributeMap attributeMap)
             throws IOException {
-        final String filename = StroomFileNameUtil.constructFilename(fileCount.incrementAndGet(), format,
+        final String filename = StroomFileNameUtil.constructFilename(null, fileCount.incrementAndGet(), format,
                 attributeMap, ZIP_EXTENSION);
         final Path file = outputDir.resolve(filename);
 

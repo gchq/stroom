@@ -35,42 +35,42 @@ class TestIndexShardDaoImpl {
         indexShardDao = injector.getInstance(IndexShardDao.class);
     }
 
-    @Test
-    void createAndGet() {
-        // Given
-        final String partitionName = "ALL";
-        final DocRef index = new DocRef.Builder()
-                .uuid(UUID.randomUUID().toString())
-                .name(TestData.createIndexName())
-                .type(IndexDoc.DOCUMENT_TYPE)
-                .build();
-        final String nodeName = TestData.createNodeName();
-        final String path = TestData.createPath();
-        final String volumeGroupName = TestData.createVolumeGroupName();
-        final Long shardFrom = System.currentTimeMillis();
-        final Long shardTo = shardFrom + 3600;
-
-        // When
-        final IndexVolume createdVolume = createVolume(nodeName, path);
-        createGroup(volumeGroupName);
-        indexVolumeDao.addVolumeToGroup(createdVolume.getId(), volumeGroupName);
-        final IndexShardKey indexShardKey = new IndexShardKey.Builder()
-                .indexUuid(index.getUuid())
-                .partition(partitionName)
-                .shardNo(0)
-                .partitionFromTime(shardFrom)
-                .partitionToTime(shardTo)
-                .build();
-        final IndexShard createdIndexShard = indexShardDao.create(indexShardKey, volumeGroupName, nodeName, "1.0-test");
-        final IndexShard byIdIndexShard = indexShardDao.fetch(createdIndexShard.getId()).orElse(null);
-
-        // Then
-        assertThat(createdIndexShard).isNotNull();
-        assertThat(byIdIndexShard).isNotNull();
-
-        assertThat(createdIndexShard.getVolume()).isNotNull();
-        assertThat(byIdIndexShard.getVolume()).isNotNull();
-    }
+//    @Test
+//    void createAndGet() {
+//        // Given
+//        final String partitionName = "ALL";
+//        final DocRef index = new DocRef.Builder()
+//                .uuid(UUID.randomUUID().toString())
+//                .name(TestData.createIndexName())
+//                .type(IndexDoc.DOCUMENT_TYPE)
+//                .build();
+//        final String nodeName = TestData.createNodeName();
+//        final String path = TestData.createPath();
+//        final String volumeGroupName = TestData.createVolumeGroupName();
+//        final Long shardFrom = System.currentTimeMillis();
+//        final Long shardTo = shardFrom + 3600;
+//
+//        // When
+//        final IndexVolume createdVolume = createVolume(nodeName, path);
+//        createGroup(volumeGroupName);
+//        indexVolumeDao.addVolumeToGroup(createdVolume.getId(), volumeGroupName);
+//        final IndexShardKey indexShardKey = new IndexShardKey.Builder()
+//                .indexUuid(index.getUuid())
+//                .partition(partitionName)
+//                .shardNo(0)
+//                .partitionFromTime(shardFrom)
+//                .partitionToTime(shardTo)
+//                .build();
+//        final IndexShard createdIndexShard = indexShardDao.create(indexShardKey, volumeGroupName, nodeName, "1.0-test");
+//        final IndexShard byIdIndexShard = indexShardDao.fetch(createdIndexShard.getId()).orElse(null);
+//
+//        // Then
+//        assertThat(createdIndexShard).isNotNull();
+//        assertThat(byIdIndexShard).isNotNull();
+//
+//        assertThat(createdIndexShard.getVolume()).isNotNull();
+//        assertThat(byIdIndexShard.getVolume()).isNotNull();
+//    }
 
     @Test
     void createShardEmptyGroup() {

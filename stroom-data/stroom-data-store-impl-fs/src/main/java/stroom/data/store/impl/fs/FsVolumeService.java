@@ -85,21 +85,20 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     private final InternalStatisticsReceiver statisticsReceiver;
     private final ClusterLockService clusterLockService;
     private final Provider<EntityEventBus> entityEventBusProvider;
-
-    private final AtomicReference<List<FsVolume>> currentVolumeState = new AtomicReference<>();
+    private final AtomicReference<VolumeList> currentVolumeList = new AtomicReference<>();
 
     private volatile boolean createdDefaultVolumes;
     private volatile boolean creatingDefaultVolumes;
 
     @Inject
     public FsVolumeService(final FsVolumeDao fsVolumeDao,
-                    final FsVolumeStateDao fileSystemVolumeStateDao,
-                    final Security security,
-                    final SecurityContext securityContext,
-                    final FsVolumeConfig volumeConfig,
-                    final InternalStatisticsReceiver statisticsReceiver,
-                    final ClusterLockService clusterLockService,
-                    final Provider<EntityEventBus> entityEventBusProvider) {
+                           final FsVolumeStateDao fileSystemVolumeStateDao,
+                           final Security security,
+                           final SecurityContext securityContext,
+                           final FsVolumeConfig volumeConfig,
+                           final InternalStatisticsReceiver statisticsReceiver,
+                           final ClusterLockService clusterLockService,
+                           final Provider<EntityEventBus> entityEventBusProvider) {
         this.fsVolumeDao = fsVolumeDao;
         this.fileSystemVolumeStateDao = fileSystemVolumeStateDao;
         this.security = security;
@@ -196,7 +195,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     private Set<FsVolume> getVolumeSet(final VolumeUseStatus streamStatus) {
         final FsVolumeSelector volumeSelector = getVolumeSelector();
-        final List<FsVolume> allVolumeList = getCurrentState();
+        final List<FsVolume> allVolumeList = getCurrentVolumeList().list;
         final List<FsVolume> freeVolumes = FsVolumeListUtil.removeFullVolumes(allVolumeList);
         Set<FsVolume> set = Collections.emptySet();
 
@@ -248,11 +247,11 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     @Override
     public void onChange(final EntityEvent event) {
-        currentVolumeState.set(null);
+        currentVolumeList.set(null);
     }
 
     private void fireChange(final EntityAction action) {
-        currentVolumeState.set(null);
+        currentVolumeList.set(null);
         if (entityEventBusProvider != null) {
             try {
                 final EntityEventBus entityEventBus = entityEventBusProvider.get();
@@ -268,22 +267,21 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     @Override
     public void clear() {
         // Clear state between tests.
-        currentVolumeState.set(null);
+        currentVolumeList.set(null);
         createdDefaultVolumes = false;
     }
 
-    private List<FsVolume> getCurrentState() {
-        List<FsVolume> state = currentVolumeState.get();
-        if (state == null) {
+    private VolumeList getCurrentVolumeList() {
+        VolumeList volumeList = currentVolumeList.get();
+        if (volumeList == null) {
             synchronized (this) {
-                state = currentVolumeState.get();
-                if (state == null) {
-                    state = refresh();
-                    currentVolumeState.set(state);
+                volumeList = currentVolumeList.get();
+                if (volumeList == null) {
+                    volumeList = refresh();
                 }
             }
         }
-        return state;
+        return volumeList;
     }
 
     @Override
@@ -295,8 +293,9 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         clusterLockService.tryLock(LOCK_NAME, this::refresh);
     }
 
-    public List<FsVolume> refresh() {
-        final List<FsVolume> newState = new ArrayList<>();
+    private VolumeList refresh() {
+        final long now = System.currentTimeMillis();
+        final List<FsVolume> volumes = new ArrayList<>();
 
         final FindFsVolumeCriteria findVolumeCriteria = new FindFsVolumeCriteria();
         findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
@@ -308,10 +307,18 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
             // Record some statistics for the use of this volume.
             recordStats(volume);
-            newState.add(volume);
+            volumes.add(volume);
         }
 
-        return newState;
+        final VolumeList newList = new VolumeList(now, volumes);
+        synchronized (this) {
+            final VolumeList currentList = currentVolumeList.get();
+            if (currentList == null || currentList.createTime < newList.createTime) {
+                currentVolumeList.set(newList);
+            }
+        }
+
+        return newList;
     }
 
     private void recordStats(final FsVolume volume) {
@@ -509,6 +516,16 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         } catch (final RuntimeException e) {
             LOGGER.warn(LambdaLogUtil.message("Unable to determine application jar directory due to: {}", e.getMessage()));
             return Optional.empty();
+        }
+    }
+
+    private static class VolumeList {
+        private final long createTime;
+        private final List<FsVolume> list;
+
+        VolumeList(final long createTime, final List<FsVolume> list) {
+            this.createTime = createTime;
+            this.list = list;
         }
     }
 }

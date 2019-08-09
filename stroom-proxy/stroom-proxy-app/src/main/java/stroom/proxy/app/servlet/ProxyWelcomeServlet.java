@@ -1,9 +1,9 @@
 package stroom.proxy.app.servlet;
 
-import stroom.util.BuildInfoProvider;
 import stroom.util.shared.BuildInfo;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -12,10 +12,10 @@ import java.io.IOException;
 import java.io.Writer;
 
 public class ProxyWelcomeServlet extends HttpServlet {
-    private final BuildInfoProvider buildInfoProvider;
+    private final Provider<BuildInfo> buildInfoProvider;
 
     @Inject
-    public ProxyWelcomeServlet(final BuildInfoProvider buildInfoProvider) {
+    public ProxyWelcomeServlet(final Provider<BuildInfo> buildInfoProvider) {
         this.buildInfoProvider = buildInfoProvider;
     }
 

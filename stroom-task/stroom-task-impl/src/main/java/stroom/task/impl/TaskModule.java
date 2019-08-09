@@ -17,6 +17,7 @@
 package stroom.task.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.searchable.api.Searchable;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskContext;
@@ -25,6 +26,7 @@ import stroom.task.api.TaskManager;
 import stroom.task.shared.FindTaskProgressAction;
 import stroom.task.shared.FindUserTaskProgressAction;
 import stroom.task.shared.TerminateTaskProgressAction;
+import stroom.util.guice.GuiceUtil;
 
 public class TaskModule extends AbstractModule {
     @Override
@@ -39,6 +41,9 @@ public class TaskModule extends AbstractModule {
                 .bind(FindUserTaskProgressAction.class, FindUserTaskProgressHandler.class)
                 .bind(GenericServerTask.class, GenericServerTaskHandler.class)
                 .bind(TerminateTaskProgressAction.class, TerminateTaskProgressHandler.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+                .addBinding(SearchableTaskProgress.class);
     }
 
     @Override

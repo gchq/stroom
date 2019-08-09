@@ -56,18 +56,19 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
-import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.FieldTypes;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.security.shared.PermissionNames;
-import stroom.ui.config.client.UiConfigCache;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.Expander;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -224,16 +225,16 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     field.setExpression(ParamUtil.makeParam(indexFieldName));
                     final DataSourceFieldsMap indexFieldsMap = getIndexFieldsMap();
                     if (indexFieldsMap != null) {
-                        final DataSourceField indexField = indexFieldsMap.get(indexFieldName);
+                        final AbstractField indexField = indexFieldsMap.get(indexFieldName);
                         if (indexField != null) {
                             switch (indexField.getType()) {
-                                case DATE_FIELD:
+                                case FieldTypes.DATE:
                                     field.setFormat(new Format(Type.DATE_TIME));
                                     break;
-                                case NUMERIC_FIELD:
-                                    field.setFormat(new Format(Type.NUMBER));
-                                    break;
-                                case ID:
+                                case FieldTypes.INTEGER:
+                                case FieldTypes.LONG:
+                                case FieldTypes.NUMBER:
+                                case FieldTypes.ID:
                                     field.setFormat(new Format(Type.NUMBER));
                                     break;
                                 default:
@@ -459,12 +460,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private void performRowAction(final Row result) {
         selectedStreamId = null;
         selectedEventId = null;
-        if (result != null && streamIdIndex >= 0 && eventIdIndex >= 0) {
+        if (result != null) {
             final String[] values = result.values;
-            if (values.length > streamIdIndex && values[streamIdIndex] != null) {
+            if (streamIdIndex >= 0 && values.length > streamIdIndex && values[streamIdIndex] != null) {
                 selectedStreamId = values[streamIdIndex];
             }
-            if (values.length > eventIdIndex && values[eventIdIndex] != null) {
+            if (eventIdIndex >= 0 && values.length > eventIdIndex && values[eventIdIndex] != null) {
                 selectedEventId = values[eventIdIndex];
             }
         }
@@ -524,20 +525,23 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         tableSettings.getFields().removeIf(field -> !field.isVisible());
     }
 
-    private int ensureHiddenField(final String indexFieldName) {
+    private Integer ensureHiddenField(final String... indexFieldNames) {
         // Now add new hidden field.
         final DataSourceFieldsMap dataSourceFieldsMap = getIndexFieldsMap();
         if (dataSourceFieldsMap != null) {
-            final DataSourceField indexField = dataSourceFieldsMap.get(indexFieldName);
-            if (indexField != null) {
-                final Field field = new Field(indexFieldName);
-                field.setExpression(ParamUtil.makeParam(indexFieldName));
-                field.setVisible(false);
-                tableSettings.addField(field);
+            for (final String indexFieldName : indexFieldNames) {
+                final AbstractField indexField = dataSourceFieldsMap.get(indexFieldName);
+                if (indexField != null) {
+                    final Field field = new Field(indexFieldName);
+                    field.setExpression(ParamUtil.makeParam(indexFieldName));
+                    field.setVisible(false);
+                    tableSettings.addField(field);
+                    return tableSettings.getFields().size() - 1;
+                }
             }
         }
 
-        return tableSettings.getFields().size() - 1;
+        return -1;
     }
 
     private DataSourceFieldsMap getIndexFieldsMap() {
@@ -557,7 +561,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Now make sure hidden fields exist for stream id and event id and get
         // their result index.
-        streamIdIndex = ensureHiddenField(IndexConstants.STREAM_ID);
+        streamIdIndex = ensureHiddenField(IndexConstants.STREAM_ID, "Id");
         eventIdIndex = ensureHiddenField(IndexConstants.EVENT_ID);
 
         // Remove existing columns.

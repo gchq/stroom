@@ -17,6 +17,7 @@
 package stroom.receive.rules.impl;
 
 import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -25,6 +26,7 @@ import stroom.importexport.api.DocRefs;
 import stroom.importexport.api.OldDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.util.HasHealthCheck;
 import stroom.util.RestResource;
 import stroom.util.string.EncodingUtil;
 
@@ -42,9 +44,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Api(value = "ruleset - /v1")
-@Path("/ruleset/v1")
+@Path(ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
-public class ReceiveDataRuleSetResource implements RestResource {
+public class ReceiveDataRuleSetResource implements RestResource, HasHealthCheck {
+    public static final String BASE_RESOURCE_PATH = "/ruleset/v1";
+
     private final ReceiveDataRuleSetService ruleSetService;
 
     @Inject
@@ -95,5 +99,10 @@ public class ReceiveDataRuleSetResource implements RestResource {
         }
         final Map<String, String> data = map.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> EncodingUtil.asString(e.getValue())));
         return new OldDocumentData(docRef, data);
+    }
+
+    @Override
+    public Result getHealth() {
+        return Result.healthy();
     }
 }

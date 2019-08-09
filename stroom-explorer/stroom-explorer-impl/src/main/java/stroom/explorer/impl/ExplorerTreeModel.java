@@ -18,67 +18,105 @@ package stroom.explorer.impl;
 
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.security.api.Security;
-import stroom.util.concurrent.ModelCache;
+import stroom.task.api.ExecutorProvider;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 class ExplorerTreeModel {
+    private static final long ONE_HOUR = 60 * 60 * 1000;
+    private static final long TEN_MINUTES = 10 * 60 * 1000;
+
     private final ExplorerTreeDao explorerTreeDao;
+    private final ExplorerSession explorerSession;
+    private final ExecutorProvider executorProvider;
     private final ExplorerActionHandlers explorerActionHandlers;
-    private final Security security;
-    private final ModelCache<TreeModel> modelCache;
+
+    private volatile TreeModel currentModel;
+    private final AtomicLong minExplorerTreeModelBuildTime = new AtomicLong();
+    private final AtomicInteger performingRebuild = new AtomicInteger();
 
     @Inject
-    ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao, final ExplorerActionHandlers explorerActionHandlers, final Security security) {
+    ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao,
+                      final ExplorerSession explorerSession,
+                      final ExecutorProvider executorProvider,
+                      final ExplorerActionHandlers explorerActionHandlers) {
         this.explorerTreeDao = explorerTreeDao;
+        this.explorerSession = explorerSession;
+        this.executorProvider = executorProvider;
         this.explorerActionHandlers = explorerActionHandlers;
-        this.security = security;
-        this.modelCache = new ModelCache.Builder<TreeModel>()
-                .valueSupplier(this::createModel)
-                .maxAge(10, TimeUnit.MINUTES)
-                .build();
     }
 
-    public TreeModel getModel() {
-        return modelCache.get();
-    }
+    TreeModel getModel() {
+        final long now = System.currentTimeMillis();
+        final AtomicBoolean done = new AtomicBoolean();
 
-    private TreeModel createModel() {
-        return security.asProcessingUserResult(() -> {
-            final TreeModel newTreeModel = new TreeModelImpl();
-            final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
-            addChildren(newTreeModel, sort(roots), null);
-            return newTreeModel;
-        });
-    }
+        // Create a model synchronously if it is currently null or hasn't been rebuilt for an hour.
+        final long oneHourAgo = now - ONE_HOUR;
+        if (requiresSynchronousRebuild(oneHourAgo)) {
+            done.set(ensureModelExists(oneHourAgo));
+        }
 
-    private void addChildren(final TreeModel treeModel, final List<ExplorerTreeNode> children, final ExplorerNode parentNode) {
-        for (final ExplorerTreeNode child : children) {
-            final ExplorerNode explorerNode = createExplorerNode(child);
-            explorerNode.setIconUrl(getIconUrl(child.getType()));
-            treeModel.add(parentNode, explorerNode);
+        // Force synchronous rebuild of the tree model if it is older than the minimum build time for the current session.
+        if (!done.get()) {
+            explorerSession.getMinExplorerTreeModelBuildTime().ifPresent(buildTime -> {
+                if (buildTime > currentModel.getCreationTime()) {
+                    done.set(updateModel());
+                }
+            });
+        }
 
-            final List<ExplorerTreeNode> subChildren = explorerTreeDao.getChildren(child);
-            if (subChildren != null && subChildren.size() > 0) {
-                addChildren(treeModel, sort(subChildren), explorerNode);
+        // If the model has not been rebuilt in the last 10 minutes for anybody then do so asynchronously.
+        if (!done.get()) {
+            // Find out what the oldest tree model is that we will allow before performing an asynchronous rebuild.
+            final long oldestAllowed = Math.max(minExplorerTreeModelBuildTime.get(), now - TEN_MINUTES);
+            if (currentModel.getCreationTime() < oldestAllowed) {
+                // Perform a build asynchronously if we aren't already building elsewhere.
+                if (performingRebuild.compareAndSet(0, 1)) {
+                    final Executor executor = executorProvider.getExecutor();
+                    CompletableFuture
+                            .runAsync(this::updateModel, executor)
+                            .thenRun(performingRebuild::decrementAndGet);
+                }
             }
         }
+
+        return currentModel;
     }
 
-    private List<ExplorerTreeNode> sort(final List<ExplorerTreeNode> list) {
-        list.sort((o1, o2) -> {
-            if (!o1.getType().equals(o2.getType())) {
-                final int p1 = getPriority(o1.getType());
-                final int p2 = getPriority(o2.getType());
-                return Integer.compare(p1, p2);
-            }
+    private boolean requiresSynchronousRebuild(final long oldestAllowedForSynchronousRebuild) {
+        return currentModel == null || currentModel.getCreationTime() < oldestAllowedForSynchronousRebuild;
+    }
 
-            return o1.getName().compareTo(o2.getName());
-        });
-        return list;
+    private synchronized boolean ensureModelExists(final long oldestAllowedForSynchronousRebuild) {
+        if (requiresSynchronousRebuild(oldestAllowedForSynchronousRebuild)) {
+            return updateModel();
+        }
+        return false;
+    }
+
+    private boolean updateModel() {
+        performingRebuild.incrementAndGet();
+        try {
+            setCurrentModel(createModel());
+        } finally {
+            performingRebuild.decrementAndGet();
+        }
+        return true;
+    }
+
+    TreeModel createModel() {
+        final TreeModel treeModel = explorerTreeDao.createModel(this::getIconUrl);
+
+        // Sort children.
+        treeModel.getChildMap().values().forEach(this::sort);
+
+        return treeModel;
     }
 
     private String getIconUrl(final String type) {
@@ -90,6 +128,18 @@ class ExplorerTreeModel {
         return documentType.getIconUrl();
     }
 
+    private void sort(final List<ExplorerNode> list) {
+        list.sort((o1, o2) -> {
+            if (!o1.getType().equals(o2.getType())) {
+                final int p1 = getPriority(o1.getType());
+                final int p2 = getPriority(o2.getType());
+                return Integer.compare(p1, p2);
+            }
+
+            return o1.getName().compareTo(o2.getName());
+        });
+    }
+
     private int getPriority(final String type) {
         final DocumentType documentType = explorerActionHandlers.getType(type);
         if (documentType == null) {
@@ -99,11 +149,26 @@ class ExplorerTreeModel {
         return documentType.getPriority();
     }
 
-    void rebuild() {
-        modelCache.rebuild();
+    private synchronized void setCurrentModel(final TreeModel treeModel) {
+        if (currentModel == null || currentModel.getCreationTime() < treeModel.getCreationTime()) {
+            currentModel = treeModel;
+        }
     }
 
-    private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
-        return new ExplorerNode(explorerTreeNode.getType(), explorerTreeNode.getUuid(), explorerTreeNode.getName(), explorerTreeNode.getTags());
+    void rebuild() {
+        final long now = System.currentTimeMillis();
+
+        minExplorerTreeModelBuildTime.getAndUpdate(prev -> {
+            if (prev < now) {
+                return now;
+            }
+            return prev;
+        });
+
+        explorerSession.setMinExplorerTreeModelBuildTime(now);
+    }
+
+    void clear() {
+        currentModel = null;
     }
 }

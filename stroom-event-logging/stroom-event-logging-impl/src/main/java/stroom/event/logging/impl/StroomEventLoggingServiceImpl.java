@@ -29,13 +29,13 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.activity.api.CurrentActivity;
-import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
-import stroom.util.BuildInfoProvider;
+import stroom.util.shared.BuildInfo;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -55,17 +55,17 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     private volatile Device storedDevice;
 
     private final SecurityContext security;
-    private final HttpServletRequestHolder httpServletRequestHolder;
+    private final Provider<HttpServletRequest> httpServletRequestProvider;
     private final CurrentActivity currentActivity;
-    private final BuildInfoProvider buildInfoProvider;
+    private final Provider<BuildInfo> buildInfoProvider;
 
     @Inject
     StroomEventLoggingServiceImpl(final SecurityContext security,
-                                  final HttpServletRequestHolder httpServletRequestHolder,
+                                  final Provider<HttpServletRequest> httpServletRequestProvider,
                                   final CurrentActivity currentActivity,
-                                  final BuildInfoProvider buildInfoProvider) {
+                                  final Provider<BuildInfo> buildInfoProvider) {
         this.security = security;
-        this.httpServletRequestHolder = httpServletRequestHolder;
+        this.httpServletRequestProvider = httpServletRequestProvider;
         this.currentActivity = currentActivity;
         this.buildInfoProvider = buildInfoProvider;
     }
@@ -229,8 +229,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     }
 
     private HttpServletRequest getRequest() {
-        if (httpServletRequestHolder != null) {
-            return httpServletRequestHolder.get();
+        if (httpServletRequestProvider != null) {
+            return httpServletRequestProvider.get();
         }
         return null;
     }

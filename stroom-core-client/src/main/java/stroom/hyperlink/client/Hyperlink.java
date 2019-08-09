@@ -1,5 +1,6 @@
 package stroom.hyperlink.client;
 
+import com.google.gwt.http.client.URL;
 import stroom.svg.client.SvgPreset;
 
 import java.util.Objects;
@@ -19,19 +20,27 @@ public class Hyperlink {
     }
 
     public String getText() {
-        return text;
+        return decode(text);
     }
 
     public String getHref() {
-        return href;
+        return decode(href);
     }
 
     public String getType() {
-        return type;
+        return decode(type);
     }
 
     public SvgPreset getIcon() {
         return icon;
+    }
+
+    private String decode(final String string) {
+        // Hyperlink values are URLEncoded within the link dashboard function so they need to be decoded when used.
+        if (string == null) {
+            return null;
+        }
+        return URL.decodeQueryString(string);
     }
 
     @Override

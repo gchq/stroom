@@ -1,26 +1,28 @@
 package stroom.explorer.impl.db;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jooq.impl.DSL;
 import stroom.db.util.JooqUtil;
 import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.explorer.impl.ExplorerTreeNode;
 import stroom.explorer.impl.ExplorerTreePath;
+import stroom.explorer.impl.TreeModel;
+import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
+import stroom.explorer.shared.ExplorerNode;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static stroom.explorer.impl.db.jooq.tables.ExplorerNode.EXPLORER_NODE;
 import static stroom.explorer.impl.db.jooq.tables.ExplorerPath.EXPLORER_PATH;
 
 class ExplorerTreeDaoImpl implements ExplorerTreeDao {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerTreeDaoImpl.class);
-
     private final boolean orderIndexMatters;
     private boolean removeReferencedNodes;
     private final ConnectionProvider connectionProvider;
@@ -185,6 +187,61 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                 .stream()
                 .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()))
                 .collect(Collectors.toList()));
+    }
+
+    @Override
+    public TreeModel createModel(final Function<String, String> iconUrlProvider) {
+        final TreeModel treeModel = new TreeModel();
+
+        final List<Integer> roots = JooqUtil.contextResult(connectionProvider, context -> context
+                .select(p.ANCESTOR)
+                .from(p)
+                .where(p.DEPTH.eq(0))
+                .andNotExists(
+                        context
+                                .select(DSL.val("x"))
+                                .from(p2)
+                                .where(p2.DESCENDANT.eq(p.DESCENDANT))
+                                .and(p2.DEPTH.gt(0))
+                )
+                .fetch(p.ANCESTOR));
+        if (roots.size() > 0) {
+            final Map<Integer, ExplorerNode> nodeMap = JooqUtil.contextResult(connectionProvider, context -> context
+                    .selectFrom(n)
+                    .fetch()
+                    .stream()
+                    .collect(Collectors.toMap(ExplorerNodeRecord::getId, r -> {
+                        final ExplorerNode explorerNode = new ExplorerNode(r.getType(), r.getUuid(), r.getName(), r.getTags());
+                        explorerNode.setIconUrl(iconUrlProvider.apply(r.getType()));
+                        return explorerNode;
+                    })));
+
+            // Add the roots.
+            roots.forEach(rootId -> {
+                final ExplorerNode root = nodeMap.get(rootId);
+                if (root != null) {
+                    treeModel.add(null, root);
+                }
+            });
+
+            // Add parents and children.
+            JooqUtil.context(connectionProvider, context -> context
+                    .select(p.ANCESTOR, p.DESCENDANT)
+                    .from(p)
+                    .where(p.DEPTH.eq(1))
+                    .fetch()
+                    .forEach(r -> {
+                        final int ancestorId = r.value1();
+                        final int descendantId = r.value2();
+                        final ExplorerNode ancestor = nodeMap.get(ancestorId);
+                        final ExplorerNode descendant = nodeMap.get(descendantId);
+                        if (ancestor != null && descendant != null) {
+                            treeModel.add(ancestor, descendant);
+                        }
+                    }));
+        }
+
+        return treeModel;
     }
 
     @Override

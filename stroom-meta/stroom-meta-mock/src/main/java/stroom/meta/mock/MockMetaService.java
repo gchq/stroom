@@ -1,11 +1,11 @@
 package stroom.meta.mock;
 
-import stroom.meta.api.ExpressionMatcher;
+import stroom.expression.matcher.ExpressionMatcher;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.MetaService;
@@ -54,7 +54,6 @@ public class MockMetaService implements MetaService, Clearable {
         builder.feedName(properties.getFeedName());
         builder.typeName(properties.getTypeName());
         builder.processorUuid(properties.getProcessorUuid());
-        builder.processorTaskId(properties.getProcessorTaskId());
         builder.createMs(properties.getCreateMs());
         builder.effectiveMs(properties.getEffectiveMs());
         builder.statusMs(properties.getStatusMs());
@@ -156,7 +155,7 @@ public class MockMetaService implements MetaService, Clearable {
 
     @Override
     public BaseResultList<Meta> find(final FindMetaCriteria criteria) {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(MetaFieldNames.getExtendedFieldMap(), null);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(MetaFields.getAllFieldMap());
         final List<Meta> list = new ArrayList<>();
         for (final Entry<Long, Meta> entry : metaMap.entrySet()) {
             try {
@@ -181,23 +180,23 @@ public class MockMetaService implements MetaService, Clearable {
         final Map<String, Object> attributeMap = new HashMap<>();
 
         if (meta != null) {
-            attributeMap.put(MetaFieldNames.ID, meta.getId());
-            attributeMap.put(MetaFieldNames.CREATE_TIME, meta.getCreateMs());
-            attributeMap.put(MetaFieldNames.EFFECTIVE_TIME, meta.getEffectiveMs());
-            attributeMap.put(MetaFieldNames.STATUS_TIME, meta.getStatusMs());
-            attributeMap.put(MetaFieldNames.STATUS, meta.getStatus().getDisplayValue());
+            attributeMap.put(MetaFields.ID.getName(), meta.getId());
+            attributeMap.put(MetaFields.CREATE_TIME.getName(), meta.getCreateMs());
+            attributeMap.put(MetaFields.EFFECTIVE_TIME.getName(), meta.getEffectiveMs());
+            attributeMap.put(MetaFields.STATUS_TIME.getName(), meta.getStatusMs());
+            attributeMap.put(MetaFields.STATUS.getName(), meta.getStatus().getDisplayValue());
             if (meta.getParentMetaId() != null) {
-                attributeMap.put(MetaFieldNames.PARENT_ID, meta.getParentMetaId());
+                attributeMap.put(MetaFields.PARENT_ID.getName(), meta.getParentMetaId());
             }
             if (meta.getTypeName() != null) {
-                attributeMap.put(MetaFieldNames.TYPE_NAME, meta.getTypeName());
+                attributeMap.put(MetaFields.TYPE_NAME.getName(), meta.getTypeName());
             }
             final String feedName = meta.getFeedName();
             if (feedName != null) {
-                attributeMap.put(MetaFieldNames.FEED_NAME, feedName);
+                attributeMap.put(MetaFields.FEED_NAME.getName(), feedName);
             }
             final String pipelineUuid = meta.getPipelineUuid();
-            attributeMap.put(MetaFieldNames.PIPELINE_UUID, pipelineUuid);
+            attributeMap.put(MetaFields.PIPELINE.getName(), pipelineUuid);
 //            if (processor != null) {
 //                final String pipelineUuid = processor.getPipelineUuid();
 //                if (pipelineUuid != null) {

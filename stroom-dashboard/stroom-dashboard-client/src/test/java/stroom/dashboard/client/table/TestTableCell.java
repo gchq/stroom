@@ -1,11 +1,13 @@
 package stroom.dashboard.client.table;
 
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTableCell {
+    @Disabled // This will never work as it relies on gwt javascript that is not available in a unit test
     @Test
     void testRender() {
         final String value = "Here we [Have](http//some-url/First){browser} several [Links](http//some-url/First){browser} for a [User](http//some-url/First) to click [On](http//some-url/First){browser} OK";

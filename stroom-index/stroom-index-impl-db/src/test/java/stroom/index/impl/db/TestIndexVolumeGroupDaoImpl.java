@@ -3,6 +3,8 @@ package stroom.index.impl.db;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.assertj.core.data.Offset;
+import org.jooq.exception.DataAccessException;
+import org.jooq.exception.DataChangedException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import stroom.index.impl.IndexVolumeGroupDao;
@@ -17,6 +19,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestIndexVolumeGroupDaoImpl {
     private static IndexVolumeGroupDao indexVolumeGroupDao;
@@ -26,6 +29,68 @@ class TestIndexVolumeGroupDaoImpl {
         final Injector injector = Guice.createInjector(new IndexDbModule(), new TestModule());
         indexVolumeGroupDao = injector.getInstance(IndexVolumeGroupDao.class);
     }
+
+    @Test
+    void testCreate() {
+        // Given
+        final var groupName = TestData.createVolumeGroupName();
+
+        // When
+        final var group = createGroup(groupName);
+
+        // Then
+        assertThat(group.getName()).isEqualTo(groupName);
+    }
+
+
+    @Test
+    void testUpdate() {
+        // Given
+        final var groupName = TestData.createVolumeGroupName();
+        createGroup(groupName);
+        final var newGroupName = TestData.createVolumeGroupName();
+        final var reloadedGroup = indexVolumeGroupDao.get(groupName);
+
+        // When
+        reloadedGroup.setName(newGroupName);
+        indexVolumeGroupDao.update(reloadedGroup);
+
+        // Then
+        final var updatedGroup = indexVolumeGroupDao.get(newGroupName);
+        assertThat(updatedGroup).isNotNull();
+        assertThat(updatedGroup.getName()).isEqualTo(newGroupName);
+        assertThat(indexVolumeGroupDao.get(groupName)).isNull();
+    }
+
+
+    @Test
+    void testDelete() {
+        // Given
+        final var groupName = TestData.createVolumeGroupName();
+        final var group = createGroup(groupName);
+
+        // When
+        indexVolumeGroupDao.delete(group.getId());
+
+        // Then
+        final var deletedGroup = indexVolumeGroupDao.get(groupName);
+        assertThat(deletedGroup).isNull();
+    }
+
+    @Test
+    void testDeleteByName() {
+        // Given
+        final var groupName = TestData.createVolumeGroupName();
+        final var group = createGroup(groupName);
+
+        // When
+        indexVolumeGroupDao.delete(groupName);
+
+        // Then
+        final var deletedGroup = indexVolumeGroupDao.get(groupName);
+        assertThat(deletedGroup).isNull();
+    }
+
 
     @Test
     void getNamesAndAll() {
@@ -136,14 +201,6 @@ class TestIndexVolumeGroupDaoImpl {
                     assertThat(i.getUpdateUser()).isEqualTo(TestModule.TEST_USER);
                 });
     }
-
-//    private IndexVolume createVolume(final String nodeName, final String path) {
-//        final IndexVolume indexVolume = new IndexVolume();
-//        indexVolume.setNodeName(nodeName);
-//        indexVolume.setPath(path);
-//        AuditUtil.stamp("test", indexVolume);
-//        return indexVolumeDao.getOrCreate(indexVolume);
-//    }
 
     private IndexVolumeGroup createGroup(final String name) {
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();

@@ -22,8 +22,16 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.datasource.api.v2.DataSourceField;
-import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.BooleanField;
+import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.DocRefField;
+import stroom.datasource.api.v2.FieldTypes;
+import stroom.datasource.api.v2.IdField;
+import stroom.datasource.api.v2.IntegerField;
+import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.NumberField;
+import stroom.datasource.api.v2.TextField;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -40,13 +48,13 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
         super(eventBus, view);
     }
 
-    public void read(final DataSourceField field, final Set<String> otherFieldNames) {
+    public void read(final AbstractField field, final Set<String> otherFieldNames) {
         this.otherFieldNames = otherFieldNames;
         getView().setType(field.getType());
         getView().setName(field.getName());
     }
 
-    public DataSourceField write() {
+    public AbstractField write() {
         String name = getView().getName();
         name = name.trim();
 
@@ -59,9 +67,7 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
             return null;
         }
 
-
-
-        return new DataSourceField(getView().getType(), null, name, true, null);
+        return create(getView().getType(), name);
     }
 
     public void show(final String caption, final PopupUiHandlers uiHandlers) {
@@ -74,12 +80,37 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
     }
 
     public interface FieldEditView extends View {
-        DataSourceFieldType getType();
+        String getType();
 
-        void setType(DataSourceFieldType type);
+        void setType(String type);
 
         String getName();
 
         void setName(final String name);
+    }
+
+    private AbstractField create(final String type, final String name) {
+        switch (type) {
+            case FieldTypes.BOOLEAN:
+                return new BooleanField(name);
+            case FieldTypes.DATE:
+                return new DateField(name);
+            case FieldTypes.DOC_REF:
+                return new DocRefField(null, name);
+            case FieldTypes.ID:
+                return new IdField(name);
+            case FieldTypes.INTEGER:
+                return new IntegerField(name);
+            case FieldTypes.LONG:
+                return new LongField(name);
+            case FieldTypes.NUMBER:
+                return new NumberField(name);
+            case FieldTypes.TEXT:
+                return new TextField(name);
+            default:
+                AlertEvent.fireWarn(this, "Unexpected type " + type, null);
+        }
+
+        return null;
     }
 }

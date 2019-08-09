@@ -65,7 +65,6 @@ public class ExpressionModel {
                 term.setField(expressionTerm.getField());
                 term.setCondition(expressionTerm.getCondition());
                 term.setValue(expressionTerm.getValue());
-                term.setDictionary(expressionTerm.getDictionary());
                 term.setDocRef(expressionTerm.getDocRef());
                 term.setEnabled(expressionTerm.getEnabled());
 
@@ -110,7 +109,6 @@ public class ExpressionModel {
                             .field(term.getField())
                             .condition(term.getCondition())
                             .value(term.getValue())
-                            .dictionary(term.getDictionary())
                             .docRef(term.getDocRef())
                             .build());
                 }

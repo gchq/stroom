@@ -7,7 +7,8 @@ import java.util.List;
 public interface IndexVolumeGroupService {
     List<String> getNames();
     List<IndexVolumeGroup> getAll();
-    IndexVolumeGroup create(String name);
+    IndexVolumeGroup create();
+    IndexVolumeGroup update(IndexVolumeGroup indexVolumeGroup);
     IndexVolumeGroup get(String name);
-    void delete(String name);
+    void delete(int id);
 }

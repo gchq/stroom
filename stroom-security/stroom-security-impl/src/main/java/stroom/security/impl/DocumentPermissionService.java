@@ -21,10 +21,11 @@ import stroom.security.shared.DocumentPermissions;
 import java.util.Set;
 
 public interface DocumentPermissionService {
-
-    Set<String> getPermissionsForDocumentForUser(String docRefUuid,String userUuid);
+    Set<String> getPermissionsForDocumentForUser(String docRefUuid, String userUuid);
 
     DocumentPermissions getPermissionsForDocument(String docRefUuid);
+
+    UserDocumentPermissions getPermissionsForUser(String userUuid);
 
     void addPermission(String docRefUuid, String userUuid, String permission);
 

@@ -2,40 +2,68 @@ package stroom.core.dataprocess;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.api.Target;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.pipeline.task.SupersededOutputHelper;
+import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskDataSource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.OptionalLong;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @PipelineScoped
 public class SupersededOutputHelperImpl implements SupersededOutputHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(SupersededOutputHelperImpl.class);
 
     private final MetaService dataMetaService;
+    private final ProcessorTaskService processorTaskService;
+    private final Set<Target> targets = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private Meta sourceMeta;
-    private Processor streamProcessor;
-    private ProcessorTask streamTask;
+    private Processor processor;
+    private ProcessorTask processorTask;
     private long processStartTime;
 
     private boolean initialised;
     private boolean superseded;
 
     @Inject
-    public SupersededOutputHelperImpl(final MetaService dataMetaService) {
+    public SupersededOutputHelperImpl(final MetaService dataMetaService,
+                                      final ProcessorTaskService processorTaskService) {
         this.dataMetaService = dataMetaService;
+        this.processorTaskService = processorTaskService;
+    }
+
+    /**
+     * Record that we are creating a target for the current processing pipeline.
+     *
+     * @param supplier The supplier of the new target.
+     * @return The newly created target.
+     */
+    @Override
+    public synchronized Target addTarget(final Supplier<Target> supplier) {
+        final Target target = supplier.get();
+        targets.add(target);
+        return target;
     }
 
     /**
@@ -46,7 +74,8 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
      * earlier stream task then mark our output as to be deleted (rather than
      * unlock it).
      */
-    public boolean isSuperseded() {
+    @Override
+    public synchronized boolean isSuperseded() {
         try {
             if (!initialised) {
                 LOGGER.debug("SupersededOutputHelper has not been initialised");
@@ -54,44 +83,41 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
             }
 
             Objects.requireNonNull(sourceMeta, "Source stream must not be null");
-            Objects.requireNonNull(streamProcessor, "Stream processor must not be null");
+            Objects.requireNonNull(processor, "Stream processor must not be null");
 
             if (!superseded) {
-                final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                        .addTerm(MetaFieldNames.PARENT_ID, Condition.EQUALS, String.valueOf(sourceMeta.getId()))
-                        .addTerm(MetaFieldNames.PROCESSOR_ID, Condition.EQUALS, String.valueOf(streamProcessor.getId()))
+                final ExpressionOperator findMetaExpression = new ExpressionOperator.Builder(Op.AND)
+                        .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, sourceMeta.getId())
+                        .addTerm(MetaFields.PROCESSOR_ID, Condition.EQUALS, processor.getId())
                         .build();
-                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
+                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
                 final List<Meta> streamList = dataMetaService.find(findMetaCriteria);
 
-                Long latestStreamTaskId = null;
-                long latestStreamCreationTime = processStartTime;
+                // Find any task id's that are greater than the current task id for this input meta.
+                final ExpressionOperator findTaskExpression = new ExpressionOperator.Builder()
+                        .addTerm(ProcessorTaskDataSource.META_ID, Condition.EQUALS, sourceMeta.getId())
+                        .addTerm(ProcessorTaskDataSource.PROCESSOR_ID, Condition.EQUALS, processor.getId())
+                        .addTerm(ProcessorTaskDataSource.TASK_ID, Condition.GREATER_THAN, processorTask.getId())
+                        .build();
+                final BaseResultList<ProcessorTask> tasks = processorTaskService.find(new ExpressionCriteria(findTaskExpression));
+                final OptionalLong maxTaskId = tasks.stream().mapToLong(ProcessorTask::getId).max();
 
-                // Find the latest stream task .... this one is not superseded
-                for (final Meta meta : streamList) {
-                    // TODO : @66 REMOVE STREAM TASK ID FROM STREAM AND QUERY THE STREAM PROCESSOR SERVICE TO FIND THE LATEST TASK ID FOR THE CURRENT INPUT STREAM AND PROCESSOR
+                // Is our task old?
+                superseded = maxTaskId.isPresent() && maxTaskId.getAsLong() != processorTask.getId();
 
-                    if (meta.getProcessorTaskId() != null && !Status.DELETED.equals(meta.getStatus())) {
-                        if (meta.getCreateMs() > latestStreamCreationTime) {
-                            latestStreamCreationTime = meta.getCreateMs();
-                            latestStreamTaskId = meta.getProcessorTaskId();
-                        } else if (meta.getCreateMs() == latestStreamCreationTime
-                                && (latestStreamTaskId == null || meta.getProcessorTaskId() > latestStreamTaskId)) {
-                            latestStreamCreationTime = meta.getCreateMs();
-                            latestStreamTaskId = meta.getProcessorTaskId();
-                        }
-                    }
+                if (!superseded) {
+                    // Get the data we want to retain.
+                    final List<Meta> retain = targets
+                            .stream()
+                            .map(Target::getMeta)
+                            .collect(Collectors.toList());
+                    streamList.removeAll(retain);
                 }
 
                 // Loop around all the streams found above looking for ones to delete
                 final FindMetaCriteria findDeleteMetaCriteria = new FindMetaCriteria();
                 for (final Meta meta : streamList) {
-                    // If the stream is not associated with the latest stream task
-                    // and is not already deleted then select it for deletion.
-                    if ((latestStreamTaskId == null || !latestStreamTaskId.equals(meta.getProcessorTaskId()))
-                            && !Status.DELETED.equals(meta.getStatus())) {
-                        findDeleteMetaCriteria.obtainSelectedIdSet().add(meta.getId());
-                    }
+                    findDeleteMetaCriteria.obtainSelectedIdSet().add(meta.getId());
                 }
 
                 // If we have found any to delete then delete them now.
@@ -99,9 +125,6 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
                     final long deleteCount = dataMetaService.updateStatus(findDeleteMetaCriteria, Status.DELETED);
                     LOGGER.info("checkSuperseded() - Removed {}", deleteCount);
                 }
-
-                // Is our task old?
-                superseded = latestStreamTaskId != null && latestStreamTaskId != streamTask.getId();
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
@@ -115,8 +138,8 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
                      final ProcessorTask processorTask,
                      final long processStartTime) {
         this.sourceMeta = sourceMeta;
-        this.streamProcessor = processor;
-        this.streamTask = processorTask;
+        this.processor = processor;
+        this.processorTask = processorTask;
         this.processStartTime = processStartTime;
 
         initialised = true;

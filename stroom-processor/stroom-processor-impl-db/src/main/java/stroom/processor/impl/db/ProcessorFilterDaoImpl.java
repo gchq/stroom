@@ -5,14 +5,17 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import stroom.db.util.ExpressionMapper;
+import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord;
-import stroom.processor.shared.FindProcessorFilterCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterDataSource;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
@@ -20,7 +23,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -34,7 +36,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
     private static final Map<String, Field> FIELD_MAP = Map.of(
-            FindProcessorFilterCriteria.FIELD_ID, PROCESSOR_FILTER.ID);
+            ProcessorFilterDataSource.FIELD_ID, PROCESSOR_FILTER.ID);
 
     private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
     private static final Function<Record, ProcessorFilter> RECORD_TO_PROCESSOR_FILTER_MAPPER = new RecordToProcessorFilterMapper();
@@ -43,12 +45,22 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private final ConnectionProvider connectionProvider;
     private final ProcessorFilterMarshaller marshaller;
     private final GenericDao<ProcessorFilterRecord, ProcessorFilter, Integer> genericDao;
+    private final ExpressionMapper expressionMapper;
 
     @Inject
-    ProcessorFilterDaoImpl(final ConnectionProvider connectionProvider) {
+    ProcessorFilterDaoImpl(final ConnectionProvider connectionProvider, final ExpressionMapperFactory expressionMapperFactory) {
         this.connectionProvider = connectionProvider;
         this.marshaller = new ProcessorFilterMarshaller();
         this.genericDao = new GenericDao<>(PROCESSOR_FILTER, PROCESSOR_FILTER.ID, ProcessorFilter.class, connectionProvider);
+
+        expressionMapper = expressionMapperFactory.create();
+        expressionMapper.map(ProcessorFilterDataSource.PRIORITY, PROCESSOR_FILTER.PRIORITY, Integer::valueOf);
+        expressionMapper.map(ProcessorFilterDataSource.LAST_POLL_MS, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS, Long::valueOf);
+        expressionMapper.map(ProcessorFilterDataSource.PROCESSOR_ID, PROCESSOR_FILTER.FK_PROCESSOR_ID, Integer::valueOf);
+        expressionMapper.map(ProcessorFilterDataSource.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
+        expressionMapper.map(ProcessorFilterDataSource.PROCESSOR_ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFilterDataSource.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
     }
 
     @Override
@@ -124,12 +136,12 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     @Override
-    public BaseResultList<ProcessorFilter> find(final FindProcessorFilterCriteria criteria) {
+    public BaseResultList<ProcessorFilter> find(final ExpressionCriteria criteria) {
         return JooqUtil.contextResult(connectionProvider, context -> find(context, criteria));
     }
 
-    private BaseResultList<ProcessorFilter> find(final DSLContext context, final FindProcessorFilterCriteria criteria) {
-        final Collection<Condition> conditions = convertCriteria(criteria);
+    private BaseResultList<ProcessorFilter> find(final DSLContext context, final ExpressionCriteria criteria) {
+        final Condition condition = expressionMapper.apply(criteria.getExpression());
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
@@ -138,7 +150,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .from(PROCESSOR_FILTER)
                 .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                .where(conditions)
+                .where(condition)
                 .orderBy(orderFields)
                 .fetch()
                 .map(record -> {
@@ -155,14 +167,14 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         return BaseResultList.createCriterialBasedList(list, criteria);
     }
 
-    private Collection<Condition> convertCriteria(final FindProcessorFilterCriteria criteria) {
-        return JooqUtil.conditions(
-                JooqUtil.getRangeCondition(PROCESSOR_FILTER.PRIORITY, criteria.getPriorityRange()),
-                JooqUtil.getRangeCondition(PROCESSOR_FILTER_TRACKER.LAST_POLL_MS, criteria.getLastPollPeriod()),
-                JooqUtil.getSetCondition(PROCESSOR_FILTER.FK_PROCESSOR_ID, criteria.getProcessorIdSet()),
-                JooqUtil.getStringCondition(PROCESSOR.PIPELINE_UUID, criteria.getPipelineUuidCriteria()),
-                Optional.ofNullable(criteria.getProcessorEnabled()).map(PROCESSOR.ENABLED::eq),
-                Optional.ofNullable(criteria.getProcessorFilterEnabled()).map(PROCESSOR_FILTER.ENABLED::eq),
-                Optional.ofNullable(criteria.getCreateUser()).map(PROCESSOR_FILTER.CREATE_USER::eq));
-    }
+//    private Collection<Condition> convertCriteria(final FindProcessorFilterCriteria criteria) {
+//        return JooqUtil.conditions(
+//                JooqUtil.getRangeCondition(PROCESSOR_FILTER.PRIORITY, criteria.getPriorityRange()),
+//                JooqUtil.getRangeCondition(PROCESSOR_FILTER_TRACKER.LAST_POLL_MS, criteria.getLastPollPeriod()),
+//                JooqUtil.getSetCondition(PROCESSOR_FILTER.FK_PROCESSOR_ID, criteria.getProcessorIdSet()),
+//                JooqUtil.getStringCondition(PROCESSOR.PIPELINE_UUID, criteria.getPipelineUuidCriteria()),
+//                Optional.ofNullable(criteria.getProcessorEnabled()).map(PROCESSOR.ENABLED::eq),
+//                Optional.ofNullable(criteria.getProcessorFilterEnabled()).map(PROCESSOR_FILTER.ENABLED::eq),
+//                Optional.ofNullable(criteria.getCreateUser()).map(PROCESSOR_FILTER.CREATE_USER::eq));
+//    }
 }

@@ -19,7 +19,6 @@ package stroom.event.logging.impl;
 import com.google.inject.AbstractModule;
 import stroom.activity.api.CurrentActivity;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
@@ -30,7 +29,6 @@ public class EventLoggingModule extends AbstractModule {
         requireBinding(CurrentActivity.class);
         requireBinding(SecurityContext.class);
 
-        bind(HttpServletRequestHolder.class).to(HttpServletRequestHolderImpl.class);
         bind(StroomEventLoggingService.class).to(StroomEventLoggingServiceImpl.class);
         bind(DocumentEventLog.class).to(DocumentEventLogImpl.class);
 

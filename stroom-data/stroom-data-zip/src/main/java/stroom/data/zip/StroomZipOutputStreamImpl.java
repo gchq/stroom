@@ -7,6 +7,7 @@ import stroom.meta.shared.AttributeMap;
 import stroom.task.api.TaskContext;
 import stroom.util.io.WrappedOutputStream;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -50,7 +51,10 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         this.lockFile = Files.createFile(lockFile);
 
         streamProgressMonitor = new StreamProgressMonitor(taskContext, "Write");
-        zipOutputStream = new ZipOutputStream(new FilterOutputStreamProgressMonitor(Files.newOutputStream(lockFile), streamProgressMonitor));
+        final OutputStream rawOutputStream = Files.newOutputStream(lockFile);
+        final OutputStream bufferedOutputStream = new BufferedOutputStream(rawOutputStream, BufferSizeUtil.get());
+        final OutputStream progressOutputStream = new FilterOutputStreamProgressMonitor(bufferedOutputStream, streamProgressMonitor);
+        zipOutputStream = new ZipOutputStream(progressOutputStream);
         if (monitorEntries) {
             stroomZipNameSet = new StroomZipNameSet(false);
         }

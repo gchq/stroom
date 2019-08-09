@@ -25,7 +25,7 @@ import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 
-public class UpdateActivityHandler extends AbstractTaskHandler<UpdateActivityAction, Activity> {
+class UpdateActivityHandler extends AbstractTaskHandler<UpdateActivityAction, Activity> {
     private final ActivityService activityService;
     private final DocumentEventLog entityEventLog;
     private final Security security;

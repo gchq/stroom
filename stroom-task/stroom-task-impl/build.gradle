@@ -3,9 +3,13 @@ ext.moduleName = 'stroom.task.impl'
 dependencies {
     compile project(':stroom-cluster:stroom-cluster-task-api')
     compile project(':stroom-core-shared')
+    compile project(':stroom-dictionary:stroom-dictionary-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-explorer:stroom-collection-api')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-node:stroom-node-api')
+    compile project(':stroom-search:stroom-expression-matcher')
+    compile project(':stroom-search:stroom-searchable-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util-shared')

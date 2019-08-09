@@ -16,8 +16,10 @@
 
 package stroom.activity.impl;
 
+import com.google.common.base.Strings;
 import stroom.activity.api.ActivityService;
 import stroom.activity.shared.Activity;
+import stroom.activity.shared.ActivityValidationResult;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;
@@ -25,6 +27,10 @@ import stroom.util.shared.BaseResultList;
 import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class ActivityServiceImpl implements ActivityService {
     private final SecurityContext securityContext;
@@ -98,5 +104,38 @@ public class ActivityServiceImpl implements ActivityService {
 
         criteria.setUserId(securityContext.getUserId());
         return dao.find(criteria);
+    }
+
+    @Override
+    public ActivityValidationResult validate(final Activity activity) {
+        boolean valid = true;
+        List<String> messages = new ArrayList<>();
+
+        final Activity.ActivityDetails activityDetails = activity.getDetails();
+        for (final Activity.Prop prop : activityDetails.getProperties()) {
+            if (prop.getValidation() != null) {
+                String value = prop.getValue();
+                if (value == null) {
+                    value = "";
+                }
+                Pattern pattern;
+                try {
+                    pattern = Pattern.compile(prop.getValidation(), Pattern.DOTALL);
+                    if (!pattern.matcher(value).matches()) {
+                        valid = false;
+                        if (Strings.isNullOrEmpty(prop.getValidationMessage())) {
+                            messages.add("Invalid value '" + value + "' for property '" + prop.getId() + "' must match '" + prop.getValidation() + "'");
+                        } else {
+                            messages.add(prop.getValidationMessage());
+                        }
+                    }
+                } catch (final PatternSyntaxException e) {
+                    valid = false;
+                    messages.add("Unable to parse validation regex '" + prop.getValidation() + "' for property '" + prop.getId() + "'");
+                }
+            }
+        }
+
+        return new ActivityValidationResult(valid, String.join("\n", messages));
     }
 }

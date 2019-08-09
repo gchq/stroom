@@ -24,7 +24,7 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -114,24 +114,24 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 
         if (createPeriodFrom != null && !createPeriodFrom.isEmpty() && createPeriodTo != null && !createPeriodTo.isEmpty()) {
-            builder.addTerm(MetaFieldNames.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
+            builder.addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
         } else if (createPeriodFrom != null && !createPeriodFrom.isEmpty()) {
-            builder.addTerm(MetaFieldNames.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
+            builder.addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
         } else if (createPeriodTo != null && !createPeriodTo.isEmpty()) {
-            builder.addTerm(MetaFieldNames.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
+            builder.addTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
         }
 
         final MetaService metaService = injector.getInstance(MetaService.class);
         final Store streamStore = injector.getInstance(Store.class);
 
         if (feed != null) {
-            builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feed);
+            builder.addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feed);
         }
 
         if (streamType != null) {
-            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, streamType);
+            builder.addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, streamType);
         } else {
-            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
+            builder.addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
         }
 
         // Query the stream store

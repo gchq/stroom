@@ -121,7 +121,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(LogUtil.message("Error sending request {} to {}/{}",
+            throw new RuntimeException(LogUtil.message("Error sending request {} to {}{}",
                     request, url, path), e);
         }
     }

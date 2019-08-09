@@ -18,6 +18,7 @@ dependencies {
     compile project(':stroom-pipeline') // TODO : @66 REMOVE DEPENDENCY ON IMPL
     compile project(':stroom-processor:stroom-processor-api')
     compile project(':stroom-search:stroom-search-api')
+    compile project(':stroom-search:stroom-searchable-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-statistics:stroom-statistics-api')
     compile project(':stroom-task:stroom-task-api')

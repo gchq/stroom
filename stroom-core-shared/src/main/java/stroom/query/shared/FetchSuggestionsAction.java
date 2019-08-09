@@ -16,9 +16,9 @@
 
 package stroom.query.shared;
 
-import stroom.datasource.api.v2.DataSourceField;
-import stroom.task.shared.Action;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
+import stroom.task.shared.Action;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedString;
 
@@ -26,14 +26,14 @@ public class FetchSuggestionsAction extends Action<SharedList<SharedString>> {
     private static final long serialVersionUID = -7883596658097683550L;
 
     private DocRef dataSource;
-    private DataSourceField field;
+    private AbstractField field;
     private String text;
 
     public FetchSuggestionsAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchSuggestionsAction(final DocRef dataSource, final DataSourceField field, final String text) {
+    public FetchSuggestionsAction(final DocRef dataSource, final AbstractField field, final String text) {
         this.dataSource = dataSource;
         this.field = field;
         this.text = text;
@@ -43,7 +43,7 @@ public class FetchSuggestionsAction extends Action<SharedList<SharedString>> {
         return dataSource;
     }
 
-    public DataSourceField getField() {
+    public AbstractField getField() {
         return field;
     }
 

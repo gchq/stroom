@@ -17,6 +17,7 @@
 package stroom.activity.api;
 
 import stroom.activity.shared.Activity;
+import stroom.activity.shared.ActivityValidationResult;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.util.shared.BaseResultList;
 
@@ -30,4 +31,6 @@ public interface ActivityService {
     boolean delete(int id);
 
     BaseResultList<Activity> find(FindActivityCriteria criteria);
+
+    ActivityValidationResult validate(Activity activity);
 }

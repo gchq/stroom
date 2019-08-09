@@ -17,6 +17,7 @@
 
 package stroom.pipeline.writer;
 
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.store.api.Store;
@@ -25,7 +26,7 @@ import stroom.data.store.api.WrappedSegmentOutputStream;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaProperties;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -96,13 +97,21 @@ public class StreamAppender extends AbstractAppender {
     protected OutputStream createOutputStream() {
         final Meta parentMeta = metaHolder.getMeta();
 
-        if (feed == null && parentMeta != null && parentMeta.getFeedName() != null) {
-            feed = parentMeta.getFeedName();
+        if (Strings.isNullOrEmpty(feed)) {
+            if (parentMeta == null) {
+                fatal("Unable to determine feed as no parent set");
+            } else if (Strings.isNullOrEmpty(parentMeta.getFeedName())) {
+                fatal("Parent has no feed name");
+            } else {
+                feed = parentMeta.getFeedName();
+            }
         }
 
-        if (streamType == null) {
-            errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), "Stream type not specified", null);
-            throw new ProcessException("Stream type not specified");
+        if (Strings.isNullOrEmpty(feed)) {
+            fatal("Feed not specified");
+        }
+        if (Strings.isNullOrEmpty(streamType)) {
+            fatal("Stream type not specified");
         }
 
         String processorUuid = null;
@@ -124,10 +133,9 @@ public class StreamAppender extends AbstractAppender {
                 .parent(parentMeta)
                 .processorUuid(processorUuid)
                 .pipelineUuid(pipelineUuid)
-                .processorTaskId(streamTaskId)
                 .build();
 
-        streamTarget = streamStore.openTarget(metaProperties);
+        streamTarget = supersededOutputHelper.addTarget(() -> streamStore.openTarget(metaProperties));
 
         wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.next().get()) {
             @Override
@@ -193,7 +201,7 @@ public class StreamAppender extends AbstractAppender {
             currentStatistics.write(streamTarget.getAttributes());
 
             // Overwrite the actual output record count.
-            streamTarget.getAttributes().put(MetaFieldNames.REC_WRITE, String.valueOf(count));
+            streamTarget.getAttributes().put(MetaFields.REC_WRITE.getName(), String.valueOf(count));
 
             // Close the stream target.
             try {
@@ -251,5 +259,10 @@ public class StreamAppender extends AbstractAppender {
             displayPriority = 5)
     public void setSplitAggregatedStreams(final boolean splitAggregatedStreams) {
         super.setSplitAggregatedStreams(splitAggregatedStreams);
+    }
+
+    private void fatal(final String message) {
+        errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), message, null);
+        throw new ProcessException(message);
     }
 }

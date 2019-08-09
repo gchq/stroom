@@ -28,12 +28,15 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
+import stroom.entity.client.presenter.FindActionDataProvider;
 import stroom.entity.client.presenter.HasDocumentRead;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.FindProcessorTaskCriteria;
 import stroom.processor.shared.FindProcessorTaskSummaryAction;
-import stroom.processor.shared.ProcessorTaskSummaryRow;
+import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorTaskSummary;
+import stroom.task.shared.ExpressionUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultList;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -43,10 +46,10 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
-public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridView<ProcessorTaskSummaryRow>>
+public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridView<ProcessorTaskSummary>>
         implements HasDocumentRead<SharedObject> {
-    private FindProcessorTaskSummaryAction action = new FindProcessorTaskSummaryAction(new FindProcessorTaskCriteria());
-    private ActionDataProvider<ProcessorTaskSummaryRow> dataProvider;
+    private final FindActionDataProvider<ExpressionCriteria, ProcessorTaskSummary> dataProvider;
+    private final ExpressionCriteria criteria;
 
     @Inject
     public ProcessorTaskSummaryPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
@@ -54,9 +57,9 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         super(eventBus, new DataGridViewImpl<>(true, false));
 
         // Info column.
-        final InfoColumn<ProcessorTaskSummaryRow> infoColumn = new InfoColumn<ProcessorTaskSummaryRow>() {
+        final InfoColumn<ProcessorTaskSummary> infoColumn = new InfoColumn<ProcessorTaskSummary>() {
             @Override
-            protected void showInfo(final ProcessorTaskSummaryRow row, final int x, final int y) {
+            protected void showInfo(final ProcessorTaskSummary row, final int x, final int y) {
                 final StringBuilder html = new StringBuilder();
 
                 TooltipUtil.addHeading(html, "Key Data");
@@ -74,53 +77,53 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         };
         getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
-        getView().addResizableColumn(new OrderByColumn<ProcessorTaskSummaryRow, String>(new TextCell(),
-                FindProcessorTaskCriteria.FIELD_PIPELINE_UUID, true) {
+        getView().addResizableColumn(new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(),
+                ProcessorTaskDataSource.FIELD_PIPELINE, true) {
             @Override
-            public String getValue(final ProcessorTaskSummaryRow row) {
-                return row.getPipeline();
+            public String getValue(final ProcessorTaskSummary row) {
+                return row.getPipeline().getName();
             }
         }, "Pipeline", 250);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummaryRow, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_FEED_NAME, true) {
+                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskDataSource.FIELD_FEED, true) {
                     @Override
-                    public String getValue(final ProcessorTaskSummaryRow row) {
-                        return row.getFeed();
+                    public String getValue(final ProcessorTaskSummary row) {
+                        return row.getFeed().getName();
                     }
                 }, "Feed", 250);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummaryRow, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_PRIORITY, false) {
+                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskDataSource.FIELD_PRIORITY, false) {
                     @Override
-                    public String getValue(final ProcessorTaskSummaryRow row) {
+                    public String getValue(final ProcessorTaskSummary row) {
                         return String.valueOf(row.getPriority());
                     }
                 }, "Priority", 100);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummaryRow, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_STATUS, false) {
+                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskDataSource.FIELD_STATUS, false) {
                     @Override
-                    public String getValue(final ProcessorTaskSummaryRow row) {
+                    public String getValue(final ProcessorTaskSummary row) {
                         return row.getStatus().getDisplayValue();
                     }
                 }, "Status", 100);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummaryRow, String>(new TextCell(), FindProcessorTaskCriteria.FIELD_COUNT, false) {
+                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskDataSource.FIELD_COUNT, false) {
                     @Override
-                    public String getValue(final ProcessorTaskSummaryRow row) {
+                    public String getValue(final ProcessorTaskSummary row) {
                         return ModelStringUtil.formatCsv(row.getCount());
                     }
                 }, "Count", 100);
 
         getView().addEndColumn(new EndColumn<>());
 
-        this.dataProvider = new ActionDataProvider<ProcessorTaskSummaryRow>(dispatcher, action) {
+        criteria = new ExpressionCriteria();
+        dataProvider = new FindActionDataProvider<ExpressionCriteria, ProcessorTaskSummary>(dispatcher, getView(), new FindProcessorTaskSummaryAction()) {
             @Override
-            protected void changeData(final ResultList<ProcessorTaskSummaryRow> data) {
-                super.changeData(data);
-                final ProcessorTaskSummaryRow selected = getView().getSelectionModel().getSelected();
+            protected ResultList<ProcessorTaskSummary> processData(final ResultList<ProcessorTaskSummary> data) {
+                final ProcessorTaskSummary selected = getView().getSelectionModel().getSelected();
                 if (selected != null) {
                     // Reselect the task set.
                     getView().getSelectionModel().clear();
@@ -128,48 +131,45 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                         getView().getSelectionModel().setSelected(selected);
                     }
                 }
+                return super.processData(data);
             }
         };
-        dataProvider.addDataDisplay(getView().getDataDisplay());
     }
 
-    public MultiSelectionModel<ProcessorTaskSummaryRow> getSelectionModel() {
+    public MultiSelectionModel<ProcessorTaskSummary> getSelectionModel() {
         return getView().getSelectionModel();
     }
 
-    private void setFeedCriteria(final String feedName) {
-//        final FindProcessorTaskCriteria criteria = initCriteria();
-//        criteria.obtainFeedNameSet().add(feedName);
+    private void setPipeline(final PipelineDoc pipelineEntity) {
+        criteria.setExpression(ExpressionUtil.createPipelineExpression(pipelineEntity));
+        dataProvider.setCriteria(criteria);
+    }
+
+    private void setFeed(final FeedDoc feed) {
+//        criteria.setExpression(ExpressionUtil.createFeedExpression(feed));
 //        dataProvider.setCriteria(criteria);
     }
 
-    private void setPipelineCriteria(final DocRef pipelineRef) {
-        final FindProcessorTaskCriteria criteria = initCriteria();
-        criteria.obtainPipelineUuidCriteria().setString(pipelineRef.getUuid());
-        action.setCriteria(criteria);
-        dataProvider.refresh();
+    private void setFolder(final DocRef folder) {
+        criteria.setExpression(ExpressionUtil.createFolderExpression(folder));
+        dataProvider.setCriteria(criteria);
     }
 
     private void setNullCriteria() {
-        action.setCriteria(initCriteria());
-        dataProvider.refresh();
+        criteria.setExpression(null);
+        dataProvider.setCriteria(criteria);
     }
 
     @Override
     public void read(final DocRef docRef, final SharedObject entity) {
-        if (entity instanceof FeedDoc) {
-            setFeedCriteria(docRef.getName());
-        } else if (entity instanceof PipelineDoc) {
-            setPipelineCriteria(docRef);
+        if (entity instanceof PipelineDoc) {
+            setPipeline((PipelineDoc) entity);
+        } else if (entity instanceof FeedDoc) {
+            setFeed((FeedDoc) entity);
+        } else if (docRef != null) {
+            setFolder(docRef);
         } else {
             setNullCriteria();
         }
-    }
-
-    private FindProcessorTaskCriteria initCriteria() {
-        final FindProcessorTaskCriteria criteria = new FindProcessorTaskCriteria();
-        // Only show owned stuff, i.e. tasks that are ready for processing or have been processed, not ones that belong to LOCKED meta.
-        criteria.obtainNodeNameCriteria().setMatchNull(false);
-        return criteria;
     }
 }

@@ -22,13 +22,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.cluster.lock.mock.MockClusterLockModule;
+import stroom.collection.mock.MockCollectionModule;
+import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.meta.impl.MetaModule;
 import stroom.meta.impl.MetaServiceImpl;
 import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaExpressionUtil;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaProperties;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
@@ -50,7 +52,14 @@ class TestMetaValueDaoImpl {
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(new MetaModule(), new MetaDbModule(), new MockClusterLockModule(), new MockSecurityContextModule()).injectMembers(this);
+        Guice.createInjector(
+                new MetaModule(),
+                new MetaDbModule(),
+                new MockClusterLockModule(),
+                new MockSecurityContextModule(),
+                new MockCollectionModule(),
+                new MockWordListProviderModule())
+                .injectMembers(this);
         metaValueConfig.setAddAsync(false);
         // Delete everything
         cleanup.clear();
@@ -69,25 +78,25 @@ class TestMetaValueDaoImpl {
 
         FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs())));
+        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs())));
 
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
+        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
 
         assertThat(metaService.find(criteria).size()).isEqualTo(0);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.FILE_SIZE, Condition.GREATER_THAN, "0"));
+        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.FILE_SIZE, Condition.GREATER_THAN, "0"));
 
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
+        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
     }
@@ -100,25 +109,25 @@ class TestMetaValueDaoImpl {
 
         FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs())));
+        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs())));
 
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
+        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
 
         assertThat(metaService.find(criteria).size()).isEqualTo(0);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.FILE_SIZE, Condition.GREATER_THAN, "0"));
+        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.FILE_SIZE, Condition.GREATER_THAN, "0"));
 
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
+        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
@@ -126,7 +135,7 @@ class TestMetaValueDaoImpl {
 
         criteria = new FindMetaCriteria();
         criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaFieldNames.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
+        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
         assertThat(metaService.find(criteria).size()).isEqualTo(0);
     }
@@ -143,7 +152,7 @@ class TestMetaValueDaoImpl {
 
     private AttributeMap createAttributes() {
         final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(MetaFieldNames.FILE_SIZE, "100");
+        attributeMap.put(MetaFields.FILE_SIZE.getName(), "100");
         return attributeMap;
     }
 }

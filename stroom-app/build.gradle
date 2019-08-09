@@ -43,6 +43,7 @@ dependencies {
     compile project(':stroom-data:stroom-data-zip')
     compile project(':stroom-db-util')
     compile project(':stroom-dictionary:stroom-dictionary-impl')
+    compile project(':stroom-dictionary:stroom-dictionary-mock')
     compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-docstore:stroom-docstore-impl-db')
     compile project(':stroom-dropwizard-common')
@@ -68,6 +69,7 @@ dependencies {
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-receive:stroom-receive-rules-impl')
     compile project(':stroom-resource:stroom-resource-impl')
+    compile project(':stroom-search:stroom-searchable-impl')
     compile project(':stroom-security:stroom-security-impl-db')
     compile project(':stroom-servicediscovery:stroom-servicediscovery-impl')
     compile project(':stroom-statistics:stroom-statistics-impl')
@@ -77,6 +79,7 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
     
+    compile libs.dropwizard_client
     compile(libs.dropwizard_assets) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
@@ -99,6 +102,7 @@ dependencies {
     compile libs.javax_servlet_api
     compile libs.jaxb_api
     compile libs.jcommander
+    compile libs.jersey_common
     compile libs.jetty_server
     compile libs.jetty_servlets
     compile libs.logback_classic
@@ -127,6 +131,7 @@ dependencies {
     testCompile project(':stroom-elastic:stroom-elastic-impl')
     testCompile project(':stroom-event-logging:stroom-event-logging-api')
     testCompile project(':stroom-event-logging:stroom-event-logging-impl')
+    testCompile project(':stroom-explorer:stroom-collection-mock')
     testCompile project(':stroom-explorer:stroom-explorer-api')
     testCompile project(':stroom-explorer:stroom-explorer-impl')
     testCompile project(':stroom-explorer:stroom-explorer-impl-db')

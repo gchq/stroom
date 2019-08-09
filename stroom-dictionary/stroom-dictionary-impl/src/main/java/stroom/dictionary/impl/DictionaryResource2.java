@@ -17,15 +17,16 @@
 package stroom.dictionary.impl;
 
 import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.importexport.api.DocRefs;
 import stroom.importexport.api.DocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.util.HasHealthCheck;
 import stroom.util.RestResource;
 
 import javax.inject.Inject;
@@ -40,9 +41,11 @@ import java.util.Map;
 import java.util.Set;
 
 @Api(value = "dictionary - /v2")
-@Path("/dictionary/v2")
+@Path(DictionaryResource2.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
-public class DictionaryResource2 implements RestResource {
+public class DictionaryResource2 implements RestResource, HasHealthCheck {
+    public static final String BASE_RESOURCE_PATH = "/dictionary/v2";
+
     private final DictionaryStore dictionaryStore;
 
     @Inject
@@ -85,5 +88,10 @@ public class DictionaryResource2 implements RestResource {
     public DocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
         final Map<String, byte[]> map = dictionaryStore.exportDocument(docRef, true, new ArrayList<>());
         return new DocumentData(docRef, map);
+    }
+
+    @Override
+    public Result getHealth() {
+        return Result.healthy();
     }
 }

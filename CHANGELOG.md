@@ -5,9 +5,174 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+* Issue **#1207** : Removed task id from meta to reduce DB size and complexity especially given the fact tasks are transient. Superseded output is now found by querying the processor task service when new output is written rather than using task ids on meta.
+
+* Uplift HBase to 2.1.5 and refactor code accordingly
+
+* Uplift Kafka to 2.1.1 and refactor code accordingly
+
+* Uplift Curator to 4.2.0
+
+* Issue **#1143** : Added mechanism to inject dashboard parameters into expressions using the `param` and `params` functions so that dashboard parameters can be echoed by expressions to create dashboard links.
+
+* Issue **#1205** : Change proxy repo clean to not delete configured rootRepoDir.
+
+* Issue **#1204** : Fix ProxySecurityFilter to use correct API key on feedStatus requests.
+
+* Issue **#1211** : Added a quick filter to the server tasks page.
+
+* Issue **#1206** : Fixed sorting active tasks when clicking column header.
+
+* Issue **#1201** : Fixed dependencies.
+
+* Issue **#1201** : Fixed tests.
+
+* Issue **#1201** : Document permission changes now mutate the user document permissions cache rather than clearing it.
+
+* Issue **#1153** : Changed security context to be a Spring singleton to improve explorer performance.
+
+* Issue **#1202** : Fixed NumberFormatException in StreamAttributeMapUtil.
+
+* Issue **#1203** : Fixed event logging detail for dictionaries.
+
+* Issue **#1197** : Restored Save As functionality.
+
+* Issue **#1199** : The index fields page now copes with more than 100 index fields.
+
+* Issue **#1200** : Removed blocking queue that was causing search to hang when full.
+
+* Issue **#1198** : Filtering by empty folders now works correctly.
+
+* Comment out rollCron in proxy-prod.yml
+
+* Change swagger UI at gchq.github.io/stroom to work off 6.0 branch
+
+* Issue **#1195** : Fixed issue where combination of quick filter and type filter were not displaying explorer items correctly.
+
+* Issue **#1153** : Changed the way document permissions are retrieved and cached to improve explorer performance.
+
+* Issue **#1196** : Added code to resolve data source names from doc refs if the name is missing when logging.
+
+* Issue **#1165** : Fixed corruption of pipeline structure when adding items to Source.
+
+* Issue **#1193** : Added optional validation to activities.
+
+* Change default config for proxy repositoryFormat to "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"
+
+* Issue **#1194** : Fixed NPE in FindTaskProgressCriteria.
+
+* Issue **#1191** : SQL statistics search tasks now show appropriate information in the server tasks pane.
+
+* Issue **#1192** : Executor provider tasks now run as the current user.
+
+* Issue **#1190** : Copied indexes now retain associated index volumes.
+
+* Issue **#1177** : Data retention now works with is doc refs.
+
+* Issue **#1160** : Proxy repositories now only roll if all output streams for a repository are closed. Proxy repositories also only calculate the current max id if the `executionUuid` repo format param is not used.
+
+* Issue **#1186** : Volume status is now refreshed every 5 minutes.
+
+* Fix incorrect default keystore in proxy config yaml.
+
+* Rename environment variables in proxy config yaml.
+
+* Issue **#1170** : The UI should now treat the `None` tree node as a null selection.
+
+* Issue **#1184** : Remove dropwizard yaml files from docker images.
+
+* Issue **#1181** : Remove dropwizard config yaml from the docker images.
+
+* Issue **#1152** : You can now control the maximum number of files that are fragmented prior to proxy aggregation with `stroom.maxFileScan`.
+
+* Issue **#1182** : Fixed use of `in folder` for data retention and receipt policies.
+
+* Updated to allow stacks to be built at this version.
+
+* Issue **#1154** : Search now terminates during result creation if it is asked to do so.
+
+* Issue **#1167** : Fix for proxy to deal with lack of explorer folder based collections.
+
+* Issue **#1172** : Fixed logging detail for viewing docs.
+
+* Issue **#1166** : Fixed issue where users with only read permission could not copy items.
+
+* Issue **#1174** : Reduced hits on the document permission cache.
+
+* Issue **#1168** : Statistics searches now work when user only has `Use` permission.
+
+* Issue **#1170** : Extra validation to check valid feed provided for stream appender.
+
+* Issue **#1174** : The size of the document permissions cache is now configurable via the `stroom.security.documentPermissions.maxCacheSize` property.
+
+* Issue **#1176** : Created index on document permissions to improve performance.
+
+* Issue **#1175** : Dropping unnecessary index `explorerTreePath_descendant_idx`.
+
+* Issue **#747** : XSLT can now reference dictionaries by UUID.
+
+* Issue **#1167** : Use of folders to include child feeds and pipelines is now supported.
+
+* Issue **#1153** : The explorer tree is now built with fewer DB queries.
+
+* Issue **#1163** : Added indexes to the DB to improve explorer performance.
+
+* Issue **#1153** : The explorer tree now only rebuilds synchronously for users who alter the tree, if has never been built or is very old. All other rebuilds of the explorer tree required to keep it fresh will happen asynchronously.
+
+* Issue **#1162** : Proxy aggregation will no longer recurse parts directories when creating parts.
+
+* Issue **#1157** : Migration now adds dummy feeds etc to processor filters if the original doc can't be found. This will prevent filters from matching more items than they should if migration fails to map feeds etc because they can't be found.
+
+* Issue **#1162** : Remove invalid CopyOption in move() call.
+
+* Issue **#1159** : Fix NPE in rolling appenders with no frequency value.
+
+* Issue **#1160** : Proxy repositories will no longer scan contents on open if they are set to be read only.
+
+* Issue **#1162** : Added buffering etc to improve the performance of proxy aggregation.
+
+* Issue **#1156** : Added code to reduce unlikely chance of NPE or uncontrolled processing in the event of a null or empty processing filter.
+
+* Issue **#1149** : Changed the way EntryIdSet is unmarshalled so jaxb can now use the getter to add items to a collection.
+
+* Ignore broken junit test that cannot work as it stands
+
+* Fix NPE in DictionaryStoreImpl.findByName().
+
+* Issue **#1146** : Added `encodeUrl()`, `decodeUrl()` and `dashboard()` functions to dashboard tables to make dashboard linking easier. The `link()` function now automatically encodes/decodes each param so that parameters do not break the link format, e.g. `[Click Here](http://www.somehost.com/somepath){dialog|Dialog Title}`.
+
+* Issue **#1144** : Changed StreamRange to account for inclusive stream id ranges in v6.0 that was causing an issue with file system maintenance.
+
+* Mask passwords on the proxy admin page.
+
+* Add exception to wrapped exception in the feedStatus service.
+
+* Issue **#1140** : Add health check for proxy feed status url.
+
+* Issue **#1138** : Stroom proxy now deletes empty repository directories based on creation time and depth first so that pruning empty directories is quicker and generally more successful.
+
+* Issue **#1137** : Change proxy remote url health check to accept a 406 code as the feed will not be specified.
+
+* Issue **#1135** : Data retention policies are now migrated to use `Type` and not `Stream Type`.
+
+* Issue **#1136** : Remove recursive chown from stroom and proxy docker entrypoint scripts.
+
+
+## [v7.0-alpha.5] - 2019-06-12
+
+* Fix YAML substitution.
+
+
+## [v7.0-alpha.4] - 2019-06-11
+
+* Update API paths
+
+
 ## [v7.0-alpha.3] - 2019-05-10
 
 * Fix config
+
 
 ## [v7.0-alpha.2] - 2019-05-10
 
@@ -1467,7 +1632,7 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#24** : Header and footer strings are now unescaped so that character sequences such as '\n' are translated into single characters as with standard Java strings, e.g. '\n' will become a new line and '\t' a tab.
 
-* Issue **#40** : Changed Stroom docker conatiner to be based on Alpine linux to save space
+* Issue **#40** : Changed Stroom docker container to be based on Alpine linux to save space
 
 * Issue **#40** : Auto import of content packs on Stroom startup and added default content packs into the docker build for Stroom.
 
@@ -1509,7 +1674,9 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-alpha.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-alpha.5...HEAD
+[v7.0-alpha.5]: https://github.com/gchq/stroom/compare/v7.0-alpha.4...v7.0-alpha.5
+[v7.0-alpha.4]: https://github.com/gchq/stroom/compare/v7.0-alpha.3...v7.0-alpha.4
 [v7.0-alpha.3]: https://github.com/gchq/stroom/compare/v7.0-alpha.2...v7.0-alpha.3
 [v7.0-alpha.2]: https://github.com/gchq/stroom/compare/v7.0-alpha.1...v7.0-alpha.2
 [v7.0-alpha.1]: https://github.com/gchq/stroom/compare/v6.0.0...v7.0-alpha.1

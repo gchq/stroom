@@ -27,7 +27,6 @@ public class Meta implements SharedObject {
     private String processorUuid;
     private String pipelineUuid;
     private Long parentDataId;
-    private Long processorTaskId;
     private Status status;
     private Long statusMs;
     private long createMs;
@@ -59,10 +58,6 @@ public class Meta implements SharedObject {
 
     public Long getParentMetaId() {
         return parentDataId;
-    }
-
-    public Long getProcessorTaskId() {
-        return processorTaskId;
     }
 
     public Status getStatus() {
@@ -112,7 +107,6 @@ public class Meta implements SharedObject {
             pipelineUuid(meta.getPipelineUuid());
             processorUuid(meta.getProcessorUuid());
             parentDataId(meta.getParentMetaId());
-            processorTaskId(meta.getProcessorTaskId());
             status(meta.getStatus());
             statusMs(meta.getStatusMs());
             createMs(meta.getCreateMs());
@@ -146,11 +140,6 @@ public class Meta implements SharedObject {
 
         public Builder parentDataId(final Long parentDataId) {
             meta.parentDataId = parentDataId;
-            return this;
-        }
-
-        public Builder processorTaskId(final Long processorTaskId) {
-            meta.processorTaskId = processorTaskId;
             return this;
         }
 

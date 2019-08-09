@@ -27,14 +27,15 @@ import stroom.data.zip.StroomZipNameSet;
 import stroom.docstore.impl.fs.FSPersistenceConfig;
 import stroom.importexport.impl.ImportExportService;
 import stroom.pipeline.filter.SafeXMLFilter;
-import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.task.impl.ExternalShutdownController;
 import stroom.util.AbstractCommandLineTool;
+import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.PathConfig;
 import stroom.util.io.StreamUtil;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.xml.XMLUtil;
 
@@ -48,12 +49,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Stream;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
 
 /**
  * Command line tool to process some files from a proxy stroom.
@@ -233,39 +235,52 @@ public class Headless extends AbstractCommandLineTool {
     private void processRepository(final HeadlessFilter headlessFilter) {
         try {
             // Loop over all of the data files in the repository.
-            final StroomZipRepository repo = new StroomZipRepository(FileUtil.getCanonicalPath(inputDir));
-            final List<Path> zipFiles = repo.listAllZipFiles();
-            zipFiles.sort(Comparator.naturalOrder());
-            try (final Stream<Path> stream = zipFiles.stream()) {
-                stream.forEach(p -> {
-                    try {
-                        LOGGER.info("Processing: " + FileUtil.getCanonicalPath(p));
-
-                        final StroomZipFile stroomZipFile = new StroomZipFile(p);
-                        final StroomZipNameSet nameSet = stroomZipFile.getStroomZipNameSet();
-
-                        // Process each base file in a consistent order
-                        for (final String baseName : nameSet.getBaseNameList()) {
-                            final InputStream dataStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
-                            final InputStream metaStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
-                            final InputStream contextStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
-
-                            final HeadlessTranslationTask task = new HeadlessTranslationTask(
-                                    IgnoreCloseInputStream.wrap(dataStream), IgnoreCloseInputStream.wrap(metaStream),
-                                    IgnoreCloseInputStream.wrap(contextStream), headlessFilter);
-                            final HeadlessTranslationTaskHandler handler = translationTaskHandlerProvider.get();
-                            handler.exec(task);
+            try {
+                Files.walkFileTree(inputDir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                    @Override
+                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                        try {
+                            if (file.toString().endsWith(StroomZipRepository.ZIP_EXTENSION)) {
+                                process(headlessFilter, file);
+                            }
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e.getMessage(), e);
                         }
-
-                        // Close the zip file.
-                        stroomZipFile.close();
-                    } catch (final IOException e) {
-                        LOGGER.error(e.getMessage(), e);
+                        return super.visitFile(file, attrs);
                     }
                 });
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
             }
         } catch (final RuntimeException e) {
             LOGGER.error("Unable to process repository!", e);
+        }
+    }
+
+    private void process(final HeadlessFilter headlessFilter, final Path path) {
+        try {
+            LOGGER.info("Processing: " + FileUtil.getCanonicalPath(path));
+
+            final StroomZipFile stroomZipFile = new StroomZipFile(path);
+            final StroomZipNameSet nameSet = stroomZipFile.getStroomZipNameSet();
+
+            // Process each base file in a consistent order
+            for (final String baseName : nameSet.getBaseNameList()) {
+                final InputStream dataStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
+                final InputStream metaStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
+                final InputStream contextStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
+
+                final HeadlessTranslationTask task = new HeadlessTranslationTask(
+                        IgnoreCloseInputStream.wrap(dataStream), IgnoreCloseInputStream.wrap(metaStream),
+                        IgnoreCloseInputStream.wrap(contextStream), headlessFilter);
+                final HeadlessTranslationTaskHandler handler = translationTaskHandlerProvider.get();
+                handler.exec(task);
+            }
+
+            // Close the zip file.
+            stroomZipFile.close();
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 

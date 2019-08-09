@@ -2,6 +2,7 @@ package stroom.core.receive;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.data.zip.BufferSizeUtil;
 import stroom.util.shared.IsConfig;
 import stroom.util.shared.ModelStringUtil;
 
@@ -11,8 +12,10 @@ import javax.inject.Singleton;
 public class ProxyAggregationConfig implements IsConfig {
     private String proxyDir = "${stroom.temp}/proxy";
     private volatile int proxyThreads = 10;
-    private volatile int maxFilesPerAggregate = 10000;
+
+    private volatile int maxFileScan = 100000;
     private volatile int maxConcurrentMappedFiles = 100000;
+    private volatile int maxFilesPerAggregate = 10000;
     private String maxUncompressedFileSize = "1G";
 
     @JsonPropertyDescription("Folder to look for Stroom Proxy Content to aggregate")
@@ -24,6 +27,15 @@ public class ProxyAggregationConfig implements IsConfig {
         this.proxyDir = proxyDir;
     }
 
+    @JsonPropertyDescription("The amount of memory to use for buffering reads/writes")
+    public int getBuffferSize() {
+        return BufferSizeUtil.get();
+    }
+
+    public void setBuffferSize(final int buffferSize) {
+        BufferSizeUtil.setValue(buffferSize);
+    }
+
     @JsonPropertyDescription("Number of threads used in aggregation")
     public int getProxyThreads() {
         return proxyThreads;
@@ -33,13 +45,13 @@ public class ProxyAggregationConfig implements IsConfig {
         this.proxyThreads = proxyThreads;
     }
 
-    @JsonPropertyDescription("The maximum number of files that can be aggregated together")
-    public int getMaxFilesPerAggregate() {
-        return maxFilesPerAggregate;
+    @JsonPropertyDescription("The limit of files to inspect before aggregation begins (should be bigger than maxAggregation)")
+    public int getMaxFileScan() {
+        return maxFileScan;
     }
 
-    public void setMaxFilesPerAggregate(final int maxFilesPerAggregate) {
-        this.maxFilesPerAggregate = maxFilesPerAggregate;
+    public void setMaxFileScan(final int maxFileScan) {
+        this.maxFileScan = maxFileScan;
     }
 
     @JsonPropertyDescription("The maximum number of file references in aggregation file sets to hold in memory prior to aggregation")
@@ -49,6 +61,15 @@ public class ProxyAggregationConfig implements IsConfig {
 
     public void setMaxConcurrentMappedFiles(final int maxConcurrentMappedFiles) {
         this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
+    }
+
+    @JsonPropertyDescription("The maximum number of files that can be aggregated together")
+    public int getMaxFilesPerAggregate() {
+        return maxFilesPerAggregate;
+    }
+
+    public void setMaxFilesPerAggregate(final int maxFilesPerAggregate) {
+        this.maxFilesPerAggregate = maxFilesPerAggregate;
     }
 
     @JsonPropertyDescription("The maximum total size of the uncompressed contents that will be held in an aggregate unless the first and only aggregated file exceeds this limit")

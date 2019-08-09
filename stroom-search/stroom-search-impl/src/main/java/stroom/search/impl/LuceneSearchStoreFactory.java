@@ -19,7 +19,7 @@ package stroom.search.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.api.DictionaryStore;
+import stroom.dictionary.api.WordListProvider;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.IndexDoc;
@@ -37,8 +37,8 @@ import stroom.query.common.v2.StoreFactory;
 import stroom.search.impl.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.UserToken;
 import stroom.security.api.UserTokenUtil;
+import stroom.security.shared.UserToken;
 import stroom.ui.config.shared.UiConfig;
 
 import javax.inject.Inject;
@@ -53,7 +53,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
 
 
     private final IndexStore indexStore;
-    private final DictionaryStore dictionaryStore;
+    private final WordListProvider wordListProvider;
     private final SearchConfig searchConfig;
     private final UiConfig clientConfig;
     private final NodeInfo nodeInfo;
@@ -64,7 +64,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
 
     @Inject
     public LuceneSearchStoreFactory(final IndexStore indexStore,
-                                    final DictionaryStore dictionaryStore,
+                                    final WordListProvider wordListProvider,
                                     final SearchConfig searchConfig,
                                     final UiConfig clientConfig,
                                     final NodeInfo nodeInfo,
@@ -72,7 +72,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
                                     final Security security,
                                     final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory) {
         this.indexStore = indexStore;
-        this.dictionaryStore = dictionaryStore;
+        this.wordListProvider = wordListProvider;
         this.searchConfig = searchConfig;
         this.clientConfig = clientConfig;
         this.nodeInfo = nodeInfo;
@@ -180,7 +180,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
             final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFields());
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                    dictionaryStore, indexFieldsMap, maxBooleanClauseCount, timeZoneId, nowEpochMilli);
+                    wordListProvider, indexFieldsMap, maxBooleanClauseCount, timeZoneId, nowEpochMilli);
             final SearchExpressionQuery query = searchExpressionQueryBuilder
                     .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, expression);
 

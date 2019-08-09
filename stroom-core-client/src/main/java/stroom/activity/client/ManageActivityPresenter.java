@@ -27,7 +27,6 @@ import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.DeleteActivityAction;
 import stroom.activity.shared.FetchActivityAction;
-import stroom.activity.shared.FindActivityAction;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
@@ -82,7 +81,7 @@ public class ManageActivityPresenter extends
         openButton = listPresenter.addButton(SvgPresets.EDIT);
         deleteButton = listPresenter.addButton(SvgPresets.DELETE);
 
-        listPresenter.setAction(new FindActivityAction(criteria));
+        listPresenter.setCriteria(criteria);
     }
 
     @Override

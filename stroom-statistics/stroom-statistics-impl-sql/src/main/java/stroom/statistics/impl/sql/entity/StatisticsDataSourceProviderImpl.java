@@ -16,16 +16,17 @@
 
 package stroom.statistics.impl.sql.entity;
 
+import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
-import stroom.datasource.api.v2.DataSourceField;
-import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
+import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.NumberField;
+import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.api.Security;
+import stroom.statistics.impl.sql.Statistics;
+import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
-import stroom.statistics.impl.sql.shared.StatisticField;
-import stroom.statistics.impl.sql.Statistics;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -36,44 +37,38 @@ import java.util.List;
 class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
     private final StatisticStoreCache statisticStoreCache;
     private final Statistics statistics;
-    private final Security security;
 
     @Inject
     StatisticsDataSourceProviderImpl(final StatisticStoreCache statisticStoreCache,
-                                     final Statistics statistics,
-                                     final Security security) {
+                                     final Statistics statistics) {
         this.statisticStoreCache = statisticStoreCache;
         this.statistics = statistics;
-        this.security = security;
     }
 
     @Override
     public DataSource getDataSource(final DocRef docRef) {
-        return security.useAsReadResult(() -> {
-            final StatisticStoreDoc entity = statisticStoreCache.getStatisticsDataSource(docRef);
-            if (entity == null) {
-                return null;
-            }
+        final StatisticStoreDoc entity = statisticStoreCache.getStatisticsDataSource(docRef);
+        if (entity == null) {
+            return null;
+        }
 
-            final List<DataSourceField> fields = buildFields(entity);
+        final List<AbstractField> fields = buildFields(entity);
 
-            return new DataSource(fields);
-        });
+        return new DataSource(fields);
     }
 
     /**
-     * Turn the {@link StatisticStoreDoc} into an {@link List<DataSourceField>} object
+     * Turn the {@link StatisticStoreDoc} into an {@link List<AbstractField>} object
      * <p>
      * This builds the standard set of fields for a statistics store, which can
      * be filtered by the relevant statistics store instance
      */
-    private List<DataSourceField> buildFields(final StatisticStoreDoc entity) {
-        List<DataSourceField> fields = new ArrayList<>();
+    private List<AbstractField> buildFields(final StatisticStoreDoc entity) {
+        List<AbstractField> fields = new ArrayList<>();
 
         // TODO currently only BETWEEN is supported, but need to add support for
         // more conditions like >, >=, <, <=, =
-        addField(StatisticStoreDoc.FIELD_NAME_DATE_TIME, DataSourceFieldType.DATE_FIELD, true,
-                Collections.singletonList(Condition.BETWEEN), fields);
+        fields.add(new DateField(StatisticStoreDoc.FIELD_NAME_DATE_TIME, true, Collections.singletonList(Condition.BETWEEN)));
 
         // one field per tag
         if (entity.getConfig() != null) {
@@ -82,30 +77,17 @@ class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
             for (final StatisticField statisticField : entity.getStatisticFields()) {
                 // TODO currently only EQUALS is supported, but need to add
                 // support for more conditions like CONTAINS
-                addField(statisticField.getFieldName(), DataSourceFieldType.FIELD, true,
-                        supportedConditions, fields);
+                fields.add(new TextField(statisticField.getFieldName(), true, supportedConditions));
             }
         }
 
-        addField(StatisticStoreDoc.FIELD_NAME_COUNT,
-                DataSourceFieldType.NUMERIC_FIELD,
-                false,
-                Collections.emptyList(),
-                fields);
+        fields.add(new NumberField(StatisticStoreDoc.FIELD_NAME_COUNT, false, Collections.emptyList()));
 
         if (entity.getStatisticType().equals(StatisticType.VALUE)) {
-            addField(StatisticStoreDoc.FIELD_NAME_VALUE,
-                    DataSourceFieldType.NUMERIC_FIELD,
-                    false,
-                    Collections.emptyList(),
-                    fields);
+            fields.add(new NumberField(StatisticStoreDoc.FIELD_NAME_VALUE, false, Collections.emptyList()));
         }
 
-        addField(StatisticStoreDoc.FIELD_NAME_PRECISION_MS,
-                DataSourceFieldType.NUMERIC_FIELD,
-                false,
-                Collections.emptyList(),
-                fields);
+        fields.add(new NumberField(StatisticStoreDoc.FIELD_NAME_PRECISION_MS, false, Collections.emptyList()));
 
         // Filter fields.
         if (entity.getConfig() != null) {
@@ -113,19 +95,5 @@ class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
         }
 
         return fields;
-    }
-
-    private void addField(final String name,
-                          final DataSourceFieldType type,
-                          final boolean isQueryable,
-                          final List<Condition> supportedConditions,
-                          final List<DataSourceField> fields) {
-        final DataSourceField field = new DataSourceField.Builder()
-                .type(type)
-                .name(name)
-                .queryable(isQueryable)
-                .addConditions(supportedConditions.toArray(new Condition[0]))
-                .build();
-        fields.add(field);
     }
 }

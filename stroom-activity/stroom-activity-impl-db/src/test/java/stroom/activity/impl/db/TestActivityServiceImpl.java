@@ -24,11 +24,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import stroom.activity.api.ActivityService;
 import stroom.activity.impl.ActivityDao;
 import stroom.activity.impl.ActivityServiceImpl;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
+import stroom.activity.shared.ActivityValidationResult;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
@@ -38,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class TestActivityServiceImpl {
     private ActivityService activityService;
 
@@ -114,10 +118,33 @@ class TestActivityServiceImpl {
         assertThat(list5.size()).isEqualTo(0);
     }
 
+    @Test
+    void testValidation() {
+        // Save 1
+        Activity activity1 = new Activity();
+        activity1.getDetails().add(createProp("foo", "\\w{3,}"), "bar");
+        activity1.getDetails().add(createProp("this", "\\w{4,}"), "that");
+        activity1.setUserId("test");
+        final ActivityValidationResult activityValidationResult1 = activityService.validate(activity1);
+        assertThat(activityValidationResult1.isValid()).isTrue();
+
+        Activity activity2 = new Activity();
+        activity2.getDetails().add(createProp("foo", ".{3,}"), "bar");
+        activity2.getDetails().add(createProp("this", ".{80,}"), "that");
+        activity2.setUserId("test");
+        final ActivityValidationResult activityValidationResult2 = activityService.validate(activity2);
+        assertThat(activityValidationResult2.isValid()).isFalse();
+    }
+
     private Prop createProp(final String name) {
+        return createProp(name, null);
+    }
+
+    private Prop createProp(final String name, final String validation) {
         final Prop prop = new Prop();
         prop.setId(name);
         prop.setName(name);
+        prop.setValidation(validation);
         return prop;
     }
 }

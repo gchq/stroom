@@ -1,6 +1,7 @@
 package stroom.proxy.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.dropwizard.client.JerseyClientConfiguration;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardStreamConfig;
 import stroom.proxy.app.handler.LogStreamConfig;
@@ -17,6 +18,8 @@ public class ProxyConfig {
     private LogStreamConfig logStreamConfig = new LogStreamConfig();
     private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
     private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
+
+    private JerseyClientConfiguration jerseyClientConfig = new JerseyClientConfiguration();
 
     @JsonProperty
     public ProxyRequestConfig getProxyRequestConfig() {
@@ -96,5 +99,15 @@ public class ProxyConfig {
     @JsonProperty
     public void setProxyContentDir(final String proxyContentDir) {
         this.proxyContentDir = proxyContentDir;
+    }
+
+    @JsonProperty("jerseyClient")
+    public JerseyClientConfiguration getJerseyClientConfiguration() {
+        return jerseyClientConfig;
+    }
+
+    @JsonProperty("jerseyClient")
+    public void setJerseyClientConfiguration(final JerseyClientConfiguration jerseyClientConfig) {
+        this.jerseyClientConfig = jerseyClientConfig;
     }
 }

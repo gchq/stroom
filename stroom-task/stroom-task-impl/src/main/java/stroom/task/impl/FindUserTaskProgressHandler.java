@@ -16,29 +16,28 @@
 
 package stroom.task.impl;
 
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.Sort.Direction;
-import stroom.event.logging.api.HttpServletRequestHolder;
-import stroom.security.api.Security;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
+import stroom.security.api.Security;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindUserTaskProgressAction;
 import stroom.task.shared.TaskProgress;
+import stroom.util.servlet.SessionIdProvider;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
 
-
 class FindUserTaskProgressHandler
         extends FindTaskProgressHandlerBase<FindUserTaskProgressAction, BaseResultList<TaskProgress>> {
-    private final transient HttpServletRequestHolder httpServletRequestHolder;
+    private final SessionIdProvider sessionIdProvider;
     private final Security security;
 
     @Inject
     FindUserTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper,
-                                final HttpServletRequestHolder httpServletRequestHolder,
+                                final SessionIdProvider sessionIdProvider,
                                 final Security security) {
         super(dispatchHelper);
-        this.httpServletRequestHolder = httpServletRequestHolder;
+        this.sessionIdProvider = sessionIdProvider;
         this.security = security;
     }
 
@@ -47,15 +46,8 @@ class FindUserTaskProgressHandler
         return security.secureResult(() -> {
             final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
             criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
-            criteria.setSessionId(getSessionId());
+            criteria.setSessionId(sessionIdProvider.get());
             return doExec(action, criteria);
         });
-    }
-
-    private String getSessionId() {
-        if (httpServletRequestHolder == null) {
-            return null;
-        }
-        return httpServletRequestHolder.getSessionId();
     }
 }

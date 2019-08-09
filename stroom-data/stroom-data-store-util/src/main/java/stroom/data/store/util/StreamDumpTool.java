@@ -22,7 +22,7 @@ import stroom.data.store.impl.DataDownloadSettings;
 import stroom.data.store.impl.DataDownloadTask;
 import stroom.data.store.impl.DataDownloadTaskHandler;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -149,25 +149,25 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 
         if (createPeriodFrom != null && !createPeriodFrom.isEmpty() && createPeriodTo != null && !createPeriodTo.isEmpty()) {
-            builder.addTerm(MetaFieldNames.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
+            builder.addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
         } else if (createPeriodFrom != null && !createPeriodFrom.isEmpty()) {
-            builder.addTerm(MetaFieldNames.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
+            builder.addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
         } else if (createPeriodTo != null && !createPeriodTo.isEmpty()) {
-            builder.addTerm(MetaFieldNames.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
+            builder.addTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
         }
 
         if (feedName != null) {
-            builder.addTerm(MetaFieldNames.FEED_NAME, Condition.EQUALS, feedName);
+            builder.addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName);
         }
 
         if (streamType != null) {
-            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, streamType);
+            builder.addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, streamType);
         }
 
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(builder.build());
-        criteria.addSort(FindMetaCriteria.FIELD_FEED, Direction.ASCENDING, true);
-        criteria.addSort(FindMetaCriteria.FIELD_ID, Direction.ASCENDING, true);
+        criteria.addSort(MetaFields.FIELD_FEED, Direction.ASCENDING, true);
+        criteria.addSort(MetaFields.FIELD_ID, Direction.ASCENDING, true);
 
         final DataDownloadSettings dataDownloadSettings = new DataDownloadSettings();
         dataDownloadSettings.setMultipleFiles(true);

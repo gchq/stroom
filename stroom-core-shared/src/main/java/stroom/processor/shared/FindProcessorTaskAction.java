@@ -16,18 +16,17 @@
 
 package stroom.processor.shared;
 
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.entity.shared.FindAction;
-import stroom.job.shared.FindJobNodeCriteria;
-import stroom.job.shared.JobNodeRow;
 
-public class FindProcessorTaskAction extends FindAction<FindProcessorTaskCriteria, ProcessorTask> {
+public class FindProcessorTaskAction extends FindAction<ExpressionCriteria, ProcessorTask> {
     private static final long serialVersionUID = -6808045615241590297L;
 
     public FindProcessorTaskAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FindProcessorTaskAction(final FindProcessorTaskCriteria criteria) {
+    public FindProcessorTaskAction(final ExpressionCriteria criteria) {
         super(criteria);
     }
 }

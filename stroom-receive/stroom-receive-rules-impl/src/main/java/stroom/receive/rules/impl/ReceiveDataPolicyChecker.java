@@ -19,10 +19,11 @@ package stroom.receive.rules.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.datasource.api.v2.DataSourceField;
-import stroom.dictionary.api.DictionaryStore;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.FieldTypes;
 import stroom.docref.DocRef;
-import stroom.meta.api.ExpressionMatcher;
+import stroom.expression.matcher.ExpressionMatcher;
+import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.receive.rules.shared.ReceiveDataRule;
@@ -46,16 +47,16 @@ class ReceiveDataPolicyChecker {
     private static final int ONE_MINUTE = 60 * 1000;
 
     private final ReceiveDataRuleSetService ruleSetService;
-    private final DictionaryStore dictionaryStore;
+    private final ExpressionMatcherFactory expressionMatcherFactory;
     private final DocRef policyRef;
     private final AtomicLong lastRefresh = new AtomicLong();
     private volatile Checker checker = new ReceiveAllChecker();
 
     ReceiveDataPolicyChecker(final ReceiveDataRuleSetService ruleSetService,
-                             final DictionaryStore dictionaryStore,
+                             final ExpressionMatcherFactory expressionMatcherFactory,
                              final DocRef policyRef) {
         this.ruleSetService = ruleSetService;
-        this.dictionaryStore = dictionaryStore;
+        this.expressionMatcherFactory = expressionMatcherFactory;
         this.policyRef = policyRef;
     }
 
@@ -81,9 +82,9 @@ class ReceiveDataPolicyChecker {
             final ReceiveDataRules dataReceiptPolicy = ruleSetService.readDocument(policyRef);
             if (dataReceiptPolicy != null && dataReceiptPolicy.getRules() != null && dataReceiptPolicy.getFields() != null) {
                 // Create a map of fields.
-                final Map<String, DataSourceField> fieldMap = dataReceiptPolicy.getFields()
+                final Map<String, AbstractField> fieldMap = dataReceiptPolicy.getFields()
                         .stream()
-                        .collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
+                        .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
 
                 // Also make sure we create a list of rules that are enabled and have at least one enabled term.
                 final Set<String> fieldSet = new HashSet<>();
@@ -100,13 +101,13 @@ class ReceiveDataPolicyChecker {
                 });
 
                 // Create a map of fields that are valid fields and have been used in the expressions.
-                final Map<String, DataSourceField> usedFieldMap = fieldSet
+                final Map<String, AbstractField> usedFieldMap = fieldSet
                         .stream()
                         .map(fieldMap::get)
                         .filter(Objects::nonNull)
-                        .collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
+                        .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
 
-                final ExpressionMatcher expressionMatcher = new ExpressionMatcher(usedFieldMap, dictionaryStore);
+                final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(usedFieldMap);
                 checker = new CheckerImpl(expressionMatcher, activeRules, fieldMap);
 
             } else {
@@ -137,9 +138,9 @@ class ReceiveDataPolicyChecker {
     private static class CheckerImpl implements Checker {
         private final ExpressionMatcher expressionMatcher;
         private final List<ReceiveDataRule> activeRules;
-        private final Map<String, DataSourceField> fieldMap;
+        private final Map<String, AbstractField> fieldMap;
 
-        CheckerImpl(final ExpressionMatcher expressionMatcher, final List<ReceiveDataRule> activeRules, final Map<String, DataSourceField> fieldMap) {
+        CheckerImpl(final ExpressionMatcher expressionMatcher, final List<ReceiveDataRule> activeRules, final Map<String, AbstractField> fieldMap) {
             this.expressionMatcher = expressionMatcher;
             this.activeRules = activeRules;
             this.fieldMap = fieldMap;
@@ -158,13 +159,13 @@ class ReceiveDataPolicyChecker {
             return RuleAction.RECEIVE;
         }
 
-        private Map<String, Object> createAttributeMap(final AttributeMap attributeMap, final Map<String, DataSourceField> fieldMap) {
+        private Map<String, Object> createAttributeMap(final AttributeMap attributeMap, final Map<String, AbstractField> fieldMap) {
             final Map<String, Object> map = new HashMap<>();
             fieldMap.forEach((fieldName, field) -> {
                 try {
                     final String string = attributeMap.get(fieldName);
                     switch (field.getType()) {
-                        case FIELD:
+                        case FieldTypes.TEXT:
                             map.put(fieldName, string);
                             break;
                         default:

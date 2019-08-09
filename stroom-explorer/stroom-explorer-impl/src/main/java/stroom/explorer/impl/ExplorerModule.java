@@ -17,6 +17,7 @@
 package stroom.explorer.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.collection.api.CollectionService;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
@@ -38,8 +39,10 @@ public class ExplorerModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ExplorerNodeService.class).to(ExplorerNodeServiceImpl.class);
+        bind(ExplorerSession.class).to(ExplorerSessionImpl.class);
         bind(ExplorerService.class).to(ExplorerServiceImpl.class);
         bind(ExplorerEventLog.class).to(ExplorerEventLogImpl.class);
+        bind(CollectionService.class).to(ExplorerServiceImpl.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(ExplorerServiceCopyAction.class, ExplorerServiceCopyHandler.class)

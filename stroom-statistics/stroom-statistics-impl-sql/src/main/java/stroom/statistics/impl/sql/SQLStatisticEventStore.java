@@ -24,16 +24,16 @@ import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.datasource.api.v2.DataSourceField;
-import stroom.statistics.impl.sql.shared.StatisticStore;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.statistics.impl.sql.shared.CustomRollUpMask;
-import stroom.statistics.impl.sql.shared.StatisticRollUpType;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.statistics.impl.sql.entity.StatisticStoreCache;
 import stroom.statistics.impl.sql.entity.StatisticStoreValidator;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
+import stroom.statistics.impl.sql.shared.CustomRollUpMask;
+import stroom.statistics.impl.sql.shared.StatisticRollUpType;
+import stroom.statistics.impl.sql.shared.StatisticStore;
+import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
@@ -400,7 +400,7 @@ public class SQLStatisticEventStore implements Statistics {
         return statisticsDataSourceCache.getStatisticsDataSource(statisticName);
     }
 
-    public List<DataSourceField> getSupportedFields(final List<DataSourceField> indexFields) {
+    public List<AbstractField> getSupportedFields(final List<AbstractField> indexFields) {
         final Set<String> blackList = getIndexFieldBlackList();
 
         if (blackList.size() == 0) {
@@ -411,7 +411,7 @@ public class SQLStatisticEventStore implements Statistics {
             // construct an anonymous class instance that will filter out black
             // listed index fields, as supplied by the
             // sub-class
-            final List<DataSourceField> supportedIndexFields = new ArrayList<>();
+            final List<AbstractField> supportedIndexFields = new ArrayList<>();
             indexFields.stream()
                     .filter(indexField -> !blackList.contains(indexField.getName()))
                     .forEach(supportedIndexFields::add);

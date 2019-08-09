@@ -87,7 +87,7 @@ public class ProxyRepositoryStreamAppender extends AbstractDestinationProvider i
     public OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
         if (outputStream == null) {
             final AttributeMap attributeMap = metaDataHolder.getMetaData();
-            stroomZipOutputStream = proxyRepositoryManager.getActiveRepository().getStroomZipOutputStream(attributeMap);
+            stroomZipOutputStream = proxyRepositoryManager.getStroomZipOutputStream(attributeMap);
             nextEntry();
         }
 

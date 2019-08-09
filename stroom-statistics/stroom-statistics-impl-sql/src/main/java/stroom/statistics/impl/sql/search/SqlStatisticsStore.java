@@ -51,7 +51,7 @@ public class SqlStatisticsStore implements Store {
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticsStore.class);
 
-    private static final String TASK_NAME = "Sql Statistic Search";
+    public static final String TASK_NAME = "Sql Statistic Search";
 
     private static final Duration RESULT_SEND_INTERVAL = Duration.ofSeconds(1);
 

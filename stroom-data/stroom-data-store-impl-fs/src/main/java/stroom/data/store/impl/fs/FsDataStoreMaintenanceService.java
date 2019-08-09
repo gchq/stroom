@@ -28,7 +28,7 @@ import stroom.util.shared.CriteriaSet;
 import stroom.util.shared.PageRequest;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFieldNames;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -230,7 +230,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
 
         if (parts.length > 0 && parts[0].length() > 0) {
             final String streamTypeName = fileSystemTypePaths.getType(parts[0]);
-            builder.addTerm(MetaFieldNames.TYPE_NAME, Condition.EQUALS, streamTypeName);
+            builder.addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, streamTypeName);
         }
         if (parts.length >= 4) {
             try {
@@ -238,8 +238,8 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
                 final LocalDate localDate = LocalDate.parse(fromDateString, DateTimeFormatter.ISO_LOCAL_DATE);
                 final String toDateString = localDate.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE);
 
-                builder.addTerm(MetaFieldNames.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, fromDateString + "T00:00:00.000Z");
-                builder.addTerm(MetaFieldNames.CREATE_TIME, Condition.LESS_THAN, toDateString + "T00:00:00.000Z");
+                builder.addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, fromDateString + "T00:00:00.000Z");
+                builder.addTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN, toDateString + "T00:00:00.000Z");
 
             } catch (final RuntimeException e) {
                 // Not a stream path
@@ -275,8 +275,8 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
 
         long toId = fromId + 1000L;
 
-        builder.addTerm(MetaFieldNames.ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(fromId));
-        builder.addTerm(MetaFieldNames.ID, Condition.LESS_THAN, String.valueOf(toId));
+        builder.addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, fromId);
+        builder.addTerm(MetaFields.ID, Condition.LESS_THAN, toId);
 
         return builder.build();
     }

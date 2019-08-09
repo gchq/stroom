@@ -16,7 +16,7 @@
 
 package stroom.core.servlet;
 
-import stroom.event.logging.api.HttpServletRequestHolder;
+import stroom.util.servlet.HttpServletRequestHolder;
 
 import javax.inject.Inject;
 import javax.servlet.Filter;
