@@ -16,7 +16,6 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.searchable.api.Searchable;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.shared.FindTaskProgressCriteria;
@@ -34,17 +33,14 @@ class SearchableTaskProgress implements Searchable {
     private static final DocRef TASK_MANAGER_PSEUDO_DOC_REF = new DocRef("Searchable", "Task Manager", "Task Manager");
 
     private final ClusterDispatchAsyncHelper dispatchHelper;
-    private final Security security;
     private final SecurityContext securityContext;
     private final ExpressionMatcherFactory expressionMatcherFactory;
 
     @Inject
     SearchableTaskProgress(final ClusterDispatchAsyncHelper dispatchHelper,
-                           final Security security,
                            final SecurityContext securityContext,
                            final ExpressionMatcherFactory expressionMatcherFactory) {
         this.dispatchHelper = dispatchHelper;
-        this.security = security;
         this.securityContext = securityContext;
         this.expressionMatcherFactory = expressionMatcherFactory;
     }
@@ -64,7 +60,7 @@ class SearchableTaskProgress implements Searchable {
 
     @Override
     public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
-        security.secure(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
+        securityContext.secure(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
             final FindTaskProgressClusterTask clusterTask = new FindTaskProgressClusterTask(
                     securityContext.getUserToken(), "Search Task Progress", new FindTaskProgressCriteria());
             final DefaultClusterResultCollector<ResultList<TaskProgress>> collector = dispatchHelper

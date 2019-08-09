@@ -18,20 +18,20 @@ package stroom.dashboard.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.dashboard.impl.datasource.DataSourceProvider;
+import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
 import stroom.dashboard.impl.logging.SearchEventLog;
 import stroom.dashboard.shared.DashboardQueryKey;
-import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.dashboard.impl.datasource.DataSourceProvider;
-import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
+import stroom.dashboard.shared.StoredQuery;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.task.api.AbstractTaskHandler;
 
@@ -51,7 +51,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
     private final DataSourceProviderRegistry searchDataSourceProviderRegistry;
     private final ActiveQueriesManager activeQueriesManager;
     private final SearchRequestMapper searchRequestMapper;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     SearchBusPollActionHandler(final StoredQueryService queryService,
@@ -59,20 +59,20 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                                final DataSourceProviderRegistry searchDataSourceProviderRegistry,
                                final ActiveQueriesManager activeQueriesManager,
                                final SearchRequestMapper searchRequestMapper,
-                               final Security security) {
+                               final SecurityContext securityContext) {
         this.queryService = queryService;
         this.searchEventLog = searchEventLog;
         this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
         this.activeQueriesManager = activeQueriesManager;
         this.searchRequestMapper = searchRequestMapper;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public SearchBusPollResult exec(final SearchBusPollAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
-            return security.useAsReadResult(() -> {
+            return securityContext.useAsReadResult(() -> {
                 if (LOGGER.isDebugEnabled()) {
                     final StringBuilder sb = new StringBuilder(
                             "Only the following search queries should be active for session '");

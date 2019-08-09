@@ -32,7 +32,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.Row;
 import stroom.resource.api.ResourceStore;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.EntityServiceExceptionUtil;
@@ -58,7 +58,7 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
     private final ActiveQueriesManager activeQueriesManager;
     private final DataSourceProviderRegistry searchDataSourceProviderRegistry;
     private final SearchRequestMapper searchRequestMapper;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     DownloadSearchResultsHandler(final ResourceStore resourceStore,
@@ -66,18 +66,18 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
                                  final ActiveQueriesManager activeQueriesManager,
                                  final DataSourceProviderRegistry searchDataSourceProviderRegistry,
                                  final SearchRequestMapper searchRequestMapper,
-                                 final Security security) {
+                                 final SecurityContext securityContext) {
         this.resourceStore = resourceStore;
         this.searchEventLog = searchEventLog;
         this.activeQueriesManager = activeQueriesManager;
         this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
         this.searchRequestMapper = searchRequestMapper;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ResourceGeneration exec(final DownloadSearchResultsAction action) {
-        return security.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             ResourceKey resourceKey;
 
             final DashboardQueryKey queryKey = action.getQueryKey();

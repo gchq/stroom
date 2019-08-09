@@ -3,7 +3,7 @@ package stroom.explorer.impl;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.FetchExplorerNodeAction;
 import stroom.explorer.shared.FetchExplorerNodeResult;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
@@ -12,17 +12,17 @@ import javax.inject.Inject;
 class FetchExplorerNodeHandler
         extends AbstractTaskHandler<FetchExplorerNodeAction, FetchExplorerNodeResult> {
     private final ExplorerService explorerService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchExplorerNodeHandler(final ExplorerService explorerService,
-                             final Security security) {
+                             final SecurityContext securityContext) {
         this.explorerService = explorerService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public FetchExplorerNodeResult exec(final FetchExplorerNodeAction action) {
-        return security.secureResult(() -> explorerService.getData(action.getCriteria()));
+        return securityContext.secureResult(() -> explorerService.getData(action.getCriteria()));
     }
 }

@@ -16,7 +16,7 @@
 
 package stroom.security.impl;
 
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.LogoutAction;
 import stroom.security.shared.User;
 import stroom.task.api.AbstractTaskHandler;
@@ -30,20 +30,20 @@ import javax.servlet.http.HttpSession;
 class LogoutHandler extends AbstractTaskHandler<LogoutAction, VoidResult> {
     private final Provider<HttpServletRequest> httpServletRequestProvider;
     private final AuthenticationEventLog eventLog;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     LogoutHandler(final Provider<HttpServletRequest> httpServletRequestProvider,
                   final AuthenticationEventLog eventLog,
-                  final Security security) {
+                  final SecurityContext securityContext) {
         this.httpServletRequestProvider = httpServletRequestProvider;
         this.eventLog = eventLog;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final LogoutAction task) {
-        return security.insecureResult(() -> {
+        return securityContext.insecureResult(() -> {
             final HttpSession session = httpServletRequestProvider.get().getSession();
             final User userRef = UserSessionUtil.get(session);
             if (session != null) {

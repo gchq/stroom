@@ -29,7 +29,7 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.TaskStatus;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
@@ -51,7 +51,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
     private final Store streamStore;
     private final NodeInfo nodeInfo;
     private final TaskContext taskContext;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     DataProcessorTaskHandler(final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders,
@@ -61,7 +61,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
                              final Store streamStore,
                              final NodeInfo nodeInfo,
                              final TaskContext taskContext,
-                             final Security security) {
+                             final SecurityContext securityContext) {
         this.executorProviders = executorProviders;
         this.processorCache = processorCache;
         this.processorFilterCache = processorFilterCache;
@@ -69,12 +69,12 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
         this.streamStore = streamStore;
         this.nodeInfo = nodeInfo;
         this.taskContext = taskContext;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final DataProcessorTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             boolean complete = false;
             final long startTime = System.currentTimeMillis();
             ProcessorTask streamTask = task.getProcessorTask();

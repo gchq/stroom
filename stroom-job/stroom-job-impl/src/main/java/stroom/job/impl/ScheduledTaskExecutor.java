@@ -22,7 +22,7 @@ import org.slf4j.MarkerFactory;
 import stroom.job.api.ScheduledJob;
 import stroom.job.api.TaskConsumer;
 import stroom.job.shared.JobNode;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.Task;
 import stroom.util.scheduler.FrequencyScheduler;
@@ -55,7 +55,7 @@ class ScheduledTaskExecutor {
     private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
     private final JobNodeTrackerCache jobNodeTrackerCache;
     private final TaskManager taskManager;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     private final AtomicReference<ScheduledExecutorService> scheduledExecutorService = new AtomicReference<>();
     private final boolean enabled;
@@ -66,11 +66,11 @@ class ScheduledTaskExecutor {
                           final JobNodeTrackerCache jobNodeTrackerCache,
                           final TaskManager taskManager,
                           final JobSystemConfig jobSystemConfig,
-                          final Security security) {
+                          final SecurityContext securityContext) {
         this.scheduledJobsMap = scheduledJobsMap;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
         this.taskManager = taskManager;
-        this.security = security;
+        this.securityContext = securityContext;
         this.enabled = jobSystemConfig.isEnabled();
         this.executionInterval = jobSystemConfig.getExecutionIntervalMs();
     }
@@ -85,7 +85,7 @@ class ScheduledTaskExecutor {
             final Runnable runnable = () -> {
                 if (lock.tryLock()) {
                     try {
-                        security.asProcessingUser(() -> {
+                        securityContext.asProcessingUser(() -> {
                             Thread.currentThread().setName("Stroom Job - ScheduledExecutor");
                             execute();
                         });

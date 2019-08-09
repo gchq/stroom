@@ -20,14 +20,14 @@ package stroom.pipeline.refdata;
 import org.junit.jupiter.api.Test;
 import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
+import stroom.data.shared.StreamTypeNames;
 import stroom.meta.mock.MockMetaService;
 import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
-import stroom.security.mock.AllowAllMockSecurity;
-import stroom.data.shared.StreamTypeNames;
-import stroom.util.date.DateUtil;
+import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.date.DateUtil;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -79,7 +79,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
             final EffectiveStreamCache effectiveStreamPool = new EffectiveStreamCache(cacheManager,
                     metaService,
                     new EffectiveStreamInternPool(),
-                    new AllowAllMockSecurity());
+                    new MockSecurityContext());
 
             assertThat(effectiveStreamPool.size()).as("No pooled times yet").isEqualTo(0);
             assertThat(findEffectiveStreamSourceCount).as("No calls to the database yet").isEqualTo(0);
@@ -130,7 +130,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
                     cacheManager,
                     mockStore,
                     new EffectiveStreamInternPool(),
-                    new AllowAllMockSecurity(),
+                    new MockSecurityContext(),
                     100,
                     TimeUnit.MILLISECONDS);
 

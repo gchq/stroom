@@ -22,16 +22,16 @@ import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheNodeRow;
 import stroom.cache.shared.FetchCacheNodeRowAction;
 import stroom.cache.shared.FindCacheInfoCriteria;
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.ResultList;
-import stroom.util.shared.StringCriteria;
-import stroom.security.api.Security;
-import stroom.security.shared.PermissionNames;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.cluster.task.api.ClusterCallEntry;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.DefaultClusterResultCollector;
 import stroom.cluster.task.api.TargetType;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.PermissionNames;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
+import stroom.util.shared.StringCriteria;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -42,18 +42,18 @@ class FetchCacheNodeRowHandler extends AbstractTaskHandler<FetchCacheNodeRowActi
     private static final Logger LOGGER = LoggerFactory.getLogger(FetchCacheNodeRowHandler.class);
 
     private final ClusterDispatchAsyncHelper dispatchHelper;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchCacheNodeRowHandler(final ClusterDispatchAsyncHelper dispatchHelper,
-                             final Security security) {
+                             final SecurityContext securityContext) {
         this.dispatchHelper = dispatchHelper;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ResultList<CacheNodeRow> exec(final FetchCacheNodeRowAction action) {
-        return security.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
             final List<CacheNodeRow> values = new ArrayList<>();
 
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();

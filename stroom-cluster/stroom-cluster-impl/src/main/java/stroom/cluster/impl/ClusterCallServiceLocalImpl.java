@@ -20,10 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.api.ClusterCallServiceLocal;
 import stroom.cluster.api.ServiceName;
-import stroom.util.shared.EntityServiceException;
 import stroom.node.api.NodeInfo;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -40,20 +40,20 @@ class ClusterCallServiceLocalImpl implements ClusterCallServiceLocal {
 
     private final Map<ServiceName, Provider<Object>> serviceMap;
     private final NodeInfo nodeInfo;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     ClusterCallServiceLocalImpl(final Map<ServiceName, Provider<Object>> serviceMap,
                                 final NodeInfo nodeInfo,
-                                final Security security) {
+                                final SecurityContext securityContext) {
         this.serviceMap = serviceMap;
         this.nodeInfo = nodeInfo;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public Object call(final String sourceNode, final String targetNode, final ServiceName serviceName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
-        return security.insecureResult(() -> {
+        return securityContext.insecureResult(() -> {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
             final String thisNodeName = nodeInfo.getThisNodeName();

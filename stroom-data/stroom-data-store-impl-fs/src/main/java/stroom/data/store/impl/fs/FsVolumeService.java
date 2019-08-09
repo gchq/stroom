@@ -11,7 +11,6 @@ import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventBus;
 import stroom.entity.shared.EntityEventHandler;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.statistics.api.InternalStatisticEvent;
@@ -79,7 +78,6 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     private final FsVolumeDao fsVolumeDao;
     private final FsVolumeStateDao fileSystemVolumeStateDao;
-    private final Security security;
     private final SecurityContext securityContext;
     private final FsVolumeConfig volumeConfig;
     private final InternalStatisticsReceiver statisticsReceiver;
@@ -93,7 +91,6 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     @Inject
     public FsVolumeService(final FsVolumeDao fsVolumeDao,
                            final FsVolumeStateDao fileSystemVolumeStateDao,
-                           final Security security,
                            final SecurityContext securityContext,
                            final FsVolumeConfig volumeConfig,
                            final InternalStatisticsReceiver statisticsReceiver,
@@ -101,7 +98,6 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                            final Provider<EntityEventBus> entityEventBusProvider) {
         this.fsVolumeDao = fsVolumeDao;
         this.fileSystemVolumeStateDao = fileSystemVolumeStateDao;
-        this.security = security;
         this.securityContext = securityContext;
         this.volumeConfig = volumeConfig;
         this.statisticsReceiver = statisticsReceiver;
@@ -114,7 +110,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     public FsVolume create(final FsVolume fileVolume) {
-        return security.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
             FsVolume result = null;
             String pathString = fileVolume.getPath();
             try {
@@ -148,7 +144,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     public FsVolume update(final FsVolume fileVolume) {
-        return security.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
             AuditUtil.stamp(securityContext.getUserId(), fileVolume);
             final FsVolume result = fsVolumeDao.update(fileVolume);
 
@@ -159,7 +155,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     public int delete(final int id) {
-        return security.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
             final int result = fsVolumeDao.delete(id);
 
             fireChange(EntityAction.DELETE);
@@ -169,11 +165,11 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     public FsVolume fetch(final int id) {
-        return security.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> fsVolumeDao.fetch(id));
+        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> fsVolumeDao.fetch(id));
     }
 
     public BaseResultList<FsVolume> find(final FindFsVolumeCriteria criteria) {
-        return security.insecureResult(() -> {
+        return securityContext.insecureResult(() -> {
             ensureDefaultVolumes();
             return doFind(criteria);
         });
@@ -184,7 +180,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     FsVolume getVolume() {
-        return security.insecureResult(() -> {
+        return securityContext.insecureResult(() -> {
             final Set<FsVolume> set = getVolumeSet(VolumeUseStatus.ACTIVE);
             if (set.size() > 0) {
                 return set.iterator().next();
@@ -410,7 +406,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         if (!createdDefaultVolumes && !creatingDefaultVolumes) {
             try {
                 creatingDefaultVolumes = true;
-                security.insecure(() -> {
+                securityContext.insecure(() -> {
                     final boolean isEnabled = volumeConfig.isCreateDefaultOnStart();
                     if (isEnabled) {
                         final FindFsVolumeCriteria findVolumeCriteria = new FindFsVolumeCriteria();

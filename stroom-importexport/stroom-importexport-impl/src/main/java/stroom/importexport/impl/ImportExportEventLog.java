@@ -29,12 +29,12 @@ import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.DocRefs;
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.importexport.shared.ExportConfigAction;
 import stroom.importexport.shared.ImportConfigAction;
 import stroom.importexport.shared.ImportState;
-import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
+import stroom.util.shared.DocRefs;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -43,17 +43,17 @@ public class ImportExportEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportEventLog.class);
 
     private final StroomEventLoggingService eventLoggingService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     public ImportExportEventLog(final StroomEventLoggingService eventLoggingService,
-                                final Security security) {
+                                final SecurityContext securityContext) {
         this.eventLoggingService = eventLoggingService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     public void export(final ExportConfigAction exportDataAction) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = eventLoggingService.createAction("ExportConfig", "Exporting Configuration");
 
@@ -77,7 +77,7 @@ public class ImportExportEventLog {
     }
 
     public void _import(final ImportConfigAction importDataAction) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final List<ImportState> confirmList = importDataAction.getConfirmList();
                 if (confirmList != null && confirmList.size() > 0) {

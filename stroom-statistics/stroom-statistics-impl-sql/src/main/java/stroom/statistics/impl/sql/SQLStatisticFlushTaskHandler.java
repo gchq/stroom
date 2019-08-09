@@ -19,7 +19,7 @@ package stroom.statistics.impl.sql;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
@@ -43,7 +43,7 @@ public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatist
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticFlushTaskHandler.class);
     private final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
     private final TaskContext taskContext;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     private LogExecutionTime logExecutionTime;
     private int count;
@@ -53,15 +53,15 @@ public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatist
     @Inject
     public SQLStatisticFlushTaskHandler(final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService,
                                         final TaskContext taskContext,
-                                        final Security security) {
+                                        final SecurityContext securityContext) {
         this.sqlStatisticValueBatchSaveService = sqlStatisticValueBatchSaveService;
         this.taskContext = taskContext;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final SQLStatisticFlushTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             flush(task.getMap());
             return new VoidResult();
         });

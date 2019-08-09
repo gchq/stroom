@@ -28,7 +28,6 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeRow;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
@@ -49,17 +48,14 @@ class JobNodeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeService.class);
 
     private final JobNodeDao jobNodeDao;
-    private final Security security;
     private final SecurityContext securityContext;
     private final ClusterDispatchAsyncHelper dispatchHelper;
 
     @Inject
     JobNodeService(final JobNodeDao jobNodeDao,
-                   final Security security,
                    final SecurityContext securityContext,
                    final ClusterDispatchAsyncHelper dispatchHelper) {
         this.jobNodeDao = jobNodeDao;
-        this.security = security;
         this.securityContext = securityContext;
         this.dispatchHelper = dispatchHelper;
     }
@@ -68,7 +64,7 @@ class JobNodeService {
         // Stop Job Nodes being saved with invalid crons.
         ensureSchedule(jobNode);
 
-        return security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
             final Optional<JobNode> before = fetch(jobNode.getId());
 
                 // We always want to update a job node instance even if we have a stale version.
@@ -81,11 +77,11 @@ class JobNodeService {
     }
 
     private BaseResultList<JobNode> find(final FindJobNodeCriteria findJobNodeCriteria) {
-        return security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobNodeDao.find(findJobNodeCriteria));
+        return securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobNodeDao.find(findJobNodeCriteria));
     }
 
     BaseResultList<JobNodeRow> findStatus(final FindJobNodeCriteria findJobNodeCriteria) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             // Add the root node.
             final List<JobNodeRow> values = new ArrayList<>();
 

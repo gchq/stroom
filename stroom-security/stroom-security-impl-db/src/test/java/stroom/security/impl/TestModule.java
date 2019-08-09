@@ -5,7 +5,6 @@ import org.mockito.Mockito;
 import stroom.cache.impl.CacheModule;
 import stroom.entity.shared.EntityEventBus;
 import stroom.explorer.api.ExplorerService;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.db.SecurityDbModule;
 
@@ -21,9 +20,7 @@ public class TestModule extends AbstractModule {
 
         bind(UserService.class).to(UserServiceImpl.class);
         bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
-        bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
 
-        bind(Security.class).to(SecurityImpl.class);
         final SecurityContext securityContext = mock(SecurityContext.class);
         when(securityContext.getUserId()).thenReturn("admin");
         when(securityContext.isLoggedIn()).thenReturn(true);

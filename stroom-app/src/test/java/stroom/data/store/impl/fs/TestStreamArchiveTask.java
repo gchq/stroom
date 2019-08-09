@@ -21,6 +21,7 @@ package stroom.data.store.impl.fs;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.data.retention.impl.DataRetentionExecutor;
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
@@ -33,7 +34,6 @@ import stroom.job.impl.MockTask;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.node.api.NodeInfo;
-import stroom.data.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 

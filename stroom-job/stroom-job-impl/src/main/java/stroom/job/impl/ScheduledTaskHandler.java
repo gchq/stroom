@@ -18,7 +18,7 @@ package stroom.job.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.VoidResult;
@@ -29,16 +29,16 @@ import javax.inject.Inject;
 class ScheduledTaskHandler extends AbstractTaskHandler<ScheduledTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskHandler.class);
 
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
-    ScheduledTaskHandler(final Security security) {
-        this.security = security;
+    ScheduledTaskHandler(final SecurityContext securityContext) {
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final ScheduledTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             try {
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
                 LOGGER.debug("exec() - >>> {}", task.getTaskName());

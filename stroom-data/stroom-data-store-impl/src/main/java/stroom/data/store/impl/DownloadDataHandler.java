@@ -16,10 +16,10 @@
 
 package stroom.data.store.impl;
 
-import stroom.resource.api.ResourceStore;
-import stroom.security.api.Security;
-import stroom.security.shared.PermissionNames;
 import stroom.data.shared.DownloadDataAction;
+import stroom.resource.api.ResourceStore;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskManager;
 import stroom.util.shared.ResourceGeneration;
@@ -34,22 +34,22 @@ class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction, Resour
     private final ResourceStore resourceStore;
     private final TaskManager taskManager;
     private final StreamEventLog streamEventLog;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     DownloadDataHandler(final ResourceStore resourceStore,
                         final TaskManager taskManager,
                         final StreamEventLog streamEventLog,
-                        final Security security) {
+                        final SecurityContext securityContext) {
         this.resourceStore = resourceStore;
         this.taskManager = taskManager;
         this.streamEventLog = streamEventLog;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ResourceGeneration exec(final DownloadDataAction action) {
-        return security.secureResult(PermissionNames.EXPORT_DATA_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.EXPORT_DATA_PERMISSION, () -> {
             ResourceKey resourceKey;
             try {
                 // Import file.

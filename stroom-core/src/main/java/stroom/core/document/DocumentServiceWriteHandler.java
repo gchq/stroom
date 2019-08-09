@@ -20,7 +20,7 @@ package stroom.core.document;
 import stroom.docref.SharedObject;
 import stroom.entity.shared.DocumentServiceWriteAction;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
@@ -28,21 +28,21 @@ import javax.inject.Inject;
 class DocumentServiceWriteHandler extends AbstractTaskHandler<DocumentServiceWriteAction<SharedObject>, SharedObject> {
     private final DocumentService documentService;
     private final DocumentEventLog documentEventLog;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     DocumentServiceWriteHandler(final DocumentService documentService,
                                 final DocumentEventLog documentEventLog,
-                                final Security security) {
+                                final SecurityContext securityContext) {
         this.documentService = documentService;
         this.documentEventLog = documentEventLog;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public SharedObject exec(final DocumentServiceWriteAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
 //        final Object bean = beanRegistry.getEntityService(action.getEntity().getClass());
 //        if (bean == null) {
 //            throw new EntityServiceException("No entity service can be found");

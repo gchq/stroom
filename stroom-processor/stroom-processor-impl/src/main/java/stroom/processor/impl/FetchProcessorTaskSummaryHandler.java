@@ -8,7 +8,7 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.FindProcessorTaskSummaryAction;
 import stroom.processor.shared.ProcessorTaskSummary;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;
@@ -18,21 +18,21 @@ import javax.inject.Inject;
 class FetchProcessorTaskSummaryHandler extends AbstractTaskHandler<FindProcessorTaskSummaryAction, ResultList<ProcessorTaskSummary>> {
     private final ProcessorTaskService processorTaskService;
     private final DocumentEventLog entityEventLog;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchProcessorTaskSummaryHandler(final ProcessorTaskService processorTaskService,
                                      final DocumentEventLog entityEventLog,
-                                     final Security security) {
+                                     final SecurityContext securityContext) {
         this.processorTaskService = processorTaskService;
         this.entityEventLog = entityEventLog;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ResultList<ProcessorTaskSummary> exec(final FindProcessorTaskSummaryAction action) {
         final ExpressionCriteria criteria = action.getCriteria();
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             BaseResultList<ProcessorTaskSummary> result;
 
             final Query query = new Query();

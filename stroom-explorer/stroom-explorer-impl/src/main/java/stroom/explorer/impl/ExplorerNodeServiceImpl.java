@@ -9,7 +9,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardTagNames;
-import stroom.security.api.SecurityContext;
+import stroom.security.api.DocumentPermissionService;
 
 import javax.inject.Inject;
 import java.util.Collections;
@@ -34,13 +34,13 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     private final ExplorerTreeDao explorerTreeDao;
-    private final SecurityContext securityContext;
+    private final DocumentPermissionService documentPermissionService;
 
     @Inject
     ExplorerNodeServiceImpl(final ExplorerTreeDao explorerTreeDao,
-                            final SecurityContext securityContext) {
+                            final DocumentPermissionService documentPermissionService) {
         this.explorerTreeDao = explorerTreeDao;
-        this.securityContext = securityContext;
+        this.documentPermissionService = documentPermissionService;
     }
 
     @Override
@@ -334,7 +334,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             final String cascadeSourceUuid = sourceUuid;
             final List<ExplorerNode> descendants = getDescendants(dest);
             descendants.forEach(descendant ->
-                    securityContext.addDocumentPermissions(cascadeSourceType,
+                    documentPermissionService.addDocumentPermissions(cascadeSourceType,
                             cascadeSourceUuid,
                             descendant.getType(),
                             descendant.getUuid(),
@@ -342,11 +342,11 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             );
         }
 
-        securityContext.addDocumentPermissions(sourceType, sourceUuid, destType, destUuid, owner);
+        documentPermissionService.addDocumentPermissions(sourceType, sourceUuid, destType, destUuid, owner);
     }
 
     private void clearDocumentPermissions(final DocRef docRef) {
-        securityContext.clearDocumentPermissions(docRef.getType(), docRef.getUuid());
+        documentPermissionService.clearDocumentPermissions(docRef.getType(), docRef.getUuid());
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {

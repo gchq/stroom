@@ -21,15 +21,15 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.Clearable;
-import stroom.util.shared.Period;
-import stroom.pipeline.errorhandler.ProcessException;
-import stroom.security.api.Security;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
 import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
-import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.security.api.SecurityContext;
+import stroom.util.shared.Clearable;
+import stroom.util.shared.Period;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -48,26 +48,26 @@ public class EffectiveStreamCache implements Clearable {
     private final LoadingCache<EffectiveStreamKey, NavigableSet> cache;
     private final MetaService metaService;
     private final EffectiveStreamInternPool internPool;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     EffectiveStreamCache(final CacheManager cacheManager,
                          final MetaService metaService,
                          final EffectiveStreamInternPool internPool,
-                         final Security security) {
-        this(cacheManager, metaService, internPool, security, 10, TimeUnit.MINUTES);
+                         final SecurityContext securityContext) {
+        this(cacheManager, metaService, internPool, securityContext, 10, TimeUnit.MINUTES);
     }
 
     @SuppressWarnings("unchecked")
     EffectiveStreamCache(final CacheManager cacheManager,
                          final MetaService metaService,
                          final EffectiveStreamInternPool internPool,
-                         final Security security,
+                         final SecurityContext securityContext,
                          final long duration,
                          final TimeUnit unit) {
         this.metaService = metaService;
         this.internPool = internPool;
-        this.security = security;
+        this.securityContext = securityContext;
 
         final CacheLoader<EffectiveStreamKey, NavigableSet> cacheLoader = CacheLoader.from(this::create);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
@@ -90,7 +90,7 @@ public class EffectiveStreamCache implements Clearable {
     }
 
     protected NavigableSet<EffectiveStream> create(final EffectiveStreamKey key) {
-        return security.asProcessingUserResult(() -> {
+        return securityContext.asProcessingUserResult(() -> {
             NavigableSet<EffectiveStream> effectiveStreamSet = Collections.emptyNavigableSet();
 
             try {

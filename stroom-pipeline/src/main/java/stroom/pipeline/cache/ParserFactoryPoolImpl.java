@@ -19,22 +19,21 @@ package stroom.pipeline.cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ErrorHandler;
+import stroom.cache.api.CacheManager;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventHandler;
-import stroom.security.api.DocumentPermissionCache;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.security.api.Security;
-import stroom.security.api.SecurityContext;
-import stroom.cache.api.CacheManager;
-import stroom.util.io.StreamUtil;
-import stroom.util.shared.Severity;
 import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.pipeline.xml.converter.xmlfragment.XMLFragmentParserFactory;
+import stroom.security.api.DocumentPermissionCache;
+import stroom.security.api.SecurityContext;
+import stroom.util.io.StreamUtil;
+import stroom.util.shared.Severity;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
@@ -52,10 +51,9 @@ class ParserFactoryPoolImpl
     @Inject
     ParserFactoryPoolImpl(final CacheManager cacheManager,
                           final DocumentPermissionCache documentPermissionCache,
-                          final Security security,
                           final SecurityContext securityContext,
                           final DSChooser dsChooser) {
-        super(cacheManager, "Parser Factory Pool", documentPermissionCache, security, securityContext);
+        super(cacheManager, "Parser Factory Pool", documentPermissionCache, securityContext);
         this.dsChooser = dsChooser;
     }
 

@@ -31,7 +31,7 @@ import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.util.io.BufferFactory;
 
 import javax.inject.Inject;
@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 class ReceiveDataRequestHandler implements RequestHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReceiveDataRequestHandler.class);
 
-    private final Security security;
+    private final SecurityContext securityContext;
     private final Store streamStore;
     private final FeedProperties feedProperties;
     private final MetaStatistics metaDataStatistics;
@@ -58,13 +58,13 @@ class ReceiveDataRequestHandler implements RequestHandler {
     private final BufferFactory bufferFactory;
 
     @Inject
-    public ReceiveDataRequestHandler(final Security security,
+    public ReceiveDataRequestHandler(final SecurityContext securityContext,
                                      final Store streamStore,
                                      final FeedProperties feedProperties,
                                      final MetaStatistics metaDataStatistics,
                                      final AttributeMapFilterFactory attributeMapFilterFactory,
                                      final BufferFactory bufferFactory) {
-        this.security = security;
+        this.securityContext = securityContext;
         this.streamStore = streamStore;
         this.feedProperties = feedProperties;
         this.metaDataStatistics = metaDataStatistics;
@@ -74,7 +74,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
 
     @Override
     public void handle(final HttpServletRequest request, final HttpServletResponse response) {
-        security.asProcessingUser(() -> {
+        securityContext.asProcessingUser(() -> {
             final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
 
             final AttributeMap attributeMap = AttributeMapUtil.create(request);

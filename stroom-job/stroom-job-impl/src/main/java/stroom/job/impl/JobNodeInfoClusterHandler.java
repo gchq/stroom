@@ -18,7 +18,7 @@ package stroom.job.impl;
 
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.shared.SharedMap;
@@ -30,18 +30,18 @@ import java.util.Collection;
 class JobNodeInfoClusterHandler
         extends AbstractTaskHandler<JobNodeInfoClusterTask, SharedMap<JobNode, JobNodeInfo>> {
     private final JobNodeTrackerCache jobNodeTrackerCache;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     JobNodeInfoClusterHandler(final JobNodeTrackerCache jobNodeTrackerCache,
-                              final Security security) {
+                              final SecurityContext securityContext) {
         this.jobNodeTrackerCache = jobNodeTrackerCache;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public stroom.util.shared.SharedMap<JobNode, JobNodeInfo> exec(final JobNodeInfoClusterTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             final SharedMap<JobNode, JobNodeInfo> result = new SharedMap<>();
             final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
             if (trackers != null) {

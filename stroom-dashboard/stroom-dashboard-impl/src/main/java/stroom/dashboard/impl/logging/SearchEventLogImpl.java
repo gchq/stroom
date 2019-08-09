@@ -35,7 +35,7 @@ import stroom.docref.DocRefInfo;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.explorer.api.ExplorerService;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 
@@ -43,19 +43,19 @@ public class SearchEventLogImpl implements SearchEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
-    private final Security security;
+    private final SecurityContext securityContext;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
     private final ExplorerService explorerService;
 
     @Inject
     public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
-                              final Security security,
+                              final SecurityContext securityContext,
                               final WordListProvider wordListProvider,
                               final CollectionService collectionService,
                               final ExplorerService explorerService) {
         this.eventLoggingService = eventLoggingService;
-        this.security = security;
+        this.securityContext = securityContext;
         this.wordListProvider = wordListProvider;
         this.collectionService = collectionService;
         this.explorerService = explorerService;
@@ -65,7 +65,7 @@ public class SearchEventLogImpl implements SearchEventLog {
     public void search(final DocRef dataSourceRef,
                        final ExpressionOperator expression,
                        final String queryInfo) {
-        security.insecure(() -> search("Search", dataSourceRef, expression, queryInfo, null));
+        securityContext.insecure(() -> search("Search", dataSourceRef, expression, queryInfo, null));
     }
 
     @Override
@@ -73,14 +73,14 @@ public class SearchEventLogImpl implements SearchEventLog {
                        final ExpressionOperator expression,
                        final String queryInfo,
                        final Exception e) {
-        security.insecure(() -> search("Search", dataSourceRef, expression, queryInfo, e));
+        securityContext.insecure(() -> search("Search", dataSourceRef, expression, queryInfo, e));
     }
 
     @Override
     public void batchSearch(final DocRef dataSourceRef,
                             final ExpressionOperator expression,
                             final String queryInfo) {
-        security.insecure(() -> search("Batch search", dataSourceRef, expression, queryInfo, null));
+        securityContext.insecure(() -> search("Batch search", dataSourceRef, expression, queryInfo, null));
     }
 
     @Override
@@ -88,14 +88,14 @@ public class SearchEventLogImpl implements SearchEventLog {
                             final ExpressionOperator expression,
                             final String queryInfo,
                             final Exception e) {
-        security.insecure(() -> search("Batch search", dataSourceRef, expression, queryInfo, e));
+        securityContext.insecure(() -> search("Batch search", dataSourceRef, expression, queryInfo, e));
     }
 
     @Override
     public void downloadResults(final DocRef dataSourceRef,
                                 final ExpressionOperator expression,
                                 final String queryInfo) {
-        security.insecure(() -> downloadResults("Batch search", dataSourceRef, expression, queryInfo, null));
+        securityContext.insecure(() -> downloadResults("Batch search", dataSourceRef, expression, queryInfo, null));
     }
 
     @Override
@@ -103,7 +103,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                                 final ExpressionOperator expression,
                                 final String queryInfo,
                                 final Exception e) {
-        security.insecure(() -> downloadResults("Download search results", dataSourceRef, expression, queryInfo, e));
+        securityContext.insecure(() -> downloadResults("Download search results", dataSourceRef, expression, queryInfo, e));
     }
 
     @Override
@@ -112,7 +112,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                                 final ExpressionOperator expression,
                                 final String queryInfo,
                                 final Exception e) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final String dataSourceName = getDataSourceName(dataSourceRef);
 
@@ -148,7 +148,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                        final ExpressionOperator expression,
                        final String queryInfo,
                        final Exception e) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 String dataSourceName = getDataSourceName(dataSourceRef);
                 if (dataSourceName == null || dataSourceName.isEmpty()) {

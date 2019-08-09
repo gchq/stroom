@@ -20,7 +20,7 @@ package stroom.processor.impl;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.CreateProcessorFilterAction;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 
@@ -28,18 +28,18 @@ import javax.inject.Inject;
 
 public class CreateProcessorHandler extends AbstractTaskHandler<CreateProcessorFilterAction, ProcessorFilter> {
     private final ProcessorFilterService processorFilterService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     CreateProcessorHandler(final ProcessorFilterService processorFilterService,
-                           final Security security) {
+                           final SecurityContext securityContext) {
         this.processorFilterService = processorFilterService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ProcessorFilter exec(final CreateProcessorFilterAction action) {
-        return security.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () ->
+        return securityContext.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () ->
                 processorFilterService.create(action.getPipeline(), action.getQueryData(), action.getPriority(), action.isEnabled()));
     }
 }

@@ -19,12 +19,11 @@ package stroom.security.impl;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import stroom.security.api.DocumentPermissionCache;
-import stroom.security.api.Security;
-import stroom.security.api.SecurityContext;
-import stroom.util.shared.Clearable;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
+import stroom.security.api.DocumentPermissionCache;
+import stroom.security.api.SecurityContext;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -40,12 +39,11 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
     @Inject
     @SuppressWarnings("unchecked")
     DocumentPermissionCacheImpl(final CacheManager cacheManager,
-                                final SecurityContext securityContext,
-                                final Security security) {
+                                final SecurityContext securityContext) {
         this.securityContext = securityContext;
 
         final CacheLoader<DocumentPermission, Boolean> cacheLoader = CacheLoader.from(k ->
-                security.insecureResult(() ->
+                securityContext.insecureResult(() ->
                         securityContext.hasDocumentPermission(k.documentType, k.documentUuid, k.permission)));
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)

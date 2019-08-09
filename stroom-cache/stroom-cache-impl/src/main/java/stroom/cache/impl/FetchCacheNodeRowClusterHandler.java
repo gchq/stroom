@@ -20,9 +20,9 @@ package stroom.cache.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.shared.CacheInfo;
-import stroom.util.shared.ResultList;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 
@@ -30,19 +30,19 @@ class FetchCacheNodeRowClusterHandler extends AbstractTaskHandler<FetchCacheNode
     private static final Logger LOGGER = LoggerFactory.getLogger(FetchCacheNodeRowClusterHandler.class);
 
     private final CacheManagerService cacheManagerService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchCacheNodeRowClusterHandler(final CacheManagerService cacheManagerService,
-                                    final Security security) {
+                                    final SecurityContext securityContext) {
         this.cacheManagerService = cacheManagerService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @SuppressWarnings({"rawtypes"})
     @Override
     public ResultList<CacheInfo> exec(final FetchCacheNodeRowClusterTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             ResultList<CacheInfo> result = null;
 
             try {

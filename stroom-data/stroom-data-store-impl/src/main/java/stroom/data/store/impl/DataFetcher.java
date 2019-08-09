@@ -20,13 +20,13 @@ package stroom.data.store.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.util.shared.EntityServiceException;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
@@ -39,7 +39,6 @@ import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.reader.BOMRemovalInputStream;
-import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchMarkerResult;
@@ -54,9 +53,10 @@ import stroom.pipeline.writer.AbstractWriter;
 import stroom.pipeline.writer.OutputStreamAppender;
 import stroom.pipeline.writer.TextWriter;
 import stroom.pipeline.writer.XMLWriter;
-import stroom.security.api.Security;
-import stroom.data.shared.StreamTypeNames;
+import stroom.security.api.SecurityContext;
 import stroom.util.io.StreamUtil;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
@@ -99,7 +99,7 @@ public class DataFetcher {
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final PipelineDataCache pipelineDataCache;
     private final StreamEventLog streamEventLog;
-    private final Security security;
+    private final SecurityContext securityContext;
     private final PipelineScopeRunnable pipelineScopeRunnable;
 
     private Long index = 0L;
@@ -120,7 +120,7 @@ public class DataFetcher {
                 final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                 final PipelineDataCache pipelineDataCache,
                 final StreamEventLog streamEventLog,
-                final Security security,
+                final SecurityContext securityContext,
                 final PipelineScopeRunnable pipelineScopeRunnable) {
         this.streamStore = streamStore;
         this.feedProperties = feedProperties;
@@ -133,7 +133,7 @@ public class DataFetcher {
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
         this.pipelineDataCache = pipelineDataCache;
         this.streamEventLog = streamEventLog;
-        this.security = security;
+        this.securityContext = securityContext;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
     }
 
@@ -155,7 +155,7 @@ public class DataFetcher {
                                            final boolean showAsHtml,
                                            final Severity... expandedSeverities) {
         // Allow users with 'Use' permission to read data, pipelines and XSLT.
-        return security.useAsReadResult(() -> {
+        return securityContext.useAsReadResult(() -> {
             List<String> availableChildStreamTypes;
             String feedName = null;
             String streamTypeName = null;

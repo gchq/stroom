@@ -22,23 +22,23 @@ import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.FeedStatusService;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 
 class FeedStatusServiceImpl implements FeedStatusService {
-    private final Security security;
+    private final SecurityContext securityContext;
     private final FeedProperties feedProperties;
 
     @Inject
-    FeedStatusServiceImpl(final Security security, final FeedProperties feedProperties) {
-        this.security = security;
+    FeedStatusServiceImpl(final SecurityContext securityContext, final FeedProperties feedProperties) {
+        this.securityContext = securityContext;
         this.feedProperties = feedProperties;
     }
 
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
-        return security.asProcessingUserResult(() -> {
+        return securityContext.asProcessingUserResult(() -> {
             final FeedStatus feedStatus = feedProperties.getStatus(request.getFeedName());
 
             if (feedStatus == null) {

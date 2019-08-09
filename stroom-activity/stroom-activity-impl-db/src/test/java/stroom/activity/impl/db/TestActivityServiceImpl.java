@@ -33,7 +33,6 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.activity.shared.FindActivityCriteria;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BaseResultList;
 
@@ -45,8 +44,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TestActivityServiceImpl {
     private ActivityService activityService;
 
-    @Mock
-    private Security security;
     @Mock
     private SecurityContext securityContext;
 

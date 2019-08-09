@@ -38,7 +38,7 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.HasId;
@@ -57,15 +57,15 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     private final StroomEventLoggingService eventLoggingService;
     private final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     public DocumentEventLogImpl(final StroomEventLoggingService eventLoggingService,
                                 final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap,
-                                final Security security) {
+                                final SecurityContext securityContext) {
         this.eventLoggingService = eventLoggingService;
         this.objectInfoProviderMap = objectInfoProviderMap;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     private ObjectInfoProvider getInfoAppender(final Class<?> type) {
@@ -92,7 +92,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void create(final String objectType, final String objectName, final Throwable ex) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction("Create", "Creating", objectType, objectName);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
@@ -118,7 +118,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void create(final java.lang.Object object, final Throwable ex) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction("Create", "Creating", object);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
@@ -140,7 +140,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void update(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction("Update", "Updating", before);
                 final Update update = new Update();
@@ -175,7 +175,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void copy(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction("Copy", "Copying", before);
                 final CopyMove copy = new CopyMove();
@@ -209,7 +209,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void move(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction("Move", "Moving", before);
                 final CopyMove move = new CopyMove();
@@ -243,7 +243,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void rename(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction("Rename", "Renaming", before);
                 final CopyMove move = new CopyMove();
@@ -277,7 +277,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void delete(final java.lang.Object object, final Throwable ex) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction("Delete", "Deleting", object);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
@@ -294,7 +294,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void view(final java.lang.Object object, final Throwable ex) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction("View", "Viewing", object);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
@@ -311,7 +311,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void delete(final BaseCriteria criteria, final Query query, final Long size, final Throwable ex) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction(criteria.getClass().getSimpleName(), "Finding " + getObjectType(criteria),
                         null);
@@ -337,7 +337,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void download(final java.lang.Object object, final Throwable ex) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction("Download", "Downloading", object);
 
@@ -360,7 +360,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     @Override
     public void search(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
                        final Throwable ex) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction(criteria.getClass().getSimpleName(), "Finding " + getObjectType(criteria),
                         null);
@@ -388,7 +388,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     @Override
     public void searchSummary(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
                               final Throwable ex) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction(criteria.getClass().getSimpleName(),
                         "Finding Summary " + getObjectType(criteria), null);

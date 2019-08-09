@@ -17,8 +17,8 @@
 package stroom.data.store.impl;
 
 import stroom.meta.shared.MetaService;
-import stroom.security.api.Security;
 import stroom.meta.shared.UpdateStatusAction;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.SharedInteger;
 
@@ -27,17 +27,17 @@ import javax.inject.Inject;
 
 class UpdateStatusHandler extends AbstractTaskHandler<UpdateStatusAction, SharedInteger> {
     private final MetaService metaService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     UpdateStatusHandler(final MetaService metaService,
-                        final Security security) {
+                        final SecurityContext securityContext) {
         this.metaService = metaService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public SharedInteger exec(final UpdateStatusAction task) {
-        return security.secureResult(() -> new SharedInteger(metaService.updateStatus(task.getCriteria(), task.getNewStatus())));
+        return securityContext.secureResult(() -> new SharedInteger(metaService.updateStatus(task.getCriteria(), task.getNewStatus())));
     }
 }

@@ -49,7 +49,7 @@ import stroom.search.impl.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.search.impl.shard.IndexShardSearchTaskExecutor;
 import stroom.search.impl.shard.IndexShardSearchTaskHandler;
 import stroom.search.impl.shard.IndexShardSearchTaskProducer;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskContext;
@@ -92,7 +92,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private final ExtractionTaskExecutor extractionTaskExecutor;
     private final ExtractionConfig extractionConfig;
     private final MetaService metaService;
-    private final Security security;
+    private final SecurityContext securityContext;
     private final int maxBooleanClauseCount;
     private final int maxStoredDataQueueSize;
     private final LinkedBlockingQueue<String> errors = new LinkedBlockingQueue<>();
@@ -115,7 +115,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                              final ExtractionTaskExecutor extractionTaskExecutor,
                              final ExtractionConfig extractionConfig,
                              final MetaService metaService,
-                             final Security security,
+                             final SecurityContext securityContext,
                              final SearchConfig searchConfig,
                              final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,
                              final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
@@ -129,7 +129,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         this.extractionTaskExecutor = extractionTaskExecutor;
         this.extractionConfig = extractionConfig;
         this.metaService = metaService;
-        this.security = security;
+        this.securityContext = securityContext;
         this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
         this.maxStoredDataQueueSize = searchConfig.getMaxStoredDataQueueSize();
         this.indexShardSearchTaskHandlerProvider = indexShardSearchTaskHandlerProvider;
@@ -139,7 +139,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
     @Override
     public void exec(final ClusterSearchTask task, final TaskCallback<NodeResult> callback) {
-        security.useAsRead(() -> {
+        securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
                 taskContext.info("Initialising...");
 
@@ -337,7 +337,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                     // Create an object to make event lists from raw index data.
                     final StreamMapCreator streamMapCreator = new StreamMapCreator(task.getStoredFields(), this,
-                            metaService, security);
+                            metaService, securityContext);
 
                     // Make a task producer that will create event data extraction tasks when requested by the executor.
                     final Executor extractionExecutor = executorProvider.getExecutor(ExtractionTaskProducer.THREAD_POOL);

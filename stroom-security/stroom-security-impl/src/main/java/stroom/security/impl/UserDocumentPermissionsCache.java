@@ -41,14 +41,14 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
     private final AuthorisationConfig authorisationConfig;
 
     private final CacheManager cacheManager;
-    private final DocumentPermissionService documentPermissionService;
+    private final DocumentPermissionServiceImpl documentPermissionService;
 
     private volatile Integer lastMaximumSize;
     private volatile LoadingCache<String, UserDocumentPermissions> cache;
 
     @Inject
     public UserDocumentPermissionsCache(final CacheManager cacheManager,
-                                        final DocumentPermissionService documentPermissionService,
+                                        final DocumentPermissionServiceImpl documentPermissionService,
                                         final AuthorisationConfig authorisationConfig) {
         this.cacheManager = cacheManager;
         this.documentPermissionService = documentPermissionService;

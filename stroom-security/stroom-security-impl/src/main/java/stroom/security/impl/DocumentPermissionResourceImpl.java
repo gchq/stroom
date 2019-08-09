@@ -7,11 +7,11 @@ import javax.ws.rs.core.Response;
 import java.util.Set;
 
 public class DocumentPermissionResourceImpl implements DocumentPermissionResource {
-    private final DocumentPermissionService documentPermissionService;
+    private final DocumentPermissionServiceImpl documentPermissionService;
     private final DocumentTypePermissions documentTypePermissions;
 
     @Inject
-    public DocumentPermissionResourceImpl(final DocumentPermissionService documentPermissionService,
+    public DocumentPermissionResourceImpl(final DocumentPermissionServiceImpl documentPermissionService,
                                           final DocumentTypePermissions documentTypePermissions) {
         this.documentPermissionService = documentPermissionService;
         this.documentTypePermissions = documentTypePermissions;

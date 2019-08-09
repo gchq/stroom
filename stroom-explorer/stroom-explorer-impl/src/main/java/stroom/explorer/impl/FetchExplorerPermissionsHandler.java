@@ -25,7 +25,6 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerPermissions;
 import stroom.explorer.shared.FetchExplorerPermissionsAction;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.task.api.AbstractTaskHandler;
@@ -43,20 +42,17 @@ class FetchExplorerPermissionsHandler
         extends AbstractTaskHandler<FetchExplorerPermissionsAction, SharedMap<ExplorerNode, ExplorerPermissions>> {
     private final ExplorerService explorerService;
     private final SecurityContext securityContext;
-    private final Security security;
 
     @Inject
     FetchExplorerPermissionsHandler(final ExplorerService explorerService,
-                                    final SecurityContext securityContext,
-                                    final Security security) {
+                                    final SecurityContext securityContext) {
         this.explorerService = explorerService;
         this.securityContext = securityContext;
-        this.security = security;
     }
 
     @Override
     public SharedMap<ExplorerNode, ExplorerPermissions> exec(final FetchExplorerPermissionsAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             final List<ExplorerNode> explorerNodeList = action.getExplorerNodeList();
             final Map<ExplorerNode, ExplorerPermissions> resultMap = new HashMap<>();
 

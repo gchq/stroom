@@ -16,7 +16,7 @@
 
 package stroom.security.impl;
 
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.FetchUserAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
@@ -33,18 +33,18 @@ import java.util.stream.Collectors;
 class FetchUserHandler
         extends AbstractTaskHandler<FetchUserAction, ResultList<User>> {
     private final UserService userService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchUserHandler(final UserService userService,
-                     final Security security) {
+                     final SecurityContext securityContext) {
         this.userService = userService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ResultList<User> exec(final FetchUserAction action) {
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             final FindUserCriteria findUserCriteria = action.getCriteria();
             findUserCriteria.setSort(FindUserCriteria.FIELD_NAME);
             if (findUserCriteria.getRelatedUser() != null) {

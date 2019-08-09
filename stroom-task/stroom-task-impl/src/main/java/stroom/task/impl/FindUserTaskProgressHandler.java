@@ -17,7 +17,7 @@
 package stroom.task.impl;
 
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindUserTaskProgressAction;
 import stroom.task.shared.TaskProgress;
@@ -30,20 +30,20 @@ import javax.inject.Inject;
 class FindUserTaskProgressHandler
         extends FindTaskProgressHandlerBase<FindUserTaskProgressAction, BaseResultList<TaskProgress>> {
     private final SessionIdProvider sessionIdProvider;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FindUserTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper,
                                 final SessionIdProvider sessionIdProvider,
-                                final Security security) {
+                                final SecurityContext securityContext) {
         super(dispatchHelper);
         this.sessionIdProvider = sessionIdProvider;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public BaseResultList<TaskProgress> exec(final FindUserTaskProgressAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
             criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
             criteria.setSessionId(sessionIdProvider.get());

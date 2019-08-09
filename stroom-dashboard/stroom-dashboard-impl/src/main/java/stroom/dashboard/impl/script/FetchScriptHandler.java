@@ -20,7 +20,7 @@ package stroom.dashboard.impl.script;
 import stroom.docref.DocRef;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.ScriptDoc;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.SharedList;
 
@@ -33,20 +33,20 @@ import java.util.Set;
 
 class FetchScriptHandler extends AbstractTaskHandler<FetchScriptAction, SharedList<ScriptDoc>> {
     private final ScriptStore scriptStore;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchScriptHandler(final ScriptStore scriptStore,
-                       final Security security) {
+                       final SecurityContext securityContext) {
         this.scriptStore = scriptStore;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public SharedList<ScriptDoc> exec(final FetchScriptAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
-            return security.useAsReadResult(() -> {
+            return securityContext.useAsReadResult(() -> {
                 final List<ScriptDoc> scripts = new ArrayList<>();
 
                 Set<DocRef> uiLoadedScripts = action.getLoadedScripts();

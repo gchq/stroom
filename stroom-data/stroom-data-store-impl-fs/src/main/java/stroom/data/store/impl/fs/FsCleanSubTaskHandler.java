@@ -18,9 +18,9 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.data.store.impl.DataStoreMaintenanceService;
-import stroom.security.api.Security;
+import stroom.data.store.impl.ScanVolumePathResult;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskContext;
@@ -38,20 +38,20 @@ class FsCleanSubTaskHandler extends AbstractTaskHandler<FsCleanSubTask, VoidResu
 
     private final DataStoreMaintenanceService streamMaintenanceService;
     private final TaskContext taskContext;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FsCleanSubTaskHandler(final DataStoreMaintenanceService streamMaintenanceService,
                           final TaskContext taskContext,
-                          final Security security) {
+                          final SecurityContext securityContext) {
         this.streamMaintenanceService = streamMaintenanceService;
         this.taskContext = taskContext;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final FsCleanSubTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             taskContext.info("Cleaning: {} - {}", task.getVolume().getPath(), task.getPath());
 
             if (Thread.currentThread().isInterrupted()) {

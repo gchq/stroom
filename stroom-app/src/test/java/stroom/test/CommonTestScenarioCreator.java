@@ -18,6 +18,7 @@
 package stroom.test;
 
 
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
@@ -40,7 +41,6 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.data.shared.StreamTypeNames;
 
 import javax.inject.Inject;
 import java.io.IOException;

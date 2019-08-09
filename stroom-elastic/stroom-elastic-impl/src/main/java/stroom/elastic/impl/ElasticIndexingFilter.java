@@ -15,7 +15,7 @@ import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -49,7 +49,7 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
     private final ElasticIndexConfigCache elasticIndexCache;
 
     private final ElasticIndexWriterFactory elasticProducerFactory;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     private ElasticIndexWriter elasticProducer = null;
     private ElasticIndexConfigDoc indexConfig = null;
@@ -59,14 +59,14 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
     @Inject
     public ElasticIndexingFilter(final LocationFactoryProxy locationFactory,
                                  final ElasticIndexConfigCache elasticIndexCache,
-                                 final Security security,
+                                 final SecurityContext securityContext,
                                  final ErrorReceiverProxy errorReceiverProxy,
                                  final ElasticIndexWriterFactory elasticProducerFactory) {
         this.locationFactory = locationFactory;
         this.elasticIndexCache = elasticIndexCache;
         this.errorReceiverProxy = errorReceiverProxy;
         this.elasticProducerFactory = elasticProducerFactory;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @PipelineProperty(description = "The field name to use as the unique ID for records.", displayPriority = 2)
@@ -102,7 +102,7 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
                 throw new LoggedException("Index has not been set");
             }
 
-            security.asProcessingUser(() -> {
+            securityContext.asProcessingUser(() -> {
                 // Get the index and index fields from the cache.
                 indexConfig = elasticIndexCache.get(indexRef);
                 if (indexConfig == null) {

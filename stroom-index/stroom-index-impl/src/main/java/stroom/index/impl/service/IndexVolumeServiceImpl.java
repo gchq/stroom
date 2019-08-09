@@ -1,13 +1,10 @@
 package stroom.index.impl.service;
 
-import com.google.common.base.Strings;
 import stroom.index.impl.CreateVolumeDTO;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.UpdateVolumeDTO;
 import stroom.index.shared.IndexVolume;
-import stroom.index.shared.IndexVolumeGroup;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
@@ -21,15 +18,12 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 
 public class IndexVolumeServiceImpl implements IndexVolumeService {
     private final IndexVolumeDao indexVolumeDao;
-    private final Security security;
     private final SecurityContext securityContext;
 
     @Inject
     IndexVolumeServiceImpl(final IndexVolumeDao indexVolumeDao,
-                           final Security security,
                            final SecurityContext securityContext) {
         this.indexVolumeDao = indexVolumeDao;
-        this.security = security;
         this.securityContext = securityContext;
     }
 
@@ -46,23 +40,23 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
         indexVolume.setPath(isNullOrEmpty(createVolumeDTO.getPath()) ? null : createVolumeDTO.getPath());
         indexVolume.setIndexVolumeGroupId(createVolumeDTO.getIndexVolumeGroupId());
 
-        return security.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeDao.create(indexVolume));
     }
 
     @Override
     public IndexVolume getById(final int id) {
-        return security.secureResult(() -> indexVolumeDao.fetch(id).orElse(null));
+        return securityContext.secureResult(() -> indexVolumeDao.fetch(id).orElse(null));
     }
 
     @Override
     public List<IndexVolume> getAll() {
-        return security.secureResult(indexVolumeDao::getAll);
+        return securityContext.secureResult(indexVolumeDao::getAll);
     }
 
     @Override
     public IndexVolume update(UpdateVolumeDTO updateVolumeDTO) {
-        final var indexVolume = security.secureResult(() -> indexVolumeDao.fetch(updateVolumeDTO.getId()).orElse(null));
+        final var indexVolume = securityContext.secureResult(() -> indexVolumeDao.fetch(updateVolumeDTO.getId()).orElse(null));
 
         // Map from DTO to entity
         indexVolume.setIndexVolumeGroupId(updateVolumeDTO.getIndexVolumeGroupId());
@@ -70,37 +64,37 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
         indexVolume.setNodeName(updateVolumeDTO.getNodeName());
 
         AuditUtil.stamp(securityContext.getUserId(), indexVolume);
-        return security.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeDao.update(indexVolume));
     }
 
 //    @Override
 //    public List<IndexVolume> getVolumesInGroup(final String groupName) {
-//        return security.secureResult(() -> indexVolumeDao.getVolumesInGroup(groupName));
+//        return securityContext.secureResult(() -> indexVolumeDao.getVolumesInGroup(groupName));
 //    }
 
 //    @Override
 //    public List<IndexVolumeGroup> getGroupsForVolume(final int id) {
-//        return security.secureResult(() -> indexVolumeDao.getGroupsForVolume(id));
+//        return securityContext.secureResult(() -> indexVolumeDao.getGroupsForVolume(id));
 //    }
 
 //    @Override
 //    public void addVolumeToGroup(final int volumeId,
 //                                 final String name) {
-//        security.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+//        securityContext.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
 //                () -> indexVolumeDao.addVolumeToGroup(volumeId, name));
 //    }
 //
 //    @Override
 //    public void removeVolumeFromGroup(final int volumeId,
 //                                      final String name) {
-//        security.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+//        securityContext.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
 //                () -> indexVolumeDao.removeVolumeFromGroup(volumeId, name));
 //    }
 
     @Override
     public void delete(final int id) {
-        security.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        securityContext.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeDao.delete(id));
     }
 

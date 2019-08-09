@@ -23,11 +23,11 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
+import stroom.security.api.UserTokenUtil;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.shared.User;
 import stroom.security.shared.UserToken;
-import stroom.security.api.UserTokenUtil;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.StreamUtil;
 
@@ -67,7 +67,7 @@ class SecurityFilter implements Filter {
     private final JWTService jwtService;
     private final AuthenticationServiceClients authenticationServiceClients;
     private final AuthenticationService authenticationService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     private Pattern pattern = null;
 
@@ -78,13 +78,13 @@ class SecurityFilter implements Filter {
             final JWTService jwtService,
             final AuthenticationServiceClients authenticationServiceClients,
             final AuthenticationService authenticationService,
-            final Security security) {
+            final SecurityContext securityContext) {
         this.config = config;
         this.uiConfig = uiConfig;
         this.jwtService = jwtService;
         this.authenticationServiceClients = authenticationServiceClients;
         this.authenticationService = authenticationService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -197,7 +197,7 @@ class SecurityFilter implements Filter {
 
     private void bypassAuthentication(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain, final boolean useSession) throws IOException, ServletException {
         final AuthenticationToken token = new AuthenticationToken("admin", null);
-        final User userRef = security.asProcessingUserResult(() -> authenticationService.getUser(token));
+        final User userRef = securityContext.asProcessingUserResult(() -> authenticationService.getUser(token));
         if (userRef != null) {
             HttpSession session;
             if (useSession) {
@@ -260,7 +260,7 @@ class SecurityFilter implements Filter {
                 if (accessCode != null) {
                     LOGGER.debug("We have the following access code: {{}}", accessCode);
                     final AuthenticationToken token = createUIToken(request, state, accessCode);
-                    final User userRef = security.asProcessingUserResult(() -> authenticationService.getUser(token));
+                    final User userRef = securityContext.asProcessingUserResult(() -> authenticationService.getUser(token));
 
                     if (userRef != null) {
                         // Set the user ref in the session.
@@ -395,7 +395,7 @@ class SecurityFilter implements Filter {
         boolean isAuthenticatedApiRequest = jwtService.containsValidJws(request);
         if (isAuthenticatedApiRequest) {
             final AuthenticationToken token = createAPIToken(request);
-            userRef = security.asProcessingUserResult(() -> authenticationService.getUser(token));
+            userRef = securityContext.asProcessingUserResult(() -> authenticationService.getUser(token));
         }
 
         if (userRef == null) {

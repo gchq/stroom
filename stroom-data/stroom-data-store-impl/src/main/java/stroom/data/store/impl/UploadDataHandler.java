@@ -16,12 +16,12 @@
 
 package stroom.data.store.impl;
 
-import stroom.resource.api.ResourceStore;
-import stroom.security.api.Security;
-import stroom.security.shared.PermissionNames;
 import stroom.data.shared.UploadDataAction;
-import stroom.task.api.TaskManager;
+import stroom.resource.api.ResourceStore;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskManager;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
@@ -31,20 +31,20 @@ import java.nio.file.Path;
 class UploadDataHandler extends AbstractTaskHandler<UploadDataAction, ResourceKey> {
     private final ResourceStore resourceStore;
     private final TaskManager taskManager;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     UploadDataHandler(final ResourceStore resourceStore,
                       final TaskManager taskManager,
-                      final Security security) {
+                      final SecurityContext securityContext) {
         this.resourceStore = resourceStore;
         this.taskManager = taskManager;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ResourceKey exec(final UploadDataAction action) {
-        return security.secureResult(PermissionNames.IMPORT_DATA_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.IMPORT_DATA_PERMISSION, () -> {
             try {
                 // Import file.
                 final Path file = resourceStore.getTempFile(action.getKey());

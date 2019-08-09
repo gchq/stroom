@@ -18,9 +18,9 @@ package stroom.core.entity.cluster;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.Clearable;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.shared.Clearable;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -32,18 +32,18 @@ class ClearServiceClusterHandler extends AbstractTaskHandler<ClearServiceCluster
     private static final Logger LOGGER = LoggerFactory.getLogger(ClearServiceClusterHandler.class);
 
     private final Set<Clearable> clearables;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     ClearServiceClusterHandler(final Set<Clearable> clearables,
-                               final Security security) {
+                               final SecurityContext securityContext) {
         this.clearables = clearables;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final ClearServiceClusterTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             if (task == null) {
                 throw new RuntimeException("No task supplied");
             }

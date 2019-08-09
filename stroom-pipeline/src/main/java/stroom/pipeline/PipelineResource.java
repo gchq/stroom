@@ -6,14 +6,14 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.pipeline.factory.PipelineDataValidator;
 import stroom.pipeline.factory.PipelineStackLoader;
-import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.SourcePipeline;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.util.RestResource;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -38,7 +38,7 @@ public class PipelineResource implements RestResource {
     private final PipelineStore pipelineStore;
     private final PipelineStackLoader pipelineStackLoader;
     private final PipelineDataValidator pipelineDataValidator;
-    private final Security security;
+    private final SecurityContext securityContext;
     private final PipelineScopeRunnable pipelineScopeRunnable;
 
     private static class PipelineDTO extends DocRef {
@@ -83,12 +83,12 @@ public class PipelineResource implements RestResource {
     public PipelineResource(final PipelineStore pipelineStore,
                             final PipelineStackLoader pipelineStackLoader,
                             final PipelineDataValidator pipelineDataValidator,
-                            final Security security,
+                            final SecurityContext securityContext,
                             final PipelineScopeRunnable pipelineScopeRunnable) {
         this.pipelineStore = pipelineStore;
         this.pipelineStackLoader = pipelineStackLoader;
         this.pipelineDataValidator = pipelineDataValidator;
-        this.security = security;
+        this.securityContext = securityContext;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
     }
 
@@ -105,7 +105,7 @@ public class PipelineResource implements RestResource {
     public Response search(@QueryParam("offset") Integer offset,
                            @QueryParam("pageSize") Integer pageSize,
                            @QueryParam("filter") String filter) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             // Validate pagination params
             if ((pageSize != null && offset == null) || (pageSize == null && offset != null)) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("A pagination request requires both a pageSize and an offset").build();
@@ -148,9 +148,9 @@ public class PipelineResource implements RestResource {
     @Path("/{pipelineId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response fetch(@PathParam("pipelineId") final String pipelineId) {
-        return security.secureResult(() -> pipelineScopeRunnable.scopeResult(() -> {
+        return securityContext.secureResult(() -> pipelineScopeRunnable.scopeResult(() -> {
             // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
-            return security.useAsReadResult(() -> fetchInScope(pipelineId));
+            return securityContext.useAsReadResult(() -> fetchInScope(pipelineId));
         }));
     }
 
@@ -209,7 +209,7 @@ public class PipelineResource implements RestResource {
                          final PipelineDTO pipelineDocUpdates) {
         pipelineScopeRunnable.scopeRunnable(() -> {
             // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
-            security.useAsRead(() -> {
+            securityContext.useAsRead(() -> {
                 final PipelineDoc pipelineDoc = pipelineStore.readDocument(getDocRef(pipelineId));
 
                 if (pipelineDoc != null) {

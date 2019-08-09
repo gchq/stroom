@@ -18,9 +18,9 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriterCache;
-import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
 import stroom.processor.impl.ProcessorTaskManager;

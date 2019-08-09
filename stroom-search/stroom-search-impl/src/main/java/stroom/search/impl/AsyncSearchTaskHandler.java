@@ -19,20 +19,6 @@ package stroom.search.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.index.shared.IndexField;
-import stroom.util.shared.Sort.Direction;
-import stroom.index.impl.IndexStore;
-import stroom.index.impl.IndexShardService;
-import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.query.api.v2.Query;
-import stroom.security.api.Security;
-import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.GenericServerTask;
-import stroom.task.api.TaskContext;
-import stroom.task.api.TaskManager;
 import stroom.cluster.task.api.ClusterDispatchAsync;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.NodeNotFoundException;
@@ -40,7 +26,21 @@ import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.cluster.task.api.TargetType;
 import stroom.cluster.task.api.TerminateTaskClusterTask;
+import stroom.index.impl.IndexShardService;
+import stroom.index.impl.IndexStore;
+import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.query.api.v2.Query;
+import stroom.security.api.SecurityContext;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.GenericServerTask;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
+import stroom.util.shared.Sort.Direction;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -65,7 +65,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
     private final IndexStore indexStore;
     private final IndexShardService indexShardService;
     private final TaskManager taskManager;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     AsyncSearchTaskHandler(final TaskContext taskContext,
@@ -75,7 +75,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                            final IndexStore indexStore,
                            final IndexShardService indexShardService,
                            final TaskManager taskManager,
-                           final Security security) {
+                           final SecurityContext securityContext) {
         this.taskContext = taskContext;
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.dispatchAsyncProvider = dispatchAsyncProvider;
@@ -83,12 +83,12 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.taskManager = taskManager;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final AsyncSearchTask task) {
-        return security.secureResult(() -> security.useAsReadResult(() -> {
+        return securityContext.secureResult(() -> securityContext.useAsReadResult(() -> {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
             if (!Thread.currentThread().isInterrupted()) {

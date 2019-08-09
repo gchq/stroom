@@ -18,21 +18,9 @@ package stroom.security.api;
 
 import stroom.security.shared.UserToken;
 
+import java.util.function.Supplier;
+
 public interface SecurityContext {
-    /**
-     * Temporarily set a different user to perform an action.
-     *
-     * @param token The user token to push.
-     */
-    void pushUser(UserToken token);
-
-    /**
-     * Remove a temporary user from the stack.
-     *
-     * @return The removed user.
-     */
-    void popUser();
-
     /**
      * Get the id of the user associated with this security context.
      *
@@ -69,16 +57,6 @@ public interface SecurityContext {
     boolean isAdmin();
 
     /**
-     * Temporarily elevate a users permissions so that documents can be read that they have 'use' permission on.
-     */
-    void elevatePermissions();
-
-    /**
-     * Restore permissions to their pre-elevated state.
-     */
-    void restorePermissions();
-
-    /**
      * Check if the user associated with this security context has the requested
      * permission to use the specified functionality.
      *
@@ -101,7 +79,27 @@ public interface SecurityContext {
      */
     boolean hasDocumentPermission(String documentType, String documentUuid, String permission);
 
-    void clearDocumentPermissions(String documentType, String documentUuid);
+    <T> T asUserResult(UserToken userToken, Supplier<T> supplier);
 
-    void addDocumentPermissions(String sourceType, String sourceUuid, String documentType, String documentUuid, boolean owner);
+    void asUser(UserToken userToken, Runnable runnable);
+
+    <T> T asProcessingUserResult(Supplier<T> supplier);
+
+    void asProcessingUser(Runnable runnable);
+
+    <T> T useAsReadResult(Supplier<T> supplier);
+
+    void useAsRead(Runnable runnable);
+
+    void secure(String permission, Runnable runnable);
+
+    <T> T secureResult(String permission, Supplier<T> supplier);
+
+    void secure(Runnable runnable);
+
+    <T> T secureResult(Supplier<T> supplier);
+
+    void insecure(Runnable runnable);
+
+    <T> T insecureResult(Supplier<T> supplier);
 }

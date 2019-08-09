@@ -25,7 +25,7 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.test.common.util.test.StroomTest;
 import stroom.test.common.util.test.TempDir;
 import stroom.test.common.util.test.TempDirExtension;
@@ -52,7 +52,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
     @Inject
     private ContentImportService contentImportService;
     @Inject
-    private Security security;
+    private SecurityContext securityContext;
 
     @BeforeAll
     public static void beforeClass() {
@@ -80,7 +80,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
      */
     @BeforeEach
     void before(final TestInfo testInfo, @TempDir final Path tempDir) {
-        security.asProcessingUser(() -> {
+        securityContext.asProcessingUser(() -> {
             LOGGER.info(String.format("Started test: %s::%s", testInfo.getTestClass().get().getName(), testInfo.getDisplayName()));
 
             final State state = TestState.getState();

@@ -20,7 +20,7 @@ package stroom.explorer.impl;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.ExplorerServiceDeleteAction;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
@@ -28,17 +28,17 @@ import javax.inject.Inject;
 
 class ExplorerServiceDeleteHandler extends AbstractTaskHandler<ExplorerServiceDeleteAction, BulkActionResult> {
     private final ExplorerService explorerService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     ExplorerServiceDeleteHandler(final ExplorerService explorerService,
-                                 final Security security) {
+                                 final SecurityContext securityContext) {
         this.explorerService = explorerService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public BulkActionResult exec(final ExplorerServiceDeleteAction action) {
-        return security.secureResult(() -> explorerService.delete(action.getDocRefs()));
+        return securityContext.secureResult(() -> explorerService.delete(action.getDocRefs()));
     }
 }

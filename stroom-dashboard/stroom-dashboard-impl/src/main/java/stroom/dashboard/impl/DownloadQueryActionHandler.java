@@ -22,7 +22,7 @@ import stroom.dashboard.shared.DownloadQueryAction;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.query.api.v2.ResultRequest;
 import stroom.resource.api.ResourceStore;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.json.JsonUtil;
@@ -45,20 +45,20 @@ class DownloadQueryActionHandler extends AbstractTaskHandler<DownloadQueryAction
 
     private final SearchRequestMapper searchRequestMapper;
     private final ResourceStore resourceStore;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     DownloadQueryActionHandler(final SearchRequestMapper searchRequestMapper,
                                final ResourceStore resourceStore,
-                               final Security security) {
+                               final SecurityContext securityContext) {
         this.searchRequestMapper = searchRequestMapper;
         this.resourceStore = resourceStore;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ResourceGeneration exec(final DownloadQueryAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             try {
                 if (action.getSearchRequest() == null) {
                     throw new EntityServiceException("Query is empty");

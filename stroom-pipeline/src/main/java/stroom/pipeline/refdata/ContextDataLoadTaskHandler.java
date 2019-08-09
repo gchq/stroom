@@ -19,9 +19,8 @@ package stroom.pipeline.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.shared.StreamTypeNames;
 import stroom.feed.api.FeedProperties;
-import stroom.util.io.BasicStreamCloser;
-import stroom.util.io.StreamCloser;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
@@ -37,9 +36,10 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.security.api.Security;
-import stroom.data.shared.StreamTypeNames;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.io.BasicStreamCloser;
+import stroom.util.io.StreamCloser;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 
@@ -60,7 +60,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
     private final PipelineStore pipelineStore;
     private final MetaHolder metaHolder;
     private final PipelineDataCache pipelineDataCache;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     private ErrorReceiverIdDecorator errorReceiver;
 
@@ -74,7 +74,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                                final PipelineStore pipelineStore,
                                final MetaHolder metaHolder,
                                final PipelineDataCache pipelineDataCache,
-                               final Security security) {
+                               final SecurityContext securityContext) {
         this.pipelineFactory = pipelineFactory;
         this.refDataLoaderHolder = refDataLoaderHolder;
         this.feedHolder = feedHolder;
@@ -84,12 +84,12 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
         this.pipelineStore = pipelineStore;
         this.metaHolder = metaHolder;
         this.pipelineDataCache = pipelineDataCache;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final ContextDataLoadTask task) {
-        security.secure(() -> {
+        securityContext.secure(() -> {
             final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
             errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
             errorReceiverProxy.setErrorReceiver(errorReceiver);

@@ -22,7 +22,7 @@ import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.searchable.api.Searchable;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.util.date.DateUtil;
@@ -55,7 +55,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private final MetaTypeDao metaTypeDao;
     private final MetaValueDao metaValueDao;
     private final MetaSecurityFilter metaSecurityFilter;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     MetaServiceImpl(final MetaDao metaDao,
@@ -63,13 +63,13 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     final MetaTypeDao metaTypeDao,
                     final MetaValueDao metaValueDao,
                     final MetaSecurityFilter metaSecurityFilter,
-                    final Security security) {
+                    final SecurityContext securityContext) {
         this.metaDao = metaDao;
         this.metaFeedDao = metaFeedDao;
         this.metaTypeDao = metaTypeDao;
         this.metaValueDao = metaValueDao;
         this.metaSecurityFilter = metaSecurityFilter;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -156,12 +156,12 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public int delete(final long id) {
-        return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDelete(id, true));
+        return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDelete(id, true));
     }
 
     @Override
     public int delete(final long id, final boolean lockCheck) {
-        return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDelete(id, lockCheck));
+        return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDelete(id, lockCheck));
     }
 
     private int doLogicalDelete(final long id, final boolean lockCheck) {
@@ -399,7 +399,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public BaseResultList<MetaRow> findRows(final FindMetaCriteria criteria) {
-        return security.useAsReadResult(() -> {
+        return securityContext.useAsReadResult(() -> {
             // Cache Call
 
 
@@ -414,7 +414,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
             if (list.size() > 0) {
 //                // We need to decorate data with retention rules as a processing user.
-//                final List<StreamDataRow> result = security.asProcessingUserResult(() -> {
+//                final List<StreamDataRow> result = securityContext.asProcessingUserResult(() -> {
 //                    // Create a data retention rule decorator for adding data retention information to returned data attribute maps.
 //                    List<DataRetentionRule> rules = Collections.emptyList();
 //

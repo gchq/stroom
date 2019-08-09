@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.node.api.NodeInfo;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.UserToken;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskCallbackAdaptor;
@@ -64,7 +64,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
 
     private final TaskHandlerRegistry taskHandlerRegistry;
     private final NodeInfo nodeInfo;
-    private final Security security;
+    private final SecurityContext securityContext;
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final AtomicInteger currentAsyncTaskCount = new AtomicInteger();
     private final Map<TaskId, TaskThread> currentTasks = new ConcurrentHashMap<>(1024, 0.75F, 1024);
@@ -76,11 +76,11 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
     @Inject
     TaskManagerImpl(final TaskHandlerRegistry taskHandlerRegistry,
                     final NodeInfo nodeInfo,
-                    final Security security,
+                    final SecurityContext securityContext,
                     final PipelineScopeRunnable pipelineScopeRunnable) {
         this.taskHandlerRegistry = taskHandlerRegistry;
         this.nodeInfo = nodeInfo;
-        this.security = security;
+        this.securityContext = securityContext;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
 
         // When we are running unit tests we need to make sure that all Stroom
@@ -358,7 +358,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 throw new TaskTerminatedException(stop.get());
             }
 
-            security.asUser(userToken, () -> {
+            securityContext.asUser(userToken, () -> {
                 CurrentTaskState.pushState(taskThread);
                 try {
                     // Get the task handler that will deal with this task.

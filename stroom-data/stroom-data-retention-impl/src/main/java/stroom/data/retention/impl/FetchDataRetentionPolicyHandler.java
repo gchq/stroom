@@ -19,7 +19,7 @@ package stroom.data.retention.impl;
 
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FetchDataRetentionRulesAction;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
@@ -27,17 +27,17 @@ import javax.inject.Inject;
 
 class FetchDataRetentionPolicyHandler extends AbstractTaskHandler<FetchDataRetentionRulesAction, DataRetentionRules> {
     private final DataRetentionRulesService dataRetentionRulesService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchDataRetentionPolicyHandler(final DataRetentionRulesService dataRetentionRulesService,
-                                    final Security security) {
+                                    final SecurityContext securityContext) {
         this.dataRetentionRulesService = dataRetentionRulesService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public DataRetentionRules exec(final FetchDataRetentionRulesAction task) {
-        return security.secureResult(() -> dataRetentionRulesService.readDocument(task.getDocRef()));
+        return securityContext.secureResult(() -> dataRetentionRulesService.readDocument(task.getDocRef()));
     }
 }

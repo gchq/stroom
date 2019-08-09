@@ -3,7 +3,7 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.UpdateFsVolumeAction;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
@@ -11,20 +11,20 @@ import javax.inject.Inject;
 class UpdateFsVolumeHandler extends AbstractTaskHandler<UpdateFsVolumeAction, FsVolume> {
     private final FsVolumeService volumeService;
     private final DocumentEventLog documentEventLog;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     UpdateFsVolumeHandler(final FsVolumeService volumeService,
                           final DocumentEventLog documentEventLog,
-                          final Security security) {
+                          final SecurityContext securityContext) {
         this.volumeService = volumeService;
         this.documentEventLog = documentEventLog;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public FsVolume exec(final UpdateFsVolumeAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             FsVolume result = null;
 
             final FsVolume volume = action.getVolume();

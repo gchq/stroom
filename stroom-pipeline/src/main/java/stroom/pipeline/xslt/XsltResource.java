@@ -3,7 +3,7 @@ package stroom.pipeline.xslt;
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.util.RestResource;
 
 import javax.inject.Inject;
@@ -21,12 +21,12 @@ import javax.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 public class XsltResource implements RestResource {
     private final XsltStore xsltStore;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
-    public XsltResource(final XsltStore xsltStore, final Security security) {
+    public XsltResource(final XsltStore xsltStore, final SecurityContext securityContext) {
         this.xsltStore = xsltStore;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     private DocRef getDocRef(final String xsltId) {
@@ -70,7 +70,7 @@ public class XsltResource implements RestResource {
     @GET
     @Path("/{xsltId}")
     public Response fetch(@PathParam("xsltId") final String xsltId) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
             if (null != xsltDoc) {
                 return Response.ok(new XsltDTO(xsltDoc)).build();
@@ -86,7 +86,7 @@ public class XsltResource implements RestResource {
     public Response save(@PathParam("xsltId") final String xsltId,
                          final XsltDTO xsltDto) {
         // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
-        security.useAsRead(() -> {
+        securityContext.useAsRead(() -> {
             final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
 
             if (xsltDoc != null) {

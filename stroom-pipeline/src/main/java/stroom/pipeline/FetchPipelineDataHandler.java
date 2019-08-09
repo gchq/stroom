@@ -25,7 +25,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.SourcePipeline;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.SharedList;
 
@@ -38,26 +38,26 @@ class FetchPipelineDataHandler extends AbstractTaskHandler<FetchPipelineDataActi
     private final PipelineStore pipelineStore;
     private final PipelineStackLoader pipelineStackLoader;
     private final PipelineDataValidator pipelineDataValidator;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchPipelineDataHandler(final PipelineStore pipelineStore,
                              final PipelineStackLoader pipelineStackLoader,
                              final PipelineDataValidator pipelineDataValidator,
-                             final Security security) {
+                             final SecurityContext securityContext) {
         this.pipelineStore = pipelineStore;
         this.pipelineStackLoader = pipelineStackLoader;
         this.pipelineDataValidator = pipelineDataValidator;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public SharedList<PipelineData> exec(final FetchPipelineDataAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(action.getPipeline());
 
             // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
-            return security.useAsReadResult(() -> {
+            return securityContext.useAsReadResult(() -> {
                 final List<PipelineDoc> pipelines = pipelineStackLoader.loadPipelineStack(pipelineDoc);
                 final SharedList<PipelineData> result = new SharedList<>(pipelines.size());
 

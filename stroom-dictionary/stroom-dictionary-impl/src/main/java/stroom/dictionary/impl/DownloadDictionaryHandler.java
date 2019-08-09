@@ -18,12 +18,12 @@ package stroom.dictionary.impl;
 
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DownloadDictionaryAction;
-import stroom.util.shared.EntityServiceException;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.resource.api.ResourceStore;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
@@ -39,22 +39,22 @@ class DownloadDictionaryHandler extends AbstractTaskHandler<DownloadDictionaryAc
     private final ResourceStore resourceStore;
     private final DocumentEventLog documentEventLog;
     private final DictionaryStore dictionaryStore;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     DownloadDictionaryHandler(final ResourceStore resourceStore,
                               final DocumentEventLog documentEventLog,
                               final DictionaryStore dictionaryStore,
-                              final Security security) {
+                              final SecurityContext securityContext) {
         this.resourceStore = resourceStore;
         this.documentEventLog = documentEventLog;
         this.dictionaryStore = dictionaryStore;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ResourceGeneration exec(final DownloadDictionaryAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             // Get dictionary.
             final DictionaryDoc dictionary = dictionaryStore.readDocument(action.getDictrionaryRef());
             if (dictionary == null) {

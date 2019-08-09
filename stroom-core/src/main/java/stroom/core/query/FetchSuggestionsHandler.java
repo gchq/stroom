@@ -17,13 +17,13 @@
 
 package stroom.core.query;
 
+import stroom.docref.DocRef;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
-import stroom.meta.shared.MetaFields;
-import stroom.docref.DocRef;
 import stroom.pipeline.PipelineStore;
 import stroom.query.shared.FetchSuggestionsAction;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedString;
@@ -37,20 +37,20 @@ import java.util.stream.Collectors;
 class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction, SharedList<SharedString>> {
     private final MetaService metaService;
     private final PipelineStore pipelineStore;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchSuggestionsHandler(final MetaService metaService,
                             final PipelineStore pipelineStore,
-                            final Security security) {
+                            final SecurityContext securityContext) {
         this.metaService = metaService;
         this.pipelineStore = pipelineStore;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public SharedList<SharedString> exec(final FetchSuggestionsAction task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             if (task.getDataSource() != null) {
                 if (MetaFields.STREAM_STORE_DOC_REF.equals(task.getDataSource())) {
                     if (task.getField().getName().equals(MetaFields.FEED_NAME)) {

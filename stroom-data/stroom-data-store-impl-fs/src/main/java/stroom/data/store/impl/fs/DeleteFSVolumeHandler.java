@@ -2,7 +2,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.DeleteFsVolumeAction;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 
@@ -11,20 +11,20 @@ import javax.inject.Inject;
 class DeleteFSVolumeHandler extends AbstractTaskHandler<DeleteFsVolumeAction, VoidResult> {
     private final FsVolumeService volumeService;
     private final DocumentEventLog documentEventLog;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     DeleteFSVolumeHandler(final FsVolumeService volumeService,
                                  final DocumentEventLog documentEventLog,
-                                 final Security security) {
+                                 final SecurityContext securityContext) {
         this.volumeService = volumeService;
         this.documentEventLog = documentEventLog;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final DeleteFsVolumeAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             try {
                 volumeService.delete(action.getVolume().getId());
                 documentEventLog.delete(action.getVolume(), null);

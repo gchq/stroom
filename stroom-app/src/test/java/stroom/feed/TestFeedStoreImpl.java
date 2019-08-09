@@ -18,10 +18,10 @@ package stroom.feed;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
-import stroom.data.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 

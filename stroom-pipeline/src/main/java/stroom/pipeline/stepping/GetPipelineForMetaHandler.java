@@ -27,7 +27,7 @@ import stroom.meta.shared.MetaService;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForMetaAction;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
@@ -37,20 +37,20 @@ import java.util.List;
 class GetPipelineForMetaHandler extends AbstractTaskHandler<GetPipelineForMetaAction, SharedDocRef> {
     private final MetaService metaService;
     private final PipelineStore pipelineStore;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     GetPipelineForMetaHandler(final MetaService metaService,
                               final PipelineStore pipelineStore,
-                              final Security security) {
+                              final SecurityContext securityContext) {
         this.metaService = metaService;
         this.pipelineStore = pipelineStore;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public SharedDocRef exec(final GetPipelineForMetaAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             DocRef docRef = null;
 
             // First try and get the pipeline from the selected child stream.
@@ -101,7 +101,7 @@ class GetPipelineForMetaHandler extends AbstractTaskHandler<GetPipelineForMetaAc
             return null;
         }
 
-        return security.asProcessingUserResult(() -> {
+        return securityContext.asProcessingUserResult(() -> {
             final FindMetaCriteria criteria = new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(id));
             final List<Meta> streamList = metaService.find(criteria);
             if (streamList != null && streamList.size() > 0) {
@@ -117,7 +117,7 @@ class GetPipelineForMetaHandler extends AbstractTaskHandler<GetPipelineForMetaAc
             return null;
         }
 
-        return security.asProcessingUserResult(() -> {
+        return securityContext.asProcessingUserResult(() -> {
             final FindMetaCriteria criteria = new FindMetaCriteria(MetaExpressionUtil.createParentIdExpression(id));
             return metaService.find(criteria).getFirst();
         });

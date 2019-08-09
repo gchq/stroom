@@ -24,7 +24,7 @@ import stroom.cluster.api.ClusterState;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.FindNodeCriteria;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -45,7 +45,7 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
     private final ClusterCallServiceRemoteImpl clusterCallServiceRemote;
     private final ExecutorProvider executorProvider;
     private final TaskContext taskContext;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     UpdateClusterStateTaskHandler(final NodeService nodeService,
@@ -53,18 +53,18 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
                                   final ClusterCallServiceRemoteImpl clusterCallServiceRemote,
                                   final ExecutorProvider executorProvider,
                                   final TaskContext taskContext,
-                                  final Security security) {
+                                  final SecurityContext securityContext) {
         this.nodeService = nodeService;
         this.nodeInfo = nodeInfo;
         this.clusterCallServiceRemote = clusterCallServiceRemote;
         this.executorProvider = executorProvider;
         this.taskContext = taskContext;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final UpdateClusterStateTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             try {
                 // We sometimes want to wait a bit before we try and establish the
                 // cluster state. This is often the case during startup when multiple

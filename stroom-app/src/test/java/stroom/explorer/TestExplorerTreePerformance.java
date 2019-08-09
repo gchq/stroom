@@ -25,10 +25,9 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserTokenUtil;
-import stroom.security.impl.DocumentPermissionService;
+import stroom.security.impl.DocumentPermissionServiceImpl;
 import stroom.security.impl.UserService;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.User;
@@ -79,15 +78,13 @@ public class TestExplorerTreePerformance extends StroomIntegrationTest {
     @Inject
     private UserService userService;
     @Inject
-    private DocumentPermissionService documentPermissionService;
+    private DocumentPermissionServiceImpl documentPermissionService;
     @Inject
     private SecurityContext securityContext;
-    @Inject
-    private Security security;
 
     @Test
     public void testLargeTreePerformance() {
-        security.asProcessingUser(() -> {
+        securityContext.asProcessingUser(() -> {
             final FindExplorerNodeCriteria findExplorerNodeCriteria = new FindExplorerNodeCriteria(
                     new HashSet<>(),
                     new HashSet<>(),
@@ -130,14 +127,14 @@ public class TestExplorerTreePerformance extends StroomIntegrationTest {
             documentPermissionService.addPermission(lastChild.get().getDocRef().getUuid(), userGroup.getUuid(), DocumentPermissionNames.READ);
 
             LOGGER.logDurationIfInfoEnabled(() -> {
-                security.asUser(UserTokenUtil.create(user.getName(), null), () -> {
+                securityContext.asUser(UserTokenUtil.create(user.getName(), null), () -> {
                     // See what we get back with a user with limited permissions.
                     expandTree(findExplorerNodeCriteria, 3);
                 });
             }, "Expand all as user with empty cache");
 
             LOGGER.logDurationIfInfoEnabled(() -> {
-                security.asUser(UserTokenUtil.create(user.getName(), null), () -> {
+                securityContext.asUser(UserTokenUtil.create(user.getName(), null), () -> {
                     // See what we get back with a user with limited permissions.
                     expandTree(findExplorerNodeCriteria, 3);
                 });

@@ -19,7 +19,7 @@ package stroom.cache.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 
@@ -30,19 +30,19 @@ class CacheClearClusterHandler extends AbstractTaskHandler<CacheClearClusterTask
     private static final Logger LOGGER = LoggerFactory.getLogger(CacheClearClusterHandler.class);
 
     private final CacheManagerService stroomCacheManager;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     CacheClearClusterHandler(final CacheManagerService stroomCacheManager,
-                             final Security security) {
+                             final SecurityContext securityContext) {
         this.stroomCacheManager = stroomCacheManager;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @SuppressWarnings({"rawtypes"})
     @Override
     public VoidResult exec(final CacheClearClusterTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             try {
                 if (task == null) {
                     throw new RuntimeException("No task supplied");

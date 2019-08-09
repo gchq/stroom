@@ -20,12 +20,11 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
-import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
-import stroom.util.shared.Clearable;
-import stroom.security.api.Security;
-import stroom.security.api.SecurityContext;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
+import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
+import stroom.security.api.SecurityContext;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -41,11 +40,10 @@ class ActiveQueriesManager implements Clearable {
     @SuppressWarnings("unchecked")
     ActiveQueriesManager(final CacheManager cacheManager,
                          final DataSourceProviderRegistry dataSourceProviderRegistry,
-                         final SecurityContext securityContext,
-                         final Security security) {
+                         final SecurityContext securityContext) {
         final RemovalListener<String, ActiveQueries> removalListener = notification -> notification.getValue().destroy();
 
-        final CacheLoader<String, ActiveQueries> cacheLoader = CacheLoader.from(k -> new ActiveQueries(dataSourceProviderRegistry, securityContext, security));
+        final CacheLoader<String, ActiveQueries> cacheLoader = CacheLoader.from(k -> new ActiveQueries(dataSourceProviderRegistry, securityContext));
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_ACTIVE_QUERIES)
                 .expireAfterAccess(1, TimeUnit.MINUTES)

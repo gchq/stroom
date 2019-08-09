@@ -18,11 +18,11 @@ package stroom.task.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.api.Security;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.TargetType;
 import stroom.cluster.task.api.TerminateTaskClusterTask;
+import stroom.security.api.SecurityContext;
+import stroom.task.api.AbstractTaskHandler;
 import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.shared.VoidResult;
 
@@ -33,18 +33,18 @@ class TerminateTaskProgressHandler extends AbstractTaskHandler<TerminateTaskProg
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminateTaskProgressHandler.class);
 
     private final ClusterDispatchAsyncHelper dispatchHelper;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     TerminateTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper,
-                                 final Security security) {
+                                 final SecurityContext securityContext) {
         this.dispatchHelper = dispatchHelper;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final TerminateTaskProgressAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask(action.getUserToken(), action.getTaskName(), action.getCriteria(), action.isKill());
             if (action.getCriteria() != null && action.getCriteria().isConstrained()) {
                 // Terminate matching tasks.

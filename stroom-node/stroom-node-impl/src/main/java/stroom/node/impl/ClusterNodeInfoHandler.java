@@ -20,12 +20,12 @@ package stroom.node.impl;
 import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ClusterNodeManager;
-import stroom.util.EntityServiceExceptionUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.ClusterNodeInfoAction;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.EntityServiceExceptionUtil;
 
 import javax.inject.Inject;
 
@@ -33,20 +33,20 @@ import javax.inject.Inject;
 class ClusterNodeInfoHandler extends AbstractTaskHandler<ClusterNodeInfoAction, ClusterNodeInfo> {
     private final ClusterCallService clusterCallService;
     private final NodeInfo nodeInfo;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     ClusterNodeInfoHandler(final ClusterCallServiceRemote clusterCallService,
                            final NodeInfo nodeInfo,
-                           final Security security) {
+                           final SecurityContext securityContext) {
         this.clusterCallService = clusterCallService;
         this.nodeInfo = nodeInfo;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ClusterNodeInfo exec(final ClusterNodeInfoAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             final String sourceNode = nodeInfo.getThisNodeName();
             final String targetNode = action.getNodeName();
 

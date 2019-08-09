@@ -21,7 +21,6 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
@@ -34,15 +33,12 @@ import java.util.UUID;
 public class ProcessorServiceImpl implements ProcessorService {
     private static final String PERMISSION = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
 
-    private final Security security;
     private final SecurityContext securityContext;
     private final ProcessorDao processorDao;
 
     @Inject
-    ProcessorServiceImpl(final Security security,
-                         final SecurityContext securityContext,
+    ProcessorServiceImpl(final SecurityContext securityContext,
                          final ProcessorDao processorDao) {
-        this.security = security;
         this.securityContext = securityContext;
         this.processorDao = processorDao;
     }
@@ -77,13 +73,13 @@ public class ProcessorServiceImpl implements ProcessorService {
         }
 
         AuditUtil.stamp(securityContext.getUserId(), processor);
-        return security.secureResult(PERMISSION, () ->
+        return securityContext.secureResult(PERMISSION, () ->
                 processorDao.create(processor));
     }
 
     @Override
     public Optional<Processor> fetch(final int id) {
-        return security.secureResult(() ->
+        return securityContext.secureResult(() ->
                 processorDao.fetch(id));
     }
 
@@ -94,19 +90,19 @@ public class ProcessorServiceImpl implements ProcessorService {
         }
 
         AuditUtil.stamp(securityContext.getUserId(), processor);
-        return security.secureResult(PERMISSION, () ->
+        return securityContext.secureResult(PERMISSION, () ->
                 processorDao.update(processor));
     }
 
     @Override
     public boolean delete(final int id) {
-        return security.secureResult(PERMISSION, () ->
+        return securityContext.secureResult(PERMISSION, () ->
                 processorDao.delete(id));
     }
 
     @Override
     public BaseResultList<Processor> find(final ExpressionCriteria criteria) {
-        return security.secureResult(() ->
+        return securityContext.secureResult(() ->
                 processorDao.find(criteria));
     }
 }

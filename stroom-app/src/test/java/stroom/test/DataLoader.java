@@ -19,6 +19,7 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.Store;
@@ -31,7 +32,6 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.MetaProperties;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
-import stroom.data.shared.StreamTypeNames;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;

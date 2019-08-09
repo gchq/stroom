@@ -25,9 +25,9 @@ import event.logging.ObjectOutcome;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.docref.DocRef;
-import stroom.security.api.Security;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 
@@ -35,18 +35,18 @@ class ImportExportDocumentEventLogImpl implements ImportExportDocumentEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportDocumentEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     ImportExportDocumentEventLogImpl(final StroomEventLoggingService eventLoggingService,
-                                     final Security security) {
+                                     final SecurityContext securityContext) {
         this.eventLoggingService = eventLoggingService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public void importDocument(final String type, final String uuid, final String name, final Exception e) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction("Import", "Importing", type, name);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();

@@ -36,16 +36,16 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
-import stroom.security.api.Security;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.statistics.impl.sql.shared.StatisticType;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
-import stroom.statistics.impl.sql.shared.StatisticField;
+import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
-import stroom.task.api.TaskManager;
+import stroom.statistics.impl.sql.shared.StatisticField;
+import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.statistics.impl.sql.shared.StatisticType;
+import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 
@@ -125,7 +125,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private StatisticsQueryService statisticsQueryService;
     @Inject
-    private Security security;
+    private SecurityContext securityContext;
 
     private StatisticStoreDoc statisticStoreDoc;
 
@@ -455,7 +455,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
         }
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, taskContext, security);
+                sqlStatisticValueBatchSaveService, taskContext, securityContext);
 
         final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(sqlStatisticAggregateMap);
 

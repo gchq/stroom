@@ -1,10 +1,10 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
-import stroom.core.benchmark.BenchmarkJobsModule;
 import stroom.cache.impl.CacheJobsModule;
 import stroom.cluster.lock.impl.db.ClusterLockJobsModule;
 import stroom.config.global.impl.GlobalConfigJobsModule;
+import stroom.core.benchmark.BenchmarkJobsModule;
 import stroom.core.receive.ProxyAggregationJobsModule;
 import stroom.data.retention.impl.DataRetentionJobsModule;
 import stroom.data.store.impl.DataRetentionJobModule;

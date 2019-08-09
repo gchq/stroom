@@ -23,7 +23,6 @@ import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeSet;
@@ -44,25 +43,22 @@ class ChangeDocumentPermissionsHandler
         extends AbstractTaskHandler<ChangeDocumentPermissionsAction, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChangeDocumentPermissionsHandler.class);
 
-    private final DocumentPermissionService documentPermissionService;
+    private final DocumentPermissionServiceImpl documentPermissionService;
     private final SecurityContext securityContext;
     private final ExplorerNodeService explorerNodeService;
-    private final Security security;
 
     @Inject
-    ChangeDocumentPermissionsHandler(final DocumentPermissionService documentPermissionService,
+    ChangeDocumentPermissionsHandler(final DocumentPermissionServiceImpl documentPermissionService,
                                      final SecurityContext securityContext,
-                                     final ExplorerNodeService explorerNodeService,
-                                     final Security security) {
+                                     final ExplorerNodeService explorerNodeService) {
         this.documentPermissionService = documentPermissionService;
         this.securityContext = securityContext;
         this.explorerNodeService = explorerNodeService;
-        this.security = security;
     }
 
     @Override
     public VoidResult exec(final ChangeDocumentPermissionsAction action) {
-        return security.insecureResult(() -> {
+        return securityContext.insecureResult(() -> {
             final DocRef docRef = action.getDocRef();
 
             // Check that the current user has permission to change the permissions of the document.

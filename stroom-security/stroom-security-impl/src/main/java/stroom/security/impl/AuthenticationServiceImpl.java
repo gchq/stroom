@@ -18,10 +18,10 @@ package stroom.security.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
+import stroom.security.api.UserTokenUtil;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
-import stroom.security.api.UserTokenUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -36,16 +36,16 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
     private final UserService userService;
     private final UserAppPermissionService userAppPermissionService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     AuthenticationServiceImpl(
             final UserService userService,
             final UserAppPermissionService userAppPermissionService,
-            final Security security) {
+            final SecurityContext securityContext) {
         this.userService = userService;
         this.userAppPermissionService = userAppPermissionService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -69,7 +69,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
                 // some way of sensibly referencing the user and something to attach permissions to.
                 // We need to elevate the user because no one is currently logged in.
                 try {
-                    userRef = security.asProcessingUserResult(() -> userService.createUser(token.getUserId()));
+                    userRef = securityContext.asProcessingUserResult(() -> userService.createUser(token.getUserId()));
                 } catch (final Exception e) {
                     final String msg = String.format("Could not create user, this is attempt %d", attempts);
                     if (attempts == 0) {
@@ -109,7 +109,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private User createOrRefreshUser(String name) {
-        return security.asProcessingUserResult(() -> {
+        return securityContext.asProcessingUserResult(() -> {
             User userRef = userService.getUserByName(name);
             if (userRef == null) {
                 userRef = userService.createUser(name);
@@ -137,7 +137,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private User createOrRefreshAdminUserGroup(final String userGroupName) {
-        return security.asProcessingUserResult(() -> {
+        return securityContext.asProcessingUserResult(() -> {
             final User existing = userService.getUserByName(userGroupName);
             if (existing != null) {
                 return existing;

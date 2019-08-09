@@ -19,7 +19,7 @@ package stroom.importexport.impl;
 import stroom.importexport.shared.ImportConfigAction;
 import stroom.importexport.shared.ImportState;
 import stroom.resource.api.ResourceStore;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.ResourceKey;
@@ -32,22 +32,22 @@ class ImportConfigHandler extends AbstractTaskHandler<ImportConfigAction, Resour
     private final ImportExportService importExportService;
     private final ImportExportEventLog eventLog;
     private final ResourceStore resourceStore;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     ImportConfigHandler(final ImportExportService importExportService,
                         final ImportExportEventLog eventLog,
                         final ResourceStore resourceStore,
-                        final Security security) {
+                        final SecurityContext securityContext) {
         this.importExportService = importExportService;
         this.eventLog = eventLog;
         this.resourceStore = resourceStore;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ResourceKey exec(final ImportConfigAction action) {
-        return security.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
+        return securityContext.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
             // Import file.
             final Path file = resourceStore.getTempFile(action.getKey());
 

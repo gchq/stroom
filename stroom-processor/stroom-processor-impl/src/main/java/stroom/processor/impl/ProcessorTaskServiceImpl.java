@@ -27,7 +27,6 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskDataSource;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.searchable.api.Searchable;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.BaseResultList;
@@ -43,33 +42,30 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     private static final DocRef PROCESSOR_TASK_PSEUDO_DOC_REF = new DocRef("Searchable", "Processor Tasks", "Processor Tasks");
 
     private final ProcessorTaskDao processorTaskDao;
-    private final Security security;
     private final SecurityContext securityContext;
 
     @Inject
     ProcessorTaskServiceImpl(final ProcessorTaskDao processorTaskDao,
-                             final Security security,
                              final SecurityContext securityContext) {
         this.processorTaskDao = processorTaskDao;
-        this.security = security;
         this.securityContext = securityContext;
     }
 
     @Override
     public BaseResultList<ProcessorTask> find(final ExpressionCriteria criteria) {
-        return security.secureResult(PERMISSION, () ->
+        return securityContext.secureResult(PERMISSION, () ->
                 processorTaskDao.find(criteria));
     }
 
     @Override
     public BaseResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
-        return security.secureResult(PERMISSION, () ->
+        return securityContext.secureResult(PERMISSION, () ->
                 processorTaskDao.findSummary(criteria));
     }
 
     @Override
     public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
-        security.secure(PERMISSION, () ->
+        securityContext.secure(PERMISSION, () ->
                 processorTaskDao.search(criteria, fields, consumer));
     }
 

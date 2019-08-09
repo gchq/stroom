@@ -19,23 +19,23 @@ package stroom.importexport.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.DocRefs;
-import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.PermissionException;
-import stroom.explorer.shared.PermissionInheritance;
+import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
-import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.io.AbstractFileVisitor;
+import stroom.util.shared.DocRefs;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -223,7 +223,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
                         // Add explorer node afterwards on successful import as they won't be controlled by doc service.
                         if (!ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
-                            if (!existingNode.isPresent()) {
+                            if (existingNode.isEmpty()) {
                                 explorerNodeService.createNode(imported, folderRef, PermissionInheritance.DESTINATION);
                             }
 

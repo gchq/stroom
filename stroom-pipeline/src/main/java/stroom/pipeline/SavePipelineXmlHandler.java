@@ -19,7 +19,7 @@ package stroom.pipeline;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.SavePipelineXmlAction;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 
@@ -29,20 +29,20 @@ import javax.inject.Inject;
 class SavePipelineXmlHandler extends AbstractTaskHandler<SavePipelineXmlAction, VoidResult> {
     private final PipelineStore pipelineStore;
     private final PipelineSerialiser pipelineSerialiser;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     SavePipelineXmlHandler(final PipelineStore pipelineStore,
                            final PipelineSerialiser pipelineSerialiser,
-                           final Security security) {
+                           final SecurityContext securityContext) {
         this.pipelineStore = pipelineStore;
         this.pipelineSerialiser = pipelineSerialiser;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final SavePipelineXmlAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(action.getPipeline());
 
             if (pipelineDoc != null) {

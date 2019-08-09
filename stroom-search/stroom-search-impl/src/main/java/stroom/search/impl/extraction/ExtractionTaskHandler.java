@@ -44,7 +44,6 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.search.impl.SearchException;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.util.io.IgnoreCloseInputStream;
@@ -75,7 +74,6 @@ public class ExtractionTaskHandler {
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
     private final TaskContext taskContext;
-    private final Security security;
     private final SecurityContext securityContext;
 
     private ExtractionTask task;
@@ -92,7 +90,6 @@ public class ExtractionTaskHandler {
                           final PipelineStore pipelineStore,
                           final PipelineDataCache pipelineDataCache,
                           final TaskContext taskContext,
-                          final Security security,
                           final SecurityContext securityContext) {
         this.streamStore = streamStore;
         this.feedHolder = feedHolder;
@@ -105,12 +102,11 @@ public class ExtractionTaskHandler {
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
         this.taskContext = taskContext;
-        this.security = security;
         this.securityContext = securityContext;
     }
 
     public VoidResult exec(final ExtractionTask task) {
-        return security.useAsReadResult(() -> {
+        return securityContext.useAsReadResult(() -> {
             LAMBDA_LOGGER.logDurationIfDebugEnabled(
                     () -> {
                         taskContext.setName("Extraction");

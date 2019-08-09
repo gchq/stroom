@@ -21,10 +21,10 @@ import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexField;
+import stroom.meta.shared.MetaService;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.search.impl.Event;
-import stroom.security.api.Security;
-import stroom.meta.shared.MetaService;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.Severity;
 
 import java.util.ArrayList;
@@ -41,16 +41,16 @@ public class StreamMapCreator {
     private final int streamIdIndex;
     private final int eventIdIndex;
 
-    private final Security security;
+    private final SecurityContext securityContext;
     private Map<Long, Boolean> fiteredStreamCache;
 
     public StreamMapCreator(final IndexField[] storedFields,
                             final ErrorReceiver errorReceiver,
                             final MetaService metaService,
-                            final Security security) {
+                            final SecurityContext securityContext) {
         this.errorReceiver = errorReceiver;
         this.metaService = metaService;
-        this.security = security;
+        this.securityContext = securityContext;
 
         // First get the index in the stored data of the stream and event id fields.
         streamIdIndex = getFieldIndex(storedFields, IndexConstants.STREAM_ID, true);
@@ -75,7 +75,7 @@ public class StreamMapCreator {
     }
 
     void addEvent(final Map<Long, List<Event>> storedDataMap, final Val[] storedData) {
-        security.useAsRead(() -> {
+        securityContext.useAsRead(() -> {
             final Long longStreamId = getLong(storedData, streamIdIndex);
             final Long longEventId = getLong(storedData, eventIdIndex);
 
