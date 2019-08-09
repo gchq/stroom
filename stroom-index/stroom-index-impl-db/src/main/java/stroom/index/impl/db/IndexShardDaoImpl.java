@@ -184,6 +184,10 @@ class IndexShardDaoImpl implements IndexShardDao {
 
         IndexVolume indexVolume;
         try {
+            // FIXME: This .next() means that every shard uses the first volume in the volume group.
+            // We need a selector similar, maybe, to the ones we have in FsVolumeService.getVolumeSet().
+            // Probably we can just use round robin, but it might be nice to do it based on free space. RR prob fine.
+            // Needs some kind of component.
             indexVolume = indexVolumes.iterator().next();
         } catch (NoSuchElementException e) {
             final String msg = String.format("No shard can be created as no volumes are available for group: %s, indexUuid: %s ",
