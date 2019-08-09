@@ -3,13 +3,13 @@ package stroom.activity.impl;
 import com.google.inject.AbstractModule;
 import stroom.activity.api.ActivityService;
 import stroom.activity.api.CurrentActivity;
-import stroom.activity.shared.ValidateActivityAction;
 import stroom.activity.shared.CreateActivityAction;
 import stroom.activity.shared.DeleteActivityAction;
 import stroom.activity.shared.FetchActivityAction;
 import stroom.activity.shared.FindActivityAction;
 import stroom.activity.shared.SetCurrentActivityAction;
 import stroom.activity.shared.UpdateActivityAction;
+import stroom.activity.shared.ValidateActivityAction;
 import stroom.task.api.TaskHandlerBinder;
 
 public class ActivityModule extends AbstractModule {

@@ -16,8 +16,6 @@
 
 package stroom.util.io;
 
-import stroom.util.io.WrappedReader;
-
 import java.io.IOException;
 import java.io.Reader;
 

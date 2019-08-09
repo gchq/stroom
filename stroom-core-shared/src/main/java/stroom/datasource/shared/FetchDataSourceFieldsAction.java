@@ -16,8 +16,8 @@
 
 package stroom.datasource.shared;
 
-import stroom.task.shared.Action;
 import stroom.docref.DocRef;
+import stroom.task.shared.Action;
 
 public class FetchDataSourceFieldsAction extends Action<DataSourceFields> {
     private static final long serialVersionUID = -6668626615097471925L;

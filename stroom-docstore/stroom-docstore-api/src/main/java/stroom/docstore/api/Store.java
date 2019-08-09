@@ -1,9 +1,9 @@
 package stroom.docstore.api;
 
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
 import stroom.docstore.shared.Doc;
 import stroom.importexport.shared.ImportState;
-import stroom.docref.DocRefInfo;
 import stroom.util.shared.Message;
 
 import java.util.List;

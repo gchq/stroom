@@ -16,9 +16,9 @@
 
 package stroom.dashboard.impl.script;
 
-import stroom.util.shared.DocRefs;
-import stroom.importexport.shared.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
+import stroom.importexport.shared.ExternalFile;
+import stroom.util.shared.DocRefs;
 
 import javax.xml.bind.annotation.XmlTransient;
 

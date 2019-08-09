@@ -4,13 +4,12 @@
 package stroom.cluster.lock.impl.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.Internal;
-
 import stroom.cluster.lock.impl.db.jooq.tables.ClusterLock;
+
+import javax.annotation.Generated;
 
 
 /**

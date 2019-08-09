@@ -18,6 +18,7 @@
 package stroom.kafka.impl;
 
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
@@ -26,7 +27,6 @@ import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.kafka.shared.KafkaConfigDoc;
-import stroom.docref.DocRefInfo;
 import stroom.util.shared.Message;
 
 import javax.inject.Inject;

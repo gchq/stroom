@@ -16,10 +16,10 @@
 
 package stroom.pool.shared;
 
+import stroom.util.shared.CompareUtil;
 import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
-import stroom.util.shared.CompareUtil;
 
 import java.util.Comparator;
 

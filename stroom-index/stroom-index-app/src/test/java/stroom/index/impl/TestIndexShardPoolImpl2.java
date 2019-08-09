@@ -20,18 +20,14 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import stroom.index.impl.FieldFactory;
-import stroom.index.impl.IndexShardKeyUtil;
-import stroom.index.impl.Indexer;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.shared.Node;
+import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.io.FileUtil;
-import stroom.test.common.util.test.StroomUnitTest;
 
 import java.util.List;
 

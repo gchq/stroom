@@ -21,10 +21,10 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.client.presenter.PipelineSettingsPresenter.PipelineSettingsView;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.docref.DocRef;
 
 public class PipelineSettingsPresenter
         extends DocumentSettingsPresenter<PipelineSettingsView, PipelineDoc>

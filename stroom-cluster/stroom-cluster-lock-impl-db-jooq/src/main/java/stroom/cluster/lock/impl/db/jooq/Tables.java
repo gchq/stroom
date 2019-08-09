@@ -4,9 +4,9 @@
 package stroom.cluster.lock.impl.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import stroom.cluster.lock.impl.db.jooq.tables.ClusterLock;
+
+import javax.annotation.Generated;
 
 
 /**

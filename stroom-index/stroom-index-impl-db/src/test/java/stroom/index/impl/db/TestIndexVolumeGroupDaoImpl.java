@@ -3,8 +3,6 @@ package stroom.index.impl.db;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.assertj.core.data.Offset;
-import org.jooq.exception.DataAccessException;
-import org.jooq.exception.DataChangedException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import stroom.index.impl.IndexVolumeGroupDao;
@@ -19,7 +17,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestIndexVolumeGroupDaoImpl {
     private static IndexVolumeGroupDao indexVolumeGroupDao;

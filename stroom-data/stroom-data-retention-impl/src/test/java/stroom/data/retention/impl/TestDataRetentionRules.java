@@ -25,12 +25,12 @@ import stroom.data.retention.impl.DataRetentionExecutor.Tracker;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.TimeUnit;
-import stroom.util.shared.Period;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.Period;
 
 import java.util.ArrayList;
 import java.util.Collections;

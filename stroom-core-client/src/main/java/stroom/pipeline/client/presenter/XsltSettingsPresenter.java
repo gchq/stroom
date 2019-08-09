@@ -24,10 +24,10 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
+import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.client.presenter.XsltSettingsPresenter.XsltSettingsView;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.docref.DocRef;
 
 public class XsltSettingsPresenter extends DocumentSettingsPresenter<XsltSettingsView, XsltDoc> {
     @Inject

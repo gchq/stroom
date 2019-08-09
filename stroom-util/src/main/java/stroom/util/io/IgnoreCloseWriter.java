@@ -16,8 +16,6 @@
 
 package stroom.util.io;
 
-import stroom.util.io.WrappedWriter;
-
 import java.io.IOException;
 import java.io.Writer;
 

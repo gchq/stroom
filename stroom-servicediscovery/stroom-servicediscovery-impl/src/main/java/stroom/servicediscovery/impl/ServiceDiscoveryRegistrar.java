@@ -10,8 +10,8 @@ import org.apache.curator.x.discovery.UriSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.servicediscovery.api.RegisteredService;
-import stroom.util.guice.ResourcePaths;
 import stroom.util.HasHealthCheck;
+import stroom.util.guice.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

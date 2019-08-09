@@ -16,9 +16,9 @@
 
 package stroom.search.impl;
 
+import stroom.query.api.v2.Query;
 import stroom.search.api.EventRef;
 import stroom.search.api.EventRefs;
-import stroom.query.api.v2.Query;
 import stroom.security.shared.UserToken;
 
 public class EventSearchTask extends AbstractSearchTask<EventRefs> {

@@ -4,9 +4,9 @@
 package stroom.storedquery.impl.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import stroom.storedquery.impl.db.jooq.tables.Query;
+
+import javax.annotation.Generated;
 
 
 /**

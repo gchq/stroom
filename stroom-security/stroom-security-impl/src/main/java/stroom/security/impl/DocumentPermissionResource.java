@@ -1,7 +1,6 @@
 package stroom.security.impl;
 
 import io.swagger.annotations.Api;
-import stroom.docref.DocRef;
 import stroom.util.RestResource;
 
 import javax.ws.rs.DELETE;

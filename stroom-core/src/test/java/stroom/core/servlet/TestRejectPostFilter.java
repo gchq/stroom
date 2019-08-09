@@ -18,7 +18,6 @@ package stroom.core.servlet;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.core.servlet.RejectPostFilter;
 import stroom.test.common.util.test.StroomUnitTest;
 
 import static org.assertj.core.api.Assertions.assertThat;

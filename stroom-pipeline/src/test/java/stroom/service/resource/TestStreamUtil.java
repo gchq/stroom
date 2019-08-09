@@ -20,8 +20,8 @@ package stroom.service.resource;
 import org.junit.jupiter.api.Test;
 import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.test.common.StroomPipelineTestFileUtil;
-import stroom.util.io.StreamUtil;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.io.StreamUtil;
 
 import java.io.IOException;
 import java.io.InputStream;

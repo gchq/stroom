@@ -16,8 +16,8 @@
 
 package stroom.node.impl;
 
-import stroom.node.shared.NodeStatusResult;
 import stroom.cluster.task.api.ClusterTask;
+import stroom.node.shared.NodeStatusResult;
 import stroom.security.shared.UserToken;
 
 class NodeStatusClusterTask extends ClusterTask<NodeStatusResult> {

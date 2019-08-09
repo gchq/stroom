@@ -16,9 +16,9 @@
 
 package stroom.feed.impl;
 
+import stroom.importexport.migration.NamedEntity;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
-import stroom.importexport.migration.NamedEntity;
 
 /**
  * Used for legacy migration

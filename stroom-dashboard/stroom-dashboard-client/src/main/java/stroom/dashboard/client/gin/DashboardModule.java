@@ -19,7 +19,6 @@ package stroom.dashboard.client.gin;
 import com.google.inject.Singleton;
 import stroom.core.client.gin.PluginModule;
 import stroom.dashboard.client.DashboardPlugin;
-import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.dashboard.client.main.ComponentRegistry;
 import stroom.dashboard.client.main.DashboardLayoutPresenter;
 import stroom.dashboard.client.main.DashboardLayoutViewImpl;
@@ -27,6 +26,7 @@ import stroom.dashboard.client.main.DashboardPresenter;
 import stroom.dashboard.client.main.DashboardViewImpl;
 import stroom.dashboard.client.unknown.HTMLView;
 import stroom.dashboard.client.unknown.HTMLViewImpl;
+import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.view.LinkTabsLayoutViewImpl;
 

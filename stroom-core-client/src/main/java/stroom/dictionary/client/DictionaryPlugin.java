@@ -24,11 +24,11 @@ import stroom.core.client.ContentManager;
 import stroom.dictionary.client.presenter.DictionaryPresenter;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.docref.DocRef;
 
 public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
     private final Provider<DictionaryPresenter> editorProvider;

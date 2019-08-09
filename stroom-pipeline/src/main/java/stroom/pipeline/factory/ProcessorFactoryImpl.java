@@ -19,7 +19,6 @@ package stroom.pipeline.factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
@@ -27,6 +26,7 @@ import stroom.pipeline.errorhandler.ExpectedProcessException;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskCallback;
+import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 

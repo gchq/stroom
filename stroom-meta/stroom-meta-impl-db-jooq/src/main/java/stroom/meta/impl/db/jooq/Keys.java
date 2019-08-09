@@ -4,13 +4,10 @@
 package stroom.meta.impl.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.UniqueKey;
 import org.jooq.impl.Internal;
-
 import stroom.meta.impl.db.jooq.tables.Meta;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaKey;
@@ -23,6 +20,8 @@ import stroom.meta.impl.db.jooq.tables.records.MetaProcessorRecord;
 import stroom.meta.impl.db.jooq.tables.records.MetaRecord;
 import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
 import stroom.meta.impl.db.jooq.tables.records.MetaValRecord;
+
+import javax.annotation.Generated;
 
 
 /**

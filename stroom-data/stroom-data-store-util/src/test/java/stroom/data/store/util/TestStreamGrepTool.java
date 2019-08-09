@@ -18,13 +18,13 @@ package stroom.data.store.util;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.db.util.DbUtil;
 import stroom.meta.impl.db.ConnectionProvider;
 import stroom.meta.shared.MetaProperties;
-import stroom.data.shared.StreamTypeNames;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;

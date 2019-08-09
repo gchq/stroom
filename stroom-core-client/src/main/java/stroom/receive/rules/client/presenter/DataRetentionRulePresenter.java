@@ -21,14 +21,14 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.TimeUnit;
+import stroom.datasource.shared.FetchFieldsAction;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
-import stroom.data.retention.shared.DataRetentionRule;
-import stroom.meta.shared.MetaFields;
-import stroom.datasource.shared.FetchFieldsAction;
 
 public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> {
     private final EditExpressionPresenter editExpressionPresenter;

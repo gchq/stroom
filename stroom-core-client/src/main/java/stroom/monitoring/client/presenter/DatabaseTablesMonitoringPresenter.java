@@ -21,19 +21,19 @@ import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.data.client.presenter.ActionDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.util.shared.Sort.Direction;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.node.shared.FindSystemTableStatusAction;
-import stroom.data.client.presenter.ActionDataProvider;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.Sort.Direction;
 
 public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataGridView<DBTableStatus>> implements ColumnSortEvent.Handler {
     private final FindDBTableCriteria criteria;

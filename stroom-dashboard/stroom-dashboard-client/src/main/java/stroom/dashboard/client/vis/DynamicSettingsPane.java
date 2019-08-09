@@ -25,12 +25,12 @@ import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import com.gwtplatform.mvp.client.Layer;
+import com.gwtplatform.mvp.client.LayerContainer;
 import stroom.entity.client.presenter.HasReadAndWrite;
 import stroom.item.client.StringListBox;
 import stroom.util.client.JSONUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.LayerContainer;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

@@ -18,7 +18,6 @@ package stroom.util.config;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.config.Parameter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

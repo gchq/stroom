@@ -1,10 +1,10 @@
 package stroom.pipeline.factory;
 
 import io.swagger.annotations.Api;
-import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.util.RestResource;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;

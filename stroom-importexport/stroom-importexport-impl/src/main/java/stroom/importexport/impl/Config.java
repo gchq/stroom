@@ -21,9 +21,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.ext.Attributes2Impl;
 import stroom.docref.DocRef;
+import stroom.util.date.DateUtil;
 import stroom.util.xml.TransformerFactoryFactory;
 import stroom.util.xml.XMLUtil;
-import stroom.util.date.DateUtil;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;

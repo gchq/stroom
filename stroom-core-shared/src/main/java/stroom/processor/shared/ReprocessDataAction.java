@@ -17,7 +17,6 @@
 package stroom.processor.shared;
 
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.processor.shared.ReprocessDataInfo;
 import stroom.task.shared.Action;
 import stroom.util.shared.SharedList;
 

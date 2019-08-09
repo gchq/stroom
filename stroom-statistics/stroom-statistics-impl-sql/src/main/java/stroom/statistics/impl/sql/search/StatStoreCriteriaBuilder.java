@@ -2,16 +2,16 @@ package stroom.statistics.impl.sql.search;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.Period;
-import stroom.util.shared.Range;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.DateExpressionParser;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
+import stroom.statistics.impl.sql.shared.StatisticRollUpType;
+import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.util.shared.Period;
+import stroom.util.shared.Range;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;

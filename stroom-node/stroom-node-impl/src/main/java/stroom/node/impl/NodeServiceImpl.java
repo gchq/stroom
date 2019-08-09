@@ -16,7 +16,6 @@
 
 package stroom.node.impl;
 
-import stroom.util.AuditUtil;
 import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventHandler;
@@ -26,6 +25,7 @@ import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.util.AuditUtil;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;

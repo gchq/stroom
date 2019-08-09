@@ -16,8 +16,8 @@
 
 package stroom.task.impl;
 
-import stroom.util.shared.HasTerminate;
 import stroom.task.shared.Task;
+import stroom.util.shared.HasTerminate;
 
 import java.util.Collections;
 import java.util.Set;

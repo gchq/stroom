@@ -25,11 +25,11 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cache.shared.CacheClearAction;
 import stroom.cache.shared.CacheRow;
 import stroom.cache.shared.FetchCacheRowAction;
+import stroom.data.client.presenter.ActionDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.data.client.presenter.ActionDataProvider;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.MultiSelectionModel;
 

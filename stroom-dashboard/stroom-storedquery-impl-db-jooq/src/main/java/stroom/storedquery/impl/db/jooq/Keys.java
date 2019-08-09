@@ -4,14 +4,13 @@
 package stroom.storedquery.impl.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import org.jooq.Identity;
 import org.jooq.UniqueKey;
 import org.jooq.impl.Internal;
-
 import stroom.storedquery.impl.db.jooq.tables.Query;
 import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
+
+import javax.annotation.Generated;
 
 
 /**

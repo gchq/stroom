@@ -17,8 +17,8 @@
 
 package stroom.dashboard.impl.visualisation;
 
-import stroom.docstore.api.DocumentStore;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentStore;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import java.util.List;

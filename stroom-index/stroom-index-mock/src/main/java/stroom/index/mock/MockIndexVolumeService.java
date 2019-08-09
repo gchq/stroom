@@ -21,9 +21,7 @@ import stroom.index.impl.CreateVolumeDTO;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.UpdateVolumeDTO;
 import stroom.index.shared.IndexVolume;
-import stroom.index.shared.IndexVolumeGroup;
 
-import java.util.Collections;
 import java.util.List;
 
 public class MockIndexVolumeService implements IndexVolumeService {

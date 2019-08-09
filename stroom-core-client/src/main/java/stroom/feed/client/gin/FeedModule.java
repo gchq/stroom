@@ -17,14 +17,14 @@
 package stroom.feed.client.gin;
 
 import stroom.core.client.gin.PluginModule;
+import stroom.data.client.presenter.DataUploadPresenter;
+import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
+import stroom.data.client.view.StreamUploadViewImpl;
 import stroom.feed.client.FeedPlugin;
 import stroom.feed.client.presenter.FeedPresenter;
 import stroom.feed.client.presenter.FeedSettingsPresenter;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
 import stroom.feed.client.view.FeedSettingsViewImpl;
-import stroom.data.client.presenter.DataUploadPresenter;
-import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
-import stroom.data.client.view.StreamUploadViewImpl;
 
 public class FeedModule extends PluginModule {
     @Override

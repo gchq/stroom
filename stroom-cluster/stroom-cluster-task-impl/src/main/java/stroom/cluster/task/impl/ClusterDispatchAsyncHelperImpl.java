@@ -19,7 +19,6 @@ package stroom.cluster.task.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.api.ClusterConfig;
-import stroom.docref.SharedObject;
 import stroom.cluster.task.api.ClusterDispatchAsync;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.ClusterTask;
@@ -27,6 +26,7 @@ import stroom.cluster.task.api.DefaultClusterResultCollector;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetType;
+import stroom.docref.SharedObject;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

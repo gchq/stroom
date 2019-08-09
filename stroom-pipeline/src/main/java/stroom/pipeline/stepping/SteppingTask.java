@@ -17,11 +17,11 @@
 package stroom.pipeline.stepping;
 
 import stroom.docref.DocRef;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.SteppingResult;
-import stroom.meta.shared.FindMetaCriteria;
 import stroom.security.shared.UserToken;
 import stroom.task.api.ServerTask;
 

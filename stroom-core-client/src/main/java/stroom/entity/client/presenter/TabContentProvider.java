@@ -19,9 +19,9 @@ package stroom.entity.client.presenter;
 
 import com.google.inject.Provider;
 import com.gwtplatform.mvp.client.PresenterWidget;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.docref.DocRef;
 import stroom.widget.tab.client.presenter.TabData;
 
 import java.util.HashMap;

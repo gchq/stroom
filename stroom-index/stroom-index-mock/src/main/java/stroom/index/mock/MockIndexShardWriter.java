@@ -19,7 +19,6 @@ package stroom.index.mock;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexableField;
-
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexStructure;
 import stroom.index.shared.IndexException;

@@ -4,9 +4,9 @@
 package stroom.activity.impl.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import stroom.activity.impl.db.jooq.tables.Activity;
+
+import javax.annotation.Generated;
 
 
 /**

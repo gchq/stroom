@@ -17,8 +17,6 @@
 package stroom.pipeline;
 
 import com.google.inject.AbstractModule;
-import stroom.pipeline.shared.FetchDataAction;
-import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.pipeline.shared.FetchPipelineDataAction;
 import stroom.pipeline.shared.FetchPipelineXmlAction;
 import stroom.pipeline.shared.FetchPropertyTypesAction;

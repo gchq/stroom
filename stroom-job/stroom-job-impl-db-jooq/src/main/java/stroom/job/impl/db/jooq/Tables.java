@@ -4,10 +4,10 @@
 package stroom.job.impl.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import stroom.job.impl.db.jooq.tables.Job;
 import stroom.job.impl.db.jooq.tables.JobNode;
+
+import javax.annotation.Generated;
 
 
 /**

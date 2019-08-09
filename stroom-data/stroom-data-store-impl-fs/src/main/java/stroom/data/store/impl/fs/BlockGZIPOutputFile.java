@@ -16,10 +16,10 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.util.io.SeekableOutputStream;
 import stroom.util.io.BasicStreamCloser;
-import stroom.util.io.StreamCloser;
 import stroom.util.io.FileUtil;
+import stroom.util.io.SeekableOutputStream;
+import stroom.util.io.StreamCloser;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;

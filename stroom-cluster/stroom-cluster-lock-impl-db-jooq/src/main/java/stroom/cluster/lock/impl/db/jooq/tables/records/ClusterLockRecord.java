@@ -4,15 +4,14 @@
 package stroom.cluster.lock.impl.db.jooq.tables.records;
 
 
-import javax.annotation.Generated;
-
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record3;
 import org.jooq.Row3;
 import org.jooq.impl.UpdatableRecordImpl;
-
 import stroom.cluster.lock.impl.db.jooq.tables.ClusterLock;
+
+import javax.annotation.Generated;
 
 
 /**

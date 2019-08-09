@@ -25,11 +25,11 @@ import stroom.meta.shared.AttributeMap;
 import stroom.pipeline.ErrorWriter;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.filter.AbstractXMLFilter;
+import stroom.pipeline.xml.event.simple.StartElement;
+import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.pipeline.xml.event.simple.StartElement;
-import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

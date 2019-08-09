@@ -16,12 +16,12 @@
 
 package stroom.cache;
 
+import stroom.pipeline.cache.PoolItem;
+import stroom.pipeline.cache.PoolKey;
 import stroom.pipeline.cache.SchemaKey;
 import stroom.pipeline.cache.SchemaLoaderImpl;
 import stroom.pipeline.cache.SchemaPool;
 import stroom.pipeline.cache.StoredSchema;
-import stroom.pipeline.cache.PoolItem;
-import stroom.pipeline.cache.PoolKey;
 
 public class MockSchemaPool implements SchemaPool {
     private final SchemaLoaderImpl schemaLoader;

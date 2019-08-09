@@ -17,7 +17,6 @@
 package stroom.node.impl;
 
 import com.google.inject.AbstractModule;
-import stroom.node.api.NodeInfo;
 
 public class NodeServiceModule extends AbstractModule {
     @Override

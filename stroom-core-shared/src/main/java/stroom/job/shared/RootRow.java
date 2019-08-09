@@ -16,8 +16,8 @@
 
 package stroom.job.shared;
 
-import stroom.util.shared.Expander;
 import stroom.docref.SharedObject;
+import stroom.util.shared.Expander;
 import stroom.util.shared.TreeRow;
 
 public class RootRow implements SharedObject, TreeRow {

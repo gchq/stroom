@@ -18,9 +18,9 @@ package stroom.pipeline;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.xml.XMLMarshallerUtil;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;

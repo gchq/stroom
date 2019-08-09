@@ -18,11 +18,11 @@ package stroom.pipeline.xml.converter.xmlfragment;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.test.AbstractProcessIntegrationTest;
 import stroom.pipeline.xml.F2XTestUtil;
 import stroom.pipeline.xml.XMLValidator;
+import stroom.test.AbstractProcessIntegrationTest;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

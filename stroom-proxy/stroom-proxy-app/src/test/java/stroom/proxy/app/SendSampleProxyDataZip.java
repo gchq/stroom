@@ -1,12 +1,11 @@
 package stroom.proxy.app;
 
 
+import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
-import javax.net.ssl.HttpsURLConnection;
 
 public class SendSampleProxyDataZip {
     private SendSampleProxyDataZip() {

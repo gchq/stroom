@@ -2,7 +2,6 @@ package stroom.util.shared;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.shared.Range;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

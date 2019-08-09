@@ -22,7 +22,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.config.global.api.ConfigProperty;
-import stroom.config.global.api.FetchGlobalConfigAction;
 import stroom.config.global.api.FindGlobalConfigAction;
 import stroom.config.global.api.FindGlobalConfigCriteria;
 import stroom.data.grid.client.DataGridView;

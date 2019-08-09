@@ -17,8 +17,6 @@
 package stroom.job.shared;
 
 import stroom.entity.shared.FindAction;
-import stroom.task.shared.Action;
-import stroom.util.shared.ResultList;
 
 public class FindJobNodeAction extends FindAction<FindJobNodeCriteria, JobNodeRow> {
     private static final long serialVersionUID = -6808045615241590297L;

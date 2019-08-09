@@ -17,8 +17,8 @@
 package stroom.dispatch.shared;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import stroom.task.shared.Action;
 import stroom.docref.SharedObject;
+import stroom.task.shared.Action;
 
 public interface DispatchServiceAsync {
     /**

@@ -19,9 +19,9 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.shared.Range;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
+import stroom.util.shared.Range;
 
 class TestRangeStoreKeySerde extends AbstractSerdeTest<RangeStoreKey, RangeStoreKeySerde> {
 

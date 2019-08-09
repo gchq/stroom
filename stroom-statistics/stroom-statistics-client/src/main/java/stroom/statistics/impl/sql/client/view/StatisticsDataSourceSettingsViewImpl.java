@@ -26,9 +26,9 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.item.client.ItemListBox;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourceSettingsUiHandlers;
-import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.statistics.impl.sql.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
+import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.widget.tickbox.client.view.TickBox;
 
 public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<StatisticsDataSourceSettingsUiHandlers>

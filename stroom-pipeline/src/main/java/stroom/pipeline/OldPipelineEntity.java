@@ -16,8 +16,8 @@
 
 package stroom.pipeline;
 
-import stroom.importexport.shared.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
+import stroom.importexport.shared.ExternalFile;
 
 /**
  * Used for legacy migration

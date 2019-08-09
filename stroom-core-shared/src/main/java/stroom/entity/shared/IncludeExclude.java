@@ -16,9 +16,9 @@
 
 package stroom.entity.shared;
 
+import stroom.docref.SharedObject;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
-import stroom.docref.SharedObject;
 
 public class IncludeExclude<T> implements SharedObject {
     private static final long serialVersionUID = 592176582746352453L;

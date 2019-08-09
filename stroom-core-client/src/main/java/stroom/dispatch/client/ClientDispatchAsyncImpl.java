@@ -27,11 +27,11 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.shared.DispatchServiceAsync;
-import stroom.task.shared.Action;
+import stroom.docref.SharedObject;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
+import stroom.task.shared.Action;
 import stroom.util.client.RandomId;
-import stroom.docref.SharedObject;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 

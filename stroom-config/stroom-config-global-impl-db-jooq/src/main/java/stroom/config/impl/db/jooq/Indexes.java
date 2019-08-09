@@ -4,13 +4,12 @@
 package stroom.config.impl.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.Internal;
-
 import stroom.config.impl.db.jooq.tables.Config;
+
+import javax.annotation.Generated;
 
 
 /**

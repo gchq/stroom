@@ -17,10 +17,10 @@
 package stroom.pipeline.shared.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import stroom.util.shared.Copyable;
 import stroom.docref.DocRef;
-import stroom.util.shared.CompareBuilder;
 import stroom.docref.SharedObject;
+import stroom.util.shared.CompareBuilder;
+import stroom.util.shared.Copyable;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

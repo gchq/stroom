@@ -19,10 +19,10 @@ package stroom.pipeline.factory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.docref.DocRef;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

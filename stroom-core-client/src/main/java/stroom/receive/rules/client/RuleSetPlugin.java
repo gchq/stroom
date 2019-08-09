@@ -22,10 +22,10 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.docref.DocRef;
 import stroom.receive.rules.client.presenter.RuleSetPresenter;
 import stroom.receive.rules.shared.ReceiveDataRules;
 

@@ -18,9 +18,9 @@ package stroom.importexport.shared;
 
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.docref.SharedObject;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
-import stroom.docref.SharedObject;
 
 import java.util.ArrayList;
 import java.util.List;

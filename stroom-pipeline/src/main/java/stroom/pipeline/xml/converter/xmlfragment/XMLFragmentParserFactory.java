@@ -23,8 +23,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.LocatorImpl;
-import stroom.util.io.StreamUtil;
 import stroom.pipeline.xml.converter.ParserFactory;
+import stroom.util.io.StreamUtil;
 
 import java.io.InputStream;
 

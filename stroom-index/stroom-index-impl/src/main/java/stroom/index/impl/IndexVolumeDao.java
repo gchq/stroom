@@ -1,7 +1,6 @@
 package stroom.index.impl;
 
 import stroom.index.shared.IndexVolume;
-import stroom.index.shared.IndexVolumeGroup;
 
 import java.util.List;
 import java.util.Optional;

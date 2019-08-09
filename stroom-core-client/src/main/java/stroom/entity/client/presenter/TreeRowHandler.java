@@ -19,8 +19,8 @@ package stroom.entity.client.presenter;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.Column;
 import stroom.data.grid.client.DataGridView;
-import stroom.util.shared.TreeAction;
 import stroom.util.shared.Expander;
+import stroom.util.shared.TreeAction;
 import stroom.util.shared.TreeRow;
 
 import java.util.List;

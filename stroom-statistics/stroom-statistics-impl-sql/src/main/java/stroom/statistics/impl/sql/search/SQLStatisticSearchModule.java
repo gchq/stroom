@@ -17,10 +17,10 @@
 package stroom.statistics.impl.sql.search;
 
 import com.google.inject.AbstractModule;
-import stroom.util.shared.Clearable;
 import stroom.statistics.impl.sql.StatisticsQueryService;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.RestResource;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 public class SQLStatisticSearchModule extends AbstractModule {
     @Override

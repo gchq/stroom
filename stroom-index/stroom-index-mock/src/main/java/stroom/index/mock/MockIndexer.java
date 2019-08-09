@@ -22,7 +22,6 @@ import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.Indexer;
 import stroom.index.shared.IndexShardKey;
 
-
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;

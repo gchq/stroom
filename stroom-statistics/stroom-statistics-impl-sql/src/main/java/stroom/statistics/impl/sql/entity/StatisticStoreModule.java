@@ -18,13 +18,13 @@ package stroom.statistics.impl.sql.entity;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEvent.Handler;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.guice.GuiceUtil;
-import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.util.shared.Clearable;
 
 public class StatisticStoreModule extends AbstractModule {

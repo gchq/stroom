@@ -1,7 +1,6 @@
 package stroom.index.mock;
 
 import stroom.index.impl.IndexVolumeGroupService;
-import stroom.index.impl.UpdateIndexVolumeGroupDTO;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.util.AuditUtil;
 

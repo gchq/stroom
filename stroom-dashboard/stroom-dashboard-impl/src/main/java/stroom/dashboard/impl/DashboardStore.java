@@ -18,8 +18,8 @@
 package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.DashboardDoc;
-import stroom.docstore.api.DocumentStore;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentStore;
 
 import java.util.List;
 

@@ -4,11 +4,6 @@
 package stroom.data.store.impl.fs.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
-
-import javax.annotation.Generated;
-
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Index;
@@ -20,11 +15,14 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
-
 import stroom.data.store.impl.fs.db.jooq.Indexes;
 import stroom.data.store.impl.fs.db.jooq.Keys;
 import stroom.data.store.impl.fs.db.jooq.Stroom;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsMetaVolumeRecord;
+
+import javax.annotation.Generated;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**

@@ -16,9 +16,9 @@
 
 package stroom.statistics.impl.sql.shared;
 
+import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
-import stroom.docref.HasDisplayValue;
 
 import java.io.Serializable;
 

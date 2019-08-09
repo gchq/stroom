@@ -19,12 +19,12 @@ package stroom.entity.client.presenter;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.data.table.client.Refreshable;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
-import com.gwtplatform.mvp.client.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 
 import java.util.ArrayList;

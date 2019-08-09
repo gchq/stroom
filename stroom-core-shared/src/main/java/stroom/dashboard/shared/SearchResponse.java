@@ -16,9 +16,9 @@
 
 package stroom.dashboard.shared;
 
+import stroom.docref.SharedObject;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
-import stroom.docref.SharedObject;
 import stroom.util.shared.ToStringBuilder;
 
 import javax.xml.bind.annotation.XmlAccessType;

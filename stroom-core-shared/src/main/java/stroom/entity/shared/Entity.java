@@ -16,8 +16,8 @@
 
 package stroom.entity.shared;
 
-import stroom.util.shared.HasType;
 import stroom.docref.SharedObject;
+import stroom.util.shared.HasType;
 
 public abstract class Entity implements HasType, SharedObject {
     // Standard data types. Unfortunately HSQLDB doesn't have unsigned data

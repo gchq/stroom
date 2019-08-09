@@ -22,9 +22,9 @@ import stroom.pipeline.destination.RollingDestinationFactory;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.PipelineFactoryException;
+import stroom.task.api.TaskContext;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
-import stroom.task.api.TaskContext;
 
 import java.io.IOException;
 

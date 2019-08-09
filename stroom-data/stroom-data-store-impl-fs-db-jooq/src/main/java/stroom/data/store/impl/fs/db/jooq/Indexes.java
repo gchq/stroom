@@ -4,17 +4,16 @@
 package stroom.data.store.impl.fs.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.Internal;
-
 import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState;
+
+import javax.annotation.Generated;
 
 
 /**

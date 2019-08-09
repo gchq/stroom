@@ -22,9 +22,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.lmdbjava.Env;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.ByteSizeUnit;
 import stroom.util.io.FileUtil;
-import stroom.test.common.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

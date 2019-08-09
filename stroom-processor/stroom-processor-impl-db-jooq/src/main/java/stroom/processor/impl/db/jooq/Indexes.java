@@ -4,17 +4,16 @@
 package stroom.processor.impl.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.Internal;
-
 import stroom.processor.impl.db.jooq.tables.Processor;
 import stroom.processor.impl.db.jooq.tables.ProcessorFilter;
 import stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker;
 import stroom.processor.impl.db.jooq.tables.ProcessorNode;
 import stroom.processor.impl.db.jooq.tables.ProcessorTask;
+
+import javax.annotation.Generated;
 
 
 /**

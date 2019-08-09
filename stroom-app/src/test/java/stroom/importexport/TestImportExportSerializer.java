@@ -20,7 +20,6 @@ package stroom.importexport;
 
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.util.shared.DocRefs;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.api.FeedStore;
@@ -38,9 +37,10 @@ import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomCoreServerTestFileUtil;
+import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.shared.DocRefs;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;

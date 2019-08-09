@@ -24,9 +24,9 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TextComponentSettings;
+import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsBuilder;
 

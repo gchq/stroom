@@ -19,7 +19,6 @@ package stroom.util.config;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import stroom.util.config.VersionSortComparator;
 
 import java.util.ArrayList;
 import java.util.Arrays;

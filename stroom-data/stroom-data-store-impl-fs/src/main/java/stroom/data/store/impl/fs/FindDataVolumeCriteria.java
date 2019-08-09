@@ -16,9 +16,9 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.meta.shared.Meta;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaSet;
-import stroom.meta.shared.Meta;
 
 public class FindDataVolumeCriteria extends BaseCriteria {
     private static final long serialVersionUID = 3528656425356870590L;

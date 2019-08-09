@@ -18,9 +18,6 @@
 package stroom.node.api;
 
 import stroom.node.shared.FindNodeCriteria;
-import stroom.node.shared.Node;
-import stroom.util.entity.FindService;
-import stroom.util.shared.BaseResultList;
 
 import java.util.List;
 

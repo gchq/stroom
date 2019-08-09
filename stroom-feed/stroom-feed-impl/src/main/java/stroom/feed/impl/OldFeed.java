@@ -17,9 +17,9 @@
 package stroom.feed.impl;
 
 import stroom.docref.HasDisplayValue;
+import stroom.importexport.migration.DocumentEntity;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
-import stroom.importexport.migration.DocumentEntity;
 
 /** Used for legacy migration **/
 @Deprecated

@@ -21,9 +21,9 @@ import org.junit.jupiter.api.Test;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.search.FilterTermsTree.OperatorNode;
 import stroom.statistics.impl.sql.search.FilterTermsTree.TermNode;
+import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.test.common.util.test.StroomUnitTest;
 
 import java.util.Set;

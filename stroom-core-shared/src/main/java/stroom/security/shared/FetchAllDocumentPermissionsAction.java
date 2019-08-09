@@ -16,8 +16,8 @@
 
 package stroom.security.shared;
 
-import stroom.task.shared.Action;
 import stroom.docref.DocRef;
+import stroom.task.shared.Action;
 
 public class FetchAllDocumentPermissionsAction extends Action<DocumentPermissions> {
     private static final long serialVersionUID = -6740095230475597845L;

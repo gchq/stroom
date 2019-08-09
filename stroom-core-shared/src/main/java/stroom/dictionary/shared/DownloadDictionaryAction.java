@@ -16,8 +16,8 @@
 
 package stroom.dictionary.shared;
 
-import stroom.task.shared.Action;
 import stroom.docref.DocRef;
+import stroom.task.shared.Action;
 import stroom.util.shared.ResourceGeneration;
 
 public class DownloadDictionaryAction extends Action<ResourceGeneration> {

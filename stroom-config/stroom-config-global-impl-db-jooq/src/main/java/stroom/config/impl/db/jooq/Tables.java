@@ -4,9 +4,9 @@
 package stroom.config.impl.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import stroom.config.impl.db.jooq.tables.Config;
+
+import javax.annotation.Generated;
 
 
 /**

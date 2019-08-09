@@ -18,7 +18,6 @@ package stroom.statistics.impl.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;

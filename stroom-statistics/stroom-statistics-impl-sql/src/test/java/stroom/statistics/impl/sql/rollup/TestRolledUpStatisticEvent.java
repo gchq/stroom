@@ -18,10 +18,10 @@ package stroom.statistics.impl.sql.rollup;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.statistics.impl.sql.StatisticEvent;
 import stroom.statistics.impl.sql.StatisticTag;
 import stroom.statistics.impl.sql.TimeAgnosticStatisticEvent;
+import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.test.common.util.test.StroomUnitTest;
 
 import java.util.ArrayList;

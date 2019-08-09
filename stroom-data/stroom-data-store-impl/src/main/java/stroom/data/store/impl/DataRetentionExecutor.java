@@ -20,11 +20,12 @@ package stroom.data.store.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
-//import stroom.entity.util.PeriodUtil;
-import stroom.task.api.TaskContext;
 import stroom.meta.shared.MetaService;
+import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
+
+//import stroom.entity.util.PeriodUtil;
 
 public class DataRetentionExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionExecutor.class);

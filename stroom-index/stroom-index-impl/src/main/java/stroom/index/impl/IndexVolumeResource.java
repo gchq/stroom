@@ -2,7 +2,6 @@ package stroom.index.impl;
 
 
 import io.swagger.annotations.Api;
-import stroom.index.shared.IndexVolume;
 import stroom.util.RestResource;
 
 import javax.ws.rs.DELETE;

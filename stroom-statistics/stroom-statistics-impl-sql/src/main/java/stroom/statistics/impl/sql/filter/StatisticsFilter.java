@@ -32,14 +32,14 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.statistics.impl.sql.shared.StatisticType;
-import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.SQLStatisticsEventValidator;
 import stroom.statistics.impl.sql.StatisticEvent;
 import stroom.statistics.impl.sql.StatisticTag;
 import stroom.statistics.impl.sql.Statistics;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
+import stroom.statistics.impl.sql.shared.StatisticField;
+import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 

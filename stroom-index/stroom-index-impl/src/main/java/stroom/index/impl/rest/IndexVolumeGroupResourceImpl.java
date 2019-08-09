@@ -2,7 +2,6 @@ package stroom.index.impl.rest;
 
 import stroom.index.impl.IndexVolumeGroupResource;
 import stroom.index.impl.IndexVolumeGroupService;
-import stroom.index.impl.UpdateIndexVolumeGroupDTO;
 import stroom.index.shared.IndexVolumeGroup;
 
 import javax.inject.Inject;

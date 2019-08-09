@@ -22,10 +22,10 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.datasource.shared.FetchDataSourceFieldsAction;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
-import stroom.docref.DocRef;
 
 import java.util.ArrayList;
 import java.util.Collections;

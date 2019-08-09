@@ -16,8 +16,8 @@
 
 package stroom.job.shared;
 
-import stroom.task.shared.Action;
 import stroom.job.shared.JobNode.JobType;
+import stroom.task.shared.Action;
 
 public class GetScheduledTimesAction extends Action<ScheduledTimes> {
     private static final long serialVersionUID = -5419140463010782005L;

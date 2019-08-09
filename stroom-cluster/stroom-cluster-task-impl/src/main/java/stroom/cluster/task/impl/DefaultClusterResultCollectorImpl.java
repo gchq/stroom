@@ -18,13 +18,13 @@ package stroom.cluster.task.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cluster.task.api.ClusterResultCollector;
-import stroom.docref.SharedObject;
 import stroom.cluster.task.api.ClusterCallEntry;
+import stroom.cluster.task.api.ClusterResultCollector;
 import stroom.cluster.task.api.ClusterTask;
 import stroom.cluster.task.api.CollectorId;
 import stroom.cluster.task.api.CollectorIdFactory;
 import stroom.cluster.task.api.DefaultClusterResultCollector;
+import stroom.docref.SharedObject;
 
 import java.util.Iterator;
 import java.util.Map;

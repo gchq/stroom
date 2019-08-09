@@ -17,8 +17,8 @@
 package stroom.pipeline.shared.data;
 
 import stroom.docref.HasDisplayValue;
-import stroom.util.shared.HasType;
 import stroom.docref.SharedObject;
+import stroom.util.shared.HasType;
 
 import java.util.Arrays;
 import java.util.HashSet;

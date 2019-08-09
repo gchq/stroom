@@ -19,6 +19,7 @@ package stroom.data.store.util;
 import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
@@ -29,7 +30,6 @@ import stroom.meta.shared.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.data.shared.StreamTypeNames;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.StreamUtil;
 

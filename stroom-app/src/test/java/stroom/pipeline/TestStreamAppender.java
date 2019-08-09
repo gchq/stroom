@@ -19,11 +19,11 @@ package stroom.pipeline;
 
 import org.junit.jupiter.api.Test;
 import stroom.data.store.api.InputStreamProvider;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.FindMetaCriteria;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.StreamUtil;
 

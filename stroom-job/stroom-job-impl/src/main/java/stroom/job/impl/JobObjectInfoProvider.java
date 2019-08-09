@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.job.shared.Job;
-import stroom.job.shared.Job;
 
 class JobObjectInfoProvider implements ObjectInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobObjectInfoProvider.class);

@@ -27,8 +27,8 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeAction;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
-import stroom.explorer.shared.TreeStructure;
 import stroom.explorer.shared.HasNodeState.NodeState;
+import stroom.explorer.shared.TreeStructure;
 
 import java.util.ArrayList;
 import java.util.List;

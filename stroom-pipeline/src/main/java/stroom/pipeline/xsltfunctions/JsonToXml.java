@@ -27,8 +27,8 @@ import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import stroom.util.shared.Severity;
 import stroom.pipeline.xml.converter.json.JSONParser;
+import stroom.util.shared.Severity;
 
 import java.io.IOException;
 import java.io.StringReader;

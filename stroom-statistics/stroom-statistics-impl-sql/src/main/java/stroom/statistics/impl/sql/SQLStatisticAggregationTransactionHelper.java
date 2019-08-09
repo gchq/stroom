@@ -34,7 +34,6 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Pattern;
 
 @Singleton
 public class SQLStatisticAggregationTransactionHelper {

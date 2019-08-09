@@ -17,6 +17,7 @@
 package stroom.data.store.mock;
 
 import org.junit.jupiter.api.Test;
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Source;
@@ -25,7 +26,6 @@ import stroom.meta.mock.MockMetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
-import stroom.data.shared.StreamTypeNames;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;

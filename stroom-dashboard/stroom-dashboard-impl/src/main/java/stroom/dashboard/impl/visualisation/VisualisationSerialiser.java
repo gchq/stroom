@@ -7,8 +7,8 @@ import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.util.shared.DocRefs;
-import stroom.util.xml.XMLMarshallerUtil;
 import stroom.util.string.EncodingUtil;
+import stroom.util.xml.XMLMarshallerUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.inject.Inject;

@@ -26,9 +26,9 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.item.client.StringListBox;
 import stroom.data.client.presenter.DataTypeUiManager;
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
+import stroom.item.client.StringListBox;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {

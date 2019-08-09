@@ -18,23 +18,23 @@
 package stroom.pipeline.xml.converter;
 
 import stroom.cache.MockSchemaPool;
-import stroom.pipeline.cache.SchemaLoaderImpl;
-import stroom.pipeline.cache.SchemaPool;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.memory.MemoryPersistence;
 import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.cache.SchemaLoaderImpl;
+import stroom.pipeline.cache.SchemaPool;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.SchemaFilter;
 import stroom.pipeline.state.PipelineContext;
-import stroom.security.mock.MockSecurityContext;
-import stroom.security.api.SecurityContext;
 import stroom.pipeline.xml.converter.ds3.DS3ParserFactory;
 import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.pipeline.xmlschema.XmlSchemaSerialiser;
 import stroom.pipeline.xmlschema.XmlSchemaStore;
 import stroom.pipeline.xmlschema.XmlSchemaStoreImpl;
+import stroom.security.api.SecurityContext;
+import stroom.security.mock.MockSecurityContext;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 
 public class SchemaFilterFactory {

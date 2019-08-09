@@ -18,11 +18,14 @@
 package stroom.receive.rules.client.gin;
 
 import stroom.core.client.gin.PluginModule;
+import stroom.receive.rules.client.DataRetentionPolicyPlugin;
 import stroom.receive.rules.client.RuleSetPlugin;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
+import stroom.receive.rules.client.presenter.EditExpressionPresenter;
+import stroom.receive.rules.client.presenter.EditExpressionPresenter.EditExpressionView;
 import stroom.receive.rules.client.presenter.FieldEditPresenter;
 import stroom.receive.rules.client.presenter.FieldEditPresenter.FieldEditView;
 import stroom.receive.rules.client.presenter.RulePresenter;
@@ -30,13 +33,10 @@ import stroom.receive.rules.client.presenter.RulePresenter.RuleView;
 import stroom.receive.rules.client.presenter.RuleSetSettingsPresenter;
 import stroom.receive.rules.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
 import stroom.receive.rules.client.view.DataRetentionPolicyViewImpl;
+import stroom.receive.rules.client.view.DataRetentionRuleViewImpl;
 import stroom.receive.rules.client.view.EditExpressionViewImpl;
 import stroom.receive.rules.client.view.FieldEditViewImpl;
 import stroom.receive.rules.client.view.RuleSetSettingsViewImpl;
-import stroom.receive.rules.client.DataRetentionPolicyPlugin;
-import stroom.receive.rules.client.presenter.EditExpressionPresenter;
-import stroom.receive.rules.client.presenter.EditExpressionPresenter.EditExpressionView;
-import stroom.receive.rules.client.view.DataRetentionRuleViewImpl;
 import stroom.receive.rules.client.view.RuleViewImpl;
 
 public class PolicyModule extends PluginModule {

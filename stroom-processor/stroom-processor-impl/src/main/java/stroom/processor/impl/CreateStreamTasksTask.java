@@ -16,10 +16,10 @@
 
 package stroom.processor.impl;
 
+import stroom.task.api.ServerTask;
 import stroom.task.shared.SimpleThreadPool;
 import stroom.task.shared.ThreadPool;
 import stroom.util.shared.VoidResult;
-import stroom.task.api.ServerTask;
 
 public class CreateStreamTasksTask extends ServerTask<VoidResult> {
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(3);

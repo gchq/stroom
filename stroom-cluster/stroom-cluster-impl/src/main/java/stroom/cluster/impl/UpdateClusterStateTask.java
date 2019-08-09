@@ -17,8 +17,8 @@
 package stroom.cluster.impl;
 
 import stroom.cluster.api.ClusterState;
-import stroom.util.shared.VoidResult;
 import stroom.task.api.ServerTask;
+import stroom.util.shared.VoidResult;
 
 class UpdateClusterStateTask extends ServerTask<VoidResult> {
     private ClusterState clusterState;

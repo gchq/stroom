@@ -4,15 +4,14 @@
 package stroom.index.impl.db.jooq.tables.records;
 
 
-import javax.annotation.Generated;
-
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record14;
 import org.jooq.Row14;
 import org.jooq.impl.UpdatableRecordImpl;
-
 import stroom.index.impl.db.jooq.tables.IndexShard;
+
+import javax.annotation.Generated;
 
 
 /**

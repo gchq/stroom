@@ -16,8 +16,8 @@
 
 package stroom.search.impl;
 
-import stroom.search.api.EventRefs;
 import stroom.query.common.v2.Payload;
+import stroom.search.api.EventRefs;
 
 public class EventRefsPayload implements Payload {
     private static final long serialVersionUID = 5271438218782010968L;

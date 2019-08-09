@@ -1,8 +1,8 @@
 package stroom.config.global.impl;
 
 import com.google.inject.AbstractModule;
-import stroom.config.global.api.ListGlobalConfigAction;
 import stroom.config.global.api.FetchGlobalConfigAction;
+import stroom.config.global.api.ListGlobalConfigAction;
 import stroom.config.global.api.UpdateGlobalConfigAction;
 import stroom.task.api.TaskHandlerBinder;
 

@@ -17,8 +17,6 @@
 package stroom.data.store.api;
 
 import java.io.Closeable;
-import java.io.IOException;
-import java.io.OutputStream;
 
 public interface OutputStreamProvider extends Closeable {
     SegmentOutputStream get();

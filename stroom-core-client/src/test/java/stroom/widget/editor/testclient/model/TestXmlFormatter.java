@@ -19,8 +19,8 @@ package stroom.widget.editor.testclient.model;
 
 import org.junit.jupiter.api.Test;
 import stroom.editor.client.model.XmlFormatter;
-import stroom.test.common.ComparisonHelper;
 import stroom.test.StroomCoreClientTestFileUtil;
+import stroom.test.common.ComparisonHelper;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;

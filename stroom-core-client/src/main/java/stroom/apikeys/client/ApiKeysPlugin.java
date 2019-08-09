@@ -9,12 +9,12 @@ import stroom.hyperlink.client.Hyperlink.Builder;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.hyperlink.client.HyperlinkType;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.ui.config.client.UiConfigCache;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class ApiKeysPlugin extends NodeToolsPlugin {

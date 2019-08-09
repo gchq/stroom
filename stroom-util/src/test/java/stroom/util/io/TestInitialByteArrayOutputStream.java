@@ -18,8 +18,6 @@ package stroom.util.io;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.io.CloseableUtil;
-import stroom.util.io.InitialByteArrayOutputStream;
 
 import java.io.IOException;
 

@@ -18,8 +18,8 @@ package stroom.pipeline.stepping;
 
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Element;
-import stroom.pipeline.writer.XMLWriter;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.writer.XMLWriter;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Indicators;
 

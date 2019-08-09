@@ -2,9 +2,9 @@ package stroom.config.global.impl;
 
 import stroom.config.global.api.ConfigProperty;
 import stroom.config.global.api.ListGlobalConfigAction;
+import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;
-import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 import java.util.List;

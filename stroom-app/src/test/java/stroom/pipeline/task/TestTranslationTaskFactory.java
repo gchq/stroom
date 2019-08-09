@@ -20,8 +20,9 @@ package stroom.pipeline.task;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import stroom.data.store.api.Store;
 import stroom.core.dataprocess.PipelineDataProcessorTaskExecutor;
+import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -35,7 +36,6 @@ import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.impl.DataProcessorTask;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.processor.shared.ProcessorTask;
-import stroom.data.shared.StreamTypeNames;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;

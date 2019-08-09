@@ -22,12 +22,12 @@ import org.slf4j.MarkerFactory;
 import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ServiceName;
+import stroom.cluster.task.api.ClusterTask;
+import stroom.cluster.task.api.CollectorId;
 import stroom.docref.SharedObject;
 import stroom.node.api.NodeInfo;
 import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
-import stroom.cluster.task.api.ClusterTask;
-import stroom.cluster.task.api.CollectorId;
 import stroom.task.shared.TaskId;
 
 import javax.inject.Inject;

@@ -16,10 +16,10 @@
 
 package stroom.cluster.impl;
 
-import stroom.node.shared.ClusterNodeInfo;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
 import stroom.node.api.NodeInfo;
+import stroom.node.shared.ClusterNodeInfo;
 
 import javax.inject.Inject;
 import java.util.Collections;

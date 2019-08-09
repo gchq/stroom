@@ -17,9 +17,8 @@
 
 package stroom.pipeline.xslt;
 
-import stroom.pipeline.shared.XsltDoc;
 import stroom.docref.DocRef;
-import stroom.pipeline.xslt.XsltStore;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;

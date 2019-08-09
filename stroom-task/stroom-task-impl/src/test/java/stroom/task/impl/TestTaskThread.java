@@ -18,8 +18,6 @@ package stroom.task.impl;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.task.impl.TaskThread;
-import stroom.task.impl.TaskThreadInfoUtil;
 
 import java.util.ArrayList;
 import java.util.List;

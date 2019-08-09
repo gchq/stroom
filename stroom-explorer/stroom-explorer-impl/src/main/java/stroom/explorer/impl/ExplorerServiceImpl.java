@@ -35,7 +35,6 @@ import stroom.explorer.shared.HasNodeState;
 import stroom.explorer.shared.HasNodeState.NodeState;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardTagNames;
-import stroom.index.shared.IndexDoc;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.PermissionException;

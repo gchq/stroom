@@ -4,14 +4,13 @@
 package stroom.config.impl.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import org.jooq.Identity;
 import org.jooq.UniqueKey;
 import org.jooq.impl.Internal;
-
 import stroom.config.impl.db.jooq.tables.Config;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
+
+import javax.annotation.Generated;
 
 
 /**

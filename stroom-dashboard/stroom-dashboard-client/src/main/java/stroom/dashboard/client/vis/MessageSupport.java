@@ -23,10 +23,10 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.Window;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.dashboard.client.vis.PostMessage.FrameListener;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.Hyperlink.Builder;
 import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.dashboard.client.vis.PostMessage.FrameListener;
 import stroom.util.client.JSONUtil;
 
 import java.util.HashMap;

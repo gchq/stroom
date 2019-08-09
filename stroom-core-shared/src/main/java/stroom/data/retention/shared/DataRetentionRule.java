@@ -16,8 +16,8 @@
 
 package stroom.data.retention.shared;
 
-import stroom.query.api.v2.ExpressionOperator;
 import stroom.docref.SharedObject;
+import stroom.query.api.v2.ExpressionOperator;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

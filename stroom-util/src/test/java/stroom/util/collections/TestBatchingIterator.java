@@ -2,7 +2,6 @@ package stroom.util.collections;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.collections.BatchingIterator;
 
 import java.util.List;
 import java.util.stream.Collectors;
