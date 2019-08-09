@@ -39,6 +39,9 @@ public final class Term extends Item {
 
     public void setCondition(final Condition condition) {
         this.condition = condition;
+        if (Condition.CONTAINS.equals(this.condition)) {
+            this.condition = Condition.EQUALS;
+        }
     }
 
     public String getValue() {

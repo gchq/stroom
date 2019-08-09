@@ -89,7 +89,7 @@ class TestStoredQueryDao {
         storedQueryDao.create(refQuery);
 
         final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.OR);
-        root.addTerm("Some field", Condition.CONTAINS, "Some value");
+        root.addTerm("Some field", Condition.EQUALS, "Some value");
 
         LOGGER.info(root.toString());
 
@@ -138,7 +138,7 @@ class TestStoredQueryDao {
                 "    \"children\" : [ {\n" +
                 "      \"type\" : \"term\",\n" +
                 "      \"field\" : \"Some field\",\n" +
-                "      \"condition\" : \"CONTAINS\",\n" +
+                "      \"condition\" : \"EQUALS\",\n" +
                 "      \"value\" : \"Some value\",\n" +
                 "      \"enabled\" : true\n" +
                 "    } ],\n" +

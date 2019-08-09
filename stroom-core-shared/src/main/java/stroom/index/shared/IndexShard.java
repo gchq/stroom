@@ -67,7 +67,7 @@ public class IndexShard implements SharedObject {
     /**
      * Status
      */
-    private volatile IndexShardStatus status = IndexShardStatus.CLOSED;
+    private volatile IndexShardStatus status = IndexShardStatus.NEW;
     private Long fileSize;
     private String indexVersion;
 
@@ -249,6 +249,8 @@ public class IndexShard implements SharedObject {
         CLOSING("Closing", 10),
         // Opening - We are in the process of opening an indexUuid shard.
         OPENING("Opening", 20),
+        // New - We are a brand new shard that hasn't been opened yet.
+        NEW("New", 30),
         // Deleted - Used to mark shard for deletion
         DELETED("Deleted", 99),
         // Corrupt - Used to mark shard has been corrupted

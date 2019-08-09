@@ -47,7 +47,7 @@ class TestHessian {
                         new ExpressionOperator.Builder()
                                 .addTerm("test", Condition.BETWEEN, "test")
                                 .build())
-                .addTerm("test", Condition.CONTAINS, "test")
+                .addTerm("test", Condition.EQUALS, "test")
                 .build();
 
         final Query query = new Query.Builder()

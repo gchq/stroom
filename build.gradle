@@ -39,13 +39,12 @@ plugins {
 //    id 'nebula.lint' version '10.4.2'
 }
 
-wrapper{
+wrapper {
     gradleVersion = '5.5.1'
 }
 
-apply plugin: 'com.jfrog.bintray'
-apply plugin: 'de.undercouch.download'
 apply plugin: 'ca.cutterslade.analyze'
+apply plugin: 'de.undercouch.download'
 
 if (!JavaVersion.current().isJava12()) {
     throw new GradleException("This build must be run with Java 12 (current = " + JavaVersion.current() + ")")
@@ -88,7 +87,7 @@ ext.versions = [
         stroomAuth        : 'v1.0-beta.8',
         stroomExpression  : 'v2.0.8',
         stroomProxyApi    : 'v5.1.2',
-        stroomQuery       : 'v4.0-beta.35', // same version for both stroom-query-api and stroom-query-common
+        stroomQuery       : 'v4.0-beta.36', // same version for both stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
@@ -119,12 +118,12 @@ ext.versions = [
         rxjava            : '2.1.10',
         swagger           : '1.5.21',
         unirest           : '1.4.9',
-        zookeeper         :         '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
+        zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
         zzDUMMYzz         : 'makes sorting easier'
 ]
 
 // Dependency strings for use in sub projects
-// If the dependency version is controlled by a BOM, e.g. dropwizard-core, then the 
+// If the dependency version is controlled by a BOM, e.g. dropwizard-core, then the
 // dependency is specified with no version. Use of the BOMs is configured further down,
 // search for 'platform'.
 ext.libs = [
@@ -264,23 +263,23 @@ def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations
 
 //A set of content packs to download in the task downloadStroomContent
 ext.contentPacks = [
-    'core-xml-schemas': 'v2.0',
-    'event-logging-xml-schema': 'v3.2.3',
-    'internal-dashboards': 'v1.1',
-    'internal-statistics-sql': 'v2.1',
-    'internal-statistics-stroom-stats': 'v2.1',
-    'standard-pipelines': 'v0.1',
-    'stroom-101': 'v1.0',
-    'stroom-logs': 'v2.0-alpha.5',
-    'template-pipelines': 'v0.2'
+        'core-xml-schemas'                : 'v2.0',
+        'event-logging-xml-schema'        : 'v3.2.3',
+        'internal-dashboards'             : 'v1.1',
+        'internal-statistics-sql'         : 'v2.1',
+        'internal-statistics-stroom-stats': 'v2.1',
+        'standard-pipelines'              : 'v0.1',
+        'stroom-101'                      : 'v1.0',
+        'stroom-logs'                     : 'v2.0-alpha.5',
+        'template-pipelines'              : 'v0.2'
 ]
 
 //defines a list of gradle projects that we will publish with maven/bintray
 def projectsToBePublished = subprojects.findAll { project ->
     project.path in [
-        ':stroom-util',
-        ':stroom-util-shared',
-        'zzDUMMYzz to ease sorting'
+            ':stroom-util',
+            ':stroom-util-shared',
+            'zzDUMMYzz to ease sorting'
     ]
 }
 
@@ -303,7 +302,7 @@ def dropwizardBomSlf4jVersion = null
 
 //Configuration applicable to all sub projects
 subprojects {
-    //println "Configuring subproject ${project.path}"
+    //println "Configuring subproject ${project.name}"
 
     apply plugin: 'java'
     apply plugin: 'idea'
@@ -345,7 +344,7 @@ subprojects {
                     eachDependency { DependencyResolveDetails details ->
                         if (dropwizardBomSlf4jVersion == null) {
                             if (details.requested.group == 'org.slf4j' && details.requested.name == "log4j-over-slf4j") {
-                            //if (details.requested.group == 'org.slf4j') {
+                                //if (details.requested.group == 'org.slf4j') {
                                 dropwizardBomSlf4jVersion = details.getTarget().getVersion()
                                 println "Slf4j version = $dropwizardBomSlf4jVersion ${details.requested}"
                             }
@@ -362,20 +361,20 @@ subprojects {
                 // Stop stroom libs from dragging in a different version of dropwizard
                 // Currently commented out in the hope the dropwiz BOM will solve things
                 //eachDependency { DependencyResolveDetails details ->
-                    //if (details.requested.group == 'io.dropwizard') {
-                        //details.useVersion versions.dropwizard
-                    //}
-                    //if (details.requested.group == 'io.dropwizard.metrics') {
-                        //details.useVersion versions.dropwizard_metrics
-                    //}
+                //if (details.requested.group == 'io.dropwizard') {
+                //details.useVersion versions.dropwizard
+                //}
+                //if (details.requested.group == 'io.dropwizard.metrics') {
+                //details.useVersion versions.dropwizard_metrics
+                //}
                 //}
 
                 forcedModules = [
-                    // This is how to force a dep to a specific version
+                        // This is how to force a dep to a specific version
 
-                    // Curator will drag in a more recent version of zk but will support older versions so
-                    // substitute it here. See NOTE in versions block above.
-                    libs.zookeeper
+                        // Curator will drag in a more recent version of zk but will support older versions so
+                        // substitute it here. See NOTE in versions block above.
+                        libs.zookeeper
                 ]
             }
         }
@@ -512,7 +511,7 @@ subprojects {
 //}
 //tasks.build.dependsOn analyzeJavaLibraryDependencies
 //tasks.build.dependsOn analyzeJavaLibraryTestDependencies
-//    
+//
     analyzeClassesDependencies {
         justWarn = true
     }
@@ -522,13 +521,11 @@ subprojects {
     }
 
 
-
 }
 
-//configures only those projects in publishedProjectsPaths
+// configures only those projects in publishedProjectsPaths
 configure(projectsToBePublished) {
-
-    println "Configuring ${project.path} for publishing"
+    println "Configuring ${project.name} for publishing"
 
     apply plugin: 'maven'
     apply plugin: 'maven-publish'
@@ -587,18 +584,18 @@ configure(projectsToBePublished) {
         }
     }
 
-    //configuration for the bintray plugin for uploading maven artefacts to bintray
-    //see https://github.com/bintray/gradle-bintray-plugin
-    //run task bintrayUpload to push the files, assuming BINTRAY_USER/KEY are set as env vars
+    // configuration for the bintray plugin for uploading maven artifacts to bintray
+    // see https://github.com/bintray/gradle-bintray-plugin
+    // run task bintrayUpload to push the files, assuming BINTRAY_USER/KEY are set as env vars
     bintray {
-        //Must never write these to log or system out
-        user = System.getenv('BINTRAY_USER') //set in Travis UI
-        key = System.getenv('BINTRAY_KEY') //set in Travis UI
+        // Must never write these to log or system out
+        user = System.getenv('BINTRAY_USER') // set in Travis UI
+        key = System.getenv('BINTRAY_KEY') // set in Travis UI
 
-        //The maven plugin publications to push to bintray
+        // The maven plugin publications to push to bintray
         publications = ['mavenJava']
 
-        //immediately make the artefacts public
+        // immediately make the artifacts public
         publish = true
 
         pkg {
@@ -613,8 +610,8 @@ configure(projectsToBePublished) {
                 released = new Date()
                 vcsTag = "${versions.stroom}"
                 gpg {
-                    //Bintray will self-sign the files
-                    sign = true //Determines whether to GPG sign the files. The default is false
+                    // Bintray will self-sign the files
+                    sign = true // Determines whether to GPG sign the files. The default is false
                 }
             }
         }
@@ -735,16 +732,16 @@ task dependenciesPng() {
     inputs.files subprojects.configurations.compile
     outputs.files compileDepsDot
     doFirst {
-        if(!reportsDir.exists()) reportsDir.mkdirs()
+        if (!reportsDir.exists()) reportsDir.mkdirs()
     }
     doLast {
         def dotGraph = "digraph compile{" + System.getProperty("line.separator")
         Set deps = [] as Set
-        subprojects.each {subproject ->
-            subproject.configurations.compile.dependencies.each {dependency ->
-                if(dependency instanceof ProjectDependency) {
+        subprojects.each { subproject ->
+            subproject.configurations.compile.dependencies.each { dependency ->
+                if (dependency instanceof ProjectDependency) {
                     String dep = "\"$subproject.name\" -> \"$dependency.name\";"
-                    if (deps.add(dep)){ // if was not there before - avoid duplicates
+                    if (deps.add(dep)) { // if was not there before - avoid duplicates
                         dotGraph += dep + System.getProperty("line.separator")
                     }
                 }

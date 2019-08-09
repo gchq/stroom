@@ -33,20 +33,29 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.NewElementView> {
     private PipelineElementType elementType;
+    private PopupUiHandlers popupUiHandlers;
 
     @Inject
     public NewElementPresenter(final EventBus eventBus, final NewElementView view) {
         super(eventBus, view);
+    }
 
-        registerHandler(view.getIdBox().addKeyDownHandler(event -> {
+    @Override
+    protected void onBind() {
+        super.onBind();
+
+        registerHandler(getView().getIdBox().addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-                hide();
+                if (popupUiHandlers != null) {
+                    popupUiHandlers.onHideRequest(false, true);
+                }
             }
         }));
     }
 
     public void show(final PipelineElementType elementType, final PopupUiHandlers popupUiHandlers) {
         this.elementType = elementType;
+        this.popupUiHandlers = popupUiHandlers;
 
         getView().getId().setText(ModelStringUtil.toCamelCase(elementType.getType()));
 

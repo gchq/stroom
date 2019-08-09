@@ -85,9 +85,12 @@ public class IndexShardManagerImpl implements IndexShardManager {
         this.taskManager = taskManager;
         this.security = security;
 
-        allowedStateTransitions.put(IndexShardStatus.CLOSED, Set.of(IndexShardStatus.OPEN, IndexShardStatus.OPENING, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.OPEN, Set.of(IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
+        // Ensure all but deleted and corrupt states can be set to closed on clean.
+        allowedStateTransitions.put(IndexShardStatus.NEW, Set.of(IndexShardStatus.OPENING, IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
         allowedStateTransitions.put(IndexShardStatus.OPENING, Set.of(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
+        allowedStateTransitions.put(IndexShardStatus.OPEN, Set.of(IndexShardStatus.CLOSING, IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
+        allowedStateTransitions.put(IndexShardStatus.CLOSING, Set.of(IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
+        allowedStateTransitions.put(IndexShardStatus.CLOSED, Set.of(IndexShardStatus.OPENING, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
         allowedStateTransitions.put(IndexShardStatus.DELETED, Collections.emptySet());
         allowedStateTransitions.put(IndexShardStatus.CORRUPT, Collections.singleton(IndexShardStatus.DELETED));
     }
@@ -313,14 +316,14 @@ public class IndexShardManagerImpl implements IndexShardManager {
                 if (indexShard != null) {
                     // Only allow certain state transitions.
                     final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
-                    if (allowed.contains(status)) {
-                        indexShardService.setStatus(indexShard.getId(), status);
+                    if (allowed == null) {
+                        throw new RuntimeException("No state transitions are defined for " + indexShard.getStatus());
                     } else {
-                        LOGGER.warn(() -> String.format("Disallowed state transition for shard %d %s -> %s (allowed: %s)",
-                                indexShardId,
-                                indexShard.getStatus(),
-                                status,
-                                allowed));
+                        if (allowed.contains(status)) {
+                            indexShardService.setStatus(indexShard.getId(), status);
+                        } else {
+                            throw new RuntimeException("State transition from " + indexShard.getStatus() + " to " + status + " was attempted but is not allowed");
+                        }
                     }
                 }
             } catch (final RuntimeException e) {

@@ -259,20 +259,17 @@ public class _V07_00_00_IndexField implements HasDisplayValue, Comparable<_V07_0
             switch (fieldType) {
                 case ID:
                     conditions.add(Condition.EQUALS);
-                    conditions.add(Condition.CONTAINS);
                     conditions.add(Condition.IN);
                     conditions.add(Condition.IN_DICTIONARY);
                     break;
                 case FIELD:
                     conditions.add(Condition.EQUALS);
-                    conditions.add(Condition.CONTAINS);
                     conditions.add(Condition.IN);
                     conditions.add(Condition.IN_DICTIONARY);
                     break;
 
                 case NUMERIC_FIELD:
                     conditions.add(Condition.EQUALS);
-                    conditions.add(Condition.CONTAINS);
                     conditions.add(Condition.GREATER_THAN);
                     conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
                     conditions.add(Condition.LESS_THAN);
@@ -284,7 +281,6 @@ public class _V07_00_00_IndexField implements HasDisplayValue, Comparable<_V07_0
 
                 case DATE_FIELD:
                     conditions.add(Condition.EQUALS);
-                    conditions.add(Condition.CONTAINS);
                     conditions.add(Condition.GREATER_THAN);
                     conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
                     conditions.add(Condition.LESS_THAN);

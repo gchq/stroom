@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1214** : Fixed issue where the max results setting in dashboard tables was not always being obeyed. Also fixed some dashboard table result page size issues.
+
+* Issue **#1238** : During proxy clean task we no longer show a failed attempt to delete an empty directory as an error as this condition is expected.
+
+* Issue **#1237** : Fixed issue where explorer model requests were failing outside of user sessions, e.g. when we want to find folder descendants for processing.
+
+* Issue **#1230** : Fix test.
+
+* Issue **#1230** : Search expressions no longer have the `contains` condition. 
+
+* Issue **#1220** : Fixed attempt to open newly created index shards as if they were old existing shards.
+
+* Issue **#1232** : Fixed handling of enter key on pipeline element editor dialog.
+
+* Issue **#1229** : Fixed issue where users needed `Read` permission on an index instead of just `Use` permission to search it.
+
 * Issue **#1207** : Removed task id from meta to reduce DB size and complexity especially given the fact tasks are transient. Superseded output is now found by querying the processor task service when new output is written rather than using task ids on meta.
 
 * Uplift HBase to 2.1.5 and refactor code accordingly
