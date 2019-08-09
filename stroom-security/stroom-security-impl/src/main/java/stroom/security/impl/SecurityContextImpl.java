@@ -12,10 +12,12 @@ import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserToken;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+@Singleton
 class SecurityContextImpl implements SecurityContext {
     private final ThreadLocal<Boolean> checkTypeThreadLocal = ThreadLocal.withInitial(() -> Boolean.TRUE);
 
@@ -174,10 +176,10 @@ class SecurityContextImpl implements SecurityContext {
 
     private boolean hasUserAppPermission(final User userRef, final String permission) {
         final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
-        if (userAppPermissions == null) {
-            return false;
+        if (userAppPermissions != null) {
+            return userAppPermissions.getUserPermissons().contains(permission);
         }
-        return userAppPermissions.getUserPermissons().contains(permission);
+        return false;
     }
 
     @Override
@@ -195,12 +197,13 @@ class SecurityContextImpl implements SecurityContext {
             throw new AuthenticationException("No user is currently logged in");
         }
 
-        final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userRef.getUuid());
-        if (userDocumentPermissions == null) {
-            return false;
+        // If we are currently allowing users with only `Use` permission to `Read` (elevate permissions) then test for `Use` instead of `Read`.
+        String perm = permission;
+        if (CurrentUserState.isElevatePermissions() && DocumentPermissionNames.READ.equals(perm)) {
+            perm = DocumentPermissionNames.USE;
         }
 
-        return hasDocumentPermission(userRef, documentUuid, permission);
+        return hasDocumentPermission(userRef, documentUuid, perm);
     }
 
     private boolean hasDocumentPermission(final User userRef, final String documentUuid, final String permission) {
@@ -223,11 +226,10 @@ class SecurityContextImpl implements SecurityContext {
 
     private boolean hasUserDocumentPermission(final String userUuid, final String documentUuid, final String permission) {
         final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userUuid);
-        if (userDocumentPermissions == null) {
-            return false;
+        if (userDocumentPermissions != null) {
+            return userDocumentPermissions.hasDocumentPermission(documentUuid, permission);
         }
-
-        return userDocumentPermissions.hasDocumentPermission(documentUuid, permission);
+        return false;
     }
 
     /**

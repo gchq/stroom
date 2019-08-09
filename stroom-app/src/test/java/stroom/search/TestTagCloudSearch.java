@@ -145,7 +145,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
     private ExpressionOperator.Builder buildExpression(final String user, final String from,
                                                        final String to) {
         final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
-        operator.addTerm("UserId", Condition.CONTAINS, user);
+        operator.addTerm("UserId", Condition.EQUALS, user);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
 
         return operator;

@@ -22,37 +22,36 @@ class ExplorerSessionImpl implements ExplorerSession {
 
     @Override
     public Optional<Long> getMinExplorerTreeModelBuildTime() {
-        final HttpServletRequest request = getRequest();
-        if (request == null) {
-            LOGGER.debug("Request holder has no current request");
-            return Optional.empty();
+        try {
+            return getSession().map(session -> (Long) session.getAttribute(MIN_EXPLORER_TREE_MODEL_BUILD_TIME));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
         }
-
-        final HttpSession session = request.getSession();
-        final Object object = session.getAttribute(MIN_EXPLORER_TREE_MODEL_BUILD_TIME);
-        return Optional.ofNullable((Long) object);
+        return Optional.empty();
     }
 
     @Override
     public void setMinExplorerTreeModelBuildTime(final long buildTime) {
-        final HttpServletRequest request = getRequest();
-        if (request == null) {
-            LOGGER.debug("Request holder has no current request");
-
-        } else {
-            final HttpSession session = request.getSession();
-            session.setAttribute(MIN_EXPLORER_TREE_MODEL_BUILD_TIME, buildTime);
+        try {
+            getSession().ifPresent(session -> session.setAttribute(MIN_EXPLORER_TREE_MODEL_BUILD_TIME, buildTime));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
         }
     }
 
-    private HttpServletRequest getRequest() {
-        if (httpServletRequestProvider != null) {
-            try {
-                return httpServletRequestProvider.get();
-            } catch (final RuntimeException e) {
-                // Ignore.
+    private Optional<HttpSession> getSession() {
+        try {
+            if (httpServletRequestProvider != null) {
+                final HttpServletRequest request = httpServletRequestProvider.get();
+                if (request == null) {
+                    LOGGER.debug("Request provider has no current request");
+                } else {
+                    return Optional.ofNullable(request.getSession());
+                }
             }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
         }
-        return null;
+        return Optional.empty();
     }
 }

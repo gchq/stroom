@@ -256,7 +256,7 @@ public class StreamEventLog {
     private void appendTerm(final List<BaseAdvancedQueryItem> items, final ExpressionTerm expressionTerm) {
         switch (expressionTerm.getCondition()) {
             case CONTAINS:
-                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.CONTAINS, expressionTerm.getValue()));
+                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, expressionTerm.getValue()));
                 break;
             case EQUALS:
                 items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, expressionTerm.getValue()));

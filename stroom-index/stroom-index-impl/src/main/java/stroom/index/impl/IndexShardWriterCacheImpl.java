@@ -53,6 +53,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -68,6 +69,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     private final Map<Long, IndexShardWriter> openWritersByShardId = new ConcurrentHashMap<>();
     private final Map<IndexShardKey, IndexShardWriter> openWritersByShardKey = new ConcurrentHashMap<>();
+    private final StripedLock existingShardQueryLocks = new StripedLock();
     private final AtomicLong closing = new AtomicLong();
     private final Runner asyncRunner;
     private final Runner syncRunner;
@@ -140,19 +142,27 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
         criteria.getIndexUuidSet().add(indexShardKey.getIndexUuid());
         criteria.getPartition().setString(indexShardKey.getPartition());
-        final List<IndexShard> list = indexShardService.find(criteria);
-        for (final IndexShard indexShard : list) {
-            // Look for non deleted, non full, non corrupt index shards.
-            if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
-                // Get the index fields.
-                final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
-                if (indexStructure != null && indexShard.getDocumentCount() < indexStructure.getIndex().getMaxDocsPerShard()) {
-                    final IndexShardWriter indexShardWriter = openWriter(indexShardKey, indexShard);
-                    if (indexShardWriter != null) {
-                        return indexShardWriter;
+
+        // Don't allow us to try to open more than one existing shard for the same index, node and partition at the same time.
+        final Lock lock = existingShardQueryLocks.getLockForKey(criteria);
+        lock.lock();
+        try {
+            final List<IndexShard> list = indexShardService.find(criteria);
+            for (final IndexShard indexShard : list) {
+                // Look for non deleted, non full, non corrupt index shards.
+                if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
+                    // Get the index fields.
+                    final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+                    if (indexStructure != null && indexShard.getDocumentCount() < indexStructure.getIndex().getMaxDocsPerShard()) {
+                        final IndexShardWriter indexShardWriter = openWriter(indexShardKey, indexShard);
+                        if (indexShardWriter != null) {
+                            return indexShardWriter;
+                        }
                     }
                 }
             }
+        } finally {
+            lock.unlock();
         }
 
         return null;

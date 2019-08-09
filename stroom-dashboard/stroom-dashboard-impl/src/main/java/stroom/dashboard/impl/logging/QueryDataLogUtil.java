@@ -59,7 +59,7 @@ public class QueryDataLogUtil {
                         appendTerm(items, field, TermCondition.EQUALS, value);
                         break;
                     case CONTAINS:
-                        appendTerm(items, field, TermCondition.CONTAINS, value);
+                        appendTerm(items, field, TermCondition.EQUALS, value);
                         break;
                     case GREATER_THAN:
                         appendTerm(items, field, TermCondition.GREATER_THAN, value);
@@ -74,10 +74,10 @@ public class QueryDataLogUtil {
                         appendTerm(items, field, TermCondition.LESS_THAN_EQUAL_TO, value);
                         break;
                     case BETWEEN:
-                        appendTerm(items, field, TermCondition.CONTAINS, value);
+                        appendTerm(items, field, TermCondition.EQUALS, value);
                         break;
                     case IN:
-                        appendTerm(items, field, TermCondition.CONTAINS, value);
+                        appendTerm(items, field, TermCondition.EQUALS, value);
                         break;
                     case IN_DICTIONARY:
                         if (wordListProvider != null) {
@@ -95,14 +95,14 @@ public class QueryDataLogUtil {
                                     value += " (" + words + ")";
                                 }
 
-                                appendTerm(items, field, TermCondition.CONTAINS, value);
+                                appendTerm(items, field, TermCondition.EQUALS, value);
 
                             } else {
-                                appendTerm(items, field, TermCondition.CONTAINS, "dictionary: " + value);
+                                appendTerm(items, field, TermCondition.EQUALS, "dictionary: " + value);
                             }
 
                         } else {
-                            appendTerm(items, field, TermCondition.CONTAINS, "dictionary: " + value);
+                            appendTerm(items, field, TermCondition.EQUALS, "dictionary: " + value);
                         }
                         break;
                     case IN_FOLDER:
@@ -113,14 +113,14 @@ public class QueryDataLogUtil {
                                 if (words != null) {
                                     value += " (" + words + ")";
                                 }
-                                appendTerm(items, field, TermCondition.CONTAINS, value);
+                                appendTerm(items, field, TermCondition.EQUALS, value);
 
                             } else {
-                                appendTerm(items, field, TermCondition.CONTAINS, "folder: " + value);
+                                appendTerm(items, field, TermCondition.EQUALS, "folder: " + value);
                             }
 
                         } else {
-                            appendTerm(items, field, TermCondition.CONTAINS, "folder: " + value);
+                            appendTerm(items, field, TermCondition.EQUALS, "folder: " + value);
                         }
                         break;
                     case IS_DOC_REF: {
