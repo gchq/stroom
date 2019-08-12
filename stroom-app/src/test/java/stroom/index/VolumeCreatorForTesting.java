@@ -20,6 +20,7 @@ package stroom.index;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.index.impl.CreateVolumeDTO;
+import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
 import stroom.node.impl.NodeConfig;
@@ -40,12 +41,15 @@ class VolumeCreatorForTesting implements VolumeCreator {
 
     private final NodeConfig nodeConfig;
     private final IndexVolumeService volumeService;
+    private final IndexVolumeGroupService indexVolumeGroupService;
 
     @Inject
     VolumeCreatorForTesting(final NodeConfig nodeConfig,
-                            final IndexVolumeService volumeService) {
+                            final IndexVolumeService volumeService,
+                            final IndexVolumeGroupService indexVolumeGroupService) {
         this.nodeConfig = nodeConfig;
         this.volumeService = volumeService;
+        this.indexVolumeGroupService = indexVolumeGroupService;
     }
 
     private List<IndexVolume> getInitialVolumeList() {
@@ -68,6 +72,12 @@ class VolumeCreatorForTesting implements VolumeCreator {
     @Override
     public void setup() {
         try {
+            var initialVolumeGroupName = "Initial index volume group";
+            var existingGroup = indexVolumeGroupService.getAll().stream()
+                    .filter(indexVolumeGroup -> indexVolumeGroup.getName().equalsIgnoreCase(initialVolumeGroupName))
+                    .findFirst()
+                    .orElseGet(() -> indexVolumeGroupService.create(initialVolumeGroupName) );
+
             final List<IndexVolume> initialVolumeList = getInitialVolumeList();
             final List<IndexVolume> existingVolumes = volumeService.getAll();
             for (final IndexVolume volume : initialVolumeList) {
@@ -85,6 +95,7 @@ class VolumeCreatorForTesting implements VolumeCreator {
                     CreateVolumeDTO createVolumeDTO = new CreateVolumeDTO();
                     createVolumeDTO.setNodeName(volume.getNodeName());
                     createVolumeDTO.setPath(volume.getPath());
+                    createVolumeDTO.setIndexVolumeGroupId(existingGroup.getId());
                     volumeService.create(createVolumeDTO);
                 }
             }

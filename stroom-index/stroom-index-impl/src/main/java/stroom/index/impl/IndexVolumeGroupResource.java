@@ -27,8 +27,8 @@ public interface IndexVolumeGroupResource extends RestResource {
     Response getAll();
 
     @GET
-    @Path("/{name}")
-    Response get(@PathParam("name") String name);
+    @Path("/{id}")
+    Response get(@PathParam("id") String id);
 
     @POST
     Response create();
@@ -37,6 +37,6 @@ public interface IndexVolumeGroupResource extends RestResource {
     Response update(IndexVolumeGroup indexVolumeGroup);
 
     @DELETE
-    @Path("/{name}")
-    Response delete(@PathParam("name") String name);
+    @Path("/{id}")
+    Response delete(@PathParam("id") String id);
 }

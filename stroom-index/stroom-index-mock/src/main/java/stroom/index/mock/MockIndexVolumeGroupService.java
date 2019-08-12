@@ -35,14 +35,23 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
     }
 
     @Override
+    public IndexVolumeGroup create(String name) {
+        final IndexVolumeGroup group = new IndexVolumeGroup();
+        group.setName(name);
+        AuditUtil.stamp(TEST_USER, group);
+        groups.add(group);
+        return group;
+    }
+
+    @Override
     public IndexVolumeGroup update(IndexVolumeGroup indexVolumeGroup) {
         return null;
     }
 
     @Override
-    public IndexVolumeGroup get(final String name) {
+    public IndexVolumeGroup get(int id) {
         return groups.stream()
-                .filter(g -> name.equals(g.getName()))
+                .filter(g -> id == g.getId())
                 .findFirst()
                 .orElse(null);
     }
