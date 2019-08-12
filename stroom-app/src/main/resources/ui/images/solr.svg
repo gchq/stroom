@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="81.627068"
+     height="89.375465"
+     viewBox="0 0 81.627068 89.375463">
+    <path
+            d="m 69.502,14.149599 -44,47.569333 55.29733,-25.512 C 79.16333,27.766932 75.158,20.177599 69.502,14.149599"
+            style="fill:#da3522;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.33333325"
+    />
+    <path
+            d="m 36.85573,0 c -6.096,0 -11.904,1.2226666 -17.2,3.4293332 L 13.75173,53.181332 43.2544,0.46266665 C 41.16373,0.16266666 39.02907,0 36.85573,0"
+            style="fill:#da3522;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.33333325"
+            id="path3768"
+    />
+    <path
+            d="m 81.23773,38.947732 -52.39733,29.322666 49.16,-5.833333 c 2.33067,-5.42 3.62667,-11.390667 3.62667,-17.665333 0,-1.976 -0.14134,-3.916 -0.38934,-5.824"
+            style="fill:#da3522;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.33333325"
+            id="path3772"
+    />
+    <path
+            d="m 61.9196,81.874398 c 5.85467,-3.962667 10.716,-9.277333 14.14933,-15.492 l -46.07866,9.150667 z"
+            style="fill:#da3522;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.33333325"
+            id="path3776"
+    />
+    <path
+            d="M 45.95227,0.92666664 20.30293,56.519998 67.88293,12.511999 C 61.91627,6.7719998 54.3696,2.6639999 45.95227,0.92666664"
+            style="fill:#da3522;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.33333325"
+            id="path3780"
+    />
+    <path
+            d="M 40.59787,89.375464 C 45.5552,88.964798 50.2832,87.752798 54.6512,85.858131 L 28.84053,82.795464 Z"
+            style="fill:#da3522;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.33333325"
+            id="path3784"
+    />
+    <path
+            d="M 15.776,5.2699998 C 9.45867,8.6486664 4.05067,13.496666 0,19.359333 l 6.48934,32.671999 z"
+            style="fill:#da3522;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.33333325"
+            id="path3792"
+    />
+</svg>
