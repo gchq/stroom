@@ -9,6 +9,7 @@ public class UrlConfig implements SharedObject, IsConfig {
     private String authenticationService = "http://auth-service:8099/authentication/v1";
     private String users = "http://IP_ADDRESS/users";
     private String apiKeys = "http://IP_ADDRESS/tokens";
+    private String indexes = "";
     private String indexVolumes = "http://IP_ADDRESS/s/indexing/volumes";
     private String indexVolumeGroups = "http://IP_ADDRESS/s/indexing/groups";
     private String userAuthorisation = "http://IP_ADDRESS/s/authorisationManager/false";
@@ -57,6 +58,14 @@ public class UrlConfig implements SharedObject, IsConfig {
 
     public void setApiKeys(final String apiKeys) {
         this.apiKeys = apiKeys;
+    }
+
+    public String getIndexes() {
+        return indexes;
+    }
+
+    public void setIndexes(String indexes) {
+        this.indexes = indexes;
     }
 
     public String getIndexVolumes() {
@@ -154,6 +163,7 @@ public class UrlConfig implements SharedObject, IsConfig {
                 ", authenticationService='" + authenticationService + '\'' +
                 ", users='" + users + '\'' +
                 ", apiKeys='" + apiKeys + '\'' +
+                ", indexes='" + indexes + '\'' +
                 ", indexVolumes='" + indexVolumes + '\'' +
                 ", indexVolumeGroups='" + indexVolumeGroups + '\'' +
                 ", userAuthorisation='" + userAuthorisation + '\'' +
@@ -167,4 +177,5 @@ public class UrlConfig implements SharedObject, IsConfig {
                 ", documentPermissions='" + documentPermissions + '\'' +
                 '}';
     }
+
 }

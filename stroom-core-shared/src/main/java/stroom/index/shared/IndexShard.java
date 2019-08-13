@@ -31,9 +31,10 @@ import java.util.Set;
  * A place where a indexUuid has been created.
  */
 public class IndexShard implements SharedObject {
-    public static final Set<IndexShardStatus> NON_DELETED_INDEX_SHARD_STATUS = Set.of(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.CORRUPT);
-    public static final Set<IndexShardStatus> READABLE_INDEX_SHARD_STATUS = Set.of(IndexShardStatus.OPEN, IndexShardStatus.CLOSED);
-
+    public static final Set<IndexShardStatus> NON_DELETED_INDEX_SHARD_STATUS = Collections.unmodifiableSet(
+            new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.CORRUPT)));
+    public static final Set<IndexShardStatus> READABLE_INDEX_SHARD_STATUS = Collections
+            .unmodifiableSet(new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED)));
     private Long id;
 
     /**

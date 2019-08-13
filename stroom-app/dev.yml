@@ -430,6 +430,7 @@ appConfig:
       authenticationService: ${STROOM_AUTHENTICATION_SERVICE_URL:-https://<<<IP_ADDRESS>>>/api/auth/authentication/v1}
       users: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/users
       apiKeys: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/apiKeys
+      indexes: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/indexing/indexes
       indexVolumes: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/indexing/volumes
       indexVolumeGroups: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/indexing/groups
       userAuthorisation: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/authorisationManager/false
