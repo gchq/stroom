@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "includes"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "imports"})
 @XmlRootElement(name = "dictionary")
 @XmlType(name = "DictionaryDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "imports"})
 public class DictionaryDoc extends Doc {

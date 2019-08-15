@@ -33,6 +33,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         DEFAULT_TAG_MAP.put("StatisticStore", "DataSource");
         DEFAULT_TAG_MAP.put("StroomStatsStore", "DataSource");
         DEFAULT_TAG_MAP.put("Index", "DataSource");
+        DEFAULT_TAG_MAP.put("SolrIndex", "DataSource");
     }
 
     private final ExplorerTreeDao explorerTreeDao;

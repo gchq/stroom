@@ -85,6 +85,7 @@ dependencies {
 //    compile project(':stroom-util')
     compile project(':stroom-pipeline')
     compile project(':stroom-dashboard-server')
+    compile project(':stroom-search:stroom-search-solr')
     compile project(':stroom-statistics-server')
     compile project(':stroom-elastic-server')
     compile project(':stroom-ruleset-server')

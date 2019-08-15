@@ -26,6 +26,7 @@ import stroom.index.spring.IndexConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.spring.ScriptConfiguration;
+import stroom.search.solr.SolrIndexConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.spring.MetaDataStatisticConfiguration;
@@ -46,6 +47,7 @@ import stroom.visualisation.spring.VisualisationConfiguration;
         DashboardConfiguration.class,
         EventLoggingConfiguration.class,
         IndexConfiguration.class,
+        SolrIndexConfiguration.class,
         MetaDataStatisticConfiguration.class,
         PersistenceConfiguration.class,
         DictionaryConfiguration.class,

@@ -1,0 +1,166 @@
+{
+  "type" : "SolrIndex",
+  "uuid" : "861c682d-a794-4e64-9963-4f4562fd1b54",
+  "name" : "mycore",
+  "version" : "77c34bfd-7a74-43e2-af05-1f2305936851",
+  "createTime" : 1565634533615,
+  "updateTime" : 1565634564193,
+  "createUser" : "admin",
+  "updateUser" : "admin",
+  "description" : "",
+  "connection" : {
+      "instanceType" : "SINGLE_NOOE",
+      "useZk" : false,
+      "solrUrls" : [ "http://localhost:8983/solr" ],
+      "zkHosts" : [ "" ],
+      "zkPath" : ""
+  },
+  "indexBatchSize" : 1000,
+    "fields" : [ {
+      "fieldUse" : "ID",
+      "fieldName" : "StreamId",
+      "fieldType" : "plong",
+      "stored" : true,
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+    }, {
+      "fieldUse" : "ID",
+      "fieldName" : "EventId",
+      "fieldType" : "plong",
+      "stored" : true,
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+    }, {
+      "fieldUse" : "FIELD",
+      "fieldName" : "Feed",
+      "fieldType" : "text_general",
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+    }, {
+      "fieldUse" : "FIELD",
+      "fieldName" : "Feed (Keyword)",
+      "fieldType" : "strings",
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+    }, {
+      "fieldUse" : "FIELD",
+      "fieldName" : "Action",
+      "fieldType" : "text_general",
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+    }, {
+      "fieldUse" : "DATE_FIELD",
+      "fieldName" : "EventTime",
+      "fieldType" : "strings",
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+    }, {
+      "fieldUse" : "FIELD",
+      "fieldName" : "UserId",
+      "fieldType" : "strings",
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+    }, {
+      "fieldUse" : "FIELD",
+      "fieldName" : "System",
+      "fieldType" : "text_general",
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+    }, {
+      "fieldUse" : "FIELD",
+      "fieldName" : "Environment",
+      "fieldType" : "text_general",
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+    }, {
+      "fieldUse" : "FIELD",
+      "fieldName" : "IPAddress",
+      "fieldType" : "strings",
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+    }, {
+      "fieldUse" : "FIELD",
+      "fieldName" : "HostName",
+      "fieldType" : "lowercase",
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+    }, {
+      "fieldUse" : "FIELD",
+      "fieldName" : "Generator",
+      "fieldType" : "text_general",
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+    }, {
+      "fieldUse" : "FIELD",
+      "fieldName" : "Command",
+      "fieldType" : "text_general",
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+    }, {
+      "fieldUse" : "FIELD",
+      "fieldName" : "Command (Keyword)",
+      "fieldType" : "strings",
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+    }, {
+      "fieldUse" : "FIELD",
+      "fieldName" : "Description",
+      "fieldType" : "text_general",
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+     }, {
+       "fieldUse" : "FIELD",
+       "fieldName" : "Description (Case Sensitive)",
+       "fieldType" : "text_ws",
+      "indexed" : true,
+      "multiValued" : true,
+      "omitNorms" : true,
+      "omitTermFreqAndPositions" : true,
+      "omitPositions" : true
+    } ]
+}

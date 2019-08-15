@@ -78,6 +78,7 @@ import stroom.ruleset.shared.RuleSet;
 import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
+import stroom.search.solr.SolrIndexConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.server.AuthorisationResource;
 import stroom.security.server.JWTService;
@@ -391,6 +392,7 @@ public class App extends Application<Config> {
                 PipelineConfiguration.class,
                 ExplorerConfiguration.class,
                 IndexConfiguration.class,
+                SolrIndexConfiguration.class,
                 SearchConfiguration.class,
                 ScriptConfiguration.class,
                 VisualisationConfiguration.class,

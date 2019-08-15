@@ -50,6 +50,7 @@ import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTest;
+import stroom.search.solr.SolrIndexConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.spring.MetaDataStatisticConfiguration;
@@ -89,6 +90,7 @@ import java.util.stream.IntStream;
         DashboardConfiguration.class,
         EventLoggingConfiguration.class,
         IndexConfiguration.class,
+        SolrIndexConfiguration.class,
         MetaDataStatisticConfiguration.class,
         PersistenceConfiguration.class,
         DictionaryConfiguration.class,

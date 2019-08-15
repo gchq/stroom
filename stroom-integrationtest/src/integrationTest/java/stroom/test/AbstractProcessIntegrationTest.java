@@ -26,6 +26,7 @@ import stroom.index.spring.IndexConfiguration;
 import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.spring.ScriptConfiguration;
+import stroom.search.solr.SolrIndexConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.spring.PersistenceConfiguration;
@@ -52,6 +53,7 @@ import stroom.visualisation.spring.VisualisationConfiguration;
         ScopeTestConfiguration.class,
         EventLoggingConfiguration.class,
         IndexConfiguration.class,
+        SolrIndexConfiguration.class,
         SearchConfiguration.class,
         ScriptConfiguration.class,
         VisualisationConfiguration.class,

@@ -1,0 +1,66 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:t="urn:import:stroom.widget.tickbox.client.view">
+    <g:FlowPanel styleName="stroom-control-page">
+        <g:Grid styleName="stroom-control-grid">
+            <g:row>
+                <g:cell>Description:</g:cell>
+                <g:customCell>
+                    <g:TextArea ui:field="description" width="400px"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Collection:</g:cell>
+                <g:customCell>
+                    <g:TextBox ui:field="collection" width="400px"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Instance Type:</g:cell>
+                <g:customCell>
+                    <l:ItemListBox ui:field="instanceType"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Solr URLs:</g:cell>
+                <g:customCell>
+                    <g:TextArea ui:field="solrUrls" width="400px"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Use ZK:</g:cell>
+                <g:customCell>
+                    <t:TickBox ui:field="useZk" width="400px"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>ZK Hosts:</g:cell>
+                <g:customCell>
+                    <g:TextArea ui:field="zkHosts" width="400px"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>ZK Path:</g:cell>
+                <g:customCell>
+                    <g:TextArea ui:field="zkPath" width="400px"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell></g:cell>
+                <g:customCell>
+                    <g:Button ui:field="testConnection" text="Test Connection" width="200px"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Index Batch Size:</g:cell>
+                <g:customCell>
+                    <v:ValueSpinner ui:field="indexBatchSize"
+                                    width="200px"/>
+                </g:customCell>
+            </g:row>
+        </g:Grid>
+    </g:FlowPanel>
+</ui:UiBinder> 

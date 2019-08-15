@@ -28,6 +28,7 @@ import stroom.node.server.NodeCache;
 import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.spring.ScriptConfiguration;
+import stroom.search.solr.SolrIndexConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.spring.PersistenceConfiguration;
@@ -87,6 +88,7 @@ public final class SetupCorruptSampleData extends AbstractCommandLineTool {
                 PipelineConfiguration.class,
                 EventLoggingConfiguration.class,
                 IndexConfiguration.class,
+                SolrIndexConfiguration.class,
                 SearchConfiguration.class,
                 ScriptConfiguration.class,
                 VisualisationConfiguration.class,

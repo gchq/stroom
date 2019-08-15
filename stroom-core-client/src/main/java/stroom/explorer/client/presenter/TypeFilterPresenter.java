@@ -59,8 +59,8 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
         final Column<DocumentType, TickBoxState> checkedColumn = new Column<DocumentType, TickBoxState>(
                 TickBoxCell.create(false, true)) {
             @Override
-            public TickBoxState getValue(final DocumentType object) {
-                return TickBoxState.fromBoolean(selected.contains(object.getType()));
+            public TickBoxState getValue(final DocumentType documentType) {
+                return TickBoxState.fromBoolean(selected.contains(documentType.getType()));
             }
         };
         checkedColumn.setFieldUpdater((index, object, value) -> {
@@ -86,8 +86,8 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
         // Text.
         final Column<DocumentType, String> textColumn = new Column<DocumentType, String>(new TextCell()) {
             @Override
-            public String getValue(final DocumentType object) {
-                return object.getType();
+            public String getValue(final DocumentType documentType) {
+                return documentType.getDisplayType();
             }
         };
         getView().addColumn(textColumn);

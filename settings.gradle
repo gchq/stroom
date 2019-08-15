@@ -51,6 +51,8 @@ include 'stroom-dashboard-client'
 include 'stroom-dashboard-gwt'
 include 'stroom-app-gwt'
 
+include 'stroom-search:stroom-search-solr'
+
 // Common test project
 include 'stroom-test-common'
 

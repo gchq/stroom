@@ -190,6 +190,7 @@ ext.libs = [
     rxjava: "io.reactivex.rxjava2:rxjava:$versions.rxjava",
     saxon_he: "net.sf.saxon:Saxon-HE:9.7.0-21",
     slf4j_api: "org.slf4j:slf4j-api:$versions.slf4j",
+    solrj: "org.apache.solr:solr-solrj:8.2.0",
     spring_aop: "org.springframework:spring-aop:$versions.spring",
     spring_aspects: "org.springframework:spring-aspects:$versions.spring",
     spring_beans: "org.springframework:spring-beans:$versions.spring",
