@@ -116,7 +116,7 @@ class TestIndexShardPoolImpl {
             final IndexDoc index = new IndexDoc();
             index.setUuid("uuid" + i);
             index.setName("index " + i);
-            index.setIndexFields(indexFields);
+            index.setFields(indexFields);
             index.setMaxDocsPerShard(maxDocumentsPerIndexShard);
             index.setShardsPerPartition(shardsPerPartition);
 

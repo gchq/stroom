@@ -191,7 +191,7 @@ public class IndexStoreImpl implements IndexStore {
 
                     final IndexFields indexFields = serialiser.getIndexFieldsFromLegacyXML(oldIndex.getIndexFields());
                     if (indexFields != null) {
-                        document.setIndexFields(indexFields.getIndexFields());
+                        document.setFields(indexFields.getIndexFields());
                     }
                 }
 

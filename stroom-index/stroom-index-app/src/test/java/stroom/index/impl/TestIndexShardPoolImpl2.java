@@ -21,9 +21,6 @@ import org.apache.lucene.document.Field;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import stroom.index.impl.FieldFactory;
-import stroom.index.impl.IndexShardKeyUtil;
-import stroom.index.impl.Indexer;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
@@ -61,7 +58,7 @@ class TestIndexShardPoolImpl2 extends StroomUnitTest {
 
             final IndexDoc index = new IndexDoc();
             index.setUuid("1");
-            index.setIndexFields(indexFields);
+            index.setFields(indexFields);
             index.setMaxDocsPerShard(1000);
 
             final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);

@@ -211,7 +211,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
     }
 
     private IndexField[] getStoredFields(final IndexDoc index) {
-        final List<IndexField> indexFields = index.getIndexFields();
+        final List<IndexField> indexFields = index.getFields();
         final List<IndexField> list = new ArrayList<>(indexFields.size());
         for (final IndexField indexField : indexFields) {
             if (indexField.isStored()) {

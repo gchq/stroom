@@ -127,7 +127,7 @@ public class CommonTestScenarioCreator {
 
         // Update the index
         index.setMaxDocsPerShard(maxDocsPerShard);
-        index.setIndexFields(indexFields);
+        index.setFields(indexFields);
         index.setVolumeGroupName(volumeGroupName);
         indexStore.writeDocument(index);
         assertThat(index).isNotNull();

@@ -30,11 +30,11 @@ import java.util.List;
 
 public final class IndexDataSourceFieldUtil {
     public static List<AbstractField> getDataSourceFields(final IndexDoc index) {
-        if (index == null || index.getIndexFields() == null) {
+        if (index == null || index.getFields() == null) {
             return null;
         }
 
-        final List<IndexField> indexFields = index.getIndexFields();
+        final List<IndexField> indexFields = index.getFields();
         final List<AbstractField> dataSourceFields = new ArrayList<>(indexFields.size());
         for (final IndexField indexField : indexFields) {
             // TODO should index fields include doc refs?
