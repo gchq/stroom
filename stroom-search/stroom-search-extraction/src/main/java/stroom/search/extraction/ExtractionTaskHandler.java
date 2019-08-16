@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.search.server.extraction;
+package stroom.search.extraction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,10 +40,9 @@ import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
-import stroom.search.server.SearchException;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
@@ -112,16 +111,16 @@ public class ExtractionTaskHandler {
     public VoidResult exec(final ExtractionTask task) {
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             LAMBDA_LOGGER.logDurationIfDebugEnabled(
-                () -> {
-                    taskMonitor.setName("Extraction");
-                    if (!taskMonitor.isTerminated()) {
-                        final String streamId = String.valueOf(task.getStreamId());
-                        taskMonitor.info("Extracting " + task.getEventIds().length + " records from stream " + streamId);
+                    () -> {
+                        taskMonitor.setName("Extraction");
+                        if (!taskMonitor.isTerminated()) {
+                            final String streamId = String.valueOf(task.getStreamId());
+                            taskMonitor.info("Extracting " + task.getEventIds().length + " records from stream " + streamId);
 
-                        extract(task);
-                    }
-                },
-                () -> "ExtractionTaskHandler.exec()");
+                            extract(task);
+                        }
+                    },
+                    () -> "ExtractionTaskHandler.exec()");
         }
 
         return VoidResult.INSTANCE;
@@ -138,20 +137,20 @@ public class ExtractionTaskHandler {
 
             // Check the pipelineRef is not our 'NULL SELECTION'
             if (DocRefUtil.NULL_SELECTION.compareTo(pipelineRef) == 0) {
-                throw new SearchException("Extraction is enabled, but no extraction pipeline is configured.");
+                throw new ExtractionException("Extraction is enabled, but no extraction pipeline is configured.");
             }
 
             // Get the translation that will be used to display results.
             final PipelineEntity pipelineEntity = pipelineService.loadByUuid(pipelineRef.getUuid());
             if (pipelineEntity == null) {
-                throw new SearchException("Unable to find result pipeline: " + pipelineRef);
+                throw new ExtractionException("Unable to find result pipeline: " + pipelineRef);
             }
 
             // Create the parser.
             final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
             if (pipeline == null) {
-                throw new SearchException("Unable to create parser for pipeline: " + pipelineRef);
+                throw new ExtractionException("Unable to create parser for pipeline: " + pipelineRef);
             }
 
             // Setup the id enrichment filter to try and recreate the conditions
@@ -182,7 +181,7 @@ public class ExtractionTaskHandler {
     private <T extends XMLFilter> T getFilter(final Pipeline pipeline, final Class<T> clazz) {
         final List<T> filters = pipeline.findFilters(clazz);
         if (filters == null || filters.size() != 1) {
-            throw new SearchException("Unable to find single '" + clazz.getName() + "' in search result pipeline");
+            throw new ExtractionException("Unable to find single '" + clazz.getName() + "' in search result pipeline");
         }
         final T filter = filters.get(0);
         return filter;
@@ -277,7 +276,7 @@ public class ExtractionTaskHandler {
                 // Ignore stopped pipeline exceptions as we are meant to get
                 // these when a task is asked to stop prematurely.
             } catch (final Exception e) {
-                throw SearchException.wrap(e);
+                throw ExtractionException.wrap(e);
             }
         }
     }

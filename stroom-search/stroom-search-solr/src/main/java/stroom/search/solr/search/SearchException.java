@@ -14,20 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.search.solr;
+package stroom.search.solr.search;
 
-class SolrIndexException extends RuntimeException {
+public class SearchException extends RuntimeException {
     private static final long serialVersionUID = -482925256715483280L;
 
-    public SolrIndexException(final Throwable t) {
-        super(t);
-    }
-
-    public SolrIndexException(final String message) {
+    public SearchException(final String message) {
         super(message);
     }
 
-    public SolrIndexException(final String message, final Throwable t) {
+    public SearchException(final String message, final Throwable t) {
         super(message, t);
+    }
+
+    public static SearchException wrap(final Throwable t) {
+        if (t instanceof SearchException) {
+            return (SearchException) t;
+        }
+        String message = t.getMessage();
+        if (message == null || message.length() == 0) {
+            message = t.toString();
+        }
+        return new SearchException(message, t);
     }
 }

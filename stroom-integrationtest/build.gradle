@@ -10,6 +10,8 @@ dependencies {
     permitUnusedDeclared project(':stroom-dashboard-server')
     compile project(':stroom-index-server')
     permitUnusedDeclared project(':stroom-index-server')
+    compile project(':stroom-search:stroom-search-extraction')
+    permitUnusedDeclared project(':stroom-search:stroom-search-extraction')
     compile project(':stroom-security-server')
     permitUnusedDeclared project(':stroom-security-server')
     compile project(':stroom-statistics-server')

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.search.server.extraction;
+package stroom.search.extraction;
 
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;

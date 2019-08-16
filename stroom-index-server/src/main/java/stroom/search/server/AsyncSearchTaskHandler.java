@@ -119,7 +119,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // TODO : Specify stored fields based on the fields that all
                     // coprocessors will require. Also
                     // batch search only needs stream and event id stored fields.
-                    final IndexField[] storedFields = getStoredFields(index);
+                    final String[] storedFields = getStoredFields(index);
 
                     // Get a list of search index shards to look through.
                     final FindIndexShardCriteria findIndexShardCriteria = new FindIndexShardCriteria();
@@ -275,16 +275,12 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         taskManager.execAsync(outerTask);
     }
 
-    private IndexField[] getStoredFields(final Index index) {
+    private String[] getStoredFields(final Index index) {
         final List<IndexField> indexFields = index.getIndexFieldsObject().getIndexFields();
-        final List<IndexField> list = new ArrayList<>(indexFields.size());
-        for (final IndexField indexField : indexFields) {
-            if (indexField.isStored()) {
-                list.add(indexField);
-            }
-        }
-        IndexField[] array = new IndexField[list.size()];
-        array = list.toArray(array);
-        return array;
+        return indexFields
+                .stream()
+                .filter(IndexField::isStored)
+                .map(IndexField::getFieldName)
+                .toArray(String[]::new);
     }
 }

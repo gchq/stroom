@@ -79,6 +79,7 @@ import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.solr.SolrIndexConfiguration;
+import stroom.search.solr.search.StroomSolrIndexQueryResource;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.server.AuthorisationResource;
 import stroom.security.server.JWTService;
@@ -310,6 +311,7 @@ public class App extends Application<Config> {
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomElasticProducerFactoryService.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomIndexQueryResource.class);
+        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomSolrIndexQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, DictionaryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, RuleSetResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, JWTService.class);
@@ -347,6 +349,7 @@ public class App extends Application<Config> {
         SpringUtil.addResource(environment.jersey(), applicationContext, DictionaryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, RuleSetResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, StroomSolrIndexQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SessionResource.class);

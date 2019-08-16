@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,49 +14,47 @@
  * limitations under the License.
  */
 
-package stroom.search.server.extraction;
+package stroom.search.solr.search;
 
-import stroom.dashboard.expression.v1.FieldIndexMap;
+import org.apache.solr.common.params.SolrParams;
 import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.query.api.v2.DocRef;
+import stroom.search.solr.CachedSolrIndex;
 
-public class ExtractionTask {
-    private final long streamId;
-    private final long[] eventIds;
-    private final DocRef pipelineRef;
-    private final FieldIndexMap fieldIndexes;
+import java.util.concurrent.atomic.AtomicLong;
+
+public class SolrSearchTask {
+    private final CachedSolrIndex solrIndex;
+    private final SolrParams solrParams;
+    private final String[] fieldNames;
     private final ResultReceiver resultReceiver;
     private final ErrorReceiver errorReceiver;
+    private final AtomicLong hitCount;
 
-    ExtractionTask(final long streamId,
-                   final long[] eventIds,
-                   final DocRef pipelineRef,
-                   final FieldIndexMap fieldIndexes,
+    public SolrSearchTask(final CachedSolrIndex solrIndex,
+                   final SolrParams solrParams,
+                   final String[] fieldNames,
                    final ResultReceiver resultReceiver,
-                   final ErrorReceiver errorReceiver) {
-        this.streamId = streamId;
-        this.eventIds = eventIds;
-        this.pipelineRef = pipelineRef;
-        this.fieldIndexes = fieldIndexes;
+                   final ErrorReceiver errorReceiver,
+                   final AtomicLong hitCount) {
+        this.solrIndex = solrIndex;
+        this.solrParams = solrParams;
+        this.fieldNames = fieldNames;
         this.resultReceiver = resultReceiver;
         this.errorReceiver = errorReceiver;
+        this.hitCount = hitCount;
     }
 
-    public long getStreamId() {
-        return streamId;
+    public CachedSolrIndex getSolrIndex() {
+        return solrIndex;
     }
 
-    public long[] getEventIds() {
-        return eventIds;
+    public SolrParams getSolrParams() {
+        return solrParams;
     }
 
-    public DocRef getPipelineRef() {
-        return pipelineRef;
-    }
-
-    public FieldIndexMap getFieldIndexes() {
-        return fieldIndexes;
+    public String[] getFieldNames() {
+        return fieldNames;
     }
 
     public ResultReceiver getResultReceiver() {
@@ -65,6 +63,10 @@ public class ExtractionTask {
 
     public ErrorReceiver getErrorReceiver() {
         return errorReceiver;
+    }
+
+    public AtomicLong getHitCount() {
+        return hitCount;
     }
 
     public interface ResultReceiver {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.search.server.extraction;
+package stroom.search.extraction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,13 +23,12 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.query.api.v2.DocRef;
 import stroom.query.common.v2.Coprocessor;
-import stroom.search.server.ClusterSearchTask;
-import stroom.search.server.Event;
-import stroom.search.server.extraction.ExtractionTask.ResultReceiver;
-import stroom.search.server.taskqueue.TaskExecutor;
-import stroom.search.server.taskqueue.TaskProducer;
+import stroom.search.extraction.ExtractionTask.ResultReceiver;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.ThreadPoolImpl;
+import stroom.util.task.taskqueue.TaskExecutor;
+import stroom.util.task.taskqueue.TaskProducer;
+import stroom.util.shared.HasTerminate;
 import stroom.util.shared.Severity;
 import stroom.util.shared.ThreadPool;
 
@@ -56,7 +55,7 @@ public class ExtractionTaskProducer extends TaskProducer {
             0,
             Integer.MAX_VALUE);
 
-    private final ClusterSearchTask clusterSearchTask;
+    private final HasTerminate clusterSearchTask;
     private final FieldIndexMap extractionFieldIndexMap;
     private final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap;
     private final ErrorReceiver errorReceiver;
@@ -69,7 +68,7 @@ public class ExtractionTaskProducer extends TaskProducer {
     private volatile boolean finishedAddingTasks;
 
     public ExtractionTaskProducer(final TaskExecutor taskExecutor,
-                                  final ClusterSearchTask clusterSearchTask,
+                                  final HasTerminate clusterSearchTask,
                                   final StreamMapCreator streamMapCreator,
                                   final LinkedBlockingQueue<Val[]> storedData,
                                   final FieldIndexMap extractionFieldIndexMap,
@@ -78,7 +77,7 @@ public class ExtractionTaskProducer extends TaskProducer {
                                   final int maxThreadsPerTask,
                                   final ExecutorProvider executorProvider,
                                   final Provider<ExtractionTaskHandler> handlerProvider,
-                                  final TaskProducer searchTaskProducer) {
+                                  final HasComplete searchTaskProducer) {
         super(taskExecutor, maxThreadsPerTask, executorProvider.getExecutor(THREAD_POOL));
         this.clusterSearchTask = clusterSearchTask;
         this.extractionFieldIndexMap = extractionFieldIndexMap;

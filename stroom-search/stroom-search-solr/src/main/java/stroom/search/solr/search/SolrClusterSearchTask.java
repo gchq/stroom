@@ -14,61 +14,57 @@
  * limitations under the License.
  */
 
-package stroom.search.server;
+package stroom.search.solr.search;
 
-import stroom.node.shared.Node;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.task.cluster.ClusterTask;
+import stroom.search.solr.CachedSolrIndex;
+import stroom.util.task.ServerTask;
 
-import java.util.List;
 import java.util.Map;
 
-public class ClusterSearchTask extends ClusterTask<NodeResult> {
+class SolrClusterSearchTask extends ServerTask<NodeResult> {
     private static final long serialVersionUID = -1305243739417365803L;
 
+    private final CachedSolrIndex cachedSolrIndex;
     private final Query query;
-    private final List<Long> shards;
-    private final Node targetNode;
-    private final String[] storedFields;
     private final int resultSendFrequency;
+    private final String[] storedFields;
     private final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap;
     private final String dateTimeLocale;
     private final long now;
 
-    public ClusterSearchTask(final String userToken, final String taskName, final Query query,
-                             final List<Long> shards, final Node targetNode, final String[] storedFields,
-                             final int resultSendFrequency, final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap, final String dateTimeLocale, final long now) {
-        super(userToken, taskName);
+    SolrClusterSearchTask(final CachedSolrIndex cachedSolrIndex,
+                          final Query query,
+                          final int resultSendFrequency,
+                          final String[] storedFields,
+                          final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
+                          final String dateTimeLocale,
+                          final long now) {
+        this.cachedSolrIndex = cachedSolrIndex;
         this.query = query;
-        this.shards = shards;
-        this.targetNode = targetNode;
-        this.storedFields = storedFields;
         this.resultSendFrequency = resultSendFrequency;
+        this.storedFields = storedFields;
         this.coprocessorMap = coprocessorMap;
         this.dateTimeLocale = dateTimeLocale;
         this.now = now;
     }
 
-    public Node getTargetNode() {
-        return targetNode;
+    public CachedSolrIndex getCachedSolrIndex() {
+        return cachedSolrIndex;
     }
 
     public Query getQuery() {
         return query;
     }
 
-    public List<Long> getShards() {
-        return shards;
+    public int getResultSendFrequency() {
+        return resultSendFrequency;
     }
 
     public String[] getStoredFields() {
         return storedFields;
-    }
-
-    public int getResultSendFrequency() {
-        return resultSendFrequency;
     }
 
     public Map<CoprocessorKey, CoprocessorSettings> getCoprocessorMap() {

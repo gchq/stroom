@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.index.server;
+package stroom.search.solr.search;
 
 import com.codahale.metrics.annotation.Timed;
-import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.datasource.api.v2.DataSource;
-import stroom.index.shared.Index;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.QueryKey;
@@ -36,7 +32,8 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
-import stroom.search.server.IndexDataSourceFieldUtil;
+import stroom.search.solr.SolrIndexStore;
+import stroom.search.solr.shared.SolrIndex;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.task.server.TaskContext;
@@ -54,27 +51,26 @@ import javax.ws.rs.core.MediaType;
 import java.util.stream.Collectors;
 
 @Api(
-        value = "stroom-index query - /v2",
-        description = "Stroom Index Query API")
-@Path("/stroom-index/v2")
+        value = "stroom-solr-index query - /v2",
+        description = "Stroom Solr Index Query API")
+@Path("/stroom-solr-index/v2")
 @Produces(MediaType.APPLICATION_JSON)
 @Component
-public class StroomIndexQueryResource implements HasHealthCheck {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomIndexQueryResource.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StroomIndexQueryResource.class);
+public class StroomSolrIndexQueryResource implements HasHealthCheck {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomSolrIndexQueryResource.class);
 
     private final SearchResponseCreatorManager searchResponseCreatorManager;
-    private final IndexService indexService;
+    private final SolrIndexStore solrIndexStore;
     private final SecurityContext securityContext;
     private final TaskContext taskContext;
 
     @Inject
-    public StroomIndexQueryResource(@Named("luceneSearchResponseCreatorManager") final SearchResponseCreatorManager searchResponseCreatorManager,
-                                    final IndexService indexService,
-                                    final SecurityContext securityContext,
-                                    final TaskContext taskContext) {
+    public StroomSolrIndexQueryResource(@Named("solrSearchResponseCreatorManager") final SearchResponseCreatorManager searchResponseCreatorManager,
+                                        final SolrIndexStore solrIndexStore,
+                                        final SecurityContext securityContext,
+                                        final TaskContext taskContext) {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
-        this.indexService = indexService;
+        this.solrIndexStore = solrIndexStore;
         this.securityContext = securityContext;
         this.taskContext = taskContext;
     }
@@ -89,8 +85,8 @@ public class StroomIndexQueryResource implements HasHealthCheck {
             response = DataSource.class)
     public DataSource getDataSource(@ApiParam("DocRef") final DocRef docRef) {
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
-            final Index index = indexService.loadByUuid(docRef.getUuid());
-            return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index));
+            final SolrIndex index = solrIndexStore.read(docRef.getUuid());
+            return new DataSource(SolrIndexDataSourceFieldUtil.getDataSourceFields(index));
         }
     }
 
@@ -113,7 +109,7 @@ public class StroomIndexQueryResource implements HasHealthCheck {
         //create a response from the data found so far, this could be complete/incomplete
         SearchResponse searchResponse = searchResponseCreator.create(request, taskContext);
 
-        LAMBDA_LOGGER.trace(() ->
+        LOGGER.trace(() ->
                 getResponseInfoForLogging(request, searchResponse));
 
         return searchResponse;
@@ -173,6 +169,6 @@ public class StroomIndexQueryResource implements HasHealthCheck {
 
     @Override
     public Result getHealth() {
-        return HealthCheck.Result.healthy();
+        return Result.healthy();
     }
 }

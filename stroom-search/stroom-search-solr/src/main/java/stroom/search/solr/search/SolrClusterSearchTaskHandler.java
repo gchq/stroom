@@ -15,19 +15,16 @@
  *
  */
 
-package stroom.search.server;
+package stroom.search.solr.search;
 
-import org.apache.lucene.search.Query;
-import org.apache.lucene.util.Version;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.common.params.SolrParams;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dictionary.server.DictionaryStore;
-import stroom.index.server.IndexService;
-import stroom.index.shared.Index;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldsMap;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
 import stroom.query.api.v2.DocRef;
@@ -39,26 +36,19 @@ import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Payload;
 import stroom.search.extraction.ExtractionTaskExecutor;
 import stroom.search.extraction.ExtractionTaskHandler;
-import stroom.search.extraction.ExtractionTaskProperties;
-import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
-import stroom.search.extraction.ExtractionTaskExecutor;
-import stroom.search.extraction.ExtractionTaskHandler;
 import stroom.search.extraction.ExtractionTaskProducer;
 import stroom.search.extraction.ExtractionTaskProperties;
 import stroom.search.extraction.StreamMapCreator;
-import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
-import stroom.search.server.shard.IndexShardSearchTaskExecutor;
-import stroom.search.server.shard.IndexShardSearchTaskHandler;
-import stroom.search.server.shard.IndexShardSearchTaskProducer;
-import stroom.search.server.shard.IndexShardSearchTaskProperties;
+import stroom.search.solr.SolrIndexCache;
+import stroom.search.solr.search.SolrSearchTask.ResultReceiver;
+import stroom.search.solr.CachedSolrIndex;
+import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
+import stroom.search.solr.shared.SolrIndexField;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.streamstore.server.StreamStore;
 import stroom.task.server.ExecutorProvider;
-import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskContext;
-import stroom.task.server.TaskHandler;
-import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskTerminatedException;
 import stroom.task.server.ThreadPoolImpl;
 import stroom.util.config.PropertyUtil;
@@ -91,10 +81,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-@TaskHandlerBean(task = ClusterSearchTask.class)
+@Component
 @Scope(StroomScope.TASK)
-class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeResult>, ErrorReceiver {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchTaskHandler.class);
+public class SolrClusterSearchTaskHandler implements ErrorReceiver {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrClusterSearchTaskHandler.class);
 
     /**
      * We don't want to collect more than 1 million doc's data into the queue by
@@ -110,12 +100,10 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
             0,
             Integer.MAX_VALUE);
 
-    private final IndexService indexService;
+    private final SolrIndexCache solrIndexCache;
     private final DictionaryStore dictionaryStore;
     private final TaskContext taskContext;
-    private final CoprocessorFactory coprocessorFactory;
-    private final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor;
-    private final IndexShardSearchTaskProperties indexShardSearchTaskProperties;
+    private final SolrCoprocessorFactory coprocessorFactory;
     private final ExtractionTaskExecutor extractionTaskExecutor;
     private final ExtractionTaskProperties extractionTaskProperties;
     private final StreamStore streamStore;
@@ -126,49 +114,44 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private final AtomicBoolean searchComplete = new AtomicBoolean();
     private final CountDownLatch searchCompleteLatch = new CountDownLatch(1);
     private final AtomicBoolean sendingData = new AtomicBoolean();
-    private final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider;
     private final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider;
     private final ExecutorProvider executorProvider;
+    private final SolrSearchTaskHandler solrSearchTaskHandler;
 
-    private ClusterSearchTask task;
+    private SolrClusterSearchTask task;
 
     private LinkedBlockingQueue<Val[]> storedData;
 
     @Inject
-    ClusterSearchTaskHandler(final IndexService indexService,
-                             final DictionaryStore dictionaryStore,
-                             final TaskContext taskContext,
-                             final CoprocessorFactory coprocessorFactory,
-                             final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor,
-                             final IndexShardSearchTaskProperties indexShardSearchTaskProperties,
-                             final ExtractionTaskExecutor extractionTaskExecutor,
-                             final ExtractionTaskProperties extractionTaskProperties,
-                             final StreamStore streamStore,
-                             final SecurityContext securityContext,
-                             @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
-                             @Value("#{propertyConfigurer.getProperty('stroom.search.maxStoredDataQueueSize')}") final String maxStoredDataQueueSize,
-                             final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,
-                             final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
-                             final ExecutorProvider executorProvider) {
-        this.indexService = indexService;
+    SolrClusterSearchTaskHandler(final SolrIndexCache solrIndexCache,
+                                 final DictionaryStore dictionaryStore,
+                                 final TaskContext taskContext,
+                                 final SolrCoprocessorFactory coprocessorFactory,
+                                 final ExtractionTaskExecutor extractionTaskExecutor,
+                                 final ExtractionTaskProperties extractionTaskProperties,
+                                 final StreamStore streamStore,
+                                 final SecurityContext securityContext,
+                                 @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
+                                 @Value("#{propertyConfigurer.getProperty('stroom.search.maxStoredDataQueueSize')}") final String maxStoredDataQueueSize,
+                                 final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
+                                 final ExecutorProvider executorProvider,
+                                 final SolrSearchTaskHandler solrSearchTaskHandler) {
+        this.solrIndexCache = solrIndexCache;
         this.dictionaryStore = dictionaryStore;
         this.taskContext = taskContext;
         this.coprocessorFactory = coprocessorFactory;
-        this.indexShardSearchTaskExecutor = indexShardSearchTaskExecutor;
-        this.indexShardSearchTaskProperties = indexShardSearchTaskProperties;
         this.extractionTaskExecutor = extractionTaskExecutor;
         this.extractionTaskProperties = extractionTaskProperties;
         this.streamStore = streamStore;
         this.securityContext = securityContext;
         this.maxBooleanClauseCount = PropertyUtil.toInt(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
         this.maxStoredDataQueueSize = PropertyUtil.toInt(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
-        this.indexShardSearchTaskHandlerProvider = indexShardSearchTaskHandlerProvider;
         this.extractionTaskHandlerProvider = extractionTaskHandlerProvider;
         this.executorProvider = executorProvider;
+        this.solrSearchTaskHandler = solrSearchTaskHandler;
     }
 
-    @Override
-    public void exec(final ClusterSearchTask task, final TaskCallback<NodeResult> callback) {
+    public void exec(final SolrClusterSearchTask task, final SolrSearchResultCollector clusterSearchResultCollector) {
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             if (!taskContext.isTerminated()) {
                 taskContext.info("Initialising...");
@@ -177,10 +160,8 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 final stroom.query.api.v2.Query query = task.getQuery();
 
                 try {
-                    final long frequency = task.getResultSendFrequency();
-
                     // Reload the index.
-                    final Index index = indexService.loadByUuid(query.getDataSource().getUuid());
+                    final CachedSolrIndex index = solrIndexCache.get(query.getDataSource());
 
                     // Make sure we have a search index.
                     if (index == null) {
@@ -210,7 +191,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     filterStreams = true;
 
                     // Create a map of index fields keyed by name.
-                    final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFieldsObject());
+                    final Map<String, SolrIndexField> indexFieldsMap = index.getFieldsMap();
 
                     // Compile all of the result component options to optimise pattern matching etc.
                     if (task.getCoprocessorMap() != null) {
@@ -256,14 +237,14 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                     // Start forwarding data to target node.
                     final Executor executor = executorProvider.getExecutor(THREAD_POOL);
-                    sendData(coprocessorMap, callback, frequency, executor);
+                    sendData(coprocessorMap, clusterSearchResultCollector, task.getResultSendFrequency(), executor);
 
                     // Start searching.
                     search(task, query, storedFields, filterStreams, indexFieldsMap, extractionFieldIndexMap, extractionCoprocessorsMap);
 
                 } catch (final RuntimeException e) {
                     try {
-                        callback.onFailure(e);
+                        clusterSearchResultCollector.onFailure(e);
                     } catch (final RuntimeException e2) {
                         // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
                         LOGGER.info(() -> "Terminating search because we were unable to send result");
@@ -288,7 +269,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     }
 
     private void sendData(final Map<CoprocessorKey, Coprocessor> coprocessorMap,
-                          final TaskCallback<NodeResult> callback,
+                          final SolrSearchResultCollector clusterSearchResultCollector,
                           final long frequency,
                           final Executor executor) {
         final long now = System.currentTimeMillis();
@@ -297,7 +278,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
         final Supplier<Boolean> supplier = () -> {
             // Find out if searching is complete.
-            final boolean searchComplete = ClusterSearchTaskHandler.this.searchComplete.get();
+            final boolean searchComplete = SolrClusterSearchTaskHandler.this.searchComplete.get();
 
             if (!taskContext.isTerminated()) {
                 taskContext.setName("Search Result Sender");
@@ -332,7 +313,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                     // Give the result to the callback.
                     taskContext.info("Sending search result");
-                    callback.onSuccess(result);
+                    clusterSearchResultCollector.onSuccess(result);
                 }
             }
 
@@ -378,7 +359,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         // Make sure we don't continue to execute this task if it should have terminated.
                         if (!taskContext.isTerminated()) {
                             // Try to send more data.
-                            sendData(coprocessorMap, callback, frequency, executor);
+                            sendData(coprocessorMap, clusterSearchResultCollector, frequency, executor);
                         }
                     }
                 })
@@ -391,53 +372,59 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 });
     }
 
-    private void search(final ClusterSearchTask task,
+    private void search(final SolrClusterSearchTask task,
                         final stroom.query.api.v2.Query query,
                         final String[] storedFieldNames,
                         final boolean filterStreams,
-                        final IndexFieldsMap indexFieldsMap,
+                        final Map<String, SolrIndexField> indexFieldsMap,
                         final FieldIndexMap extractionFieldIndexMap,
                         final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap) {
         taskContext.info("Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
-            if (extractionCoprocessorsMap != null && extractionCoprocessorsMap.size() > 0
-                    && task.getShards().size() > 0) {
+            if (extractionCoprocessorsMap != null && extractionCoprocessorsMap.size() > 0) {
                 // Make sure we are searching a specific index.
                 if (query.getExpression() == null) {
                     throw new SearchException("Search expression has not been set");
                 }
 
                 // Search all index shards.
-                final Map<Version, Optional<SearchExpressionQuery>> queryMap = new HashMap<>();
-                final IndexShardQueryFactory queryFactory = createIndexShardQueryFactory(
-                        task, query, indexFieldsMap, queryMap);
+                final Optional<SearchExpressionQuery> optionalQuery = getQuery(query.getExpression(), indexFieldsMap);
 
                 // Create a transfer list to capture stored data from the index that can be used by coprocessors.
                 storedData = new LinkedBlockingQueue<>(maxStoredDataQueueSize);
                 final AtomicLong hitCount = new AtomicLong();
 
-                // Update config for the index shard search task executor.
-                indexShardSearchTaskExecutor.setMaxThreads(indexShardSearchTaskProperties.getMaxThreads());
+                final String queryString = optionalQuery.get().getQuery().toString();
+                final SolrQuery solrQuery = new SolrQuery(queryString);
+                solrQuery.setRows(Integer.MAX_VALUE);
 
-                // Make a task producer that will create event data extraction tasks when requested by the executor.
-                final IndexShardSearchTaskProducer indexShardSearchTaskProducer = new IndexShardSearchTaskProducer(
-                        indexShardSearchTaskExecutor,
-                        task,
-                        storedData,
-                        task.getShards(),
-                        queryFactory,
-                        storedFieldNames,
-                        this,
-                        hitCount,
-                        indexShardSearchTaskProperties.getMaxThreadsPerTask(),
-                        executorProvider,
-                        indexShardSearchTaskHandlerProvider);
+                // Create a deque to capture stored data from the index that can be used by coprocessors.
+                final ResultReceiver resultReceiver = values -> {
+                    try {
+                        boolean stored = false;
+                        while (!task.isTerminated() && !stored) {
+                            // Loop until item is added or we terminate.
+                            stored = storedData.offer(values, 1, TimeUnit.SECONDS);
+                        }
+                    } catch (final InterruptedException e) {
+                        // Continue to interrupt.
+                        Thread.currentThread().interrupt();
+
+                        error(e.getMessage(), e);
+                    } catch (final RuntimeException e) {
+                        error(e.getMessage(), e);
+                    }
+                };
+
+                // Start searching
+                final SolrSearchTask solrSearchTask = new SolrSearchTask(task.getCachedSolrIndex(), solrQuery, storedFieldNames, resultReceiver, this, hitCount);
+                solrSearchTaskHandler.exec(solrSearchTask);
 
                 if (!filterStreams) {
                     // If we aren't required to filter streams and aren't using pipelines to feed data to coprocessors then just do a simple data transfer to the coprocessors.
-                    transfer(extractionCoprocessorsMap, indexShardSearchTaskProducer);
+                    transfer(extractionCoprocessorsMap);
 
                 } else {
                     // Update config for extraction task executor.
@@ -459,14 +446,12 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             extractionTaskProperties.getMaxThreadsPerTask(),
                             executorProvider,
                             extractionTaskHandlerProvider,
-                            indexShardSearchTaskProducer);
+                            solrSearchTaskHandler);
 
                     // Wait for completion.
-                    while (!indexShardSearchTaskProducer.isComplete() || !extractionTaskProducer.isComplete()) {
+                    while (!solrSearchTaskHandler.isComplete() || !extractionTaskProducer.isComplete()) {
                         taskContext.info(
                                 "Searching... " +
-                                        indexShardSearchTaskProducer.getRemainingTasks() +
-                                        " shards and " +
                                         extractionTaskProducer.getRemainingTasks() +
                                         " extractions remaining");
 
@@ -479,55 +464,40 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         }
     }
 
-    private IndexShardQueryFactory createIndexShardQueryFactory(final ClusterSearchTask task, final stroom.query.api.v2.Query query, final IndexFieldsMap indexFieldsMap, final Map<Version, Optional<SearchExpressionQuery>> queryMap) {
-        return new IndexShardQueryFactory() {
+    private Optional<SearchExpressionQuery> getQuery(final ExpressionOperator expression,
+                                                     final Map<String, SolrIndexField> indexFieldsMap) {
+        try {
+            final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
+                    dictionaryStore,
+                    indexFieldsMap,
+                    maxBooleanClauseCount,
+                    task.getDateTimeLocale(),
+                    task.getNow());
+            final SearchExpressionQuery query = searchExpressionQueryBuilder.buildQuery(expression);
 
-            @Override
-            public Query getQuery(final Version luceneVersion) {
-                final Optional<SearchExpressionQuery> optional = queryMap.computeIfAbsent(luceneVersion, k -> {
-                    // Get a query for the required lucene version.
-                    return getQuery(k, query.getExpression(), indexFieldsMap);
-                });
-                return optional.map(SearchExpressionQuery::getQuery).orElse(null);
+            // Make sure the query was created successfully.
+            if (query.getQuery() == null) {
+                throw new SearchException("Failed to build query given expression");
+            } else {
+                LOGGER.debug(() -> "Query is " + query.toString());
             }
 
-            private Optional<SearchExpressionQuery> getQuery(final Version version, final ExpressionOperator expression,
-                                                             final IndexFieldsMap indexFieldsMap) {
-                try {
-                    final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                            dictionaryStore,
-                            indexFieldsMap,
-                            maxBooleanClauseCount,
-                            task.getDateTimeLocale(),
-                            task.getNow());
-                    final SearchExpressionQuery query = searchExpressionQueryBuilder.buildQuery(version, expression);
+            return Optional.of(query);
+        } catch (final RuntimeException e) {
+            error(e.getMessage(), e);
+        }
 
-                    // Make sure the query was created successfully.
-                    if (query.getQuery() == null) {
-                        throw new SearchException("Failed to build Lucene query given expression");
-                    } else {
-                        LOGGER.debug(() -> "Lucene Query is " + query.toString());
-                    }
-
-                    return Optional.of(query);
-                } catch (final RuntimeException e) {
-                    error(e.getMessage(), e);
-                }
-
-                return Optional.empty();
-            }
-        };
+        return Optional.empty();
     }
 
-    private void transfer(final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap,
-                          final IndexShardSearchTaskProducer indexShardSearchTaskProducer) {
+    private void transfer(final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap) {
         try {
             // If we aren't required to filter streams and aren't using pipelines to feed data to coprocessors then just do a simple data transfer to the coprocessors.
             final Set<Coprocessor> coprocessors = extractionCoprocessorsMap.get(null);
             boolean complete = false;
             while (!complete && !task.isTerminated()) {
                 // Check if search is finished before polling for stored data.
-                final boolean searchComplete = indexShardSearchTaskProducer.isComplete();
+                final boolean searchComplete = solrSearchTaskHandler.isComplete();
                 // Poll for the next stored data result.
                 final Val[] values = storedData.poll(1, TimeUnit.SECONDS);
 
@@ -562,7 +532,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         }
     }
 
-    public ClusterSearchTask getTask() {
+    public SolrClusterSearchTask getTask() {
         return task;
     }
 }

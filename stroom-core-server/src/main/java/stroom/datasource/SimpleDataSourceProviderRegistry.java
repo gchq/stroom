@@ -50,6 +50,7 @@ class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
             //if this code is kept long term then ResourcePaths needs to be mode so that is accessible to all
             urlMap = new HashMap<>();
             urlMap.put("Index", basePath + "/api/stroom-index/v2");
+            urlMap.put("SolrIndex", basePath + "/api/stroom-solr-index/v2");
             urlMap.put("StatisticStore", basePath + "/api/sqlstatistics/v2");
             //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
             //you can run service discovery

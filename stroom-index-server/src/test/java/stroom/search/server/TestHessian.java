@@ -60,7 +60,7 @@ public class TestHessian {
         final Node node = Node.create(rack, "node");
 
         final IndexFields indexFields = createIndexFields();
-        final IndexField[] fields = indexFields.getIndexFields().toArray(new IndexField[0]);
+        final String[] fields = indexFields.getIndexFields().stream().map(IndexField::getFieldName).toArray(String[]::new);
 
         final Field field = new Field(
                 "test",
@@ -112,7 +112,7 @@ public class TestHessian {
         final Map<CoprocessorKey, Payload> payloadMap = new HashMap<>();
         payloadMap.put(coprocessorKey, tablePayload);
 
-        final NodeResult nodeResult = new NodeResult(payloadMap, Arrays.asList("test"), true);
+        final NodeResult nodeResult = new NodeResult(payloadMap, Collections.singletonList("test"), true);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Hessian2Output out = new Hessian2Output(baos);

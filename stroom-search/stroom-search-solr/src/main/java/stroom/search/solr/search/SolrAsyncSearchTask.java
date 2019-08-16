@@ -14,57 +14,53 @@
  * limitations under the License.
  */
 
-package stroom.search.server;
+package stroom.search.solr.search;
 
-import stroom.node.shared.Node;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.task.cluster.ClusterTask;
+import stroom.util.shared.Task;
+import stroom.util.shared.VoidResult;
+import stroom.util.task.ServerTask;
 
-import java.util.List;
+import java.io.Serializable;
 import java.util.Map;
 
-public class ClusterSearchTask extends ClusterTask<NodeResult> {
+public class SolrAsyncSearchTask extends ServerTask<VoidResult> implements Serializable {
     private static final long serialVersionUID = -1305243739417365803L;
 
+    private final String searchName;
     private final Query query;
-    private final List<Long> shards;
-    private final Node targetNode;
-    private final String[] storedFields;
     private final int resultSendFrequency;
     private final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap;
     private final String dateTimeLocale;
     private final long now;
 
-    public ClusterSearchTask(final String userToken, final String taskName, final Query query,
-                             final List<Long> shards, final Node targetNode, final String[] storedFields,
-                             final int resultSendFrequency, final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap, final String dateTimeLocale, final long now) {
-        super(userToken, taskName);
+    private volatile transient SolrSearchResultCollector resultCollector;
+
+    public SolrAsyncSearchTask(final Task<?> parentTask,
+                               final String userToken,
+                               final String searchName,
+                               final Query query,
+                               final int resultSendFrequency,
+                               final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
+                               final String dateTimeLocale,
+                               final long now) {
+        super(parentTask, userToken);
+        this.searchName = searchName;
         this.query = query;
-        this.shards = shards;
-        this.targetNode = targetNode;
-        this.storedFields = storedFields;
         this.resultSendFrequency = resultSendFrequency;
         this.coprocessorMap = coprocessorMap;
         this.dateTimeLocale = dateTimeLocale;
         this.now = now;
     }
 
-    public Node getTargetNode() {
-        return targetNode;
+    public String getSearchName() {
+        return searchName;
     }
 
     public Query getQuery() {
         return query;
-    }
-
-    public List<Long> getShards() {
-        return shards;
-    }
-
-    public String[] getStoredFields() {
-        return storedFields;
     }
 
     public int getResultSendFrequency() {
@@ -81,5 +77,13 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
 
     public long getNow() {
         return now;
+    }
+
+    public SolrSearchResultCollector getResultCollector() {
+        return resultCollector;
+    }
+
+    public void setResultCollector(final SolrSearchResultCollector resultCollector) {
+        this.resultCollector = resultCollector;
     }
 }

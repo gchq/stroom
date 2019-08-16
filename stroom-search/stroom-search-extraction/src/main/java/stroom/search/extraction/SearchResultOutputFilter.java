@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.search.server.extraction;
+package stroom.search.extraction;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -28,7 +28,7 @@ import stroom.pipeline.server.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.search.server.extraction.ExtractionTask.ResultReceiver;
+import stroom.search.extraction.ExtractionTask.ResultReceiver;
 import stroom.util.spring.StroomScope;
 
 @Component

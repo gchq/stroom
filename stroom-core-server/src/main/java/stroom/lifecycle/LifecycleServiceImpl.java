@@ -24,7 +24,7 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.jobsystem.server.ScheduledTaskExecutor;
 import stroom.security.SecurityHelper;
 import stroom.security.SecurityContext;
-import stroom.task.server.StroomThreadGroup;
+import stroom.util.thread.StroomThreadGroup;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
 import stroom.util.config.PropertyUtil;

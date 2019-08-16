@@ -38,7 +38,6 @@ import stroom.spring.ServerConfiguration;
 import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
-import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.AbstractCommandLineTool;

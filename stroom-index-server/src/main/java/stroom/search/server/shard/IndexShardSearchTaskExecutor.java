@@ -17,7 +17,7 @@
 package stroom.search.server.shard;
 
 import org.springframework.stereotype.Component;
-import stroom.search.server.taskqueue.TaskExecutor;
+import stroom.util.task.taskqueue.TaskExecutor;
 
 import javax.inject.Singleton;
 

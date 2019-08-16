@@ -18,7 +18,6 @@ package stroom.search.solr;
 
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.request.SolrPing;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.springframework.context.annotation.Scope;
 import stroom.search.solr.shared.SolrConnectionTestAction;

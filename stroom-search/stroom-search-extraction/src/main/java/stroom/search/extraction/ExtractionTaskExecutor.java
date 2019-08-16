@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.task.server;
+package stroom.search.extraction;
 
-public final class StroomThreadGroup {
-    private static final ThreadGroup MAIN_THREAD_GROUP = Thread.currentThread().getThreadGroup();
-    private static final ThreadGroup STROOM_THREAD_GROUP = new ThreadGroup(MAIN_THREAD_GROUP, "Stroom");
+import org.springframework.stereotype.Component;
+import stroom.util.task.taskqueue.TaskExecutor;
 
-    private StroomThreadGroup() {
-        // Static class.
-    }
+import javax.inject.Singleton;
 
-    public static ThreadGroup instance() {
-        return STROOM_THREAD_GROUP;
+@Component
+@Singleton
+public class ExtractionTaskExecutor extends TaskExecutor {
+    public ExtractionTaskExecutor() {
+        super("Extraction Task Executor");
     }
 }

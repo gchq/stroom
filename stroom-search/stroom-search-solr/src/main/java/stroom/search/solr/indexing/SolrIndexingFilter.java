@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.search.solr;
+package stroom.search.solr.indexing;
 
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
@@ -36,9 +36,12 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.query.api.v2.DocRef;
+import stroom.search.solr.SolrIndexCache;
+import stroom.search.solr.SolrIndexClientCache;
 import stroom.search.solr.shared.SolrIndex;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrIndexFieldType;
+import stroom.search.solr.CachedSolrIndex;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -52,7 +55,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * The index filter... takes the index XML and builds the LUCENE documents
+ * The Solr index filter... takes the index XML and sends documents to Solr for indexing.
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)

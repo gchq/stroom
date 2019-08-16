@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.search.server.extraction;
+package stroom.search.extraction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,6 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexField;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.search.server.Event;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.streamstore.server.StreamStore;
@@ -48,7 +47,7 @@ public class StreamMapCreator {
     private final SecurityContext securityContext;
     private Map<Long, Optional<Stream>> fiteredStreamCache;
 
-    public StreamMapCreator(final IndexField[] storedFields,
+    public StreamMapCreator(final String[] storedFields,
                             final ErrorReceiver errorReceiver,
                             final StreamStore streamStore,
                             final SecurityContext securityContext) {
@@ -61,12 +60,12 @@ public class StreamMapCreator {
         eventIdIndex = getFieldIndex(storedFields, IndexConstants.EVENT_ID, true);
     }
 
-    private int getFieldIndex(final IndexField[] storedFields, final String fieldName, final boolean warn) {
+    private int getFieldIndex(final String[] storedFields, final String fieldName, final boolean warn) {
         int index = -1;
 
         for (int i = 0; i < storedFields.length && index == -1; i++) {
-            final IndexField storedField = storedFields[i];
-            if (storedField.getFieldName().equals(fieldName)) {
+            final String storedField = storedFields[i];
+            if (storedField.equals(fieldName)) {
                 index = i;
             }
         }

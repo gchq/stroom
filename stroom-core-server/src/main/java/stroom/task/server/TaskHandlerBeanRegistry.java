@@ -70,7 +70,7 @@ public class TaskHandlerBeanRegistry implements ApplicationContextAware, Initial
             final TaskHandlerBean handlerBean = handlerClass.getAnnotation(TaskHandlerBean.class);
             final Class<?> taskClass = handlerBean.task();
 
-            final Object previousHandler = handlerMap.put(taskClass, handlerName);
+            final String previousHandler = handlerMap.put(taskClass, handlerName);
 
             taskHandlerMap.put(taskClass, handlerBean);
 

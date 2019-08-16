@@ -47,6 +47,7 @@ import stroom.util.task.MonitorInfoUtil;
 import stroom.util.task.TaskScopeContextHolder;
 import stroom.util.task.TaskScopeRunnable;
 import stroom.util.thread.CustomThreadFactory;
+import stroom.util.thread.StroomThreadGroup;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;

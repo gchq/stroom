@@ -27,7 +27,7 @@ import stroom.index.shared.Index;
 import javax.inject.Inject;
 
 @Configuration
-@ComponentScan(basePackages = {"stroom.index.server"}, excludeFilters = {
+@ComponentScan(basePackages = {"stroom.index.server", "stroom.search.extraction"}, excludeFilters = {
         // Exclude other configurations that might be found accidentally during
         // a component scan as configurations should be specified explicitly.
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})

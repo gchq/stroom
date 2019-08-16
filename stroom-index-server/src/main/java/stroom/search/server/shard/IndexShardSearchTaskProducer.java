@@ -18,11 +18,12 @@ package stroom.search.server.shard;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
+import stroom.search.extraction.HasComplete;
 import stroom.search.server.ClusterSearchTask;
 import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.search.server.shard.IndexShardSearchTask.ResultReceiver;
-import stroom.search.server.taskqueue.TaskExecutor;
-import stroom.search.server.taskqueue.TaskProducer;
+import stroom.util.task.taskqueue.TaskExecutor;
+import stroom.util.task.taskqueue.TaskProducer;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.ThreadPoolImpl;
 import stroom.util.logging.LambdaLogger;
@@ -39,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class IndexShardSearchTaskProducer extends TaskProducer {
+public class IndexShardSearchTaskProducer extends TaskProducer implements HasComplete {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
 
     static final ThreadPool THREAD_POOL = new ThreadPoolImpl(

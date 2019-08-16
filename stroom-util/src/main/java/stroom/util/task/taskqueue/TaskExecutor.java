@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.search.server.taskqueue;
+package stroom.util.task.taskqueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.task.server.StroomThreadGroup;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.thread.CustomThreadFactory;
+import stroom.util.thread.StroomThreadGroup;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;

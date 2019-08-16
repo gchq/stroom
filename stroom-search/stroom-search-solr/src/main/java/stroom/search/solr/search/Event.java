@@ -14,17 +14,34 @@
  * limitations under the License.
  */
 
-package stroom.search.server.extraction;
+package stroom.search.solr.search;
 
-import org.springframework.stereotype.Component;
-import stroom.search.server.taskqueue.TaskExecutor;
+import stroom.dashboard.expression.v1.Val;
 
-import javax.inject.Singleton;
+public class Event implements Comparable<Event> {
+    private final long id;
+    private final Val[] values;
 
-@Component
-@Singleton
-public class ExtractionTaskExecutor extends TaskExecutor {
-    public ExtractionTaskExecutor() {
-        super("Extraction Task Executor");
+    public Event(final long id, final Val[] values) {
+        this.id = id;
+        this.values = values;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public Val[] getValues() {
+        return values;
+    }
+
+    @Override
+    public int compareTo(final Event o) {
+        return Long.compare(id, o.id);
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(id);
     }
 }

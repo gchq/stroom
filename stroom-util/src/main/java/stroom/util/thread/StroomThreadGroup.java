@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.search.solr;
+package stroom.util.thread;
 
-class SolrIndexException extends RuntimeException {
-    private static final long serialVersionUID = -482925256715483280L;
+public final class StroomThreadGroup {
+    private static final ThreadGroup MAIN_THREAD_GROUP = Thread.currentThread().getThreadGroup();
+    private static final ThreadGroup STROOM_THREAD_GROUP = new ThreadGroup(MAIN_THREAD_GROUP, "Stroom");
 
-    public SolrIndexException(final Throwable t) {
-        super(t);
+    private StroomThreadGroup() {
+        // Static class.
     }
 
-    public SolrIndexException(final String message) {
-        super(message);
-    }
-
-    public SolrIndexException(final String message, final Throwable t) {
-        super(message, t);
+    public static ThreadGroup instance() {
+        return STROOM_THREAD_GROUP;
     }
 }
