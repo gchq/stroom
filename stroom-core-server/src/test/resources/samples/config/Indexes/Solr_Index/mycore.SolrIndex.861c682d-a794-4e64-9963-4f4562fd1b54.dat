@@ -31,20 +31,20 @@
     "indexed" : false
   }, {
     "fieldName" : "Action",
-    "fieldType" : "text_general",
+    "fieldType" : "lowercase",
     "multiValued" : true,
     "omitNorms" : true,
     "omitTermFreqAndPositions" : true,
     "omitPositions" : true
   }, {
     "fieldName" : "Command",
-    "fieldType" : "_nest_path_",
+    "fieldType" : "lowercase",
     "multiValued" : true,
     "omitNorms" : true,
     "omitTermFreqAndPositions" : true,
     "omitPositions" : true
   }, {
-    "fieldName" : "Command (Keyword)",
+    "fieldName" : "Command_Keyword",
     "fieldType" : "strings",
     "multiValued" : true,
     "omitNorms" : true,
@@ -52,24 +52,21 @@
     "omitPositions" : true
   }, {
     "fieldName" : "Description",
-    "fieldType" : "text_general",
+    "fieldType" : "lowercase",
     "multiValued" : true,
     "omitNorms" : true,
     "omitTermFreqAndPositions" : true,
     "omitPositions" : true
   }, {
-    "fieldName" : "Description (Case Sensitive)",
+    "fieldName" : "Description_Case_Sensitive",
     "fieldType" : "text_ws",
     "multiValued" : true,
     "omitNorms" : true,
     "omitTermFreqAndPositions" : true,
     "omitPositions" : true
-  }, {
-    "fieldName" : "Description__Case_Sensitive_",
-    "fieldType" : "text_general"
-  }, {
+  },, {
     "fieldName" : "Environment",
-    "fieldType" : "text_general",
+    "fieldType" : "lowercase",
     "multiValued" : true,
     "omitNorms" : true,
     "omitTermFreqAndPositions" : true,
@@ -86,31 +83,28 @@
   }, {
     "fieldUse" : "DATE_FIELD",
     "fieldName" : "EventTime",
-    "fieldType" : "strings",
+    "fieldType" : "plong",
     "multiValued" : true,
     "omitNorms" : true,
     "omitTermFreqAndPositions" : true,
     "omitPositions" : true
   }, {
     "fieldName" : "Feed",
-    "fieldType" : "text_general",
+    "fieldType" : "lowercase",
     "multiValued" : true,
     "omitNorms" : true,
     "omitTermFreqAndPositions" : true,
     "omitPositions" : true
   }, {
-    "fieldName" : "Feed (Keyword)",
+    "fieldName" : "Feed_Keyword",
     "fieldType" : "strings",
     "multiValued" : true,
     "omitNorms" : true,
     "omitTermFreqAndPositions" : true,
     "omitPositions" : true
-  }, {
-    "fieldName" : "Feed__Keyword_",
-    "fieldType" : "text_general"
-  }, {
+  },, {
     "fieldName" : "Generator",
-    "fieldType" : "text_general",
+    "fieldType" : "lowercase",
     "multiValued" : true,
     "omitNorms" : true,
     "omitTermFreqAndPositions" : true,
@@ -145,7 +139,7 @@
     "omitPositions" : true
   }, {
     "fieldName" : "System",
-    "fieldType" : "text_general",
+    "fieldType" : "lowercase",
     "multiValued" : true,
     "omitNorms" : true,
     "omitTermFreqAndPositions" : true,
