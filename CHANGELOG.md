@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Initial support for Solr indexing and search.
+
 
 ## [v6.0.7] - 2019-08-08
 
