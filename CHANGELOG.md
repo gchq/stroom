@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1-beta.1] - 2019-08-19
+
 * Initial support for Solr indexing and search.
 
 
@@ -1840,7 +1843,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.7...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.1...Solr
+[v6.1-beta.1]: https://github.com/gchq/stroom/compare/v6.0.7...v6.1-beta.1
 [v6.0.7]: https://github.com/gchq/stroom/compare/v6.0.6...v6.0.7
 [v6.0.6]: https://github.com/gchq/stroom/compare/v6.0.5...v6.0.6
 [v6.0.5]: https://github.com/gchq/stroom/compare/v6.0.4...v6.0.5
