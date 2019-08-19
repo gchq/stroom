@@ -17,10 +17,12 @@
 package stroom.search.solr.client.view;
 
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -59,6 +61,8 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     Button testConnection;
     @UiField
     ValueSpinner indexBatchSize;
+    @UiField
+    HTML synchState;
 
     @Inject
     public SolrIndexSettingsViewImpl(final Binder binder) {
@@ -186,6 +190,11 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     @Override
     public void setIndexBatchSize(final int indexBatchSize) {
         this.indexBatchSize.setValue(indexBatchSize);
+    }
+
+    @Override
+    public void setSynchState(final String syncState) {
+        this.synchState.setHTML(SafeHtmlUtils.fromTrustedString(syncState));
     }
 
     @Override

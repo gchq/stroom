@@ -17,7 +17,6 @@
 package stroom.search.extraction;
 
 import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.query.api.v2.DocRef;
 
@@ -28,19 +27,22 @@ public class ExtractionTask {
     private final FieldIndexMap fieldIndexes;
     private final ResultReceiver resultReceiver;
     private final ErrorReceiver errorReceiver;
+    private final ExtractionTaskCompletionStatus completionStatus;
 
     ExtractionTask(final long streamId,
                    final long[] eventIds,
                    final DocRef pipelineRef,
                    final FieldIndexMap fieldIndexes,
                    final ResultReceiver resultReceiver,
-                   final ErrorReceiver errorReceiver) {
+                   final ErrorReceiver errorReceiver,
+                   final ExtractionTaskCompletionStatus completionStatus) {
         this.streamId = streamId;
         this.eventIds = eventIds;
         this.pipelineRef = pipelineRef;
         this.fieldIndexes = fieldIndexes;
         this.resultReceiver = resultReceiver;
         this.errorReceiver = errorReceiver;
+        this.completionStatus = completionStatus;
     }
 
     public long getStreamId() {
@@ -67,7 +69,11 @@ public class ExtractionTask {
         return errorReceiver;
     }
 
+    public ExtractionTaskCompletionStatus getCompletionStatus() {
+        return completionStatus;
+    }
+
     public interface ResultReceiver {
-        void receive(Val[] values);
+        void receive(Values values);
     }
 }

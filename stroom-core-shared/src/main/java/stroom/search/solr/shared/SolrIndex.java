@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "collection", "connection", "indexBatchSize", "fields"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "collection", "connection", "indexBatchSize", "fields", "state"})
 public class SolrIndex extends Doc {
     public static final String ENTITY_TYPE = "SolrIndex";
 
@@ -38,6 +38,7 @@ public class SolrIndex extends Doc {
 
     private List<SolrIndexField> fields;
     private List<SolrIndexField> deletedFields;
+    private SolrSynchState solrSynchState;
 
     public SolrIndex() {
         fields = new ArrayList<>();
@@ -101,6 +102,16 @@ public class SolrIndex extends Doc {
     @JsonIgnore
     public void setDeletedFields(final List<SolrIndexField> deletedFields) {
         this.deletedFields = deletedFields;
+    }
+
+    @JsonProperty("state")
+    public SolrSynchState getSolrSynchState() {
+        return solrSynchState;
+    }
+
+    @JsonProperty("state")
+    public void setSolrSynchState(final SolrSynchState solrSynchState) {
+        this.solrSynchState = solrSynchState;
     }
 
     @JsonIgnore

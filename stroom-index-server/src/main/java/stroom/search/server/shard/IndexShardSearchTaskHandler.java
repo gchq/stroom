@@ -33,6 +33,7 @@ import stroom.index.server.IndexShardWriterCache;
 import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
 import stroom.node.server.StroomPropertyService;
+import stroom.search.extraction.Values;
 import stroom.search.server.SearchException;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
@@ -241,7 +242,7 @@ public class IndexShardSearchTaskHandler {
             }
 
             if (values != null) {
-                task.getResultReceiver().receive(task.getIndexShardId(), values);
+                task.getResultReceiver().receive(task.getIndexShardId(), new Values(values));
             }
         } catch (final Exception e) {
             error(task, e.getMessage(), e);

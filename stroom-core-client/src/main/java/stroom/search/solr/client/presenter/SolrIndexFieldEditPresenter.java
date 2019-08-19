@@ -45,6 +45,8 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
     public void read(final SolrIndexField indexField,
                      final Set<String> otherFieldNames,
                      final List<String> fieldTypes) {
+        getView().setFieldTypes(fieldTypes);
+
         this.otherFieldNames = otherFieldNames;
         getView().setFieldUse(indexField.getFieldUse());
         getView().setFieldName(indexField.getFieldName());
@@ -65,7 +67,6 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
         getView().setTermPayloads(indexField.isTermPayloads());
         getView().setSortMissingFirst(indexField.isSortMissingFirst());
         getView().setSortMissingLast(indexField.isSortMissingLast());
-        getView().setFieldTypes(fieldTypes);
     }
 
     public boolean write(final SolrIndexField indexField) {
@@ -74,6 +75,10 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
 
         if (name.length() == 0) {
             AlertEvent.fireWarn(this, "An index field must have a name", null);
+            return false;
+        }
+        if (!name.matches(SolrIndexField.VALID_FIELD_NAME_PATTERN)) {
+            AlertEvent.fireWarn(this, "An index field name must conform to the pattern '" + SolrIndexField.VALID_FIELD_NAME_PATTERN + "'", null);
             return false;
         }
         if (otherFieldNames.contains(indexField.getFieldName())) {

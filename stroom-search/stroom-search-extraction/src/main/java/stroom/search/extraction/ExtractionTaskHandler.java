@@ -127,6 +127,8 @@ public class ExtractionTaskHandler {
     }
 
     private void extract(final ExtractionTask task) {
+        long successCount = 0;
+
         try {
             this.task = task;
 
@@ -171,11 +173,15 @@ public class ExtractionTaskHandler {
             searchResultOutputFilter.setup(task.getFieldIndexes(), task.getResultReceiver());
 
             // Process the stream segments.
-            processData(task.getStreamId(), task.getEventIds(), pipelineEntity, pipeline);
+            successCount = processData(task.getStreamId(), task.getEventIds(), pipelineEntity, pipeline);
+
 
         } catch (final Exception e) {
             error(e.getMessage(), e);
         }
+
+        task.getCompletionStatus().getSuccessfulExtractions().addAndGet(successCount);
+        task.getCompletionStatus().getFailedExtractions().addAndGet(task.getEventIds().length - successCount);
     }
 
     private <T extends XMLFilter> T getFilter(final Pipeline pipeline, final Class<T> clazz) {

@@ -86,7 +86,6 @@ public class TaskExecutor {
                                     LOGGER.trace(e.getMessage(), e);
                                 }
                             }
-
                         }
                     } catch (final InterruptedException e) {
                         // Clear the interrupt state.

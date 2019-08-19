@@ -25,7 +25,6 @@ import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
-import stroom.search.extraction.HasComplete;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskTerminatedException;
@@ -42,7 +41,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class SolrSearchResultCollector implements Store, HasComplete, CompletionListener {
+public class SolrSearchResultCollector implements Store, CompletionListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(SolrSearchResultCollector.class);
 
     public static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";

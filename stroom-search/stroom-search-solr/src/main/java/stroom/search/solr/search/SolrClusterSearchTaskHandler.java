@@ -18,12 +18,10 @@
 package stroom.search.solr.search;
 
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.common.params.SolrParams;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.Val;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
@@ -34,15 +32,17 @@ import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Payload;
+import stroom.search.extraction.CompletionStatusImpl;
 import stroom.search.extraction.ExtractionTaskExecutor;
 import stroom.search.extraction.ExtractionTaskHandler;
 import stroom.search.extraction.ExtractionTaskProducer;
 import stroom.search.extraction.ExtractionTaskProperties;
 import stroom.search.extraction.StreamMapCreator;
-import stroom.search.solr.SolrIndexCache;
-import stroom.search.solr.search.SolrSearchTask.ResultReceiver;
+import stroom.search.extraction.Values;
 import stroom.search.solr.CachedSolrIndex;
+import stroom.search.solr.SolrIndexCache;
 import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
+import stroom.search.solr.search.SolrSearchTask.ResultReceiver;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
@@ -77,7 +77,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -120,7 +119,7 @@ public class SolrClusterSearchTaskHandler implements ErrorReceiver {
 
     private SolrClusterSearchTask task;
 
-    private LinkedBlockingQueue<Val[]> storedData;
+    private LinkedBlockingQueue<Values> storedData;
 
     @Inject
     SolrClusterSearchTaskHandler(final SolrIndexCache solrIndexCache,
@@ -394,7 +393,6 @@ public class SolrClusterSearchTaskHandler implements ErrorReceiver {
 
                 // Create a transfer list to capture stored data from the index that can be used by coprocessors.
                 storedData = new LinkedBlockingQueue<>(maxStoredDataQueueSize);
-                final AtomicLong hitCount = new AtomicLong();
 
                 final String queryString = optionalQuery.get().getQuery().toString();
                 final SolrQuery solrQuery = new SolrQuery(queryString);
@@ -419,7 +417,8 @@ public class SolrClusterSearchTaskHandler implements ErrorReceiver {
                 };
 
                 // Start searching
-                final SolrSearchTask solrSearchTask = new SolrSearchTask(task.getCachedSolrIndex(), solrQuery, storedFieldNames, resultReceiver, this, hitCount);
+                final CompletionStatusImpl completionStatus = new CompletionStatusImpl();
+                final SolrSearchTask solrSearchTask = new SolrSearchTask(task.getCachedSolrIndex(), solrQuery, storedFieldNames, resultReceiver, this, completionStatus);
                 solrSearchTaskHandler.exec(solrSearchTask);
 
                 if (!filterStreams) {
@@ -446,10 +445,13 @@ public class SolrClusterSearchTaskHandler implements ErrorReceiver {
                             extractionTaskProperties.getMaxThreadsPerTask(),
                             executorProvider,
                             extractionTaskHandlerProvider,
-                            solrSearchTaskHandler);
+                            completionStatus);
+
+                    // Set the parent status as complete.
+                    completionStatus.setComplete();
 
                     // Wait for completion.
-                    while (!solrSearchTaskHandler.isComplete() || !extractionTaskProducer.isComplete()) {
+                    while (!completionStatus.isComplete()) {
                         taskContext.info(
                                 "Searching... " +
                                         extractionTaskProducer.getRemainingTasks() +
@@ -457,6 +459,8 @@ public class SolrClusterSearchTaskHandler implements ErrorReceiver {
 
                         ThreadUtil.sleep(1000);
                     }
+
+                    LOGGER.debug(() -> "Complete - " + completionStatus);
                 }
             }
         } catch (final Exception pEx) {
@@ -496,18 +500,17 @@ public class SolrClusterSearchTaskHandler implements ErrorReceiver {
             final Set<Coprocessor> coprocessors = extractionCoprocessorsMap.get(null);
             boolean complete = false;
             while (!complete && !task.isTerminated()) {
-                // Check if search is finished before polling for stored data.
-                final boolean searchComplete = solrSearchTaskHandler.isComplete();
                 // Poll for the next stored data result.
-                final Val[] values = storedData.poll(1, TimeUnit.SECONDS);
-
+                final Values values = storedData.poll(1, TimeUnit.SECONDS);
                 if (values != null) {
-                    // Send the data to all coprocessors.
-                    for (final Coprocessor coprocessor : coprocessors) {
-                        coprocessor.receive(values);
+                    if (values.complete()) {
+                        complete = true;
+                    } else {
+                        // Send the data to all coprocessors.
+                        for (final Coprocessor coprocessor : coprocessors) {
+                            coprocessor.receive(values.getValues());
+                        }
                     }
-                } else {
-                    complete = searchComplete;
                 }
             }
         } catch (final Exception e) {

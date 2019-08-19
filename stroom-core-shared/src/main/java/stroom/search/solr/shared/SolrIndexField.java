@@ -36,7 +36,7 @@ import java.util.Objects;
  */
 @JsonInclude(Include.NON_DEFAULT)
 @JsonPropertyOrder({
-        "fieldUse", 
+        "fieldUse",
         "fieldName",
         "fieldType",
         "defaultValue",
@@ -59,11 +59,13 @@ import java.util.Objects;
 public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexField>, Serializable {
     private static final long serialVersionUID = 3100770758821157580L;
 
-    private SolrIndexFieldType fieldUse;
+    public static final String VALID_FIELD_NAME_PATTERN = "[a-zA-Z_](?:[a-zA-Z0-9_])*";
+
+    private SolrIndexFieldType fieldUse = SolrIndexFieldType.FIELD;
     private String fieldName;
     private String fieldType;
     private String defaultValue;
-    private boolean stored = false;
+    private boolean stored;
     private boolean indexed = true;
     private boolean uninvertible;
     private boolean docValues;
@@ -146,14 +148,13 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
     }
 
     public SolrIndexFieldType getFieldUse() {
-        if (fieldUse == null) {
-            return SolrIndexFieldType.FIELD;
-        }
-
         return fieldUse;
     }
 
     public void setFieldUse(final SolrIndexFieldType fieldUse) {
+        if (fieldUse == null) {
+            this.fieldUse = SolrIndexFieldType.FIELD;
+        }
         this.fieldUse = fieldUse;
     }
 

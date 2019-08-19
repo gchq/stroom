@@ -17,11 +17,10 @@
 package stroom.search.solr.search;
 
 import org.apache.solr.common.params.SolrParams;
-import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
+import stroom.search.extraction.CompletionStatus;
+import stroom.search.extraction.Values;
 import stroom.search.solr.CachedSolrIndex;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 public class SolrSearchTask {
     private final CachedSolrIndex solrIndex;
@@ -29,20 +28,20 @@ public class SolrSearchTask {
     private final String[] fieldNames;
     private final ResultReceiver resultReceiver;
     private final ErrorReceiver errorReceiver;
-    private final AtomicLong hitCount;
+    private final CompletionStatus parentCompletionStatus;
 
     public SolrSearchTask(final CachedSolrIndex solrIndex,
-                   final SolrParams solrParams,
-                   final String[] fieldNames,
-                   final ResultReceiver resultReceiver,
-                   final ErrorReceiver errorReceiver,
-                   final AtomicLong hitCount) {
+                          final SolrParams solrParams,
+                          final String[] fieldNames,
+                          final ResultReceiver resultReceiver,
+                          final ErrorReceiver errorReceiver,
+                          final CompletionStatus parentCompletionStatus) {
         this.solrIndex = solrIndex;
         this.solrParams = solrParams;
         this.fieldNames = fieldNames;
         this.resultReceiver = resultReceiver;
         this.errorReceiver = errorReceiver;
-        this.hitCount = hitCount;
+        this.parentCompletionStatus = parentCompletionStatus;
     }
 
     public CachedSolrIndex getSolrIndex() {
@@ -65,11 +64,11 @@ public class SolrSearchTask {
         return errorReceiver;
     }
 
-    public AtomicLong getHitCount() {
-        return hitCount;
+    public CompletionStatus getParentCompletionStatus() {
+        return parentCompletionStatus;
     }
 
     public interface ResultReceiver {
-        void receive(Val[] values);
+        void receive(Values values);
     }
 }

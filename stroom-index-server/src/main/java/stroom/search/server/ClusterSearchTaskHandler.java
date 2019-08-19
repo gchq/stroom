@@ -22,11 +22,9 @@ import org.apache.lucene.util.Version;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.Val;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.index.server.IndexService;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
@@ -37,15 +35,14 @@ import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Payload;
-import stroom.search.extraction.ExtractionTaskExecutor;
-import stroom.search.extraction.ExtractionTaskHandler;
-import stroom.search.extraction.ExtractionTaskProperties;
-import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
+import stroom.search.extraction.CompletionStatusImpl;
 import stroom.search.extraction.ExtractionTaskExecutor;
 import stroom.search.extraction.ExtractionTaskHandler;
 import stroom.search.extraction.ExtractionTaskProducer;
 import stroom.search.extraction.ExtractionTaskProperties;
 import stroom.search.extraction.StreamMapCreator;
+import stroom.search.extraction.Values;
+import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.search.server.shard.IndexShardSearchTaskExecutor;
 import stroom.search.server.shard.IndexShardSearchTaskHandler;
@@ -132,7 +129,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
     private ClusterSearchTask task;
 
-    private LinkedBlockingQueue<Val[]> storedData;
+    private LinkedBlockingQueue<Values> storedData;
 
     @Inject
     ClusterSearchTaskHandler(final IndexService indexService,
@@ -402,6 +399,8 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
+            final CompletionStatusImpl completionStatus = new CompletionStatusImpl();
+
             if (extractionCoprocessorsMap != null && extractionCoprocessorsMap.size() > 0
                     && task.getShards().size() > 0) {
                 // Make sure we are searching a specific index.
@@ -433,7 +432,8 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         hitCount,
                         indexShardSearchTaskProperties.getMaxThreadsPerTask(),
                         executorProvider,
-                        indexShardSearchTaskHandlerProvider);
+                        indexShardSearchTaskHandlerProvider,
+                        completionStatus);
 
                 if (!filterStreams) {
                     // If we aren't required to filter streams and aren't using pipelines to feed data to coprocessors then just do a simple data transfer to the coprocessors.
@@ -459,10 +459,13 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             extractionTaskProperties.getMaxThreadsPerTask(),
                             executorProvider,
                             extractionTaskHandlerProvider,
-                            indexShardSearchTaskProducer);
+                            completionStatus);
+
+                    // Set the parent status as complete.
+                    completionStatus.setComplete();
 
                     // Wait for completion.
-                    while (!indexShardSearchTaskProducer.isComplete() || !extractionTaskProducer.isComplete()) {
+                    while (!completionStatus.isComplete()) {
                         taskContext.info(
                                 "Searching... " +
                                         indexShardSearchTaskProducer.getRemainingTasks() +
@@ -472,6 +475,8 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                         ThreadUtil.sleep(1000);
                     }
+
+                    LOGGER.debug(() -> "Complete - " + completionStatus);
                 }
             }
         } catch (final Exception pEx) {
@@ -526,18 +531,17 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
             final Set<Coprocessor> coprocessors = extractionCoprocessorsMap.get(null);
             boolean complete = false;
             while (!complete && !task.isTerminated()) {
-                // Check if search is finished before polling for stored data.
-                final boolean searchComplete = indexShardSearchTaskProducer.isComplete();
                 // Poll for the next stored data result.
-                final Val[] values = storedData.poll(1, TimeUnit.SECONDS);
-
+                final Values values = storedData.poll(1, TimeUnit.SECONDS);
                 if (values != null) {
-                    // Send the data to all coprocessors.
-                    for (final Coprocessor coprocessor : coprocessors) {
-                        coprocessor.receive(values);
+                    if (values.complete()) {
+                        complete = true;
+                    } else {
+                        // Send the data to all coprocessors.
+                        for (final Coprocessor coprocessor : coprocessors) {
+                            coprocessor.receive(values.getValues());
+                        }
                     }
-                } else {
-                    complete = searchComplete;
                 }
             }
         } catch (final Exception e) {

@@ -203,7 +203,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<DataGridView<
                         final SolrIndexField indexField = new SolrIndexField();
                         if (indexFieldEditPresenter.write(indexField)) {
                             fields.add(indexField);
-                            fields.sort(Comparator.comparing(SolrIndexField::getFieldName));
+                            fields.sort(Comparator.comparing(SolrIndexField::getFieldName, String.CASE_INSENSITIVE_ORDER));
                             getView().getSelectionModel().setSelected(indexField);
                             refresh();
 
@@ -240,7 +240,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<DataGridView<
                                 if (!indexField.equals(existingField)) {
                                     fields.remove(existingField);
                                     fields.add(indexField);
-                                    fields.sort(Comparator.comparing(SolrIndexField::getFieldName));
+                                    fields.sort(Comparator.comparing(SolrIndexField::getFieldName, String.CASE_INSENSITIVE_ORDER));
                                     getView().getSelectionModel().setSelected(indexField);
                                     refresh();
 

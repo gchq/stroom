@@ -31,6 +31,8 @@ import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
 import stroom.search.solr.shared.SolrConnectionTestAction;
 import stroom.search.solr.shared.SolrIndex;
+import stroom.search.solr.shared.SolrSynchState;
+import stroom.widget.customdatebox.client.ClientDateUtil;
 
 import java.util.List;
 
@@ -79,6 +81,21 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
         getView().setDescription(index.getDescription());
         getView().setCollection(index.getCollection());
         getView().setIndexBatchSize(index.getIndexBatchSize());
+
+        final SolrSynchState state = index.getSolrSynchState();
+        final StringBuilder sb = new StringBuilder();
+        if (state != null) {
+            if (state.getLastSynchronized() != null) {
+                sb.append("<b>Last synchronised:</b> ");
+                sb.append(ClientDateUtil.toISOString(index.getSolrSynchState().getLastSynchronized()));
+                sb.append("</br>");
+            }
+            for (final String message : state.getMessages()) {
+                sb.append(message);
+                sb.append("</br>");
+            }
+        }
+        getView().setSynchState(sb.toString());
     }
 
     @Override
@@ -132,5 +149,7 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
         int getIndexBatchSize();
 
         void setIndexBatchSize(int indexBatchSize);
+
+        void setSynchState(final String syncState);
     }
 }

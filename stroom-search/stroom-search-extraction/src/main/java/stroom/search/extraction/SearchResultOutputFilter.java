@@ -72,7 +72,7 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
-            resultReceiver.receive(values);
+            resultReceiver.receive(new Values(values));
             values = null;
         }
 

@@ -82,7 +82,7 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
                         LOGGER.debug(e.getMessage(), e);
                     } finally {
                         threadsUsed.decrementAndGet();
-                        tasksCompleted.incrementAndGet();
+                        incrementTasksCompleted();
                     }
                 };
             }
@@ -98,7 +98,7 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
      *
      * @return True if this producer will not issue any further tasks and that all of the tasks it has issued have completed processing.
      */
-    public boolean isComplete() {
+    protected boolean isComplete() {
         return getRemainingTasks() == 0;
     }
 
@@ -114,12 +114,24 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
         taskExecutor.signalAll();
     }
 
-    protected final AtomicInteger getTasksTotal() {
-        return tasksTotal;
+    protected final int getTasksTotal() {
+        return tasksTotal.get();
     }
 
-    protected final AtomicInteger getTasksCompleted() {
-        return tasksCompleted;
+    protected final void setTasksTotal(int tasksTotal) {
+        this.tasksTotal.set(tasksTotal);
+    }
+
+    protected void incrementTasksTotal() {
+        tasksTotal.incrementAndGet();
+    }
+
+    protected final int getTasksCompleted() {
+        return tasksCompleted.get();
+    }
+
+    protected void incrementTasksCompleted() {
+        tasksCompleted.incrementAndGet();
     }
 
     public final int getRemainingTasks() {

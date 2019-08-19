@@ -61,6 +61,12 @@
                                     width="200px"/>
                 </g:customCell>
             </g:row>
+            <g:row>
+                <g:cell>State:</g:cell>
+                <g:customCell>
+                    <g:HTML ui:field="synchState"  width="400px"></g:HTML>
+                </g:customCell>
+            </g:row>
         </g:Grid>
     </g:FlowPanel>
 </ui:UiBinder> 
