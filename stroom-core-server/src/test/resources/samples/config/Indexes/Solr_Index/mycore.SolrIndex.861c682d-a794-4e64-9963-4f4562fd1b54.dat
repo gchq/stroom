@@ -1,166 +1,161 @@
 {
-  "type" : "SolrIndex",
   "uuid" : "861c682d-a794-4e64-9963-4f4562fd1b54",
   "name" : "mycore",
-  "version" : "77c34bfd-7a74-43e2-af05-1f2305936851",
+  "version" : "436987e6-82ed-4ee3-9b76-823b23d7470c",
   "createTime" : 1565634533615,
-  "updateTime" : 1565634564193,
+  "updateTime" : 1565866914390,
   "createUser" : "admin",
   "updateUser" : "admin",
   "description" : "",
   "connection" : {
-      "instanceType" : "SINGLE_NOOE",
-      "useZk" : false,
-      "solrUrls" : [ "http://localhost:8983/solr" ],
-      "zkHosts" : [ "" ],
-      "zkPath" : ""
+    "useZk" : false,
+    "instanceType" : "SINGLE_NOOE",
+    "solrUrls" : [ "http://localhost:8983/solr/mycore" ],
+    "zkHosts" : [ "" ],
+    "zkPath" : ""
   },
   "indexBatchSize" : 1000,
-    "fields" : [ {
-      "fieldUse" : "ID",
-      "fieldName" : "StreamId",
-      "fieldType" : "plong",
-      "stored" : true,
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-    }, {
-      "fieldUse" : "ID",
-      "fieldName" : "EventId",
-      "fieldType" : "plong",
-      "stored" : true,
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-    }, {
-      "fieldUse" : "FIELD",
-      "fieldName" : "Feed",
-      "fieldType" : "text_general",
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-    }, {
-      "fieldUse" : "FIELD",
-      "fieldName" : "Feed (Keyword)",
-      "fieldType" : "strings",
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-    }, {
-      "fieldUse" : "FIELD",
-      "fieldName" : "Action",
-      "fieldType" : "text_general",
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-    }, {
-      "fieldUse" : "DATE_FIELD",
-      "fieldName" : "EventTime",
-      "fieldType" : "strings",
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-    }, {
-      "fieldUse" : "FIELD",
-      "fieldName" : "UserId",
-      "fieldType" : "strings",
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-    }, {
-      "fieldUse" : "FIELD",
-      "fieldName" : "System",
-      "fieldType" : "text_general",
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-    }, {
-      "fieldUse" : "FIELD",
-      "fieldName" : "Environment",
-      "fieldType" : "text_general",
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-    }, {
-      "fieldUse" : "FIELD",
-      "fieldName" : "IPAddress",
-      "fieldType" : "strings",
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-    }, {
-      "fieldUse" : "FIELD",
-      "fieldName" : "HostName",
-      "fieldType" : "lowercase",
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-    }, {
-      "fieldUse" : "FIELD",
-      "fieldName" : "Generator",
-      "fieldType" : "text_general",
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-    }, {
-      "fieldUse" : "FIELD",
-      "fieldName" : "Command",
-      "fieldType" : "text_general",
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-    }, {
-      "fieldUse" : "FIELD",
-      "fieldName" : "Command (Keyword)",
-      "fieldType" : "strings",
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-    }, {
-      "fieldUse" : "FIELD",
-      "fieldName" : "Description",
-      "fieldType" : "text_general",
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-     }, {
-       "fieldUse" : "FIELD",
-       "fieldName" : "Description (Case Sensitive)",
-       "fieldType" : "text_ws",
-      "indexed" : true,
-      "multiValued" : true,
-      "omitNorms" : true,
-      "omitTermFreqAndPositions" : true,
-      "omitPositions" : true
-    } ]
+  "fields" : [ {
+    "fieldName" : "_nest_path_",
+    "fieldType" : "_nest_path_"
+  }, {
+    "fieldName" : "_root_",
+    "fieldType" : "string"
+  }, {
+    "fieldName" : "_text_",
+    "fieldType" : "text_general",
+    "multiValued" : true
+  }, {
+    "fieldName" : "_version_",
+    "fieldType" : "plong",
+    "indexed" : false
+  }, {
+    "fieldName" : "Action",
+    "fieldType" : "text_general",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Command",
+    "fieldType" : "_nest_path_",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Command (Keyword)",
+    "fieldType" : "strings",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Description",
+    "fieldType" : "text_general",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Description (Case Sensitive)",
+    "fieldType" : "text_ws",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Description__Case_Sensitive_",
+    "fieldType" : "text_general"
+  }, {
+    "fieldName" : "Environment",
+    "fieldType" : "text_general",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldUse" : "ID",
+    "fieldName" : "EventId",
+    "fieldType" : "plong",
+    "stored" : true,
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldUse" : "DATE_FIELD",
+    "fieldName" : "EventTime",
+    "fieldType" : "strings",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Feed",
+    "fieldType" : "text_general",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Feed (Keyword)",
+    "fieldType" : "strings",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Feed__Keyword_",
+    "fieldType" : "text_general"
+  }, {
+    "fieldName" : "Generator",
+    "fieldType" : "text_general",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "HostName",
+    "fieldType" : "lowercase",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "id",
+    "fieldType" : "string",
+    "stored" : true,
+    "required" : true
+  }, {
+    "fieldName" : "IPAddress",
+    "fieldType" : "strings",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldUse" : "ID",
+    "fieldName" : "StreamId",
+    "fieldType" : "plong",
+    "stored" : true,
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "System",
+    "fieldType" : "text_general",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "UserId",
+    "fieldType" : "strings",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  } ]
 }
