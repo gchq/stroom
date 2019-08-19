@@ -1,9 +1,9 @@
 {
   "uuid" : "861c682d-a794-4e64-9963-4f4562fd1b54",
   "name" : "mycore",
-  "version" : "436987e6-82ed-4ee3-9b76-823b23d7470c",
+  "version" : "a144237c-42af-4ce6-a5e2-f11cd972ec26",
   "createTime" : 1565634533615,
-  "updateTime" : 1565866914390,
+  "updateTime" : 1566220114568,
   "createUser" : "admin",
   "updateUser" : "admin",
   "description" : "",
@@ -64,7 +64,7 @@
     "omitNorms" : true,
     "omitTermFreqAndPositions" : true,
     "omitPositions" : true
-  },, {
+  }, {
     "fieldName" : "Environment",
     "fieldType" : "lowercase",
     "multiValued" : true,
@@ -102,7 +102,7 @@
     "omitNorms" : true,
     "omitTermFreqAndPositions" : true,
     "omitPositions" : true
-  },, {
+  }, {
     "fieldName" : "Generator",
     "fieldType" : "lowercase",
     "multiValued" : true,
