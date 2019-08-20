@@ -44,19 +44,18 @@ class TestIndexVolumeGroupDaoImpl {
     void testUpdate() {
         // Given
         final var groupName = TestData.createVolumeGroupName();
-        createGroup(groupName);
+        final var group = createGroup(groupName);
         final var newGroupName = TestData.createVolumeGroupName();
-        final var reloadedGroup = indexVolumeGroupDao.get(groupName);
+        final var reloadedGroup = indexVolumeGroupDao.get(group.getId());
 
         // When
         reloadedGroup.setName(newGroupName);
         indexVolumeGroupDao.update(reloadedGroup);
 
         // Then
-        final var updatedGroup = indexVolumeGroupDao.get(newGroupName);
+        final var updatedGroup = indexVolumeGroupDao.get(group.getId());
         assertThat(updatedGroup).isNotNull();
         assertThat(updatedGroup.getName()).isEqualTo(newGroupName);
-        assertThat(indexVolumeGroupDao.get(groupName)).isNull();
     }
 
 
@@ -70,78 +69,11 @@ class TestIndexVolumeGroupDaoImpl {
         indexVolumeGroupDao.delete(group.getId());
 
         // Then
-        final var deletedGroup = indexVolumeGroupDao.get(groupName);
-        assertThat(deletedGroup).isNull();
-    }
-
-    @Test
-    void testDeleteByName() {
-        // Given
-        final var groupName = TestData.createVolumeGroupName();
-        final var group = createGroup(groupName);
-
-        // When
-        indexVolumeGroupDao.delete(groupName);
-
-        // Then
-        final var deletedGroup = indexVolumeGroupDao.get(groupName);
+        final var deletedGroup = indexVolumeGroupDao.get(group.getId());
         assertThat(deletedGroup).isNull();
     }
 
 
-    @Test
-    void getNamesAndAll() {
-        // Given
-        final long now = System.currentTimeMillis();
-        final Set<String> namesToDelete = IntStream.range(0, 3)
-                .mapToObj(TestData::createVolumeGroupName).collect(Collectors.toSet());
-        final Set<String> names = IntStream.range(0, 7)
-                .mapToObj(TestData::createVolumeGroupName).collect(Collectors.toSet());
-
-        // When
-        namesToDelete.forEach(this::createGroup);
-        names.forEach(this::createGroup);
-        final List<String> allNames1 = indexVolumeGroupDao.getNames();
-        final List<IndexVolumeGroup> allGroups1 = indexVolumeGroupDao.getAll();
-        final List<IndexVolumeGroup> foundGroups1 = Stream.concat(namesToDelete.stream(), names.stream())
-                .map(indexVolumeGroupDao::get)
-                .collect(Collectors.toList());
-
-        namesToDelete.forEach(indexVolumeGroupDao::delete);
-        final List<String> allNames2 = indexVolumeGroupDao.getNames();
-        final List<IndexVolumeGroup> allGroups2 = indexVolumeGroupDao.getAll();
-        final List<IndexVolumeGroup> foundGroups2 = names.stream()
-                .map(indexVolumeGroupDao::get)
-                .collect(Collectors.toList());
-
-        // Then
-        assertThat(allNames1).containsAll(namesToDelete);
-        assertThat(allNames1).containsAll(names);
-        assertThat(foundGroups1.stream().map(IndexVolumeGroup::getName))
-                .containsAll(namesToDelete);
-        assertThat(foundGroups1.stream().map(IndexVolumeGroup::getName))
-                .containsAll(names);
-
-        assertThat(allNames2).doesNotContainAnyElementsOf(namesToDelete);
-        assertThat(allNames2).containsAll(names);
-        assertThat(allGroups2.stream().map(IndexVolumeGroup::getName))
-                .doesNotContainAnyElementsOf(namesToDelete);
-        assertThat(allGroups2.stream().map(IndexVolumeGroup::getName))
-                .containsAll(names);
-
-        final Consumer<IndexVolumeGroup> checkAuditFields = indexVolumeGroup -> {
-            assertThat(indexVolumeGroup.getCreateUser())
-                    .isEqualTo(TestModule.TEST_USER);
-            assertThat(indexVolumeGroup.getUpdateUser())
-                    .isEqualTo(TestModule.TEST_USER);
-            assertThat(indexVolumeGroup.getCreateTimeMs())
-                    .isCloseTo(now, Offset.offset(1000L));
-            assertThat(indexVolumeGroup.getUpdateTimeMs())
-                    .isCloseTo(now, Offset.offset(1000L));
-        };
-        assertThat(foundGroups1).allSatisfy(checkAuditFields);
-        assertThat(foundGroups2).allSatisfy(checkAuditFields);
-    }
 
     @Test
     void testCreateGetDelete() {
@@ -151,7 +83,7 @@ class TestIndexVolumeGroupDaoImpl {
 
         // When
         final IndexVolumeGroup created = createGroup(groupName);
-        final IndexVolumeGroup retrieved = indexVolumeGroupDao.get(groupName);
+        final IndexVolumeGroup retrieved = indexVolumeGroupDao.get(created.getId());
 
         // Then
         assertThat(Stream.of(created, retrieved)).allSatisfy(i -> {
@@ -161,9 +93,9 @@ class TestIndexVolumeGroupDaoImpl {
             assertThat(i.getCreateTimeMs()).isCloseTo(now, Offset.offset(1000L));
         });
 
-        indexVolumeGroupDao.delete(groupName);
+        indexVolumeGroupDao.delete(created.getId());
 
-        final IndexVolumeGroup retrievedAfterDelete = indexVolumeGroupDao.get(groupName);
+        final IndexVolumeGroup retrievedAfterDelete = indexVolumeGroupDao.get(created.getId());
         assertThat(retrievedAfterDelete).isNull();
     }
 
@@ -177,7 +109,7 @@ class TestIndexVolumeGroupDaoImpl {
         final IndexVolumeGroup createdOnce = createGroup(groupName);
         final Long createdTimeMs = createdOnce.getCreateTimeMs();
         assertThat(createdTimeMs).isCloseTo(now, Offset.offset(100L));
-        final IndexVolumeGroup retrievedOnce = indexVolumeGroupDao.get(groupName);
+        final IndexVolumeGroup retrievedOnce = indexVolumeGroupDao.get(createdOnce.getId());
 
         // Put some delay in it, so that the audit time fields will definitely be different
         try {
@@ -187,7 +119,7 @@ class TestIndexVolumeGroupDaoImpl {
         }
 
         final IndexVolumeGroup createdTwice = createGroup(groupName);
-        final IndexVolumeGroup retrievedTwice = indexVolumeGroupDao.get(groupName);
+        final IndexVolumeGroup retrievedTwice = indexVolumeGroupDao.get(createdTwice.getId());
 
         // Make sure they are all the same
         assertThat(Stream.of(createdOnce, retrievedOnce, createdTwice, retrievedTwice))

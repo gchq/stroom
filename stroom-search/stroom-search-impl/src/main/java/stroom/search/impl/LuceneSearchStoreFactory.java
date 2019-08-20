@@ -173,7 +173,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
 
         try {
             // Create a map of index fields keyed by name.
-            final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFields());
+            final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getFields());
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
                     wordListProvider, indexFieldsMap, maxBooleanClauseCount, timeZoneId, nowEpochMilli);

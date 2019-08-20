@@ -108,6 +108,7 @@
     <inherits name="stroom.importexport.ImportExport" />
     <inherits name="stroom.job.Job" />
     <inherits name="stroom.monitoring.Monitoring" />
+    <inherits name="stroom.index.Index"/>
     <!--
     <inherits name="stroom.nstat.store.monitoring.StatsMonitoring" />
      -->

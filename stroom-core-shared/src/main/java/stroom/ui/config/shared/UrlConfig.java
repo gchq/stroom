@@ -167,4 +167,5 @@ public class UrlConfig implements SharedObject, IsConfig {
                 ", documentPermissions='" + documentPermissions + '\'' +
                 '}';
     }
+
 }

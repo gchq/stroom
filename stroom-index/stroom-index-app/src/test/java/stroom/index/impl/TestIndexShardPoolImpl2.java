@@ -57,7 +57,7 @@ class TestIndexShardPoolImpl2 extends StroomUnitTest {
 
             final IndexDoc index = new IndexDoc();
             index.setUuid("1");
-            index.setIndexFields(indexFields);
+            index.setFields(indexFields);
             index.setMaxDocsPerShard(1000);
 
             final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);

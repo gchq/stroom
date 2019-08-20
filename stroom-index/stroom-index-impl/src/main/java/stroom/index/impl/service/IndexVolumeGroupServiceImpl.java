@@ -38,6 +38,15 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     }
 
     @Override
+    public IndexVolumeGroup create(String name) {
+        final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
+        indexVolumeGroup.setName(name);
+        AuditUtil.stamp(securityContext.getUserId(), indexVolumeGroup);
+        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+                () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
+    }
+
+    @Override
     public IndexVolumeGroup create() {
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         var newName = NextNameGenerator.getNextName(indexVolumeGroupDao.getNames(), "New group");
@@ -55,8 +64,8 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     }
 
     @Override
-    public IndexVolumeGroup get(final String name) {
-        return securityContext.secureResult(() -> indexVolumeGroupDao.get(name));
+    public IndexVolumeGroup get(final int id) {
+        return securityContext.secureResult(() -> indexVolumeGroupDao.get(id));
     }
 
     @Override

@@ -8,7 +8,8 @@ public interface IndexVolumeGroupService {
     List<String> getNames();
     List<IndexVolumeGroup> getAll();
     IndexVolumeGroup create();
+    IndexVolumeGroup create(String name);
     IndexVolumeGroup update(IndexVolumeGroup indexVolumeGroup);
-    IndexVolumeGroup get(String name);
+    IndexVolumeGroup get(int id);
     void delete(int id);
 }

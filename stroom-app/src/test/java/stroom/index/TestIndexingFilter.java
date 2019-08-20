@@ -180,7 +180,7 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
             // Setup the index.
             final DocRef indexRef = indexStore.createDocument("Test index");
             final IndexDoc index = indexStore.readDocument(indexRef);
-            index.setIndexFields(indexFields);
+            index.setFields(indexFields);
             indexStore.writeDocument(index);
 
             // Setup the error handler.

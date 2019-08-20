@@ -52,7 +52,7 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
         indexFields.add(IndexField.createField("User"));
 
         final IndexDoc index = indexStore.readDocument(testIndex);
-        index.setIndexFields(indexFields);
+        index.setFields(indexFields);
         indexStore.writeDocument(index);
     }
 
@@ -106,7 +106,7 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
                 "   </field>\n" +
                 "</fields>\n";
         final IndexFields indexFields = indexSerialiser.getIndexFieldsFromLegacyXML(xml);
-        assertThat(index.getIndexFields()).isEqualTo(indexFields.getIndexFields());
+        assertThat(index.getFields()).isEqualTo(indexFields.getIndexFields());
     }
 
     @Test

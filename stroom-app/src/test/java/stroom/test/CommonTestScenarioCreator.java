@@ -23,6 +23,7 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
+import stroom.index.impl.CreateVolumeDTO;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
@@ -112,11 +113,21 @@ public class CommonTestScenarioCreator {
         // Create a test index.
         final DocRef indexRef = indexStore.createDocument(name);
         final IndexDoc index = indexStore.readDocument(indexRef);
-        final String volumeGroupName = UUID.randomUUID().toString();
-        indexVolumeGroupService.create();
 
+        // Create a test index volume group
+        final String volumeGroupName = UUID.randomUUID().toString();
+        final var indexVolumeGroup = indexVolumeGroupService.create();
+
+        // Create a test index volume and add it to the group
+        final var createVolumeDTO = new CreateVolumeDTO();
+        createVolumeDTO.setNodeName(nodeInfo.getThisNodeName());
+        createVolumeDTO.setPath("/todo");
+        createVolumeDTO.setIndexVolumeGroupId(indexVolumeGroup.getId());
+        indexVolumeService.create(createVolumeDTO);
+
+        // Update the index
         index.setMaxDocsPerShard(maxDocsPerShard);
-        index.setIndexFields(indexFields);
+        index.setFields(indexFields);
         index.setVolumeGroupName(volumeGroupName);
         indexStore.writeDocument(index);
         assertThat(index).isNotNull();
@@ -125,10 +136,6 @@ public class CommonTestScenarioCreator {
                 .filter(v -> v.getNodeName().equals(nodeInfo.getThisNodeName()))
                 .findAny()
                 .orElseThrow(() -> new AssertionError("Could not get Index Volume"));
-
-
-        //TODO:
-//        indexVolumeService.addVolumeToGroup(indexVolume.getId(), volumeGroupName);
 
         return indexRef;
     }

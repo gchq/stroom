@@ -32,8 +32,9 @@ public class IndexVolumeGroupResourceImpl implements IndexVolumeGroupResource {
     }
 
     @Override
-    public Response get(final String name) {
-        final IndexVolumeGroup group = indexVolumeGroupService.get(name);
+    public Response get(final String id) {
+        int parsedId = Integer.parseInt(id);
+        final IndexVolumeGroup group = indexVolumeGroupService.get(parsedId);
 
         if (null != group) {
             return Response.ok(group).build();

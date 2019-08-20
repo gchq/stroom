@@ -106,6 +106,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                 .orElse(null));
     }
 
+
     @Override
     public List<String> getNames() {
         return JooqUtil.contextResult(connectionProvider, context -> context
@@ -126,11 +127,5 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     @Override
     public void delete(final int id) {
         genericDao.delete(id);
-    }
-
-    @Override
-    public void delete(final String name) {
-        final var indexVolumeGroup = this.get(name);
-        genericDao.delete(indexVolumeGroup.getId());
     }
 }

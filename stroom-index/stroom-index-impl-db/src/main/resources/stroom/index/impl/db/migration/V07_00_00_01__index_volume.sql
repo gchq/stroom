@@ -6,6 +6,12 @@ CREATE TABLE IF NOT EXISTS index_volume_group (
   update_time_ms        bigint(20) NOT NULL,
   update_user           varchar(255) NOT NULL,
   name                  varchar(255) NOT NULL,
+  -- 'name' needs to be unique because it is used as a reference by IndexDoc.
+  -- IndexDoc uses this name because it is fully portable -- if an index is imported
+  -- then as long as it has the right index volume group name and the group exists
+  -- it will use that index volume group. This would not be the case if the
+  -- reference was a database generated ID or a uuid.
+  UNIQUE (name),
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

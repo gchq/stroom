@@ -183,7 +183,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     filterStreams = true;
 
                     // Create a map of index fields keyed by name.
-                    final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFields());
+                    final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getFields());
 
                     // Compile all of the result component options to optimise pattern matching etc.
                     if (task.getCoprocessorMap() != null) {

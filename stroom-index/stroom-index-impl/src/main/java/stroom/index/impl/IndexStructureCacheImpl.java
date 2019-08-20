@@ -55,7 +55,7 @@ public class IndexStructureCacheImpl implements IndexStructureCache, Clearable {
             }
 
             // Create a map of index fields keyed by name.
-            List<IndexField> indexFields = loaded.getIndexFields();
+            List<IndexField> indexFields = loaded.getFields();
             if (indexFields == null) {
                 indexFields = new ArrayList<>();
             }

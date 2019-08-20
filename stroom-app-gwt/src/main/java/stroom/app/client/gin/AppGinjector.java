@@ -54,6 +54,8 @@ import stroom.folder.client.gin.FolderGinjector;
 import stroom.folder.client.gin.FolderModule;
 import stroom.importexport.client.gin.ImportExportConfigGinjector;
 import stroom.importexport.client.gin.ImportExportConfigModule;
+import stroom.index.client.gin.IndexGinjector;
+import stroom.index.client.gin.IndexModule;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.menubar.client.presenter.MenubarPresenter;
 import stroom.monitoring.client.gin.MonitoringGinjector;
@@ -82,29 +84,30 @@ import stroom.xmlschema.client.gin.XMLSchemaGinjector;
 import stroom.xmlschema.client.gin.XMLSchemaModule;
 
 @GinModules({
-        AlertModule.class,
         ActivityModule.class,
+        AlertModule.class,
         AppModule.class,
         CacheModule.class,
         ClientDispatchModule.class,
         DashboardModule.class,
         DictionaryModule.class,
         EntityModule.class,
-        FeedModule.class,
         FSVolumeModule.class,
+        FeedModule.class,
         FolderModule.class,
         ImportExportConfigModule.class,
+        IndexModule.class,
         MonitoringModule.class,
         NewUiModule.class,
         PipelineModule.class,
         PluginsModule.class,
+        PolicyModule.class,
         PopupModule.class,
         QueryModule.class,
         ScriptModule.class,
         SecurityModule.class,
         StatisticsModule.class,
         StreamStoreModule.class,
-        PolicyModule.class,
         StroomStatsStoreModule.class,
         TaskModule.class,
         VisModule.class,
@@ -118,11 +121,12 @@ public interface AppGinjector extends
         DashboardGinjector,
         DictionaryGinjector,
         EntityGinjector,
-        FeedGinjector,
         FSVolumeGinjector,
+        FeedGinjector,
         FolderGinjector,
         Ginjector,
         ImportExportConfigGinjector,
+        IndexGinjector,
         MonitoringGinjector,
         NewUiGinjector,
         PipelineGinjector,

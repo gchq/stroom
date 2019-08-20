@@ -84,6 +84,8 @@ public class IndexResourceImpl implements IndexResource {
 
         if (doc != null) {
             doc.setDescription(updates.getDescription());
+            doc.setVolumeGroupName(updates.getVolumeGroupName());
+            doc.setFields(updates.getFields());
             indexStore.writeDocument(doc);
         }
 
