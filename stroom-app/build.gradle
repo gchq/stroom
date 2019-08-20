@@ -86,6 +86,7 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-dashboard-server')
     compile project(':stroom-search:stroom-search-extraction')
+    permitUnusedDeclared project(':stroom-search:stroom-search-extraction') // picked up by DI
     compile project(':stroom-search:stroom-search-solr')
     compile project(':stroom-statistics-server')
     compile project(':stroom-elastic-server')

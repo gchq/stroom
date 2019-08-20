@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexConstants;
-import stroom.index.shared.IndexField;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;

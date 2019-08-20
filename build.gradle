@@ -148,6 +148,7 @@ ext.libs = [
     hibernate_entitymanager: "org.hibernate:hibernate-entitymanager:$versions.hibernate" /* LATEST 5.2.5.Final */,
     hibernate_jpa_api: "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final",
     hibernate_validator: "org.hibernate:hibernate-validator:5.3.4.Final",
+    http_client: "org.apache.httpcomponents:httpclient:4.5.6",
     hsqldb: "org.hsqldb:hsqldb:2.3.4",
     jBCrypt: "de.svenkubiak:jBCrypt:0.4.1",
     jackson_annotations: "com.fasterxml.jackson.core:jackson-annotations:$versions.jackson",
