@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add data retention feature and index optimisation to Solr indexes.
+
 
 ## [v6.1-beta.1] - 2019-08-19
 
