@@ -1,9 +1,5 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <dashboard>
-   <createTime>1565865853916</createTime>
-   <createUser>admin</createUser>
    <name>Test Solr Dashboard</name>
-   <updateTime>1565866962559</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>ec67ae72-4264-47f7-8567-7c0242a93dc0</uuid>
 </dashboard>

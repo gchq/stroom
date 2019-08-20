@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public final class JsonSerialiser<D> implements Serialiser<D> {
+public class JsonSerialiser<D> implements Serialiser<D> {
     private final ObjectMapper mapper;
 
     public JsonSerialiser() {
@@ -23,6 +23,11 @@ public final class JsonSerialiser<D> implements Serialiser<D> {
 
     @Override
     public void write(final OutputStream outputStream, final D document) throws IOException {
+        write(outputStream, document, false);
+    }
+
+    @Override
+    public void write(final OutputStream outputStream, final D document, final boolean export) throws IOException {
         mapper.writeValue(outputStream, document);
     }
 

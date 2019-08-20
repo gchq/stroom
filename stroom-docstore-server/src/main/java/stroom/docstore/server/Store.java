@@ -290,7 +290,7 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
                 }
 
                 final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                serialiser.write(byteArrayOutputStream, document);
+                serialiser.write(byteArrayOutputStream, document, true);
 
                 data = new HashMap<>();
                 data.put(KEY, new String(byteArrayOutputStream.toByteArray(), CHARSET));

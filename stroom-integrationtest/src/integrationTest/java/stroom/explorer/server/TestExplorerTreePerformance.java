@@ -18,6 +18,7 @@ package stroom.explorer.server;
 
 import fri.util.database.jpa.tree.uniqueconstraints.UniqueConstraintViolationException;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -87,6 +88,7 @@ import java.util.concurrent.atomic.AtomicReference;
         ServerConfiguration.class,
         StatisticsConfiguration.class,
         VisualisationConfiguration.class})
+@Ignore
 public class TestExplorerTreePerformance extends StroomIntegrationTest {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestExplorerTreePerformance.class);
     private static final int MAX_CHILDREN = 200;

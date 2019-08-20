@@ -1,11 +1,7 @@
 {
   "uuid" : "861c682d-a794-4e64-9963-4f4562fd1b54",
   "name" : "mycore",
-  "version" : "f937aae3-3c56-46b0-ba07-8e0a54051389",
-  "createTime" : 1565634533615,
-  "updateTime" : 1566303623580,
-  "createUser" : "admin",
-  "updateUser" : "admin",
+  "version" : "f21d8c78-98c4-42e8-889f-4014912cbe64",
   "description" : "",
   "connection" : {
     "useZk" : false,
@@ -151,10 +147,6 @@
     "omitTermFreqAndPositions" : true,
     "omitPositions" : true
   } ],
-  "state" : {
-    "lastSynchronized" : 1566303623569,
-    "messages" : [ "Replaced 0 fields", "Added 0 fields", "Deleted 0 fields" ]
-  },
   "retentionExpression" : {
     "type" : "operator",
     "op" : "AND",

@@ -27,7 +27,6 @@ import org.apache.solr.client.solrj.request.schema.SchemaRequest.ReplaceField;
 import org.apache.solr.client.solrj.response.schema.SchemaResponse.FieldsResponse;
 import org.springframework.stereotype.Component;
 import stroom.docstore.server.JsonSerialiser;
-import stroom.docstore.server.Persistence;
 import stroom.docstore.server.Store;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -37,7 +36,6 @@ import stroom.search.solr.shared.SolrIndex;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrIndexFieldType;
 import stroom.search.solr.shared.SolrSynchState;
-import stroom.security.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
@@ -45,6 +43,8 @@ import stroom.util.shared.Message;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -65,21 +65,24 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     private static final Pattern VALID_FIELD_NAME_PATTERN = Pattern.compile(SolrIndexField.VALID_FIELD_NAME_PATTERN);
 
     private final Store<SolrIndex> store;
-    private final SecurityContext securityContext;
-    private final Persistence persistence;
     private final SolrIndexClientCache solrIndexClientCache;
 
     @Inject
     public SolrIndexStoreImpl(final Store<SolrIndex> store,
-                              final SecurityContext securityContext,
-                              final Persistence persistence,
                               final SolrIndexClientCache solrIndexClientCache) {
         this.store = store;
-        this.securityContext = securityContext;
-        this.persistence = persistence;
         this.solrIndexClientCache = solrIndexClientCache;
         store.setType(SolrIndex.ENTITY_TYPE, SolrIndex.class);
-        store.setSerialiser(new JsonSerialiser<>());
+        store.setSerialiser(new JsonSerialiser<SolrIndex>() {
+            @Override
+            public void write(final OutputStream outputStream, final SolrIndex document, final boolean export) throws IOException {
+                if (export) {
+                    // We don't want to export the synch state.
+                    document.setSolrSynchState(null);
+                }
+                super.write(outputStream, document, export);
+            }
+        });
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -349,18 +352,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
     @Override
     public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
-        final DocRef result = store.importDocument(docRef, dataMap, importState, importMode);
-
-        // Make sure import doesn't change the sync state.
-        if (importState.ok(importMode)) {
-            final SolrIndex solrIndex = read(result.getUuid());
-            if (solrIndex != null) {
-                solrIndex.setSolrSynchState(null);
-                writeDocument(solrIndex);
-            }
-        }
-
-        return result;
+        return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
