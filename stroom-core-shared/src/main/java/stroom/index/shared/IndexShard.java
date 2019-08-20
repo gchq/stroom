@@ -22,6 +22,9 @@ import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PrimitiveValueConverter;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
