@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserTokenUtil;
 import stroom.security.impl.exception.AuthenticationException;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
