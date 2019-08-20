@@ -2,123 +2,131 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
-             xmlns:l="urn:import:stroom.item.client">
-    <g:Grid styleName="stroom-control-grid" width="100%">
-        <g:row>
-            <g:cell>Field Use:</g:cell>
-            <g:customCell>
-                <l:ItemListBox ui:field="fieldUse" width="100%"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Field Name:</g:cell>
-            <g:customCell>
-                <g:TextBox ui:field="fieldName" width="100%"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Field Type:</g:cell>
-            <g:customCell>
-                <l:StringListBox ui:field="fieldType" width="100%"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Default Value:</g:cell>
-            <g:customCell>
-                <g:TextBox ui:field="defaultValue" width="100%"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Stored:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="stored"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Indexed:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="indexed"/>
-            </g:customCell>
-        </g:row>
-
-        <g:row>
-            <g:cell>Uninvertible:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="uninvertible"/>
-            </g:customCell>
-        </g:row>
-
-        <g:row>
-            <g:cell>Doc Values:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="docValues"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Multi Valued:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="multiValued"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Required:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="required"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Omit Norms:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="omitNorms"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Omit Positions:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="omitPositions"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Omit Term Freq And Positions:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="omitTermFreqAndPositions"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Term Vectors:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="termVectors"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Term Positions:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="termPositions"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Term Offsets:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="termOffsets"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Term Payloads:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="termPayloads"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Sort Missing First:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="sortMissingFirst"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Sort Missing Last:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="sortMissingLast"/>
-            </g:customCell>
-        </g:row>
-    </g:Grid>
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:view="urn:import:stroom.widget.layout.client.view">
+    <view:ResizeSimplePanel styleName="stroom-control-page" width="100%" height="100%">
+        <g:DockLayoutPanel unit="PX" width="100%" height="100%">
+            <g:south size="200">
+                <g:HTML ui:field="synchState" width="100%" height="200px"></g:HTML>
+            </g:south>
+            <g:center>
+                <g:Grid styleName="stroom-control-grid">
+                    <g:row>
+                        <g:cell>Field Use:</g:cell>
+                        <g:customCell>
+                            <l:ItemListBox ui:field="fieldUse" width="100%"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Field Name:</g:cell>
+                        <g:customCell>
+                            <g:TextBox ui:field="fieldName" width="100%"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Field Type:</g:cell>
+                        <g:customCell>
+                            <l:StringListBox ui:field="fieldType" width="100%"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Default Value:</g:cell>
+                        <g:customCell>
+                            <g:TextBox ui:field="defaultValue" width="100%"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Stored:</g:cell>
+                        <g:customCell>
+                            <tickbox:TickBox ui:field="stored"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Indexed:</g:cell>
+                        <g:customCell>
+                            <tickbox:TickBox ui:field="indexed"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Uninvertible:</g:cell>
+                        <g:customCell>
+                            <tickbox:TickBox ui:field="uninvertible"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Doc Values:</g:cell>
+                        <g:customCell>
+                            <tickbox:TickBox ui:field="docValues"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Multi Valued:</g:cell>
+                        <g:customCell>
+                            <tickbox:TickBox ui:field="multiValued"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Required:</g:cell>
+                        <g:customCell>
+                            <tickbox:TickBox ui:field="required"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Omit Norms:</g:cell>
+                        <g:customCell>
+                            <tickbox:TickBox ui:field="omitNorms"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Omit Positions:</g:cell>
+                        <g:customCell>
+                            <tickbox:TickBox ui:field="omitPositions"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Omit Term Freq And Positions:</g:cell>
+                        <g:customCell>
+                            <tickbox:TickBox ui:field="omitTermFreqAndPositions"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Term Vectors:</g:cell>
+                        <g:customCell>
+                            <tickbox:TickBox ui:field="termVectors"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Term Positions:</g:cell>
+                        <g:customCell>
+                            <tickbox:TickBox ui:field="termPositions"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Term Offsets:</g:cell>
+                        <g:customCell>
+                            <tickbox:TickBox ui:field="termOffsets"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Term Payloads:</g:cell>
+                        <g:customCell>
+                            <tickbox:TickBox ui:field="termPayloads"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Sort Missing First:</g:cell>
+                        <g:customCell>
+                            <tickbox:TickBox ui:field="sortMissingFirst"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Sort Missing Last:</g:cell>
+                        <g:customCell>
+                            <tickbox:TickBox ui:field="sortMissingLast"/>
+                        </g:customCell>
+                    </g:row>
+                </g:Grid>
+            </g:center>
+        </g:DockLayoutPanel>
+    </view:ResizeSimplePanel>
 </ui:UiBinder>

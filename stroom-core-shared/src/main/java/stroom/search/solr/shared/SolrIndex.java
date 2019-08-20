@@ -20,12 +20,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
+import stroom.query.api.v2.ExpressionOperator;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "collection", "connection", "indexBatchSize", "fields", "state"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "collection", "connection", "indexBatchSize", "fields", "state", "retentionExpression"})
 public class SolrIndex extends Doc {
     public static final String ENTITY_TYPE = "SolrIndex";
 
@@ -34,11 +35,12 @@ public class SolrIndex extends Doc {
     private String description;
     private String collection;
     private SolrConnectionConfig solrConnectionConfig = new SolrConnectionConfig();
-    private int indexBatchSize = 1000;
 
     private List<SolrIndexField> fields;
     private List<SolrIndexField> deletedFields;
     private SolrSynchState solrSynchState;
+
+    private ExpressionOperator retentionExpression;
 
     public SolrIndex() {
         fields = new ArrayList<>();
@@ -76,14 +78,6 @@ public class SolrIndex extends Doc {
         this.solrConnectionConfig = solrConnectionConfig;
     }
 
-    public int getIndexBatchSize() {
-        return indexBatchSize;
-    }
-
-    public void setIndexBatchSize(final int indexBatchSize) {
-        this.indexBatchSize = indexBatchSize;
-    }
-
     @JsonProperty("fields")
     public List<SolrIndexField> getFields() {
         return fields;
@@ -114,6 +108,16 @@ public class SolrIndex extends Doc {
         this.solrSynchState = solrSynchState;
     }
 
+    @JsonProperty("retentionExpression")
+    public ExpressionOperator getRetentionExpression() {
+        return retentionExpression;
+    }
+
+    @JsonProperty("retentionExpression")
+    public void setRetentionExpression(final ExpressionOperator retentionExpression) {
+        this.retentionExpression = retentionExpression;
+    }
+
     @JsonIgnore
     @Override
     public final String getType() {
@@ -126,8 +130,7 @@ public class SolrIndex extends Doc {
         if (!(o instanceof SolrIndex)) return false;
         if (!super.equals(o)) return false;
         final SolrIndex solrIndex = (SolrIndex) o;
-        return indexBatchSize == solrIndex.indexBatchSize &&
-                Objects.equals(description, solrIndex.description) &&
+        return Objects.equals(description, solrIndex.description) &&
                 Objects.equals(collection, solrIndex.collection) &&
                 Objects.equals(solrConnectionConfig, solrIndex.solrConnectionConfig) &&
                 Objects.equals(fields, solrIndex.fields);
@@ -135,7 +138,7 @@ public class SolrIndex extends Doc {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, collection, solrConnectionConfig, indexBatchSize, fields);
+        return Objects.hash(super.hashCode(), description, collection, solrConnectionConfig, fields);
     }
 
     @Override
@@ -144,7 +147,6 @@ public class SolrIndex extends Doc {
                 "description='" + description + '\'' +
                 ", collection='" + collection + '\'' +
                 ", solrConnectionConfig=" + solrConnectionConfig +
-                ", indexBatchSize=" + indexBatchSize +
                 ", fields=" + fields +
                 '}';
     }

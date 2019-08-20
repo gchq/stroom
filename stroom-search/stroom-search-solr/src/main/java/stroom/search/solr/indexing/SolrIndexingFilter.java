@@ -36,12 +36,12 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.query.api.v2.DocRef;
+import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexCache;
 import stroom.search.solr.SolrIndexClientCache;
 import stroom.search.solr.shared.SolrIndex;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrIndexFieldType;
-import stroom.search.solr.CachedSolrIndex;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -79,7 +79,11 @@ class SolrIndexingFilter extends AbstractXMLFilter {
     private Collection<SolrInputDocument> currentDocuments = new ArrayList<>();
     private SolrInputDocument document = new SolrInputDocument();
 
-    private int fieldsIndexed = 0;
+    private int batchSize = 1000;
+    private int commitWithinMs = -1;
+    private boolean softCommit = true;
+    private int fieldsIndexed;
+    private long docsIndexed;
 
     private Locator locator;
 
@@ -135,9 +139,7 @@ class SolrIndexingFilter extends AbstractXMLFilter {
     public void endProcessing() {
         try {
             // Send last docs.
-            if (currentDocuments.size() > 0) {
-                addDocuments(currentDocuments);
-            }
+            addDocuments(currentDocuments, true);
             currentDocuments = null;
         } finally {
             super.endProcessing();
@@ -210,27 +212,38 @@ class SolrIndexingFilter extends AbstractXMLFilter {
         // Write the document if we have dropped out of the record element and
         // have indexed some fields.
         if (fieldsIndexed > 0) {
+            docsIndexed++;
             currentDocuments.add(document);
             document = new SolrInputDocument();
 
-            if (currentDocuments.size() > indexConfig.getIndex().getIndexBatchSize()) {
-                addDocuments(currentDocuments);
+            if (currentDocuments.size() > batchSize) {
+                addDocuments(currentDocuments, false);
                 currentDocuments = new ArrayList<>();
             }
         }
     }
 
-    private void addDocuments(final Collection<SolrInputDocument> documents) {
-        solrIndexClientCache.context(indexConfig.getIndex().getSolrConnectionConfig(), solrClient -> {
-            try {
-                solrClient.add(indexConfig.getIndex().getCollection(), documents);
-                solrClient.commit(indexConfig.getIndex().getCollection());
-            } catch (final RuntimeException | SolrServerException | IOException e) {
-                log(Severity.FATAL_ERROR, e.getMessage(), e);
-                // Terminate processing as this is a fatal error.
-                throw new LoggedException(e.getMessage(), e);
-            }
-        });
+    private void addDocuments(final Collection<SolrInputDocument> documents, final boolean commit) {
+        if (docsIndexed > 0) {
+            final String collection = indexConfig.getIndex().getCollection();
+            solrIndexClientCache.context(indexConfig.getIndex().getSolrConnectionConfig(), solrClient -> {
+                try {
+                    if (documents.size() > 0) {
+                        solrClient.add(collection, documents, commitWithinMs);
+                    }
+
+                    if (commit) {
+                        solrClient.commit(collection);
+                    } else if (softCommit) {
+                        solrClient.commit(collection, false, false, true);
+                    }
+                } catch (final RuntimeException | SolrServerException | IOException e) {
+                    log(Severity.FATAL_ERROR, e.getMessage(), e);
+                    // Terminate processing as this is a fatal error.
+                    throw new LoggedException(e.getMessage(), e);
+                }
+            });
+        }
     }
 
     private void processIndexContent(final SolrIndexField indexField, final String value) {
@@ -272,6 +285,25 @@ class SolrIndexingFilter extends AbstractXMLFilter {
     @PipelinePropertyDocRef(types = SolrIndex.ENTITY_TYPE)
     public void setIndex(final DocRef indexRef) {
         this.indexRef = indexRef;
+    }
+
+    @PipelineProperty(description = "How many documents to send to the index in a single post.", defaultValue = "1000")
+    public void setBatchSize(final int batchSize) {
+        this.batchSize = batchSize;
+    }
+
+    @PipelineProperty(description = "Commit indexed documents within the specified number of milliseconds.", defaultValue = "-1")
+    public void setCommitWithinMs(final int commitWithinMs) {
+        if (commitWithinMs < 0) {
+            this.commitWithinMs = -1;
+        } else {
+            this.commitWithinMs = commitWithinMs;
+        }
+    }
+
+    @PipelineProperty(description = "Perform a soft commit after every batch so that docs are available for searching immediately (if using NRT replicas).", defaultValue = "true")
+    public void setSoftCommit(final boolean softCommit) {
+        this.softCommit = softCommit;
     }
 
     private void log(final Severity severity, final String message, final Exception e) {

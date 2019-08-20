@@ -22,6 +22,9 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.springframework.stereotype.Component;
+import stroom.entity.server.event.EntityEvent;
+import stroom.entity.server.event.EntityEventHandler;
+import stroom.entity.shared.EntityAction;
 import stroom.query.api.v2.DocRef;
 import stroom.search.solr.shared.SolrIndex;
 import stroom.search.solr.shared.SolrIndexField;
@@ -33,8 +36,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@EntityEventHandler(type = SolrIndex.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE, EntityAction.UPDATE})
 @Component
-public class SolrIndexCacheImpl implements SolrIndexCache {
+public class SolrIndexCacheImpl implements SolrIndexCache, EntityEvent.Handler {
     private static final int MAX_CACHE_ENTRIES = 100;
 
     private final LoadingCache<DocRef, CachedSolrIndex> cache;
@@ -78,5 +82,12 @@ public class SolrIndexCacheImpl implements SolrIndexCache {
     @Override
     public void remove(final DocRef key) {
         cache.invalidate(key);
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        if (SolrIndex.ENTITY_TYPE.equals(event.getDocRef().getType())) {
+            cache.invalidate(event.getDocRef());
+        }
     }
 }

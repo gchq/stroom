@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.search.solr.search;
+package stroom.search.solr.shared;
 
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;

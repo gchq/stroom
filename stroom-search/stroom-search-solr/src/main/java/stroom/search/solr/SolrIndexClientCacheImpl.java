@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+
 @Component
 public class SolrIndexClientCacheImpl implements SolrIndexClientCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrIndexClientCacheImpl.class);
@@ -71,7 +72,6 @@ public class SolrIndexClientCacheImpl implements SolrIndexClientCache {
         cache = cacheBuilder.build(cacheLoader);
         cacheManager.registerCache("Solr Client Cache", cacheBuilder, cache);
     }
-
 
     @Override
     public void context(final SolrConnectionConfig key, final Consumer<SolrClient> consumer) {

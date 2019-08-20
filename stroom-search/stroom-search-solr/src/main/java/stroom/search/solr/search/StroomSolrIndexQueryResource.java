@@ -34,6 +34,7 @@ import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.search.solr.SolrIndexStore;
 import stroom.search.solr.shared.SolrIndex;
+import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.task.server.TaskContext;

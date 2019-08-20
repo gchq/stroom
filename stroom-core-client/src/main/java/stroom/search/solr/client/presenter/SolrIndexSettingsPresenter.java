@@ -26,27 +26,38 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.ruleset.client.presenter.EditExpressionPresenter;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
 import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
 import stroom.search.solr.shared.SolrConnectionTestAction;
 import stroom.search.solr.shared.SolrIndex;
-import stroom.search.solr.shared.SolrSynchState;
-import stroom.widget.customdatebox.client.ClientDateUtil;
+import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 
 import java.util.List;
 
 public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIndexSettingsView, SolrIndex> implements SolrIndexSettingsUiHandlers {
+    private final EditExpressionPresenter editExpressionPresenter;
     private final ClientDispatchAsync dispatcher;
 
     @Inject
     public SolrIndexSettingsPresenter(final EventBus eventBus,
                                       final SolrIndexSettingsView view,
+                                      final EditExpressionPresenter editExpressionPresenter,
                                       final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
+        this.editExpressionPresenter = editExpressionPresenter;
         this.dispatcher = dispatcher;
 
         view.setUiHandlers(this);
+        view.setRententionExpressionView(editExpressionPresenter.getView());
+    }
+
+    @Override
+    protected void onBind() {
+        registerHandler(editExpressionPresenter.addDirtyHandler(dirty -> setDirty(true)));
     }
 
     @Override
@@ -80,22 +91,12 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
 
         getView().setDescription(index.getDescription());
         getView().setCollection(index.getCollection());
-        getView().setIndexBatchSize(index.getIndexBatchSize());
 
-        final SolrSynchState state = index.getSolrSynchState();
-        final StringBuilder sb = new StringBuilder();
-        if (state != null) {
-            if (state.getLastSynchronized() != null) {
-                sb.append("<b>Last synchronised:</b> ");
-                sb.append(ClientDateUtil.toISOString(index.getSolrSynchState().getLastSynchronized()));
-                sb.append("</br>");
-            }
-            for (final String message : state.getMessages()) {
-                sb.append(message);
-                sb.append("</br>");
-            }
+        if (index.getRetentionExpression() == null) {
+            index.setRetentionExpression(new ExpressionOperator.Builder().op(Op.AND).build());
         }
-        getView().setSynchState(sb.toString());
+        editExpressionPresenter.init(dispatcher, docRef, SolrIndexDataSourceFieldUtil.getDataSourceFields(index));
+        editExpressionPresenter.read(index.getRetentionExpression());
     }
 
     @Override
@@ -114,7 +115,7 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
         } else {
             index.setCollection(getView().getCollection().trim());
         }
-        index.setIndexBatchSize(getView().getIndexBatchSize());
+        index.setRetentionExpression(editExpressionPresenter.write());
     }
 
     public interface SolrIndexSettingsView extends View, ReadOnlyChangeHandler, HasUiHandlers<SolrIndexSettingsUiHandlers> {
@@ -146,10 +147,6 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
 
         void setZkPath(String zkPath);
 
-        int getIndexBatchSize();
-
-        void setIndexBatchSize(int indexBatchSize);
-
-        void setSynchState(final String syncState);
+        void setRententionExpressionView(final View view);
     }
 }

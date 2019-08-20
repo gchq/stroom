@@ -23,16 +23,19 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.item.client.ItemListBox;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
 import stroom.search.solr.client.presenter.SolrIndexSettingsUiHandlers;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -60,9 +63,7 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     @UiField
     Button testConnection;
     @UiField
-    ValueSpinner indexBatchSize;
-    @UiField
-    HTML synchState;
+    ResizeSimplePanel retentionExpressionPanel;
 
     @Inject
     public SolrIndexSettingsViewImpl(final Binder binder) {
@@ -71,10 +72,6 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         instanceType.addItem(InstanceType.SINGLE_NOOE);
         instanceType.addItem(InstanceType.SOLR_CLOUD);
 
-        indexBatchSize.setValue(1000L);
-        indexBatchSize.setMin(1L);
-        indexBatchSize.setMax(10000000000L);
-
         description.addKeyDownHandler(e -> fireChange());
         collection.addKeyDownHandler(e -> fireChange());
         instanceType.addSelectionHandler(e -> fireChange());
@@ -82,7 +79,6 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         useZk.addValueChangeHandler(e -> fireChange());
         zkHosts.addKeyDownHandler(e -> fireChange());
         zkPath.addKeyDownHandler(e -> fireChange());
-        indexBatchSize.getSpinner().addSpinnerHandler(e -> fireChange());
     }
 
     private void fireChange() {
@@ -183,18 +179,8 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     }
 
     @Override
-    public int getIndexBatchSize() {
-        return indexBatchSize.getValue();
-    }
-
-    @Override
-    public void setIndexBatchSize(final int indexBatchSize) {
-        this.indexBatchSize.setValue(indexBatchSize);
-    }
-
-    @Override
-    public void setSynchState(final String syncState) {
-        this.synchState.setHTML(SafeHtmlUtils.fromTrustedString(syncState));
+    public void setRententionExpressionView(final View view) {
+        retentionExpressionPanel.setWidget(view.asWidget());
     }
 
     @Override
@@ -205,7 +191,6 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         useZk.setEnabled(!readOnly);
         zkHosts.setEnabled(!readOnly);
         zkPath.setEnabled(!readOnly);
-        indexBatchSize.setEnabled(!readOnly);
     }
 
     @UiHandler("testConnection")

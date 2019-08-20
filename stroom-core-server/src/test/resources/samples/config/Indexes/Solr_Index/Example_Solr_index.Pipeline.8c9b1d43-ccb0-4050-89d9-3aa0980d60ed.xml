@@ -1,6 +1,6 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <createTime>1565861622051</createTime>
+   <createTime>1566301092551</createTime>
    <createUser>admin</createUser>
    <name>Example Solr index</name>
    <parentPipelineXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
@@ -10,7 +10,7 @@
    &lt;name&gt;Indexing&lt;/name&gt;
 &lt;/doc&gt;
 </parentPipelineXML>
-   <updateTime>1566213977160</updateTime>
+   <updateTime>1566301092551</updateTime>
    <updateUser>admin</updateUser>
    <uuid>8c9b1d43-ccb0-4050-89d9-3aa0980d60ed</uuid>
 </pipeline>

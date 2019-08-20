@@ -16,15 +16,18 @@
 
 package stroom.search.solr.client.gin;
 
-        import stroom.core.client.gin.PluginModule;
-        import stroom.search.solr.client.SolrIndexPlugin;
-        import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter;
-        import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
-        import stroom.search.solr.client.presenter.SolrIndexPresenter;
-        import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter;
-        import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
-        import stroom.search.solr.client.view.SolrIndexFieldEditViewImpl;
-        import stroom.search.solr.client.view.SolrIndexSettingsViewImpl;
+import stroom.core.client.gin.PluginModule;
+import stroom.search.solr.client.SolrIndexPlugin;
+import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter;
+import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
+import stroom.search.solr.client.presenter.SolrIndexFieldListPresenter;
+import stroom.search.solr.client.presenter.SolrIndexFieldListPresenter.SolrIndexFieldListView;
+import stroom.search.solr.client.presenter.SolrIndexPresenter;
+import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter;
+import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
+import stroom.search.solr.client.view.SolrIndexFieldEditViewImpl;
+import stroom.search.solr.client.view.SolrIndexFieldListViewImpl;
+import stroom.search.solr.client.view.SolrIndexSettingsViewImpl;
 
 public class SolrIndexModule extends PluginModule {
     @Override
@@ -32,6 +35,7 @@ public class SolrIndexModule extends PluginModule {
         bindPlugin(SolrIndexPlugin.class);
         bind(SolrIndexPresenter.class);
         bindPresenterWidget(SolrIndexSettingsPresenter.class, SolrIndexSettingsView.class, SolrIndexSettingsViewImpl.class);
+        bindPresenterWidget(SolrIndexFieldListPresenter.class, SolrIndexFieldListView.class, SolrIndexFieldListViewImpl.class);
         bindPresenterWidget(SolrIndexFieldEditPresenter.class, SolrIndexFieldEditView.class, SolrIndexFieldEditViewImpl.class);
     }
 }
