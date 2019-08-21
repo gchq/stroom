@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Backport of change from 6.1 that protects index shard searches finishing prematurely. 
+
 
 ## [v6.0.7] - 2019-08-08
 

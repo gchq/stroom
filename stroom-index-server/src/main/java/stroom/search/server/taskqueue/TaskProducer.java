@@ -20,10 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class TaskProducer implements Comparable<TaskProducer> {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskProducer.class);
 
     private final long now = System.currentTimeMillis();
@@ -34,6 +34,7 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
     private final int maxThreadsPerTask;
     private final Executor executor;
 
+    private final AtomicBoolean finishedAddingTasks = new AtomicBoolean();
     private final AtomicInteger tasksTotal = new AtomicInteger();
     private final AtomicInteger tasksCompleted = new AtomicInteger();
 
@@ -83,7 +84,7 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
                         LOGGER.debug(e.getMessage(), e);
                     } finally {
                         threadsUsed.decrementAndGet();
-                        tasksCompleted.incrementAndGet();
+                        incrementTasksCompleted();
                     }
                 };
             }
@@ -100,7 +101,7 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
      * @return True if this producer will not issue any further tasks and that all of the tasks it has issued have completed processing.
      */
     public boolean isComplete() {
-        return getRemainingTasks() == 0;
+        return finishedAddingTasks.get() && getRemainingTasks() == 0;
     }
 
     protected void attach() {
@@ -115,12 +116,28 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
         taskExecutor.signalAll();
     }
 
-    protected final AtomicInteger getTasksTotal() {
-        return tasksTotal;
+    protected void finishedAddingTasks() {
+        this.finishedAddingTasks.set(true);
     }
 
-    protected final AtomicInteger getTasksCompleted() {
-        return tasksCompleted;
+    protected final int getTasksTotal() {
+        return tasksTotal.get();
+    }
+
+    protected final void setTasksTotal(int tasksTotal) {
+        this.tasksTotal.set(tasksTotal);
+    }
+
+    protected void incrementTasksTotal() {
+        tasksTotal.incrementAndGet();
+    }
+
+    final int getTasksCompleted() {
+        return tasksCompleted.get();
+    }
+
+    protected void incrementTasksCompleted() {
+        tasksCompleted.incrementAndGet();
     }
 
     public final int getRemainingTasks() {

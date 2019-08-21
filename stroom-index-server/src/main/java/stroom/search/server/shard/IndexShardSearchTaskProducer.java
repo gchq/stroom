@@ -103,7 +103,10 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
 
         // Set the total number of index shards we are searching.
         // We set this here so that any errors that might have occurred adding shard search tasks would prevent this producer having work to do.
-        getTasksTotal().set(count);
+        setTasksTotal(count);
+
+        // Let consumers now there will be no more tasks.
+        finishedAddingTasks();
     }
 
     @Override
@@ -118,14 +121,14 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
         if (clusterSearchTask.isTerminated()) {
             // Drain the queue and increment the complete task count.
             while (taskQueue.poll() != null) {
-                getTasksCompleted().getAndIncrement();
+                incrementTasksCompleted();
             }
         } else {
             // If there are no open shards that can be used for any tasks then just get the task at the head of the queue.
             task = taskQueue.poll();
             if (task != null) {
                 final int no = tasksRequested.incrementAndGet();
-                task.getTask().setShardTotal(getTasksTotal().get());
+                task.getTask().setShardTotal(getTasksTotal());
                 task.getTask().setShardNumber(no);
             }
         }

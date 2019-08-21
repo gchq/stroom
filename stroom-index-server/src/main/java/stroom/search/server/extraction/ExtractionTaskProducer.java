@@ -66,8 +66,6 @@ public class ExtractionTaskProducer extends TaskProducer {
     private final AtomicBoolean completedEventMapping = new AtomicBoolean();
     private final Map<Long, List<Event>> streamEventMap = new ConcurrentHashMap<>();
 
-    private volatile boolean finishedAddingTasks;
-
     public ExtractionTaskProducer(final TaskExecutor taskExecutor,
                                   final ClusterSearchTask clusterSearchTask,
                                   final StreamMapCreator streamMapCreator,
@@ -142,8 +140,7 @@ public class ExtractionTaskProducer extends TaskProducer {
 
     @Override
     public boolean isComplete() {
-        // If we haven't finished mapping all of the streams then we aren't complete.
-        return clusterSearchTask.isTerminated() || (finishedAddingTasks && super.isComplete());
+        return clusterSearchTask.isTerminated() || super.isComplete();
     }
 
     @Override
@@ -151,16 +148,18 @@ public class ExtractionTaskProducer extends TaskProducer {
         ExtractionRunnable task = null;
 
         if (clusterSearchTask.isTerminated()) {
-            finishedAddingTasks = true;
+            finishedAddingTasks();
 
             // Drain the queue and increment the complete task count.
             while (taskQueue.poll() != null) {
-                getTasksCompleted().getAndIncrement();
+                incrementTasksCompleted();
             }
         } else {
             task = taskQueue.poll();
             if (task == null) {
-                finishedAddingTasks = addTasks();
+                if (addTasks()) {
+                    finishedAddingTasks();
+                }
                 task = taskQueue.poll();
             }
         }
@@ -212,7 +211,7 @@ public class ExtractionTaskProducer extends TaskProducer {
                     Arrays.sort(eventIds);
                 }
 
-                getTasksTotal().incrementAndGet();
+                incrementTasksTotal();
                 final ExtractionTask task = new ExtractionTask(streamId, eventIds, pipelineRef, extractionFieldIndexMap, resultReceiver, errorReceiver);
                 taskQueue.offer(new ExtractionRunnable(task, handlerProvider));
                 tasksCreated++;
