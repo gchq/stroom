@@ -224,7 +224,6 @@ public class ExtractionTaskProducer extends TaskProducer {
                             }
                         }
                     }
-                    ;
                 };
 
                 if (eventIds == null) {
