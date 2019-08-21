@@ -21,8 +21,6 @@ import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexConstants;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamPermissionException;
@@ -43,16 +41,13 @@ public class StreamMapCreator {
     private final int streamIdIndex;
     private final int eventIdIndex;
 
-    private final SecurityContext securityContext;
     private Map<Long, Optional<Stream>> fiteredStreamCache;
 
     public StreamMapCreator(final String[] storedFields,
                             final ErrorReceiver errorReceiver,
-                            final StreamStore streamStore,
-                            final SecurityContext securityContext) {
+                            final StreamStore streamStore) {
         this.errorReceiver = errorReceiver;
         this.streamStore = streamStore;
-        this.securityContext = securityContext;
 
         // First get the index in the stored data of the stream and event id fields.
         streamIdIndex = getFieldIndex(storedFields, IndexConstants.STREAM_ID, true);
@@ -77,22 +72,20 @@ public class StreamMapCreator {
     }
 
     void addEvent(final Map<Long, List<Event>> storedDataMap, final Val[] storedData) {
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
-            final Long longStreamId = getLong(storedData, streamIdIndex);
-            final Long longEventId = getLong(storedData, eventIdIndex);
+        final Long longStreamId = getLong(storedData, streamIdIndex);
+        final Long longEventId = getLong(storedData, eventIdIndex);
 
-            if (longStreamId != null && longEventId != null) {
-                // Filter the streams by ones that should be visible to the current user.
-                final Optional<Stream> optional = getStreamById(longStreamId);
-                if (optional.isPresent()) {
-                    storedDataMap.compute(longStreamId, (k, v) -> {
-                        if (v == null) {
-                            v = new ArrayList<>();
-                        }
-                        v.add(new Event(longEventId, storedData));
-                        return v;
-                    });
-                }
+        if (longStreamId != null && longEventId != null) {
+            // Filter the streams by ones that should be visible to the current user.
+            final Optional<Stream> optional = getStreamById(longStreamId);
+            if (optional.isPresent()) {
+                storedDataMap.compute(longStreamId, (k, v) -> {
+                    if (v == null) {
+                        v = new ArrayList<>();
+                    }
+                    v.add(new Event(longEventId, storedData));
+                    return v;
+                });
             }
         }
     }

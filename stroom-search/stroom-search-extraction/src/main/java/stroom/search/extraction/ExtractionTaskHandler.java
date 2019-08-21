@@ -180,8 +180,8 @@ public class ExtractionTaskHandler {
             error(e.getMessage(), e);
         }
 
-        task.getCompletionStatus().getSuccessfulExtractions().addAndGet(successCount);
-        task.getCompletionStatus().getFailedExtractions().addAndGet(task.getEventIds().length - successCount);
+        task.getSuccessfulExtractions().addAndGet(successCount);
+        task.getFailedExtractions().addAndGet(task.getEventIds().length - successCount);
     }
 
     private <T extends XMLFilter> T getFilter(final Pipeline pipeline, final Class<T> clazz) {
@@ -189,8 +189,7 @@ public class ExtractionTaskHandler {
         if (filters == null || filters.size() != 1) {
             throw new ExtractionException("Unable to find single '" + clazz.getName() + "' in search result pipeline");
         }
-        final T filter = filters.get(0);
-        return filter;
+        return filters.get(0);
     }
 
     /**

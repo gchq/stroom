@@ -35,7 +35,7 @@ import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Payload;
-import stroom.search.extraction.CompletionStatusImpl;
+import stroom.search.extraction.CompletionStatus;
 import stroom.search.extraction.ExtractionTaskExecutor;
 import stroom.search.extraction.ExtractionTaskHandler;
 import stroom.search.extraction.ExtractionTaskProducer;
@@ -399,7 +399,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
-            final CompletionStatusImpl completionStatus = new CompletionStatusImpl();
+            final CompletionStatus completionStatus = new CompletionStatus("ClusterSearchTaskHandler");
 
             if (extractionCoprocessorsMap != null && extractionCoprocessorsMap.size() > 0
                     && task.getShards().size() > 0) {
@@ -444,8 +444,10 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     extractionTaskExecutor.setMaxThreads(extractionTaskProperties.getMaxThreads());
 
                     // Create an object to make event lists from raw index data.
-                    final StreamMapCreator streamMapCreator = new StreamMapCreator(task.getStoredFields(), this,
-                            streamStore, securityContext);
+                    final StreamMapCreator streamMapCreator = new StreamMapCreator(
+                            task.getStoredFields(),
+                            this,
+                            streamStore);
 
                     // Make a task producer that will create event data extraction tasks when requested by the executor.
                     final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(
@@ -459,10 +461,11 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             extractionTaskProperties.getMaxThreadsPerTask(),
                             executorProvider,
                             extractionTaskHandlerProvider,
-                            completionStatus);
+                            completionStatus,
+                            securityContext);
 
                     // Set the parent status as complete.
-                    completionStatus.setComplete();
+                    completionStatus.complete();
 
                     // Wait for completion.
                     while (!completionStatus.isComplete()) {

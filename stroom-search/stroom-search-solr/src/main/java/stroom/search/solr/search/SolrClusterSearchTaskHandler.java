@@ -32,7 +32,7 @@ import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Payload;
-import stroom.search.extraction.CompletionStatusImpl;
+import stroom.search.extraction.CompletionStatus;
 import stroom.search.extraction.ExtractionTaskExecutor;
 import stroom.search.extraction.ExtractionTaskHandler;
 import stroom.search.extraction.ExtractionTaskProducer;
@@ -417,7 +417,7 @@ public class SolrClusterSearchTaskHandler implements ErrorReceiver {
                 };
 
                 // Start searching
-                final CompletionStatusImpl completionStatus = new CompletionStatusImpl();
+                final CompletionStatus completionStatus = new CompletionStatus("SolrClusterSearchTaskHandler");
                 final SolrSearchTask solrSearchTask = new SolrSearchTask(task.getCachedSolrIndex(), solrQuery, storedFieldNames, resultReceiver, this, completionStatus);
                 solrSearchTaskHandler.exec(solrSearchTask);
 
@@ -430,8 +430,10 @@ public class SolrClusterSearchTaskHandler implements ErrorReceiver {
                     extractionTaskExecutor.setMaxThreads(extractionTaskProperties.getMaxThreads());
 
                     // Create an object to make event lists from raw index data.
-                    final StreamMapCreator streamMapCreator = new StreamMapCreator(task.getStoredFields(), this,
-                            streamStore, securityContext);
+                    final StreamMapCreator streamMapCreator = new StreamMapCreator(
+                            task.getStoredFields(),
+                            this,
+                            streamStore);
 
                     // Make a task producer that will create event data extraction tasks when requested by the executor.
                     final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(
@@ -445,10 +447,11 @@ public class SolrClusterSearchTaskHandler implements ErrorReceiver {
                             extractionTaskProperties.getMaxThreadsPerTask(),
                             executorProvider,
                             extractionTaskHandlerProvider,
-                            completionStatus);
+                            completionStatus,
+                            securityContext);
 
                     // Set the parent status as complete.
-                    completionStatus.setComplete();
+                    completionStatus.complete();
 
                     // Wait for completion.
                     while (!completionStatus.isComplete()) {

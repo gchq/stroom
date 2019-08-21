@@ -23,6 +23,8 @@ import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.query.api.v2.DocRef;
 import stroom.query.common.v2.Coprocessor;
 import stroom.search.extraction.ExtractionTask.ResultReceiver;
+import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.ThreadPoolImpl;
 import stroom.util.shared.HasTerminate;
@@ -44,6 +46,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ExtractionTaskProducer extends TaskProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskProducer.class);
@@ -60,11 +63,14 @@ public class ExtractionTaskProducer extends TaskProducer {
     private final Provider<ExtractionTaskHandler> handlerProvider;
     private final Queue<ExtractionRunnable> taskQueue = new ConcurrentLinkedQueue<>();
 
-    private final CompletionStatusImpl streamMapCreatorCompletionStatus = new CompletionStatusImpl();
-    private final ExtractionTaskCompletionStatus extractionTaskCompletionStatus = new ExtractionTaskCompletionStatus();
+    private final CompletionStatus streamMapCreatorCompletionStatus = new CompletionStatus("Stream Map Creator");
+    private final AtomicLong streamMapCountStatistic = streamMapCreatorCompletionStatus.getStatistic("count");
+    private final CompletionStatus completionStatus = new CompletionStatus("Extraction Tasks");
+    private final AtomicLong tasksCreatedStatistic = completionStatus.getStatistic("tasksCreated");
+    private final AtomicLong tasksCompletedStatistic = completionStatus.getStatistic("tasksCompleted");
+    private final AtomicLong successfulExtractions = completionStatus.getStatistic("successfulExtractions");
+    private final AtomicLong failedExtractions = completionStatus.getStatistic("failedExtractions");
     private final Map<Long, List<Event>> streamEventMap = new ConcurrentHashMap<>();
-
-    private volatile boolean finishedAddingTasks;
 
     public ExtractionTaskProducer(final TaskExecutor taskExecutor,
                                   final HasTerminate clusterSearchTask,
@@ -76,7 +82,8 @@ public class ExtractionTaskProducer extends TaskProducer {
                                   final int maxThreadsPerTask,
                                   final ExecutorProvider executorProvider,
                                   final Provider<ExtractionTaskHandler> handlerProvider,
-                                  final CompletionStatus parentCompletionStatus) {
+                                  final CompletionStatus parentCompletionStatus,
+                                  final SecurityContext securityContext) {
         super(taskExecutor, maxThreadsPerTask, executorProvider.getExecutor(THREAD_POOL));
         this.clusterSearchTask = clusterSearchTask;
         this.extractionFieldIndexMap = extractionFieldIndexMap;
@@ -84,14 +91,16 @@ public class ExtractionTaskProducer extends TaskProducer {
         this.errorReceiver = errorReceiver;
         this.handlerProvider = handlerProvider;
 
-        parentCompletionStatus.addChild("streamMapCreatorCompletionStatus", streamMapCreatorCompletionStatus);
-        parentCompletionStatus.addChild("extractionTaskCompletionStatus", extractionTaskCompletionStatus);
+        parentCompletionStatus.addChild(streamMapCreatorCompletionStatus);
+        parentCompletionStatus.addChild(completionStatus);
 
         // Start mapping streams.
         final Executor executor = executorProvider.getExecutor(THREAD_POOL);
         CompletableFuture.runAsync(() -> {
             LOGGER.debug("Starting extraction task producer");
-            try {
+
+            // Elevate permissions so users with only `Use` feed permission can `Read` streams.
+            try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
                 while (!streamMapCreatorCompletionStatus.isComplete() && !clusterSearchTask.isTerminated()) {
                     try {
                         // Poll for the next set of values.
@@ -99,11 +108,11 @@ public class ExtractionTaskProducer extends TaskProducer {
                         if (values != null) {
                             if (values.complete()) {
                                 // If we did not get any values then there are no more to get if the search task producer is complete.
-                                streamMapCreatorCompletionStatus.setComplete();
+                                streamMapCreatorCompletionStatus.complete();
                             } else {
                                 // If we have some values then map them.
                                 streamMapCreator.addEvent(streamEventMap, values.getValues());
-                                streamMapCreatorCompletionStatus.increment();
+                                streamMapCountStatistic.incrementAndGet();
 
                                 // Tell the supplied executor that we are ready to deliver tasks.
                                 signalAvailable();
@@ -111,10 +120,10 @@ public class ExtractionTaskProducer extends TaskProducer {
                         }
                     } catch (final InterruptedException e) {
                         LOGGER.debug(e.getMessage(), e);
-                        streamMapCreatorCompletionStatus.setComplete();
+                        streamMapCreatorCompletionStatus.complete();
                     } catch (final Exception e) {
                         LOGGER.error(e.getMessage(), e);
-                        streamMapCreatorCompletionStatus.setComplete();
+                        streamMapCreatorCompletionStatus.complete();
                     }
                 }
 
@@ -126,7 +135,7 @@ public class ExtractionTaskProducer extends TaskProducer {
             } catch (final Throwable t) {
                 error(t.getMessage(), t);
             } finally {
-                streamMapCreatorCompletionStatus.setComplete();
+                streamMapCreatorCompletionStatus.complete();
 
                 // Tell the supplied executor that we are ready to deliver final tasks.
                 signalAvailable();
@@ -141,25 +150,19 @@ public class ExtractionTaskProducer extends TaskProducer {
     }
 
     protected boolean isComplete() {
-        // If we haven't finished mapping all of the streams then we aren't complete.
-        return clusterSearchTask.isTerminated() || (finishedAddingTasks && super.isComplete());
+        return clusterSearchTask.isTerminated() || super.isComplete();
     }
 
     @Override
     protected Runnable getNext() {
         ExtractionRunnable task = null;
 
-        if (clusterSearchTask.isTerminated()) {
-            finishedAddingTasks = true;
-
-            // Drain the queue and increment the complete task count.
-            while (taskQueue.poll() != null) {
-                incrementTasksCompleted();
-            }
-        } else {
+        if (!clusterSearchTask.isTerminated()) {
             task = taskQueue.poll();
             if (task == null) {
-                finishedAddingTasks = addTasks();
+                if (addTasks()) {
+                    finishedAddingTasks();
+                }
                 task = taskQueue.poll();
             }
         }
@@ -172,16 +175,18 @@ public class ExtractionTaskProducer extends TaskProducer {
     @Override
     protected void incrementTasksCompleted() {
         super.incrementTasksCompleted();
-        extractionTaskCompletionStatus.increment();
+        tasksCompletedStatistic.incrementAndGet();
         checkCompletion();
     }
 
     private void checkCompletion() {
         if (isComplete()) {
-            // Send terminal values.
-            // TODO : @66 Change coprocessors to accept terminal values.
+            // Set complete if not already done.
+            if (completionStatus.complete()) {
+                // Send terminal values.
+                // TODO : @66 Change coprocessors to accept terminal values.
 //            putValues(new Values(null));
-            extractionTaskCompletionStatus.setComplete();
+            }
         }
     }
 
@@ -218,7 +223,8 @@ public class ExtractionTaskProducer extends TaskProducer {
                                 error(e.getMessage(), e);
                             }
                         }
-                    };
+                    }
+                    ;
                 };
 
                 if (eventIds == null) {
@@ -232,10 +238,10 @@ public class ExtractionTaskProducer extends TaskProducer {
                 }
 
                 incrementTasksTotal();
-                final ExtractionTask task = new ExtractionTask(streamId, eventIds, pipelineRef, extractionFieldIndexMap, resultReceiver, errorReceiver, extractionTaskCompletionStatus);
+                final ExtractionTask task = new ExtractionTask(streamId, eventIds, pipelineRef, extractionFieldIndexMap, resultReceiver, errorReceiver, successfulExtractions, failedExtractions);
                 taskQueue.offer(new ExtractionRunnable(task, handlerProvider));
                 tasksCreated++;
-                extractionTaskCompletionStatus.getTasksCreated().incrementAndGet();
+                tasksCreatedStatistic.incrementAndGet();
 
             } else {
                 // Pass raw values to coprocessors that are not requesting values to be extracted.

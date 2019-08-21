@@ -18,7 +18,6 @@ package stroom.search.server.shard;
 
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.search.extraction.CompletionStatus;
-import stroom.search.extraction.CompletionStatusImpl;
 import stroom.search.extraction.Values;
 import stroom.search.server.ClusterSearchTask;
 import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
@@ -57,7 +56,8 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
     private final Queue<IndexShardSearchRunnable> taskQueue = new ConcurrentLinkedQueue<>();
     private final AtomicInteger tasksRequested = new AtomicInteger();
 
-    private final CompletionStatusImpl indexShardSearchTaskCompletionStatus = new CompletionStatusImpl();
+    private final CompletionStatus completionStatus = new CompletionStatus("Search Index Shards");
+    private final AtomicLong count = completionStatus.getStatistic("count");
 
     public IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
                                         final ClusterSearchTask clusterSearchTask,
@@ -76,7 +76,7 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
         this.storedData = storedData;
         this.errorReceiver = errorReceiver;
 
-        parentCompletionStatus.addChild("indexShardSearchTaskCompletionStatus", indexShardSearchTaskCompletionStatus);
+        parentCompletionStatus.addChild(completionStatus);
 
         // Create a deque to capture stored data from the index that can be used by coprocessors.
         final ResultReceiver resultReceiver = (shardId, values) -> putValues(values);
@@ -98,6 +98,9 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
         // Set the total number of index shards we are searching.
         // We set this here so that any errors that might have occurred adding shard search tasks would prevent this producer having work to do.
         setTasksTotal(count);
+
+        // Let consumers now there will be no more tasks.
+        finishedAddingTasks();
     }
 
     private void putValues(final Values values) {
@@ -125,12 +128,7 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
     protected Runnable getNext() {
         IndexShardSearchRunnable task = null;
 
-        if (clusterSearchTask.isTerminated()) {
-            // Drain the queue and increment the complete task count.
-            while (taskQueue.poll() != null) {
-                incrementTasksCompleted();
-            }
-        } else {
+        if (!clusterSearchTask.isTerminated()) {
             // If there are no open shards that can be used for any tasks then just get the task at the head of the queue.
             task = taskQueue.poll();
             if (task != null) {
@@ -148,15 +146,17 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
     @Override
     protected void incrementTasksCompleted() {
         super.incrementTasksCompleted();
-        indexShardSearchTaskCompletionStatus.increment();
+        count.incrementAndGet();
         checkCompletion();
     }
 
     private void checkCompletion() {
         if (isComplete()) {
-            // Send terminal values.
-            putValues(new Values(null));
-            indexShardSearchTaskCompletionStatus.setComplete();
+            // Set complete if not already done.
+            if (completionStatus.complete()) {
+                // Send terminal values.
+                putValues(Values.COMPLETE);
+            }
         }
     }
 

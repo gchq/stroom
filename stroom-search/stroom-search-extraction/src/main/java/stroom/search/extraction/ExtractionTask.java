@@ -20,6 +20,8 @@ import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.query.api.v2.DocRef;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class ExtractionTask {
     private final long streamId;
     private final long[] eventIds;
@@ -27,7 +29,8 @@ public class ExtractionTask {
     private final FieldIndexMap fieldIndexes;
     private final ResultReceiver resultReceiver;
     private final ErrorReceiver errorReceiver;
-    private final ExtractionTaskCompletionStatus completionStatus;
+    private final AtomicLong successfulExtractions;
+    private final AtomicLong failedExtractions;
 
     ExtractionTask(final long streamId,
                    final long[] eventIds,
@@ -35,14 +38,16 @@ public class ExtractionTask {
                    final FieldIndexMap fieldIndexes,
                    final ResultReceiver resultReceiver,
                    final ErrorReceiver errorReceiver,
-                   final ExtractionTaskCompletionStatus completionStatus) {
+                   final AtomicLong successfulExtractions,
+                   final AtomicLong failedExtractions) {
         this.streamId = streamId;
         this.eventIds = eventIds;
         this.pipelineRef = pipelineRef;
         this.fieldIndexes = fieldIndexes;
         this.resultReceiver = resultReceiver;
         this.errorReceiver = errorReceiver;
-        this.completionStatus = completionStatus;
+        this.successfulExtractions = successfulExtractions;
+        this.failedExtractions = failedExtractions;
     }
 
     public long getStreamId() {
@@ -69,8 +74,12 @@ public class ExtractionTask {
         return errorReceiver;
     }
 
-    public ExtractionTaskCompletionStatus getCompletionStatus() {
-        return completionStatus;
+    public AtomicLong getSuccessfulExtractions() {
+        return successfulExtractions;
+    }
+
+    public AtomicLong getFailedExtractions() {
+        return failedExtractions;
     }
 
     public interface ResultReceiver {

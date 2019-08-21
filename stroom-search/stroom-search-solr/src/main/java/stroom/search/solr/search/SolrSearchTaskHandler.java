@@ -33,7 +33,7 @@ import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.search.extraction.CompletionStatusImpl;
+import stroom.search.extraction.CompletionStatus;
 import stroom.search.extraction.Values;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexClientCache;
@@ -59,6 +59,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @Scope(StroomScope.TASK)
@@ -74,7 +75,7 @@ public class SolrSearchTaskHandler {
     private final SolrIndexClientCache solrIndexClientCache;
     private final ExecutorProvider executorProvider;
     private final TaskContext taskContext;
-    private final CompletionStatusImpl completionStatus = new CompletionStatusImpl();
+    private final CompletionStatus completionStatus = new CompletionStatus("Search Solr Index");
 
     @Inject
     SolrSearchTaskHandler(final SolrIndexClientCache solrIndexClientCache,
@@ -86,7 +87,7 @@ public class SolrSearchTaskHandler {
     }
 
     public VoidResult exec(final SolrSearchTask task) {
-        task.getParentCompletionStatus().addChild("SolrSearchTaskHandler", completionStatus);
+        task.getParentCompletionStatus().addChild(completionStatus);
 
         LOGGER.logDurationIfDebugEnabled(
                 () -> {
@@ -133,9 +134,10 @@ public class SolrSearchTaskHandler {
                             } catch (final RuntimeException e) {
                                 error(task, e.getMessage(), e);
                             } finally {
-                                completionStatus.setComplete();
-                                // Send terminal values.
-                                task.getResultReceiver().receive(new Values(null));
+                                if (completionStatus.complete()) {
+                                    // Send terminal values.
+                                    task.getResultReceiver().receive(Values.COMPLETE);
+                                }
                             }
                         },
                         () -> "searcher.search()");
@@ -146,12 +148,13 @@ public class SolrSearchTaskHandler {
     }
 
     private void fastStreamingDocsSearch(final SolrSearchTask task, final SolrIndex solrIndex, final SolrConnectionConfig connectionConfig) {
-        final Callback2 callback = new Callback2(completionStatus, task.getFieldNames(), task.getSolrIndex().getFieldsMap(), task.getResultReceiver(), task.getErrorReceiver(), taskContext);
+        final AtomicLong count = completionStatus.getStatistic("count");
+        final Callback2 callback = new Callback2(count, task.getFieldNames(), task.getSolrIndex().getFieldsMap(), task.getResultReceiver(), task.getErrorReceiver(), taskContext);
         solrIndexClientCache.context(connectionConfig, solrClient -> {
             try {
                 final QueryResponse response = solrClient.queryAndStreamResponse(solrIndex.getCollection(), task.getSolrParams(), callback);
                 LOGGER.debug(() -> "fastStreamingDocsSearch() - response=" + response);
-                completionStatus.setComplete();
+                completionStatus.complete();
             } catch (final SolrServerException | IOException | RuntimeException e) {
                 error(task, e.getMessage(), e);
             }
@@ -159,19 +162,20 @@ public class SolrSearchTaskHandler {
     }
 
     private void streamingSearch(final SolrSearchTask task, final SolrIndex solrIndex, final SolrConnectionConfig connectionConfig) {
-        final Callback callback = new Callback(completionStatus, task.getFieldNames(), task.getResultReceiver(), task.getErrorReceiver());
+        final AtomicLong count = completionStatus.getStatistic("count");
+        final Callback callback = new Callback(count, task.getFieldNames(), task.getResultReceiver(), task.getErrorReceiver());
         solrIndexClientCache.context(connectionConfig, solrClient -> {
             try {
                 final QueryResponse response = solrClient.queryAndStreamResponse(solrIndex.getCollection(), task.getSolrParams(), callback);
                 final DocListInfo docListInfo = callback.getDocListInfo();
                 LOGGER.debug(() -> "streamingSearch() - response=" + response);
-                LOGGER.debug(() -> "hitCount=" + completionStatus.getCount());
+                LOGGER.debug(() -> "hitCount=" + count.get());
 
                 // Make sure we got back what we expected to.
                 if (docListInfo == null) {
                     throw new SolrServerException("docListInfo is null");
-                } else if (docListInfo.getNumFound() != completionStatus.getCount()) {
-                    throw new SolrServerException("Unexpected hit count - numFound=" + docListInfo.getNumFound() + " hitCount=" + completionStatus.getCount());
+                } else if (docListInfo.getNumFound() != count.get()) {
+                    throw new SolrServerException("Unexpected hit count - numFound=" + docListInfo.getNumFound() + " hitCount=" + count.get());
                 }
 
             } catch (final SolrServerException | IOException | RuntimeException e) {
@@ -189,18 +193,18 @@ public class SolrSearchTaskHandler {
     }
 
     private static class Callback extends StreamingResponseCallback {
-        private final CompletionStatusImpl completionStatus;
+        private final AtomicLong count;
         private final String[] fieldNames;
         private final ResultReceiver resultReceiver;
         private final ErrorReceiver errorReceiver;
 
         private DocListInfo docListInfo;
 
-        Callback(final CompletionStatusImpl completionStatus,
+        Callback(final AtomicLong count,
                  final String[] fieldNames,
                  final ResultReceiver resultReceiver,
                  final ErrorReceiver errorReceiver) {
-            this.completionStatus = completionStatus;
+            this.count = count;
             this.fieldNames = fieldNames;
             this.resultReceiver = resultReceiver;
             this.errorReceiver = errorReceiver;
@@ -209,7 +213,7 @@ public class SolrSearchTaskHandler {
         @Override
         public void streamSolrDocument(final SolrDocument doc) {
             try {
-                completionStatus.increment();
+                count.incrementAndGet();
 
                 Val[] values = null;
                 for (int i = 0; i < fieldNames.length; i++) {
@@ -297,20 +301,20 @@ public class SolrSearchTaskHandler {
     }
 
     private static class Callback2 implements FastStreamingDocsCallback {
-        private final CompletionStatusImpl completionStatus;
+        private final AtomicLong count;
         private final String[] fieldNames;
         private final Map<String, SolrIndexField> fieldsMap;
         private final ResultReceiver resultReceiver;
         private final ErrorReceiver errorReceiver;
         private final HasTerminate hasTerminate;
 
-        Callback2(final CompletionStatusImpl completionStatus,
+        Callback2(final AtomicLong count,
                   final String[] fieldNames,
                   final Map<String, SolrIndexField> fieldsMap,
                   final ResultReceiver resultReceiver,
                   final ErrorReceiver errorReceiver,
                   final HasTerminate hasTerminate) {
-            this.completionStatus = completionStatus;
+            this.count = count;
             this.fieldNames = fieldNames;
             this.fieldsMap = fieldsMap;
             this.resultReceiver = resultReceiver;
@@ -344,7 +348,7 @@ public class SolrSearchTaskHandler {
             getStoredData(map);
             map.clear();
 
-            completionStatus.increment();
+            count.incrementAndGet();
         }
 
         private Val convertFieldValue(final DataEntry entry) {

@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class TaskProducer implements Comparable<TaskProducer> {
@@ -33,6 +34,7 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
     private final int maxThreadsPerTask;
     private final Executor executor;
 
+    private final AtomicBoolean finishedAddingTasks = new AtomicBoolean();
     private final AtomicInteger tasksTotal = new AtomicInteger();
     private final AtomicInteger tasksCompleted = new AtomicInteger();
 
@@ -99,7 +101,7 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
      * @return True if this producer will not issue any further tasks and that all of the tasks it has issued have completed processing.
      */
     protected boolean isComplete() {
-        return getRemainingTasks() == 0;
+        return finishedAddingTasks.get() && getRemainingTasks() == 0;
     }
 
     protected void attach() {
@@ -114,6 +116,10 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
         taskExecutor.signalAll();
     }
 
+    protected void finishedAddingTasks() {
+        this.finishedAddingTasks.set(true);
+    }
+
     protected final int getTasksTotal() {
         return tasksTotal.get();
     }
@@ -126,7 +132,7 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
         tasksTotal.incrementAndGet();
     }
 
-    protected final int getTasksCompleted() {
+    final int getTasksCompleted() {
         return tasksCompleted.get();
     }
 
