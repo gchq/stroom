@@ -26,6 +26,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,6 +41,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     private final DocumentTypePermissions documentTypePermissions;
     private final SecurityContextImpl securityContext;
 
+    @Inject
     DocumentPermissionServiceImpl(final DocumentPermissionDao documentPermissionDao,
                                   final UserDao userDao,
                                   final DocumentTypePermissions documentTypePermissions,

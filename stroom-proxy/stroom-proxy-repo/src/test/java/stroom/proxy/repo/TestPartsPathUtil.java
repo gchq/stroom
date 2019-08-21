@@ -9,9 +9,9 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class TestPartsPathUtil {
+class TestPartsPathUtil {
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         Path uniqueTestDir = Files.createTempDirectory("stroom");
 
         final Path zipFile = uniqueTestDir.resolve("test.zip");

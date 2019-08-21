@@ -23,19 +23,15 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
-import stroom.index.impl.CreateVolumeDTO;
+import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexStore;
-import stroom.index.impl.IndexVolumeGroupService;
-import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
-import stroom.index.shared.IndexVolume;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.StandardHeaderArguments;
-import stroom.node.api.NodeInfo;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
@@ -59,25 +55,16 @@ public class CommonTestScenarioCreator {
     private final ProcessorService streamProcessorService;
     private final ProcessorFilterService processorFilterService;
     private final IndexStore indexStore;
-    private final IndexVolumeService indexVolumeService;
-    private final IndexVolumeGroupService indexVolumeGroupService;
-    private final NodeInfo nodeInfo;
 
     @Inject
     CommonTestScenarioCreator(final Store streamStore,
                               final ProcessorService streamProcessorService,
                               final ProcessorFilterService processorFilterService,
-                              final IndexStore indexStore,
-                              final IndexVolumeService indexVolumeService,
-                              final IndexVolumeGroupService indexVolumeGroupService,
-                              final NodeInfo nodeInfo) {
+                              final IndexStore indexStore) {
         this.streamStore = streamStore;
         this.streamProcessorService = streamProcessorService;
         this.processorFilterService = processorFilterService;
         this.indexStore = indexStore;
-        this.indexVolumeService = indexVolumeService;
-        this.indexVolumeGroupService = indexVolumeGroupService;
-        this.nodeInfo = nodeInfo;
     }
 
     public void createBasicTranslateStreamProcessor(final String feed) {
@@ -97,7 +84,6 @@ public class CommonTestScenarioCreator {
         processor.setPipelineUuid(UUID.randomUUID().toString());
         processor.setEnabled(true);
         processor = streamProcessorService.create(processor);
-
         processorFilterService.create(processor, queryData, 1, true);
     }
 
@@ -114,29 +100,12 @@ public class CommonTestScenarioCreator {
         final DocRef indexRef = indexStore.createDocument(name);
         final IndexDoc index = indexStore.readDocument(indexRef);
 
-        // Create a test index volume group
-        final String volumeGroupName = UUID.randomUUID().toString();
-        final var indexVolumeGroup = indexVolumeGroupService.create();
-
-        // Create a test index volume and add it to the group
-        final var createVolumeDTO = new CreateVolumeDTO();
-        createVolumeDTO.setNodeName(nodeInfo.getThisNodeName());
-        createVolumeDTO.setPath("/todo");
-        createVolumeDTO.setIndexVolumeGroupId(indexVolumeGroup.getId());
-        indexVolumeService.create(createVolumeDTO);
-
         // Update the index
         index.setMaxDocsPerShard(maxDocsPerShard);
         index.setFields(indexFields);
-        index.setVolumeGroupName(volumeGroupName);
+        index.setVolumeGroupName(VolumeCreator.DEFAULT_VOLUME_GROUP);
         indexStore.writeDocument(index);
         assertThat(index).isNotNull();
-
-        final IndexVolume indexVolume = indexVolumeService.getAll().stream()
-                .filter(v -> v.getNodeName().equals(nodeInfo.getThisNodeName()))
-                .findAny()
-                .orElseThrow(() -> new AssertionError("Could not get Index Volume"));
-
         return indexRef;
     }
 

@@ -40,6 +40,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.PermissionException;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -61,7 +62,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
     private final ExplorerActionHandlers explorerActionHandlers;
     private final SecurityContext securityContext;
     private final ExplorerEventLog explorerEventLog;
-    private final ExplorerDecorator explorerDecorator;
+    private final Provider<ExplorerDecorator> explorerDecoratorProvider;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
@@ -69,13 +70,13 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                         final ExplorerActionHandlers explorerActionHandlers,
                         final SecurityContext securityContext,
                         final ExplorerEventLog explorerEventLog,
-                        final ExplorerDecorator explorerDecorator) {
+                        final Provider<ExplorerDecorator> explorerDecoratorProvider) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
         this.securityContext = securityContext;
         this.explorerEventLog = explorerEventLog;
-        this.explorerDecorator = explorerDecorator;
+        this.explorerDecoratorProvider = explorerDecoratorProvider;
     }
 
     @Override
@@ -116,18 +117,21 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
         if (criteria.getFilter() != null &&
                 criteria.getFilter().getTags() != null &&
                 criteria.getFilter().getTags().contains(StandardTagNames.DATA_SOURCE)) {
-            final List<DocRef> additionalDocRefs = explorerDecorator.list();
-            additionalDocRefs.forEach(docRef -> {
-                final ExplorerNode node = new ExplorerNode(
-                        docRef.getType(),
-                        docRef.getUuid(),
-                        docRef.getName(),
-                        StandardTagNames.DATA_SOURCE);
-                node.setNodeState(NodeState.LEAF);
-                node.setDepth(1);
-                node.setIconUrl(DocumentType.DOC_IMAGE_URL + "searchable.svg");
-                result.getTreeStructure().add(result.getTreeStructure().getRoot(), node);
-            });
+            final ExplorerDecorator explorerDecorator = explorerDecoratorProvider.get();
+            if (explorerDecorator != null) {
+                final List<DocRef> additionalDocRefs = explorerDecorator.list();
+                additionalDocRefs.forEach(docRef -> {
+                    final ExplorerNode node = new ExplorerNode(
+                            docRef.getType(),
+                            docRef.getUuid(),
+                            docRef.getName(),
+                            StandardTagNames.DATA_SOURCE);
+                    node.setNodeState(NodeState.LEAF);
+                    node.setDepth(1);
+                    node.setIconUrl(DocumentType.DOC_IMAGE_URL + "searchable.svg");
+                    result.getTreeStructure().add(result.getTreeStructure().getRoot(), node);
+                });
+            }
         }
 
         return result;

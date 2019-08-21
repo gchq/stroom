@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     private final IndexVolumeGroupDao indexVolumeGroupDao;
-    private IndexVolumeDao indexVolumeDao;
+    private final IndexVolumeDao indexVolumeDao;
     private final SecurityContext securityContext;
 
     @Inject
@@ -38,7 +38,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     }
 
     @Override
-    public IndexVolumeGroup create(String name) {
+    public IndexVolumeGroup getOrCreate(final String name) {
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         indexVolumeGroup.setName(name);
         AuditUtil.stamp(securityContext.getUserId(), indexVolumeGroup);
@@ -57,7 +57,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     }
 
     @Override
-    public IndexVolumeGroup update(IndexVolumeGroup indexVolumeGroup) {
+    public IndexVolumeGroup update(final IndexVolumeGroup indexVolumeGroup) {
         AuditUtil.stamp(securityContext.getUserId(), indexVolumeGroup);
         return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.update(indexVolumeGroup));
@@ -73,14 +73,9 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
         securityContext.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> {
                     //TODO Transaction?
-                    var indexVolumesInGroup = indexVolumeDao.getAll().stream().filter( indexVolume -> indexVolume.getIndexVolumeGroupId().equals(id)).collect(Collectors.toList());
+                    var indexVolumesInGroup = indexVolumeDao.getAll().stream().filter(indexVolume -> indexVolume.getIndexVolumeGroupId().equals(id)).collect(Collectors.toList());
                     indexVolumesInGroup.forEach(indexVolume -> indexVolumeDao.delete(indexVolume.getId()));
                     indexVolumeGroupDao.delete(id);
                 });
-    }
-
-
-    static String getNextNameForNewGroup(List<String> names){
-        return NextNameGenerator.getNextName(names, "New group");
     }
 }

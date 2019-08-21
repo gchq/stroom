@@ -3,7 +3,7 @@ package stroom.util.concurrent;
 import org.junit.jupiter.api.Disabled;
 
 @Disabled
-public class TestThreadPoolExecutor {
+class TestThreadPoolExecutor {
 //    @Test
 //    public void test() throws Exception {
 //        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(0, 2, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());

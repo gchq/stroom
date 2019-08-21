@@ -1,8 +1,7 @@
 package stroom.receive;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.core.receive.ProxyAggregationExecutor;
@@ -47,7 +46,7 @@ import java.util.zip.ZipOutputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Ignore //Only meant to be run manually
+@Disabled //Only meant to be run manually
 public class ManualProxyAggregationTest {
 
     // The aim of this test class is to be able to run the proxy aggregation
@@ -86,7 +85,7 @@ public class ManualProxyAggregationTest {
 
 
     @Test
-    public void clean() {
+    void clean() {
         commonTestControl.teardown();
         FileUtil.deleteContents(getProxyDir());
         FileUtil.deleteDir(getProxyDir());
@@ -95,7 +94,7 @@ public class ManualProxyAggregationTest {
 
 
     @Test
-    public void generateInputFiles() {
+    void generateInputFiles() {
         // Generate the feeds to use in the test
         final List<String> eventFeeds = createFeeds(FEED_COUNT);
 
@@ -105,7 +104,7 @@ public class ManualProxyAggregationTest {
     }
 
     @Test
-    public void runProxyAggregation() {
+    void runProxyAggregation() {
         // Generate the feeds to use in the test
         final List<String> eventFeeds = getFeedNames(FEED_COUNT);
 
@@ -245,7 +244,7 @@ public class ManualProxyAggregationTest {
             final FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setExpression(MetaExpressionUtil.createFeedExpression(feed));
             final List<Meta> streams = metaService.find(criteria);
-            Assert.assertEquals(expectedStreamsPerFeed, streams.size());
+            assertThat(streams.size()).isEqualTo(expectedStreamsPerFeed);
 
             streams.forEach(stream -> {
                 long streamId = stream.getId();

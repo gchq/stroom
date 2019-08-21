@@ -30,14 +30,14 @@ public interface IndexVolumeDao {
 //     */
 //    List<IndexVolumeGroup> getGroupsForVolume(int id);
 //
-//    /**
-//     * Retrieve all the volumes in a specific group, on a specific node.
-//     * Used to retrieve a volume on which to put a new shard.
-//     * @param groupName The name of the group to filter on.
-//     * @param nodeName The node on which the volume must belong.
-//     * @return A list of candidate Index Volumes.
-//     */
-//    List<IndexVolume> getVolumesInGroupOnNode(String groupName, String nodeName);
+    /**
+     * Retrieve all the volumes in a specific group, on a specific node.
+     * Used to retrieve a volume on which to put a new shard.
+     * @param groupName The name of the group to filter on.
+     * @param nodeName The node on which the volume must belong.
+     * @return A list of candidate Index Volumes.
+     */
+    List<IndexVolume> getVolumesInGroupOnNode(String groupName, String nodeName);
 //
 //    /**
 //     * Add to membership of a volume group.

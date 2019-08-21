@@ -41,21 +41,9 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
 
     @BeforeEach
     void before(final TestInfo testInfo, @TempDir final Path tempDir) {
-//        final Injector childInjector = injector.createChildInjector();
-//        childInjector.injectMembers(this);
-
         injector.injectMembers(this);
         super.before(testInfo, tempDir);
     }
-//
-//    @After
-//    public void after() {
-//        // Stop task manager
-//        injector.getInstance(TaskManager.class).shutdown();
-//
-//        // Stop persistance
-//        injector.getInstance(PersistService.class).stop();
-//    }
 
     /**
      * For use when you need to get an instance of a custom scoped class, e.g.

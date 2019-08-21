@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestNextNameGenerator {
+class TestNextNameGenerator {
     @Test
     void simple() {
         var names = Arrays.asList("New group", "New group (1)", "New group (2)");
@@ -31,5 +31,4 @@ public class TestNextNameGenerator {
         var names = new ArrayList<String>();
         assertThat(NextNameGenerator.getNextName(names, "New group")).isEqualTo("New group (1)");
     }
-
 }

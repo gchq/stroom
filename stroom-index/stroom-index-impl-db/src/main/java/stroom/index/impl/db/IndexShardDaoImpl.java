@@ -9,6 +9,7 @@ import stroom.db.util.JooqUtil;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
+import stroom.index.impl.selection.RoundRobinVolumeSelector;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
@@ -18,12 +19,10 @@ import stroom.index.shared.IndexVolume;
 import stroom.util.shared.CriteriaSet;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -79,6 +78,7 @@ class IndexShardDaoImpl implements IndexShardDao {
     private final ConnectionProvider connectionProvider;
     private final IndexVolumeDao indexVolumeDao;
     private final GenericDao<IndexShardRecord, IndexShard, Long> genericDao;
+    private final RoundRobinVolumeSelector volumeSelector = new RoundRobinVolumeSelector();
 
     @Inject
     IndexShardDaoImpl(final ConnectionProvider connectionProvider,
@@ -180,21 +180,19 @@ class IndexShardDaoImpl implements IndexShardDao {
                              final String volumeGroupName,
                              final String ownerNodeName,
                              final String indexVersion) {
-        // TODO : @66 Add volume selection based on strategy for using least full etc, like we do for data store.
-//        final List<IndexVolume> indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
-        final List<IndexVolume> indexVolumes = new ArrayList<>();
+        // TODO : @66 Add some caching here. Maybe do this as part of volume selection.
+        final List<IndexVolume> indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
+        if (indexVolumes == null || indexVolumes.size() == 0) {
+            throw new IndexException("Unable to find any index volumes for group with name " + volumeGroupName);
+        }
 
-        IndexVolume indexVolume;
-        try {
-            // FIXME: This .next() means that every shard uses the first volume in the volume group.
-            // We need a selector similar, maybe, to the ones we have in FsVolumeService.getVolumeSet().
-            // Probably we can just use round robin, but it might be nice to do it based on free space. RR prob fine.
-            // Needs some kind of component.
-            indexVolume = indexVolumes.iterator().next();
-        } catch (NoSuchElementException e) {
-            final String msg = String.format("No shard can be created as no volumes are available for group: %s, indexUuid: %s ",
-                    volumeGroupName,
-                    indexShardKey.getIndexUuid());
+        // TODO : @66 Add volume selection based on strategy for using least full etc, like we do for data store.
+        final IndexVolume indexVolume = volumeSelector.select(indexVolumes);
+        if (indexVolume == null) {
+            final String msg = "No shard can be created as no volumes are available for group: " +
+                    volumeGroupName +
+                    " indexUuid: " +
+                    indexShardKey.getIndexUuid();
             throw new IndexException(msg);
         }
 
@@ -206,7 +204,6 @@ class IndexShardDaoImpl implements IndexShardDao {
         indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
         indexShard.setVolume(indexVolume);
         indexShard.setIndexVersion(indexVersion);
-        indexShard.setStatus(IndexShardStatus.OPEN);
 
         final IndexShard created = genericDao.create(indexShard);
         created.setVolume(indexVolume);

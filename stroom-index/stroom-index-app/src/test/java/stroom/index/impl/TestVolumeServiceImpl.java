@@ -22,11 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class TestVolumeServiceImpl {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TestVolumeServiceImpl.class);
 
     @Test
-    public void run() {
+    void run() {
         LOGGER.warn("All these tests need remaking");
     }
 
