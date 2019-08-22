@@ -167,6 +167,7 @@ include 'stroom-processor:stroom-processor-api'
 include 'stroom-processor:stroom-processor-impl'
 include 'stroom-processor:stroom-processor-impl-db'
 include 'stroom-processor:stroom-processor-impl-db-jooq'
+include 'stroom-processor:stroom-processor-mock'
 
 // Proxy
 include 'stroom-proxy:stroom-proxy-app'

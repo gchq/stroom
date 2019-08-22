@@ -33,14 +33,14 @@ import stroom.data.store.impl.fs.SegmentInputStreamProvider;
 import stroom.data.store.impl.fs.SegmentInputStreamProviderFactory;
 import stroom.data.store.impl.fs.SegmentOutputStreamProvider;
 import stroom.data.store.impl.fs.SegmentOutputStreamProviderFactory;
-import stroom.util.shared.Clearable;
-import stroom.util.io.SeekableInputStream;
 import stroom.meta.mock.MockMetaService;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
+import stroom.util.io.SeekableInputStream;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

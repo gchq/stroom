@@ -18,8 +18,8 @@ package stroom.search.impl;
 
 import stroom.query.api.v2.Query;
 import stroom.security.shared.UserToken;
-import stroom.task.shared.Task;
 import stroom.task.api.ServerTask;
+import stroom.task.shared.Task;
 
 abstract class AbstractSearchTask<R> extends ServerTask<R> {
     private final Query query;

@@ -18,6 +18,7 @@ package stroom.pipeline.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SizeAwareInputStream;
 import stroom.docref.DocRef;
@@ -35,9 +36,8 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.security.api.DocumentPermissionCache;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.data.shared.StreamTypeNames;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -72,7 +72,7 @@ public class ReferenceData {
     private final RefDataStoreHolder refDataStoreHolder;
     private final RefDataLoaderHolder refDataLoaderHolder;
     private final PipelineStore pipelineStore;
-    private final Security security;
+    private final SecurityContext securityContext;
 
 
     @Inject
@@ -85,7 +85,7 @@ public class ReferenceData {
                   final RefDataStoreHolder refDataStoreHolder,
                   final RefDataLoaderHolder refDataLoaderHolder,
                   final PipelineStore pipelineStore,
-                  final Security security) {
+                  final SecurityContext securityContext) {
         this.effectiveStreamCache = effectiveStreamCache;
         this.feedHolder = feedHolder;
         this.metaHolder = metaHolder;
@@ -95,7 +95,7 @@ public class ReferenceData {
         this.refDataStoreHolder = refDataStoreHolder;
         this.refDataLoaderHolder = refDataLoaderHolder;
         this.pipelineStore = pipelineStore;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     /**
@@ -392,7 +392,7 @@ public class ReferenceData {
                             LOGGER.debug("Creating task to load reference data {}", refStreamDefinition);
 
                             // initiate a load of the ref data for this stream
-                            security.asProcessingUser(() ->
+                            securityContext.asProcessingUser(() ->
                                     referenceDataLoader.load(refStreamDefinition));
 
                             LAMBDA_LOGGER.debug(LambdaLogUtil.message(

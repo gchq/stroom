@@ -1,7 +1,5 @@
 package stroom.config.app;
 
-import stroom.config.app.AppConfig;
-
 public class WrapperConfig {
     private AppConfig appConfig;
 

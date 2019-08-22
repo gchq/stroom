@@ -2,10 +2,10 @@ package stroom.statistics.impl.sql.search;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import stroom.cache.api.CacheManager;
 import stroom.query.common.v2.AbstractInMemorySearchResponseCreatorCacheFactory;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
-import stroom.cache.api.CacheManager;
 
 import javax.inject.Inject;
 import java.time.Duration;

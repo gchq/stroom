@@ -33,7 +33,7 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.StandardHeaderArguments;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.util.io.BufferFactory;
@@ -59,7 +59,7 @@ public class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTas
     private final TaskContext taskContext;
     private final Store streamStore;
     private final MetaService metaService;
-    private final Security security;
+    private final SecurityContext securityContext;
     private final BufferFactory bufferFactory;
 
     private final AtomicLong fileCount = new AtomicLong(0);
@@ -70,18 +70,18 @@ public class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTas
     public DataDownloadTaskHandler(final TaskContext taskContext,
                             final Store streamStore,
                             final MetaService metaService,
-                            final Security security,
+                            final SecurityContext securityContext,
                             final BufferFactory bufferFactory) {
         this.taskContext = taskContext;
         this.streamStore = streamStore;
         this.metaService = metaService;
-        this.security = security;
+        this.securityContext = securityContext;
         this.bufferFactory = bufferFactory;
     }
 
     @Override
     public DataDownloadResult exec(final DataDownloadTask task) {
-        return security.secureResult(() -> downloadData(task));
+        return securityContext.secureResult(() -> downloadData(task));
     }
 
     private DataDownloadResult downloadData(final DataDownloadTask task) {

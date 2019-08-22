@@ -8,7 +8,7 @@ import stroom.elastic.api.ElasticIndexWriterFactory;
 import stroom.elastic.impl.ElasticIndexConfigCache;
 import stroom.elastic.impl.ElasticIndexConfigDoc;
 import stroom.pipeline.errorhandler.LoggedException;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -19,18 +19,18 @@ class HttpElasticIndexWriterFactory implements ElasticIndexWriterFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpElasticIndexWriterFactory.class);
 
     private final ElasticIndexConfigCache elasticIndexCache;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     HttpElasticIndexWriterFactory(final ElasticIndexConfigCache elasticIndexCache,
-                                  final Security security) {
+                                  final SecurityContext securityContext) {
         this.elasticIndexCache = elasticIndexCache;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public Optional<ElasticIndexWriter> create(final DocRef elasticConfigRef) {
-        return security.asProcessingUserResult(() -> {
+        return securityContext.asProcessingUserResult(() -> {
             // Get the index and index fields from the cache.
             final ElasticIndexConfigDoc elasticIndexConfigDoc = elasticIndexCache.get(elasticConfigRef);
             if (elasticIndexConfigDoc == null) {

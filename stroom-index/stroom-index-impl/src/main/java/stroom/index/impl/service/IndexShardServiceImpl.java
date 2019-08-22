@@ -28,7 +28,6 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -44,36 +43,33 @@ import java.util.List;
 public class IndexShardServiceImpl implements IndexShardService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardServiceImpl.class);
 
-    private final Security security;
-    private final IndexStructureCache indexStructureCache;
     private final SecurityContext securityContext;
+    private final IndexStructureCache indexStructureCache;
     private final IndexShardDao indexShardDao;
 
     @Inject
-    IndexShardServiceImpl(final Security security,
+    IndexShardServiceImpl(final SecurityContext securityContext,
                           final IndexStructureCache indexStructureCache,
-                          final SecurityContext securityContext,
                           final IndexShardDao indexShardDao) {
-        this.security = security;
-        this.indexStructureCache = indexStructureCache;
         this.securityContext = securityContext;
+        this.indexStructureCache = indexStructureCache;
         this.indexShardDao = indexShardDao;
     }
 
     @Override
     public IndexShard loadById(final Long id) {
-        return security.secureResult(() -> indexShardDao.fetch(id).orElse(null));
+        return securityContext.secureResult(() -> indexShardDao.fetch(id).orElse(null));
     }
 
     @Override
     public List<IndexShard> find(final FindIndexShardCriteria criteria) {
-        return security.secureResult(() -> indexShardDao.find(criteria));
+        return securityContext.secureResult(() -> indexShardDao.find(criteria));
     }
 
     @Override
     public IndexShard createIndexShard(final IndexShardKey indexShardKey,
                                        final String ownerNodeName) {
-        return security.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
             final IndexDoc index = indexStructure.getIndex();
 
@@ -83,7 +79,7 @@ public class IndexShardServiceImpl implements IndexShardService {
 
     @Override
     public Boolean delete(final IndexShard entity) {
-        return security.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             if (!securityContext.hasDocumentPermission(IndexDoc.DOCUMENT_TYPE, entity.getIndexUuid(), DocumentPermissionNames.DELETE)) {
                 throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete index shard");
             }
@@ -97,7 +93,7 @@ public class IndexShardServiceImpl implements IndexShardService {
     @Override
     public Boolean setStatus(final Long id,
                              final IndexShard.IndexShardStatus status) {
-        return security.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             indexShardDao.setStatus(id, status);
             return Boolean.TRUE;
         });
@@ -109,7 +105,7 @@ public class IndexShardServiceImpl implements IndexShardService {
                        final Long commitDurationMs,
                        final Long commitMs,
                        final Long fileSize) {
-        security.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+        securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             // Output some debug so we know how long commits are taking.
             LOGGER.debug(() -> String.format("Documents written %s (%s)",
                     documentCount,

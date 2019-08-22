@@ -21,7 +21,6 @@ package stroom.config.global.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.global.api.ConfigProperty;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
@@ -46,18 +45,15 @@ class GlobalConfigService {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigService.class);
 
     private final ConfigPropertyDao dao;
-    private final Security security;
     private final SecurityContext securityContext;
     private final Map<String, ConfigProperty> globalProperties = new HashMap<>();
     private final ConfigMapper configMapper;
 
     @Inject
     GlobalConfigService(final ConfigPropertyDao dao,
-                        final Security security,
                         final SecurityContext securityContext,
                         final ConfigMapper configMapper) {
         this.dao = dao;
-        this.security = security;
         this.securityContext = securityContext;
         this.configMapper = configMapper;
 
@@ -138,7 +134,7 @@ class GlobalConfigService {
     }
 
     public List<ConfigProperty> list() {
-        return security.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
             updateConfigObjectsFromDB();
 
             final List<ConfigProperty> list = new ArrayList<>(globalProperties.values());
@@ -149,7 +145,7 @@ class GlobalConfigService {
     }
 
     public ConfigProperty fetch(final int id) {
-        return security.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> dao.fetch(id)
+        return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> dao.fetch(id)
                 .map(prop -> {
                     prop.setSource(ConfigProperty.SourceType.DATABASE);
                     return prop;
@@ -157,7 +153,7 @@ class GlobalConfigService {
     }
 
     public ConfigProperty update(final ConfigProperty configProperty) {
-        return security.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
             LAMBDA_LOGGER.debug(LambdaLogUtil.message(
                     "Saving property [{}] with new value [{}]",
                     configProperty.getName(), configProperty.getValue()));

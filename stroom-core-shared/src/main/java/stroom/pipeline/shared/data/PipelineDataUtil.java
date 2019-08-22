@@ -16,9 +16,9 @@
 
 package stroom.pipeline.shared.data;
 
+import stroom.docref.DocRef;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
-import stroom.docref.DocRef;
 
 import java.util.Collections;
 

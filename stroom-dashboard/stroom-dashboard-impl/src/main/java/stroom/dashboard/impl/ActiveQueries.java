@@ -18,11 +18,10 @@ package stroom.dashboard.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.UserToken;
 
@@ -38,14 +37,11 @@ class ActiveQueries {
 
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final SecurityContext securityContext;
-    private final Security security;
 
     ActiveQueries(final DataSourceProviderRegistry dataSourceProviderRegistry,
-                  final SecurityContext securityContext,
-                  final Security security) {
+                  final SecurityContext securityContext) {
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
         this.securityContext = securityContext;
-        this.security = security;
     }
 
     void destroyUnusedQueries(final Set<DashboardQueryKey> keys) {
@@ -56,7 +52,7 @@ class ActiveQueries {
             final DashboardQueryKey queryKey = entry.getKey();
             final ActiveQuery activeQuery = entry.getValue();
             if (keys == null || !keys.contains(queryKey)) {
-                final Boolean success = security.asUserResult(activeQuery.getUserToken(), () -> dataSourceProviderRegistry.getDataSourceProvider(activeQuery.getDocRef())
+                final Boolean success = securityContext.asUserResult(activeQuery.getUserToken(), () -> dataSourceProviderRegistry.getDataSourceProvider(activeQuery.getDocRef())
                         .map(provider -> provider.destroy(new QueryKey(queryKey.getUuid())))
                         .orElseGet(() -> {
                             LOGGER.warn("Unable to destroy query with key {} as provider {} cannot be found",

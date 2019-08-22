@@ -16,7 +16,6 @@
 
 package stroom.security.impl;
 
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
@@ -29,22 +28,19 @@ import javax.inject.Inject;
 
 class FetchAllDocumentPermissionsHandler
         extends AbstractTaskHandler<FetchAllDocumentPermissionsAction, DocumentPermissions> {
-    private final DocumentPermissionService documentPermissionService;
+    private final DocumentPermissionServiceImpl documentPermissionService;
     private final SecurityContext securityContext;
-    private final Security security;
 
     @Inject
-    FetchAllDocumentPermissionsHandler(final DocumentPermissionService documentPermissionService,
-                                       final SecurityContext securityContext,
-                                       final Security security) {
+    FetchAllDocumentPermissionsHandler(final DocumentPermissionServiceImpl documentPermissionService,
+                                       final SecurityContext securityContext) {
         this.documentPermissionService = documentPermissionService;
         this.securityContext = securityContext;
-        this.security = security;
     }
 
     @Override
     public DocumentPermissions exec(final FetchAllDocumentPermissionsAction action) {
-        return security.insecureResult(() -> {
+        return securityContext.insecureResult(() -> {
             if (securityContext.hasDocumentPermission(action.getDocRef().getType(), action.getDocRef().getUuid(), DocumentPermissionNames.OWNER)) {
                 return documentPermissionService.getPermissionsForDocument(action.getDocRef().getUuid());
             }

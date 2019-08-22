@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.Sort;
@@ -40,17 +40,17 @@ class DBTableService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBTableService.class);
 
     private final Set<DataSource> dataSources;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     DBTableService(final Set<DataSource> dataSources,
-                   final Security security) {
+                   final SecurityContext securityContext) {
         this.dataSources = dataSources;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     List<DBTableStatus> findSystemTableStatus(final FindDBTableCriteria criteria) {
-        return security.secureResult(PermissionNames.MANAGE_DB_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_DB_PERMISSION, () -> {
             final List<DBTableStatus> rtnList = new ArrayList<>();
 
             if (dataSources != null) {

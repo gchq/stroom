@@ -18,9 +18,9 @@ package stroom.core.entity.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEvent.Handler;
-import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.EntityEventBus;
 import stroom.entity.shared.EntityEventHandler;
 import stroom.task.api.TaskManager;

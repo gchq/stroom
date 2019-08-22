@@ -18,10 +18,10 @@ package stroom.core.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
-import stroom.core.db.migration._V07_00_00.docref._V07_00_00_DocRef;
-import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_DocRefs;
 import stroom.core.db.migration._V07_00_00.doc.script._V07_00_00_ScriptDoc;
 import stroom.core.db.migration._V07_00_00.doc.script._V07_00_00_ScriptSerialiser;
+import stroom.core.db.migration._V07_00_00.docref._V07_00_00_DocRef;
+import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_DocRefs;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

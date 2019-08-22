@@ -18,13 +18,13 @@ package stroom.statistics.impl.sql;
 
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.junit.jupiter.api.Test;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
-import stroom.statistics.impl.sql.shared.StatisticField;
-import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
+import stroom.statistics.impl.sql.shared.StatisticField;
+import stroom.statistics.impl.sql.shared.StatisticRollUpType;
+import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.test.common.util.test.StroomUnitTest;
 
 import java.util.ArrayList;

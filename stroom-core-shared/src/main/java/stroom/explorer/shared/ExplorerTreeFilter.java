@@ -16,9 +16,9 @@
 
 package stroom.explorer.shared;
 
+import stroom.docref.SharedObject;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
-import stroom.docref.SharedObject;
 
 import java.util.Set;
 

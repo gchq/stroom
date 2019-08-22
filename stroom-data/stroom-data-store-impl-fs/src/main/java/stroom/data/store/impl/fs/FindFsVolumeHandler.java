@@ -3,10 +3,10 @@ package stroom.data.store.impl.fs;
 import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
-import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FindFsVolumeAction;
+import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;
@@ -16,15 +16,15 @@ import javax.inject.Inject;
 class FindFsVolumeHandler extends AbstractTaskHandler<FindFsVolumeAction, ResultList<FsVolume>> {
     private final FsVolumeService volumeService;
     private final DocumentEventLog documentEventLog;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FindFsVolumeHandler(final FsVolumeService volumeService,
                         final DocumentEventLog documentEventLog,
-                        final Security security) {
+                        final SecurityContext securityContext) {
         this.volumeService = volumeService;
         this.documentEventLog = documentEventLog;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -36,7 +36,7 @@ class FindFsVolumeHandler extends AbstractTaskHandler<FindFsVolumeAction, Result
         final And and = new And();
         advanced.getAdvancedQueryItems().add(and);
 
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             BaseResultList<FsVolume> result = null;
 
             try {

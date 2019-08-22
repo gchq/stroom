@@ -4,14 +4,13 @@
 package stroom.data.store.impl.fs.db.jooq.tables.records;
 
 
-import javax.annotation.Generated;
-
 import org.jooq.Field;
 import org.jooq.Record2;
 import org.jooq.Row2;
 import org.jooq.impl.UpdatableRecordImpl;
-
 import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
+
+import javax.annotation.Generated;
 
 
 /**

@@ -16,14 +16,14 @@
 
 package stroom.cache.impl;
 
+import stroom.cache.api.CacheManager;
 import stroom.cache.shared.CacheRow;
 import stroom.cache.shared.FetchCacheRowAction;
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.ResultList;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.cache.api.CacheManager;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 import java.util.Comparator;
@@ -33,18 +33,18 @@ import java.util.stream.Collectors;
 
 class FetchCacheRowHandler extends AbstractTaskHandler<FetchCacheRowAction, ResultList<CacheRow>> {
     private final CacheManager cacheManager;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchCacheRowHandler(final CacheManager cacheManager,
-                         final Security security) {
+                         final SecurityContext securityContext) {
         this.cacheManager = cacheManager;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ResultList<CacheRow> exec(final FetchCacheRowAction action) {
-        return security.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
             final List<CacheRow> values = cacheManager.getCaches()
                     .keySet()
                     .stream()

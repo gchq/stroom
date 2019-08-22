@@ -19,11 +19,11 @@ package stroom.pipeline;
 
 import org.junit.jupiter.api.Test;
 import stroom.test.common.StroomCoreServerTestFileUtil;
+import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Marker;
 import stroom.util.shared.Severity;
 import stroom.util.shared.Summary;
-import stroom.test.common.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -32,7 +32,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestFetchMarkerHandler extends StroomUnitTest {
+class TestFetchMarkerHandler extends StroomUnitTest {
     @Test
     void test() throws IOException {
         doTest(4, 12);

@@ -21,7 +21,6 @@ import org.apache.lucene.document.Field;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import stroom.index.mock.MockIndexShardService;
 import stroom.index.mock.MockIndexShardWriterCache;
 import stroom.index.shared.IndexDoc;

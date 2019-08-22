@@ -19,6 +19,7 @@ package stroom.receive;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.mock.MockStore;
 import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFileType;
@@ -29,7 +30,6 @@ import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
-import stroom.data.shared.StreamTypeNames;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 

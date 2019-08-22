@@ -19,18 +19,17 @@ package stroom.pipeline.factory;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import stroom.security.api.DocumentPermissionCache;
-import stroom.util.shared.Clearable;
-import stroom.util.shared.PermissionException;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.security.api.Security;
+import stroom.security.api.DocumentPermissionCache;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.util.shared.Clearable;
+import stroom.util.shared.PermissionException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -44,7 +43,6 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
 
     private final PipelineStackLoader pipelineStackLoader;
     private final LoadingCache<PipelineDoc, PipelineData> cache;
-    private final Security security;
     private final SecurityContext securityContext;
     private final DocumentPermissionCache documentPermissionCache;
 
@@ -52,11 +50,9 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
     @SuppressWarnings("unchecked")
     public PipelineDataCacheImpl(final CacheManager cacheManager,
                                  final PipelineStackLoader pipelineStackLoader,
-                                 final Security security,
                                  final SecurityContext securityContext,
                                  final DocumentPermissionCache documentPermissionCache) {
         this.pipelineStackLoader = pipelineStackLoader;
-        this.security = security;
         this.securityContext = securityContext;
         this.documentPermissionCache = documentPermissionCache;
 
@@ -78,7 +74,7 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
     }
 
     private PipelineData create(final PipelineDoc key) {
-        return security.asProcessingUserResult(() -> {
+        return securityContext.asProcessingUserResult(() -> {
             final PipelineDoc pipelineDoc = key;
             final List<PipelineDoc> pipelines = pipelineStackLoader.loadPipelineStack(pipelineDoc);
             // Iterate over the pipeline list reading the deepest ancestor first.

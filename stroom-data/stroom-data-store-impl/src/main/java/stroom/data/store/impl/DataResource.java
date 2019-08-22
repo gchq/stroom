@@ -25,15 +25,15 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.RestResource;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 
@@ -51,7 +51,7 @@ import javax.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 public class DataResource implements RestResource {
     private final DataFetcher dataFetcher;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     public DataResource(final Store streamStore,
@@ -65,7 +65,7 @@ public class DataResource implements RestResource {
                         final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                         final PipelineDataCache pipelineDataCache,
                         final StreamEventLog streamEventLog,
-                        final Security security,
+                        final SecurityContext securityContext,
                         final PipelineScopeRunnable pipelineScopeRunnable) {
         dataFetcher = new DataFetcher(streamStore,
                 feedProperties,
@@ -78,9 +78,9 @@ public class DataResource implements RestResource {
                 errorReceiverProxyProvider,
                 pipelineDataCache,
                 streamEventLog,
-                security,
+                securityContext,
                 pipelineScopeRunnable);
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @GET
@@ -103,7 +103,7 @@ public class DataResource implements RestResource {
         //TODO Used for child streams. Needs implementing.
         String childStreamTypeName = null;
 
-        return security.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
             dataFetcher.reset();
             AbstractFetchDataResult data = dataFetcher.getData(
                     streamId,

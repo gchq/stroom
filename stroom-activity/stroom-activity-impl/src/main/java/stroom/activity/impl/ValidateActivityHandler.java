@@ -17,8 +17,8 @@
 package stroom.activity.impl;
 
 import stroom.activity.api.ActivityService;
-import stroom.activity.shared.ValidateActivityAction;
 import stroom.activity.shared.ActivityValidationResult;
+import stroom.activity.shared.ValidateActivityAction;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

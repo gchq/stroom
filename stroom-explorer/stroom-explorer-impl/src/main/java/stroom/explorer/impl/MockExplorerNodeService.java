@@ -1,9 +1,9 @@
 package stroom.explorer.impl;
 
-import stroom.explorer.shared.PermissionInheritance;
+import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.docref.DocRef;
+import stroom.explorer.shared.PermissionInheritance;
 
 import java.util.Collections;
 import java.util.List;

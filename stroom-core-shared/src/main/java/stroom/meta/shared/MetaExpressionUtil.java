@@ -2,7 +2,6 @@ package stroom.meta.shared;
 
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
-import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;

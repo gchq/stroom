@@ -26,11 +26,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.docref.DocRef;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.entity.StatisticStoreCache;
+import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.concurrent.AtomicSequence;
 import stroom.util.concurrent.SimpleExecutor;
-import stroom.test.common.util.test.StroomUnitTest;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;

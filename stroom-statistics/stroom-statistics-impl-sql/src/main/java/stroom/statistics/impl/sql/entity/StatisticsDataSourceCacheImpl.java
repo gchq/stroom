@@ -22,19 +22,18 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventHandler;
-import stroom.util.shared.Clearable;
-import stroom.entity.shared.EntityAction;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionException;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -58,7 +57,6 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
 
     private final StatisticStoreStore statisticStoreStore;
     private final CacheManager cacheManager;
-    private final Security security;
     private final SecurityContext securityContext;
 
     private volatile LoadingCache<String, Optional<StatisticStoreDoc>> cacheByName;
@@ -67,11 +65,9 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
     @Inject
     StatisticsDataSourceCacheImpl(final StatisticStoreStore statisticStoreStore,
                                   final CacheManager cacheManager,
-                                  final Security security,
                                   final SecurityContext securityContext) {
         this.statisticStoreStore = statisticStoreStore;
         this.cacheManager = cacheManager;
-        this.security = security;
         this.securityContext = securityContext;
     }
 
@@ -85,7 +81,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
                         }
 
                         // Id and key not found in cache so try pulling it from the DB
-                        return security.asProcessingUserResult(() -> {
+                        return securityContext.asProcessingUserResult(() -> {
                             final List<DocRef> results = statisticStoreStore.list().stream().filter(docRef -> k.equals(docRef.getName())).collect(Collectors.toList());
                             if (results.size() > 1) {
                                 throw new RuntimeException(String.format(
@@ -109,7 +105,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
             synchronized (this) {
                 if (cacheByRef == null) {
                     final CacheLoader<DocRef, Optional<StatisticStoreDoc>> cacheLoader = CacheLoader.from(k ->
-                            security.asProcessingUserResult(() ->
+                            securityContext.asProcessingUserResult(() ->
                                     Optional.ofNullable(statisticStoreStore.readDocument(k))));
                     cacheByRef = createCache(STATISTICS_DATA_SOURCE_CACHE_NAME_BY_ID, cacheLoader);
                 }

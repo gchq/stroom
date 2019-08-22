@@ -29,9 +29,8 @@ import stroom.dashboard.shared.Sort;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.TimeZone;
-import stroom.explorer.shared.SharedDocRef;
 import stroom.docref.DocRef;
-
+import stroom.explorer.shared.SharedDocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ResultRequest.Fetch;

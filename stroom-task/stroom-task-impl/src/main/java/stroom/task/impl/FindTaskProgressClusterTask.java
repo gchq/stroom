@@ -16,11 +16,11 @@
 
 package stroom.task.impl;
 
-import stroom.security.shared.UserToken;
-import stroom.util.shared.ResultList;
 import stroom.cluster.task.api.ClusterTask;
+import stroom.security.shared.UserToken;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
+import stroom.util.shared.ResultList;
 
 public class FindTaskProgressClusterTask extends ClusterTask<ResultList<TaskProgress>> {
     private static final long serialVersionUID = -5285569438944240375L;

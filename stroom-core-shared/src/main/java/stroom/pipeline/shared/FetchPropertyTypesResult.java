@@ -16,9 +16,9 @@
 
 package stroom.pipeline.shared;
 
+import stroom.docref.SharedObject;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
-import stroom.docref.SharedObject;
 
 import java.util.Map;
 

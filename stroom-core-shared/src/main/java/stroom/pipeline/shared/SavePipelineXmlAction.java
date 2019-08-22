@@ -16,8 +16,8 @@
 
 package stroom.pipeline.shared;
 
-import stroom.task.shared.Action;
 import stroom.docref.DocRef;
+import stroom.task.shared.Action;
 import stroom.util.shared.VoidResult;
 
 public class SavePipelineXmlAction extends Action<VoidResult> {

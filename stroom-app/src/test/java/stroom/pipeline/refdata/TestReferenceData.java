@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
+import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
@@ -45,8 +46,7 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.security.api.DocumentPermissionCache;
-import stroom.security.mock.AllowAllMockSecurity;
-import stroom.data.shared.StreamTypeNames;
+import stroom.security.mock.MockSecurityContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.ByteSizeUnit;
 import stroom.util.date.DateUtil;
@@ -192,7 +192,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         getRefDataStoreHolder(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
-                        new AllowAllMockSecurity());
+                        new MockSecurityContext());
 
                 Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
 
@@ -405,7 +405,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         getRefDataStoreHolder(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
-                        new AllowAllMockSecurity());
+                        new MockSecurityContext());
 
                 Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
 
@@ -478,7 +478,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         getRefDataStoreHolder(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
-                        new AllowAllMockSecurity());
+                        new MockSecurityContext());
 
                 Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
 

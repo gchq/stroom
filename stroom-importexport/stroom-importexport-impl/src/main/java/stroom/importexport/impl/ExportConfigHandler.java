@@ -18,7 +18,7 @@ package stroom.importexport.impl;
 
 import stroom.importexport.shared.ExportConfigAction;
 import stroom.resource.api.ResourceStore;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.Message;
@@ -35,22 +35,22 @@ class ExportConfigHandler extends AbstractTaskHandler<ExportConfigAction, Resour
     private final ImportExportService importExportService;
     private final ImportExportEventLog eventLog;
     private final ResourceStore resourceStore;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     ExportConfigHandler(final ImportExportService importExportService,
                         final ImportExportEventLog eventLog,
                         final ResourceStore resourceStore,
-                        final Security security) {
+                        final SecurityContext securityContext) {
         this.importExportService = importExportService;
         this.eventLog = eventLog;
         this.resourceStore = resourceStore;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ResourceGeneration exec(final ExportConfigAction action) {
-        return security.secureResult(PermissionNames.EXPORT_CONFIGURATION, () -> {
+        return securityContext.secureResult(PermissionNames.EXPORT_CONFIGURATION, () -> {
             // Log the export.
             eventLog.export(action);
             final List<Message> messageList = new ArrayList<>();

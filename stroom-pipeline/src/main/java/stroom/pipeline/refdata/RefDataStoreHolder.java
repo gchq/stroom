@@ -17,9 +17,9 @@
 
 package stroom.pipeline.refdata;
 
-import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
+import stroom.util.pipeline.scope.PipelineScoped;
 
 import javax.inject.Inject;
 

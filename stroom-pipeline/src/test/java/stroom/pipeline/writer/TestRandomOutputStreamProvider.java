@@ -18,8 +18,8 @@ package stroom.pipeline.writer;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.io.FileUtil;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.io.FileUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;

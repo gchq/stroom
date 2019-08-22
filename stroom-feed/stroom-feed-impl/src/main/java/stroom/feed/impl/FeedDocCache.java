@@ -22,10 +22,10 @@ import com.google.common.cache.LoadingCache;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
 import stroom.docref.DocRef;
-import stroom.util.shared.Clearable;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -39,15 +39,15 @@ public class FeedDocCache implements Clearable {
 
     private final LoadingCache<String, Optional<FeedDoc>> cache;
     private final FeedStore feedStore;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     @SuppressWarnings("unchecked")
     public FeedDocCache(final CacheManager cacheManager,
                         final FeedStore feedStore,
-                        final Security security) {
+                        final SecurityContext securityContext) {
         this.feedStore = feedStore;
-        this.security = security;
+        this.securityContext = securityContext;
 
         final CacheLoader<String, Optional<FeedDoc>> cacheLoader = CacheLoader.from(this::create);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
@@ -62,7 +62,7 @@ public class FeedDocCache implements Clearable {
     }
 
     private Optional<FeedDoc> create(final String feedName) {
-        return security.asProcessingUserResult(() -> {
+        return securityContext.asProcessingUserResult(() -> {
             final List<DocRef> list = feedStore.findByName(feedName);
             if (list != null && list.size() > 0) {
                 return Optional.ofNullable(feedStore.readDocument(list.get(0)));

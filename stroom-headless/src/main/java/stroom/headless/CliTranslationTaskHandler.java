@@ -17,6 +17,7 @@
 
 package stroom.headless;
 
+import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMapUtil;
@@ -42,8 +43,7 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.security.api.Security;
-import stroom.data.shared.StreamTypeNames;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
@@ -69,7 +69,7 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
     private final RecordErrorReceiver recordErrorReceiver;
     private final PipelineDataCache pipelineDataCache;
     private final MetaHolder metaHolder;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     CliTranslationTaskHandler(final PipelineFactory pipelineFactory,
@@ -84,7 +84,7 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
                               final RecordErrorReceiver recordErrorReceiver,
                               final PipelineDataCache pipelineDataCache,
                               final MetaHolder metaHolder,
-                              final Security security) {
+                              final SecurityContext securityContext) {
         this.pipelineFactory = pipelineFactory;
         this.feedProperties = feedProperties;
         this.pipelineStore = pipelineStore;
@@ -97,12 +97,12 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
         this.recordErrorReceiver = recordErrorReceiver;
         this.pipelineDataCache = pipelineDataCache;
         this.metaHolder = metaHolder;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final CliTranslationTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             try {
                 final ErrorWriter errorWriter = new CliErrorWriter(task.getErrorWriter());
 

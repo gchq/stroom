@@ -25,7 +25,6 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import java.io.IOException;
 
 class Meta extends StroomExtensionFunctionCall {
     private final MetaDataHolder metaDataHolder;

@@ -16,30 +16,26 @@
 
 package stroom.security.impl;
 
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserTokenUtil;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.shared.FetchUserAndPermissionsAction;
-import stroom.security.shared.UserAndPermissions;
 import stroom.security.shared.User;
-import stroom.security.api.UserTokenUtil;
+import stroom.security.shared.UserAndPermissions;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 
 
 class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPermissionsAction, UserAndPermissions> {
-    private final Security security;
     private final SecurityContext securityContext;
     private final UserAndPermissionsHelper userAndPermissionsHelper;
     private final AuthenticationConfig securityConfig;
 
     @Inject
-    FetchUserAndPermissionsHandler(final Security security,
-                                   final SecurityContext securityContext,
+    FetchUserAndPermissionsHandler(final SecurityContext securityContext,
                                    final UserAndPermissionsHelper userAndPermissionsHelper,
                                    final AuthenticationConfig securityConfig) {
-        this.security = security;
         this.securityContext = securityContext;
         this.userAndPermissionsHelper = userAndPermissionsHelper;
         this.securityConfig = securityConfig;
@@ -47,7 +43,7 @@ class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPer
 
     @Override
     public UserAndPermissions exec(final FetchUserAndPermissionsAction task) {
-        return security.insecureResult(() -> {
+        return securityContext.insecureResult(() -> {
             final User userRef = CurrentUserState.currentUser();
             if (userRef == null) {
                 return null;
@@ -55,7 +51,7 @@ class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPer
 
             final boolean preventLogin = securityConfig.isPreventLogin();
             if (preventLogin) {
-                security.asUser(UserTokenUtil.create(userRef.getName()), () -> {
+                securityContext.asUser(UserTokenUtil.create(userRef.getName()), () -> {
                     if (!securityContext.isAdmin()) {
                         throw new AuthenticationException("Stroom is down for maintenance. Please try again later.");
                     }

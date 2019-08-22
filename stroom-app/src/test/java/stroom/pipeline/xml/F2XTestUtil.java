@@ -20,8 +20,6 @@ package stroom.pipeline.xml;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineTestUtil;
-import stroom.pipeline.textconverter.TextConverterStore;
-import stroom.pipeline.xslt.XsltStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
@@ -36,7 +34,9 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
+import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.writer.TestAppender;
+import stroom.pipeline.xslt.XsltStore;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 

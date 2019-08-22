@@ -22,11 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class TestVolumeServiceImpl {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TestVolumeServiceImpl.class);
 
     @Test
-    public void run() {
+    void run() {
         LOGGER.warn("All these tests need remaking");
     }
 
@@ -67,7 +66,7 @@ class TestVolumeServiceImpl {
 //            FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2B")),
 //            VolumeType.PUBLIC,
 //            VolumeState.create(0, 1000));
-//    private final Security security = new AllowAllMockSecurity();
+//    private final SecurityContext securityContext = new MockSecurityContext();
 //    private VolumeConfig volumeConfig = new VolumeConfig();
 //    private MockVolumeService volumeServiceImpl = null;
 //    @Mock
@@ -209,7 +208,7 @@ class TestVolumeServiceImpl {
 //        private List<VolumeEntity> savedVolumes = new ArrayList<>();
 //
 //        MockVolumeService(final StroomEntityManager stroomEntityManager,
-//                          final Security security,
+//                          final SecurityContext securityContext,
 //                          final EntityManagerSupport entityManagerSupport,
 //                          final NodeInfo nodeInfo,
 //                          final VolumeConfig volumeConfig,

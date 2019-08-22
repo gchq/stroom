@@ -17,8 +17,8 @@
 
 package stroom.statistics.impl.hbase.entity;
 
-import stroom.docstore.api.DocumentStore;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentStore;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 
 import java.util.List;

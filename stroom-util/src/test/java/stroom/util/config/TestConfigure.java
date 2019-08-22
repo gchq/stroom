@@ -18,9 +18,6 @@ package stroom.util.config;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.config.Configure;
-import stroom.util.config.Parameter;
-import stroom.util.config.ParameterFile;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;

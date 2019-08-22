@@ -18,13 +18,13 @@ package stroom.config.global.client.presenter;
 
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import stroom.config.global.api.ConfigProperty;
-import stroom.config.global.api.ListGlobalConfigAction;
 import stroom.config.global.api.FindGlobalConfigCriteria;
+import stroom.config.global.api.ListGlobalConfigAction;
+import stroom.data.client.presenter.ActionDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.util.shared.ResultList;
-import stroom.data.client.presenter.ActionDataProvider;
 
 public class FetchGlobalConfigActionDataProvider implements Refreshable, ColumnSortEvent.Handler {
     private final ClientDispatchAsync dispatcher;

@@ -18,13 +18,11 @@ package stroom.index.impl;
 
 
 import org.junit.jupiter.api.Test;
-
-import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.index.shared.IndexShardKey;
-import stroom.util.date.DateUtil;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.date.DateUtil;
 
 import java.util.UUID;
 

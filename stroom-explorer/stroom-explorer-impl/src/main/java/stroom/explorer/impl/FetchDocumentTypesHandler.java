@@ -20,7 +20,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.FetchDocumentTypesAction;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
@@ -29,18 +29,18 @@ import java.util.List;
 
 class FetchDocumentTypesHandler extends AbstractTaskHandler<FetchDocumentTypesAction, DocumentTypes> {
     private final ExplorerService explorerService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchDocumentTypesHandler(final ExplorerService explorerService,
-                              final Security security) {
+                              final SecurityContext securityContext) {
         this.explorerService = explorerService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public DocumentTypes exec(final FetchDocumentTypesAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             final List<DocumentType> nonSystemTypes = explorerService.getNonSystemTypes();
             final List<DocumentType> visibleTypes = explorerService.getVisibleTypes();
             return new DocumentTypes(nonSystemTypes, visibleTypes);

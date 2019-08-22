@@ -17,13 +17,13 @@
 package stroom.data.store.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.data.shared.DownloadDataAction;
+import stroom.data.shared.UploadDataAction;
 import stroom.meta.shared.FetchFullMetaInfoAction;
 import stroom.meta.shared.FindMetaRowAction;
+import stroom.meta.shared.UpdateStatusAction;
 import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
-import stroom.data.shared.DownloadDataAction;
-import stroom.meta.shared.UpdateStatusAction;
-import stroom.data.shared.UploadDataAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.RestResource;
 import stroom.util.guice.GuiceUtil;

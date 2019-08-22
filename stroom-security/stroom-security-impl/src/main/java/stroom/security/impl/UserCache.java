@@ -19,11 +19,11 @@ package stroom.security.impl;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import stroom.util.shared.Clearable;
-import stroom.security.api.Security;
-import stroom.security.shared.User;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.User;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -40,9 +40,9 @@ class UserCache implements Clearable {
     @SuppressWarnings("unchecked")
     UserCache(final CacheManager cacheManager,
               final UserService userService,
-              final Security security) {
+              final SecurityContext securityContext) {
         final CacheLoader<String, Optional<User>> cacheLoader = CacheLoader.from(
-                name -> security.asProcessingUserResult(
+                name -> securityContext.asProcessingUserResult(
                         () -> Optional.ofNullable(userService.getUserByName(name))));
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)

@@ -17,5 +17,7 @@
 package stroom.index;
 
 public interface VolumeCreator {
+    String DEFAULT_VOLUME_GROUP = "Default Volume Group";
+
     void setup();
 }

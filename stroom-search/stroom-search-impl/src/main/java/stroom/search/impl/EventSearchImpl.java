@@ -1,9 +1,9 @@
 package stroom.search.impl;
 
+import stroom.query.api.v2.Query;
 import stroom.search.api.EventRef;
 import stroom.search.api.EventRefs;
 import stroom.search.api.EventSearch;
-import stroom.query.api.v2.Query;
 import stroom.security.api.UserTokenUtil;
 import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;

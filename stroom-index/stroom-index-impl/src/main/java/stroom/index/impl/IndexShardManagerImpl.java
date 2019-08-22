@@ -22,7 +22,7 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.api.NodeInfo;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskManager;
@@ -64,7 +64,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
     private final Provider<IndexShardWriterCache> indexShardWriterCacheProvider;
     private final NodeInfo nodeInfo;
     private final TaskManager taskManager;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     private final StripedLock shardUpdateLocks = new StripedLock();
     private final AtomicBoolean deletingShards = new AtomicBoolean();
@@ -77,13 +77,13 @@ public class IndexShardManagerImpl implements IndexShardManager {
                           final Provider<IndexShardWriterCache> indexShardWriterCacheProvider,
                           final NodeInfo nodeInfo,
                           final TaskManager taskManager,
-                          final Security security) {
+                          final SecurityContext securityContext) {
         this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.indexShardWriterCacheProvider = indexShardWriterCacheProvider;
         this.nodeInfo = nodeInfo;
         this.taskManager = taskManager;
-        this.security = security;
+        this.securityContext = securityContext;
 
         // Ensure all but deleted and corrupt states can be set to closed on clean.
         allowedStateTransitions.put(IndexShardStatus.NEW, Set.of(IndexShardStatus.OPENING, IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
@@ -100,7 +100,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
      */
     @Override
     public void deleteFromDisk() {
-        security.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+        securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             if (deletingShards.compareAndSet(false, true)) {
                 try {
                     final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
@@ -176,7 +176,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
      */
     @Override
     public Long findFlush(final FindIndexShardCriteria criteria) {
-        return security.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> performAction(criteria, IndexShardAction.FLUSH));
+        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> performAction(criteria, IndexShardAction.FLUSH));
     }
 
 //    /**
@@ -195,7 +195,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
      */
     @Override
     public Long findDelete(final FindIndexShardCriteria criteria) {
-        return security.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> performAction(criteria, IndexShardAction.DELETE));
+        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> performAction(criteria, IndexShardAction.DELETE));
     }
 
     private Long performAction(final FindIndexShardCriteria criteria, final IndexShardAction action) {
@@ -251,7 +251,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
 
     @Override
     public void checkRetention() {
-        security.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+        securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
             criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
             final List<IndexShard> shards = indexShardService.find(criteria);
@@ -289,7 +289,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
 
     @Override
     public IndexShard load(final long indexShardId) {
-        return security.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             // Allow the thing to run without a service (e.g. benchmark mode)
             if (indexShardService != null) {
                 final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);

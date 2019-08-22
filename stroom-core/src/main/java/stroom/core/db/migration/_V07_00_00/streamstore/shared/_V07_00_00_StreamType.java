@@ -16,10 +16,10 @@
 
 package stroom.core.db.migration._V07_00_00.streamstore.shared;
 
+import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_HasPrimitiveValue;
 import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_NamedEntity;
 import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_PrimitiveValueConverter;
 import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_SQLNameConstants;
-import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_HasPrimitiveValue;
 
 /** Used for legacy migration **/
 public class _V07_00_00_StreamType extends _V07_00_00_NamedEntity implements _V07_00_00_HasPrimitiveValue {

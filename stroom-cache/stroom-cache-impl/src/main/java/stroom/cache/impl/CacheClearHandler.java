@@ -18,11 +18,11 @@ package stroom.cache.impl;
 
 import stroom.cache.shared.CacheClearAction;
 import stroom.cache.shared.FindCacheInfoCriteria;
-import stroom.security.api.Security;
-import stroom.security.shared.PermissionNames;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.TargetType;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.PermissionNames;
+import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -30,18 +30,18 @@ import javax.inject.Inject;
 
 class CacheClearHandler extends AbstractTaskHandler<CacheClearAction, VoidResult> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     CacheClearHandler(final ClusterDispatchAsyncHelper dispatchHelper,
-                      final Security security) {
+                      final SecurityContext securityContext) {
         this.dispatchHelper = dispatchHelper;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final CacheClearAction action) {
-        return security.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.getName().setString(action.getCacheName());
 

@@ -1,6 +1,6 @@
 package stroom.task.impl;
 
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskContext;
@@ -11,18 +11,18 @@ import javax.inject.Inject;
 
 class GenericServerTaskHandler extends AbstractTaskHandler<GenericServerTask, VoidResult> {
     private final TaskContext taskContext;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     GenericServerTaskHandler(final TaskContext taskContext,
-                             final Security security) {
+                             final SecurityContext securityContext) {
         this.taskContext = taskContext;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final GenericServerTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             taskContext.info(task.getMessage());
             task.getRunnable().run();
             return VoidResult.INSTANCE;

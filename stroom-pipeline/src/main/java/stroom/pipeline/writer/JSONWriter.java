@@ -21,7 +21,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.io.SerializedString;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import stroom.util.io.IgnoreCloseWriter;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -31,6 +30,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.xml.converter.json.JSONParser;
+import stroom.util.io.IgnoreCloseWriter;
 
 import javax.inject.Inject;
 import java.io.IOException;

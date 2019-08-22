@@ -16,7 +16,7 @@
 
 package stroom.security.impl;
 
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.PermissionNames;
@@ -33,7 +33,7 @@ class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult
     private final AuthorisationEventLog authorisationEventLog;
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     ChangeUserHandler(final UserService userService,
@@ -41,18 +41,18 @@ class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult
                       final AuthorisationEventLog authorisationEventLog,
                       final UserGroupsCache userGroupsCache,
                       final UserAppPermissionsCache userAppPermissionsCache,
-                      final Security security) {
+                      final SecurityContext securityContext) {
         this.userService = userService;
         this.userAppPermissionService = userAppPermissionService;
         this.authorisationEventLog = authorisationEventLog;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final ChangeUserAction action) {
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             final User userRef = action.getUser();
             if (userRef != null) {
 

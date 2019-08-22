@@ -2,8 +2,8 @@ package stroom.cluster.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.util.shared.IsConfig;
 import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.shared.IsConfig;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Singleton;

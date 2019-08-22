@@ -20,7 +20,7 @@ package stroom.core.servlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.api.NodeInfo;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.BuildInfo;
 
 import javax.inject.Inject;
@@ -56,15 +56,15 @@ public class StatusServlet extends HttpServlet {
 
     private final Provider<BuildInfo> buildInfoProvider;
     private final NodeInfo nodeInfo;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     StatusServlet(final Provider<BuildInfo> buildInfoProvider,
                   final NodeInfo nodeInfo,
-                  final Security security) {
+                  final SecurityContext securityContext) {
         this.buildInfoProvider = buildInfoProvider;
         this.nodeInfo = nodeInfo;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -89,7 +89,7 @@ public class StatusServlet extends HttpServlet {
      */
     @Override
     public void service(final ServletRequest arg0, final ServletResponse arg1) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 super.service(arg0, arg1);
             } catch (ServletException e) {
@@ -102,7 +102,7 @@ public class StatusServlet extends HttpServlet {
 
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) {
-        security.asProcessingUser(() -> {
+        securityContext.asProcessingUser(() -> {
             try {
                 response.setContentType("text/plain");
 

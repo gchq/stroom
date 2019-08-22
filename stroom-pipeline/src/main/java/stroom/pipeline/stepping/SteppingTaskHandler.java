@@ -51,7 +51,7 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
@@ -86,7 +86,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private final SteppingResponseCache steppingResponseCache;
     private final PipelineDataCache pipelineDataCache;
     private final PipelineContext pipelineContext;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     private List<Long> allStreamIdList;
     private List<Long> filteredStreamIdList;
@@ -117,7 +117,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         final SteppingResponseCache steppingResponseCache,
                         final PipelineDataCache pipelineDataCache,
                         final PipelineContext pipelineContext,
-                        final Security security) {
+                        final SecurityContext securityContext) {
         this.streamStore = streamStore;
         this.metaService = metaService;
         this.feedProperties = feedProperties;
@@ -135,14 +135,14 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         this.steppingResponseCache = steppingResponseCache;
         this.pipelineDataCache = pipelineDataCache;
         this.pipelineContext = pipelineContext;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public SteppingResult exec(final SteppingTask request) {
-        return security.secureResult(PermissionNames.STEPPING_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.STEPPING_PERMISSION, () -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
-            return security.useAsReadResult(() -> {
+            return securityContext.useAsReadResult(() -> {
                 // Set the current user so they are visible during translation.
                 currentUserHolder.setCurrentUser(request.getUserToken().getUserId());
 

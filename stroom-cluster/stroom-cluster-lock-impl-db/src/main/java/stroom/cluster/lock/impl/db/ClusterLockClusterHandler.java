@@ -18,7 +18,7 @@ package stroom.cluster.lock.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedBoolean;
@@ -33,16 +33,16 @@ public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockCl
     private static final long TEN_MINUTES = 10 * 60 * 1000;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockClusterHandler.class);
     private final ConcurrentHashMap<String, Lock> lockMap = new ConcurrentHashMap<>();
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
-    ClusterLockClusterHandler(final Security security) {
-        this.security = security;
+    ClusterLockClusterHandler(final SecurityContext securityContext) {
+        this.securityContext = securityContext;
     }
 
     @Override
     public SharedBoolean exec(final ClusterLockClusterTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             boolean success = false;
 
             final ClusterLockKey clusterLockKey = task.getKey();

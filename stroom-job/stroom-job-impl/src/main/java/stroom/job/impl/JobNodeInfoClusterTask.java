@@ -16,9 +16,9 @@
 
 package stroom.job.impl;
 
+import stroom.cluster.task.api.ClusterTask;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
-import stroom.cluster.task.api.ClusterTask;
 import stroom.security.shared.UserToken;
 import stroom.util.shared.SharedMap;
 

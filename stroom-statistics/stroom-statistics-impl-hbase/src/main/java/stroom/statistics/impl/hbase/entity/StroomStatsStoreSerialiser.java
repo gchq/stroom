@@ -5,9 +5,9 @@ import org.slf4j.LoggerFactory;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
-import stroom.util.xml.XMLMarshallerUtil;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
+import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;

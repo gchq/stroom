@@ -23,8 +23,8 @@ import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
-import stroom.util.io.BufferFactory;
 import stroom.receive.common.StroomStreamHandler;
+import stroom.util.io.BufferFactory;
 import stroom.util.io.CloseableUtil;
 import stroom.util.shared.ModelStringUtil;
 

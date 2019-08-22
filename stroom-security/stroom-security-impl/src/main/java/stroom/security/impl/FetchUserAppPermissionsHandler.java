@@ -16,7 +16,7 @@
 
 package stroom.security.impl;
 
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.FetchUserAppPermissionsAction;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
@@ -28,17 +28,17 @@ import javax.inject.Inject;
 class FetchUserAppPermissionsHandler
         extends AbstractTaskHandler<FetchUserAppPermissionsAction, UserAppPermissions> {
     private final UserAppPermissionsCache userAppPermissionsCache;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchUserAppPermissionsHandler(final UserAppPermissionsCache userAppPermissionsCache,
-                                   final Security security) {
+                                   final SecurityContext securityContext) {
         this.userAppPermissionsCache = userAppPermissionsCache;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public UserAppPermissions exec(final FetchUserAppPermissionsAction action) {
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> userAppPermissionsCache.get(action.getUser()));
+        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> userAppPermissionsCache.get(action.getUser()));
     }
 }

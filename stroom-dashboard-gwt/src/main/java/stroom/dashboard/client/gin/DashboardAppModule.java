@@ -30,24 +30,24 @@ import stroom.core.client.presenter.CorePresenter.CoreProxy;
 import stroom.core.client.presenter.CorePresenter.CoreView;
 import stroom.core.client.view.CoreViewImpl;
 import stroom.dashboard.client.main.DashboardMainPresenter;
-import stroom.dashboard.client.main.DashboardMainViewImpl;
 import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainProxy;
 import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainView;
+import stroom.dashboard.client.main.DashboardMainViewImpl;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.client.view.EntityTreeViewImpl;
-import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
-import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
-import stroom.widget.dropdowntree.client.view.DropDownTreeViewImpl;
-import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.iframe.client.view.IFrameViewImpl;
+import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
+import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
+import stroom.widget.dropdowntree.client.view.DropDownTreeViewImpl;
+import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 
 public class DashboardAppModule extends AbstractPresenterModule {
     @Override

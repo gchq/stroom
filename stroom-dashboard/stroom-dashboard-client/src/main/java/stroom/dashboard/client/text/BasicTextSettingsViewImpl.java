@@ -29,8 +29,8 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettingsView;
-import stroom.item.client.ItemListBox;
 import stroom.docref.HasDisplayValue;
+import stroom.item.client.ItemListBox;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import java.util.List;

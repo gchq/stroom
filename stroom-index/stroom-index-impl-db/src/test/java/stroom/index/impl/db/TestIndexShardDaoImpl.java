@@ -10,7 +10,6 @@ import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexException;
-import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
@@ -18,7 +17,6 @@ import stroom.util.AuditUtil;
 
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestIndexShardDaoImpl {

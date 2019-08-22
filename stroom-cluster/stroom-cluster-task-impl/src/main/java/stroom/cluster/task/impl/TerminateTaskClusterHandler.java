@@ -18,13 +18,13 @@ package stroom.cluster.task.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.BaseResultList;
-import stroom.security.api.Security;
-import stroom.task.api.TaskManager;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.cluster.task.api.TerminateTaskClusterTask;
+import stroom.security.api.SecurityContext;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TaskProgress;
+import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
 
@@ -33,18 +33,18 @@ class TerminateTaskClusterHandler extends AbstractTaskHandler<TerminateTaskClust
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminateTaskClusterHandler.class);
 
     private final TaskManager taskManager;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     TerminateTaskClusterHandler(final TaskManager taskManager,
-                                final Security security) {
+                                final SecurityContext securityContext) {
         this.taskManager = taskManager;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public BaseResultList<TaskProgress> exec(final TerminateTaskClusterTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             BaseResultList<TaskProgress> taskedKilled = null;
 
             final FindTaskCriteria criteria = task.getCriteria();

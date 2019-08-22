@@ -16,9 +16,9 @@
 
 package stroom.config.global.api;
 
+import stroom.task.shared.Action;
 import stroom.util.shared.HasCriteria;
 import stroom.util.shared.ResultList;
-import stroom.task.shared.Action;
 
 public class ListGlobalConfigAction extends Action<ResultList<ConfigProperty>> implements HasCriteria {
     private static final long serialVersionUID = 6083235358421128201L;

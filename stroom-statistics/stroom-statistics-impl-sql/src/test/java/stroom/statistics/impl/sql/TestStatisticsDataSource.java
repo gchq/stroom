@@ -18,11 +18,11 @@ package stroom.statistics.impl.sql;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
+import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 
 import java.util.ArrayList;
 import java.util.Arrays;

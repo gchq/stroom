@@ -23,7 +23,6 @@ import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
@@ -40,17 +39,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
     private final ProcessorService processorService;
     private final ProcessorFilterDao processorFilterDao;
-    private final Security security;
     private final SecurityContext securityContext;
 
     @Inject
     ProcessorFilterServiceImpl(final ProcessorService processorService,
                                final ProcessorFilterDao processorFilterDao,
-                               final Security security,
                                final SecurityContext securityContext) {
         this.processorService = processorService;
         this.processorFilterDao = processorFilterDao;
-        this.security = security;
         this.securityContext = securityContext;
     }
 
@@ -86,13 +82,13 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         }
 
         AuditUtil.stamp(securityContext.getUserId(), processorFilter);
-        return security.secureResult(PERMISSION, () ->
+        return securityContext.secureResult(PERMISSION, () ->
                 processorFilterDao.create(processorFilter));
     }
 
     @Override
     public Optional<ProcessorFilter> fetch(final int id) {
-        return security.secureResult(PERMISSION, () ->
+        return securityContext.secureResult(PERMISSION, () ->
                 processorFilterDao.fetch(id));
     }
 
@@ -103,13 +99,13 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         }
 
         AuditUtil.stamp(securityContext.getUserId(), processorFilter);
-        return security.secureResult(PERMISSION, () ->
+        return securityContext.secureResult(PERMISSION, () ->
                 processorFilterDao.update(processorFilter));
     }
 
     @Override
     public boolean delete(final int id) {
-        return security.secureResult(PERMISSION, () ->
+        return securityContext.secureResult(PERMISSION, () ->
                 processorFilterDao.delete(id));
     }
 
@@ -122,14 +118,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 //    @Override
 //    public ProcessorFilter create(final ProcessorFilter processorFilter) {
 //        AuditUtil.stamp(securityContext.getUserId(), processorFilter);
-//        return security.secureResult(permission(), () ->
+//        return securityContext.secureResult(permission(), () ->
 //                processorFilterDao.create(processorFilter));
 //    }
 
 //    @Override
 //    public ProcessorFilter update(final ProcessorFilter processorFilter) {
 //        AuditUtil.stamp(securityContext.getUserId(), processorFilter);
-//        return security.secureResult(permission(), () ->
+//        return securityContext.secureResult(permission(), () ->
 //                processorFilterDao.update(processorFilter));
 //    }
 
@@ -141,7 +137,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 //     */
 //    @Override
 //    public boolean delete(final int id) {
-//        return security.secureResult(permission(), () ->
+//        return securityContext.secureResult(permission(), () ->
 //                processorFilterDao.delete(id));
 //    }
 
@@ -153,7 +149,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 //     */
 //    @Override
 //    public Optional<ProcessorFilter> fetch(final int id) {
-//        return security.secureResult(permission(), () ->
+//        return securityContext.secureResult(permission(), () ->
 //                processorFilterDao.fetch(id));
 //    }
 
@@ -164,7 +160,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
     @Override
     public BaseResultList<ProcessorFilter> find(final ExpressionCriteria criteria) {
-        return security.secureResult(PERMISSION, () ->
+        return securityContext.secureResult(PERMISSION, () ->
                 processorFilterDao.find(criteria));
     }
 
@@ -174,7 +170,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 //                                        final boolean enabled,
 //                                        final int priority) {
 //
-////        security.secure(permission(), () -> entityManagerSupport.transaction(entityManager -> {
+////        securityContext.secure(permission(), () -> entityManagerSupport.transaction(entityManager -> {
 ////            ProcessorFilter filter = new ProcessorFilter();
 ////            // Blank tracker
 ////            filter.setProcessorFilterTracker(new ProcessorFilterTracker());
@@ -188,7 +184,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 ////            getEntityManager().flush();
 ////            save(filter);
 ////        }));
-//        return security.secureResult(permission(), () ->
+//        return securityContext.secureResult(permission(), () ->
 //                processorFilterDao.createFilter(streamProcessor, queryData, enabled, priority));
 //    }
 //
@@ -249,7 +245,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
 //    @Override
 //    public Boolean delete(final ProcessorFilter entity) {
-//        return security.secureResult(permission(), () -> {
+//        return securityContext.secureResult(permission(), () -> {
 //            if (Boolean.TRUE.equals(super.delete(entity))) {
 //                return getEntityManager().deleteEntity(entity.getProcessorFilterTracker());
 //            }

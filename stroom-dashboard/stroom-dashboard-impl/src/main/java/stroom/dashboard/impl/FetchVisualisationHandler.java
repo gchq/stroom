@@ -17,10 +17,10 @@
 
 package stroom.dashboard.impl;
 
-import stroom.dashboard.shared.FetchVisualisationAction;
-import stroom.security.api.Security;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
+import stroom.dashboard.shared.FetchVisualisationAction;
+import stroom.security.api.SecurityContext;
+import stroom.task.api.AbstractTaskHandler;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.inject.Inject;
@@ -28,20 +28,20 @@ import javax.inject.Inject;
 
 class FetchVisualisationHandler extends AbstractTaskHandler<FetchVisualisationAction, VisualisationDoc> {
     private final VisualisationStore visualisationStore;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchVisualisationHandler(final VisualisationStore visualisationStore,
-                              final Security security) {
+                              final SecurityContext securityContext) {
         this.visualisationStore = visualisationStore;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VisualisationDoc exec(final FetchVisualisationAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             // Elevate the users permissions for the duration of this task so they can read the visualisation if they have 'use' permission.
-            return security.useAsReadResult(() -> visualisationStore.readDocument(action.getVisualisation()));
+            return securityContext.useAsReadResult(() -> visualisationStore.readDocument(action.getVisualisation()));
         });
     }
 }

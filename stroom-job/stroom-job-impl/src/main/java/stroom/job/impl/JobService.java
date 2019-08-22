@@ -23,7 +23,6 @@ import stroom.job.api.ScheduledJob;
 import stroom.job.api.TaskConsumer;
 import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.Job;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
@@ -43,7 +42,6 @@ import java.util.Set;
 @Singleton
 class JobService {
     private final JobDao jobDao;
-    private final Security security;
     private final SecurityContext securityContext;
 
     private final Map<String, String> jobDescriptionMap = new HashMap<>();
@@ -51,12 +49,10 @@ class JobService {
 
     @Inject
     JobService(final JobDao jobDao,
-               final Security security,
                final SecurityContext securityContext,
                final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
                final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
         this.jobDao = jobDao;
-        this.security = security;
         this.securityContext = securityContext;
 
         scheduledJobsMap.keySet().forEach(scheduledJob -> {
@@ -74,7 +70,7 @@ class JobService {
     }
 
     Job update(final Job job) {
-        return security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
             final Optional<Job> before = fetch(job.getId());
 
                 // We always want to update a job instance even if we have a stale version.
@@ -87,7 +83,7 @@ class JobService {
     }
 
     BaseResultList<Job> find(final FindJobCriteria findJobCriteria) {
-        final BaseResultList<Job> results = security.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobDao.find(findJobCriteria));
+        final BaseResultList<Job> results = securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobDao.find(findJobCriteria));
         results.forEach(this::decorate);
 
         if (findJobCriteria.getSortList().size() > 0) {

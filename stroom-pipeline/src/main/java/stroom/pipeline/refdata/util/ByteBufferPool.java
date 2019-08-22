@@ -20,8 +20,8 @@ package stroom.pipeline.refdata.util;
 import com.codahale.metrics.health.HealthCheck;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.Clearable;
 import stroom.util.HasHealthCheck;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;

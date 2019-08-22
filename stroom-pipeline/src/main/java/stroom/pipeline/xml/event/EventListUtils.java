@@ -26,9 +26,9 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.xml.event.simple.StartElement;
 import stroom.util.CharBuffer;
 import stroom.util.xml.XMLUtil;
-import stroom.pipeline.xml.event.simple.StartElement;
 
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;

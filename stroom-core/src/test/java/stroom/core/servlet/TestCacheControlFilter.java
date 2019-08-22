@@ -2,7 +2,6 @@ package stroom.core.servlet;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.core.servlet.CacheControlFilter;
 
 class TestCacheControlFilter {
     @Test

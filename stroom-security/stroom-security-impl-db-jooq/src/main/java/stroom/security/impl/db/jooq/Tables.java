@@ -4,12 +4,12 @@
 package stroom.security.impl.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import stroom.security.impl.db.jooq.tables.AppPermission;
 import stroom.security.impl.db.jooq.tables.DocPermission;
 import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.StroomUserGroup;
+
+import javax.annotation.Generated;
 
 
 /**

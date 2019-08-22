@@ -17,9 +17,9 @@
 package stroom.data.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
-import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ClassificationWrapperPresenter;
 import stroom.data.client.presenter.MetaListPresenter;
+import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskListPresenter;
 
 public interface StreamStoreGinjector {

@@ -10,7 +10,6 @@ import com.google.inject.Scopes;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
-import java.util.Queue;
 
 import static com.google.common.base.Preconditions.checkState;
 

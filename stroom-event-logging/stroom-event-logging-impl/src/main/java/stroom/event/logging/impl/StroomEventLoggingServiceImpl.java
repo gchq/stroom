@@ -54,17 +54,17 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     private volatile boolean obtainedDevice;
     private volatile Device storedDevice;
 
-    private final SecurityContext security;
+    private final SecurityContext securityContext;
     private final Provider<HttpServletRequest> httpServletRequestProvider;
     private final CurrentActivity currentActivity;
     private final Provider<BuildInfo> buildInfoProvider;
 
     @Inject
-    StroomEventLoggingServiceImpl(final SecurityContext security,
+    StroomEventLoggingServiceImpl(final SecurityContext securityContext,
                                   final Provider<HttpServletRequest> httpServletRequestProvider,
                                   final CurrentActivity currentActivity,
                                   final Provider<BuildInfo> buildInfoProvider) {
-        this.security = security;
+        this.securityContext = securityContext;
         this.httpServletRequestProvider = httpServletRequestProvider;
         this.currentActivity = currentActivity;
         this.buildInfoProvider = buildInfoProvider;
@@ -167,7 +167,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     private User getUser() {
         try {
-            final String userId = security.getUserId();
+            final String userId = securityContext.getUserId();
             if (userId != null) {
                 final User user = new User();
                 user.setId(userId);

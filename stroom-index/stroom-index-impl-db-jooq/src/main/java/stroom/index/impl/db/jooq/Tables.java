@@ -4,11 +4,11 @@
 package stroom.index.impl.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import stroom.index.impl.db.jooq.tables.IndexShard;
 import stroom.index.impl.db.jooq.tables.IndexVolume;
 import stroom.index.impl.db.jooq.tables.IndexVolumeGroup;
+
+import javax.annotation.Generated;
 
 
 /**

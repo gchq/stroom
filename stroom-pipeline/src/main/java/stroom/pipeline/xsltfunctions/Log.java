@@ -22,8 +22,6 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import stroom.util.shared.Severity;
 
-import java.io.IOException;
-
 class Log extends StroomExtensionFunctionCall {
     @Override
     protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) {

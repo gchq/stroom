@@ -16,10 +16,10 @@
 
 package stroom.pipeline.destination;
 
-import stroom.meta.shared.MetaFields;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
+import stroom.meta.shared.MetaFields;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.scheduler.SimpleCron;
 

@@ -19,8 +19,6 @@ package stroom.util.scheduler;
 
 import org.junit.jupiter.api.Test;
 import stroom.util.date.DateUtil;
-import stroom.util.scheduler.SimpleCron;
-import stroom.util.scheduler.SimpleCronScheduler;
 
 import java.text.ParseException;
 

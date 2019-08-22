@@ -16,8 +16,8 @@
 
 package stroom.config.common;
 
-import stroom.util.shared.IsConfig;
 import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.shared.IsConfig;
 
 import java.util.Objects;
 

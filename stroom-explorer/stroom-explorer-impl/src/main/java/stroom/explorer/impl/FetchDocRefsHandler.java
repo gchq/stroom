@@ -23,7 +23,6 @@ import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchDocRefsAction;
 import stroom.explorer.shared.SharedDocRef;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.task.api.AbstractTaskHandler;
@@ -37,20 +36,17 @@ class FetchDocRefsHandler
     private final Logger LOGGER = LoggerFactory.getLogger(FetchDocRefsHandler.class);
     private final ExplorerNodeService explorerNodeService;
     private final SecurityContext securityContext;
-    private final Security security;
 
     @Inject
     FetchDocRefsHandler(final ExplorerNodeService explorerNodeService,
-                        final SecurityContext securityContext,
-                        final Security security) {
+                        final SecurityContext securityContext) {
         this.explorerNodeService = explorerNodeService;
         this.securityContext = securityContext;
-        this.security = security;
     }
 
     @Override
     public SharedSet<SharedDocRef> exec(final FetchDocRefsAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             final SharedSet<SharedDocRef> result = new SharedSet<>();
             if (action.getDocRefs() != null) {
                 for (final DocRef docRef : action.getDocRefs()) {

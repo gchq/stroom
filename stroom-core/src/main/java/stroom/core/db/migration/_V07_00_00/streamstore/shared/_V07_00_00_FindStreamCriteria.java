@@ -16,11 +16,11 @@
 
 package stroom.core.db.migration._V07_00_00.streamstore.shared;
 
-import stroom.util.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityIdSet;
-import stroom.util.shared.IdRange;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.IdRange;
 import stroom.util.shared.Period;
 
 import javax.xml.bind.annotation.XmlRootElement;

@@ -6,8 +6,8 @@ import stroom.processor.shared.TaskStatus;
 
 import java.util.function.Function;
 
-import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 import static stroom.processor.impl.db.jooq.tables.ProcessorNode.PROCESSOR_NODE;
+import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class RecordToProcessorTaskMapper implements Function<Record, ProcessorTask> {
     @Override

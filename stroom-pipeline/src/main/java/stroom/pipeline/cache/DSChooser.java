@@ -18,10 +18,10 @@ package stroom.pipeline.cache;
 
 import org.xml.sax.ErrorHandler;
 import stroom.pipeline.errorhandler.ProcessException;
-import stroom.util.io.StreamUtil;
 import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.pipeline.xml.converter.ds3.DS3ParserFactory;
 import stroom.pipeline.xml.converter.xmlfragment.XMLFragmentParserFactory;
+import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

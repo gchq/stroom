@@ -18,14 +18,14 @@ package stroom.core.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.BaseResultList;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.security.api.UserTokenUtil;
-import stroom.task.api.TaskManager;
 import stroom.task.api.TaskIdFactory;
+import stroom.task.api.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TerminateTaskProgressAction;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

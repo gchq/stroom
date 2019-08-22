@@ -18,14 +18,14 @@ package stroom.search.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.search.api.EventRefs;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Sizes;
-import stroom.security.api.Security;
+import stroom.search.api.EventRefs;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LogUtil;
@@ -44,24 +44,24 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
     private final SearchConfig searchConfig;
     private final UiConfig clientConfig;
     private final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     EventSearchTaskHandler(final NodeInfo nodeInfo,
                            final SearchConfig searchConfig,
                            final UiConfig clientConfig,
                            final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory,
-                           final Security security) {
+                           final SecurityContext securityContext) {
         this.nodeInfo = nodeInfo;
         this.searchConfig = searchConfig;
         this.clientConfig = clientConfig;
         this.clusterSearchResultCollectorFactory = clusterSearchResultCollectorFactory;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public EventRefs exec(final EventSearchTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             EventRefs eventRefs;
 
             // Get the current time in millis since epoch.

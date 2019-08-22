@@ -18,7 +18,7 @@ package stroom.pipeline;
 
 import stroom.pipeline.shared.FetchPipelineXmlAction;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.SharedString;
 
@@ -28,20 +28,20 @@ import javax.inject.Inject;
 class FetchPipelineXmlHandler extends AbstractTaskHandler<FetchPipelineXmlAction, SharedString> {
     private final PipelineStore pipelineStore;
     private final PipelineSerialiser pipelineSerialiser;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchPipelineXmlHandler(final PipelineStore pipelineStore,
                             final PipelineSerialiser pipelineSerialiser,
-                            final Security security) {
+                            final SecurityContext securityContext) {
         this.pipelineStore = pipelineStore;
         this.pipelineSerialiser = pipelineSerialiser;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public SharedString exec(final FetchPipelineXmlAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             SharedString result = null;
 
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(action.getPipeline());

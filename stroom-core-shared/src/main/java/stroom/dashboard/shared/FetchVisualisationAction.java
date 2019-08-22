@@ -16,8 +16,8 @@
 
 package stroom.dashboard.shared;
 
-import stroom.task.shared.Action;
 import stroom.docref.DocRef;
+import stroom.task.shared.Action;
 import stroom.visualisation.shared.VisualisationDoc;
 
 public class FetchVisualisationAction extends Action<VisualisationDoc> {

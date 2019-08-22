@@ -17,14 +17,14 @@
 
 package stroom.task.api;
 
-import stroom.util.entity.FindService;
-import stroom.util.shared.BaseResultList;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
-import stroom.task.shared.TaskProgress;
 import stroom.task.shared.Task;
 import stroom.task.shared.TaskId;
+import stroom.task.shared.TaskProgress;
 import stroom.task.shared.ThreadPool;
+import stroom.util.entity.FindService;
+import stroom.util.shared.BaseResultList;
 
 public interface TaskManager extends FindService<TaskProgress, FindTaskProgressCriteria> {
     void startup();

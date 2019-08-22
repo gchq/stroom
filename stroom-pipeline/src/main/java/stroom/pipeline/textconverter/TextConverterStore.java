@@ -17,9 +17,9 @@
 
 package stroom.pipeline.textconverter;
 
+import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
 import stroom.pipeline.shared.TextConverterDoc;
-import stroom.docref.DocRef;
 
 import java.util.List;
 

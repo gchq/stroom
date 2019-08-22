@@ -16,7 +16,7 @@
 
 package stroom.core.servlet;
 
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskIdFactory;
 import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
@@ -38,13 +38,13 @@ public class SessionListServlet extends HttpServlet {
     private static final long serialVersionUID = 8723931558071593017L;
 
     private final TaskManager taskManager;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     SessionListServlet(final TaskManager taskManager,
-                       final Security security) {
+                       final SecurityContext securityContext) {
         this.taskManager = taskManager;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     /**
@@ -55,7 +55,7 @@ public class SessionListServlet extends HttpServlet {
      */
     @Override
     public void service(final ServletRequest req, final ServletResponse res) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 super.service(req, res);
             } catch (ServletException e) {

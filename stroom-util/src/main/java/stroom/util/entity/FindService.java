@@ -17,9 +17,9 @@
 
 package stroom.util.entity;
 
+import stroom.docref.SharedObject;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.BaseResultList;
-import stroom.docref.SharedObject;
 
 public interface FindService<E extends SharedObject, C extends BaseCriteria> {
     BaseResultList<E> find(C criteria);

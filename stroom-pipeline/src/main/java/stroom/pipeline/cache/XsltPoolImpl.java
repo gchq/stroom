@@ -22,7 +22,7 @@ import net.sf.saxon.s9api.XsltCompiler;
 import net.sf.saxon.s9api.XsltExecutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.api.DocumentPermissionCache;
+import stroom.cache.api.CacheManager;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
@@ -31,9 +31,8 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.xsltfunctions.StroomXsltFunctionLibrary;
-import stroom.security.api.Security;
+import stroom.security.api.DocumentPermissionCache;
 import stroom.security.api.SecurityContext;
-import stroom.cache.api.CacheManager;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
@@ -55,11 +54,10 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
     @Inject
     XsltPoolImpl(final CacheManager cacheManager,
                  final DocumentPermissionCache documentPermissionCache,
-                 final Security security,
                  final SecurityContext securityContext,
                  final URIResolver uriResolver,
                  final Provider<StroomXsltFunctionLibrary> stroomXsltFunctionLibraryProvider) {
-        super(cacheManager, "XSLT Pool", documentPermissionCache, security, securityContext);
+        super(cacheManager, "XSLT Pool", documentPermissionCache, securityContext);
         this.uriResolver = uriResolver;
         this.stroomXsltFunctionLibraryProvider = stroomXsltFunctionLibraryProvider;
     }

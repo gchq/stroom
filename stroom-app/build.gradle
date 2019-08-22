@@ -143,6 +143,7 @@ dependencies {
     testCompile project(':stroom-meta:stroom-meta-mock')
     testCompile project(':stroom-node:stroom-node-mock')
     testCompile project(':stroom-pipeline')
+    testCompile project(':stroom-processor:stroom-processor-mock')
     testCompile project(':stroom-receive:stroom-receive-rules-impl')
     testCompile project(':stroom-security:stroom-security-api')
     testCompile project(':stroom-security:stroom-security-impl')
@@ -159,6 +160,7 @@ dependencies {
 
     testCompile libs.commons_io
     testCompile libs.guice4
+    testCompile libs.guice_extension
     testCompile libs.hikari
     testCompile libs.junit_jupiter_api
     testCompile libs.lmdbjava

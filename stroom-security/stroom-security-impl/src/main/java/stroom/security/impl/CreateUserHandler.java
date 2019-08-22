@@ -16,7 +16,7 @@
 
 package stroom.security.impl;
 
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.CreateUserAction;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
@@ -27,18 +27,18 @@ import javax.inject.Inject;
 
 class CreateUserHandler extends AbstractTaskHandler<CreateUserAction, User> {
     private final UserService userService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     CreateUserHandler(final UserService userService,
-                      final Security security) {
+                      final SecurityContext securityContext) {
         this.userService = userService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public User exec(final CreateUserAction action) {
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             if (action.isGroup()) {
                 return userService.createUserGroup(action.getName());
             } else {

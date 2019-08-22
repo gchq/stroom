@@ -41,17 +41,17 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
     private final AuthorisationConfig authorisationConfig;
 
     private final CacheManager cacheManager;
-    private final DocumentPermissionService documentPermissionService;
+    private final DocumentPermissionDao documentPermissionDao;
 
     private volatile Integer lastMaximumSize;
     private volatile LoadingCache<String, UserDocumentPermissions> cache;
 
     @Inject
     public UserDocumentPermissionsCache(final CacheManager cacheManager,
-                                        final DocumentPermissionService documentPermissionService,
+                                        final DocumentPermissionDao documentPermissionDao,
                                         final AuthorisationConfig authorisationConfig) {
         this.cacheManager = cacheManager;
-        this.documentPermissionService = documentPermissionService;
+        this.documentPermissionDao = documentPermissionDao;
         this.authorisationConfig = authorisationConfig;
     }
 
@@ -113,7 +113,7 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
     private synchronized void createCache() {
         final int maximumSize = getMaximumSize();
         if (lastMaximumSize == null || lastMaximumSize != maximumSize) {
-            final CacheLoader<String, UserDocumentPermissions> cacheLoader = CacheLoader.from(documentPermissionService::getPermissionsForUser);
+            final CacheLoader<String, UserDocumentPermissions> cacheLoader = CacheLoader.from(documentPermissionDao::getPermissionsForUser);
             final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                     .maximumSize(maximumSize)
                     .expireAfterAccess(10, TimeUnit.MINUTES);

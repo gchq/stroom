@@ -23,7 +23,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
@@ -37,15 +37,15 @@ public class ProcessorCache implements Clearable {
 
     private final LoadingCache<Integer, Optional<Processor>> cache;
     private final ProcessorService processorService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     @SuppressWarnings("unchecked")
     public ProcessorCache(final CacheManager cacheManager,
                           final ProcessorService processorService,
-                          final Security security) {
+                          final SecurityContext securityContext) {
         this.processorService = processorService;
-        this.security = security;
+        this.securityContext = securityContext;
 
         final CacheLoader<Integer, Optional<Processor>> cacheLoader = CacheLoader.from(this::create);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
@@ -60,7 +60,7 @@ public class ProcessorCache implements Clearable {
     }
 
     private Optional<Processor> create(final int id) {
-        return security.asProcessingUserResult(() -> processorService.fetch(id));
+        return securityContext.asProcessingUserResult(() -> processorService.fetch(id));
     }
 
     @Override

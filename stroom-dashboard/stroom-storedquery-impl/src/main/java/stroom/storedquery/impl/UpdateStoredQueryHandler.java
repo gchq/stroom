@@ -19,7 +19,7 @@ package stroom.storedquery.impl;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.UpdateStoredQueryAction;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
@@ -27,21 +27,21 @@ import javax.inject.Inject;
 class UpdateStoredQueryHandler extends AbstractTaskHandler<UpdateStoredQueryAction, StoredQuery> {
     private final StoredQueryServiceImpl storedQueryService;
     private final DocumentEventLog entityEventLog;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     UpdateStoredQueryHandler(final StoredQueryServiceImpl storedQueryService,
                              final DocumentEventLog entityEventLog,
-                             final Security security) {
+                             final SecurityContext securityContext) {
         this.storedQueryService = storedQueryService;
         this.entityEventLog = entityEventLog;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public StoredQuery exec(final UpdateStoredQueryAction action) {
         final StoredQuery storedQuery = action.getStoredQuery();
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             StoredQuery result;
             StoredQuery before = null;
 

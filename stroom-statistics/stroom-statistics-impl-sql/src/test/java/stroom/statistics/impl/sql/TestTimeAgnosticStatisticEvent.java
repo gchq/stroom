@@ -18,8 +18,6 @@ package stroom.statistics.impl.sql;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.junit.jupiter.api.Test;
-import stroom.statistics.impl.sql.StatisticTag;
-import stroom.statistics.impl.sql.TimeAgnosticStatisticEvent;
 
 import java.util.ArrayList;
 import java.util.List;

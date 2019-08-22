@@ -22,9 +22,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.filter.SchemaFilter;
-import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.pipeline.xml.converter.ds3.ref.VarMap;
+import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 
 import javax.inject.Inject;

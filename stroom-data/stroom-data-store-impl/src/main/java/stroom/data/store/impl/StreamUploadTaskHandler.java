@@ -19,14 +19,13 @@ package stroom.data.store.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
-import stroom.util.shared.EntityServiceException;
 import stroom.feed.api.FeedProperties;
-import stroom.util.io.BufferFactory;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.MetaProperties;
@@ -34,13 +33,14 @@ import stroom.meta.shared.StandardHeaderArguments;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.receive.common.StroomStreamProcessor;
-import stroom.security.api.Security;
-import stroom.data.shared.StreamTypeNames;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
+import stroom.util.io.BufferFactory;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -62,7 +62,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
     private final Store streamStore;
     private final FeedProperties feedProperties;
     private final MetaStatistics metaStatistics;
-    private final Security security;
+    private final SecurityContext securityContext;
     private final BufferFactory bufferFactory;
 
     @Inject
@@ -70,19 +70,19 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
                             final Store streamStore,
                             final FeedProperties feedProperties,
                             final MetaStatistics metaStatistics,
-                            final Security security,
+                            final SecurityContext securityContext,
                             final BufferFactory bufferFactory) {
         this.taskContext = taskContext;
         this.streamStore = streamStore;
         this.feedProperties = feedProperties;
         this.metaStatistics = metaStatistics;
-        this.security = security;
+        this.securityContext = securityContext;
         this.bufferFactory = bufferFactory;
     }
 
     @Override
     public VoidResult exec(final StreamUploadTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             taskContext.info(task.getFile().toString());
             uploadData(task);
             return VoidResult.INSTANCE;

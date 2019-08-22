@@ -35,7 +35,7 @@ import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.BaseResultList;
@@ -57,22 +57,22 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
     private final ProcessorService streamProcessorService;
     private final ProcessorFilterService processorFilterService;
     private final MetaService metaService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     ReprocessDataHandler(final ProcessorService streamProcessorService,
                          final ProcessorFilterService processorFilterService,
                          final MetaService metaService,
-                         final Security security) {
+                         final SecurityContext securityContext) {
         this.streamProcessorService = streamProcessorService;
         this.processorFilterService = processorFilterService;
         this.metaService = metaService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public SharedList<ReprocessDataInfo> exec(final ReprocessDataAction action) {
-        return security.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () -> {
             final List<ReprocessDataInfo> info = new ArrayList<>();
 
             try {

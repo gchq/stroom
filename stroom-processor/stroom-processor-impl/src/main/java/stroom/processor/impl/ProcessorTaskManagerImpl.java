@@ -20,9 +20,6 @@ package stroom.processor.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.search.api.EventRef;
-import stroom.search.api.EventRefs;
-import stroom.search.api.EventSearch;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -45,7 +42,10 @@ import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
-import stroom.security.api.Security;
+import stroom.search.api.EventRef;
+import stroom.search.api.EventRefs;
+import stroom.search.api.EventSearch;
+import stroom.security.api.SecurityContext;
 import stroom.security.api.UserTokenUtil;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
@@ -99,7 +99,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
     private final MetaService metaService;
     private final EventSearch eventSearch;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
@@ -148,7 +148,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                              final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
                              final MetaService metaService,
                              final EventSearch eventSearch,
-                             final Security security) {
+                             final SecurityContext securityContext) {
 
         this.processorFilterService = processorFilterService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
@@ -159,7 +159,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
         this.metaService = metaService;
         this.eventSearch = eventSearch;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -482,7 +482,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             optionalProcessorFilter.ifPresent(loadedFilter -> {
 
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
-                security.asUser(UserTokenUtil.create(loadedFilter.getCreateUser()), () -> {
+                securityContext.asUser(UserTokenUtil.create(loadedFilter.getCreateUser()), () -> {
                     LOGGER.debug("createTasksForFilter() - processorFilter {}", loadedFilter.toString());
 
                     // Only try and create tasks if the processor is enabled.

@@ -19,6 +19,8 @@ package stroom.core.db;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.zaxxer.hikari.HikariConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
@@ -26,8 +28,6 @@ import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;

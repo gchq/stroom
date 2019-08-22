@@ -4,15 +4,14 @@
 package stroom.job.impl.db.jooq.tables.records;
 
 
-import javax.annotation.Generated;
-
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record12;
 import org.jooq.Row12;
 import org.jooq.impl.UpdatableRecordImpl;
-
 import stroom.job.impl.db.jooq.tables.JobNode;
+
+import javax.annotation.Generated;
 
 
 /**

@@ -54,10 +54,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * Command line tool to process some files from a proxy stroom.

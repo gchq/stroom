@@ -18,7 +18,7 @@ package stroom.job.impl;
 
 import stroom.job.shared.GetScheduledTimesAction;
 import stroom.job.shared.ScheduledTimes;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
@@ -26,18 +26,18 @@ import javax.inject.Inject;
 
 class GetScheduledTimesHandler extends AbstractTaskHandler<GetScheduledTimesAction, ScheduledTimes> {
     private final ScheduleService scheduleService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     GetScheduledTimesHandler(final ScheduleService scheduleService,
-                             final Security security) {
+                             final SecurityContext securityContext) {
         this.scheduleService = scheduleService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ScheduledTimes exec(final GetScheduledTimesAction task) {
-        return security.secureResult(() -> scheduleService.getScheduledTimes(task.getJobType(), task.getScheduleReferenceTime(),
+        return securityContext.secureResult(() -> scheduleService.getScheduledTimes(task.getJobType(), task.getScheduleReferenceTime(),
                 task.getLastExecutedTime(), task.getSchedule()));
     }
 }

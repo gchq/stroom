@@ -16,40 +16,36 @@
 
 package stroom.security.impl;
 
-
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeAll;
+import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
+import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
+import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(GuiceExtension.class)
+@IncludeModule(TestModule.class)
 class TestAppPermissionServiceImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppPermissionServiceImpl.class);
 
-    private static UserService userService;
-    private static UserAppPermissionService userAppPermissionService;
-    private static UserGroupsCache userGroupsCache;
-    private static UserAppPermissionsCache userAppPermissionsCache;
-
-    @BeforeAll
-    static void beforeAll() {
-        final Injector injector = Guice.createInjector(new TestModule());
-
-        userService = injector.getInstance(UserService.class);
-        userAppPermissionService = injector.getInstance(UserAppPermissionService.class);
-        userGroupsCache = injector.getInstance(UserGroupsCache.class);
-        userAppPermissionsCache = injector.getInstance(UserAppPermissionsCache.class);
-    }
+    @Inject
+    private UserService userService;
+    @Inject
+    private UserAppPermissionService userAppPermissionService;
+    @Inject
+    private UserGroupsCache userGroupsCache;
+    @Inject
+    private UserAppPermissionsCache userAppPermissionsCache;
 
     @Test
     void test() {

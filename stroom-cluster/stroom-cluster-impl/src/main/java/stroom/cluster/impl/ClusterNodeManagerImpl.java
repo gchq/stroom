@@ -18,7 +18,6 @@ package stroom.cluster.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.shared.ClusterNodeInfo;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
 import stroom.entity.shared.EntityAction;
@@ -26,6 +25,7 @@ import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventHandler;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.Node;
 import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;

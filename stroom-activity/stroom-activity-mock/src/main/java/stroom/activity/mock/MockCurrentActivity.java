@@ -1,7 +1,7 @@
 package stroom.activity.mock;
 
-import stroom.activity.shared.Activity;
 import stroom.activity.api.CurrentActivity;
+import stroom.activity.shared.Activity;
 
 public class MockCurrentActivity implements CurrentActivity {
     @Override

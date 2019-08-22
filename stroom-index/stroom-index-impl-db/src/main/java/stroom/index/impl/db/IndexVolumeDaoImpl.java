@@ -15,6 +15,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
+import static stroom.index.impl.db.jooq.tables.IndexVolumeGroup.INDEX_VOLUME_GROUP;
 
 class IndexVolumeDaoImpl implements IndexVolumeDao {
     static final Function<Record, IndexVolume> RECORD_TO_INDEX_VOLUME_MAPPER = record -> {
@@ -102,4 +103,15 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                 .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply));
     }
 
+    @Override
+    public List<IndexVolume> getVolumesInGroupOnNode(final String groupName, final String nodeName) {
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select()
+                .from(INDEX_VOLUME)
+                .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
+                .where(INDEX_VOLUME_GROUP.NAME.eq(groupName))
+                .and(INDEX_VOLUME.NODE_NAME.eq(nodeName))
+                .fetch()
+                .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply));
+    }
 }

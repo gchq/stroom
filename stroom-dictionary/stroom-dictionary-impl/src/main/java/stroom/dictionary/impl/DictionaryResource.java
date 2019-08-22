@@ -27,7 +27,7 @@ import stroom.importexport.api.DocRefs;
 import stroom.importexport.api.OldDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
 import stroom.util.RestResource;
 import stroom.util.string.EncodingUtil;
@@ -55,7 +55,7 @@ public class DictionaryResource implements RestResource, HasHealthCheck {
     public static final String BASE_RESOURCE_PATH = "/dictionary/v1";
 
     private final DictionaryStore dictionaryStore;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     private static class DictionaryDTO extends DocRef {
         private String description;
@@ -100,9 +100,9 @@ public class DictionaryResource implements RestResource, HasHealthCheck {
 
     @Inject
     DictionaryResource(final DictionaryStore dictionaryStore,
-                       final Security security) {
+                       final SecurityContext securityContext) {
         this.dictionaryStore = dictionaryStore;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @GET
@@ -162,7 +162,7 @@ public class DictionaryResource implements RestResource, HasHealthCheck {
     @Produces(MediaType.APPLICATION_JSON)
     public Response fetch(@PathParam("dictionaryUuid") final String dictionaryUuid) {
         // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
-        return security.useAsReadResult(() -> fetchInScope(dictionaryUuid));
+        return securityContext.useAsReadResult(() -> fetchInScope(dictionaryUuid));
     }
 
     private DocRef getDocRef(final String pipelineId) {
@@ -180,7 +180,7 @@ public class DictionaryResource implements RestResource, HasHealthCheck {
                          final DictionaryDTO updates) {
 
         // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
-        security.useAsRead(() -> {
+        securityContext.useAsRead(() -> {
             final DictionaryDoc doc = dictionaryStore.readDocument(getDocRef(dictionaryUuid));
 
             if (doc != null) {

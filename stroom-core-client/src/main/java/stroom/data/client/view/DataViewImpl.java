@@ -21,10 +21,10 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasRows;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.data.pager.client.Pager;
-import stroom.data.client.presenter.DataPresenter.DataView;
 import com.gwtplatform.mvp.client.LayerContainer;
+import com.gwtplatform.mvp.client.ViewImpl;
+import stroom.data.client.presenter.DataPresenter.DataView;
+import stroom.data.pager.client.Pager;
 import stroom.widget.tab.client.view.LinkTabBar;
 
 public class DataViewImpl extends ViewImpl implements DataView {

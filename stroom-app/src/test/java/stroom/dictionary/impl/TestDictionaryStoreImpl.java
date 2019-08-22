@@ -20,7 +20,6 @@ package stroom.dictionary.impl;
 
 import org.junit.jupiter.api.Test;
 import stroom.dictionary.api.WordListProvider;
-import stroom.dictionary.impl.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;

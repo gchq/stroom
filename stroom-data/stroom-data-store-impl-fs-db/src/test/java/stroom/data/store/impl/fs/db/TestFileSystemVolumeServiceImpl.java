@@ -31,9 +31,7 @@ import stroom.data.store.impl.fs.FsVolumeStateDao;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
-import stroom.security.mock.AllowAllMockSecurity;
 import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
@@ -66,7 +64,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
     private final FsVolume public2b = FsVolume.create(
             FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2B")),
             FsVolumeState.create(0, 1000));
-    //    private final Security security = new AllowAllMockSecurity();
+    //    private final SecurityContext securityContext = new MockSecurityContext();
 //    private FileSystemVolumeConfig volumeConfig = new FileSystemVolumeConfig();
     private FsVolumeService volumeService = null;
 
@@ -81,14 +79,12 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 //        volumeList.add(public2b);
 
         final SecurityContext securityContext = new MockSecurityContext();
-        final Security security = new AllowAllMockSecurity();
 
         final ConnectionProvider connectionProvider = new FsDataStoreDbModule().getConnectionProvider(DataStoreServiceConfig::new);
         final FsVolumeDao fsVolumeDao = new FsVolumeDaoImpl(connectionProvider);
         final FsVolumeStateDao fsVolumeStateDao = new FsVolumeStateDaoImpl(connectionProvider);
         volumeService = new FsVolumeService(fsVolumeDao,
                 fsVolumeStateDao,
-                security,
                 securityContext,
                 new FsVolumeConfig(),
                 null,

@@ -16,11 +16,11 @@
 
 package stroom.statistics.impl.hbase.rollup;
 
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.ResultList;
 import stroom.statistics.impl.hbase.shared.CustomRollUpMaskFields;
 import stroom.statistics.impl.hbase.shared.StroomStatsRollUpBitMaskConversionAction;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import java.util.ArrayList;
 import java.util.Collections;

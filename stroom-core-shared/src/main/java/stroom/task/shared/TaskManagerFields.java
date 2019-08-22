@@ -2,11 +2,8 @@ package stroom.task.shared;
 
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.DocRefField;
-import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
-import stroom.docref.DocRef;
 
 import java.util.ArrayList;
 import java.util.List;

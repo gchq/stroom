@@ -37,7 +37,6 @@ import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
@@ -56,24 +55,21 @@ public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAct
     private final ProcessorService streamProcessorService;
     private final SecurityContext securityContext;
     private final ExplorerService explorerService;
-    private final Security security;
 
     @Inject
     FetchProcessorHandler(final ProcessorFilterService processorFilterService,
                           final ProcessorService streamProcessorService,
                           final SecurityContext securityContext,
-                          final ExplorerService explorerService,
-                          final Security security) {
+                          final ExplorerService explorerService) {
         this.processorFilterService = processorFilterService;
         this.streamProcessorService = streamProcessorService;
         this.securityContext = securityContext;
         this.explorerService = explorerService;
-        this.security = security;
     }
 
     @Override
     public ResultList<SharedObject> exec(final FetchProcessorAction action) {
-        return security.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () -> {
             final List<SharedObject> values = new ArrayList<>();
 
             final ExpressionCriteria criteria = new ExpressionCriteria(action.getExpression());

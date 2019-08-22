@@ -20,7 +20,6 @@ import stroom.dropwizard.common.LogLevelInspector;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
-import stroom.proxy.app.NoSecurityContext;
 import stroom.proxy.app.ProxyConfigHealthCheck;
 import stroom.proxy.app.handler.ForwardStreamHandlerFactory;
 import stroom.proxy.app.handler.ProxyRequestHandler;
@@ -44,6 +43,7 @@ import stroom.receive.rules.impl.ReceiveDataRuleSetResource2;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
 import stroom.receive.rules.impl.ReceiveDataRuleSetServiceImpl;
 import stroom.security.api.SecurityContext;
+import stroom.security.mock.MockSecurityContext;
 import stroom.util.RestResource;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
@@ -88,7 +88,7 @@ public class ProxyModule extends AbstractModule {
         bind(ProxyRepositoryManager.class).asEagerSingleton();
         bind(ProxyRepositoryReader.class).asEagerSingleton();
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
-        bind(SecurityContext.class).to(NoSecurityContext.class);
+        bind(SecurityContext.class).to(MockSecurityContext.class);
         bind(FeedStatusService.class).to(RemoteFeedStatusService.class);
 
         HealthCheckBinder.create(binder())

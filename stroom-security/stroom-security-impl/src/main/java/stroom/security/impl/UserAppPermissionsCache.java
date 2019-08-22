@@ -19,11 +19,11 @@ package stroom.security.impl;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import stroom.util.shared.Clearable;
-import stroom.security.shared.UserAppPermissions;
-import stroom.security.shared.User;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
+import stroom.security.shared.User;
+import stroom.security.shared.UserAppPermissions;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

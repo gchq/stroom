@@ -61,10 +61,6 @@ public class MetaFields {
     public static final LongField FILE_SIZE = new LongField("File Size");
     public static final LongField RAW_SIZE = new LongField("Raw Size");
 
-    // Legacy or hidden fields.
-    public static final IdField FEED_ID = new IdField("Feed Id");
-    public static final IdField TASK_ID = new IdField("Task Id");
-
     static {
         // Non grouped fields
         FIELDS.add(FEED_NAME);

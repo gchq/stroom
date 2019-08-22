@@ -16,8 +16,8 @@
 
 package stroom.core.entity.event;
 
-import stroom.entity.shared.EntityEvent;
 import stroom.cluster.task.api.ClusterTask;
+import stroom.entity.shared.EntityEvent;
 import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;
 

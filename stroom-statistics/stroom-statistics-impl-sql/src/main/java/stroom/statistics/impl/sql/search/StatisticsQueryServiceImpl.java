@@ -14,7 +14,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.SQLStatisticCacheImpl;
 import stroom.statistics.impl.sql.StatisticsQueryService;
 import stroom.statistics.impl.sql.entity.StatisticStoreCache;
@@ -39,23 +39,23 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     private final StatisticsDataSourceProvider statisticsDataSourceProvider;
     private final StatisticStoreCache statisticStoreCache;
     private final SearchResponseCreatorManager searchResponseCreatorManager;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     public StatisticsQueryServiceImpl(final StatisticsDataSourceProvider statisticsDataSourceProvider,
                                       final StatisticStoreCache statisticStoreCache,
                                       final SqlStatisticsSearchResponseCreatorManager searchResponseCreatorManager,
-                                      final Security security) {
+                                      final SecurityContext securityContext) {
         this.statisticsDataSourceProvider = statisticsDataSourceProvider;
         this.statisticStoreCache = statisticStoreCache;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
 
     @Override
     public DataSource getDataSource(final DocRef docRef) {
-        return security.useAsReadResult(() -> {
+        return securityContext.useAsReadResult(() -> {
             LOGGER.debug("getDataSource called for docRef {}", docRef);
             return statisticsDataSourceProvider.getDataSource(docRef);
         });
@@ -63,7 +63,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
     @Override
     public SearchResponse search(final SearchRequest searchRequest) {
-        return security.useAsReadResult(() -> {
+        return securityContext.useAsReadResult(() -> {
             LOGGER.debug("search called for searchRequest {}", searchRequest);
 
             final DocRef docRef = Preconditions.checkNotNull(

@@ -2,12 +2,12 @@ package stroom.importexport.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
+import stroom.importexport.shared.Dependency;
+import stroom.importexport.shared.DependencyCriteria;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
-import stroom.importexport.shared.Dependency;
-import stroom.importexport.shared.DependencyCriteria;
-import stroom.docref.DocRef;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

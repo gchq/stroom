@@ -17,7 +17,6 @@
 package stroom.dashboard.shared;
 
 import stroom.task.shared.Action;
-import stroom.util.shared.ResourceGeneration;
 
 public class SaveStoredQueryAction extends Action<StoredQuery> {
     private static final long serialVersionUID = -6668626615097471925L;

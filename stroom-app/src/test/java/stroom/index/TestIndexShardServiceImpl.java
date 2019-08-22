@@ -18,30 +18,18 @@
 package stroom.index;
 
 
-import org.junit.jupiter.api.Test;
-import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
-import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexDoc.PartitionBy;
-import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexVolume;
 import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.Range;
-import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
-import java.util.List;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     @Inject

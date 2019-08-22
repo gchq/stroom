@@ -20,10 +20,10 @@ package stroom.statistics.impl.sql;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.api.Security;
-import stroom.statistics.impl.sql.shared.StatisticType;
+import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
+import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -59,7 +59,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
     @Inject
     private SQLStatisticAggregationTransactionHelper sqlStatisticAggregationTransactionHelper;
     @Inject
-    private Security security;
+    private SecurityContext securityContext;
     @Inject
     private SQLStatisticsConfig sqlStatisticsConfig;
 
@@ -538,7 +538,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         }
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, new SimpleTaskContext(), security);
+                sqlStatisticValueBatchSaveService, new SimpleTaskContext(), securityContext);
 
         final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(sqlStatisticAggregateMap);
 

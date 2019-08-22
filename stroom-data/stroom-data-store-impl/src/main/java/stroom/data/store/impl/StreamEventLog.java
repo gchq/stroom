@@ -35,14 +35,14 @@ import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaFields;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -51,17 +51,17 @@ public class StreamEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamEventLog.class);
 
     private final StroomEventLoggingService eventLoggingService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     StreamEventLog(final StroomEventLoggingService eventLoggingService,
-                   final Security security) {
+                   final SecurityContext securityContext) {
         this.eventLoggingService = eventLoggingService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     public void importStream(final String feedName, final String path, final Throwable th) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = eventLoggingService.createAction("Data Upload", "Data uploaded to \"" + feedName + "\"");
 
@@ -87,7 +87,7 @@ public class StreamEventLog {
     }
 
     public void exportStream(final FindMetaCriteria findMetaCriteria, final Throwable th) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 if (findMetaCriteria != null) {
                     final Event event = eventLoggingService.createAction("ExportData", "Exporting Data");
@@ -118,7 +118,7 @@ public class StreamEventLog {
                            final String streamTypeName,
                            final DocRef pipelineRef,
                            final Throwable th) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 if (eventId != null) {
                     final Event event = eventLoggingService.createAction("View", "Viewing Stream");

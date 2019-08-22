@@ -38,11 +38,11 @@ import stroom.pipeline.writer.OutputStreamAppender;
 import stroom.pipeline.writer.XMLWriter;
 import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomPipelineTestFileUtil;
+import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
-import stroom.test.common.util.test.StroomUnitTest;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;

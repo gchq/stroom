@@ -16,7 +16,6 @@
 
 package stroom.security.impl;
 
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.CheckDocumentPermissionAction;
 import stroom.task.api.AbstractTaskHandler;
@@ -28,17 +27,14 @@ import javax.inject.Inject;
 class CheckDocumentPermissionHandler
         extends AbstractTaskHandler<CheckDocumentPermissionAction, SharedBoolean> {
     private final SecurityContext securityContext;
-    private final Security security;
 
     @Inject
-    CheckDocumentPermissionHandler(final SecurityContext securityContext,
-                                   final Security security) {
+    CheckDocumentPermissionHandler(final SecurityContext securityContext) {
         this.securityContext = securityContext;
-        this.security = security;
     }
 
     @Override
     public SharedBoolean exec(final CheckDocumentPermissionAction action) {
-        return security.insecureResult(() -> SharedBoolean.wrap(securityContext.hasDocumentPermission(action.getDocumentType(), action.getDocumentId(), action.getPermission())));
+        return securityContext.insecureResult(() -> SharedBoolean.wrap(securityContext.hasDocumentPermission(action.getDocumentType(), action.getDocumentId(), action.getPermission())));
     }
 }

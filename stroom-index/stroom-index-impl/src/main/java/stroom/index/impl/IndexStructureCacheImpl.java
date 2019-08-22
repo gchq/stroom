@@ -23,10 +23,10 @@ import com.google.common.cache.LoadingCache;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
 import stroom.docref.DocRef;
-import stroom.index.shared.IndexField;
-import stroom.util.shared.Clearable;
 import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

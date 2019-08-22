@@ -18,8 +18,8 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.io.SeekableOutputStream;
 import stroom.util.io.BasicStreamCloser;
+import stroom.util.io.SeekableOutputStream;
 import stroom.util.io.StreamCloser;
 
 import java.io.BufferedOutputStream;

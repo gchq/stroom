@@ -29,7 +29,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.util.RestResource;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.IdSet;
@@ -56,13 +56,13 @@ import static stroom.query.api.v2.ExpressionTerm.Condition;
 public class StreamAttributeMapResource implements RestResource {
 
     private MetaService dataMetaService;
-    private Security security;
+    private SecurityContext securityContext;
 
     @Inject
     public StreamAttributeMapResource(final MetaService dataMetaService,
-                                      final Security security) {
+                                      final SecurityContext securityContext) {
         this.dataMetaService = dataMetaService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @GET
@@ -70,7 +70,7 @@ public class StreamAttributeMapResource implements RestResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response page(@QueryParam("pageOffset") Long pageOffset,
                          @QueryParam("pageSize") Integer pageSize) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             // Validate pagination params
             if ((pageSize != null && pageOffset == null) || (pageSize == null && pageOffset != null)) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("A pagination request requires both a pageSize and an offset").build();
@@ -105,7 +105,7 @@ public class StreamAttributeMapResource implements RestResource {
     public Response search(@QueryParam("pageOffset") Long pageOffset,
                            @QueryParam("pageSize") Integer pageSize,
                            final ExpressionOperator expression) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             // Validate pagination params
             if ((pageSize != null && pageOffset == null) || (pageSize == null && pageOffset != null)) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("A pagination request requires both a pageSize and an offset").build();
@@ -149,7 +149,7 @@ public class StreamAttributeMapResource implements RestResource {
     @Path("/{id}/{anyStatus}/relations")
     public Response getRelations(@PathParam("id") Long id,
                                  @PathParam("anyStatus") Boolean anyStatus) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             final List<MetaRow> rows = dataMetaService.findRelatedData(id, anyStatus);
             return Response.ok(rows).build();
         });
@@ -159,7 +159,7 @@ public class StreamAttributeMapResource implements RestResource {
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response search(@PathParam("id") Long id) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             // Configure default criteria
             FindMetaCriteria criteria = new FindMetaCriteria();
             IdSet idSet = new IdSet();

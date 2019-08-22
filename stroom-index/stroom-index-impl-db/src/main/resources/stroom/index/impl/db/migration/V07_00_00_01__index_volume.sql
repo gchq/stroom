@@ -32,6 +32,6 @@ CREATE TABLE IF NOT EXISTS index_volume (
   bytes_total               bigint(20) DEFAULT NULL,
   status_ms                 bigint(20) DEFAULT NULL,
   PRIMARY KEY (id),
-  UNIQUE KEY node_name_path (node_name, path),
+  UNIQUE KEY node_name_path (fk_index_volume_group_id, node_name, path),
   CONSTRAINT index_volume_group_link_fk_group_id FOREIGN KEY (fk_index_volume_group_id) REFERENCES index_volume_group (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

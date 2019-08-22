@@ -18,8 +18,9 @@ package stroom.pipeline.task;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.store.mock.MockStore;
 import stroom.core.dataprocess.PipelineDataProcessorTaskExecutor;
+import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.mock.MockStore;
 import stroom.meta.mock.MockMetaService;
 import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
@@ -27,7 +28,6 @@ import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.impl.DataProcessorTask;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.processor.shared.ProcessorTask;
-import stroom.data.shared.StreamTypeNames;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StoreCreationTool;

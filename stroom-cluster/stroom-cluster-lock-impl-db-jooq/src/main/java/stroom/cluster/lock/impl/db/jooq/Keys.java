@@ -4,14 +4,13 @@
 package stroom.cluster.lock.impl.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import org.jooq.Identity;
 import org.jooq.UniqueKey;
 import org.jooq.impl.Internal;
-
 import stroom.cluster.lock.impl.db.jooq.tables.ClusterLock;
 import stroom.cluster.lock.impl.db.jooq.tables.records.ClusterLockRecord;
+
+import javax.annotation.Generated;
 
 
 /**

@@ -18,6 +18,7 @@ package stroom.index.mock;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.impl.IndexElementModule;
 import stroom.index.impl.IndexShardService;
@@ -31,7 +32,6 @@ import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.Indexer;
 import stroom.index.shared.IndexDoc;
 import stroom.util.guice.GuiceUtil;
-import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.util.shared.Clearable;
 
 public class MockIndexModule extends AbstractModule {

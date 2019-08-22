@@ -2,8 +2,6 @@ package stroom.util.servlet;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.util.Providers;
-import stroom.util.servlet.HttpServletRequestHolder;
-import stroom.util.servlet.SessionIdProvider;
 
 import javax.servlet.http.HttpServletRequest;
 

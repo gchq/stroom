@@ -21,11 +21,11 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.util.shared.ResultList;
-import stroom.util.shared.Sort.Direction;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.FindMetaRowAction;
 import stroom.meta.shared.MetaRow;
+import stroom.util.shared.ResultList;
+import stroom.util.shared.Sort.Direction;
 
 public class FindStreamActionDataProvider implements Refreshable, ColumnSortEvent.Handler {
     private final ClientDispatchAsync dispatcher;

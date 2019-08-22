@@ -18,9 +18,9 @@ package stroom.data.store.impl.fs.shared;
 
 import stroom.docref.HasDisplayValue;
 import stroom.docref.SharedObject;
+import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
-import stroom.util.shared.HasAuditInfo;
 
 import java.util.Objects;
 

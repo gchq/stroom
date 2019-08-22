@@ -19,13 +19,10 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.data.store.impl.DataStoreMaintenanceService;
+import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.CriteriaSet;
-import stroom.util.shared.PageRequest;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -33,9 +30,12 @@ import stroom.meta.shared.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.PageRequest;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -62,7 +62,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
     private final FsPathHelper fileSystemStreamPathHelper;
     private final DataVolumeService dataVolumeService;
     private final MetaService metaService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     private final FsFeedPathDao fileSystemFeedPaths;
     private final FsTypePathDao fileSystemTypePaths;
@@ -73,13 +73,13 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
                                          final FsTypePathDao fileSystemTypePaths,
                                          final DataVolumeService dataVolumeService,
                                          final MetaService metaService,
-                                         final Security security) {
+                                         final SecurityContext securityContext) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.fileSystemFeedPaths = fileSystemFeedPaths;
         this.fileSystemTypePaths = fileSystemTypePaths;
         this.dataVolumeService = dataVolumeService;
         this.metaService = metaService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     List<Path> findAllStreamFile(final Meta meta) {
@@ -101,7 +101,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
                                                final boolean doDelete,
                                                final String repoPath,
                                                final long oldFileAge) {
-        return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
             final ScanVolumePathResult result = new ScanVolumePathResult();
 
             final long oldFileTime = System.currentTimeMillis() - oldFileAge;

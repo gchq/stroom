@@ -16,15 +16,15 @@
 
 package stroom.core.servlet;
 
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.ResultList;
-import stroom.security.api.Security;
-import stroom.security.api.UserTokenUtil;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.cluster.task.api.ClusterCallEntry;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.DefaultClusterResultCollector;
 import stroom.cluster.task.api.TargetType;
+import stroom.security.api.SecurityContext;
+import stroom.security.api.UserTokenUtil;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -33,18 +33,18 @@ import java.util.Map.Entry;
 
 class SessionListHandler extends AbstractTaskHandler<SessionListAction, ResultList<SessionDetails>> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     SessionListHandler(final ClusterDispatchAsyncHelper dispatchHelper,
-                       final Security security) {
+                       final SecurityContext securityContext) {
         this.dispatchHelper = dispatchHelper;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ResultList<SessionDetails> exec(final SessionListAction action) {
-        return security.insecureResult(() -> {
+        return securityContext.insecureResult(() -> {
             final DefaultClusterResultCollector<ResultList<SessionDetails>> collector = dispatchHelper
                     .execAsync(
                             new SessionListClusterTask(UserTokenUtil.processingUser(), "Get session list"),

@@ -25,9 +25,9 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.Reader;
 
 @Disabled
-public class TestSAXParserFactoryFactory {
+class TestSAXParserFactoryFactory {
     @Test
-    public void testExceedingTotalEntities() throws Exception {
+    void testExceedingTotalEntities() throws Exception {
         // Set this to true to test limits.
         ParserConfig.secureProcessing = false;
 

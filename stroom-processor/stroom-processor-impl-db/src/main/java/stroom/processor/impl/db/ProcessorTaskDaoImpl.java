@@ -621,7 +621,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 //
 //;
 //
-//        return security.secureResult(permission(), () -> {
+//        return securityContext.secureResult(permission(), () -> {
 //            final SqlBuilder sql = new SqlBuilder();
 //            sql.append("SELECT D.* FROM (");
 //            sql.append("SELECT 0");

@@ -27,7 +27,7 @@ import stroom.meta.shared.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.api.UserTokenUtil;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
@@ -128,9 +128,9 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         };
         final Store streamStore = injector.getInstance(Store.class);
         final MetaService metaService = injector.getInstance(MetaService.class);
-        final Security security = injector.getInstance(Security.class);
+        final SecurityContext securityContext = injector.getInstance(SecurityContext.class);
         final BufferFactory bufferFactory = () -> new byte[4096];
-        final DataDownloadTaskHandler streamDownloadTaskHandler = new DataDownloadTaskHandler(taskContext, streamStore, metaService, security, bufferFactory);
+        final DataDownloadTaskHandler streamDownloadTaskHandler = new DataDownloadTaskHandler(taskContext, streamStore, metaService, securityContext, bufferFactory);
 
         download(feed, streamType, createPeriodFrom, createPeriodTo, dir, format, streamDownloadTaskHandler);
 

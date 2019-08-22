@@ -25,7 +25,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.api.NodeInfo;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.shared.ThreadPool;
@@ -74,7 +74,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final Runner asyncRunner;
     private final Runner syncRunner;
     private final TaskContext taskContext;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     private volatile Settings settings;
 
@@ -86,7 +86,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                                      final IndexShardManager indexShardManager,
                                      final ExecutorProvider executorProvider,
                                      final TaskContext taskContext,
-                                     final Security security) {
+                                     final SecurityContext securityContext) {
         this.nodeInfo = nodeInfo;
         this.indexShardService = indexShardService;
         this.indexConfig = indexConfig;
@@ -99,7 +99,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         syncRunner = new SyncRunner();
 
         this.taskContext = taskContext;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -431,7 +431,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     }
 
     synchronized void startup() {
-        security.asProcessingUser(() -> {
+        securityContext.asProcessingUser(() -> {
             LOGGER.info(() -> "Index shard writer cache startup");
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
@@ -452,7 +452,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     @Override
     public synchronized void shutdown() {
-        security.asProcessingUser(() -> {
+        securityContext.asProcessingUser(() -> {
             LOGGER.info(() -> "Index shard writer cache shutdown");
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 

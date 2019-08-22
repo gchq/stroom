@@ -112,7 +112,6 @@ class MetaDaoImpl implements MetaDao {
         expressionMapper.map(MetaFields.ID, meta.ID, Long::valueOf);
         expressionMapper.multiMap(MetaFields.FEED, meta.FEED_ID, feedDao::find, true);
         expressionMapper.multiMap(MetaFields.FEED_NAME, meta.FEED_ID, feedDao::find);
-        expressionMapper.map(MetaFields.FEED_ID, meta.FEED_ID, Integer::valueOf);
         expressionMapper.multiMap(MetaFields.TYPE_NAME, meta.TYPE_ID, metaTypeDao::find);
         expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
         expressionMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, Long::valueOf);
@@ -148,7 +147,6 @@ class MetaDaoImpl implements MetaDao {
         valueMapper.map(MetaFields.ID, meta.ID, ValLong::create);
         valueMapper.map(MetaFields.FEED, metaFeed.NAME, ValString::create);
         valueMapper.map(MetaFields.FEED_NAME, metaFeed.NAME, ValString::create);
-        valueMapper.map(MetaFields.FEED_ID, meta.FEED_ID, ValInteger::create);
         valueMapper.map(MetaFields.TYPE_NAME, metaType.NAME, ValString::create);
         valueMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, ValString::create);
         valueMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, ValLong::create);

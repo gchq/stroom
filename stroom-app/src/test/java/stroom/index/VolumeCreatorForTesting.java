@@ -23,6 +23,7 @@ import stroom.index.impl.CreateVolumeDTO;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeGroup;
 import stroom.node.impl.NodeConfig;
 import stroom.pipeline.writer.PathCreator;
 
@@ -72,12 +73,7 @@ class VolumeCreatorForTesting implements VolumeCreator {
     @Override
     public void setup() {
         try {
-            var initialVolumeGroupName = "Initial index volume group";
-            var existingGroup = indexVolumeGroupService.getAll().stream()
-                    .filter(indexVolumeGroup -> indexVolumeGroup.getName().equalsIgnoreCase(initialVolumeGroupName))
-                    .findFirst()
-                    .orElseGet(() -> indexVolumeGroupService.create(initialVolumeGroupName) );
-
+            final IndexVolumeGroup indexVolumeGroup = indexVolumeGroupService.getOrCreate(DEFAULT_VOLUME_GROUP);
             final List<IndexVolume> initialVolumeList = getInitialVolumeList();
             final List<IndexVolume> existingVolumes = volumeService.getAll();
             for (final IndexVolume volume : initialVolumeList) {
@@ -87,7 +83,6 @@ class VolumeCreatorForTesting implements VolumeCreator {
                             && existingVolume.getPath().equals(volume.getPath())) {
                         found = true;
                     }
-
                 }
 
                 if (!found) {
@@ -95,7 +90,7 @@ class VolumeCreatorForTesting implements VolumeCreator {
                     CreateVolumeDTO createVolumeDTO = new CreateVolumeDTO();
                     createVolumeDTO.setNodeName(volume.getNodeName());
                     createVolumeDTO.setPath(volume.getPath());
-                    createVolumeDTO.setIndexVolumeGroupId(existingGroup.getId());
+                    createVolumeDTO.setIndexVolumeGroupId(indexVolumeGroup.getId());
                     volumeService.create(createVolumeDTO);
                 }
             }

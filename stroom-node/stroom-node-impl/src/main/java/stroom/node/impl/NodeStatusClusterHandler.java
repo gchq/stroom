@@ -17,25 +17,25 @@
 package stroom.node.impl;
 
 import stroom.node.shared.NodeStatusResult;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 
 class NodeStatusClusterHandler extends AbstractTaskHandler<NodeStatusClusterTask, NodeStatusResult> {
     private final NodeServiceImpl nodeService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     NodeStatusClusterHandler(final NodeServiceImpl nodeService,
-                             final Security security) {
+                             final SecurityContext securityContext) {
         this.nodeService = nodeService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public NodeStatusResult exec(final NodeStatusClusterTask action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             final NodeStatusResult nodeStatusResult = new NodeStatusResult();
             nodeStatusResult.setNode(nodeService.getThisNode());
             nodeStatusResult.setPing(System.currentTimeMillis());

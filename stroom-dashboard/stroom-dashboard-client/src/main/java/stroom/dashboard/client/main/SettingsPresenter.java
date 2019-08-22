@@ -18,9 +18,9 @@ package stroom.dashboard.client.main;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.dashboard.shared.ComponentConfig;
-import com.gwtplatform.mvp.client.Layer;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;

@@ -28,10 +28,10 @@ import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.filter.SchemaFilter;
+import stroom.pipeline.xml.converter.SchemaFilterFactory;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.xml.XMLUtil;
-import stroom.pipeline.xml.converter.SchemaFilterFactory;
 
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;

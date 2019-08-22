@@ -17,10 +17,10 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Deserializer;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serializer;
-import stroom.pipeline.refdata.store.offheapstore.UID;
 
 import java.nio.ByteBuffer;
 

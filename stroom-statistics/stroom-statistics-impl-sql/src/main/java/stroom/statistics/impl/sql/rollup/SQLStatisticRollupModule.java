@@ -17,9 +17,9 @@
 package stroom.statistics.impl.sql.rollup;
 
 import com.google.inject.AbstractModule;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeAction;
 import stroom.statistics.impl.sql.shared.RollUpBitMaskConversionAction;
 import stroom.statistics.impl.sql.shared.RollUpBitMaskPermGenerationAction;
+import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeAction;
 import stroom.task.api.TaskHandlerBinder;
 
 public class SQLStatisticRollupModule extends AbstractModule {

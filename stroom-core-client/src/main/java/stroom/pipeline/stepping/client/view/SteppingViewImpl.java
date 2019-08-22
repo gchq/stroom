@@ -25,10 +25,10 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
-import com.gwtplatform.mvp.client.LayerContainer;
 
 public class SteppingViewImpl extends ViewImpl implements SteppingView, RequiresResize, ProvidesResize {
     private final Widget widget;

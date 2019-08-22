@@ -18,7 +18,6 @@ package stroom.util.io;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.io.ByteCountInputStream;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

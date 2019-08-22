@@ -23,13 +23,13 @@ import stroom.cluster.task.api.ClusterCallEntry;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.DefaultClusterResultCollector;
 import stroom.cluster.task.api.TargetType;
-import stroom.util.EntityServiceExceptionUtil;
 import stroom.node.shared.FetchNodeStatusAction;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;
 
@@ -43,22 +43,22 @@ class FetchNodeStatusHandler extends AbstractTaskHandler<FetchNodeStatusAction, 
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final ClusterNodeManager clusterNodeManager;
     private final NodeServiceImpl nodeService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchNodeStatusHandler(final ClusterDispatchAsyncHelper dispatchHelper,
                            final ClusterNodeManager clusterNodeManager,
                            final NodeServiceImpl nodeService,
-                           final Security security) {
+                           final SecurityContext securityContext) {
         this.dispatchHelper = dispatchHelper;
         this.clusterNodeManager = clusterNodeManager;
         this.nodeService = nodeService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ResultList<NodeStatusResult> exec(final FetchNodeStatusAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             // Get pings back from all enabled nodes in the cluster.
             // Wait up to 5 seconds to get responses from each node.
             final DefaultClusterResultCollector<NodeStatusResult> collector = dispatchHelper

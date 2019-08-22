@@ -16,25 +16,25 @@
 
 package stroom.core.servlet;
 
-import stroom.util.shared.ResultList;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 
 class SessionListClusterHandler extends AbstractTaskHandler<SessionListClusterTask, ResultList<SessionDetails>> {
     private final SessionListService sessionListService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     SessionListClusterHandler(final SessionListService sessionListService,
-                              final Security security) {
+                              final SecurityContext securityContext) {
         this.sessionListService = sessionListService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public ResultList<SessionDetails> exec(final SessionListClusterTask task) {
-        return security.insecureResult(() -> sessionListService.find(null));
+        return securityContext.insecureResult(() -> sessionListService.find(null));
     }
 }

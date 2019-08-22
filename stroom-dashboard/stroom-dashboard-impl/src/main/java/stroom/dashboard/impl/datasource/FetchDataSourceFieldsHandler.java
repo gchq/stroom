@@ -16,9 +16,9 @@
 
 package stroom.dashboard.impl.datasource;
 
-import stroom.datasource.shared.FetchDataSourceFieldsAction;
 import stroom.datasource.shared.DataSourceFields;
-import stroom.security.api.Security;
+import stroom.datasource.shared.FetchDataSourceFieldsAction;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
@@ -26,20 +26,20 @@ import javax.inject.Inject;
 
 class FetchDataSourceFieldsHandler extends AbstractTaskHandler<FetchDataSourceFieldsAction, DataSourceFields> {
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     FetchDataSourceFieldsHandler(final DataSourceProviderRegistry dataSourceProviderRegistry,
-                                 final Security security) {
+                                 final SecurityContext securityContext) {
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public DataSourceFields exec(final FetchDataSourceFieldsAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
-            return security.useAsReadResult(() -> dataSourceProviderRegistry.getDataSourceProvider(action.getDataSourceRef())
+            return securityContext.useAsReadResult(() -> dataSourceProviderRegistry.getDataSourceProvider(action.getDataSourceRef())
                     .map(provider ->
                             new DataSourceFields(provider.getDataSource(action.getDataSourceRef()).getFields()))
                     .orElse(null));

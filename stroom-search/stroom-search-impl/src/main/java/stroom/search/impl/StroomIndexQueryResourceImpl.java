@@ -28,29 +28,27 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
-import stroom.search.impl.IndexDataSourceFieldUtil;
-import stroom.search.impl.LuceneSearchResponseCreatorManager;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 
 public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
     private final SearchResponseCreatorManager searchResponseCreatorManager;
     private final IndexStore indexStore;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     public StroomIndexQueryResourceImpl(final LuceneSearchResponseCreatorManager searchResponseCreatorManager,
                                         final IndexStore indexStore,
-                                        final Security security) {
+                                        final SecurityContext securityContext) {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.indexStore = indexStore;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Timed
     public DataSource getDataSource(final DocRef docRef) {
-        return security.useAsReadResult(() -> {
+        return securityContext.useAsReadResult(() -> {
             final IndexDoc index = indexStore.readDocument(docRef);
             return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index));
         });

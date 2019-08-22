@@ -20,7 +20,7 @@ package stroom.explorer.impl;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.ExplorerServiceMoveAction;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
@@ -29,17 +29,17 @@ import javax.inject.Inject;
 class ExplorerServiceMoveHandler
         extends AbstractTaskHandler<ExplorerServiceMoveAction, BulkActionResult> {
     private final ExplorerService explorerService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     ExplorerServiceMoveHandler(final ExplorerService explorerService,
-                               final Security security) {
+                               final SecurityContext securityContext) {
         this.explorerService = explorerService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public BulkActionResult exec(final ExplorerServiceMoveAction action) {
-        return security.secureResult(() -> explorerService.move(action.getDocRefs(), action.getDestinationFolderRef(), action.getPermissionInheritance()));
+        return securityContext.secureResult(() -> explorerService.move(action.getDocRefs(), action.getDestinationFolderRef(), action.getPermissionInheritance()));
     }
 }

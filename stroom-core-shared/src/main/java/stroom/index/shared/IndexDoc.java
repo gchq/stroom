@@ -106,6 +106,16 @@ public class IndexDoc extends Doc {
         this.fields = fields;
     }
 
+    @Deprecated
+    public void setIndexFields(final List<IndexField> fields) {
+        this.fields = fields;
+    }
+
+    @Deprecated
+    public List<IndexField> getIndexFields() {
+        return null;
+    }
+
     public String getVolumeGroupName() {
         return volumeGroupName;
     }

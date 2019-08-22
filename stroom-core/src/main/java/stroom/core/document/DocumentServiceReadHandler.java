@@ -20,7 +20,7 @@ package stroom.core.document;
 import stroom.docref.SharedObject;
 import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
@@ -30,20 +30,20 @@ class DocumentServiceReadHandler
         extends AbstractTaskHandler<DocumentServiceReadAction<SharedObject>, SharedObject> {
     private final DocumentService documentService;
     private final DocumentEventLog documentEventLog;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     DocumentServiceReadHandler(final DocumentService documentService,
                                final DocumentEventLog documentEventLog,
-                               final Security security) {
+                               final SecurityContext securityContext) {
         this.documentService = documentService;
         this.documentEventLog = documentEventLog;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public SharedObject exec(final DocumentServiceReadAction action) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             try {
                 final SharedObject doc = (SharedObject) documentService.readDocument(action.getDocRef());
                 documentEventLog.view(action.getDocRef(), null);

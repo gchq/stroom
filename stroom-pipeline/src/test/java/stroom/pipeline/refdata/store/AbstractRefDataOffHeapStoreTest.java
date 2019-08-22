@@ -23,9 +23,9 @@ import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.util.ByteSizeUnit;
+import stroom.util.pipeline.scope.PipelineScopeModule;
 
 import javax.inject.Inject;
 import java.io.IOException;

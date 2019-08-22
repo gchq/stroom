@@ -19,7 +19,7 @@ package stroom.dashboard.impl.script;
 
 import stroom.docref.DocRef;
 import stroom.script.shared.ScriptDoc;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServlet;
@@ -41,19 +41,19 @@ class ScriptServlet extends HttpServlet {
     private static final long serialVersionUID = 2912973031600581055L;
 
     private final ScriptStore scriptStore;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     ScriptServlet(final ScriptStore scriptStore,
-                  final Security security) {
+                  final SecurityContext securityContext) {
         this.scriptStore = scriptStore;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) {
         // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
-        security.useAsRead(() -> {
+        securityContext.useAsRead(() -> {
             try {
                 response.setContentType("text/javascript");
                 response.setCharacterEncoding("UTF-8");

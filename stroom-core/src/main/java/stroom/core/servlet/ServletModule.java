@@ -17,7 +17,6 @@
 package stroom.core.servlet;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.task.api.TaskHandlerBinder;

@@ -1,7 +1,6 @@
 package stroom.security.impl;
 
 import stroom.docref.DocRef;
-import stroom.util.shared.EntityServiceException;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.api.SecurityContext;
@@ -9,21 +8,21 @@ import stroom.security.shared.CopyPermissionsFromParentAction;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
 import java.util.Optional;
 
-
 public class CopyPermissionsFromParentHandler
         extends AbstractTaskHandler<CopyPermissionsFromParentAction, DocumentPermissions> {
 
-    private final DocumentPermissionService documentPermissionService;
+    private final DocumentPermissionServiceImpl documentPermissionService;
     private final SecurityContext securityContext;
     private final ExplorerNodeService explorerNodeService;
 
     @Inject
     CopyPermissionsFromParentHandler(
-            final DocumentPermissionService documentPermissionService,
+            final DocumentPermissionServiceImpl documentPermissionService,
             final SecurityContext securityContext,
             final ExplorerNodeService explorerNodeService) {
         this.documentPermissionService = documentPermissionService;

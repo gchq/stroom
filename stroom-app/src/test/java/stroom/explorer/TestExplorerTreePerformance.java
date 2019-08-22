@@ -16,8 +16,13 @@
 
 package stroom.explorer;
 
-import org.junit.Assert;
-import org.junit.Test;
+import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
+import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import stroom.app.guice.CoreModule;
+import stroom.cluster.impl.MockClusterModule;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.explorer.impl.ExplorerTreeNode;
@@ -25,14 +30,15 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
-import stroom.security.api.Security;
+import stroom.meta.statistics.impl.MockMetaStatisticsModule;
+import stroom.resource.impl.MockResourceModule;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserTokenUtil;
-import stroom.security.impl.DocumentPermissionService;
+import stroom.security.impl.DocumentPermissionServiceImpl;
+import stroom.security.impl.SecurityContextModule;
 import stroom.security.impl.UserService;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.User;
-import stroom.test.StroomIntegrationTest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -44,30 +50,16 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-//@ActiveProfiles(value = {
-//        StroomSpringProfiles.PROD,
-//        StroomSpringProfiles.IT,
-//        SecurityConfiguration.PROD_SECURITY})
-//@ContextConfiguration(classes = {
-//        DashboardConfiguration.class,
-//        EventLoggingConfiguration.class,
-//        IndexConfiguration.class,
-//        MetaDataStatisticConfiguration.class,
-//        PersistenceConfiguration.class,
-//        DictionaryConfiguration.class,
-//        PipelineConfiguration.class,
-//        RuleSetConfiguration.class,
-//        ScopeConfiguration.class,
-//        ScopeTestConfiguration.class,
-//        ScriptConfiguration.class,
-//        SearchConfiguration.class,
-//        SecurityConfiguration.class,
-//        ExplorerConfiguration.class,
-//        ServerComponentScanTestConfiguration.class,
-//        ServerConfiguration.class,
-//        StatisticsConfiguration.class,
-//        VisualisationConfiguration.class})
-public class TestExplorerTreePerformance extends StroomIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+@ExtendWith(GuiceExtension.class)
+@IncludeModule(CoreModule.class)
+@IncludeModule(MockClusterModule.class)
+@IncludeModule(MockMetaStatisticsModule.class)
+@IncludeModule(MockResourceModule.class)
+@IncludeModule(SecurityContextModule.class)
+@Disabled
+class TestExplorerTreePerformance {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestExplorerTreePerformance.class);
     private static final int MAX_CHILDREN = 200;
     private static final int MAX_TREE_DEPTH = 2;
@@ -79,15 +71,13 @@ public class TestExplorerTreePerformance extends StroomIntegrationTest {
     @Inject
     private UserService userService;
     @Inject
-    private DocumentPermissionService documentPermissionService;
+    private DocumentPermissionServiceImpl documentPermissionService;
     @Inject
     private SecurityContext securityContext;
-    @Inject
-    private Security security;
 
     @Test
-    public void testLargeTreePerformance() {
-        security.asProcessingUser(() -> {
+    void testLargeTreePerformance() {
+        securityContext.asProcessingUser(() -> {
             final FindExplorerNodeCriteria findExplorerNodeCriteria = new FindExplorerNodeCriteria(
                     new HashSet<>(),
                     new HashSet<>(),
@@ -103,7 +93,7 @@ public class TestExplorerTreePerformance extends StroomIntegrationTest {
             LOGGER.logDurationIfInfoEnabled(() -> {
                 explorerService.clear();
                 FetchExplorerNodeResult result = explorerService.getData(findExplorerNodeCriteria);
-                Assert.assertNull(result.getTreeStructure().getRoot());
+                assertThat(result.getTreeStructure().getRoot()).isNull();
             }, "Checked empty tree");
 
             final int count = (int) Math.pow(MAX_CHILDREN, MAX_TREE_DEPTH) + MAX_CHILDREN + 1;
@@ -130,14 +120,14 @@ public class TestExplorerTreePerformance extends StroomIntegrationTest {
             documentPermissionService.addPermission(lastChild.get().getDocRef().getUuid(), userGroup.getUuid(), DocumentPermissionNames.READ);
 
             LOGGER.logDurationIfInfoEnabled(() -> {
-                security.asUser(UserTokenUtil.create(user.getName(), null), () -> {
+                securityContext.asUser(UserTokenUtil.create(user.getName(), null), () -> {
                     // See what we get back with a user with limited permissions.
                     expandTree(findExplorerNodeCriteria, 3);
                 });
             }, "Expand all as user with empty cache");
 
             LOGGER.logDurationIfInfoEnabled(() -> {
-                security.asUser(UserTokenUtil.create(user.getName(), null), () -> {
+                securityContext.asUser(UserTokenUtil.create(user.getName(), null), () -> {
                     // See what we get back with a user with limited permissions.
                     expandTree(findExplorerNodeCriteria, 3);
                 });
@@ -153,7 +143,7 @@ public class TestExplorerTreePerformance extends StroomIntegrationTest {
         FetchExplorerNodeResult result = explorerService.getData(findExplorerNodeCriteria);
         count(result.getTreeStructure().getRoot(), result, count, lastChild);
 
-        Assert.assertEquals(expected, count.get());
+        assertThat(count.get()).isEqualTo(expected);
 
         return lastChild.get();
     }

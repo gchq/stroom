@@ -22,7 +22,7 @@ import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 
@@ -34,20 +34,20 @@ class DispatchPermissionChangeEventTaskHandler extends AbstractTaskHandler<Dispa
 
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final TargetNodeSetFactory targetNodeSetFactory;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     DispatchPermissionChangeEventTaskHandler(final ClusterDispatchAsyncHelper dispatchHelper,
                                              final TargetNodeSetFactory targetNodeSetFactory,
-                                             final Security security) {
+                                             final SecurityContext securityContext) {
         this.dispatchHelper = dispatchHelper;
         this.targetNodeSetFactory = targetNodeSetFactory;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final DispatchPermissionChangeEventTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             try {
                 // Get this node.
                 final String sourceNode = targetNodeSetFactory.getSourceNode();

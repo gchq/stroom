@@ -16,27 +16,23 @@
 
 package stroom.pipeline.cache;
 
+import stroom.cache.api.CacheManager;
 import stroom.docstore.shared.Doc;
 import stroom.security.api.DocumentPermissionCache;
-import stroom.util.shared.PermissionException;
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.cache.api.CacheManager;
+import stroom.util.shared.PermissionException;
 
 public abstract class AbstractDocPool<K extends Doc, V> extends AbstractPoolCache<K, V> implements Pool<K, V> {
     private final DocumentPermissionCache documentPermissionCache;
-    private final Security security;
     private final SecurityContext securityContext;
 
     public AbstractDocPool(final CacheManager cacheManager,
                            final String name,
                            final DocumentPermissionCache documentPermissionCache,
-                           final Security security,
                            final SecurityContext securityContext) {
         super(cacheManager, name);
         this.documentPermissionCache = documentPermissionCache;
-        this.security = security;
         this.securityContext = securityContext;
     }
 
@@ -58,7 +54,7 @@ public abstract class AbstractDocPool<K extends Doc, V> extends AbstractPoolCach
     @Override
     @SuppressWarnings("unchecked")
     protected V internalCreateValue(final Object key) {
-        return security.asProcessingUserResult(() -> {
+        return securityContext.asProcessingUserResult(() -> {
             final K doc = (K) key;
             return createValue(doc);
         });

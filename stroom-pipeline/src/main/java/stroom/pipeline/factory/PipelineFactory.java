@@ -32,7 +32,6 @@ import stroom.pipeline.reader.AbstractReaderElement;
 import stroom.pipeline.reader.InputStreamRecordDetectorElement;
 import stroom.pipeline.reader.ReaderRecordDetectorElement;
 import stroom.pipeline.reader.ReaderRecorder;
-import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
@@ -48,6 +47,7 @@ import stroom.pipeline.stepping.SteppingController;
 import stroom.pipeline.stepping.SteppingFilter;
 import stroom.pipeline.stepping.SteppingTask;
 import stroom.pipeline.writer.OutputRecorder;
+import stroom.util.pipeline.scope.PipelineScoped;
 
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;

@@ -43,7 +43,7 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
@@ -75,7 +75,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     private final LocationFactoryProxy locationFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final PipelineDataCache pipelineDataCache;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     private ErrorReceiverIdDecorator errorReceiver;
 
@@ -93,7 +93,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  final LocationFactoryProxy locationFactory,
                                  final ErrorReceiverProxy errorReceiverProxy,
                                  final PipelineDataCache pipelineDataCache,
-                                 final Security security) {
+                                 final SecurityContext securityContext) {
         this.streamStore = streamStore;
         this.pipelineFactory = pipelineFactory;
         this.pipelineStore = pipelineStore;
@@ -107,7 +107,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         this.refDataLoaderHolder = refDataLoaderHolder;
         this.errorReceiverProxy = errorReceiverProxy;
         this.pipelineDataCache = pipelineDataCache;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     /**
@@ -116,7 +116,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
      */
     @Override
     public VoidResult exec(final ReferenceDataLoadTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
 //            final List<RefStreamDefinition> loadedRefStreamDefinitions = new ArrayList<>();
             final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
             errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);

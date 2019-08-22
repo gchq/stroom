@@ -18,9 +18,9 @@ package stroom.core.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
-import stroom.core.db.migration._V07_00_00.docref._V07_00_00_DocRef;
 import stroom.core.db.migration._V07_00_00.doc.visualisation._V07_00_00_VisualisationDoc;
 import stroom.core.db.migration._V07_00_00.doc.visualisation._V07_00_00_VisualisationSerialiser;
+import stroom.core.db.migration._V07_00_00.docref._V07_00_00_DocRef;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

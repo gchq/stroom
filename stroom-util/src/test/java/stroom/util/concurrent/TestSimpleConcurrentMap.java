@@ -19,11 +19,8 @@ package stroom.util.concurrent;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import stroom.util.concurrent.SimpleConcurrentMap;
 
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSimpleConcurrentMap {
     @Test

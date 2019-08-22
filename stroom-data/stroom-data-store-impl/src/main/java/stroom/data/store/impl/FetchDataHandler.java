@@ -23,23 +23,23 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 
 class FetchDataHandler extends AbstractTaskHandler<FetchDataAction, AbstractFetchDataResult> {
-    private final Security security;
+    private final SecurityContext securityContext;
     private final DataFetcher dataFetcher;
 
     @Inject
@@ -54,7 +54,7 @@ class FetchDataHandler extends AbstractTaskHandler<FetchDataAction, AbstractFetc
                      final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                      final PipelineDataCache pipelineDataCache,
                      final StreamEventLog streamEventLog,
-                     final Security security,
+                     final SecurityContext securityContext,
                      final PipelineScopeRunnable pipelineScopeRunnable) {
         dataFetcher = new DataFetcher(streamStore,
                 feedProperties,
@@ -67,14 +67,14 @@ class FetchDataHandler extends AbstractTaskHandler<FetchDataAction, AbstractFetc
                 errorReceiverProxyProvider,
                 pipelineDataCache,
                 streamEventLog,
-                security,
+                securityContext,
                 pipelineScopeRunnable);
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public AbstractFetchDataResult exec(final FetchDataAction action) {
-        return security.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
+        return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
             final Long streamId = action.getStreamId();
 
             if (streamId != null) {

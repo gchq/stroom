@@ -17,7 +17,6 @@
 package stroom.pipeline.stepping;
 
 import org.xml.sax.Locator;
-import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -25,10 +24,11 @@ import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.xml.converter.ds3.DS3Reader;
 import stroom.task.api.TaskContext;
+import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Location;
-import stroom.pipeline.xml.converter.ds3.DS3Reader;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

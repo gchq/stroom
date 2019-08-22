@@ -7,7 +7,7 @@
   "partitionBy" : "MONTH",
   "partitionSize" : 1,
   "shardsPerPartition" : 1,
-  "indexFields" : [ {
+  "fields" : [ {
     "fieldType" : "ID",
     "fieldName" : "StreamId",
     "stored" : true,

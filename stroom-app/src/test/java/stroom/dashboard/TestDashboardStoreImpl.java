@@ -20,6 +20,8 @@ package stroom.dashboard;
 
 import org.junit.jupiter.api.Test;
 import stroom.dashboard.impl.DashboardStore;
+import stroom.dashboard.impl.script.ScriptStore;
+import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
@@ -29,10 +31,8 @@ import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.docref.DocRef;
-import stroom.dashboard.impl.script.ScriptStore;
 import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.inject.Inject;

@@ -16,8 +16,8 @@
 
 package stroom.pipeline.shared;
 
-import stroom.util.shared.Indicators;
 import stroom.docref.SharedObject;
+import stroom.util.shared.Indicators;
 
 public class SharedElementData implements SharedObject {
     private static final long serialVersionUID = -1614851794579868895L;

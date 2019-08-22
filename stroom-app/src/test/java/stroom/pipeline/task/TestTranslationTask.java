@@ -18,12 +18,12 @@ package stroom.pipeline.task;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.store.mock.MockStore;
 import stroom.core.dataprocess.PipelineDataProcessorTaskExecutor;
+import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.mock.MockStore;
 import stroom.meta.mock.MockMetaService;
 import stroom.meta.shared.Meta;
 import stroom.processor.api.DataProcessorTaskExecutor;
-import stroom.data.shared.StreamTypeNames;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.common.ComparisonHelper;

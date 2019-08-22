@@ -16,10 +16,10 @@
 
 package stroom.importexport.impl;
 
-import stroom.util.shared.DocRefs;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 import stroom.util.shared.SharedList;
 import stroom.util.zip.ZipUtil;

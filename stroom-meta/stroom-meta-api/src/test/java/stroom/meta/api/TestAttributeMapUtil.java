@@ -1,7 +1,6 @@
 package stroom.meta.api;
 
 import org.junit.jupiter.api.Test;
-import stroom.meta.api.AttributeMapUtil;
 
 import java.time.LocalDateTime;
 

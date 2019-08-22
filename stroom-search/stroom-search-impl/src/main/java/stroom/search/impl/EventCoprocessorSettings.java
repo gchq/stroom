@@ -17,8 +17,8 @@
 package stroom.search.impl;
 
 import stroom.docref.DocRef;
-import stroom.search.api.EventRef;
 import stroom.query.common.v2.CoprocessorSettings;
+import stroom.search.api.EventRef;
 
 class EventCoprocessorSettings implements CoprocessorSettings {
     private static final long serialVersionUID = -4916050910828000494L;

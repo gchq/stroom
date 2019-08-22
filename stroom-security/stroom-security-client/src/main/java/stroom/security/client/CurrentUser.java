@@ -32,8 +32,8 @@ import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.security.client.api.event.RequestLogoutEvent;
 import stroom.security.shared.CheckDocumentPermissionAction;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.UserAndPermissions;
 import stroom.security.shared.User;
+import stroom.security.shared.UserAndPermissions;
 
 import javax.inject.Singleton;
 import java.util.Set;

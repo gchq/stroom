@@ -18,7 +18,6 @@ package stroom.util.concurrent;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.concurrent.SimpleExecutor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

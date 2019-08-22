@@ -4,10 +4,10 @@
 package stroom.explorer.impl.db.jooq;
 
 
-import javax.annotation.Generated;
-
 import stroom.explorer.impl.db.jooq.tables.ExplorerNode;
 import stroom.explorer.impl.db.jooq.tables.ExplorerPath;
+
+import javax.annotation.Generated;
 
 
 /**

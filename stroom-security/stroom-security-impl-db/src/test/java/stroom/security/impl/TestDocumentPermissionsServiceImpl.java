@@ -41,7 +41,7 @@ class TestDocumentPermissionsServiceImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDocumentPermissionsServiceImpl.class);
 
     private static UserService userService;
-    private static DocumentPermissionService documentPermissionService;
+    private static DocumentPermissionServiceImpl documentPermissionService;
     private static UserGroupsCache userGroupsCache;
     private static UserDocumentPermissionsCache userDocumentPermissionsCache;
 
@@ -50,7 +50,7 @@ class TestDocumentPermissionsServiceImpl {
         final Injector injector = Guice.createInjector(new TestModule());
 
         userService = injector.getInstance(UserService.class);
-        documentPermissionService = injector.getInstance(DocumentPermissionService.class);
+        documentPermissionService = injector.getInstance(DocumentPermissionServiceImpl.class);
         userGroupsCache = injector.getInstance(UserGroupsCache.class);
         userDocumentPermissionsCache = injector.getInstance(UserDocumentPermissionsCache.class);
     }

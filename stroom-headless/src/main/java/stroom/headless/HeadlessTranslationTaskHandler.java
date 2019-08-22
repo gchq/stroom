@@ -17,6 +17,7 @@
 
 package stroom.headless;
 
+import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMapUtil;
@@ -46,8 +47,7 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.security.api.Security;
-import stroom.data.shared.StreamTypeNames;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
@@ -73,7 +73,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
     private final RecordErrorReceiver recordErrorReceiver;
     private final PipelineDataCache pipelineDataCache;
     private final MetaHolder metaHolder;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     HeadlessTranslationTaskHandler(final PipelineFactory pipelineFactory,
@@ -88,7 +88,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                                    final RecordErrorReceiver recordErrorReceiver,
                                    final PipelineDataCache pipelineDataCache,
                                    final MetaHolder metaHolder,
-                                   final Security security) {
+                                   final SecurityContext securityContext) {
         this.pipelineFactory = pipelineFactory;
         this.feedProperties = feedProperties;
         this.pipelineStore = pipelineStore;
@@ -101,12 +101,12 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
         this.recordErrorReceiver = recordErrorReceiver;
         this.pipelineDataCache = pipelineDataCache;
         this.metaHolder = metaHolder;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public VoidResult exec(final HeadlessTranslationTask task) {
-        return security.secureResult(() -> {
+        return securityContext.secureResult(() -> {
             try {
                 // Setup the error handler and receiver.
                 errorWriterProxy.setErrorWriter(task.getHeadlessFilter());

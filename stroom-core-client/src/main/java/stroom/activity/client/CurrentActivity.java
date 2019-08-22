@@ -22,7 +22,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.activity.shared.Activity;
-import stroom.activity.shared.Activity;
 import stroom.activity.shared.SetCurrentActivityAction;
 import stroom.dispatch.client.ClientDispatchAsync;
 

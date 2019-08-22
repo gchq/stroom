@@ -16,14 +16,14 @@
 
 package stroom.statistics.impl.sql.entity;
 
-import stroom.importexport.shared.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
-import stroom.statistics.impl.sql.shared.StatisticType;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
+import stroom.importexport.shared.ExternalFile;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
+import stroom.statistics.impl.sql.shared.StatisticType;
+import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;

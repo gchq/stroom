@@ -17,6 +17,7 @@
 
 package stroom.pipeline.task;
 
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SizeAwareInputStream;
 import stroom.docref.DocRef;
@@ -27,7 +28,6 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.state.MetaDataProvider;
 import stroom.pipeline.state.MetaHolder;
-import stroom.data.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
 
 import java.io.IOException;

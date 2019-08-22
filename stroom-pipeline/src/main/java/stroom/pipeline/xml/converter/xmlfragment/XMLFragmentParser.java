@@ -25,8 +25,8 @@ import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLReader;
 import stroom.pipeline.errorhandler.ProcessException;
-import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.pipeline.xml.converter.AbstractParser;
+import stroom.util.xml.SAXParserFactoryFactory;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;

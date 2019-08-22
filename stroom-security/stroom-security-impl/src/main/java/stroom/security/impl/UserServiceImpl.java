@@ -16,7 +16,6 @@
 
 package stroom.security.impl;
 
-import stroom.security.api.Security;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
@@ -30,17 +29,14 @@ import java.util.UUID;
 
 @Singleton
 class UserServiceImpl implements UserService {
-    private final Security security;
     private final SecurityContext securityContext;
     private final AuthenticationConfig securityConfig;
     private final UserDao userDao;
 
     @Inject
-    UserServiceImpl(final Security security,
-                    final SecurityContext securityContext,
+    UserServiceImpl(final SecurityContext securityContext,
                     final AuthenticationConfig securityConfig,
                     final UserDao userDao) {
-        this.security = security;
         this.securityContext = securityContext;
         this.securityConfig = securityConfig;
         this.userDao = userDao;
@@ -63,7 +59,7 @@ class UserServiceImpl implements UserService {
         user.setName(name);
         user.setGroup(isGroup);
 
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () ->
+        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () ->
                 userDao.create(user));
     }
 
@@ -91,13 +87,13 @@ class UserServiceImpl implements UserService {
     @Override
     public User update(User user) {
         AuditUtil.stamp(securityContext.getUserId(), user);
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () ->
+        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () ->
                 userDao.update(user));
     }
 
     @Override
     public Boolean delete(final String userUuid) {
-        security.secure(PermissionNames.MANAGE_USERS_PERMISSION, () ->
+        securityContext.secure(PermissionNames.MANAGE_USERS_PERMISSION, () ->
                 userDao.delete(userUuid));
         return true;
     }
@@ -124,13 +120,13 @@ class UserServiceImpl implements UserService {
 
     @Override
     public void addUserToGroup(final String userUuid, final String groupUuid) {
-        security.secure(PermissionNames.MANAGE_USERS_PERMISSION, () ->
+        securityContext.secure(PermissionNames.MANAGE_USERS_PERMISSION, () ->
                 userDao.addUserToGroup(userUuid, groupUuid));
     }
 
     @Override
     public void removeUserFromGroup(final String userUuid, final String groupUuid) {
-        security.secure(PermissionNames.MANAGE_USERS_PERMISSION, () ->
+        securityContext.secure(PermissionNames.MANAGE_USERS_PERMISSION, () ->
                 userDao.removeUserFromGroup(userUuid, groupUuid));
     }
 

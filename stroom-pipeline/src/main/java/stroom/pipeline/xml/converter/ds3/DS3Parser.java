@@ -23,13 +23,13 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
-import stroom.util.CharBuffer;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.Severity;
 import stroom.pipeline.xml.NamespaceConstants;
 import stroom.pipeline.xml.converter.AbstractParser;
 import stroom.pipeline.xml.converter.ds3.GroupFactory.MatchOrder;
 import stroom.pipeline.xml.converter.ds3.NodeFactory.NodeType;
+import stroom.util.CharBuffer;
+import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.Severity;
 
 import java.io.IOException;
 import java.util.concurrent.Executors;

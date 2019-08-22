@@ -18,7 +18,6 @@ package stroom.util.shared;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.shared.StringCriteria;
 
 import java.util.ArrayList;
 import java.util.List;

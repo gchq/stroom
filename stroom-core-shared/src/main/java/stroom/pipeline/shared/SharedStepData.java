@@ -16,8 +16,8 @@
 
 package stroom.pipeline.shared;
 
-import stroom.util.shared.Highlight;
 import stroom.docref.SharedObject;
+import stroom.util.shared.Highlight;
 
 import java.util.List;
 import java.util.Map;

@@ -324,7 +324,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
     }
 
     @Test
-    public void testBuildCriteria_invalidDateTermOnlyOneDate() {
+    void testBuildCriteria_invalidDateTermOnlyOneDate() {
         assertThatThrownBy(() -> {
             final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
@@ -346,7 +346,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
     }
 
     @Test
-    public void testBuildCriteria_validDateTermOtherTermMissingFieldName() {
+    void testBuildCriteria_validDateTermOtherTermMissingFieldName() {
         assertThatThrownBy(() -> {
             final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 

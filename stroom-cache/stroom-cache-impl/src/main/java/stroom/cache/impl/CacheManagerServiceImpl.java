@@ -18,15 +18,15 @@ package stroom.cache.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cache.api.CacheHolder;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.PageRequest;
-import stroom.cache.api.CacheHolder;
-import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.PageRequest;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

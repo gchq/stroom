@@ -20,7 +20,6 @@ import stroom.docref.SharedObject;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class UserAppPermissions implements SharedObject {
     private static final long serialVersionUID = 2374084842679322202L;

@@ -18,7 +18,6 @@ package stroom.statistics.impl.sql;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.statistics.impl.sql.SQLSafe;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

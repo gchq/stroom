@@ -214,7 +214,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testFolder() throws Exception {
+    void testFolder() throws Exception {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(MetaFields.FEED, Condition.IN_FOLDER, folder2)
                 .build();

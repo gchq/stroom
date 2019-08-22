@@ -4,11 +4,6 @@
 package stroom.cluster.lock.impl.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
-
-import javax.annotation.Generated;
-
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
@@ -21,11 +16,14 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
-
 import stroom.cluster.lock.impl.db.jooq.Indexes;
 import stroom.cluster.lock.impl.db.jooq.Keys;
 import stroom.cluster.lock.impl.db.jooq.Stroom;
 import stroom.cluster.lock.impl.db.jooq.tables.records.ClusterLockRecord;
+
+import javax.annotation.Generated;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**

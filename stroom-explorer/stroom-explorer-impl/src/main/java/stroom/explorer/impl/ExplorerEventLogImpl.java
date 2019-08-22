@@ -27,10 +27,10 @@ import event.logging.ObjectOutcome;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.explorer.shared.PermissionInheritance;
-import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.docref.DocRef;
-import stroom.security.api.Security;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.explorer.shared.PermissionInheritance;
+import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 
@@ -38,18 +38,18 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     ExplorerEventLogImpl(final StroomEventLoggingService eventLoggingService,
-                         final Security security) {
+                         final SecurityContext securityContext) {
         this.eventLoggingService = eventLoggingService;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
     @Override
     public void create(final String type, final String uuid, final String name, final DocRef folder, final PermissionInheritance permissionInheritance, final Exception e) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction("Create", "Creating", type, name, permissionInheritance);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
@@ -71,7 +71,7 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
 
     @Override
     public void copy(final DocRef document, final DocRef folder, final PermissionInheritance permissionInheritance, final Exception e) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction("Copy", "Copying", document, permissionInheritance);
                 final CopyMove copy = new CopyMove();
@@ -105,7 +105,7 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
 
     @Override
     public void move(final DocRef document, final DocRef folder, final PermissionInheritance permissionInheritance, final Exception e) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction("Move", "Moving", document, permissionInheritance);
                 final CopyMove move = new CopyMove();
@@ -139,7 +139,7 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
 
     @Override
     public void rename(final DocRef document, final String name, final Exception e) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction("Rename", "Renaming", document, null);
                 final CopyMove move = new CopyMove();
@@ -174,7 +174,7 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
 
     @Override
     public void delete(final DocRef document, final Exception e) {
-        security.insecure(() -> {
+        securityContext.insecure(() -> {
             try {
                 final Event event = createAction("Delete", "Deleting", document, null);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();

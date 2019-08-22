@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
-import stroom.util.io.StreamUtil;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.io.StreamUtil;
 import stroom.util.xml.XMLUtil;
 
 import javax.xml.transform.TransformerConfigurationException;

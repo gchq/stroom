@@ -26,14 +26,14 @@ import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.shared.data.PipelineReference;
-import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
 import stroom.pipeline.refdata.store.GenericRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
+import stroom.pipeline.shared.data.PipelineReference;
+import stroom.pipeline.state.MetaHolder;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 

@@ -16,7 +16,7 @@ import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
-import stroom.security.api.Security;
+import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -35,19 +35,19 @@ class SearchableService {
 
     private final SearchableProvider searchableProvider;
     private final SearchResponseCreatorManager searchResponseCreatorManager;
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
     SearchableService(final SearchableProvider searchableProvider,
                       final SearchableSearchResponseCreatorManager searchResponseCreatorManager,
-                      final Security security) {
+                      final SecurityContext securityContext) {
         this.searchableProvider = searchableProvider;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
-        this.security = security;
+        this.securityContext = securityContext;
     }
 
      DataSource getDataSource(final DocRef docRef) {
-        return security.useAsReadResult(() -> {
+        return securityContext.useAsReadResult(() -> {
             LOGGER.debug("getDataSource called for docRef {}", docRef);
             final Searchable searchable = searchableProvider.get(docRef);
             if (searchable == null) {
@@ -58,7 +58,7 @@ class SearchableService {
     }
 
     public SearchResponse search(final SearchRequest searchRequest) {
-        return security.useAsReadResult(() -> {
+        return securityContext.useAsReadResult(() -> {
             LOGGER.debug("search called for searchRequest {}", searchRequest);
 
             final DocRef docRef = Preconditions.checkNotNull(

@@ -16,25 +16,25 @@
 
 package stroom.dashboard.impl.datasource;
 
-import stroom.meta.shared.MetaFields;
 import stroom.datasource.shared.DataSourceFields;
 import stroom.datasource.shared.FetchFieldsAction;
-import stroom.security.api.Security;
+import stroom.meta.shared.MetaFields;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 
 
 class FetchFieldsHandler extends AbstractTaskHandler<FetchFieldsAction, DataSourceFields> {
-    private final Security security;
+    private final SecurityContext securityContext;
 
     @Inject
-    FetchFieldsHandler(final Security security) {
-        this.security = security;
+    FetchFieldsHandler(final SecurityContext securityContext) {
+        this.securityContext = securityContext;
     }
 
     @Override
     public DataSourceFields exec(final FetchFieldsAction task) {
-        return security.secureResult(() -> new DataSourceFields(MetaFields.getFields()));
+        return securityContext.secureResult(() -> new DataSourceFields(MetaFields.getFields()));
     }
 }

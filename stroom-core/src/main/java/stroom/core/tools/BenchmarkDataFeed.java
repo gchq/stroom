@@ -16,12 +16,12 @@
 
 package stroom.core.tools;
 
-import stroom.util.thread.StroomThreadGroup;
 import stroom.util.ArgsUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.CustomThreadFactory;
+import stroom.util.thread.StroomThreadGroup;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;

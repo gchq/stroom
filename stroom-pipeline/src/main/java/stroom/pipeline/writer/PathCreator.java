@@ -19,9 +19,9 @@ package stroom.pipeline.writer;
 import com.google.common.base.Strings;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.SearchIdHolder;
-import stroom.pipeline.state.MetaHolder;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;

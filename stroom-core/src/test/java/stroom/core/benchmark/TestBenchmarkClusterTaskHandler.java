@@ -18,10 +18,8 @@ package stroom.core.benchmark;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.core.benchmark.BenchmarkClusterConfig;
-import stroom.core.benchmark.BenchmarkClusterExecutor;
-import stroom.util.shared.Period;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.shared.Period;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -1,7 +1,6 @@
 package stroom.config.global.impl;
 
 import org.junit.jupiter.api.Test;
-import stroom.config.global.impl.FieldMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

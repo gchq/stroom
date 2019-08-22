@@ -18,11 +18,11 @@ package stroom.cluster.task.impl;
 
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
-import stroom.node.api.NodeInfo;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.cluster.task.api.TargetType;
+import stroom.node.api.NodeInfo;
 
 import javax.inject.Inject;
 import java.util.Collections;

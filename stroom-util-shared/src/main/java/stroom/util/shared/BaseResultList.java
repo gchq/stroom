@@ -16,10 +16,10 @@
 
 package stroom.util.shared;
 
+import stroom.docref.SharedObject;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import stroom.docref.SharedObject;
 
 /**
  * List that knows how big the whole set is.

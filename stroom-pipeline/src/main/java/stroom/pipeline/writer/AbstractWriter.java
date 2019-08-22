@@ -16,10 +16,6 @@
 
 package stroom.pipeline.writer;
 
-import stroom.util.io.EncodingWriter;
-import stroom.util.io.MultiOutputStream;
-import stroom.util.io.NullOutputStream;
-import stroom.util.io.OutputStreamWrapper;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.ErrorReceiver;
@@ -30,6 +26,10 @@ import stroom.pipeline.factory.HasTargets;
 import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.Target;
 import stroom.pipeline.filter.AbstractXMLFilter;
+import stroom.util.io.EncodingWriter;
+import stroom.util.io.MultiOutputStream;
+import stroom.util.io.NullOutputStream;
+import stroom.util.io.OutputStreamWrapper;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
