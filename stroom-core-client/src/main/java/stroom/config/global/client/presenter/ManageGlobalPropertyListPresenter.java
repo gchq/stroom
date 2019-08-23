@@ -55,7 +55,7 @@ public class ManageGlobalPropertyListPresenter
                 if (row == null) {
                     return null;
                 }
-                return row.getValue();
+                return row.getValue().toString();
             }
         }, "Value", 150);
 

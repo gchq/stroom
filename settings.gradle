@@ -46,6 +46,7 @@ include 'stroom-config:stroom-config-app'
 include 'stroom-config:stroom-config-common'
 include 'stroom-config:stroom-config-global-impl-db'
 include 'stroom-config:stroom-config-global-impl-db-jooq'
+include 'stroom-config:stroom-config-impl'
 
 // Core
 include 'stroom-core-client'

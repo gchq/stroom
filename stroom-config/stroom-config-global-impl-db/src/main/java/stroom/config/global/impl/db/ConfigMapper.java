@@ -174,11 +174,12 @@ public class ConfigMapper {
         final String defaultValueAsStr = getDefaultValue(defaultProp);
 
         // build a new ConfigProperty object from our Prop and our defaults
-        final ConfigProperty configProperty = new ConfigProperty();
+        final ConfigProperty<?> configProperty = new ConfigProperty(defaultProp.getValueClass());
         configProperty.setSource(ConfigProperty.SourceType.DEFAULT);
         configProperty.setName(fullPath);
 
         // Set both value and default to the default value defined in the object
+        configProperty.setValueType(defaultProp.getValueClass());
         configProperty.setValue(defaultValueAsStr);
         configProperty.setDefaultValue(defaultValueAsStr);
 
@@ -239,7 +240,6 @@ public class ConfigMapper {
                     default:
                         throw new RuntimeException("Should never get here");
                 }
-                configProperty.setEditable(false);
             }
         }
     }

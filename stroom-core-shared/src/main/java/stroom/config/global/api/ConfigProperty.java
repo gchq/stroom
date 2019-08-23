@@ -33,13 +33,15 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     private Long updateTimeMs;
     private String updateUser;
     private String name;
+
     // TODO now that properties are typed in AppConfig we should really be dealing with typed
     // values here so the UI can edit/display/validate them appropriately according to their type,
     // e.g. a custom UI control for managing List/Map/boolean types
-    private String value;
+    private Object value;
+    private Class valueType;
 
     // These fields are not saved to the database ... just
-    private String defaultValue;
+    private Object defaultValue;
     private SourceType source;
     private String description;
     private boolean editable;
@@ -49,6 +51,10 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
 
     public ConfigProperty() {
         // Required for Gwt
+    }
+
+    public ConfigProperty(final Class valueType) {
+        this.valueType = valueType;
     }
 
     public Integer getId() {
@@ -111,19 +117,27 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         this.name = name;
     }
 
-    public String getValue() {
+    public Object getValue() {
         return value;
     }
 
-    public void setValue(final String value) {
+    public Class getValueType() {
+        return valueType;
+    }
+
+    public void setValueType(final Class valueType) {
+        this.valueType = valueType;
+    }
+
+    public void setValue(final Object value) {
         this.value = value;
     }
 
-    public String getDefaultValue() {
+    public Object getDefaultValue() {
         return defaultValue;
     }
 
-    public void setDefaultValue(final String defaultValue) {
+    public void setDefaultValue(final Object defaultValue) {
         this.defaultValue = defaultValue;
     }
 

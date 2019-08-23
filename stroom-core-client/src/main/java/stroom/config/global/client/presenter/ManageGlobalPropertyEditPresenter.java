@@ -119,9 +119,9 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
         getView().setRequireRestart(getEntity().isRequireRestart());
         getView().setRequireUiRestart(getEntity().isRequireUiRestart());
         getView().getName().setText(getEntity().getName());
-        getView().getValue().setText(getEntity().getValue());
+        getView().getValue().setText(getEntity().getValue().toString());
         getView().getDescription().setText(getEntity().getDescription());
-        getView().getDefaultValue().setText(getEntity().getDefaultValue());
+        getView().getDefaultValue().setText(getEntity().getDefaultValue().toString());
         getView().getSource().setText(getEntity().getSource().getName());
     }
 

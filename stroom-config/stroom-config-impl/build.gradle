@@ -1,0 +1,10 @@
+ext.moduleName = 'stroom.config.impl'
+
+dependencies {
+    compile project(':stroom-util')
+    compile project(':stroom-core-shared')
+
+    compile libs.jackson_annotations
+    compile libs.swagger_annotations
+    compile libs.ws_rs_api
+}
