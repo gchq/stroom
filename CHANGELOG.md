@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1244** : Updated Dropwizard to version 1.3.14 to fix session based memory leak.
+
 * Backport of change from 6.1 that protects index shard searches finishing prematurely. 
 
 
