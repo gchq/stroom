@@ -163,7 +163,7 @@ public class ReferenceData {
                 // There may not be a provider for this stream type if we do not
                 // have any context data stream.
                 if (provider != null) {
-                    final StreamSourceInputStream inputStream = provider.getStream(streamNo);
+                    final StreamSourceInputStream inputStream = provider.getStream(streamNo - 1);
                     mapStore = getContextData(streamHolder.getStream(), inputStream, pipelineReference.getPipeline());
                 }
 

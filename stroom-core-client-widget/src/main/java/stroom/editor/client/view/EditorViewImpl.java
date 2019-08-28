@@ -89,8 +89,10 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     Image filterInactive;
     @UiField
     Image filterActive;
+
     private Indicators indicators;
     private AceEditorMode mode = AceEditorMode.XML;
+    private int firstLineNumber = 1;
 
     @Inject
     public EditorViewImpl() {
@@ -174,6 +176,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
     @Override
     public void setFirstLineNumber(final int firstLineNumber) {
+        this.firstLineNumber = firstLineNumber;
         editor.setFirstLineNumber(firstLineNumber);
     }
 
@@ -226,21 +229,26 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
     @Override
     public void setHighlights(final List<Highlight> highlights) {
-        if (highlights != null && highlights.size() > 0) {
-            final List<Marker> markers = new ArrayList<>();
-            int minLineNo = Integer.MAX_VALUE;
+        Scheduler.get().scheduleDeferred(() -> {
+            if (highlights != null && highlights.size() > 0) {
+                final List<Marker> markers = new ArrayList<>();
+                int minLineNo = Integer.MAX_VALUE;
 
-            for (final Highlight highlight : highlights) {
-                minLineNo = Math.min(minLineNo, highlight.getLineFrom());
-                final AceRange range = AceRange.create(highlight.getLineFrom() - 1, highlight.getColFrom() - 1, highlight.getLineTo() - 1, highlight.getColTo());
-                markers.add(new Marker(range, "hl", AceMarkerType.TEXT, false));
+                for (final Highlight highlight : highlights) {
+                    minLineNo = Math.min(minLineNo, highlight.getFrom().getLineNo());
+                    final AceRange range = AceRange.create(
+                            highlight.getFrom().getLineNo() - firstLineNumber,
+                            highlight.getFrom().getColNo() - 1,
+                            highlight.getTo().getLineNo() - firstLineNumber,
+                            highlight.getTo().getColNo() - 1);
+                    markers.add(new Marker(range, "hl", AceMarkerType.TEXT, false));
+                }
+                editor.setMarkers(markers);
+                editor.gotoLine(minLineNo - firstLineNumber + 1);
+            } else {
+                editor.setMarkers(null);
             }
-
-            editor.setMarkers(markers);
-            editor.gotoLine(minLineNo);
-        } else {
-            editor.setMarkers(null);
-        }
+        });
     }
 
     @Override

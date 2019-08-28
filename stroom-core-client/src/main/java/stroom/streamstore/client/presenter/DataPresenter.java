@@ -46,6 +46,7 @@ import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 import stroom.util.shared.Severity;
 import stroom.util.shared.SharedList;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.widget.tab.client.presenter.LayerContainer;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
@@ -89,6 +90,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private ClassificationUiHandlers classificationUiHandlers;
     private BeginSteppingHandler beginSteppingHandler;
     private boolean steppingSource;
+    private boolean formatOnLoad;
 
     @Inject
     public DataPresenter(final EventBus eventBus, final DataView view, final TextPresenter textPresenter,
@@ -200,6 +202,64 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         streamTypeOffsetRangeMap.clear();
         markerListPresenter.resetExpandedSeverities();
         update(fireEvents);
+    }
+
+    public void fetchData(final SourceLocation sourceLocation) {
+        this.highlights = new ArrayList<>();
+        this.highlights.add(sourceLocation.getHighlight());
+
+        this.highlightStreamId = sourceLocation.getStreamId();
+        this.highlightStreamNo = sourceLocation.getStreamNo();
+        this.highlightChildStreamType = sourceLocation.getChildStreamType();
+
+        // Set the source type that will be used when the page source is shown.
+        // Make sure the right page is shown when the source is displayed.
+        final long oldStreamNo = currentStreamRange.getOffset() + 1;
+        long newStreamNo = oldStreamNo;
+        final long oldPageOffset = currentPageRange.getOffset();
+        final long pageLength = currentPageRange.getLength();
+        int lineNo = 0;
+
+        // If we have a source highlight then use it.
+        if (highlights != null && highlights.size() > 0) {
+            final Highlight highlight = highlights.get(0);
+            newStreamNo = highlightStreamNo;
+            lineNo = highlight.getFrom().getLineNo();
+        }
+
+        final long page = lineNo / pageLength;
+        long newPageOffset = oldPageOffset % pageLength;
+        final long tmp = page * pageLength;
+        if (tmp + newPageOffset < lineNo) {
+            // We can show this page.
+            newPageOffset = tmp + newPageOffset;
+        } else {
+            // We need to show the page before.
+            newPageOffset = tmp - pageLength + newPageOffset;
+        }
+
+        // Update the stream source.
+        if (!EqualsUtil.isEquals(currentStreamId, highlightStreamId)
+                || !EqualsUtil.isEquals(currentChildStreamType, highlightChildStreamType) || oldStreamNo != newStreamNo
+                || oldPageOffset != newPageOffset) {
+            currentStreamRange = new OffsetRange<>(newStreamNo - 1, 1L);
+            currentPageRange = new OffsetRange<>(newPageOffset, pageLength);
+
+            this.currentStreamId = highlightStreamId;
+            this.currentChildStreamType = highlightChildStreamType;
+            streamTypeOffsetRangeMap.clear();
+            markerListPresenter.resetExpandedSeverities();
+//            currentStreamRange = new OffsetRange<>(sourceLocation.getStreamNo() - 1, 1L);
+//            currentPageRange = new OffsetRange<>((long) sourceLocation.getHighlight().getFrom().getLineNo() - 1, 1L);
+//            streamTypeOffsetRangeMap.clear();
+//            markerListPresenter.resetExpandedSeverities();
+
+//            fetchData(false, highlightStreamId, highlightChildStreamType);
+            update(false);
+        } else {
+            refreshHighlights(lastResult);
+            refreshMarkers(lastResult);
+        }
     }
 
     public void fetchData(final Stream stream) {
@@ -401,7 +461,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         pageRows.updateRowData(pageOffset, pageLength);
         pageRows.updateRowCount(pageCount, pageCountExact);
 
-        textPresenter.setText(data, true);
+        textPresenter.setText(data, formatOnLoad);
         textPresenter.setFirstLineNumber(startLineNo);
         textPresenter.setControlsVisible(playButtonVisible);
 
@@ -410,17 +470,17 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void refreshHighlights(final AbstractFetchDataResult result) {
-        int streamOffset = 0;
+        int streamNo = 0;
 
         if (result != null) {
-            streamOffset = result.getStreamRange().getOffset().intValue();
+            streamNo = result.getStreamRange().getOffset().intValue() + 1;
         }
 
         // Make sure we have a highlight section to add and that the stream id
         // matches that of the current page, and that the stream number matches
         // the stream number of the current page.
         if (highlights != null && currentStreamId != null && currentStreamId.equals(highlightStreamId)
-                && streamOffset == highlightStreamNo
+                && streamNo == highlightStreamNo
                 && EqualsUtil.isEquals(currentChildStreamType, highlightChildStreamType)) {
             // Set the content to be displayed in the source view with a
             // highlight.
@@ -453,7 +513,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         // Set the source type that will be used when the page source is shown.
         // Make sure the right page is shown when the source is displayed.
-        final long oldStreamNo = currentStreamRange.getOffset();
+        final long oldStreamNo = currentStreamRange.getOffset() + 1;
         long newStreamNo = oldStreamNo;
         final long oldPageOffset = currentPageRange.getOffset();
         final long pageLength = currentPageRange.getLength();
@@ -463,7 +523,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         if (highlights != null && highlights.size() > 0) {
             final Highlight highlight = highlights.get(0);
             newStreamNo = highlightStreamNo;
-            lineNo = highlight.getLineFrom();
+            lineNo = highlight.getFrom().getLineNo();
         }
 
         final long page = lineNo / pageLength;
@@ -481,7 +541,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         if (!EqualsUtil.isEquals(currentStreamId, highlightStreamId)
                 || !EqualsUtil.isEquals(currentChildStreamType, highlightChildStreamType) || oldStreamNo != newStreamNo
                 || oldPageOffset != newPageOffset) {
-            currentStreamRange = new OffsetRange<>(newStreamNo, 1L);
+            currentStreamRange = new OffsetRange<>(newStreamNo - 1, 1L);
             currentPageRange = new OffsetRange<>(newPageOffset, pageLength);
 
             fetchData(false, highlightStreamId, highlightChildStreamType);
@@ -502,6 +562,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     public void setSteppingSource(final boolean steppingSource) {
         this.steppingSource = steppingSource;
         errorMarkerMode = !steppingSource;
+    }
+
+    public void setFormatOnLoad(final boolean formatOnLoad) {
+        this.formatOnLoad = formatOnLoad;
     }
 
     public interface DataView extends View {

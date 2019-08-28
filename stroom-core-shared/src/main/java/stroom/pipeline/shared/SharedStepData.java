@@ -16,29 +16,27 @@
 
 package stroom.pipeline.shared;
 
-import stroom.util.shared.Highlight;
 import stroom.util.shared.SharedObject;
 
-import java.util.List;
 import java.util.Map;
 
 public class SharedStepData implements SharedObject {
     private static final long serialVersionUID = 8988595868257312081L;
 
-    private List<Highlight> sourceHighlights;
+    private SourceLocation sourceLocation;
     private Map<String, SharedElementData> elementMap;
 
     public SharedStepData() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public SharedStepData(final List<Highlight> sourceHighlights, final Map<String, SharedElementData> elementMap) {
-        this.sourceHighlights = sourceHighlights;
+    public SharedStepData(final SourceLocation sourceLocation, final Map<String, SharedElementData> elementMap) {
+        this.sourceLocation = sourceLocation;
         this.elementMap = elementMap;
     }
 
-    public List<Highlight> getSourceHighlights() {
-        return sourceHighlights;
+    public SourceLocation getSourceLocation() {
+        return sourceLocation;
     }
 
     public SharedElementData getElementData(final String elementId) {

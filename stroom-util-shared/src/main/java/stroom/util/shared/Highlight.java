@@ -17,86 +17,58 @@
 package stroom.util.shared;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class Highlight implements Serializable, Comparable<Highlight> {
     private static final long serialVersionUID = -2327935798577052482L;
 
-    private int streamFrom;
-    private int lineFrom;
-    private int colFrom;
-    private int streamTo;
-    private int lineTo;
-    private int colTo;
+    private Location from;
+    private Location to;
 
     public Highlight() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public Highlight(final int streamFrom, final int lineFrom, final int colFrom, final int streamTo, final int lineTo,
-                     final int colTo) {
-        this.streamFrom = streamFrom;
-        this.lineFrom = lineFrom;
-        this.colFrom = colFrom;
-        this.streamTo = streamTo;
-        this.lineTo = lineTo;
-        this.colTo = colTo;
+    public Highlight(final Location from, final Location to) {
+        this.from = from;
+        this.to = to;
     }
 
-    public int getStreamFrom() {
-        return streamFrom;
+    public Location getFrom() {
+        return from;
     }
 
-    public int getLineFrom() {
-        return lineFrom;
+    public void setFrom(final Location from) {
+        this.from = from;
     }
 
-    public int getColFrom() {
-        return colFrom;
+    public Location getTo() {
+        return to;
     }
 
-    public int getStreamTo() {
-        return streamTo;
-    }
-
-    public int getLineTo() {
-        return lineTo;
-    }
-
-    public int getColTo() {
-        return colTo;
-    }
-
-    @Override
-    public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(streamFrom);
-        builder.append(lineFrom);
-        builder.append(colFrom);
-        return builder.toHashCode();
+    public void setTo(final Location to) {
+        this.to = to;
     }
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        } else if (o == null || !(o instanceof Highlight)) {
-            return false;
-        }
-
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         final Highlight highlight = (Highlight) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(streamFrom, highlight.streamFrom);
-        builder.append(lineFrom, highlight.lineFrom);
-        builder.append(colFrom, highlight.colFrom);
-        return builder.isEquals();
+        return Objects.equals(from, highlight.from) &&
+                Objects.equals(to, highlight.to);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(from, to);
     }
 
     @Override
     public int compareTo(final Highlight o) {
         final CompareBuilder builder = new CompareBuilder();
-        builder.append(streamFrom, o.streamFrom);
-        builder.append(lineFrom, o.lineFrom);
-        builder.append(colFrom, o.colFrom);
+        builder.append(from, o.from);
+        builder.append(to, o.to);
         return builder.toComparison();
     }
 
@@ -104,17 +76,9 @@ public class Highlight implements Serializable, Comparable<Highlight> {
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("[");
-        sb.append(streamFrom);
-        sb.append(":");
-        sb.append(lineFrom);
-        sb.append(":");
-        sb.append(colFrom);
+        sb.append(from);
         sb.append("][");
-        sb.append(streamTo);
-        sb.append(":");
-        sb.append(lineTo);
-        sb.append(":");
-        sb.append(colTo);
+        sb.append(to);
         sb.append("]");
         return sb.toString();
     }

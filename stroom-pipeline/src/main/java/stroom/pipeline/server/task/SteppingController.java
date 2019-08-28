@@ -19,14 +19,15 @@ package stroom.pipeline.server.task;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.state.StreamHolder;
+import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Location;
 import stroom.util.spring.StroomScope;
@@ -34,9 +35,7 @@ import stroom.util.task.TaskMonitor;
 import stroom.xml.converter.ds3.DS3Reader;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Component
@@ -135,7 +134,7 @@ public class SteppingController {
      */
     public boolean endRecord(final Locator locator, final long currentRecordNo) {
         // Get the current stream number.
-        final long currentStreamNo = streamHolder.getStreamNo() + 1;
+        final long currentStreamNo = streamHolder.getStreamNo();
 
         // Update the progress monitor.
         if (getTaskMonitor() != null) {
@@ -149,7 +148,7 @@ public class SteppingController {
         moveSourceLocation(locator);
 
         // Figure out what the highlighted portion of the input stream should be.
-        final Highlight highlight = createHighlight((int) currentStreamNo);
+        final Highlight highlight = createHighlight();
 
         // First we need to check that the record is ok WRT the location of the
         // record, i.e. is it after the last record found if stepping forward
@@ -204,7 +203,7 @@ public class SteppingController {
 
     }
 
-    Highlight createHighlight(final int currentStreamNo) {
+    Highlight createHighlight() {
         // Record the current source location.
         final Location start = locationFactory.create(currentStartLocation.getLineNo(), currentStartLocation.getColNo());
         final Location end = locationFactory.create(currentEndLocation.getLineNo(), currentEndLocation.getColNo());
@@ -214,20 +213,21 @@ public class SteppingController {
         final int endLineNo = end.getLineNo() > 1 ? end.getLineNo() : 1;
         final int endColNo = end.getColNo() > 1 ? end.getColNo() : 1;
 
-        return new Highlight(currentStreamNo, startLineNo, startColNo, currentStreamNo, endLineNo, endColNo);
+        return new Highlight(new DefaultLocation(startLineNo, startColNo), new DefaultLocation(endLineNo, endColNo));
     }
 
     StepData createStepData(final Highlight highlight) {
-        List<Highlight> highlights;
-        if (highlight != null) {
-            highlights = new ArrayList<>(1);
-            highlights.add(highlight);
-        } else {
-            highlights = new ArrayList<>(0);
+        SourceLocation sourceLocation = null;
+        if (stepLocation != null) {
+            sourceLocation = new SourceLocation(stepLocation.getStreamId(),
+                    streamHolder.getChildStreamType(),
+                    stepLocation.getStreamNo(),
+                    stepLocation.getRecordNo(),
+                    highlight);
         }
 
         final StepData stepData = new StepData();
-        stepData.setSourceHighlights(highlights);
+        stepData.setSourceLocation(sourceLocation);
 
         // Store the current data and reset for each filter.
         final LoggingErrorReceiver errorReceiver = getErrorReceiver();
@@ -267,7 +267,7 @@ public class SteppingController {
      */
     private boolean isRecordPositionOk(final long currentRecordNo) {
         // final PipelineStepTask request = controller.getRequest();
-        final long currentStreamNo = streamHolder.getStreamNo() + 1;
+        final long currentStreamNo = streamHolder.getStreamNo();
 
         // If we aren't using a step location as a reference point to look
         // before or after then the location will always be ok.

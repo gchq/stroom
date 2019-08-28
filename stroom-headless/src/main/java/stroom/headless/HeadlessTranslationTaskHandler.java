@@ -261,12 +261,12 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
         }
 
         @Override
-        public StreamSourceInputStream getStream(final long streamNo) {
+        public StreamSourceInputStream getStream(final long streamOffset) {
             return inputStream;
         }
 
         @Override
-        public RASegmentInputStream getSegmentInputStream(final long streamNo) {
+        public RASegmentInputStream getSegmentInputStream(final long streamOffset) {
             return null;
         }
 

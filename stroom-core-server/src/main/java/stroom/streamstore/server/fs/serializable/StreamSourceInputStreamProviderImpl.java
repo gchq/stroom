@@ -37,7 +37,7 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
     private InputStream segmentIndex;
     private StreamCloser streamCloser;
 
-    public StreamSourceInputStreamProviderImpl(final StreamSource streamSource) throws IOException {
+    public StreamSourceInputStreamProviderImpl(final StreamSource streamSource) {
         this.streamSource = streamSource;
     }
 
@@ -78,10 +78,10 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
     }
 
     @Override
-    public StreamSourceInputStream getStream(final long streamNo) throws IOException {
+    public StreamSourceInputStream getStream(final long streamOffset) throws IOException {
         // Check bounds.
         final long segmentCount = getSegmentCount();
-        if (streamNo < 0 || streamNo >= segmentCount) {
+        if (streamOffset < 0 || streamOffset >= segmentCount) {
             return null;
         }
 
@@ -90,12 +90,12 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
         // If this stream has segments, include the requested segment
         // otherwise we will use the whole stream.
         if (segmentCount > 0) {
-            segmentInputStream.include(streamNo);
+            segmentInputStream.include(streamOffset);
         }
 
         // Calculate the size of this stream.
-        final long entryByteOffsetStart = entryByteOffsetStart(segmentInputStream, streamNo);
-        final long entryByteOffsetEnd = entryByteOffsetEnd(segmentInputStream, streamNo);
+        final long entryByteOffsetStart = entryByteOffsetStart(segmentInputStream, streamOffset);
+        final long entryByteOffsetEnd = entryByteOffsetEnd(segmentInputStream, streamOffset);
         final long size = entryByteOffsetEnd - entryByteOffsetStart;
 
         // Create the wrapped input stream.
@@ -105,10 +105,10 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
     }
 
     @Override
-    public RASegmentInputStream getSegmentInputStream(final long streamNo) throws IOException {
+    public RASegmentInputStream getSegmentInputStream(final long streamOffset) throws IOException {
         // Check bounds.
         final long segmentCount = getSegmentCount();
-        if (streamNo < 0 || streamNo >= segmentCount) {
+        if (streamOffset < 0 || streamOffset >= segmentCount) {
             return null;
         }
 
@@ -117,12 +117,12 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
         // If this stream has segments, include the requested segment
         // otherwise we will use the whole stream.
         if (segmentCount > 0) {
-            segmentInputStream.include(streamNo);
+            segmentInputStream.include(streamOffset);
         }
 
         // Calculate the size of this stream.
-        final long entryByteOffsetStart = entryByteOffsetStart(segmentInputStream, streamNo);
-        final long entryByteOffsetEnd = entryByteOffsetEnd(segmentInputStream, streamNo);
+        final long entryByteOffsetStart = entryByteOffsetStart(segmentInputStream, streamOffset);
+        final long entryByteOffsetEnd = entryByteOffsetEnd(segmentInputStream, streamOffset);
         // final long size = entryByteOffsetEnd - entryByteOffsetStart;
 
         final RASegmentInputStream child = new RASegmentInputStream(getData(), getSegmentIndex(), entryByteOffsetStart,
@@ -130,14 +130,14 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
         return child;
     }
 
-    private long entryByteOffsetStart(final RASegmentInputStream segmentInputStream, final long streamNo)
+    private long entryByteOffsetStart(final RASegmentInputStream segmentInputStream, final long streamOffset)
             throws IOException {
-        return segmentInputStream.byteOffset(streamNo);
+        return segmentInputStream.byteOffset(streamOffset);
     }
 
-    private long entryByteOffsetEnd(final RASegmentInputStream segmentInputStream, final long streamNo)
+    private long entryByteOffsetEnd(final RASegmentInputStream segmentInputStream, final long streamOffset)
             throws IOException {
-        long offset = segmentInputStream.byteOffset(streamNo + 1);
+        long offset = segmentInputStream.byteOffset(streamOffset + 1);
         if (offset == -1) {
             offset = ((SeekableInputStream) getData()).getSize();
         }

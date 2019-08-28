@@ -38,6 +38,7 @@ public class StreamHolder implements Holder {
     @Resource
     private StreamCloser streamCloser;
     private Stream stream;
+    private StreamType childStreamType;
     private long streamNo;
 
     public Stream getStream() {
@@ -46,6 +47,16 @@ public class StreamHolder implements Holder {
 
     public void setStream(final Stream stream) {
         this.stream = stream;
+    }
+
+    public StreamType getChildStreamType() {
+        return childStreamType;
+    }
+
+    public void setChildStreamType(final StreamType childStreamType) {
+        if (childStreamType != StreamType.META && childStreamType != StreamType.CONTEXT) {
+            this.childStreamType = childStreamType;
+        }
     }
 
     public void addProvider(final StreamSource source) throws IOException {

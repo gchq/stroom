@@ -159,10 +159,10 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
         }
 
         private void consumeHighlightedSection(final Highlight highlight, final Consumer<Character> consumer) {
-            final int lineFrom = highlight.getLineFrom();
-            final int colFrom = highlight.getColFrom();
-            final int lineTo = highlight.getLineTo();
-            final int colTo = highlight.getColTo();
+            final int lineFrom = highlight.getFrom().getLineNo();
+            final int colFrom = highlight.getFrom().getColNo();
+            final int lineTo = highlight.getTo().getLineNo();
+            final int colTo = highlight.getTo().getColNo();
 
             boolean found = false;
             boolean inRecord = false;
@@ -316,10 +316,10 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
         }
 
         private void consumeHighlightedSection(final Highlight highlight, final Consumer<Byte> consumer) {
-            final int lineFrom = highlight.getLineFrom();
-            final int colFrom = highlight.getColFrom();
-            final int lineTo = highlight.getLineTo();
-            final int colTo = highlight.getColTo();
+            final int lineFrom = highlight.getFrom().getLineNo();
+            final int colFrom = highlight.getFrom().getColNo();
+            final int lineTo = highlight.getTo().getLineNo();
+            final int colTo = highlight.getTo().getColNo();
 
             boolean found = false;
             boolean inRecord = false;

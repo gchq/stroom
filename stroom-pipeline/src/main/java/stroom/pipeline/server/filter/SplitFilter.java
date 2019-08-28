@@ -19,16 +19,21 @@ package stroom.pipeline.server.filter;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.state.LocationHolder;
+import stroom.pipeline.state.StreamHolder;
 import stroom.util.spring.StroomScope;
 import stroom.xml.event.Event;
 import stroom.xml.event.simple.StartElement;
 import stroom.xml.event.simple.StartPrefixMapping;
+
+import javax.inject.Inject;
 
 /**
  * Splits a single XML instance into separate XML instances that contain
@@ -113,6 +118,24 @@ public class SplitFilter extends AbstractXMLFilter {
      */
     private boolean hasFiredEvents;
 
+    private final StreamHolder streamHolder;
+    private final LocationHolder locationHolder;
+    private Locator locator;
+    private boolean storeLocations = true;
+    private SourceLocationFactory sourceLocationFactory;
+
+    public SplitFilter() {
+        this.streamHolder = null;
+        this.locationHolder = null;
+    }
+
+    @Inject
+    SplitFilter(final StreamHolder streamHolder,
+                final LocationHolder locationHolder) {
+        this.streamHolder = streamHolder;
+        this.locationHolder = locationHolder;
+    }
+
     @Override
     public void endProcessing() {
         super.endProcessing();
@@ -131,8 +154,17 @@ public class SplitFilter extends AbstractXMLFilter {
         afterRoot = -1;
         depth = 0;
         count = 0;
+        if (sourceLocationFactory != null) {
+            sourceLocationFactory.reset();
+        }
 
         super.startStream();
+    }
+
+    @Override
+    public void setDocumentLocator(final Locator locator) {
+        super.setDocumentLocator(locator);
+        this.locator = locator;
     }
 
     /**
@@ -287,6 +319,10 @@ public class SplitFilter extends AbstractXMLFilter {
         }
 
         if (depth == splitDepth) {
+            if (storeLocations && locationHolder != null && streamHolder != null) {
+                getSourceLocationFactory().storeLocation();
+            }
+
             buffer = true;
 
             if (count == splitCount || afterRoot < 0) {
@@ -294,6 +330,7 @@ public class SplitFilter extends AbstractXMLFilter {
                 count = 0;
                 // Fire all end events.
                 fireEndEvents(length, 0);
+
                 super.endDocument();
             } else {
                 // If the count has not yet reached the split count then we only
@@ -303,6 +340,17 @@ public class SplitFilter extends AbstractXMLFilter {
         }
 
         depth--;
+    }
+
+    private SourceLocationFactory getSourceLocationFactory() {
+        if (sourceLocationFactory == null) {
+            if (locator.getClass().getSimpleName().contains("DS")) {
+                sourceLocationFactory = new DSSourceLocationFactory(streamHolder, locationHolder, locator, splitCount);
+            } else {
+                sourceLocationFactory = new XmlSourceLocationFactory(streamHolder, locationHolder, locator, splitCount);
+            }
+        }
+        return sourceLocationFactory;
     }
 
     /**
@@ -393,5 +441,10 @@ public class SplitFilter extends AbstractXMLFilter {
     @PipelineProperty(description = "The number of elements at the split depth to count before the XML is split.", defaultValue = "10000")
     public void setSplitCount(final int splitCount) {
         this.splitCount = splitCount;
+    }
+
+    @PipelineProperty(description = "Should this split filter store processing locations.", defaultValue = "true")
+    public void setStoreLocations(final boolean storeLocations) {
+        this.storeLocations = storeLocations;
     }
 }
