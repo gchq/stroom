@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1246** : Removed elastic search document type, menu items and filter.
+
 * Backport of change from 6.1 that protects index shard searches finishing prematurely. 
 
 
