@@ -35,7 +35,7 @@ class DSSourceLocationFactory implements SourceLocationFactory {
 
     @Override
     public void storeLocation() {
-        if (storeLocations && locationHolder != null && streamHolder != null) {
+        if (storeLocations && locationHolder != null && streamHolder != null && streamHolder.getStream() != null) {
             recordNo++;
 
             final Location location = new DefaultLocation(locator.getLineNumber(), locator.getColumnNumber());
