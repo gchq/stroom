@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1246** : Removed elastic search document type, menu items and filter.
+
+* Backport of change from 6.1 that protects index shard searches finishing prematurely. 
+
 * Issue **#1214** : Fixed issue where the max results setting in dashboard tables was not always being obeyed. Also fixed some dashboard table result page size issues.
 
 * Issue **#1238** : During proxy clean task we no longer show a failed attempt to delete an empty directory as an error as this condition is expected.

@@ -42,7 +42,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.dictionary.impl.DictionaryTaskHandlerModule());
         install(new stroom.docstore.impl.db.DBPersistenceModule());
         install(new stroom.docstore.impl.DocStoreModule());
-        install(new stroom.elastic.impl.ElasticModule());
+//        install(new stroom.elastic.impl.ElasticModule());
         install(new stroom.elastic.impl.http.HttpElasticModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.explorer.impl.db.ExplorerDbModule());
