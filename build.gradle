@@ -87,7 +87,7 @@ ext.versions = [
         stroomAuth        : 'v1.0-beta.8',
         stroomExpression  : 'v2.0.8',
         stroomProxyApi    : 'v5.1.2',
-        stroomQuery       : 'v4.0-beta.36', // same version for both stroom-query-api and stroom-query-common
+        stroomQuery       : 'v4.0-beta.37', // same version for both stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
@@ -107,7 +107,7 @@ ext.versions = [
 
         //------------3rd-party------------
         curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
-        dropwizard        : '1.3.8', // used to set the dropwizard-bom version, that controls lots of dependency versions
+        dropwizard        : '1.3.14', // used to set the dropwizard-bom version, that controls lots of dependency versions
         guice4            : '4.2.0',
         gwt               : '2.8.2',
         hikari            : '3.2.0',
