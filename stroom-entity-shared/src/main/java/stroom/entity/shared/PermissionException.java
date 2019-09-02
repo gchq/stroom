@@ -58,6 +58,10 @@ public class PermissionException extends EntityServiceException {
                 "User does not have the required permission (" + permission + ")");
     }
 
+    public String getUser() {
+        return user;
+    }
+
     @Override
     public String getMessage() {
         String message = getGenericMessage();

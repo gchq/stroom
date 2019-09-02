@@ -18,6 +18,7 @@
 package stroom.pipeline.server;
 
 import org.springframework.context.annotation.Scope;
+import stroom.entity.shared.PermissionException;
 import stroom.pipeline.server.factory.PipelineDataValidator;
 import stroom.pipeline.server.factory.PipelineStackLoader;
 import stroom.pipeline.shared.FetchPipelineDataAction;
@@ -62,21 +63,25 @@ public class FetchPipelineDataHandler extends AbstractTaskHandler<FetchPipelineD
 
         // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
-            final List<PipelineEntity> pipelines = pipelineStackLoader.loadPipelineStack(pipelineEntity);
-            final SharedList<PipelineData> result = new SharedList<>(pipelines.size());
+            try {
+                final List<PipelineEntity> pipelines = pipelineStackLoader.loadPipelineStack(pipelineEntity);
+                final SharedList<PipelineData> result = new SharedList<>(pipelines.size());
 
-            final Map<String, PipelineElementType> elementMap = PipelineDataMerger.createElementMap();
-            for (final PipelineEntity pipe : pipelines) {
-                final PipelineData pipelineData = pipe.getPipelineData();
+                final Map<String, PipelineElementType> elementMap = PipelineDataMerger.createElementMap();
+                for (final PipelineEntity pipe : pipelines) {
+                    final PipelineData pipelineData = pipe.getPipelineData();
 
-                // Validate the pipeline data and add element and property type
-                // information.
-                final SourcePipeline source = new SourcePipeline(pipe);
-                pipelineDataValidator.validate(source, pipelineData, elementMap);
-                result.add(pipelineData);
+                    // Validate the pipeline data and add element and property type
+                    // information.
+                    final SourcePipeline source = new SourcePipeline(pipe);
+                    pipelineDataValidator.validate(source, pipelineData, elementMap);
+                    result.add(pipelineData);
+                }
+
+                return result;
+            } catch (final PermissionException e) {
+                throw new PermissionException(e.getUser(), e.getMessage().replaceAll("permission to read", "permission to use"));
             }
-
-            return result;
         }
     }
 }
