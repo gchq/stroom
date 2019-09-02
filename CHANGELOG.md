@@ -6,9 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1256** : Fix error caused when logging data source name when downloading search results.
+
 * Issue **#399** : Fix for error message when stepping that said user needed `read` permission on parent pipeline and not just `use`.
 
-* Issue **#1242** : Fix for pipeline corruption caused when moving elements back to inherited parents. 
+* Issue **#1242** : Fix for pipeline corruption caused when moving elements back to inherited parents.
 
 * Issue **#1244** : Updated Dropwizard to version 1.3.14 to fix session based memory leak.
 
