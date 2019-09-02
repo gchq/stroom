@@ -1,6 +1,6 @@
 dependencies {
     compile project(':stroom-core-server')
-    compile project(':stroom-core-shared')
+//    compile project(':stroom-core-shared')
     compile project(':stroom-util-shared')
     compile project(':stroom-pipeline')
     compile project(':stroom-connectors')
