@@ -184,12 +184,12 @@ public class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceD
                 // Loop over the stream boundaries and process each
                 // sequentially.
                 final long streamCount = mainProvider.getStreamCount();
-                for (long streamNo = 0; streamNo < streamCount && !taskMonitor.isTerminated(); streamNo++) {
-                    streamHolder.setStreamNo(streamNo);
-                    streamLocationFactory.setStreamNo(streamNo + 1);
+                for (long streamOffset = 0; streamOffset < streamCount && !taskMonitor.isTerminated(); streamOffset++) {
+                    streamHolder.setStreamNo(streamOffset + 1);
+                    streamLocationFactory.setStreamNo(streamOffset + 1);
 
                     // Get the stream.
-                    final StreamSourceInputStream inputStream = mainProvider.getStream(streamNo);
+                    final StreamSourceInputStream inputStream = mainProvider.getStream(streamOffset);
 
                     // Process the boundary.
                     try {

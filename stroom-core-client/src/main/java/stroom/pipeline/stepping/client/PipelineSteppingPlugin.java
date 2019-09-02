@@ -28,6 +28,7 @@ import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
@@ -62,18 +63,19 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
     public void onBegin(final BeginPipelineSteppingEvent event) {
         if (event.getStreamId() != null) {
             if (event.getPipelineRef() != null) {
-                choosePipeline(event.getPipelineRef(), event.getStreamId(), event.getEventId(),
+                choosePipeline(event.getPipelineRef(),
+                        event.getStepLocation(),
                         event.getChildStreamType());
             } else {
                 // If we don't have a pipeline id then try to guess one for the
                 // supplied stream.
-                dispatcher.exec(new GetPipelineForStreamAction(event.getStreamId(), event.getChildStreamId())).onSuccess(result -> choosePipeline(result, event.getStreamId(), event.getEventId(),
-                        event.getChildStreamType()));
+                dispatcher.exec(new GetPipelineForStreamAction(event.getStreamId(), event.getChildStreamId())).onSuccess(result -> choosePipeline(result, event.getStepLocation(), event.getChildStreamType()));
             }
         }
     }
 
-    private void choosePipeline(final SharedDocRef initialPipelineRef, final long streamId, final long eventId,
+    private void choosePipeline(final SharedDocRef initialPipelineRef,
+                                final StepLocation stepLocation,
                                 final StreamType childStreamType) {
         final EntityChooser chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Step With");
@@ -83,7 +85,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
             final DocRef pipeline = chooser.getSelectedEntityReference();
             if (pipeline != null) {
                 final FindStreamAttributeMapCriteria streamAttributeMapCriteria = new FindStreamAttributeMapCriteria();
-                streamAttributeMapCriteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(streamId);
+                streamAttributeMapCriteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(stepLocation.getStreamId());
                 streamAttributeMapCriteria.getFetchSet().add(Feed.ENTITY_TYPE);
                 streamAttributeMapCriteria.getFetchSet().add(StreamType.ENTITY_TYPE);
                 streamAttributeMapCriteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
@@ -92,7 +94,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                 dispatcher.exec(new EntityServiceFindAction<FindStreamAttributeMapCriteria, StreamAttributeMap>(streamAttributeMapCriteria)).onSuccess(result -> {
                     if (result != null && result.size() == 1) {
                         final StreamAttributeMap row = result.get(0);
-                        openEditor(pipeline, row.getStream(), eventId, childStreamType);
+                        openEditor(pipeline, stepLocation, row.getStream(), childStreamType);
                     }
                 });
             }
@@ -105,10 +107,12 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         chooser.show();
     }
 
-    private void openEditor(final DocRef pipeline, final Stream stream, final long eventId,
+    private void openEditor(final DocRef pipeline,
+                            final StepLocation stepLocation,
+                            final Stream stream,
                             final StreamType childStreamType) {
         final SteppingContentTabPresenter editor = editorProvider.get();
-        editor.read(pipeline, stream, eventId, childStreamType);
+        editor.read(pipeline, stepLocation, stream, childStreamType);
         contentManager.open(editor, editor, editor);
     }
 }

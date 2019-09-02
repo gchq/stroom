@@ -497,7 +497,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                                 outputIndicators, elementData.isFormatInput(), elementData.isFormatOutput());
                         SharedStepData newStepData = newResponse.getStepData();
                         if (newStepData == null) {
-                            newStepData = new SharedStepData(stepResponse.getStepData().getSourceHighlights(),
+                            newStepData = new SharedStepData(stepResponse.getStepData().getSourceLocation(),
                                     new HashMap<>());
                         }
                         newStepData.getElementMap().put(elementId, newElementData);

@@ -92,7 +92,7 @@ public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Ho
             final StreamSourceInputStreamProvider provider = streamHolder.getProvider(StreamType.META);
             if (provider != null) {
                 // Get the input stream.
-                final StreamSourceInputStream inputStream = provider.getStream(lastMetaStreamNo);
+                final StreamSourceInputStream inputStream = provider.getStream(lastMetaStreamNo - 1);
 
                 // Make sure we got an input stream.
                 if (inputStream != null) {

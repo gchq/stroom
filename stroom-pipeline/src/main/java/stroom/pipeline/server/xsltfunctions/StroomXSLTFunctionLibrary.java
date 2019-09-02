@@ -54,6 +54,20 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("col-from")
+                .library(this)
+                .delegateClass(ColFrom.class)
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("col-to")
+                .library(this)
+                .delegateClass(ColTo.class)
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("current-time")
                 .library(this)
                 .delegateClass(CurrentTime.class)
@@ -215,6 +229,20 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("line-from")
+                .library(this)
+                .delegateClass(LineFrom.class)
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("line-to")
+                .library(this)
+                .delegateClass(LineTo.class)
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("link")
                 .library(this)
                 .minArgs(1)
@@ -226,6 +254,13 @@ public class StroomXSLTFunctionLibrary {
                 })
                 .delegateClass(Link.class)
                 .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("location")
+                .library(this)
+                .delegateClass(Location.class)
+                .resultType(SequenceType.NODE_SEQUENCE)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
@@ -321,6 +356,13 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("record-no")
+                .library(this)
+                .delegateClass(RecordNo.class)
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("search-id")
                 .library(this)
                 .delegateClass(SearchId.class)
@@ -331,6 +373,13 @@ public class StroomXSLTFunctionLibrary {
                 .functionName("stream-id")
                 .library(this)
                 .delegateClass(StreamId.class)
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("stream-no")
+                .library(this)
+                .delegateClass(StreamNo.class)
                 .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
     }

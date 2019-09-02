@@ -45,6 +45,7 @@ import stroom.entity.shared.SharedDocRef;
 import stroom.entity.shared.Sort.Direction;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
@@ -127,6 +128,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         setInSlot(DATA, dataPresenter);
 
         dataPresenter.setBeginSteppingHandler(this);
+        dataPresenter.setFormatOnLoad(true);
 
         // Process
         if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
@@ -626,7 +628,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                 }
             }
 
-            BeginPipelineSteppingEvent.fire(this, streamId, 0L, childStreamId, childStreamType, pipelineRef);
+            BeginPipelineSteppingEvent.fire(this, streamId, childStreamId, childStreamType, new StepLocation(streamId, 1, 0), pipelineRef);
         }
     }
 

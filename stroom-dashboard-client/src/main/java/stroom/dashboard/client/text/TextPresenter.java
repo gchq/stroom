@@ -17,6 +17,8 @@
 package stroom.dashboard.client.text;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -34,13 +36,17 @@ import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.HtmlPresenter;
+import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.Stream;
+import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Highlight;
 
@@ -105,6 +111,16 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
             if (isHtml) {
                 if (htmlPresenter == null) {
                     htmlPresenter = htmlPresenterProvider.get();
+                    htmlPresenter.getWidget().addDomHandler(event -> {
+                        final Element target = event.getNativeEvent().getEventTarget().cast();
+                        final String link = target.getAttribute("link");
+                        if (link != null) {
+                            final Hyperlink hyperlink = Hyperlink.create(link);
+                            if (hyperlink != null) {
+                                HyperlinkEvent.fire(TextPresenter.this, hyperlink);
+                            }
+                        }
+                    }, ClickEvent.getType());
                 }
 
                 getView().setContent(htmlPresenter.getView());
@@ -172,8 +188,9 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                             }
 
                             if (found) {
-                                final Highlight hl = new Highlight(1, lineNo, colNo, 1, lineNo,
-                                        colNo + highlightLength);
+                                final Highlight hl = new Highlight(
+                                        new DefaultLocation(lineNo, colNo),
+                                        new DefaultLocation(lineNo, colNo + highlightLength));
                                 highlights.add(hl);
 
                                 i += highlightLength;
@@ -376,7 +393,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     @Override
     public void beginStepping() {
-        BeginPipelineSteppingEvent.fire(this, currentStreamId, currentEventId, null, null, null);
+        BeginPipelineSteppingEvent.fire(this, currentStreamId, null, null, new StepLocation(currentStreamId, 1, currentEventId), null);
     }
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {

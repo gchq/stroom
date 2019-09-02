@@ -27,7 +27,7 @@ import java.io.IOException;
 public interface StreamSourceInputStreamProvider extends Closeable {
     long getStreamCount() throws IOException;
 
-    StreamSourceInputStream getStream(final long streamNo) throws IOException;
+    StreamSourceInputStream getStream(final long streamOffset) throws IOException;
 
-    RASegmentInputStream getSegmentInputStream(final long streamNo) throws IOException;
+    RASegmentInputStream getSegmentInputStream(final long streamOffset) throws IOException;
 }

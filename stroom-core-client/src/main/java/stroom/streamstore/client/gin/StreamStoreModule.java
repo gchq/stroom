@@ -22,6 +22,7 @@ import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
+import stroom.streamstore.client.presenter.DataPopupSupport;
 import stroom.streamstore.client.presenter.DataPresenter;
 import stroom.streamstore.client.presenter.DataPresenter.DataView;
 import stroom.streamstore.client.presenter.EntityChoicePresenter;
@@ -53,6 +54,7 @@ public class StreamStoreModule extends PluginModule {
     @Override
     protected void configure() {
         bind(StreamTypeUiManager.class).asEagerSingleton();
+        bind(DataPopupSupport.class).asEagerSingleton();
 
         bindPresenterWidget(ClassificationWrapperPresenter.class, ClassificationWrapperView.class,
                 ClassificationWrapperViewImpl.class);

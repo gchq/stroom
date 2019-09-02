@@ -487,12 +487,13 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
 
             // Get the stream providers.
             streamHolder.setStream(stream);
+            streamHolder.setChildStreamType(streamType);
             streamHolder.addProvider(streamSource);
             streamHolder.addProvider(streamSource.getChildStream(StreamType.META));
             streamHolder.addProvider(streamSource.getChildStream(StreamType.CONTEXT));
 
             // Get the main stream provider.
-            final StreamSourceInputStreamProvider mainProvider = streamHolder.getProvider(streamSource.getType());
+            final StreamSourceInputStreamProvider mainProvider = streamHolder.getProvider(streamType);
 
             try {
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
@@ -526,7 +527,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
                 boolean done = controller.isFound();
                 while (!done && streamNo > 0 && streamNo <= streamCount && !taskMonitor.isTerminated()) {
                     // Set the stream number.
-                    streamHolder.setStreamNo(streamNo - 1);
+                    streamHolder.setStreamNo(streamNo);
                     streamLocationFactory.setStreamNo(streamNo);
 
                     // Process the boundary making sure to use the right

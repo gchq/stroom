@@ -357,7 +357,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                 // Loop over the stream boundaries and process each
                 // sequentially.
                 final long streamCount = mainProvider.getStreamCount();
-                for (long streamNo = 0; streamNo < streamCount && !taskMonitor.isTerminated(); streamNo++) {
+                for (long streamOffset = 0; streamOffset < streamCount && !taskMonitor.isTerminated(); streamOffset++) {
                     InputStream inputStream;
 
                     // If the task requires specific events to be processed then
@@ -365,7 +365,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                     final String data = streamTask.getData();
                     if (data != null && data.length() > 0) {
                         final List<InclusiveRange> ranges = InclusiveRanges.rangesFromString(data);
-                        final RASegmentInputStream raSegmentInputStream = mainProvider.getSegmentInputStream(streamNo);
+                        final RASegmentInputStream raSegmentInputStream = mainProvider.getSegmentInputStream(streamOffset);
                         raSegmentInputStream.include(0);
                         for (final InclusiveRange range : ranges) {
                             for (long i = range.getMin(); i <= range.getMax(); i++) {
@@ -377,7 +377,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
                     } else {
                         // Get the stream.
-                        inputStream = mainProvider.getStream(streamNo);
+                        inputStream = mainProvider.getStream(streamOffset);
                     }
 
                     // Get the appropriate encoding for the stream type.
@@ -408,8 +408,8 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                                 pipeline.startProcessing();
                             }
 
-                            streamHolder.setStreamNo(streamNo);
-                            streamLocationFactory.setStreamNo(streamNo + 1);
+                            streamHolder.setStreamNo(streamOffset + 1);
+                            streamLocationFactory.setStreamNo(streamOffset + 1);
 
                             // Process the boundary.
                             try {
