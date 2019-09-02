@@ -186,7 +186,9 @@ include 'stroom-receive:stroom-receive-rules-impl'
 // Search
 include 'stroom-search:stroom-expression-matcher'
 include 'stroom-search:stroom-search-api'
+include 'stroom-search:stroom-search-extraction'
 include 'stroom-search:stroom-search-impl'
+include 'stroom-search:stroom-search-solr'
 include 'stroom-search:stroom-searchable-api'
 include 'stroom-search:stroom-searchable-impl'
 

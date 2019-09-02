@@ -118,7 +118,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 @Override
                 public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                     try {
-                        if (file.getFileName().toString().endsWith(".node")) {
+                        final String fileName = file.getFileName().toString();
+                        if (fileName.endsWith(".node") && !fileName.startsWith(".")) {
                             performImport(file, confirmMap, importMode);
                         }
                     } catch (final RuntimeException e) {
@@ -163,8 +164,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, filePrefix + "*")) {
                     stream.forEach(file -> {
                         try {
-                            if (!file.equals(nodeFile)) {
-                                final String key = file.getFileName().toString().substring(filePrefix.length() + 1);
+                            final String fileName = file.getFileName().toString();
+                            if (!file.equals(nodeFile) && !fileName.startsWith(".")) {
+                                final String key = fileName.substring(filePrefix.length() + 1);
                                 final byte[] bytes = Files.readAllBytes(file);
                                 dataMap.put(key, bytes);
                             }

@@ -1,0 +1,92 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:t="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:view="urn:import:stroom.widget.layout.client.view">
+    <ui:style>
+        .label {
+        width: 110px;
+        margin-top: 2px;
+        vertical-align: top;
+        white-space: nowrap;
+        }
+
+        .retentionExpressionPanel {
+        width: 100%;
+        height: 100%;
+        border: solid 1px #c5cde2;
+        background-color: white;
+        }
+    </ui:style>
+    <view:ResizeSimplePanel styleName="stroom-control-page" width="100%" height="100%">
+        <g:DockLayoutPanel unit="PX" width="100%" height="100%">
+            <g:north size="440">
+                <g:Grid styleName="stroom-control-grid">
+                    <g:row>
+                        <g:cell>Description:</g:cell>
+                        <g:customCell>
+                            <g:TextArea ui:field="description" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Collection:</g:cell>
+                        <g:customCell>
+                            <g:TextBox ui:field="collection" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Instance Type:</g:cell>
+                        <g:customCell>
+                            <l:ItemListBox ui:field="instanceType"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Solr URLs:</g:cell>
+                        <g:customCell>
+                            <g:TextArea ui:field="solrUrls" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Use ZK:</g:cell>
+                        <g:customCell>
+                            <t:TickBox ui:field="useZk" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>ZK Hosts:</g:cell>
+                        <g:customCell>
+                            <g:TextArea ui:field="zkHosts" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>ZK Path:</g:cell>
+                        <g:customCell>
+                            <g:TextArea ui:field="zkPath" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell></g:cell>
+                        <g:customCell>
+                            <g:Button ui:field="testConnection" text="Test Connection" width="200px"/>
+                        </g:customCell>
+                    </g:row>
+                </g:Grid>
+            </g:north>
+            <g:center>
+                <g:DockLayoutPanel unit="PX" width="100%"
+                                   height="100%">
+                    <g:north size="20">
+                        <g:Label text="Data Retention Expression (matching data will be deleted):"
+                                 addStyleNames="{style.label}"
+                                 width="100%"/>
+                    </g:north>
+                    <g:center>
+                        <view:ResizeSimplePanel ui:field="retentionExpressionPanel"
+                                                styleName="{style.retentionExpressionPanel}"/>
+                    </g:center>
+                </g:DockLayoutPanel>
+            </g:center>
+        </g:DockLayoutPanel>
+    </view:ResizeSimplePanel>
+</ui:UiBinder> 

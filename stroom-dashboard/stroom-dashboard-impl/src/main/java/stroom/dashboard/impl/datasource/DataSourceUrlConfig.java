@@ -8,6 +8,7 @@ import javax.inject.Singleton;
 @Singleton
 public class DataSourceUrlConfig implements IsConfig {
     private String index = "http://127.0.0.1:8080/api/stroom-index/v2";
+    private String solrIndex = "http://127.0.0.1:8080/api/stroom-solr-index/v2";
     private String statisticStore = "http://127.0.0.1:8080/api/sqlstatistics/v2";
     private String searchable = "http://127.0.0.1:8080/api/searchable/v2";
     private String annotations = "http://IP_ADDRESS/annotationsService/queryApi/v1";
@@ -20,6 +21,15 @@ public class DataSourceUrlConfig implements IsConfig {
 
     public void setIndex(final String index) {
         this.index = index;
+    }
+
+    @JsonPropertyDescription("The URL for the Solr index search service")
+    public String getSolrIndex() {
+        return solrIndex;
+    }
+
+    public void setSolrIndex(final String solrIndex) {
+        this.solrIndex = solrIndex;
     }
 
     @JsonPropertyDescription("The URL for the SQL based statistics service")

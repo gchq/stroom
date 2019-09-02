@@ -16,22 +16,21 @@
 
 package stroom.search.impl.shard;
 
-import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.search.extraction.Values;
 import stroom.search.impl.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.search.impl.shard.IndexShardSearchTask.ResultReceiver;
-import stroom.search.impl.taskqueue.AbstractTaskProducer;
-import stroom.search.impl.taskqueue.TaskExecutor;
-import stroom.search.impl.taskqueue.TaskProducer;
 import stroom.task.shared.ThreadPool;
 import stroom.task.shared.ThreadPoolImpl;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
+import stroom.util.task.taskqueue.AbstractTaskProducer;
+import stroom.util.task.taskqueue.TaskExecutor;
+import stroom.util.task.taskqueue.TaskProducer;
 
 import javax.inject.Provider;
 import java.util.List;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
@@ -60,10 +59,10 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
     private final AtomicInteger tasksRemaining = new AtomicInteger();
     private final AtomicInteger tasksRequested = new AtomicInteger();
     private final CountDownLatch completionLatch = new CountDownLatch(1);
-    private final LinkedBlockingQueue<Optional<Val[]>> storedData;
+    private final LinkedBlockingQueue<Values> storedData;
 
     public IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
-                                        final LinkedBlockingQueue<Optional<Val[]>> storedData,
+                                        final LinkedBlockingQueue<Values> storedData,
                                         final List<Long> shards,
                                         final IndexShardQueryFactory queryFactory,
                                         final String[] fieldNames,
@@ -78,16 +77,7 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
         this.errorReceiver = errorReceiver;
 
         // Create a deque to capture stored data from the index that can be used by coprocessors.
-        final ResultReceiver resultReceiver = (shardId, values) -> {
-            try {
-                storedData.put(Optional.of(values));
-            } catch (final InterruptedException e) {
-                error(e.getMessage(), e);
-
-                // Continue to interrupt this thread.
-                Thread.currentThread().interrupt();
-            }
-        };
+        final ResultReceiver resultReceiver = (shardId, values) -> putValues(values);
 
         for (final Long shard : shards) {
             final IndexShardSearchTask task = new IndexShardSearchTask(queryFactory, shard, fieldNames, resultReceiver, errorReceiver, hitCount);
@@ -107,6 +97,17 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
 
         // Tell the supplied executor that we are ready to deliver tasks.
         signalAvailable();
+    }
+
+    private void putValues(final Values values) {
+        try {
+            storedData.put(values);
+        } catch (final InterruptedException e) {
+            error(e.getMessage(), e);
+
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
+        }
     }
 
     /**
@@ -177,7 +178,7 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
         tasksRemaining.set(0);
 
         try {
-            storedData.put(Optional.empty());
+            storedData.put(Values.COMPLETE);
         } catch (final InterruptedException e) {
             LAMBDA_LOGGER.debug(e::getMessage, e);
 

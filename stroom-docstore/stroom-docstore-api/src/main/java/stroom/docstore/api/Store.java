@@ -9,6 +9,7 @@ import stroom.util.shared.Message;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 public interface Store<D extends Doc> extends DocumentActionHandler<D> {
     ////////////////////////////////////////////////////////////////////////
@@ -46,8 +47,8 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
             ImportState.ImportMode importMode);
 
     Map<String, byte[]> exportDocument(DocRef docRef,
-                                       boolean omitAuditFields,
-                                       List<Message> messageList);
+                                       List<Message> messageList,
+                                       Function<D, D> filter);
 
     List<DocRef> list();
 

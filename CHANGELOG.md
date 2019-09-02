@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add data retention feature and index optimisation to Solr indexes.
+
+* Initial support for Solr indexing and search.
+
 * Issue **#1244** : Updated Dropwizard to version 1.3.14 to fix session based memory leak.
 
 * Issue **#1246** : Removed elastic search document type, menu items and filter.

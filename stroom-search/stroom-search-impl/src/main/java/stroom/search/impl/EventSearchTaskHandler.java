@@ -16,8 +16,6 @@
 
 package stroom.search.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CompletionState;
@@ -28,6 +26,8 @@ import stroom.search.api.EventRefs;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 
 
 class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventRefs> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EventSearchTaskHandler.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventSearchTaskHandler.class);
 
     private final NodeInfo nodeInfo;
     private final SearchConfig searchConfig;
@@ -104,7 +104,7 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
                 // Start asynchronous search execution.
                 searchResultCollector.start();
 
-                LOGGER.debug("Started searchResultCollector {}", searchResultCollector);
+                LOGGER.debug(() -> "Started searchResultCollector " + searchResultCollector);
 
                 // Wait for completion or termination
                 searchResultCollector.awaitCompletion();
@@ -147,8 +147,8 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
                         .map(String::trim)
                         .map(Integer::valueOf)
                         .collect(Collectors.toList()));
-            } catch (Exception e) {
-                LOGGER.warn(e.getMessage());
+            } catch (RuntimeException e) {
+                LOGGER.warn(e::getMessage);
             }
         }
         return Sizes.create(Integer.MAX_VALUE);

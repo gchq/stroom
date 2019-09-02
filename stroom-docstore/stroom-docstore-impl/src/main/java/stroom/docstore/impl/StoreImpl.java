@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.Doc;
@@ -67,7 +68,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 //    private volatile long lastUpdate;
 
     @Inject
-    public StoreImpl(final Persistence persistence,
+    StoreImpl(final Persistence persistence,
                      final SecurityContext securityContext,
                      final DocumentSerialiser2<D> serialiser,
                      final String type,
@@ -190,7 +191,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         return read(docRef.getUuid());
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public D writeDocument(final D document) {
         return update(document);
@@ -251,7 +251,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                     importState.setState(State.NEW);
                 } else {
                     final List<String> updatedFields = importState.getUpdatedFieldList();
-                    checkForUpdatedFields(docRef, dataMap, true, updatedFields);
+                    checkForUpdatedFields(docRef, dataMap, new AuditFieldFilter<>(), updatedFields);
                     if (updatedFields.size() == 0) {
                         importState.setState(State.EQUAL);
                     }
@@ -285,8 +285,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     @Override
     public Map<String, byte[]> exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
+                                              final List<Message> messageList,
+                                              final Function<D, D> filter) {
         Map<String, byte[]> data = Collections.emptyMap();
 
         final String uuid = docRef.getUuid();
@@ -300,11 +300,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 if (document == null) {
                     throw new IOException("Unable to read " + docRef);
                 }
-
-                if (omitAuditFields) {
-                    removeAuditFields(document);
-                }
-
+                document = filter.apply(document);
                 data = serialiser.write(document);
             }
         } catch (final IOException e) {
@@ -316,7 +312,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     private void checkForUpdatedFields(final DocRef docRef,
                                        final Map<String, byte[]> dataMap,
-                                       final boolean omitAuditFields,
+                                       final Function<D, D> filter,
                                        final List<String> updatedFieldList) {
         try {
             D existingDocument = read(docRef.getUuid());
@@ -324,12 +320,10 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 throw new RuntimeException("Unable to read " + docRef);
             }
 
-            final D newDocument = serialiser.read(dataMap);
+            D newDocument = serialiser.read(dataMap);
 
-            if (omitAuditFields) {
-                removeAuditFields(existingDocument);
-                removeAuditFields(newDocument);
-            }
+            existingDocument = filter.apply(existingDocument);
+            newDocument = filter.apply(newDocument);
 
             try {
                 final Method[] methods = existingDocument.getClass().getMethods();
@@ -354,13 +348,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         } catch (final RuntimeException | IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
-    }
-
-    private void removeAuditFields(D doc) {
-        doc.setCreateTime(null);
-        doc.setCreateUser(null);
-        doc.setUpdateTime(null);
-        doc.setUpdateUser(null);
     }
 
     ////////////////////////////////////////////////////////////////////////

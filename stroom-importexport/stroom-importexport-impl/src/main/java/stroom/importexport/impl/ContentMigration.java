@@ -69,10 +69,18 @@ public class ContentMigration {
                             hasNodes.set(true);
                             final String fileStem = fileName.substring(0, fileName.lastIndexOf("."));
                             final Properties properties = PropertiesSerialiser.read(Files.newInputStream(file));
-                            final String newFileStem = createFilePrefix(properties.getProperty("name"), properties.getProperty("type"), properties.getProperty("uuid"));
 
-                            if (!fileStem.equals(newFileStem)) {
-                                renameFiles(file.getParent(), fileStem, newFileStem);
+                            final String name = properties.getProperty("name");
+                            final String type = properties.getProperty("type");
+                            final String uuid = properties.getProperty("uuid");
+
+                            if (name != null && type != null && uuid != null) {
+                                final String newFileStem = createFilePrefix(name, type, uuid);
+                                if (!fileStem.equals(newFileStem)) {
+                                    renameFiles(file.getParent(), fileStem, newFileStem);
+                                }
+                            } else {
+                                LOGGER.error("Bad properties file " + fileName);
                             }
                         }
                     } catch (final RuntimeException | IOException e) {

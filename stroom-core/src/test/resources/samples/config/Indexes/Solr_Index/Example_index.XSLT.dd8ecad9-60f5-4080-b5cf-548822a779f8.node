@@ -1,0 +1,4 @@
+name=Example index
+path=Indexes/Solr Index
+type=XSLT
+uuid=dd8ecad9-60f5-4080-b5cf-548822a779f8

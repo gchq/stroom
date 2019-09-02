@@ -59,7 +59,7 @@ class TestHessian {
         final String nodeName = "node";
 
         final List<IndexField> indexFields = createIndexFields();
-        final IndexField[] fields = indexFields.toArray(new IndexField[0]);
+        final String[] fields = indexFields.stream().map(IndexField::getFieldName).toArray(String[]::new);
 
         final Field field = new Field(
                 "test",
