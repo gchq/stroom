@@ -30,8 +30,10 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.streamstore.shared.StreamType;
+import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class TestPipelineModel {
@@ -295,44 +297,177 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testMove() {
+    public void testMove1() {
         final DefaultPipelineTreeBuilder builder = new DefaultPipelineTreeBuilder();
 
-        final PipelineElementType sourceElementType = new PipelineElementType("Source", null,
-                new String[]{PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, null);
-
-        final PipelineElementType combinedParserElementType = new PipelineElementType("CombinedParser", Category.PARSER,
-                new String[]{PipelineElementType.ROLE_PARSER,
-                        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
-                        PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
-                        PipelineElementType.ROLE_HAS_CODE}, null);
-
-        final PipelineElementType findReplaceElementType = new PipelineElementType("FindReplaceFilter", Category.READER,
-                new String[]{PipelineElementType.ROLE_TARGET,
-                        PipelineElementType.ROLE_HAS_TARGETS,
-                        PipelineElementType.ROLE_READER,
-                        PipelineElementType.ROLE_MUTATOR,
-                        PipelineElementType.VISABILITY_STEPPING}, null);
+        final PipelineElement source = createElement("Source", null, "Source");
+        final PipelineElement combinedParser = createElement("CombinedParser", Category.PARSER, "combinedParser");
+        final PipelineElement findReplaceFilter = createElement("FindReplaceFilter", Category.READER, "FindReplaceFilter");
 
         final PipelineData pipelineData = new PipelineData();
 //        pipelineData.addElement(sourceElementType, "Source");
-        pipelineData.addElement(combinedParserElementType, "combinedParser");
-        pipelineData.addElement(findReplaceElementType, "findReplaceFilter");
+        pipelineData.addElement(combinedParser);
+        pipelineData.addElement(findReplaceFilter);
 
-        pipelineData.addLink("Source", "combinedParser");
-        pipelineData.addLink("Source", "findReplaceFilter");
+        pipelineData.addLink(source, combinedParser);
+        pipelineData.addLink(source, findReplaceFilter);
 
         final PipelineModel pipelineModel = new PipelineModel();
         pipelineModel.setBaseStack(null);
         pipelineModel.setPipelineData(pipelineData);
         pipelineModel.build();
-        builder.getTree(pipelineModel);
+        final DefaultTreeForTreeLayout<PipelineElement> tree1 = builder.getTree(pipelineModel);
+        checkChildren(tree1, source, new PipelineElement[]{combinedParser, findReplaceFilter});
 
-        pipelineModel.removeElement(new PipelineElement("combinedParser", "CombinedParser"));
-        pipelineModel.addExistingElement(new PipelineElement("findReplaceFilter", "FindReplaceFilter"), new PipelineElement("combinedParser", "CombinedParser"));
+        pipelineModel.moveElement(findReplaceFilter, combinedParser);
 
         pipelineModel.build();
-        builder.getTree(pipelineModel);
+        final DefaultTreeForTreeLayout<PipelineElement> tree2 = builder.getTree(pipelineModel);
+        checkChildren(tree2, source, new PipelineElement[]{findReplaceFilter});
+        checkChildren(tree2, findReplaceFilter, new PipelineElement[]{combinedParser});
+    }
+
+    @Test
+    public void testMove2() {
+        final DefaultPipelineTreeBuilder builder = new DefaultPipelineTreeBuilder();
+
+        final PipelineElement source = createElement("Source", null, "Source");
+        final PipelineElement xmlParser = createElement("XMLParser", Category.PARSER, "xmlParser");
+        final PipelineElement idEnrichmentFilter = createElement("IDEnrichmentFilter", Category.FILTER, "idEnrichmentFilter");
+        final PipelineElement xsltFilter = createElement("XSLTFilter", Category.FILTER, "xsltFilter");
+
+        final PipelineData base = new PipelineData();
+//        pipelineData.addElement(sourceElementType, "Source");
+        base.addElement(xmlParser);
+        base.addElement(idEnrichmentFilter);
+        base.addElement(xsltFilter);
+
+        base.addLink(source, xmlParser);
+        base.addLink(xmlParser, idEnrichmentFilter);
+        base.addLink(idEnrichmentFilter, xsltFilter);
+
+        final PipelineModel pipelineModel = new PipelineModel();
+        pipelineModel.setBaseStack(Collections.singletonList(base));
+        pipelineModel.setPipelineData(new PipelineData());
+        pipelineModel.build();
+
+        final DefaultTreeForTreeLayout<PipelineElement> tree1 = builder.getTree(pipelineModel);
+        checkChildren(tree1, source, new PipelineElement[]{xmlParser});
+        checkChildren(tree1, xmlParser, new PipelineElement[]{idEnrichmentFilter});
+        checkChildren(tree1, idEnrichmentFilter, new PipelineElement[]{xsltFilter});
+
+        pipelineModel.moveElement(idEnrichmentFilter, xsltFilter);
+
+        pipelineModel.build();
+        final DefaultTreeForTreeLayout<PipelineElement> tree2 = builder.getTree(pipelineModel);
+        checkChildren(tree2, source, new PipelineElement[]{xmlParser});
+        checkChildren(tree2, xmlParser, new PipelineElement[]{idEnrichmentFilter});
+        checkChildren(tree2, idEnrichmentFilter, new PipelineElement[]{xsltFilter});
+    }
+
+    @Test
+    public void testMove3() {
+        final DefaultPipelineTreeBuilder builder = new DefaultPipelineTreeBuilder();
+
+        final PipelineElement source = createElement("Source", null, "Source");
+        final PipelineElement xmlParser = createElement("XMLParser", Category.PARSER, "xmlParser");
+        final PipelineElement idEnrichmentFilter = createElement("IDEnrichmentFilter", Category.FILTER, "idEnrichmentFilter");
+        final PipelineElement xsltFilter = createElement("XSLTFilter", Category.FILTER, "xsltFilter");
+//        final PipelineElement xsltFilter2 = createElement("XSLTFilter", Category.FILTER, "xsltFilter2");
+
+        final PipelineData base = new PipelineData();
+//        pipelineData.addElement(sourceElementType, "Source");
+        base.addElement(xmlParser);
+        base.addElement(idEnrichmentFilter);
+        base.addElement(xsltFilter);
+
+        base.addLink(source, xmlParser);
+        base.addLink(xmlParser, idEnrichmentFilter);
+        base.addLink(idEnrichmentFilter, xsltFilter);
+
+        final PipelineModel pipelineModel = new PipelineModel();
+        pipelineModel.setBaseStack(Collections.singletonList(base));
+        pipelineModel.setPipelineData(new PipelineData());
+        pipelineModel.build();
+
+        final DefaultTreeForTreeLayout<PipelineElement> tree1 = builder.getTree(pipelineModel);
+        checkChildren(tree1, source, new PipelineElement[]{xmlParser});
+        checkChildren(tree1, xmlParser, new PipelineElement[]{idEnrichmentFilter});
+        checkChildren(tree1, idEnrichmentFilter, new PipelineElement[]{xsltFilter});
+
+        final PipelineElement xsltFilter2 = pipelineModel.addElement(idEnrichmentFilter, createType("XSLTFilter", Category.FILTER), "xsltFilter2");
+        pipelineModel.moveElement(xsltFilter2, xsltFilter);
+
+        pipelineModel.build();
+        final DefaultTreeForTreeLayout<PipelineElement> tree2 = builder.getTree(pipelineModel);
+        checkChildren(tree2, source, new PipelineElement[]{xmlParser});
+        checkChildren(tree2, xmlParser, new PipelineElement[]{idEnrichmentFilter});
+        checkChildren(tree2, idEnrichmentFilter, new PipelineElement[]{xsltFilter2});
+        checkChildren(tree2, xsltFilter2, new PipelineElement[]{xsltFilter});
+
+        pipelineModel.moveElement(idEnrichmentFilter, xsltFilter);
+
+        pipelineModel.build();
+        final DefaultTreeForTreeLayout<PipelineElement> tree3 = builder.getTree(pipelineModel);
+        checkChildren(tree3, source, new PipelineElement[]{xmlParser});
+        checkChildren(tree3, xmlParser, new PipelineElement[]{idEnrichmentFilter});
+        checkChildren(tree3, idEnrichmentFilter, new PipelineElement[]{xsltFilter, xsltFilter2});
+    }
+
+    private void checkChildren(final DefaultTreeForTreeLayout<PipelineElement> tree, final PipelineElement parent, final PipelineElement[] children) {
+        List<PipelineElement> list = tree.getChildren(parent);
+        if (children.length == 0) {
+            Assert.assertTrue(list == null || list.size() == 0);
+        } else {
+            Assert.assertEquals(children.length, list.size());
+            for (final PipelineElement child : children) {
+                Assert.assertTrue(list.contains(child));
+            }
+        }
+    }
+
+    private PipelineElement createElement(final String type, final Category category, final String id) {
+        final PipelineElementType elementType = createType(type, category);
+        final PipelineElement element = new PipelineElement();
+        element.setId(id);
+        element.setType(elementType.getType());
+        element.setElementType(elementType);
+        return element;
+    }
+
+    private PipelineElementType createType(final String type, final Category category) {
+        String[] roles = null;
+        if (category == null) {
+            roles = new String[]{PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE};
+        } else {
+            switch (category) {
+                case READER:
+                    roles = new String[]{PipelineElementType.ROLE_TARGET,
+                            PipelineElementType.ROLE_HAS_TARGETS,
+                            PipelineElementType.ROLE_READER,
+                            PipelineElementType.ROLE_MUTATOR,
+                            PipelineElementType.VISABILITY_STEPPING};
+                    break;
+                case PARSER:
+                    roles = new String[]{PipelineElementType.ROLE_PARSER,
+                            PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
+                            PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
+                            PipelineElementType.ROLE_HAS_CODE};
+                    break;
+
+                case FILTER:
+                    roles = new String[]{PipelineElementType.ROLE_TARGET,
+                            PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
+                            PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
+                            PipelineElementType.ROLE_HAS_CODE};
+                    break;
+            }
+        }
+
+        return new PipelineElementType(
+                type,
+                category,
+                roles, null);
     }
 
     private void test(final List<PipelineData> baseStack, final PipelineData pipelineData, final int addedElements,

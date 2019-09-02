@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1242** : Fix for pipeline corruption caused when moving elements back to inherited parents. 
+
 * Issue **#1244** : Updated Dropwizard to version 1.3.14 to fix session based memory leak.
 
 * Issue **#1246** : Removed elastic search document type, menu items and filter.
