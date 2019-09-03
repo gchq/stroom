@@ -125,7 +125,13 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     }
 
     @Override
-    public void delete(final int id) {
+    public void delete(final String name) {
+        final var indexVolumeGroupToDelete = get(name);
+        genericDao.delete(indexVolumeGroupToDelete.getId());
+    }
+
+    @Override
+    public void delete(int id) {
         genericDao.delete(id);
     }
 }

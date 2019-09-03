@@ -17,5 +17,7 @@ public interface IndexVolumeGroupDao {
 
     List<IndexVolumeGroup> getAll();
 
+    void delete(String name);
+
     void delete(int id);
 }

@@ -90,7 +90,7 @@ class VolumeCreatorForTesting implements VolumeCreator {
                     CreateVolumeDTO createVolumeDTO = new CreateVolumeDTO();
                     createVolumeDTO.setNodeName(volume.getNodeName());
                     createVolumeDTO.setPath(volume.getPath());
-                    createVolumeDTO.setIndexVolumeGroupId(indexVolumeGroup.getId());
+                    createVolumeDTO.setIndexVolumeGroupName(indexVolumeGroup.getName());
                     volumeService.create(createVolumeDTO);
                 }
             }

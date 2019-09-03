@@ -28,7 +28,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         indexVolume.setUpdateUser(record.get(INDEX_VOLUME.UPDATE_USER));
         indexVolume.setPath(record.get(INDEX_VOLUME.PATH));
         indexVolume.setNodeName(record.get(INDEX_VOLUME.NODE_NAME));
-        indexVolume.setIndexVolumeGroupId(record.get(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID));
+        indexVolume.setIndexVolumeGroupName(record.get(INDEX_VOLUME.INDEX_VOLUME_GROUP_NAME));
         final Byte state = record.get(INDEX_VOLUME.STATE);
         if (state != null) {
             indexVolume.setState(VolumeUseState.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(state));
@@ -51,7 +51,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         record.set(INDEX_VOLUME.UPDATE_USER, indexVolume.getUpdateUser());
         record.set(INDEX_VOLUME.PATH, indexVolume.getPath());
         record.set(INDEX_VOLUME.NODE_NAME, indexVolume.getNodeName());
-        record.set(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID, indexVolume.getIndexVolumeGroupId());
+        record.set(INDEX_VOLUME.INDEX_VOLUME_GROUP_NAME, indexVolume.getIndexVolumeGroupName());
         if ( indexVolume.getState() != null) {
             record.set(INDEX_VOLUME.STATE, indexVolume.getState().getPrimitiveValue());
         }
@@ -108,7 +108,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .select()
                 .from(INDEX_VOLUME)
-                .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
+                .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.NAME.eq(INDEX_VOLUME.INDEX_VOLUME_GROUP_NAME))
                 .where(INDEX_VOLUME_GROUP.NAME.eq(groupName))
                 .and(INDEX_VOLUME.NODE_NAME.eq(nodeName))
                 .fetch()
