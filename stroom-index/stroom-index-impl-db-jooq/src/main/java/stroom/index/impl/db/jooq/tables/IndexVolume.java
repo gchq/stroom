@@ -4,6 +4,11 @@
 package stroom.index.impl.db.jooq.tables;
 
 
+import java.util.Arrays;
+import java.util.List;
+
+import javax.annotation.Generated;
+
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
@@ -16,14 +21,11 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
+
 import stroom.index.impl.db.jooq.Indexes;
 import stroom.index.impl.db.jooq.Keys;
 import stroom.index.impl.db.jooq.Stroom;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeRecord;
-
-import javax.annotation.Generated;
-import java.util.Arrays;
-import java.util.List;
 
 
 /**
@@ -39,7 +41,7 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexVolume extends TableImpl<IndexVolumeRecord> {
 
-    private static final long serialVersionUID = -2023614813;
+    private static final long serialVersionUID = -1085302288;
 
     /**
      * The reference instance of <code>stroom.index_volume</code>
@@ -95,9 +97,9 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
     public final TableField<IndexVolumeRecord, String> PATH = createField("path", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
 
     /**
-     * The column <code>stroom.index_volume.fk_index_volume_group_id</code>.
+     * The column <code>stroom.index_volume.index_volume_group_name</code>.
      */
-    public final TableField<IndexVolumeRecord, Integer> FK_INDEX_VOLUME_GROUP_ID = createField("fk_index_volume_group_id", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<IndexVolumeRecord, String> INDEX_VOLUME_GROUP_NAME = createField("index_volume_group_name", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.index_volume.state</code>.
@@ -175,7 +177,7 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
      */
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.INDEX_VOLUME_INDEX_VOLUME_GROUP_LINK_FK_GROUP_ID, Indexes.INDEX_VOLUME_NODE_NAME_PATH, Indexes.INDEX_VOLUME_PRIMARY);
+        return Arrays.<Index>asList(Indexes.INDEX_VOLUME_NODE_NAME_PATH, Indexes.INDEX_VOLUME_PRIMARY);
     }
 
     /**
@@ -207,11 +209,11 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
      */
     @Override
     public List<ForeignKey<IndexVolumeRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<IndexVolumeRecord, ?>>asList(Keys.INDEX_VOLUME_GROUP_LINK_FK_GROUP_ID);
+        return Arrays.<ForeignKey<IndexVolumeRecord, ?>>asList(Keys.INDEX_VOLUME_GROUP_LINK_FK_GROUP_NAME);
     }
 
     public IndexVolumeGroup indexVolumeGroup() {
-        return new IndexVolumeGroup(this, Keys.INDEX_VOLUME_GROUP_LINK_FK_GROUP_ID);
+        return new IndexVolumeGroup(this, Keys.INDEX_VOLUME_GROUP_LINK_FK_GROUP_NAME);
     }
 
     /**

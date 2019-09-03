@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS index_volume (
   update_user               varchar(255) NOT NULL,
   node_name                 varchar(255) DEFAULT NULL,
   path                      varchar(255) DEFAULT NULL,
-  fk_index_volume_group_id  int(11) NOT NULL,
+  index_volume_group_name   varchar(255) NOT NULL,
   state                     tinyint(4) DEFAULT NULL,
   bytes_limit               bigint(20) DEFAULT NULL,
   bytes_used                bigint(20) DEFAULT NULL,
@@ -32,6 +32,6 @@ CREATE TABLE IF NOT EXISTS index_volume (
   bytes_total               bigint(20) DEFAULT NULL,
   status_ms                 bigint(20) DEFAULT NULL,
   PRIMARY KEY (id),
-  UNIQUE KEY node_name_path (fk_index_volume_group_id, node_name, path),
-  CONSTRAINT index_volume_group_link_fk_group_id FOREIGN KEY (fk_index_volume_group_id) REFERENCES index_volume_group (id)
+  UNIQUE KEY node_name_path (index_volume_group_name, node_name, path),
+  CONSTRAINT index_volume_group_link_fk_group_name FOREIGN KEY (index_volume_group_name) REFERENCES index_volume_group (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -15,7 +15,11 @@ public interface IndexVolumeGroupService {
 
     IndexVolumeGroup update(IndexVolumeGroup indexVolumeGroup);
 
+    IndexVolumeGroup get(String name);
+
     IndexVolumeGroup get(int id);
+
+    void delete(String name);
 
     void delete(int id);
 }
