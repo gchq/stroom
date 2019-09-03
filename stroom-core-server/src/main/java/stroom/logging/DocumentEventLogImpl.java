@@ -35,11 +35,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.HasUuid;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageResponse;
+import stroom.query.api.v2.DocRef;
 import stroom.security.Insecure;
 import stroom.util.shared.HasId;
 import stroom.util.spring.StroomBeanStore;
@@ -448,26 +448,29 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     private Event createAction(final String typeId, final String description, final java.lang.Object object) {
-        String type = typeId;
-        String desc = description;
+        final StringBuilder desc = new StringBuilder(description);
         if (object != null) {
-            String objectType = getObjectType(object);
-            if (objectType == null) {
-                objectType = "";
-            } else {
-                objectType = " " + objectType;
+            final String objectType = getObjectType(object);
+            if (objectType != null) {
+                desc.append(" ");
+                desc.append(objectType);
             }
 
-            if (object instanceof NamedEntity) {
-                final NamedEntity namedEntity = (NamedEntity) object;
-                desc = description + objectType + " \"" + namedEntity.getName() + "\" id="
-                        + getObjectId(object);
-            } else {
-                desc = description + objectType + " id=" + getObjectId(object);
+            final String objectName = getObjectName(object);
+            if (objectName != null) {
+                desc.append(" \"");
+                desc.append(objectName);
+                desc.append("\"");
+            }
+
+            final String objectId = getObjectId(object);
+            if (objectId != null) {
+                desc.append(" id=");
+                desc.append(objectId);
             }
         }
 
-        return eventLoggingService.createAction(type, desc);
+        return eventLoggingService.createAction(typeId, desc.toString());
     }
 
     private Event createAction(final String typeId, final String description, final String objectType,
@@ -477,11 +480,24 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     private String getObjectType(final java.lang.Object object) {
+        if (object instanceof DocRef) {
+            return String.valueOf(((DocRef) object).getType());
+        }
+
         final EventInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
         if (objectInfoAppender == null) {
             return null;
         }
         return objectInfoAppender.getObjectType(object);
+    }
+
+    private String getObjectName(final java.lang.Object object) {
+        if (object instanceof NamedEntity) {
+            return ((NamedEntity) object).getName();
+        } else if (object instanceof DocRef) {
+            return ((DocRef) object).getName();
+        }
+        return null;
     }
 
     private String getObjectId(final java.lang.Object object) {
@@ -493,7 +509,11 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             return String.valueOf(((HasId) object).getId());
         }
 
-        return "";
+        if (object instanceof DocRef) {
+            return String.valueOf(((DocRef) object).getUuid());
+        }
+
+        return null;
     }
 
     private BaseObject createBaseObject(final java.lang.Object object) {

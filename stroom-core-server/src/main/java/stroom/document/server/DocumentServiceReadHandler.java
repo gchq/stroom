@@ -74,7 +74,7 @@ class DocumentServiceReadHandler
 //        return result;
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final SharedObject doc = (SharedObject) documentService.readDocument(action.getDocRef());
-            documentEventLog.view(action.getDocRef(), null);
+            documentEventLog.view(doc, null);
             return doc;
         } catch (final PermissionException e) {
             documentEventLog.view(action.getDocRef(), e);
