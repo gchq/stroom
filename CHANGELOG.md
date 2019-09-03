@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1218** : All stepping panes will now show line numbers automatically if there are indicators (errors, warnings etc) that need to be displayed.  
+
 * Issue **#1254** : Added option to allow non Java escaped find and replacement text to be used in `FindReplaceFilter`. 
 
 * Issue **#1250** : Fixed logging description for reading and writing documents.
