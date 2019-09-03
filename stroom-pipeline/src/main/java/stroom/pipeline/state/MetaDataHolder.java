@@ -21,6 +21,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.MetaMap;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
@@ -51,15 +53,19 @@ public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Ho
 
     private final StreamHolder streamHolder;
     private final StreamProcessorService streamProcessorService;
+    private final SecurityContext securityContext;
 
     private Map<String, String> parentData = new ConcurrentHashMap<>();
     private MetaMap metaData;
     private long lastMetaStreamNo;
 
     @Inject
-    MetaDataHolder(final StreamHolder streamHolder, final StreamProcessorService streamProcessorService) {
+    MetaDataHolder(final StreamHolder streamHolder,
+                   final StreamProcessorService streamProcessorService,
+                   final SecurityContext securityContext) {
         this.streamHolder = streamHolder;
         this.streamProcessorService = streamProcessorService;
+        this.securityContext = securityContext;
     }
 
     public String get(final String key) throws IOException {
@@ -151,9 +157,11 @@ public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Ho
         return parentData.computeIfAbsent(PIPELINE, k -> {
             final Stream stream = streamHolder.getStream();
             if (stream != null && stream.getStreamProcessor() != null) {
-                final StreamProcessor streamProcessor = streamProcessorService.load(stream.getStreamProcessor(), FETCH_SET);
-                if (streamProcessor != null && streamProcessor.getPipeline() != null) {
-                    return streamProcessor.getPipeline().getName();
+                try (final SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+                    final StreamProcessor streamProcessor = streamProcessorService.load(stream.getStreamProcessor(), FETCH_SET);
+                    if (streamProcessor != null && streamProcessor.getPipeline() != null) {
+                        return streamProcessor.getPipeline().getName();
+                    }
                 }
             }
             return null;
