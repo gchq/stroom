@@ -30,6 +30,7 @@ import stroom.query.shared.FetchSuggestionsAction;
 import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
+import stroom.streamstore.shared.StreamType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedList;
@@ -41,6 +42,7 @@ import javax.inject.Named;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = FetchSuggestionsAction.class)
@@ -67,15 +69,22 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
         if (task.getDataSource() != null) {
             if (StreamDataSource.STREAM_STORE_DOC_REF.equals(task.getDataSource())) {
                 if (task.getField().getName().equals(StreamDataSource.FEED_NAME)) {
-                    return createList(feedService, task.getText());
+                    return createList(feedService, task.getText(), o -> true);
                 }
 
                 if (task.getField().getName().equals(StreamDataSource.PIPELINE_UUID)) {
-                    return createList(pipelineService, task.getText());
+                    return createList(pipelineService, task.getText(), o -> true);
                 }
 
                 if (task.getField().getName().equals(StreamDataSource.STREAM_TYPE_NAME)) {
-                    return createList(streamTypeService, task.getText());
+                    return createList(streamTypeService, task.getText(), o -> {
+                        if (o instanceof StreamType) {
+                            final StreamType streamType = (StreamType) o;
+                            return !streamType.getPurpose().isNested();
+                        } else {
+                            return true;
+                        }
+                    });
                 }
 
                 if (task.getField().getName().equals(StreamDataSource.STATUS)) {
@@ -87,7 +96,7 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
                 }
 
                 if (task.getField().getName().equals(StreamDataSource.NODE)) {
-                    return createList(nodeService, task.getText());
+                    return createList(nodeService, task.getText(), o -> true);
                 }
             }
         }
@@ -96,13 +105,14 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
     }
 
     @SuppressWarnings("unchecked")
-    private SharedList<SharedString> createList(final FindService service, final String text) {
+    private SharedList<SharedString> createList(final FindService service, final String text, final Predicate<Object> filter) {
         final SharedList<SharedString> result = new SharedList<>();
         final FindNamedEntityCriteria criteria = (FindNamedEntityCriteria) service.createCriteria();
         criteria.setName(new StringCriteria(text, MatchStyle.WildEnd));
         final List<Object> list = service.find(criteria);
         list
                 .stream()
+                .filter(filter)
                 .sorted(Comparator.comparing(e -> ((NamedEntity) e).getName()))
                 .forEachOrdered(e -> result.add(SharedString.wrap(((NamedEntity) e).getName())));
         return result;
