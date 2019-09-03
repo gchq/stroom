@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1254** : Added option to allow non Java escaped find and replacement text to be used in `FindReplaceFilter`. 
+
 * Issue **#1250** : Fixed logging description for reading and writing documents.
 
 * Issue **#1251** : Copy permissions from a parent now shows changes prior to the user clicking ok.
