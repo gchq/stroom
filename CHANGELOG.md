@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1251** : Copy permissions from a parent now shows changes prior to the user clicking ok.
+
 * Issue **#758** : You no longer need the `Manage Processors` privilege to call `stroom:meta('Pipeline')` in XSLT.
 
 * Issue **#1256** : Fix error caused when logging data source name when downloading search results.
