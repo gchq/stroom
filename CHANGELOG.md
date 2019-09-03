@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.8] - 2019-09-03
+
 * Issue **#1253** : Data retention policies containing just `AND` will now match everything.
 
 * Issue **#1252** : Stream type suggestions no longer list internal types.
@@ -1864,7 +1867,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.7...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.8...6.0
+[v6.0.8]: https://github.com/gchq/stroom/compare/v6.0.7...v6.0.8
 [v6.0.7]: https://github.com/gchq/stroom/compare/v6.0.6...v6.0.7
 [v6.0.6]: https://github.com/gchq/stroom/compare/v6.0.5...v6.0.6
 [v6.0.5]: https://github.com/gchq/stroom/compare/v6.0.4...v6.0.5
