@@ -388,11 +388,12 @@ public class DataRetentionExecutor {
             // Also make sure we create a list of rules that are enabled and have at least one enabled term.
             rules.forEach(rule -> {
                 if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
+                    activeRules.add(rule);
+
                     final Set<String> fields = new HashSet<>();
                     addToFieldSet(rule, fields);
                     if (fields.size() > 0) {
                         fieldSet.addAll(fields);
-                        activeRules.add(rule);
                     }
                 }
             });

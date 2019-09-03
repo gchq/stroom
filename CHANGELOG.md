@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#1252** : Stream type suggestions no longer list internal types. 
+* Issue **#1253** : Data retention policies containing just `AND` will now match everything.
+
+* Issue **#1252** : Stream type suggestions no longer list internal types.
 
 * Issue **#1218** : All stepping panes will now show line numbers automatically if there are indicators (errors, warnings etc) that need to be displayed.  
 
