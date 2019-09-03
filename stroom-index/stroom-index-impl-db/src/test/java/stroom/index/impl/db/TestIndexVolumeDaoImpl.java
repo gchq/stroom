@@ -111,7 +111,7 @@ class TestIndexVolumeDaoImpl {
         // Then
         BiConsumer<String, Integer> checkTheNewVolumeExists = (name, expectedCount) -> {
             final var foundIndexVolumesForGroup = indexVolumes.stream()
-                    .filter(indexVolume -> indexVolume.getIndexVolumeGroupName() == name).collect(Collectors.toList());
+                    .filter(indexVolume -> indexVolume.getIndexVolumeGroupName().equals(name)).collect(Collectors.toList());
             assertThat(foundIndexVolumesForGroup.size()).isEqualTo(expectedCount);
         };
 
