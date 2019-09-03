@@ -109,7 +109,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // TODO : Specify stored fields based on the fields that all
                     // coprocessors will require. Also
                     // batch search only needs stream and event id stored fields.
-                    final IndexField[] storedFields = getStoredFields(index);
+                    final String[] storedFields = getStoredFields(index);
 
                     // Get a list of search index shards to look through.
                     final FindIndexShardCriteria findIndexShardCriteria = new FindIndexShardCriteria();
@@ -152,8 +152,17 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
                     // Now send out distributed search tasks to each worker node.
                     filteredShardNodes.forEach((node, shards) -> {
-                        final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task, task.getUserToken(), "Cluster Search", query, shards, sourceNode, storedFields,
-                                task.getResultSendFrequency(), task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow());
+                        final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task,
+                                task.getUserToken(),
+                                "Cluster Search",
+                                query,
+                                shards,
+                                sourceNode,
+                                storedFields,
+                                task.getResultSendFrequency(),
+                                task.getCoprocessorMap(),
+                                task.getDateTimeLocale(),
+                                task.getNow());
                         LOGGER.debug("Dispatching clusterSearchTask to node {}", node);
                         dispatchAsyncProvider.get().execAsync(clusterSearchTask, resultCollector, sourceNode,
                                 Collections.singleton(node));
@@ -210,14 +219,11 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         taskManager.execAsync(outerTask);
     }
 
-    private IndexField[] getStoredFields(final IndexDoc index) {
-        final List<IndexField> indexFields = index.getFields();
-        final List<IndexField> list = new ArrayList<>(indexFields.size());
-        for (final IndexField indexField : indexFields) {
-            if (indexField.isStored()) {
-                list.add(indexField);
-            }
-        }
-        return list.toArray(new IndexField[0]);
+    private String[] getStoredFields(final IndexDoc index) {
+        return index.getFields()
+                .stream()
+                .filter(IndexField::isStored)
+                .map(IndexField::getFieldName)
+                .toArray(String[]::new);
     }
 }

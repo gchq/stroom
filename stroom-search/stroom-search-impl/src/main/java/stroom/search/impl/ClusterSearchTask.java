@@ -17,7 +17,6 @@
 package stroom.search.impl;
 
 import stroom.cluster.task.api.ClusterTask;
-import stroom.index.shared.IndexField;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
@@ -34,7 +33,7 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
     private final Query query;
     private final List<Long> shards;
     private final String targetNode;
-    private final IndexField[] storedFields;
+    private final String[] storedFields;
     private final int resultSendFrequency;
     private final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap;
     private final String dateTimeLocale;
@@ -46,7 +45,7 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
                              final Query query,
                              final List<Long> shards,
                              final String targetNode,
-                             final IndexField[] storedFields,
+                             final String[] storedFields,
                              final int resultSendFrequency,
                              final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
                              final String dateTimeLocale,
@@ -80,7 +79,7 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
         return shards;
     }
 
-    public IndexField[] getStoredFields() {
+    public String[] getStoredFields() {
         return storedFields;
     }
 

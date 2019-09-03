@@ -201,8 +201,8 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
             }
 
         } catch (final RuntimeException e) {
-            nodeComplete(nodeName);
             getErrorSet(nodeName).add(e.getMessage());
+            nodeComplete(nodeName);
 
         } finally {
             if (remainingNodeCount.compareAndSet(0, 0)) {

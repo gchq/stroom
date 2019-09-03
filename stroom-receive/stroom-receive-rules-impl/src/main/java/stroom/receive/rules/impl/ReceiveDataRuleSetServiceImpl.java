@@ -19,6 +19,7 @@ package stroom.receive.rules.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
@@ -130,7 +131,10 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
 
     @Override
     public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
+        if (omitAuditFields) {
+            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
+        }
+        return store.exportDocument(docRef, messageList, d -> d);
     }
 
     @Override
