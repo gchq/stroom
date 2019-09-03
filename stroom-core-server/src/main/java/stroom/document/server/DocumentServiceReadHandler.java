@@ -19,7 +19,10 @@ package stroom.document.server;
 
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.DocumentServiceReadAction;
+import stroom.entity.shared.PermissionException;
 import stroom.logging.DocumentEventLog;
+import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedObject;
@@ -33,11 +36,15 @@ class DocumentServiceReadHandler
         extends AbstractTaskHandler<DocumentServiceReadAction<SharedObject>, SharedObject> {
     private final DocumentService documentService;
     private final DocumentEventLog documentEventLog;
+    private final SecurityContext securityContext;
 
     @Inject
-    DocumentServiceReadHandler(final DocumentService documentService, final DocumentEventLog documentEventLog) {
+    DocumentServiceReadHandler(final DocumentService documentService,
+                               final DocumentEventLog documentEventLog,
+                               final SecurityContext securityContext) {
         this.documentService = documentService;
         this.documentEventLog = documentEventLog;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -65,11 +72,13 @@ class DocumentServiceReadHandler
 //        }
 //
 //        return result;
-
-        try {
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final SharedObject doc = (SharedObject) documentService.readDocument(action.getDocRef());
             documentEventLog.view(action.getDocRef(), null);
             return doc;
+        } catch (final PermissionException e) {
+            documentEventLog.view(action.getDocRef(), e);
+            throw new PermissionException(e.getUser(), e.getMessage().replaceAll("permission to read", "permission to use"));
         } catch (final RuntimeException e) {
             documentEventLog.view(action.getDocRef(), e);
             throw e;
