@@ -4,13 +4,41 @@
     <xsl:apply-templates />
   </xsl:template>
   <xsl:template match="Event">
+    <xsl:variable name="href">
+      <xsl:apply-templates select="Data[@Name eq 'location']" />
+    </xsl:variable>
     <div>
+      <div style="padding: 5px;">
+        <span style="text-decoration:underline;color:blue;cursor:pointer">
+          <xsl:attribute name="link" select="concat('[link](', $href, '){data}')" />
+          <xsl:text>Show Source</xsl:text>
+        </span>
+        <xsl:text> </xsl:text>
+        <xsl:value-of select="$href" />
+      </div>
+      <div style="padding: 5px;">
+        <span style="text-decoration:underline;color:blue;cursor:pointer">
+          <xsl:attribute name="link" select="concat('[link](', $href, '){stepping}')" />
+          <xsl:text>Step Source</xsl:text>
+        </span>
+        <xsl:text> </xsl:text>
+        <xsl:value-of select="$href" />
+      </div>
+
       <xsl:call-template name="line">
         <xsl:with-param name="tag" select="'Feed'" />
         <xsl:with-param name="value" select="stroom:feed-name()" />
       </xsl:call-template>
-      <xsl:apply-templates />
+
+      <xsl:apply-templates select="*[starts-with(local-name(), 'Event')]" />
     </div>
+  </xsl:template>
+
+  <xsl:template match="Event/Data[@Name eq 'location']/Data">
+    <xsl:value-of select="@Name" />
+    <xsl:text>=</xsl:text>
+    <xsl:value-of select="@Value" />
+    <xsl:text>&amp;</xsl:text>
   </xsl:template>
 
   <!-- Index the action -->

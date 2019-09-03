@@ -47,7 +47,17 @@
           </Data>
         </Authenticate>
       </EventDetail>
+      <xsl:apply-templates select="stroom:location()" />
     </Event>
+  </xsl:template>
+  <xsl:template match="stroom:*">
+    <Data>
+      <xsl:attribute name="Name" select="name()" />
+      <xsl:if test="string-length(text()) gt 0">
+        <xsl:attribute name="Value" select="text()" />
+      </xsl:if>
+      <xsl:apply-templates select="element()" />
+    </Data>
   </xsl:template>
   <xsl:template name="header">
     <xsl:variable name="date" select="data[@name='Date']/@value" />
