@@ -272,7 +272,9 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         }
     }
 
-    public void read(final DocRef pipeline, final Meta meta, final long eventId,
+    public void read(final DocRef pipeline,
+                     final StepLocation stepLocation,
+                     final Meta meta,
                      final String childStreamType) {
         this.meta = meta;
 
@@ -311,8 +313,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
             }
 
-            if (eventId > 0) {
-                step(StepType.REFRESH, new StepLocation(meta.getId(), 1L, eventId));
+            if (stepLocation != null) {
+                step(StepType.REFRESH, new StepLocation(meta.getId(), stepLocation.getStreamNo(), stepLocation.getRecordNo()));
             }
         });
     }
@@ -388,12 +390,13 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             }
 
             if (foundRecord) {
-                // Determine the type of input for input highlighting.
-                final String childStreamType = action.getChildStreamType();
-
-                // Set the source selection and highlight.
-                sourcePresenter.showStepSource(result.getCurrentStreamOffset(), result.getStepLocation(),
-                        childStreamType, result.getStepData().getSourceHighlights());
+//                // Determine the type of input for input highlighting.
+//                final StreamType childStreamType = action.getChildStreamType();
+//
+//                // Set the source selection and highlight.
+//                sourcePresenter.showStepSource(result.getCurrentStreamOffset(), result.getStepLocation(),
+//                        childStreamType, result.getStepData().getSourceHighlights());
+                sourcePresenter.fetchData(result.getStepData().getSourceLocation());
 
                 // We found a record so update the display to indicate the
                 // record that was found and update the request with the new
@@ -412,11 +415,10 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     sb.append("\n");
                 }
 
-                AlertEvent.fireError(this, "Some errors occured during stepping", sb.toString(), null);
+                AlertEvent.fireError(this, "Some errors occurred during stepping", sb.toString(), null);
             }
 
         } finally {
-            // final boolean tasksSelected = inputSelected();
             stepControlPresenter.setEnabledButtons(true, action.getStepType(), true, showingData, foundRecord);
             busyTranslating = false;
         }

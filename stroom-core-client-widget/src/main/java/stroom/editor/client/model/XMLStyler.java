@@ -183,8 +183,8 @@ public class XMLStyler {
                     // We assume highlights are in appearance order so get the
                     // first from the list.
                     final Highlight highlight = remainingHighlights.get(0);
-                    if ((lineNo == highlight.getLineFrom() && colNo >= highlight.getColFrom())
-                            || lineNo > highlight.getLineFrom()) {
+                    if ((lineNo == highlight.getFrom().getLineNo() && colNo >= highlight.getFrom().getColNo())
+                            || lineNo > highlight.getFrom().getLineNo()) {
                         inHighlight = true;
                         changedHighlight = true;
                     }
@@ -192,8 +192,8 @@ public class XMLStyler {
                     // We assume highlights are in appearance order so get the
                     // first from the list.
                     final Highlight highlight = remainingHighlights.get(0);
-                    if ((lineNo == highlight.getLineTo() && colNo >= highlight.getColTo())
-                            || lineNo > highlight.getLineTo()) {
+                    if ((lineNo == highlight.getTo().getLineNo() && colNo >= highlight.getTo().getColNo())
+                            || lineNo > highlight.getTo().getLineNo()) {
                         inHighlight = false;
                         changedHighlight = true;
 

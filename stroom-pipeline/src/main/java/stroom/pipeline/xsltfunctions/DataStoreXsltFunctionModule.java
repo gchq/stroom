@@ -11,6 +11,7 @@ public class DataStoreXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(BitmapLookupFunction.class);
         bindFunction(LookupFunction.class);
         bindFunction(StreamIdFunction.class);
+        bindFunction(StreamNoFunction.class);
     }
 
     private static class BitmapLookupFunction extends StroomExtensionFunctionDefinition<BitmapLookup> {
@@ -43,6 +44,13 @@ public class DataStoreXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         StreamIdFunction(final Provider<MetaId> functionCallProvider) {
             super("stream-id", 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING, functionCallProvider);
+        }
+    }
+
+    private static class StreamNoFunction extends StroomExtensionFunctionDefinition<StreamNo> {
+        @Inject
+        StreamNoFunction(final Provider<StreamNo> functionCallProvider) {
+            super("stream-no", 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING, functionCallProvider);
         }
     }
 }

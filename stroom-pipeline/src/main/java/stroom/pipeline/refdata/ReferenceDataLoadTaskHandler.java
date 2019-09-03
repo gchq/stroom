@@ -196,7 +196,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                     // multiple then overrideExisting may be needed.
                     final long count = source.count();
                     for (long index = 0; index < count && !Thread.currentThread().isInterrupted(); index++) {
-                        metaHolder.setStreamNo(index);
+                        metaHolder.setStreamNo(index + 1);
                         streamLocationFactory.setStreamNo(index + 1);
 
                         try (final InputStreamProvider inputStreamProvider = source.get(index)) {

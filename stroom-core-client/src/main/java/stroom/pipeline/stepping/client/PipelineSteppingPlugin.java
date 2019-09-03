@@ -31,6 +31,7 @@ import stroom.meta.shared.FindMetaRowAction;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.stepping.GetPipelineForMetaAction;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
@@ -58,19 +59,19 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
     @Override
     public void onBegin(final BeginPipelineSteppingEvent event) {
         if (event.getPipelineRef() != null) {
-            choosePipeline(event.getPipelineRef(), event.getStreamId(), event.getEventId(),
+            choosePipeline(event.getPipelineRef(),
+                    event.getStepLocation(),
                     event.getChildStreamType());
         } else {
             // If we don't have a pipeline id then try to guess one for the
             // supplied stream.
             dispatcher.exec(new GetPipelineForMetaAction(event.getStreamId(), event.getChildStreamId())).onSuccess(result ->
-                    choosePipeline(result, event.getStreamId(), event.getEventId(), event.getChildStreamType()));
+                    choosePipeline(result, event.getStepLocation(), event.getChildStreamType()));
         }
     }
 
     private void choosePipeline(final SharedDocRef initialPipelineRef,
-                                final long streamId,
-                                final long eventId,
+                                final StepLocation stepLocation,
                                 final String childStreamType) {
         final EntityChooser chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Step With");
@@ -80,12 +81,12 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
             final DocRef pipeline = chooser.getSelectedEntityReference();
             if (pipeline != null) {
                 final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-                findMetaCriteria.obtainSelectedIdSet().add(streamId);
+                findMetaCriteria.obtainSelectedIdSet().add(stepLocation.getStreamId());
 
                 dispatcher.exec(new FindMetaRowAction(findMetaCriteria)).onSuccess(result -> {
                     if (result != null && result.size() == 1) {
                         final MetaRow row = result.get(0);
-                        openEditor(pipeline, row.getMeta(), eventId, childStreamType);
+                        openEditor(pipeline, stepLocation, row.getMeta(), childStreamType);
                     }
                 });
             }
@@ -98,10 +99,12 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         chooser.show();
     }
 
-    private void openEditor(final DocRef pipeline, final Meta meta, final long eventId,
+    private void openEditor(final DocRef pipeline,
+                            final StepLocation stepLocation,
+                            final Meta meta,
                             final String childStreamType) {
         final SteppingContentTabPresenter editor = editorProvider.get();
-        editor.read(pipeline, meta, eventId, childStreamType);
+        editor.read(pipeline, stepLocation, meta, childStreamType);
         contentManager.open(editor, editor, editor);
     }
 }

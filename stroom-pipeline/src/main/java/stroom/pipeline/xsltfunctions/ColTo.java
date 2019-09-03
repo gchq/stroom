@@ -14,8 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.pipeline.xsltfunctions;
 
-public interface BeginSteppingHandler {
-    void beginStepping(long streamId, String childStreamType);
+import stroom.pipeline.shared.SourceLocation;
+import stroom.pipeline.state.LocationHolder;
+import stroom.pipeline.state.LocationHolder.FunctionType;
+
+import javax.inject.Inject;
+
+class ColTo extends AbstractLocationFunction {
+    @Inject
+    ColTo(final LocationHolder locationHolder) {
+        super(locationHolder);
+    }
+
+    @Override
+    String getValue(final SourceLocation location) {
+        return String.valueOf(location.getHighlight().getTo().getColNo());
+    }
+
+    @Override
+    FunctionType getType() {
+        return FunctionType.COL_TO;
+    }
 }

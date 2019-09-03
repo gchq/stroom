@@ -49,6 +49,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.UpdateStatusAction;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.processor.shared.ReprocessDataAction;
 import stroom.processor.shared.ReprocessDataInfo;
@@ -127,6 +128,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         setInSlot(DATA, dataPresenter);
 
         dataPresenter.setBeginSteppingHandler(this);
+        dataPresenter.setFormatOnLoad(true);
 
         // Process
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
@@ -567,13 +569,12 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     }
 
     @Override
-    public void beginStepping(final Long streamId, final String childStreamType) {
-        if (streamId != null) {
-            // Try and get a pipeline id to use as a starting point for
-            // stepping.
-            SharedDocRef pipelineRef = null;
+    public void beginStepping(final long streamId, final String childStreamType) {
+        // Try and get a pipeline id to use as a starting point for
+        // stepping.
+        SharedDocRef pipelineRef = null;
 
-            // TODO : Fix by making entity id sets docref sets.
+        // TODO : Fix by making entity id sets docref sets.
 //            final EntityIdSet<PipelineEntity> entityIdSet = findMetaCriteria
 //                    .getPipelineUuidCriteria();
 //            if (entityIdSet != null) {
@@ -582,24 +583,23 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
 //                }
 //            }
 
-            // We will assume that the stream list has a child stream selected.
-            // This would be the case where a user chooses an event with errors
-            // in the top screen and then chooses the raw stream in the middle
-            // pane to step through.
-            Long childStreamId = null;
-            final MetaRow map = metaListPresenter.getSelected();
-            if (map != null && map.getMeta() != null) {
-                final Meta childMeta = map.getMeta();
-                // If the top list has a raw stream selected or isn't a child of
-                // the selected stream then this is't the child stream we are
-                // looking for.
-                if (childMeta.getParentMetaId() != null && childMeta.getParentMetaId().equals(streamId)) {
-                    childStreamId = childMeta.getId();
-                }
+        // We will assume that the stream list has a child stream selected.
+        // This would be the case where a user chooses an event with errors
+        // in the top screen and then chooses the raw stream in the middle
+        // pane to step through.
+        Long childStreamId = null;
+        final MetaRow map = metaListPresenter.getSelected();
+        if (map != null && map.getMeta() != null) {
+            final Meta childMeta = map.getMeta();
+            // If the top list has a raw stream selected or isn't a child of
+            // the selected stream then this is't the child stream we are
+            // looking for.
+            if (childMeta.getParentMetaId() != null && childMeta.getParentMetaId().equals(streamId)) {
+                childStreamId = childMeta.getId();
             }
-
-            BeginPipelineSteppingEvent.fire(this, streamId, 0L, childStreamId, childStreamType, pipelineRef);
         }
+
+        BeginPipelineSteppingEvent.fire(this, streamId, childStreamId, childStreamType, new StepLocation(streamId, 1, 0), pipelineRef);
     }
 
     public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {

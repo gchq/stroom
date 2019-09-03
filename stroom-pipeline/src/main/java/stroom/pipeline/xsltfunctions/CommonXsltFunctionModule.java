@@ -9,6 +9,8 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
     @Override
     protected void configureFunctions() {
         bindFunction(ClassificationFunction.class);
+        bindFunction(ColFromFunction.class);
+        bindFunction(ColToFunction.class);
         bindFunction(CurrentTimeFunction.class);
         bindFunction(CurrentUserFunction.class);
         bindFunction(DictionaryFunction.class);
@@ -16,7 +18,6 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(FeedNameFunction.class);
         bindFunction(FetchJsonFunction.class);
         bindFunction(FormatDateFunction.class);
-        bindFunction(LinkFunction.class);
         bindFunction(GetFunction.class);
         bindFunction(HashFunction.class);
         bindFunction(HexToDecFunction.class);
@@ -24,6 +25,10 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(HostAddressFunction.class);
         bindFunction(HostNameFunction.class);
         bindFunction(JsonToXmlFunction.class);
+        bindFunction(LineFromFunction.class);
+        bindFunction(LineToFunction.class);
+        bindFunction(LinkFunction.class);
+        bindFunction(LocationFunction.class);
         bindFunction(LogFunction.class);
         bindFunction(MetaFunction.class);
         bindFunction(NumericIPFunction.class);
@@ -31,6 +36,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(PipelineNameFunction.class);
         bindFunction(PutFunction.class);
         bindFunction(RandomFunction.class);
+        bindFunction(RecordNoFunction.class);
         bindFunction(SearchIdFunction.class);
     }
 
@@ -38,6 +44,20 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         ClassificationFunction(final Provider<Classification> functionCallProvider) {
             super("classification", 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING, functionCallProvider);
+        }
+    }
+
+    private static class ColFromFunction extends StroomExtensionFunctionDefinition<ColFrom> {
+        @Inject
+        ColFromFunction(final Provider<ColFrom> functionCallProvider) {
+            super("col-from", 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING, functionCallProvider);
+        }
+    }
+
+    private static class ColToFunction extends StroomExtensionFunctionDefinition<ColTo> {
+        @Inject
+        ColToFunction(final Provider<ColTo> functionCallProvider) {
+            super("col-to", 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING, functionCallProvider);
         }
     }
 
@@ -169,6 +189,20 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
+    private static class LineFromFunction extends StroomExtensionFunctionDefinition<LineFrom> {
+        @Inject
+        LineFromFunction(final Provider<LineFrom> functionCallProvider) {
+            super("line-from", 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING, functionCallProvider);
+        }
+    }
+
+    private static class LineToFunction extends StroomExtensionFunctionDefinition<LineTo> {
+        @Inject
+        LineToFunction(final Provider<LineTo> functionCallProvider) {
+            super("line-to", 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING, functionCallProvider);
+        }
+    }
+
     private static class LinkFunction extends StroomExtensionFunctionDefinition<Link> {
         @Inject
         LinkFunction(final Provider<Link> functionCallProvider) {
@@ -177,6 +211,13 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     SequenceType.OPTIONAL_STRING,
                     SequenceType.OPTIONAL_STRING
             }, SequenceType.OPTIONAL_STRING, functionCallProvider);
+        }
+    }
+
+    private static class LocationFunction extends StroomExtensionFunctionDefinition<Location> {
+        @Inject
+        LocationFunction(final Provider<Location> functionCallProvider) {
+            super("location", 0, 0, new SequenceType[]{}, SequenceType.NODE_SEQUENCE, functionCallProvider);
         }
     }
 
@@ -238,6 +279,13 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         RandomFunction(final Provider<Random> functionCallProvider) {
             super("random", 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_DOUBLE, functionCallProvider);
+        }
+    }
+
+    private static class RecordNoFunction extends StroomExtensionFunctionDefinition<RecordNo> {
+        @Inject
+        RecordNoFunction(final Provider<RecordNo> functionCallProvider) {
+            super("record-no", 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING, functionCallProvider);
         }
     }
 

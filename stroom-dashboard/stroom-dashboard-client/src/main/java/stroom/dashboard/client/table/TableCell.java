@@ -61,7 +61,7 @@ public class TableCell extends AbstractCell<Row> {
             if (element.hasTagName("u")) {
                 final String link = element.getAttribute("link");
                 if (link != null) {
-                    final Hyperlink hyperlink = getHyperlink(link, 0);
+                    final Hyperlink hyperlink = Hyperlink.create(link);
                     if (hyperlink != null) {
                         HyperlinkEvent.fire(hasHandlers, hyperlink);
                     }
@@ -118,7 +118,7 @@ public class TableCell extends AbstractCell<Row> {
             final char c = value.charAt(i);
 
             if (c == '[') {
-                final Hyperlink hyperlink = getHyperlink(value, i);
+                final Hyperlink hyperlink = Hyperlink.create(value, i);
                 if (hyperlink != null) {
                     if (sb.length() > 0) {
                         parts.add(sb.toString());
@@ -140,43 +140,5 @@ public class TableCell extends AbstractCell<Row> {
         }
 
         return parts;
-    }
-
-    private static Hyperlink getHyperlink(final String value, final int pos) {
-        Hyperlink hyperlink = null;
-
-        int index = pos;
-        final String text = nextToken(value, index, '[', ']');
-        if (text != null) {
-            index = index + text.length() + 2;
-            final String href = nextToken(value, index, '(', ')');
-            if (href != null) {
-                index = index + href.length() + 2;
-                final String type = nextToken(value, index, '{', '}');
-                hyperlink = new Builder().text(text).href(href).type(type).build();
-            }
-        }
-
-        return hyperlink;
-    }
-
-    private static String nextToken(final String value, final int pos, final char startChar, final char endChar) {
-        if (value.length() <= pos + 2 || value.charAt(pos) != startChar) {
-            return null;
-        }
-
-        final StringBuilder sb = new StringBuilder();
-        for (int i = pos + 1; i < value.length(); i++) {
-            final char c = value.charAt(i);
-            if (c == endChar) {
-                return sb.toString();
-            } else if (c == '[' || c == ']' || c == '(' || c == ')') {
-                // Unexpected token
-                return null;
-            } else {
-                sb.append(c);
-            }
-        }
-        return null;
     }
 }
