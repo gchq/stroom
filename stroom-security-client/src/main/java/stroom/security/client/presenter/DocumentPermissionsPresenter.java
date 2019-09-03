@@ -66,7 +66,7 @@ public class DocumentPermissionsPresenter
     }
 
     public void show(final ExplorerNode explorerNode) {
-        getView().setCascasdeVisible(DocumentTypes.isFolder(explorerNode.getType()));
+        getView().setCascadeVisible(DocumentTypes.isFolder(explorerNode.getType()));
         final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(explorerNode);
         final DocumentPermissionsTabPresenter groupsPresenter = getTabPresenter(explorerNode);
 
@@ -155,7 +155,7 @@ public class DocumentPermissionsPresenter
 
         ItemListBox<ChangeDocumentPermissionsAction.Cascade> getCascade();
 
-        void setCascasdeVisible(boolean visible);
+        void setCascadeVisible(boolean visible);
 
         Button getCopyPermissionsFromParentButton();
     }
