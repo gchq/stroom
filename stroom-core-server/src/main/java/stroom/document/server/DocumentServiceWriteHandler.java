@@ -39,65 +39,15 @@ class DocumentServiceWriteHandler extends AbstractTaskHandler<DocumentServiceWri
         this.documentEventLog = documentEventLog;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public SharedObject exec(final DocumentServiceWriteAction action) {
-//        final Object bean = beanRegistry.getEntityService(action.getEntity().getClass());
-//        if (bean == null) {
-//            throw new EntityServiceException("No entity service can be found");
-//        }
-//        if (!(bean instanceof EntityService<?>)) {
-//            throw new EntityServiceException("Bean is not an entity service");
-//        }
-//
-//        final EntityService<BaseEntity> entityService = (EntityService<BaseEntity>) bean;
-//        final BaseEntity entity = action.getEntity();
-//        final boolean persistent = entity.isPersistent();
-//
-//        BaseEntity result = null;
-//
-//        try {
-//            if (persistent) {
-//                // Get the before version.
-//                final BaseEntity before = entityService.load(entity);
-//
-//                // Validate the entity name.
-//                if (entityService instanceof ProvidesNamePattern) {
-//                    final ProvidesNamePattern providesNamePattern = (ProvidesNamePattern) entityService;
-//                    NameValidationUtil.validate(providesNamePattern, before, entity);
-//                }
-//
-//                result = entityService.save(entity);
-//                documentEventLog.update(before, result);
-//
-//            } else {
-//                // Validate the entity name.
-//                if (entityService instanceof ProvidesNamePattern) {
-//                    final ProvidesNamePattern providesNamePattern = (ProvidesNamePattern) entityService;
-//                    NameValidationUtil.validate(providesNamePattern, entity);
-//                }
-//
-//                result = entityService.save(entity);
-//                documentEventLog.create(result);
-//            }
-//        } catch (final RuntimeException e) {
-//            if (persistent) {
-//                // Get the before version.
-//                documentEventLog.update(null, entity, e);
-//            } else {
-//                documentEventLog.create(entity, e);
-//            }
-//            throw e;
-//        }
-//
-//        return result;
-
         try {
-            final SharedObject doc = (SharedObject) documentService.writeDocument(action.getDocRef(), action.getDocument());
-            documentEventLog.delete(action.getDocRef(), null);
-            return doc;
+            final SharedObject before = (SharedObject) documentService.readDocument(action.getDocRef());
+            final SharedObject after = (SharedObject) documentService.writeDocument(action.getDocRef(), action.getDocument());
+            documentEventLog.update(before, after, null);
+            return after;
         } catch (final RuntimeException e) {
-            documentEventLog.delete(action.getDocRef(), e);
+            documentEventLog.update(action.getDocRef(), null, e);
             throw e;
         }
     }

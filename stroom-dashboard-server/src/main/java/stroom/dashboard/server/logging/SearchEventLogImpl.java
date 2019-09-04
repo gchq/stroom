@@ -37,6 +37,8 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.Insecure;
+import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.streamstore.server.CollectionService;
 
 import javax.inject.Inject;
@@ -50,16 +52,19 @@ public class SearchEventLogImpl implements SearchEventLog {
     private final DictionaryStore dictionaryStore;
     private final CollectionService collectionService;
     private final ExplorerService explorerService;
+    private final SecurityContext securityContext;
 
     @Inject
     public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
                               final DictionaryStore dictionaryStore,
                               final CollectionService collectionService,
-                              final ExplorerService explorerService) {
+                              final ExplorerService explorerService,
+                              final SecurityContext securityContext) {
         this.eventLoggingService = eventLoggingService;
         this.dictionaryStore = dictionaryStore;
         this.collectionService = collectionService;
         this.explorerService = explorerService;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -176,9 +181,11 @@ public class SearchEventLogImpl implements SearchEventLog {
             return null;
         }
 
-        final DocRefInfo docRefInfo = explorerService.info(docRef);
-        if (docRefInfo != null) {
-            return docRefInfo.getDocRef().getName();
+        try (final SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+            final DocRefInfo docRefInfo = explorerService.info(docRef);
+            if (docRefInfo != null) {
+                return docRefInfo.getDocRef().getName();
+            }
         }
 
         return docRef.getName();

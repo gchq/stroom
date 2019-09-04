@@ -52,6 +52,8 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
 
     private String find;
     private String replacement = "";
+    private boolean escapeFind = true;
+    private boolean escapeReplacement = true;
     private int maxReplacements = -1;
     private boolean regex;
     private boolean dotAll;
@@ -72,8 +74,8 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
         try {
             textReplacementFilterReader = new FindReplaceFilter.Builder()
                     .reader(reader)
-                    .find(find)
-                    .replacement(replacement)
+                    .find(escapeFind ? StringEscapeUtils.unescapeJava(find) : find)
+                    .replacement(escapeReplacement ? StringEscapeUtils.unescapeJava(replacement) : replacement)
                     .maxReplacements(maxReplacements)
                     .regex(regex)
                     .dotAll(dotAll)
@@ -116,12 +118,22 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
 
     @PipelineProperty(description = "The text or regex pattern to find and replace.")
     public void setFind(final String find) {
-        this.find = StringEscapeUtils.unescapeJava(find);
+        this.find = find;
     }
 
     @PipelineProperty(description = "The replacement text.")
     public void setReplacement(final String replacement) {
-        this.replacement = StringEscapeUtils.unescapeJava(replacement);
+        this.replacement = replacement;
+    }
+
+    @PipelineProperty(description = "Whether or not to escape find pattern or text.", defaultValue = "true")
+    public void setEscapeFind(final boolean escapeFind) {
+        this.escapeFind = escapeFind;
+    }
+
+    @PipelineProperty(description = "Whether or not to escape replacement text.", defaultValue = "true")
+    public void setEscapeReplacement(final boolean escapeReplacement) {
+        this.escapeReplacement = escapeReplacement;
     }
 
     @PipelineProperty(description = "The maximum number of times to try and replace text. There is no limit by default.")

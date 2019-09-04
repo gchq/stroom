@@ -51,6 +51,21 @@ public class TestExpressionMatcher extends StroomUnitTest {
         test(createAttributeMap(), createExpression(Op.NOT, "TEST_FEED"), false);
     }
 
+    @Test
+    public void testMatchAll() {
+        test(createAttributeMap(), new ExpressionOperator.Builder(Op.AND).build(), true);
+    }
+
+    @Test
+    public void testMatchNone1() {
+        test(createAttributeMap(), null, false);
+    }
+
+    @Test
+    public void testMatchNone2() {
+        test(createAttributeMap(), new ExpressionOperator.Builder(Op.AND).enabled(false).build(), false);
+    }
+
     private void test(final Map<String, Object> attributeMap, final ExpressionOperator expression, final boolean outcome) {
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), null, null);
         Assert.assertEquals(outcome, expressionMatcher.match(attributeMap, expression));

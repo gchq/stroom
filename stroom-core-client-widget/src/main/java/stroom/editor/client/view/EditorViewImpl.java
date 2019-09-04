@@ -223,6 +223,11 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
             }
         }
 
+        // Ensure line numbers are visible if there are annotations.
+        if (annotations.size() > 0) {
+            getLineNumbersOption().setOn(true);
+        }
+
         editor.setAnnotations(annotations);
         doLayout();
     }

@@ -25,9 +25,9 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.item.client.ItemListBox;
-import stroom.security.shared.CopyPermissionsFromParentAction;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeSet;
+import stroom.security.shared.CopyPermissionsFromParentAction;
 import stroom.security.shared.FetchAllDocumentPermissionsAction;
 import stroom.security.shared.UserPermission;
 import stroom.security.shared.UserRef;
@@ -66,7 +66,7 @@ public class DocumentPermissionsPresenter
     }
 
     public void show(final ExplorerNode explorerNode) {
-        getView().setCascasdeVisible(DocumentTypes.isFolder(explorerNode.getType()));
+        getView().setCascadeVisible(DocumentTypes.isFolder(explorerNode.getType()));
         final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(explorerNode);
         final DocumentPermissionsTabPresenter groupsPresenter = getTabPresenter(explorerNode);
 
@@ -82,29 +82,26 @@ public class DocumentPermissionsPresenter
                         Map<UserRef, Set<String>> permissionsToRemove = new HashMap<>();
                         permissionsToRemove.putAll(usersPresenter.getDocumentPermissions().getUserPermissions());
                         permissionsToRemove.putAll(groupsPresenter.getDocumentPermissions().getUserPermissions());
-                        for(UserRef userRef : permissionsToRemove.keySet()){
-                            for(String permission : permissionsToRemove.get(userRef)){
+                        for (UserRef userRef : permissionsToRemove.keySet()) {
+                            for (String permission : permissionsToRemove.get(userRef)) {
                                 changeSet.remove(new UserPermission(userRef, permission));
                             }
                         }
                         // We need to update the changeSet with all the new permissions.
-                        for(UserRef userRef : documentPermissions.getUserPermissions().keySet()){
-                            for(String permission : documentPermissions.getPermissionsForUser(userRef)) {
+                        for (UserRef userRef : documentPermissions.getUserPermissions().keySet()) {
+                            for (String permission : documentPermissions.getPermissionsForUser(userRef)) {
                                 changeSet.add(new UserPermission(userRef, permission));
                             }
                         }
                         // We need to set the document permissions so that what's been changed is visible.
                         usersPresenter.setDocumentPermissions(documentPermissions, false, changeSet);
                         groupsPresenter.setDocumentPermissions(documentPermissions, true, changeSet);
-                        // TODO: How do I refresh the view if it's already being displayed? If you click a group and
-                        // then click copy from parent it doesn't update the display until you click the group again.
                     });
         });
         // If we're looking at the root node then we can't copy from the parent because there isn't one.
-        if(DocumentTypes.isSystem(explorerNode.getType())) {
+        if (DocumentTypes.isSystem(explorerNode.getType())) {
             getView().getCopyPermissionsFromParentButton().setEnabled(false);
         }
-
 
         final FetchAllDocumentPermissionsAction fetchAllDocumentPermissionsAction = new FetchAllDocumentPermissionsAction(explorerNode.getDocRef());
         dispatcher.exec(fetchAllDocumentPermissionsAction).onSuccess(documentPermissions -> {
@@ -155,7 +152,7 @@ public class DocumentPermissionsPresenter
 
         ItemListBox<ChangeDocumentPermissionsAction.Cascade> getCascade();
 
-        void setCascasdeVisible(boolean visible);
+        void setCascadeVisible(boolean visible);
 
         Button getCopyPermissionsFromParentButton();
     }

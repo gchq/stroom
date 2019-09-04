@@ -73,6 +73,9 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
     }
 
     public void refresh() {
+        final UserRef selected = getDataGridView().getSelectionModel().getSelected();
+        getDataGridView().getSelectionModel().clear();
+
         final List<UserRef> users = new ArrayList<>();
         for (final UserRef user : documentPermissions.getUserPermissions().keySet()) {
             if (user.isGroup() == group) {
@@ -84,9 +87,13 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
             }
         }
 
-        Collections.sort(users, Comparator.comparing(DocRef::getName));
+        users.sort(Comparator.comparing(DocRef::getName));
 
         getDataGridView().setRowData(0, users);
         getDataGridView().setRowCount(users.size());
+
+        if (selected != null) {
+            getDataGridView().getSelectionModel().setSelected(selected);
+        }
     }
 }

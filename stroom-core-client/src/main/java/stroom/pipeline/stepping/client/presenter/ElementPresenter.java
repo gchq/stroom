@@ -135,7 +135,11 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                             loadEntityRef(future);
                         }
                     })
-                    .onFailure(caught -> future.setResult(false));
+                    .onFailure(caught -> {
+                        dirtyCode = false;
+                        setCode(caught.getMessage(), null);
+                        future.setResult(false);
+                    });
         } else if (XSLT.ENTITY_TYPE.equals(fuzzyEntityRef.getType())) {
             final FindXSLTCriteria criteria = new FindXSLTCriteria();
             criteria.setName(new StringCriteria(fuzzyEntityRef.getName()));
@@ -153,7 +157,11 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                             loadEntityRef(future);
                         }
                     })
-                    .onFailure(caught -> future.setResult(false));
+                    .onFailure(caught -> {
+                        dirtyCode = false;
+                        setCode(caught.getMessage(), null);
+                        future.setResult(false);
+                    });
         } else {
             Scheduler.get().scheduleDeferred(() -> future.setResult(true));
         }
@@ -169,7 +177,11 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
                         future.setResult(true);
                     })
-                    .onFailure(caught -> future.setResult(false));
+                    .onFailure(caught -> {
+                        dirtyCode = false;
+                        setCode(caught.getMessage(), null);
+                        future.setResult(false);
+                    });
         } else {
             Scheduler.get().scheduleDeferred(() -> future.setResult(true));
         }

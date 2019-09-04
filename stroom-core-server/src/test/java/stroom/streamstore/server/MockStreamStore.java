@@ -350,7 +350,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         for (final Stream stream : fileData.keySet()) {
             final StreamAttributeMap streamAttributeMap = new StreamAttributeMap(stream);
             final Map<String, Object> attributeMap = StreamAttributeMapUtil.createAttributeMap(streamAttributeMap);
-            if (expressionMatcher.match(attributeMap, criteria.getExpression())) {
+            if (criteria.getExpression() == null || expressionMatcher.match(attributeMap, criteria.getExpression())) {
                 list.add(stream);
             }
         }

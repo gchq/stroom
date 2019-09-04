@@ -50,41 +50,53 @@ public class ExpressionMatcher {
     }
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
+        // If the initial item is null or not enabled then don't match.
         if (item == null || !item.enabled()) {
+            return false;
+        }
+        return matchItem(attributeMap, item);
+    }
+
+    private boolean matchItem(final Map<String, Object> attributeMap, final ExpressionItem item) {
+        if (!item.enabled()) {
+            // If the child item is not enabled then return and keep trying to match with other parts of the expression.
             return true;
         }
 
         if (item instanceof ExpressionOperator) {
-            final ExpressionOperator operator = (ExpressionOperator) item;
-            if (operator.getChildren() == null || operator.getChildren().size() == 0) {
-                return true;
-            }
-
-            switch (operator.getOp()) {
-                case AND:
-                    for (final ExpressionItem child : operator.getChildren()) {
-                        if (!match(attributeMap, child)) {
-                            return false;
-                        }
-                    }
-                    return true;
-
-                case OR:
-                    for (final ExpressionItem child : operator.getChildren()) {
-                        if (match(attributeMap, child)) {
-                            return true;
-                        }
-                    }
-                    return false;
-                case NOT:
-                    return operator.getChildren().size() == 1 && !match(attributeMap, operator.getChildren().get(0));
-            }
-
+            return matchOperator(attributeMap, (ExpressionOperator) item);
         } else if (item instanceof ExpressionTerm) {
             return matchTerm(attributeMap, (ExpressionTerm) item);
+        } else {
+            throw new MatchException("Unexpected item type");
+        }
+    }
+
+    private boolean matchOperator(final Map<String, Object> attributeMap, final ExpressionOperator operator) {
+        if (operator.getChildren() == null || operator.getChildren().size() == 0) {
+            return true;
         }
 
-        throw new MatchException("Unexpected item type");
+        switch (operator.getOp()) {
+            case AND:
+                for (final ExpressionItem child : operator.getChildren()) {
+                    if (!matchItem(attributeMap, child)) {
+                        return false;
+                    }
+                }
+                return true;
+            case OR:
+                for (final ExpressionItem child : operator.getChildren()) {
+                    if (matchItem(attributeMap, child)) {
+                        return true;
+                    }
+                }
+                return false;
+            case NOT:
+                return operator.getChildren().size() == 1 && !matchItem(attributeMap, operator.getChildren().get(0));
+            default:
+                throw new MatchException("Unexpected operator type");
+        }
     }
 
     private boolean matchTerm(final Map<String, Object> attributeMap, final ExpressionTerm term) {

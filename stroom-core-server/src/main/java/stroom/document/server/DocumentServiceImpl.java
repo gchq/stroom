@@ -21,54 +21,27 @@ import org.springframework.stereotype.Component;
 import stroom.docstore.server.DocumentActionHandler;
 import stroom.entity.server.EntityServiceBeanRegistry;
 import stroom.entity.shared.EntityServiceException;
-import stroom.logging.DocumentEventLog;
 import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
 
 @Component
 class DocumentServiceImpl implements DocumentService {
-    private final DocumentEventLog documentEventLog;
     private final EntityServiceBeanRegistry beanRegistry;
 
     @Inject
-    public DocumentServiceImpl(final DocumentEventLog documentEventLog, final EntityServiceBeanRegistry beanRegistry) {
-        this.documentEventLog = documentEventLog;
+    public DocumentServiceImpl(final EntityServiceBeanRegistry beanRegistry) {
         this.beanRegistry = beanRegistry;
     }
 
     @Override
     public Object readDocument(DocRef docRef) {
-        Object result = null;
-        try {
-            final DocumentActionHandler documentActionHandler = getDocumentActionHandler(docRef.getType());
-            result = documentActionHandler.readDocument(docRef);
-            if (result != null) {
-                documentEventLog.view(result, null);
-            }
-        } catch (final RuntimeException e) {
-            documentEventLog.view(docRef, e);
-            throw e;
-        }
-
-        return result;
+        return getDocumentActionHandler(docRef.getType()).readDocument(docRef);
     }
 
     @Override
     public Object writeDocument(DocRef docRef, final Object document) {
-        Object result = null;
-        try {
-            final DocumentActionHandler documentActionHandler = getDocumentActionHandler(docRef.getType());
-            result = documentActionHandler.writeDocument(document);
-            if (result != null) {
-                documentEventLog.update(document, result, null);
-            }
-        } catch (final RuntimeException e) {
-            documentEventLog.update(document, result, e);
-            throw e;
-        }
-
-        return result;
+        return getDocumentActionHandler(docRef.getType()).writeDocument(document);
     }
 
     private DocumentActionHandler getDocumentActionHandler(final String type) {
