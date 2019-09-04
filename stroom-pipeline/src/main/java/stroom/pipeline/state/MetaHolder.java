@@ -26,7 +26,7 @@ public class MetaHolder implements Holder {
     private InputStreamProvider inputStreamProvider;
 
     private Meta meta;
-    private String childStreamType;
+    private String childDataType;
     private long streamNo;
 
     public Meta getMeta() {
@@ -37,13 +37,13 @@ public class MetaHolder implements Holder {
         this.meta = meta;
     }
 
-    public String getChildStreamType() {
-        return childStreamType;
+    public String getChildDataType() {
+        return childDataType;
     }
 
-    public void setChildStreamType(final String childStreamType) {
-        if (!childStreamType.equals(StreamTypeNames.META) && !childStreamType.equals(StreamTypeNames.CONTEXT)) {
-            this.childStreamType = childStreamType;
+    public void setChildDataType(final String childDataType) {
+        if (!StreamTypeNames.META.equals(childDataType) && !StreamTypeNames.CONTEXT.equals(childDataType)) {
+            this.childDataType = childDataType;
         }
     }
 

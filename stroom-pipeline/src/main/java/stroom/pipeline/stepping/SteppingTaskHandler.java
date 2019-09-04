@@ -471,7 +471,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         }
     }
 
-    private void process(final SteppingController controller, final String feedName, final String streamTypeName,
+    private void process(final SteppingController controller, final String feedName, final String childDataType,
                          final Source source) {
         final Meta meta = source.getMeta();
         final SteppingTask request = controller.getRequest();
@@ -480,7 +480,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
         // Set the source meta.
         metaHolder.setMeta(meta);
-        metaHolder.setChildStreamType(streamTypeName);
+        metaHolder.setChildDataType(childDataType);
 
         try {
             final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
@@ -506,7 +506,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             }
 
             // Get the appropriate encoding for the stream type.
-            final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
+            final String encoding = feedProperties.getEncoding(feedName, childDataType);
 
             // Loop over the stream boundaries and process each
             // sequentially. Loop over the stream boundaries and process
@@ -524,7 +524,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 // Get the stream.
                 try (final InputStreamProvider inputStreamProvider = source.get(partNo - 1)) {
                     metaHolder.setInputStreamProvider(inputStreamProvider);
-                    final SizeAwareInputStream inputStream = inputStreamProvider.get(streamTypeName);
+                    final SizeAwareInputStream inputStream = inputStreamProvider.get(childDataType);
 
                     // Process the boundary.
                     try {

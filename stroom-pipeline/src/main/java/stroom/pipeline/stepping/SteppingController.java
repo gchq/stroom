@@ -227,7 +227,7 @@ public class SteppingController {
         SourceLocation sourceLocation = null;
         if (stepLocation != null) {
             sourceLocation = new SourceLocation(stepLocation.getId(),
-                    metaHolder.getChildStreamType(),
+                    metaHolder.getChildDataType(),
                     stepLocation.getPartNo(),
                     stepLocation.getRecordNo(),
                     highlight);

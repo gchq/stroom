@@ -44,7 +44,7 @@ class XmlSourceLocationFactory implements SourceLocationFactory {
             highlight.setTo(location);
             currentLocation = location;
 
-            final SourceLocation sourceLocation = new SourceLocation(metaHolder.getMeta().getId(), metaHolder.getChildStreamType(), metaHolder.getStreamNo(), recordNo, highlight);
+            final SourceLocation sourceLocation = new SourceLocation(metaHolder.getMeta().getId(), metaHolder.getChildDataType(), metaHolder.getStreamNo(), recordNo, highlight);
             if (maxSize <= 1) {
                 locationHolder.setCurrentLocation(sourceLocation);
 
