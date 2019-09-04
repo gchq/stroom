@@ -105,6 +105,7 @@ public class ExtractionTaskHandler {
     }
 
     public VoidResult exec(final ExtractionTask task) {
+        // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
         return securityContext.useAsReadResult(() -> {
             LAMBDA_LOGGER.logDurationIfDebugEnabled(
                     () -> {

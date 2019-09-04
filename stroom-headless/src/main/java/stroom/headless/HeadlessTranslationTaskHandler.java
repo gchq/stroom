@@ -107,99 +107,102 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
     @Override
     public VoidResult exec(final HeadlessTranslationTask task) {
         return securityContext.secureResult(() -> {
-            try {
-                // Setup the error handler and receiver.
-                errorWriterProxy.setErrorWriter(task.getHeadlessFilter());
-                errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
-
-                final InputStream dataStream = task.getDataStream();
-                final InputStream metaStream = task.getMetaStream();
-
-                if (metaStream == null) {
-                    throw new RuntimeException("No meta data found");
-                }
-
-                // Load the meta and context data.
-                final AttributeMap metaData = new AttributeMap();
-                AttributeMapUtil.read(metaStream, metaData);
-
-                // Get the feed.
-                final String feedName = metaData.get(StandardHeaderArguments.FEED);
-                feedHolder.setFeedName(feedName);
-
-                // Setup the meta data holder.
-                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
-
-                // Set the pipeline so it can be used by a filter if needed.
-                final List<DocRef> pipelines = pipelineStore.findByName(feedName);
-                if (pipelines == null || pipelines.size() == 0) {
-                    throw new ProcessException("No pipeline found for feed name '" + feedName + "'");
-                }
-                if (pipelines.size() > 1) {
-                    throw new ProcessException("More than one pipeline found for feed name '" + feedName + "'");
-                }
-
-                final DocRef pipelineRef = pipelines.get(0);
-                pipelineHolder.setPipeline(pipelineRef);
-
-                // Create the parser.
-                final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-                final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-                final Pipeline pipeline = pipelineFactory.create(pipelineData);
-
-                // Find last XSLT filter.
-                final XMLFilter lastFilter = getLastFilter(pipeline);
-                if (!(lastFilter instanceof HasTargets)) {
-                    throw new ProcessException(
-                            "No appendable filters can be found in pipeline '" + pipelineRef.getName() + "'");
-                }
-                ((HasTargets) lastFilter).setTarget(task.getHeadlessFilter());
-
-                // Output the meta data for the new stream.
-                this.metaData.putAll(metaData);
-                task.getHeadlessFilter().changeMetaData(metaData);
-
-                // Set effective time.
-                Long effectiveMs = null;
+            // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
+            return securityContext.useAsReadResult(() -> {
                 try {
-                    final String effectiveTime = metaData.get(StandardHeaderArguments.EFFECTIVE_TIME);
-                    if (effectiveTime != null && !effectiveTime.isEmpty()) {
-                        effectiveMs = DateUtil.parseNormalDateTimeString(effectiveTime);
+                    // Setup the error handler and receiver.
+                    errorWriterProxy.setErrorWriter(task.getHeadlessFilter());
+                    errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
+
+                    final InputStream dataStream = task.getDataStream();
+                    final InputStream metaStream = task.getMetaStream();
+
+                    if (metaStream == null) {
+                        throw new RuntimeException("No meta data found");
                     }
-                } catch (final RuntimeException e) {
+
+                    // Load the meta and context data.
+                    final AttributeMap metaData = new AttributeMap();
+                    AttributeMapUtil.read(metaStream, metaData);
+
+                    // Get the feed.
+                    final String feedName = metaData.get(StandardHeaderArguments.FEED);
+                    feedHolder.setFeedName(feedName);
+
+                    // Setup the meta data holder.
+                    metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
+
+                    // Set the pipeline so it can be used by a filter if needed.
+                    final List<DocRef> pipelines = pipelineStore.findByName(feedName);
+                    if (pipelines == null || pipelines.size() == 0) {
+                        throw new ProcessException("No pipeline found for feed name '" + feedName + "'");
+                    }
+                    if (pipelines.size() > 1) {
+                        throw new ProcessException("More than one pipeline found for feed name '" + feedName + "'");
+                    }
+
+                    final DocRef pipelineRef = pipelines.get(0);
+                    pipelineHolder.setPipeline(pipelineRef);
+
+                    // Create the parser.
+                    final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+                    final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
+                    final Pipeline pipeline = pipelineFactory.create(pipelineData);
+
+                    // Find last XSLT filter.
+                    final XMLFilter lastFilter = getLastFilter(pipeline);
+                    if (!(lastFilter instanceof HasTargets)) {
+                        throw new ProcessException(
+                                "No appendable filters can be found in pipeline '" + pipelineRef.getName() + "'");
+                    }
+                    ((HasTargets) lastFilter).setTarget(task.getHeadlessFilter());
+
+                    // Output the meta data for the new stream.
+                    this.metaData.putAll(metaData);
+                    task.getHeadlessFilter().changeMetaData(metaData);
+
+                    // Set effective time.
+                    Long effectiveMs = null;
+                    try {
+                        final String effectiveTime = metaData.get(StandardHeaderArguments.EFFECTIVE_TIME);
+                        if (effectiveTime != null && !effectiveTime.isEmpty()) {
+                            effectiveMs = DateUtil.parseNormalDateTimeString(effectiveTime);
+                        }
+                    } catch (final RuntimeException e) {
+                        outputError(e);
+                    }
+
+                    // Create the stream.
+                    final Meta meta = new Meta.Builder()
+                            .effectiveMs(effectiveMs)
+                            .feedName(feedName)
+                            .build();
+
+                    // Add stream providers for lookups etc.
+                    final BasicInputStreamProvider inputStreamProvider = new BasicInputStreamProvider();
+                    inputStreamProvider.put(null, new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
+                    inputStreamProvider.put(StreamTypeNames.RAW_EVENTS, new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
+                    if (task.getMetaStream() != null) {
+                        inputStreamProvider.put(StreamTypeNames.META, new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
+                    }
+                    if (task.getContextStream() != null) {
+                        inputStreamProvider.put(StreamTypeNames.CONTEXT, new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
+                    }
+
+                    metaHolder.setMeta(meta);
+                    metaHolder.setInputStreamProvider(inputStreamProvider);
+
+                    try {
+                        pipeline.process(dataStream, feedProperties.getEncoding(feedName, feedProperties.getStreamTypeName(feedName)));
+                    } catch (final RuntimeException e) {
+                        outputError(e);
+                    }
+                } catch (final IOException | RuntimeException e) {
                     outputError(e);
                 }
 
-                // Create the stream.
-                final Meta meta = new Meta.Builder()
-                        .effectiveMs(effectiveMs)
-                        .feedName(feedName)
-                        .build();
-
-                // Add stream providers for lookups etc.
-                final BasicInputStreamProvider inputStreamProvider = new BasicInputStreamProvider();
-                inputStreamProvider.put(null, new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
-                inputStreamProvider.put(StreamTypeNames.RAW_EVENTS, new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
-                if (task.getMetaStream() != null) {
-                    inputStreamProvider.put(StreamTypeNames.META, new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
-                }
-                if (task.getContextStream() != null) {
-                    inputStreamProvider.put(StreamTypeNames.CONTEXT, new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
-                }
-
-                metaHolder.setMeta(meta);
-                metaHolder.setInputStreamProvider(inputStreamProvider);
-
-                try {
-                    pipeline.process(dataStream, feedProperties.getEncoding(feedName, feedProperties.getStreamTypeName(feedName)));
-                } catch (final RuntimeException e) {
-                    outputError(e);
-                }
-            } catch (final IOException | RuntimeException e) {
-                outputError(e);
-            }
-
-            return VoidResult.INSTANCE;
+                return VoidResult.INSTANCE;
+            });
         });
     }
 

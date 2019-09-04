@@ -239,12 +239,12 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 } else if (currentLocation != null) {
                     // For all other step types we should have an existing
                     // stream index.
-                    currentStreamIndex = streamIdList.indexOf(currentLocation.getStreamId());
+                    currentStreamIndex = streamIdList.indexOf(currentLocation.getId());
 
                     // [Optimisation] If we are moving backward and are at the
                     // beginning of a stream then move to the previous stream.
                     if (StepType.BACKWARD.equals(stepType) && currentStreamIndex != -1
-                            && currentLocation.getStreamNo() <= 1 && currentLocation.getRecordNo() <= 1) {
+                            && currentLocation.getPartNo() <= 1 && currentLocation.getRecordNo() <= 1) {
                         currentStreamIndex--;
 
                         // If there are no more streams then we are at the
@@ -279,7 +279,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
                 // If we have changed stream and are moving forward of backward
                 // then we need to change the request.
-                if (currentLocation != null && streamId != currentLocation.getStreamId()) {
+                if (currentLocation != null && streamId != currentLocation.getId()) {
                     if (StepType.FORWARD.equals(stepType)) {
                         // If we haven't got a position or are moving forward
                         // and the stream id has changed then keep look from the
@@ -358,7 +358,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                     return null;
                 }
 
-                return currentLocation.getStreamId();
+                return currentLocation.getId();
             }
 
             // Return the task at the current index or null if the index is out
@@ -488,20 +488,20 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
             // Determine which stream number to start with.
             final long count = source.count();
-            long streamNo = 1;
+            long partNo = 1;
             if (currentLocation != null) {
                 // If stream no has been set beyond the last stream no then
                 // start at the end.
-                if (currentLocation.getStreamNo() > count) {
+                if (currentLocation.getPartNo() > count) {
                     // Start at the last stream number.
-                    streamNo = count;
+                    partNo = count;
                     // Update the current processing location.
-                    currentLocation = new StepLocation(meta.getId(), streamNo, currentLocation.getRecordNo());
+                    currentLocation = new StepLocation(meta.getId(), partNo, currentLocation.getRecordNo());
                 } else {
                     // Else start at the current location.
-                    streamNo = currentLocation.getStreamNo();
+                    partNo = currentLocation.getPartNo();
                     // Update the current processing location.
-                    currentLocation = new StepLocation(meta.getId(), streamNo, currentLocation.getRecordNo());
+                    currentLocation = new StepLocation(meta.getId(), partNo, currentLocation.getRecordNo());
                 }
             }
 
@@ -512,17 +512,17 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             // sequentially. Loop over the stream boundaries and process
             // each sequentially until we find a record.
             boolean done = controller.isFound();
-            while (!done && streamNo > 0 && streamNo <= count && !Thread.currentThread().isInterrupted()) {
+            while (!done && partNo > 0 && partNo <= count && !Thread.currentThread().isInterrupted()) {
                 // Set the stream number.
-                metaHolder.setStreamNo(streamNo);
-                streamLocationFactory.setStreamNo(streamNo);
+                metaHolder.setStreamNo(partNo);
+                streamLocationFactory.setStreamNo(partNo);
 
                 // Process the boundary making sure to use the right
                 // encoding.
                 controller.clearAllFilters(null);
 
                 // Get the stream.
-                try (final InputStreamProvider inputStreamProvider = source.get(streamNo - 1)) {
+                try (final InputStreamProvider inputStreamProvider = source.get(partNo - 1)) {
                     metaHolder.setInputStreamProvider(inputStreamProvider);
                     final SizeAwareInputStream inputStream = inputStreamProvider.get(streamTypeName);
 
@@ -553,17 +553,17 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         // If we are stepping forward increment the stream
                         // number, otherwise decrement the stream number.
                         if (StepType.FIRST.equals(stepType)) {
-                            streamNo++;
-                            currentLocation = new StepLocation(meta.getId(), streamNo, 0);
+                            partNo++;
+                            currentLocation = new StepLocation(meta.getId(), partNo, 0);
                         } else if (StepType.BACKWARD.equals(stepType)) {
-                            streamNo--;
-                            currentLocation = new StepLocation(meta.getId(), streamNo, Long.MAX_VALUE);
+                            partNo--;
+                            currentLocation = new StepLocation(meta.getId(), partNo, Long.MAX_VALUE);
                         } else if (StepType.FORWARD.equals(stepType)) {
-                            streamNo++;
-                            currentLocation = new StepLocation(meta.getId(), streamNo, 0);
+                            partNo++;
+                            currentLocation = new StepLocation(meta.getId(), partNo, 0);
                         } else if (StepType.LAST.equals(stepType)) {
-                            streamNo--;
-                            currentLocation = new StepLocation(meta.getId(), streamNo, Long.MAX_VALUE);
+                            partNo--;
+                            currentLocation = new StepLocation(meta.getId(), partNo, Long.MAX_VALUE);
                         }
                     }
                 } catch (final IOException | RuntimeException e) {

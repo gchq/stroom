@@ -76,9 +76,9 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
     public void onMove(final PipelineElement parent, final PipelineElement child) {
         if (pipelineModel != null && pipelineModel.getParentMap() != null) {
             try {
-                pipelineModel.removeElement(child);
-                pipelineModel.addExistingElement(parent, child);
-                setDirty(true);
+                if (pipelineModel.moveElement(parent, child)) {
+                    setDirty(true);
+                }
             } catch (final RuntimeException e) {
                 AlertEvent.fireError(PipelineTreePresenter.this, e.getMessage(), null);
             }

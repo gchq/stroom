@@ -59,6 +59,10 @@ public class PermissionException extends RuntimeException {
 //                "User does not have the required permission (" + permission + ")");
 //    }
 
+    public String getUser() {
+        return user;
+    }
+
     @Override
     public String getMessage() {
         String message = getGenericMessage();

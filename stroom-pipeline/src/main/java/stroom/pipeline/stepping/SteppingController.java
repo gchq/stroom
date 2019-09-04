@@ -33,9 +33,7 @@ import stroom.util.shared.Highlight;
 import stroom.util.shared.Location;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @PipelineScoped
@@ -208,7 +206,7 @@ public class SteppingController {
         // We want to exit early from backward stepping if we have got to the
         // previous record number.
         return StepType.BACKWARD.equals(request.getStepType()) && stepLocation != null
-                && currentStreamNo == stepLocation.getStreamNo() && currentRecordNo >= stepLocation.getRecordNo() - 1;
+                && currentStreamNo == stepLocation.getPartNo() && currentRecordNo >= stepLocation.getRecordNo() - 1;
 
     }
 
@@ -228,9 +226,9 @@ public class SteppingController {
     StepData createStepData(final Highlight highlight) {
         SourceLocation sourceLocation = null;
         if (stepLocation != null) {
-            sourceLocation = new SourceLocation(stepLocation.getStreamId(),
+            sourceLocation = new SourceLocation(stepLocation.getId(),
                     metaHolder.getChildStreamType(),
-                    stepLocation.getStreamNo(),
+                    stepLocation.getPartNo(),
                     stepLocation.getRecordNo(),
                     highlight);
         }
@@ -293,15 +291,15 @@ public class SteppingController {
         final StepType stepType = request.getStepType();
         if (StepType.FIRST.equals(stepType) || StepType.LAST.equals(stepType)) {
             return true;
-        } else if (StepType.FORWARD.equals(stepType) && currentStreamNo > stepLocation.getStreamNo()) {
+        } else if (StepType.FORWARD.equals(stepType) && currentStreamNo > stepLocation.getPartNo()) {
             return true;
-        } else if (StepType.BACKWARD.equals(stepType) && currentStreamNo < stepLocation.getStreamNo()) {
+        } else if (StepType.BACKWARD.equals(stepType) && currentStreamNo < stepLocation.getPartNo()) {
             return true;
         }
 
         // If the stream number is the same as the one requested then we can
         // test the record number.
-        if (currentStreamNo == stepLocation.getStreamNo()) {
+        if (currentStreamNo == stepLocation.getPartNo()) {
             if (StepType.REFRESH.equals(stepType) && currentRecordNo == stepLocation.getRecordNo()) {
                 return true;
             } else if (StepType.FORWARD.equals(stepType) && currentRecordNo > stepLocation.getRecordNo()) {

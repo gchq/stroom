@@ -54,6 +54,9 @@ public class ErrorReceiverProxy implements ErrorReceiver {
 
     @Override
     public String toString() {
-        return this.errorReceiver.toString();
+        if (errorReceiver != null) {
+            return this.errorReceiver.toString();
+        }
+        return super.toString();
     }
 }

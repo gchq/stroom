@@ -28,7 +28,6 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(LineFromFunction.class);
         bindFunction(LineToFunction.class);
         bindFunction(LinkFunction.class);
-        bindFunction(LocationFunction.class);
         bindFunction(LogFunction.class);
         bindFunction(MetaFunction.class);
         bindFunction(NumericIPFunction.class);
@@ -38,6 +37,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(RandomFunction.class);
         bindFunction(RecordNoFunction.class);
         bindFunction(SearchIdFunction.class);
+        bindFunction(SourceFunction.class);
     }
 
     private static class ClassificationFunction extends StroomExtensionFunctionDefinition<Classification> {
@@ -214,13 +214,6 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
-    private static class LocationFunction extends StroomExtensionFunctionDefinition<Location> {
-        @Inject
-        LocationFunction(final Provider<Location> functionCallProvider) {
-            super("location", 0, 0, new SequenceType[]{}, SequenceType.NODE_SEQUENCE, functionCallProvider);
-        }
-    }
-
     private static class LogFunction extends StroomExtensionFunctionDefinition<Log> {
         @Inject
         LogFunction(final Provider<Log> functionCallProvider) {
@@ -293,6 +286,13 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         SearchIdFunction(final Provider<SearchId> functionCallProvider) {
             super("search-id", 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING, functionCallProvider);
+        }
+    }
+
+    private static class SourceFunction extends StroomExtensionFunctionDefinition<Source> {
+        @Inject
+        SourceFunction(final Provider<Source> functionCallProvider) {
+            super("source", 0, 0, new SequenceType[]{}, SequenceType.NODE_SEQUENCE, functionCallProvider);
         }
     }
 }

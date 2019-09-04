@@ -25,9 +25,9 @@ import java.util.Objects;
 public class SourceLocation implements Serializable, Comparable<SourceLocation> {
     private static final long serialVersionUID = -2327935798577052482L;
 
-    private long streamId;
-    private String childStreamType;
-    private long streamNo;
+    private long id;
+    private String childType;
+    private long partNo;
     private long recordNo = -1;
     private Highlight highlight;
 
@@ -35,24 +35,24 @@ public class SourceLocation implements Serializable, Comparable<SourceLocation> 
         // Default constructor necessary for GWT serialisation.
     }
 
-    public SourceLocation(final long streamId, final String childStreamType, final long streamNo, final long recordNo, final Highlight highlight) {
-        this.streamId = streamId;
-        this.childStreamType = childStreamType;
-        this.streamNo = streamNo;
+    public SourceLocation(final long id, final String childType, final long partNo, final long recordNo, final Highlight highlight) {
+        this.id = id;
+        this.childType = childType;
+        this.partNo = partNo;
         this.recordNo = recordNo;
         this.highlight = highlight;
     }
 
-    public long getStreamId() {
-        return streamId;
+    public long getId() {
+        return id;
     }
 
-    public String getChildStreamType() {
-        return childStreamType;
+    public String getChildType() {
+        return childType;
     }
 
-    public long getStreamNo() {
-        return streamNo;
+    public long getPartNo() {
+        return partNo;
     }
 
     public long getRecordNo() {
@@ -68,24 +68,24 @@ public class SourceLocation implements Serializable, Comparable<SourceLocation> 
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final SourceLocation that = (SourceLocation) o;
-        return streamId == that.streamId &&
-                streamNo == that.streamNo &&
+        return id == that.id &&
+                partNo == that.partNo &&
                 recordNo == that.recordNo &&
-                Objects.equals(childStreamType, that.childStreamType) &&
+                Objects.equals(childType, that.childType) &&
                 Objects.equals(highlight, that.highlight);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(streamId, childStreamType, streamNo, recordNo, highlight);
+        return Objects.hash(id, childType, partNo, recordNo, highlight);
     }
 
     @Override
     public int compareTo(final SourceLocation o) {
         final CompareBuilder builder = new CompareBuilder();
-        builder.append(streamId, o.streamId);
-        builder.append(childStreamType, o.childStreamType);
-        builder.append(streamNo, o.streamNo);
+        builder.append(id, o.id);
+        builder.append(childType, o.childType);
+        builder.append(partNo, o.partNo);
         builder.append(recordNo, o.recordNo);
         builder.append(highlight, o.highlight);
         return builder.toComparison();
@@ -94,9 +94,9 @@ public class SourceLocation implements Serializable, Comparable<SourceLocation> 
     @Override
     public String toString() {
         return "DataLocation{" +
-                "streamId=" + streamId +
-                ", streamId=" + childStreamType +
-                ", streamNo=" + streamNo +
+                "id=" + id +
+                ", childType=" + childType +
+                ", partNo=" + partNo +
                 ", recordNo=" + recordNo +
                 ", highlight=" + highlight +
                 '}';

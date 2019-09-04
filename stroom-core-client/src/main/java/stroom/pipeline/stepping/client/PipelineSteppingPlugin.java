@@ -81,7 +81,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
             final DocRef pipeline = chooser.getSelectedEntityReference();
             if (pipeline != null) {
                 final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-                findMetaCriteria.obtainSelectedIdSet().add(stepLocation.getStreamId());
+                findMetaCriteria.obtainSelectedIdSet().add(stepLocation.getId());
 
                 dispatcher.exec(new FindMetaRowAction(findMetaCriteria)).onSuccess(result -> {
                     if (result != null && result.size() == 1) {

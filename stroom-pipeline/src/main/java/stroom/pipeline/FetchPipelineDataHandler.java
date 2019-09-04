@@ -17,6 +17,7 @@
 
 package stroom.pipeline;
 
+import stroom.entity.shared.PermissionException;
 import stroom.pipeline.factory.PipelineDataValidator;
 import stroom.pipeline.factory.PipelineStackLoader;
 import stroom.pipeline.shared.FetchPipelineDataAction;
@@ -54,26 +55,30 @@ class FetchPipelineDataHandler extends AbstractTaskHandler<FetchPipelineDataActi
     @Override
     public SharedList<PipelineData> exec(final FetchPipelineDataAction action) {
         return securityContext.secureResult(() -> {
-            final PipelineDoc pipelineDoc = pipelineStore.readDocument(action.getPipeline());
+            try {
+                final PipelineDoc pipelineDoc = pipelineStore.readDocument(action.getPipeline());
 
-            // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
-            return securityContext.useAsReadResult(() -> {
-                final List<PipelineDoc> pipelines = pipelineStackLoader.loadPipelineStack(pipelineDoc);
-                final SharedList<PipelineData> result = new SharedList<>(pipelines.size());
+                // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+                return securityContext.useAsReadResult(() -> {
+                    final List<PipelineDoc> pipelines = pipelineStackLoader.loadPipelineStack(pipelineDoc);
+                    final SharedList<PipelineData> result = new SharedList<>(pipelines.size());
 
-                final Map<String, PipelineElementType> elementMap = PipelineDataMerger.createElementMap();
-                for (final PipelineDoc pipe : pipelines) {
-                    final PipelineData pipelineData = pipe.getPipelineData();
+                    final Map<String, PipelineElementType> elementMap = PipelineDataMerger.createElementMap();
+                    for (final PipelineDoc pipe : pipelines) {
+                        final PipelineData pipelineData = pipe.getPipelineData();
 
-                    // Validate the pipeline data and add element and property type
-                    // information.
-                    final SourcePipeline source = new SourcePipeline(pipe);
-                    pipelineDataValidator.validate(source, pipelineData, elementMap);
-                    result.add(pipelineData);
-                }
+                        // Validate the pipeline data and add element and property type
+                        // information.
+                        final SourcePipeline source = new SourcePipeline(pipe);
+                        pipelineDataValidator.validate(source, pipelineData, elementMap);
+                        result.add(pipelineData);
+                    }
 
-                return result;
-            });
+                    return result;
+                });
+            } catch (final PermissionException e) {
+                throw new PermissionException(e.getUser(), e.getMessage().replaceAll("permission to read", "permission to use"));
+            }
         });
     }
 }

@@ -75,84 +75,87 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
     @Override
     public VoidResult exec(final DataProcessorTask task) {
         return securityContext.secureResult(() -> {
-            boolean complete = false;
-            final long startTime = System.currentTimeMillis();
-            ProcessorTask streamTask = task.getProcessorTask();
-            LOGGER.trace("Executing stream task: {}", streamTask.getId());
+            // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
+            return securityContext.useAsReadResult(() -> {
+                boolean complete = false;
+                final long startTime = System.currentTimeMillis();
+                ProcessorTask streamTask = task.getProcessorTask();
+                LOGGER.trace("Executing stream task: {}", streamTask.getId());
 
-            // Open the stream source.
-            try (Source source = streamStore.openSource(streamTask.getMetaId())) {
-                if (source != null) {
-                    final Meta meta = source.getMeta();
+                // Open the stream source.
+                try (Source source = streamStore.openSource(streamTask.getMetaId())) {
+                    if (source != null) {
+                        final Meta meta = source.getMeta();
 
-                    Processor destStreamProcessor = null;
-                    ProcessorFilter destProcessorFilter = null;
-                    if (streamTask.getProcessorFilter() != null) {
-                        destProcessorFilter = processorFilterCache.get(streamTask.getProcessorFilter().getId()).orElse(null);
-                        if (destProcessorFilter != null) {
-                            destStreamProcessor = processorCache
-                                    .get(destProcessorFilter.getProcessor().getId()).orElse(null);
-                        }
-                    }
-                    if (destProcessorFilter == null || destStreamProcessor == null) {
-                        throw new RuntimeException("No dest processor has been loaded.");
-                    }
-
-                    if (destStreamProcessor.getPipelineUuid() != null) {
-                        taskContext.info("Stream {} {} {} {}", meta.getId(),
-                                DateUtil.createNormalDateTimeString(meta.getCreateMs()),
-                                destStreamProcessor.getTaskType(), destStreamProcessor.getPipelineUuid());
-                    } else {
-                        taskContext.info("Stream {} {} {}", meta.getId(),
-                                DateUtil.createNormalDateTimeString(meta.getCreateMs()),
-                                destStreamProcessor.getTaskType());
-                    }
-
-                    // Don't process any streams that we have already created
-                    if (meta.getProcessorUuid() != null && meta.getProcessorUuid().equals(destStreamProcessor.getUuid())) {
-                        complete = true;
-                        LOGGER.warn("Skipping data that we seem to have created (avoid processing forever) {} {}", meta,
-                                destStreamProcessor);
-
-                    } else {
-                        // Change the task status.... and save
-                        streamTask = processorTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(),
-                                TaskStatus.PROCESSING, startTime, null);
-                        // Avoid having to do another fetch
-                        streamTask.setProcessorFilter(destProcessorFilter);
-
-                        final Provider<DataProcessorTaskExecutor> executorProvider = executorProviders.get(new TaskType(destStreamProcessor.getTaskType()));
-                        final DataProcessorTaskExecutor dataProcessorTaskExecutor = executorProvider.get();
-
-                        // Used as a hook for the test code
-                        task.setDataProcessorTaskExecutor(dataProcessorTaskExecutor);
-
-                        try {
-                            dataProcessorTaskExecutor.exec(destStreamProcessor, destProcessorFilter, streamTask,
-                                    source);
-                            // Only record completion for this task if it was not
-                            // terminated.
-                            if (!Thread.currentThread().isInterrupted()) {
-                                complete = true;
+                        Processor destStreamProcessor = null;
+                        ProcessorFilter destProcessorFilter = null;
+                        if (streamTask.getProcessorFilter() != null) {
+                            destProcessorFilter = processorFilterCache.get(streamTask.getProcessorFilter().getId()).orElse(null);
+                            if (destProcessorFilter != null) {
+                                destStreamProcessor = processorCache
+                                        .get(destProcessorFilter.getProcessor().getId()).orElse(null);
                             }
-                        } catch (final RuntimeException e) {
-                            LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e);
+                        }
+                        if (destProcessorFilter == null || destStreamProcessor == null) {
+                            throw new RuntimeException("No dest processor has been loaded.");
+                        }
+
+                        if (destStreamProcessor.getPipelineUuid() != null) {
+                            taskContext.info("Stream {} {} {} {}", meta.getId(),
+                                    DateUtil.createNormalDateTimeString(meta.getCreateMs()),
+                                    destStreamProcessor.getTaskType(), destStreamProcessor.getPipelineUuid());
+                        } else {
+                            taskContext.info("Stream {} {} {}", meta.getId(),
+                                    DateUtil.createNormalDateTimeString(meta.getCreateMs()),
+                                    destStreamProcessor.getTaskType());
+                        }
+
+                        // Don't process any streams that we have already created
+                        if (meta.getProcessorUuid() != null && meta.getProcessorUuid().equals(destStreamProcessor.getUuid())) {
+                            complete = true;
+                            LOGGER.warn("Skipping data that we seem to have created (avoid processing forever) {} {}", meta,
+                                    destStreamProcessor);
+
+                        } else {
+                            // Change the task status.... and save
+                            streamTask = processorTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(),
+                                    TaskStatus.PROCESSING, startTime, null);
+                            // Avoid having to do another fetch
+                            streamTask.setProcessorFilter(destProcessorFilter);
+
+                            final Provider<DataProcessorTaskExecutor> executorProvider = executorProviders.get(new TaskType(destStreamProcessor.getTaskType()));
+                            final DataProcessorTaskExecutor dataProcessorTaskExecutor = executorProvider.get();
+
+                            // Used as a hook for the test code
+                            task.setDataProcessorTaskExecutor(dataProcessorTaskExecutor);
+
+                            try {
+                                dataProcessorTaskExecutor.exec(destStreamProcessor, destProcessorFilter, streamTask,
+                                        source);
+                                // Only record completion for this task if it was not
+                                // terminated.
+                                if (!Thread.currentThread().isInterrupted()) {
+                                    complete = true;
+                                }
+                            } catch (final RuntimeException e) {
+                                LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e);
+                            }
                         }
                     }
+                } catch (final IOException | RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                } finally {
+                    if (complete) {
+                        processorTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
+                                startTime, System.currentTimeMillis());
+                    } else {
+                        processorTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.FAILED, startTime,
+                                System.currentTimeMillis());
+                    }
                 }
-            } catch (final IOException | RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-            } finally {
-                if (complete) {
-                    processorTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
-                            startTime, System.currentTimeMillis());
-                } else {
-                    processorTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.FAILED, startTime,
-                            System.currentTimeMillis());
-                }
-            }
 
-            return new VoidResult();
+                return new VoidResult();
+            });
         });
     }
 }

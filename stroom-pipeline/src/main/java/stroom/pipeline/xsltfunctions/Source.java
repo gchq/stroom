@@ -29,18 +29,22 @@ import org.xml.sax.helpers.AttributesImpl;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.LocationHolder.FunctionType;
+import stroom.pipeline.state.MetaHolder;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 
-class Location extends StroomExtensionFunctionCall {
+class Source extends StroomExtensionFunctionCall {
     private static final AttributesImpl EMPTY_ATTS = new AttributesImpl();
-    private static final String URI = "stroom";
+    private static final String URI = "stroom-meta";
 
+    private final MetaHolder metaHolder;
     private final LocationHolder locationHolder;
 
     @Inject
-    Location(final LocationHolder locationHolder) {
+    Source(final MetaHolder metaHolder,
+           final LocationHolder locationHolder) {
+        this.metaHolder = metaHolder;
         this.locationHolder = locationHolder;
     }
 
@@ -50,9 +54,10 @@ class Location extends StroomExtensionFunctionCall {
 
         try {
             locationHolder.move(FunctionType.LOCATION);
+            final long streamId = metaHolder.getMeta().getId();
             final SourceLocation currentLocation = locationHolder.getCurrentLocation();
             if (currentLocation != null) {
-                result = createSequence(context, currentLocation);
+                result = createSequence(context, streamId, currentLocation);
             }
         } catch (final Exception e) {
             log(context, Severity.ERROR, e.getMessage(), e);
@@ -61,7 +66,7 @@ class Location extends StroomExtensionFunctionCall {
         return result;
     }
 
-    private Sequence createSequence(final XPathContext context, final SourceLocation location) throws SAXException {
+    private Sequence createSequence(final XPathContext context, final long streamId, final SourceLocation location) throws SAXException {
         final Configuration configuration = context.getConfiguration();
         final PipelineConfiguration pipe = configuration.makePipelineConfiguration();
         final Builder builder = new TinyBuilder(pipe);
@@ -71,15 +76,15 @@ class Location extends StroomExtensionFunctionCall {
         contentHandler.setReceiver(builder);
 
         contentHandler.startDocument();
-        startElement(contentHandler, "location");
-        data(contentHandler, "streamId", location.getStreamId());
-        data(contentHandler, "streamNo", location.getStreamNo());
+        startElement(contentHandler, "source");
+        data(contentHandler, "id", location.getId());
+        data(contentHandler, "partNo", location.getPartNo());
         data(contentHandler, "recordNo", location.getRecordNo());
         data(contentHandler, "lineFrom", location.getHighlight().getFrom().getLineNo());
         data(contentHandler, "colFrom", location.getHighlight().getFrom().getColNo());
         data(contentHandler, "lineTo", location.getHighlight().getTo().getLineNo());
         data(contentHandler, "colTo", location.getHighlight().getTo().getColNo());
-        endElement(contentHandler, "location");
+        endElement(contentHandler, "source");
         contentHandler.endDocument();
 
         Sequence sequence = builder.getCurrentRoot();

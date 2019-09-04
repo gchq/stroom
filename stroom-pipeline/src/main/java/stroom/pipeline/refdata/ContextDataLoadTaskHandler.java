@@ -90,90 +90,93 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
     @Override
     public VoidResult exec(final ContextDataLoadTask task) {
         securityContext.secure(() -> {
-            final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
-            errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
-            errorReceiverProxy.setErrorReceiver(errorReceiver);
+            // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
+            securityContext.useAsRead(() -> {
+                final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
+                errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
+                errorReceiverProxy.setErrorReceiver(errorReceiver);
 
-            final InputStream inputStream = task.getInputStream();
-            final Meta meta = task.getMeta();
-            final String feedName = task.getFeedName();
+                final InputStream inputStream = task.getInputStream();
+                final Meta meta = task.getMeta();
+                final String feedName = task.getFeedName();
 
-            if (inputStream != null) {
-                final StreamCloser streamCloser = new BasicStreamCloser();
-                streamCloser.add(inputStream);
+                if (inputStream != null) {
+                    final StreamCloser streamCloser = new BasicStreamCloser();
+                    streamCloser.add(inputStream);
 
-                try {
-                    String contextIdentifier = null;
+                    try {
+                        String contextIdentifier = null;
 
-                    if (LOGGER.isDebugEnabled()) {
-                        final StringBuilder sb = new StringBuilder();
-                        sb.append("(feed = ");
-                        sb.append(feedName);
-                        if (meta != null) {
-                            sb.append(", source id = ");
-                            sb.append(meta.getId());
+                        if (LOGGER.isDebugEnabled()) {
+                            final StringBuilder sb = new StringBuilder();
+                            sb.append("(feed = ");
+                            sb.append(feedName);
+                            if (meta != null) {
+                                sb.append(", source id = ");
+                                sb.append(meta.getId());
+                            }
+                            sb.append(")");
+                            contextIdentifier = sb.toString();
+                            LOGGER.debug("Loading context data " + contextIdentifier);
                         }
-                        sb.append(")");
-                        contextIdentifier = sb.toString();
-                        LOGGER.debug("Loading context data " + contextIdentifier);
-                    }
 
-                    // Create the parser.
-                    final PipelineDoc pipelineDoc = pipelineStore.readDocument(task.getContextPipeline());
-                    final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-                    final Pipeline pipeline = pipelineFactory.create(pipelineData);
+                        // Create the parser.
+                        final PipelineDoc pipelineDoc = pipelineStore.readDocument(task.getContextPipeline());
+                        final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
+                        final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
-                    feedHolder.setFeedName(feedName);
+                        feedHolder.setFeedName(feedName);
 
-                    // Setup the meta data holder.
-                    metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
+                        // Setup the meta data holder.
+                        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
-                    // Get the appropriate encoding for the stream type.
-                    final String encoding = feedProperties.getEncoding(feedName, StreamTypeNames.CONTEXT);
+                        // Get the appropriate encoding for the stream type.
+                        final String encoding = feedProperties.getEncoding(feedName, StreamTypeNames.CONTEXT);
 //                    mapStoreHolder.setMapStoreBuilder(mapStoreBuilder);
 
-                    // TODO is it always 0 for context streams?
+                        // TODO is it always 0 for context streams?
 //                    RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
 //                            pipelineDoc.getUuid(),
 //                            pipelineDoc.getVersion(),
 //                            stream.getId());
 
-                    RefStreamDefinition refStreamDefinition = task.getRefStreamDefinition();
+                        RefStreamDefinition refStreamDefinition = task.getRefStreamDefinition();
 
-                    task.getRefDataStore().doWithLoaderUnlessComplete(
-                            refStreamDefinition,
-                            meta.getEffectiveMs(),
-                            refDataLoader -> {
-                                // set this loader in the holder so it is available to the pipeline filters
-                                refDataLoaderHolder.setRefDataLoader(refDataLoader);
-                                // Process the boundary.
-                                try {
-                                    // Parse the stream. The ReferenceDataFilter will process the context data
-                                    pipeline.process(inputStream, encoding);
+                        task.getRefDataStore().doWithLoaderUnlessComplete(
+                                refStreamDefinition,
+                                meta.getEffectiveMs(),
+                                refDataLoader -> {
+                                    // set this loader in the holder so it is available to the pipeline filters
+                                    refDataLoaderHolder.setRefDataLoader(refDataLoader);
+                                    // Process the boundary.
+                                    try {
+                                        // Parse the stream. The ReferenceDataFilter will process the context data
+                                        pipeline.process(inputStream, encoding);
 
-                                } catch (final RuntimeException e) {
-                                    log(Severity.FATAL_ERROR, e.getMessage(), e);
-                                }
-                            });
+                                    } catch (final RuntimeException e) {
+                                        log(Severity.FATAL_ERROR, e.getMessage(), e);
+                                    }
+                                });
 
-                    // clear the reference to the loader now we have finished with it
-                    refDataLoaderHolder.setRefDataLoader(null);
+                        // clear the reference to the loader now we have finished with it
+                        refDataLoaderHolder.setRefDataLoader(null);
 
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Finished loading context data " + contextIdentifier);
-                    }
-                } catch (final RuntimeException e) {
-                    log(Severity.FATAL_ERROR, "Error loading context data: " + e.getMessage(), e);
-                } finally {
-                    try {
-                        // Close all open streams.
-                        streamCloser.close();
-                    } catch (final IOException e) {
-                        log(Severity.FATAL_ERROR, "Error closing context data stream: " + e.getMessage(), e);
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Finished loading context data " + contextIdentifier);
+                        }
+                    } catch (final RuntimeException e) {
+                        log(Severity.FATAL_ERROR, "Error loading context data: " + e.getMessage(), e);
+                    } finally {
+                        try {
+                            // Close all open streams.
+                            streamCloser.close();
+                        } catch (final IOException e) {
+                            log(Severity.FATAL_ERROR, "Error closing context data stream: " + e.getMessage(), e);
+                        }
                     }
                 }
-            }
 //            return loadedRefStreamDefinitions;
+            });
         });
         return VoidResult.INSTANCE;
     }

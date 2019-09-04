@@ -44,6 +44,6 @@ public class ClassificationWrappedDataPresenter extends ClassificationWrapperPre
 
     @Override
     public void beginStepping(final long streamId, final String childStreamType) {
-        BeginPipelineSteppingEvent.fire(this, streamId, null, childStreamType, new StepLocation(streamId, sourceLocation.getStreamNo(), sourceLocation.getRecordNo()), null);
+        BeginPipelineSteppingEvent.fire(this, streamId, null, childStreamType, new StepLocation(streamId, sourceLocation.getPartNo(), sourceLocation.getRecordNo()), null);
     }
 }

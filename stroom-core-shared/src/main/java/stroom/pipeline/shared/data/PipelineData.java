@@ -121,6 +121,11 @@ public class PipelineData implements SharedObject {
         addLink(link);
     }
 
+    public void addLink(final PipelineElement from, final PipelineElement to) {
+        final PipelineLink link = new PipelineLink(from.getId(), to.getId());
+        addLink(link);
+    }
+
     public void addLink(final PipelineLink link) {
         getAddedLinks().add(link);
     }

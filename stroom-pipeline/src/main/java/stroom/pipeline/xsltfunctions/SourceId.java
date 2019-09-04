@@ -20,16 +20,17 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
+import stroom.meta.shared.Meta;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 
-class StreamNo extends StroomExtensionFunctionCall {
+class SourceId extends StroomExtensionFunctionCall {
     private final MetaHolder metaHolder;
 
     @Inject
-    StreamNo(final MetaHolder metaHolder) {
+    SourceId(final MetaHolder metaHolder) {
         this.metaHolder = metaHolder;
     }
 
@@ -38,7 +39,10 @@ class StreamNo extends StroomExtensionFunctionCall {
         String result = null;
 
         try {
-            result = String.valueOf(metaHolder.getStreamNo());
+            final Meta meta = metaHolder.getMeta();
+            if (meta != null) {
+                result = String.valueOf(meta.getId());
+            }
         } catch (final Exception e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }

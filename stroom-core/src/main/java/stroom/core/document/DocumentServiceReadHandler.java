@@ -19,6 +19,7 @@ package stroom.core.document;
 
 import stroom.docref.SharedObject;
 import stroom.entity.shared.DocumentServiceReadAction;
+import stroom.entity.shared.PermissionException;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
@@ -43,15 +44,19 @@ class DocumentServiceReadHandler
 
     @Override
     public SharedObject exec(final DocumentServiceReadAction action) {
-        return securityContext.secureResult(() -> {
-            try {
-                final SharedObject doc = (SharedObject) documentService.readDocument(action.getDocRef());
-                documentEventLog.view(action.getDocRef(), null);
-                return doc;
-            } catch (final RuntimeException e) {
-                documentEventLog.view(action.getDocRef(), e);
-                throw e;
-            }
-        });
+        return securityContext.secureResult(() ->
+                securityContext.useAsReadResult(() -> {
+                    try {
+                        final SharedObject doc = (SharedObject) documentService.readDocument(action.getDocRef());
+                        documentEventLog.view(doc, null);
+                        return doc;
+                    } catch (final PermissionException e) {
+                        documentEventLog.view(action.getDocRef(), e);
+                        throw new PermissionException(e.getUser(), e.getMessage().replaceAll("permission to read", "permission to use"));
+                    } catch (final RuntimeException e) {
+                        documentEventLog.view(action.getDocRef(), e);
+                        throw e;
+                    }
+                }));
     }
 }

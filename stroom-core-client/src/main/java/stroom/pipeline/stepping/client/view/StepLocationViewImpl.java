@@ -169,8 +169,8 @@ public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandl
             lblStreamNo.setHTML(EMPTY);
             lblRecordNo.setHTML(EMPTY);
         } else {
-            lblStreamId.setHTML(Long.toString(stepLocation.getStreamId()));
-            lblStreamNo.setHTML(Long.toString(stepLocation.getStreamNo()));
+            lblStreamId.setHTML(Long.toString(stepLocation.getId()));
+            lblStreamNo.setHTML(Long.toString(stepLocation.getPartNo()));
             lblRecordNo.setHTML(Long.toString(stepLocation.getRecordNo()));
         }
     }

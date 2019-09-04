@@ -214,17 +214,19 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     }
 
     private void refreshEditor(final ElementPresenter editorPresenter, final String elementId) {
-        editorPresenter.load().onSuccess(result -> {
-            if (editorPresenter.isRefreshRequired()) {
-                editorPresenter.setRefreshRequired(false);
+        editorPresenter.load()
+                .onSuccess(result -> {
+                    if (editorPresenter.isRefreshRequired()) {
+                        editorPresenter.setRefreshRequired(false);
 
-                // Update code pane.
-                refreshEditorCodeIndicators(editorPresenter, elementId);
+                        // Update code pane.
+                        refreshEditorCodeIndicators(editorPresenter, elementId);
 
-                // Update IO data.
-                refreshEditorIO(editorPresenter, elementId);
-            }
-        });
+                        // Update IO data.
+                        refreshEditorIO(editorPresenter, elementId);
+                    }
+                })
+                .onFailure(throwable -> AlertEvent.fireError(this, throwable.getMessage(), null));
     }
 
     private void refreshEditorCodeIndicators(final ElementPresenter editorPresenter, final String elementId) {
@@ -314,7 +316,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             }
 
             if (stepLocation != null) {
-                step(StepType.REFRESH, new StepLocation(meta.getId(), stepLocation.getStreamNo(), stepLocation.getRecordNo()));
+                step(StepType.REFRESH, new StepLocation(meta.getId(), stepLocation.getPartNo(), stepLocation.getRecordNo()));
             }
         });
     }
