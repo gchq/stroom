@@ -147,21 +147,21 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     break;
                 }
                 case STEPPING: {
-                    final long streamId = getParam(href, "streamId", -1);
-                    final long streamNo = getParam(href, "streamNo", 0);
+                    final long id = getParam(href, "id", -1);
+                    final long partNo = getParam(href, "partNo", 0);
                     final long recordNo = getParam(href, "recordNo", 0);
-                    BeginPipelineSteppingEvent.fire(this, streamId, null, null, new StepLocation(streamId, streamNo + 1, recordNo), null);
+                    BeginPipelineSteppingEvent.fire(this, id, null, null, new StepLocation(id, partNo, recordNo), null);
                     break;
                 }
                 case DATA: {
-                    final long streamId = getParam(href, "streamId", -1);
-                    final long streamNo = getParam(href, "streamNo", 0);
+                    final long id = getParam(href, "id", -1);
+                    final long partNo = getParam(href, "partNo", 0);
                     final long recordNo = getParam(href, "recordNo", 0);
                     final int lineFrom = (int) getParam(href, "lineFrom", 1);
                     final int colFrom = (int) getParam(href, "colFrom", 0);
                     final int lineTo = (int) getParam(href, "lineTo", 1);
                     final int colTo = (int) getParam(href, "colTo", 0);
-                    final SourceLocation sourceLocation = new SourceLocation(streamId, null, streamNo, recordNo, new Highlight(new DefaultLocation(lineFrom, colFrom), new DefaultLocation(lineTo, colTo)));
+                    final SourceLocation sourceLocation = new SourceLocation(id, null, partNo, recordNo, new Highlight(new DefaultLocation(lineFrom, colFrom), new DefaultLocation(lineTo, colTo)));
                     ShowDataEvent.fire(this, sourceLocation);
                     break;
                 }

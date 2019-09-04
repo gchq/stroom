@@ -85,7 +85,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
             final DocRef pipeline = chooser.getSelectedEntityReference();
             if (pipeline != null) {
                 final FindStreamAttributeMapCriteria streamAttributeMapCriteria = new FindStreamAttributeMapCriteria();
-                streamAttributeMapCriteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(stepLocation.getStreamId());
+                streamAttributeMapCriteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(stepLocation.getId());
                 streamAttributeMapCriteria.getFetchSet().add(Feed.ENTITY_TYPE);
                 streamAttributeMapCriteria.getFetchSet().add(StreamType.ENTITY_TYPE);
                 streamAttributeMapCriteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);

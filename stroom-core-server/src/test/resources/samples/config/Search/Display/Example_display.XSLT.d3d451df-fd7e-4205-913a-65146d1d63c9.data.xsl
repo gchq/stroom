@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<xsl:stylesheet xpath-default-namespace="event-logging:3" xmlns:stroom="stroom" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0">
+<xsl:stylesheet xpath-default-namespace="event-logging:3" xmlns:stroom="stroom" xmlns:stroom-meta="stroom-meta" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0">
   <xsl:template match="/Events">
     <xsl:apply-templates />
   </xsl:template>
   <xsl:template match="Event">
     <xsl:variable name="href">
-      <xsl:apply-templates select="Data[@Name eq 'location']" />
+      <xsl:apply-templates select="Meta/stroom-meta:source" />
     </xsl:variable>
     <div>
       <div style="padding: 5px;">
@@ -34,10 +34,10 @@
     </div>
   </xsl:template>
 
-  <xsl:template match="Event/Data[@Name eq 'location']/Data">
-    <xsl:value-of select="@Name" />
+  <xsl:template match="Event/Meta/stroom-meta:source/*">
+    <xsl:value-of select="name()" />
     <xsl:text>=</xsl:text>
-    <xsl:value-of select="@Value" />
+    <xsl:value-of select="text()" />
     <xsl:text>&amp;</xsl:text>
   </xsl:template>
 

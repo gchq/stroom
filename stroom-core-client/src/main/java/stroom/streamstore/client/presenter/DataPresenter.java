@@ -83,8 +83,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private SharedList<Marker> markers;
     private int startLineNo;
     private List<Highlight> highlights;
-    private Long highlightStreamId;
-    private Long highlightStreamNo;
+    private Long highlightId;
+    private Long highlightPartNo;
     private StreamType highlightChildStreamType;
     private boolean playButtonVisible;
     private ClassificationUiHandlers classificationUiHandlers;
@@ -208,14 +208,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         this.highlights = new ArrayList<>();
         this.highlights.add(sourceLocation.getHighlight());
 
-        this.highlightStreamId = sourceLocation.getStreamId();
-        this.highlightStreamNo = sourceLocation.getStreamNo();
-        this.highlightChildStreamType = sourceLocation.getChildStreamType();
+        this.highlightId = sourceLocation.getId();
+        this.highlightPartNo = sourceLocation.getPartNo();
+        this.highlightChildStreamType = sourceLocation.getChildType();
 
         // Set the source type that will be used when the page source is shown.
         // Make sure the right page is shown when the source is displayed.
-        final long oldStreamNo = currentStreamRange.getOffset() + 1;
-        long newStreamNo = oldStreamNo;
+        final long oldPartNo = currentStreamRange.getOffset() + 1;
+        long newPartNo = oldPartNo;
         final long oldPageOffset = currentPageRange.getOffset();
         final long pageLength = currentPageRange.getLength();
         int lineNo = 0;
@@ -223,7 +223,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         // If we have a source highlight then use it.
         if (highlights != null && highlights.size() > 0) {
             final Highlight highlight = highlights.get(0);
-            newStreamNo = highlightStreamNo;
+            newPartNo = highlightPartNo;
             lineNo = highlight.getFrom().getLineNo();
         }
 
@@ -239,13 +239,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
 
         // Update the stream source.
-        if (!EqualsUtil.isEquals(currentStreamId, highlightStreamId)
-                || !EqualsUtil.isEquals(currentChildStreamType, highlightChildStreamType) || oldStreamNo != newStreamNo
+        if (!EqualsUtil.isEquals(currentStreamId, highlightId)
+                || !EqualsUtil.isEquals(currentChildStreamType, highlightChildStreamType) || oldPartNo != newPartNo
                 || oldPageOffset != newPageOffset) {
-            currentStreamRange = new OffsetRange<>(newStreamNo - 1, 1L);
+            currentStreamRange = new OffsetRange<>(newPartNo - 1, 1L);
             currentPageRange = new OffsetRange<>(newPageOffset, pageLength);
 
-            this.currentStreamId = highlightStreamId;
+            this.currentStreamId = highlightId;
             this.currentChildStreamType = highlightChildStreamType;
             streamTypeOffsetRangeMap.clear();
             markerListPresenter.resetExpandedSeverities();
@@ -479,8 +479,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         // Make sure we have a highlight section to add and that the stream id
         // matches that of the current page, and that the stream number matches
         // the stream number of the current page.
-        if (highlights != null && currentStreamId != null && currentStreamId.equals(highlightStreamId)
-                && streamNo == highlightStreamNo
+        if (highlights != null && currentStreamId != null && currentStreamId.equals(highlightId)
+                && streamNo == highlightPartNo
                 && EqualsUtil.isEquals(currentChildStreamType, highlightChildStreamType)) {
             // Set the content to be displayed in the source view with a
             // highlight.
@@ -507,8 +507,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     public void showStepSource(final Integer taskOffset, final StepLocation stepLocation,
                                final StreamType childStreamType, final List<Highlight> highlights) {
         this.highlights = highlights;
-        this.highlightStreamId = stepLocation.getStreamId();
-        this.highlightStreamNo = stepLocation.getStreamNo() - 1;
+        this.highlightId = stepLocation.getId();
+        this.highlightPartNo = stepLocation.getPartNo() - 1;
         this.highlightChildStreamType = childStreamType;
 
         // Set the source type that will be used when the page source is shown.
@@ -522,7 +522,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         // If we have a source highlight then use it.
         if (highlights != null && highlights.size() > 0) {
             final Highlight highlight = highlights.get(0);
-            newStreamNo = highlightStreamNo;
+            newStreamNo = highlightPartNo;
             lineNo = highlight.getFrom().getLineNo();
         }
 
@@ -538,13 +538,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
 
         // Update the stream source.
-        if (!EqualsUtil.isEquals(currentStreamId, highlightStreamId)
+        if (!EqualsUtil.isEquals(currentStreamId, highlightId)
                 || !EqualsUtil.isEquals(currentChildStreamType, highlightChildStreamType) || oldStreamNo != newStreamNo
                 || oldPageOffset != newPageOffset) {
             currentStreamRange = new OffsetRange<>(newStreamNo - 1, 1L);
             currentPageRange = new OffsetRange<>(newPageOffset, pageLength);
 
-            fetchData(false, highlightStreamId, highlightChildStreamType);
+            fetchData(false, highlightId, highlightChildStreamType);
         } else {
             refreshHighlights(lastResult);
             refreshMarkers(lastResult);

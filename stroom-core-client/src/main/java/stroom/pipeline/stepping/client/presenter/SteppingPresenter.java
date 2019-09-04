@@ -317,7 +317,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             }
 
             if (stepLocation != null) {
-                step(StepType.REFRESH, new StepLocation(stream.getId(), stepLocation.getStreamNo(), stepLocation.getRecordNo()));
+                step(StepType.REFRESH, new StepLocation(stream.getId(), stepLocation.getPartNo(), stepLocation.getRecordNo()));
             }
         });
     }

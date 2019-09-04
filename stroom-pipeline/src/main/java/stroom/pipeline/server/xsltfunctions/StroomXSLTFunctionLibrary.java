@@ -257,13 +257,6 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
-                .functionName("location")
-                .library(this)
-                .delegateClass(Location.class)
-                .resultType(SequenceType.NODE_SEQUENCE)
-                .build());
-
-        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("log")
                 .library(this)
                 .delegateClass(Log.class)
@@ -329,6 +322,13 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("part-no")
+                .library(this)
+                .delegateClass(PartNo.class)
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("pipeline-name")
                 .library(this)
                 .delegateClass(PipelineName.class)
@@ -370,16 +370,23 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
-                .functionName("stream-id")
+                .functionName("source")
                 .library(this)
-                .delegateClass(StreamId.class)
+                .delegateClass(Source.class)
+                .resultType(SequenceType.NODE_SEQUENCE)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("source-id")
+                .library(this)
+                .delegateClass(SourceId.class)
                 .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
-                .functionName("stream-no")
+                .functionName("stream-id")
                 .library(this)
-                .delegateClass(StreamNo.class)
+                .delegateClass(SourceId.class)
                 .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
     }

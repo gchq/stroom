@@ -23,7 +23,6 @@ import net.sf.saxon.value.StringValue;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.pipeline.state.StreamHolder;
-import stroom.streamstore.shared.Stream;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
@@ -31,11 +30,11 @@ import javax.inject.Inject;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-class StreamId extends StroomExtensionFunctionCall {
+class PartNo extends StroomExtensionFunctionCall {
     private final StreamHolder streamHolder;
 
     @Inject
-    StreamId(final StreamHolder streamHolder) {
+    PartNo(final StreamHolder streamHolder) {
         this.streamHolder = streamHolder;
     }
 
@@ -44,10 +43,7 @@ class StreamId extends StroomExtensionFunctionCall {
         String result = null;
 
         try {
-            final Stream stream = streamHolder.getStream();
-            if (stream != null) {
-                result = String.valueOf(streamHolder.getStream().getId());
-            }
+            result = String.valueOf(streamHolder.getStreamNo());
         } catch (final Exception e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }

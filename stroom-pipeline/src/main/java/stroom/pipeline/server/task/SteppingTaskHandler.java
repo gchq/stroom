@@ -223,12 +223,12 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
                 } else if (currentLocation != null) {
                     // For all other step types we should have an existing
                     // stream index.
-                    currentStreamIndex = streamIdList.indexOf(currentLocation.getStreamId());
+                    currentStreamIndex = streamIdList.indexOf(currentLocation.getId());
 
                     // [Optimisation] If we are moving backward and are at the
                     // beginning of a stream then move to the previous stream.
                     if (StepType.BACKWARD.equals(stepType) && currentStreamIndex != -1
-                            && currentLocation.getStreamNo() <= 1 && currentLocation.getRecordNo() <= 1) {
+                            && currentLocation.getPartNo() <= 1 && currentLocation.getRecordNo() <= 1) {
                         currentStreamIndex--;
 
                         // If there are no more streams then we are at the
@@ -263,7 +263,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
 
                 // If we have changed stream and are moving forward of backward
                 // then we need to change the request.
-                if (currentLocation != null && streamId != currentLocation.getStreamId()) {
+                if (currentLocation != null && streamId != currentLocation.getId()) {
                     if (StepType.FORWARD.equals(stepType)) {
                         // If we haven't got a position or are moving forward
                         // and the stream id has changed then keep look from the
@@ -364,7 +364,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
                     return null;
                 }
 
-                return currentLocation.getStreamId();
+                return currentLocation.getId();
             }
 
             // Return the task at the current index or null if the index is out
@@ -505,14 +505,14 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
                 if (currentLocation != null) {
                     // If stream no has been set beyond the last stream no then
                     // start at the end.
-                    if (currentLocation.getStreamNo() > streamCount) {
+                    if (currentLocation.getPartNo() > streamCount) {
                         // Start at the last stream number.
                         streamNo = streamCount;
                         // Update the current processing location.
                         currentLocation = new StepLocation(stream.getId(), streamNo, currentLocation.getRecordNo());
                     } else {
                         // Else start at the current location.
-                        streamNo = currentLocation.getStreamNo();
+                        streamNo = currentLocation.getPartNo();
                         // Update the current processing location.
                         currentLocation = new StepLocation(stream.getId(), streamNo, currentLocation.getRecordNo());
                     }

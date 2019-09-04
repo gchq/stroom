@@ -39,16 +39,16 @@ import javax.inject.Inject;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-class Location extends StroomExtensionFunctionCall {
+class Source extends StroomExtensionFunctionCall {
     private static final AttributesImpl EMPTY_ATTS = new AttributesImpl();
-    private static final String URI = "stroom";
+    private static final String URI = "stroom-meta";
 
     private final StreamHolder streamHolder;
     private final LocationHolder locationHolder;
 
     @Inject
-    Location(final StreamHolder streamHolder,
-             final LocationHolder locationHolder) {
+    Source(final StreamHolder streamHolder,
+           final LocationHolder locationHolder) {
         this.streamHolder = streamHolder;
         this.locationHolder = locationHolder;
     }
@@ -81,15 +81,15 @@ class Location extends StroomExtensionFunctionCall {
         contentHandler.setReceiver(builder);
 
         contentHandler.startDocument();
-        startElement(contentHandler, "location");
-        data(contentHandler, "streamId", location.getStreamId());
-        data(contentHandler, "streamNo", location.getStreamNo());
+        startElement(contentHandler, "source");
+        data(contentHandler, "id", location.getId());
+        data(contentHandler, "partNo", location.getPartNo());
         data(contentHandler, "recordNo", location.getRecordNo());
         data(contentHandler, "lineFrom", location.getHighlight().getFrom().getLineNo());
         data(contentHandler, "colFrom", location.getHighlight().getFrom().getColNo());
         data(contentHandler, "lineTo", location.getHighlight().getTo().getLineNo());
         data(contentHandler, "colTo", location.getHighlight().getTo().getColNo());
-        endElement(contentHandler, "location");
+        endElement(contentHandler, "source");
         contentHandler.endDocument();
 
         Sequence sequence = builder.getCurrentRoot();
