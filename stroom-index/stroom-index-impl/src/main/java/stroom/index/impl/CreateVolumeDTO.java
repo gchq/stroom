@@ -8,7 +8,7 @@ public class CreateVolumeDTO {
     private String nodeName;
     @Nullable
     private String path;
-    private int indexVolumeGroupId;
+    private String indexVolumeGroupName;
 
     public CreateVolumeDTO() {
 
@@ -30,11 +30,11 @@ public class CreateVolumeDTO {
         this.path = path;
     }
 
-    public int getIndexVolumeGroupId() {
-        return indexVolumeGroupId;
+    public String getIndexVolumeGroupName() {
+        return indexVolumeGroupName;
     }
 
-    public void setIndexVolumeGroupId(int indexVolumeGroupId) {
-        this.indexVolumeGroupId = indexVolumeGroupId;
+    public void setIndexVolumeGroupName(String indexVolumeGroupName) {
+        this.indexVolumeGroupName = indexVolumeGroupName;
     }
 }

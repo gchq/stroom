@@ -4,6 +4,11 @@
 package stroom.index.impl.db.jooq.tables;
 
 
+import java.util.Arrays;
+import java.util.List;
+
+import javax.annotation.Generated;
+
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
@@ -16,14 +21,11 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
+
 import stroom.index.impl.db.jooq.Indexes;
 import stroom.index.impl.db.jooq.Keys;
 import stroom.index.impl.db.jooq.Stroom;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
-
-import javax.annotation.Generated;
-import java.util.Arrays;
-import java.util.List;
 
 
 /**
@@ -39,7 +41,7 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
 
-    private static final long serialVersionUID = -129852791;
+    private static final long serialVersionUID = 1660229987;
 
     /**
      * The reference instance of <code>stroom.index_volume_group</code>
@@ -135,7 +137,7 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
      */
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.INDEX_VOLUME_GROUP_INDEX_VOLUME_GROUP_NAME, Indexes.INDEX_VOLUME_GROUP_PRIMARY);
+        return Arrays.<Index>asList(Indexes.INDEX_VOLUME_GROUP_NAME, Indexes.INDEX_VOLUME_GROUP_PRIMARY);
     }
 
     /**
@@ -159,7 +161,7 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
      */
     @Override
     public List<UniqueKey<IndexVolumeGroupRecord>> getKeys() {
-        return Arrays.<UniqueKey<IndexVolumeGroupRecord>>asList(Keys.KEY_INDEX_VOLUME_GROUP_PRIMARY, Keys.KEY_INDEX_VOLUME_GROUP_INDEX_VOLUME_GROUP_NAME);
+        return Arrays.<UniqueKey<IndexVolumeGroupRecord>>asList(Keys.KEY_INDEX_VOLUME_GROUP_PRIMARY, Keys.KEY_INDEX_VOLUME_GROUP_NAME);
     }
 
     /**
