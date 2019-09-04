@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1-beta.4] - 2019-09-04
+
 * Issue **#1253** : Data retention policies containing just `AND` will now match everything.
 
 * Issue **#1252** : Stream type suggestions no longer list internal types.
@@ -1879,106 +1882,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.3...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.4...6.1
+[v6.1-beta.4]: https://github.com/gchq/stroom/compare/v6.1-beta.3...v6.1-beta.4
 [v6.1-beta.3]: https://github.com/gchq/stroom/compare/v6.1-beta.2...v6.1-beta.3
 [v6.1-beta.2]: https://github.com/gchq/stroom/compare/v6.1-beta.1...v6.1-beta.2
 [v6.1-beta.1]: https://github.com/gchq/stroom/compare/v6.0.7...v6.1-beta.1
-[v6.0.7]: https://github.com/gchq/stroom/compare/v6.0.6...v6.0.7
-[v6.0.6]: https://github.com/gchq/stroom/compare/v6.0.5...v6.0.6
-[v6.0.5]: https://github.com/gchq/stroom/compare/v6.0.4...v6.0.5
-[v6.0.4]: https://github.com/gchq/stroom/compare/v6.0.3...v6.0.4
-[v6.0.3]: https://github.com/gchq/stroom/compare/v6.0.2...v6.0.3
-[v6.0.2]: https://github.com/gchq/stroom/compare/v6.0.1...v6.0.2
-[v6.0.1]: https://github.com/gchq/stroom/compare/v6.0-beta.66...v6.0.1
-[v6.0-beta.70]: https://github.com/gchq/stroom/compare/v6.0-beta.69...v6.0-beta.70
-[v6.0-beta.69]: https://github.com/gchq/stroom/compare/v6.0-beta.68...v6.0-beta.69
-[v6.0-beta.68]: https://github.com/gchq/stroom/compare/v6.0-beta.67...v6.0-beta.68
-[v6.0-beta.67]: https://github.com/gchq/stroom/compare/v6.0-beta.66...v6.0-beta.67
-[v6.0-beta.66]: https://github.com/gchq/stroom/compare/v6.0-beta.65...v6.0-beta.66
-[v6.0-beta.65]: https://github.com/gchq/stroom/compare/v6.0-beta.64...v6.0-beta.65
-[v6.0-beta.64]: https://github.com/gchq/stroom/compare/v6.0-beta.63...v6.0-beta.64
-[v6.0-beta.63]: https://github.com/gchq/stroom/compare/v6.0-beta.62...v6.0-beta.63
-[v6.0-beta.62]: https://github.com/gchq/stroom/compare/v6.0-beta.61...v6.0-beta.62
-[v6.0-beta.61]: https://github.com/gchq/stroom/compare/v6.0-beta.60...v6.0-beta.61
-[v6.0-beta.60]: https://github.com/gchq/stroom/compare/v6.0-beta.59...v6.0-beta.60
-[v6.0-beta.59]: https://github.com/gchq/stroom/compare/v6.0-beta.58...v6.0-beta.59
-[v6.0-beta.58]: https://github.com/gchq/stroom/compare/v6.0-beta.57...v6.0-beta.58
-[v6.0-beta.57]: https://github.com/gchq/stroom/compare/v6.0-beta.56...v6.0-beta.57
-[v6.0-beta.56]: https://github.com/gchq/stroom/compare/v6.0-beta.55...v6.0-beta.56
-[v6.0-beta.55]: https://github.com/gchq/stroom/compare/v6.0-beta.54...v6.0-beta.55
-[v6.0-beta.54]: https://github.com/gchq/stroom/compare/v6.0-beta.53...v6.0-beta.54
-[v6.0-beta.53]: https://github.com/gchq/stroom/compare/v6.0-beta.52...v6.0-beta.53
-[v6.0-beta.52]: https://github.com/gchq/stroom/compare/v6.0-beta.51...v6.0-beta.52
-[v6.0-beta.51]: https://github.com/gchq/stroom/compare/v6.0-beta.50...v6.0-beta.51
-[v6.0-beta.50]: https://github.com/gchq/stroom/compare/v6.0-beta.49...v6.0-beta.50
-[v6.0-beta.49]: https://github.com/gchq/stroom/compare/v6.0-beta.48...v6.0-beta.49
-[v6.0-beta.48]: https://github.com/gchq/stroom/compare/v6.0-beta.47...v6.0-beta.48
-[v6.0-beta.47]: https://github.com/gchq/stroom/compare/v6.0-beta.46...v6.0-beta.47
-[v6.0-beta.46]: https://github.com/gchq/stroom/compare/v6.0-beta.45...v6.0-beta.46
-[v6.0-beta.45]: https://github.com/gchq/stroom/compare/v6.0-beta.44...v6.0-beta.45
-[v6.0-beta.44]: https://github.com/gchq/stroom/compare/v6.0-beta.43...v6.0-beta.44
-[v6.0-beta.43]: https://github.com/gchq/stroom/compare/v6.0-beta.42...v6.0-beta.43
-[v6.0-beta.42]: https://github.com/gchq/stroom/compare/v6.0-beta.41...v6.0-beta.42
-[v6.0-beta.41]: https://github.com/gchq/stroom/compare/v6.0-beta.40...v6.0-beta.41
-[v6.0-beta.40]: https://github.com/gchq/stroom/compare/v6.0-beta.39...v6.0-beta.40
-[v6.0-beta.39]: https://github.com/gchq/stroom/compare/v6.0-beta.38...v6.0-beta.39
-[v6.0-beta.38]: https://github.com/gchq/stroom/compare/v6.0-beta.37...v6.0-beta.38
-[v6.0-beta.37]: https://github.com/gchq/stroom/compare/v6.0-beta.36...v6.0-beta.37
-[v6.0-beta.36]: https://github.com/gchq/stroom/compare/v6.0-beta.35...v6.0-beta.36
-[v6.0-beta.35]: https://github.com/gchq/stroom/compare/v6.0-beta.34...v6.0-beta.35
-[v6.0-beta.34]: https://github.com/gchq/stroom/compare/v6.0-beta.33...v6.0-beta.34
-[v6.0-beta.33]: https://github.com/gchq/stroom/compare/v6.0-beta.32...v6.0-beta.33
-[v6.0-beta.32]: https://github.com/gchq/stroom/compare/v6.0-beta.31...v6.0-beta.32
-[v6.0-beta.31]: https://github.com/gchq/stroom/compare/v6.0-beta.30...v6.0-beta.31
-[v6.0-beta.30]: https://github.com/gchq/stroom/compare/v6.0-beta.29...v6.0-beta.30
-[v6.0-beta.29]: https://github.com/gchq/stroom/compare/v6.0-beta.28...v6.0-beta.29
-[v6.0-beta.28]: https://github.com/gchq/stroom/compare/v6.0-beta.27...v6.0-beta.28
-[v6.0-beta.27]: https://github.com/gchq/stroom/compare/v6.0-beta.26...v6.0-beta.27
-[v6.0-beta.26]: https://github.com/gchq/stroom/compare/v6.0-beta.25...v6.0-beta.26
-[v6.0-beta.25]: https://github.com/gchq/stroom/compare/v6.0-beta.24...v6.0-beta.25
-[v6.0-beta.24]: https://github.com/gchq/stroom/compare/v6.0-beta.23...v6.0-beta.24
-[v6.0-beta.23]: https://github.com/gchq/stroom/compare/v6.0-beta.22...v6.0-beta.23
-[v6.0-beta.22]: https://github.com/gchq/stroom/compare/v6.0-beta.21...v6.0-beta.22
-[v6.0-beta.21]: https://github.com/gchq/stroom/compare/v6.0-beta.20...v6.0-beta.21
-[v6.0-beta.20]: https://github.com/gchq/stroom/compare/v6.0-beta.19...v6.0-beta.20
-[v6.0-beta.19]: https://github.com/gchq/stroom/compare/v6.0-beta.18...v6.0-beta.19
-[v6.0-beta.18]: https://github.com/gchq/stroom/compare/v6.0-beta.17...v6.0-beta.18
-[v6.0-beta.17]: https://github.com/gchq/stroom/compare/v6.0-beta.16...v6.0-beta.17
-[v6.0-beta.16]: https://github.com/gchq/stroom/compare/v6.0-beta.15...v6.0-beta.16
-[v6.0-beta.15]: https://github.com/gchq/stroom/compare/v6.0-beta.14...v6.0-beta.15
-[v6.0-beta.14]: https://github.com/gchq/stroom/compare/v6.0-beta.13...v6.0-beta.14
-[v6.0-beta.13]: https://github.com/gchq/stroom/compare/v6.0-beta.12...v6.0-beta.13
-[v6.0-beta.12]: https://github.com/gchq/stroom/compare/v6.0-beta.11...v6.0-beta.12
-[v6.0-beta.11]: https://github.com/gchq/stroom/compare/v6.0-beta.10...v6.0-beta.11
-[v6.0-beta.10]: https://github.com/gchq/stroom/compare/v6.0-beta.9...v6.0-beta.10
-[v6.0-beta.9]: https://github.com/gchq/stroom/compare/v6.0-beta.8...v6.0-beta.9
-[v6.0-beta.8]: https://github.com/gchq/stroom/compare/v6.0-beta.7...v6.0-beta.8
-[v6.0-beta.7]: https://github.com/gchq/stroom/compare/v6.0-beta.6...v6.0-beta.7
-[v6.0-beta.6]: https://github.com/gchq/stroom/compare/v6.0-beta.5...v6.0-beta.6
-[v6.0-beta.5]: https://github.com/gchq/stroom/compare/v6.0-beta.4...v6.0-beta.5
-[v6.0-beta.4]: https://github.com/gchq/stroom/compare/v6.0-beta.3...v6.0-beta.4
-[v6.0-beta.3]: https://github.com/gchq/stroom/compare/v6.0-beta.2...v6.0-beta.3
-[v6.0-beta.2]: https://github.com/gchq/stroom/compare/v6.0-beta.1...v6.0-beta.2
-[v6.0-beta.1]: https://github.com/gchq/stroom/compare/v6.0-alpha.27...v6.0-beta.1
-[v6.0-alpha.27]: https://github.com/gchq/stroom/compare/v6.0-alpha.26...v6.0-alpha.27
-[v6.0-alpha.26]: https://github.com/gchq/stroom/compare/v6.0-alpha.24...v6.0-alpha.26
-[v6.0-alpha.25]: https://github.com/gchq/stroom/compare/v6.0-alpha.24...v6.0-alpha.25
-[v6.0-alpha.24]: https://github.com/gchq/stroom/compare/v6.0-alpha.23...v6.0-alpha.24
-[v6.0-alpha.23]: https://github.com/gchq/stroom/compare/v6.0-alpha.22...v6.0-alpha.23
-[v6.0-alpha.22]: https://github.com/gchq/stroom/compare/v6.0-alpha.21...v6.0-alpha.22
-[v6.0-alpha.21]: https://github.com/gchq/stroom/compare/v6.0-alpha.20...v6.0-alpha.21
-[v6.0-alpha.20]: https://github.com/gchq/stroom/compare/v6.0-alpha.19...v6.0-alpha.20
-[v6.0-alpha.19]: https://github.com/gchq/stroom/compare/v6.0-alpha.18...v6.0-alpha.19
-[v6.0-alpha.18]: https://github.com/gchq/stroom/compare/v6.0-alpha.17...v6.0-alpha.18
-[v6.0-alpha.17]: https://github.com/gchq/stroom/compare/v6.0-alpha.16...v6.0-alpha.17
-[v6.0-alpha.16]: https://github.com/gchq/stroom/compare/v6.0-alpha.15...v6.0-alpha.16
-[v6.0-alpha.15]: https://github.com/gchq/stroom/compare/v6.0-alpha.14...v6.0-alpha.15
-[v6.0-alpha.14]: https://github.com/gchq/stroom/compare/v6.0-alpha.13...v6.0-alpha.14
-[v6.0-alpha.13]: https://github.com/gchq/stroom/compare/v6.0-alpha.12...v6.0-alpha.13
-[v6.0-alpha.12]: https://github.com/gchq/stroom/compare/v6.0-alpha.11...v6.0-alpha.12
-[v6.0-alpha.11]: https://github.com/gchq/stroom/compare/v6.0-alpha.10...v6.0-alpha.11
-[v6.0-alpha.10]: https://github.com/gchq/stroom/compare/v6.0-alpha.9...v6.0-alpha.10
-[v6.0-alpha.9]: https://github.com/gchq/stroom/compare/v6.0-alpha.8...v6.0-alpha.9
-[v6.0-alpha.8]: https://github.com/gchq/stroom/compare/v6.0-alpha.7...v6.0-alpha.8
-[v6.0-alpha.7]: https://github.com/gchq/stroom/compare/v6.0-alpha.4...v6.0-alpha.7
-[v6.0-alpha.4]: https://github.com/gchq/stroom/commits/v6.0-alpha.4
