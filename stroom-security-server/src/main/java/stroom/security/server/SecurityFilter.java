@@ -23,6 +23,7 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
+import stroom.feed.StroomHeaderArguments;
 import stroom.security.server.exception.AuthenticationException;
 import stroom.security.shared.UserRef;
 import stroom.util.io.StreamUtil;
@@ -213,16 +214,24 @@ public class SecurityFilter implements Filter {
                 LOGGER.warn("Unexpected state: " + stateId);
 
             } else {
+
                 // If we have an access code we can try and log in.
                 final String accessCode = request.getParameter("accessCode");
                 if (accessCode != null) {
                     LOGGER.debug("We have the following access code: {{}}", accessCode);
-                    final AuthenticationToken token = createUIToken(request, state, accessCode);
+                    final HttpSession session = request.getSession(true);
+
+                    final String userAgent = request.getHeader(StroomHeaderArguments.USER_AGENT);
+                    if (userAgent != null) {
+                        session.setAttribute(StroomHeaderArguments.USER_AGENT, userAgent);
+                    }
+
+                    final AuthenticationToken token = createUIToken(session, state, accessCode);
                     final UserRef userRef = authenticationService.getUserRef(token);
 
                     if (userRef != null) {
                         // Set the user ref in the session.
-                        UserRefSessionUtil.set(request.getSession(true), userRef);
+                        UserRefSessionUtil.set(session, userRef);
 
                         loggedIn = true;
                     }
@@ -253,6 +262,9 @@ public class SecurityFilter implements Filter {
         String url = request.getRequestURL().toString();
         String query = request.getQueryString();
         if (!Strings.isNullOrEmpty(query)) {
+            query.split()
+            sdds
+
             url += "?" + query;
         }
 
@@ -274,8 +286,8 @@ public class SecurityFilter implements Filter {
         if (parsedRequestUrl.getPath() != null && parsedRequestUrl.getPath().length() > 0 && !parsedRequestUrl.getPath().equals("/")) {
             redirectUrl += parsedRequestUrl.getPath();
             redirectUrl += "?";
-            if (!Strings.isNullOrEmpty(query)) {
-                redirectUrl += query;
+            if (!Strings.isNullOrEmpty(parsedRequestUrl.getQuery())) {
+                redirectUrl += parsedRequestUrl.getQuery();
             }
         }
 
@@ -312,11 +324,11 @@ public class SecurityFilter implements Filter {
      * This method must create the token.
      * It does this by enacting the OpenId exchange of accessCode for idToken.
      */
-    private AuthenticationToken createUIToken(final HttpServletRequest request, final AuthenticationState state, final String accessCode) {
+    private AuthenticationToken createUIToken(final HttpSession session, final AuthenticationState state, final String accessCode) {
         AuthenticationToken token = null;
 
         try {
-            String sessionId = request.getSession().getId();
+            String sessionId = session.getId();
             final String idToken = authenticationServiceClients.newAuthenticationApi().getIdToken(accessCode);
             final JwtClaims jwtClaimsOptional = jwtService.verifyToken(idToken);
             final String nonce = (String) jwtClaimsOptional.getClaimsMap().get("nonce");
