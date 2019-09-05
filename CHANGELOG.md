@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1258** : Fixed issue affecting search expressions against keyword fields using dictionaries containing carriage returns.
+
 
 ## [v6.0.8] - 2019-09-03
 
