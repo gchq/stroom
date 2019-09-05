@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.9] - 2019-09-05
+
 * Issue **#1258** : Fixed issue affecting search expressions against keyword fields using dictionaries containing carriage returns.
 
 
@@ -1869,7 +1872,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.8...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.9...6.0
+[v6.0.9]: https://github.com/gchq/stroom/compare/v6.0.8...v6.0.9
 [v6.0.8]: https://github.com/gchq/stroom/compare/v6.0.7...v6.0.8
 [v6.0.7]: https://github.com/gchq/stroom/compare/v6.0.6...v6.0.7
 [v6.0.6]: https://github.com/gchq/stroom/compare/v6.0.5...v6.0.6
