@@ -47,7 +47,7 @@ class ExplorerSessionImpl implements ExplorerSession, BeanFactoryAware {
                     if (request == null) {
                         LOGGER.debug("Request holder has no current request");
                     } else {
-                        return Optional.ofNullable(request.getSession());
+                        return Optional.ofNullable(request.getSession(false));
                     }
                 }
             }

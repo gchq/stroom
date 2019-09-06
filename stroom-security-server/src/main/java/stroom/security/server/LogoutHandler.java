@@ -45,7 +45,7 @@ public class LogoutHandler extends AbstractTaskHandler<LogoutAction, VoidResult>
 
     @Override
     public VoidResult exec(final LogoutAction task) {
-        final HttpSession session = httpServletRequestHolder.get().getSession();
+        final HttpSession session = httpServletRequestHolder.get().getSession(false);
         final UserRef userRef = UserRefSessionUtil.get(session);
         if (session != null) {
             // Invalidate the current user session

@@ -28,7 +28,7 @@ import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.Action;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.PermissionException;
-import stroom.feed.StroomHeaderArguments;
+import stroom.feed.server.UserAgentSessionUtil;
 import stroom.security.SecurityContext;
 import stroom.security.UserTokenUtil;
 import stroom.servlet.HttpServletRequestHolder;
@@ -43,7 +43,6 @@ import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
@@ -142,14 +141,7 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
     protected void service(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
         try {
             // Set the user agent in the session.
-            final HttpSession httpSession = req.getSession(false);
-            if (httpSession != null) {
-                final String userAgent = req.getHeader(StroomHeaderArguments.USER_AGENT);
-                if (userAgent != null) {
-                    httpSession.setAttribute(StroomHeaderArguments.USER_AGENT, userAgent);
-                }
-            }
-
+            UserAgentSessionUtil.set(req);
             super.service(req, resp);
 
         } catch (final Exception ex) {
