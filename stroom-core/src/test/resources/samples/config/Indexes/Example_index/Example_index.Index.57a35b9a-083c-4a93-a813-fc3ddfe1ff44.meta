@@ -135,5 +135,6 @@
     "termPositions" : false,
     "analyzerType" : "ALPHA_NUMERIC",
     "caseSensitive" : true
-  } ]
+  } ],
+  "volumeGroupName" : "Default Volume Group"
 }
