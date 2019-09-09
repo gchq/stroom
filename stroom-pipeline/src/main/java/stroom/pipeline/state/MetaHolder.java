@@ -16,6 +16,7 @@
 
 package stroom.pipeline.state;
 
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.meta.shared.Meta;
 import stroom.util.pipeline.scope.PipelineScoped;
@@ -25,6 +26,7 @@ public class MetaHolder implements Holder {
     private InputStreamProvider inputStreamProvider;
 
     private Meta meta;
+    private String childDataType;
     private long streamNo;
 
     public Meta getMeta() {
@@ -33,6 +35,16 @@ public class MetaHolder implements Holder {
 
     public void setMeta(final Meta meta) {
         this.meta = meta;
+    }
+
+    public String getChildDataType() {
+        return childDataType;
+    }
+
+    public void setChildDataType(final String childDataType) {
+        if (!StreamTypeNames.META.equals(childDataType) && !StreamTypeNames.CONTEXT.equals(childDataType)) {
+            this.childDataType = childDataType;
+        }
     }
 
     public void setInputStreamProvider(final InputStreamProvider inputStreamProvider) {

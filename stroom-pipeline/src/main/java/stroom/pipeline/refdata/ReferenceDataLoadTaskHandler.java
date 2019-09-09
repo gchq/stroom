@@ -117,49 +117,52 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     @Override
     public VoidResult exec(final ReferenceDataLoadTask task) {
         return securityContext.secureResult(() -> {
+            // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
+            return securityContext.useAsReadResult(() -> {
 //            final List<RefStreamDefinition> loadedRefStreamDefinitions = new ArrayList<>();
-            final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
-            errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
-            errorReceiverProxy.setErrorReceiver(errorReceiver);
+                final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
+                errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
+                errorReceiverProxy.setErrorReceiver(errorReceiver);
 
-            final RefStreamDefinition refStreamDefinition = task.getRefStreamDefinition();
-            LOGGER.debug("Loading reference data: {}", refStreamDefinition);
+                final RefStreamDefinition refStreamDefinition = task.getRefStreamDefinition();
+                LOGGER.debug("Loading reference data: {}", refStreamDefinition);
 
-            // Open the stream source.
-            try (final Source source = streamStore.openSource(refStreamDefinition.getStreamId())) {
-                if (source != null) {
-                    final Meta meta = source.getMeta();
+                // Open the stream source.
+                try (final Source source = streamStore.openSource(refStreamDefinition.getStreamId())) {
+                    if (source != null) {
+                        final Meta meta = source.getMeta();
 
-                    // Load the feed.
-                    final String feedName = meta.getFeedName();
-                    feedHolder.setFeedName(feedName);
+                        // Load the feed.
+                        final String feedName = meta.getFeedName();
+                        feedHolder.setFeedName(feedName);
 
-                    // Setup the meta data holder.
-                    metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
+                        // Setup the meta data holder.
+                        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
-                    // Set the pipeline so it can be used by a filter if needed.
-                    final PipelineDoc pipelineDoc = pipelineStore
-                            .readDocument(refStreamDefinition.getPipelineDocRef());
-                    pipelineHolder.setPipeline(refStreamDefinition.getPipelineDocRef());
+                        // Set the pipeline so it can be used by a filter if needed.
+                        final PipelineDoc pipelineDoc = pipelineStore
+                                .readDocument(refStreamDefinition.getPipelineDocRef());
+                        pipelineHolder.setPipeline(refStreamDefinition.getPipelineDocRef());
 
-                    // Create the parser.
-                    final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-                    final Pipeline pipeline = pipelineFactory.create(pipelineData);
+                        // Create the parser.
+                        final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
+                        final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
-                    populateMaps(
-                            pipeline,
-                            meta,
-                            source,
-                            feedName,
-                            meta.getTypeName(),
-                            task.getRefStreamDefinition());
+                        populateMaps(
+                                pipeline,
+                                meta,
+                                source,
+                                feedName,
+                                meta.getTypeName(),
+                                task.getRefStreamDefinition());
 
-                    LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
+                        LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
+                    }
+                } catch (final IOException | RuntimeException e) {
+                    log(Severity.FATAL_ERROR, e.getMessage(), e);
                 }
-            } catch (final IOException | RuntimeException e) {
-                log(Severity.FATAL_ERROR, e.getMessage(), e);
-            }
-            return VoidResult.INSTANCE;
+                return VoidResult.INSTANCE;
+            });
         });
     }
 
@@ -196,7 +199,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                     // multiple then overrideExisting may be needed.
                     final long count = source.count();
                     for (long index = 0; index < count && !Thread.currentThread().isInterrupted(); index++) {
-                        metaHolder.setStreamNo(index);
+                        metaHolder.setStreamNo(index + 1);
                         streamLocationFactory.setStreamNo(index + 1);
 
                         try (final InputStreamProvider inputStreamProvider = source.get(index)) {

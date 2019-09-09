@@ -3,7 +3,7 @@
     <option name="ALTERNATIVE_JRE_PATH" value="12" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <option name="MAIN_CLASS_NAME" value="stroom.app.App" />
-    <module name="stroom.stroom-app.main" />
+    <module name="stroom-app_main" />
     <option name="PROGRAM_PARAMETERS" value="server ../local.yml" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/stroom-app" />
     <method v="2">

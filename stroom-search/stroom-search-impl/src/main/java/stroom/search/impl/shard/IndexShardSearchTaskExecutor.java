@@ -16,7 +16,7 @@
 
 package stroom.search.impl.shard;
 
-import stroom.search.impl.taskqueue.TaskExecutor;
+import stroom.util.task.taskqueue.TaskExecutor;
 
 import javax.inject.Singleton;
 

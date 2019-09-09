@@ -18,6 +18,7 @@ package stroom.pipeline.stepping;
 
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SharedStepData;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.util.shared.Highlight;
 
 import java.util.HashMap;
@@ -27,14 +28,14 @@ import java.util.Map.Entry;
 
 public class StepData {
     private final Map<String, ElementData> elementMap = new HashMap<>();
-    private List<Highlight> sourceHighlights;
+    private SourceLocation sourceLocation;
 
-    public List<Highlight> getSourceHighlights() {
-        return sourceHighlights;
+    public SourceLocation getSourceLocation() {
+        return sourceLocation;
     }
 
-    public void setSourceHighlights(final List<Highlight> sourceHighlights) {
-        this.sourceHighlights = sourceHighlights;
+    public void setSourceLocation(final SourceLocation sourceLocation) {
+        this.sourceLocation = sourceLocation;
     }
 
     public Map<String, ElementData> getElementMap() {
@@ -47,6 +48,6 @@ public class StepData {
             map.put(entry.getKey(), entry.getValue().convertToShared());
         }
 
-        return new SharedStepData(sourceHighlights, map);
+        return new SharedStepData(sourceLocation, map);
     }
 }

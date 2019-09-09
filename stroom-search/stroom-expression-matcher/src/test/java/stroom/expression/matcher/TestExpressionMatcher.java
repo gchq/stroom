@@ -53,6 +53,21 @@ class TestExpressionMatcher {
         test(createAttributeMap(), createExpression(Op.NOT, "TEST_FEED"), false);
     }
 
+    @Test
+    void testMatchAll() {
+        test(createAttributeMap(), new ExpressionOperator.Builder(Op.AND).build(), true);
+    }
+
+    @Test
+    void testMatchNone1() {
+        test(createAttributeMap(), null, false);
+    }
+
+    @Test
+    void testMatchNone2() {
+        test(createAttributeMap(), new ExpressionOperator.Builder(Op.AND).enabled(false).build(), false);
+    }
+
     private void test(final Map<String, Object> attributeMap, final ExpressionOperator expression, final boolean outcome) {
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(FIELD_MAP, null, null);
         assertThat(expressionMatcher.match(attributeMap, expression)).isEqualTo(outcome);

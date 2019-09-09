@@ -12,8 +12,14 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HandlerContainerImpl;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
+import stroom.data.client.presenter.ShowDataEvent;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
+import stroom.pipeline.shared.SourceLocation;
+import stroom.pipeline.shared.StepLocation;
+import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
+import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.Highlight;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -132,6 +138,26 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                 }
                 case BROWSER: {
                     Window.open(href, "_blank", "");
+                    break;
+                }
+                case STEPPING: {
+                    final long id = getParam(href, "id", -1);
+                    final long partNo = getParam(href, "partNo", 0);
+                    final long recordNo = getParam(href, "recordNo", 0);
+                    BeginPipelineSteppingEvent.fire(this, id, null, null, new StepLocation(id, partNo, recordNo), null);
+                    break;
+                }
+                case DATA: {
+                    final long id = getParam(href, "id", -1);
+                    final long partNo = getParam(href, "partNo", 0);
+                    final long recordNo = getParam(href, "recordNo", 0);
+                    final int lineFrom = (int) getParam(href, "lineFrom", 1);
+                    final int colFrom = (int) getParam(href, "colFrom", 0);
+                    final int lineTo = (int) getParam(href, "lineTo", 1);
+                    final int colTo = (int) getParam(href, "colTo", 0);
+                    final SourceLocation sourceLocation = new SourceLocation(id, null, partNo, recordNo, new Highlight(new DefaultLocation(lineFrom, colFrom), new DefaultLocation(lineTo, colTo)));
+                    ShowDataEvent.fire(this, sourceLocation);
+                    break;
                 }
                 default:
                     Window.open(href, "_blank", "");
@@ -139,6 +165,20 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         } else {
             Window.open(href, "_blank", "");
         }
+    }
+
+    private long getParam(final String href, final String paramName, final long def) {
+        int start = href.indexOf(paramName + "=");
+        if (start != -1) {
+            start = start + (paramName + "=").length();
+            int end = href.indexOf("&", start);
+            if (end == -1) {
+                return Long.parseLong(href.substring(start));
+            } else {
+                return Long.parseLong(href.substring(start, end));
+            }
+        }
+        return def;
     }
 
     @Override

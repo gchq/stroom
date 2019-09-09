@@ -162,7 +162,7 @@ public class MockMetaService implements MetaService, Clearable {
                 final Meta meta = entry.getValue();
 //                final MetaRow row = new MetaRow(meta);
                 final Map<String, Object> attributeMap = createAttributeMap(meta);
-                if (expressionMatcher.match(attributeMap, criteria.getExpression())) {
+                if (criteria.getExpression() == null || expressionMatcher.match(attributeMap, criteria.getExpression())) {
                     list.add(meta);
                 }
             } catch (final RuntimeException e) {

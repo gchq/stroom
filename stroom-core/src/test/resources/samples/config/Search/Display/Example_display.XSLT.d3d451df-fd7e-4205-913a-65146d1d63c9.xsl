@@ -1,16 +1,44 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<xsl:stylesheet xpath-default-namespace="event-logging:3" xmlns:stroom="stroom" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0">
+<xsl:stylesheet xpath-default-namespace="event-logging:3" xmlns:stroom="stroom" xmlns:stroom-meta="stroom-meta" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0">
   <xsl:template match="/Events">
     <xsl:apply-templates />
   </xsl:template>
   <xsl:template match="Event">
+    <xsl:variable name="href">
+      <xsl:apply-templates select="Meta/stroom-meta:source" />
+    </xsl:variable>
     <div>
+      <div style="padding: 5px;">
+        <span style="text-decoration:underline;color:blue;cursor:pointer">
+          <xsl:attribute name="link" select="concat('[link](', $href, '){data}')" />
+          <xsl:text>Show Source</xsl:text>
+        </span>
+        <xsl:text> </xsl:text>
+        <xsl:value-of select="$href" />
+      </div>
+      <div style="padding: 5px;">
+        <span style="text-decoration:underline;color:blue;cursor:pointer">
+          <xsl:attribute name="link" select="concat('[link](', $href, '){stepping}')" />
+          <xsl:text>Step Source</xsl:text>
+        </span>
+        <xsl:text> </xsl:text>
+        <xsl:value-of select="$href" />
+      </div>
+
       <xsl:call-template name="line">
         <xsl:with-param name="tag" select="'Feed'" />
         <xsl:with-param name="value" select="stroom:feed-name()" />
       </xsl:call-template>
-      <xsl:apply-templates />
+
+      <xsl:apply-templates select="*[starts-with(local-name(), 'Event')]" />
     </div>
+  </xsl:template>
+
+  <xsl:template match="Event/Meta/stroom-meta:source/*">
+    <xsl:value-of select="name()" />
+    <xsl:text>=</xsl:text>
+    <xsl:value-of select="text()" />
+    <xsl:text>&amp;</xsl:text>
   </xsl:template>
 
   <!-- Index the action -->

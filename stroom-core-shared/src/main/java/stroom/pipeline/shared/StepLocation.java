@@ -23,27 +23,27 @@ import stroom.util.shared.HashCodeBuilder;
 public class StepLocation implements SharedObject {
     private static final long serialVersionUID = 6018818196613322322L;
 
-    private long streamId;
+    private long id;
     // The stream number is 1 based and not 0 based as in the stream store.
-    private long streamNo;
+    private long partNo;
     private long recordNo;
 
     public StepLocation() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public StepLocation(final long streamId, final long streamNo, final long recordNo) {
-        this.streamId = streamId;
-        this.streamNo = streamNo;
+    public StepLocation(final long id, final long partNo, final long recordNo) {
+        this.id = id;
+        this.partNo = partNo;
         this.recordNo = recordNo;
     }
 
-    public long getStreamId() {
-        return streamId;
+    public long getId() {
+        return id;
     }
 
-    public long getStreamNo() {
-        return streamNo;
+    public long getPartNo() {
+        return partNo;
     }
 
     public long getRecordNo() {
@@ -53,8 +53,8 @@ public class StepLocation implements SharedObject {
     @Override
     public int hashCode() {
         final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(streamId);
-        builder.append(streamNo);
+        builder.append(id);
+        builder.append(partNo);
         builder.append(recordNo);
         return builder.toHashCode();
     }
@@ -70,14 +70,14 @@ public class StepLocation implements SharedObject {
 
         final StepLocation stepLocation = (StepLocation) o;
         final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(streamId, stepLocation.streamId);
-        builder.append(streamNo, stepLocation.streamNo);
+        builder.append(id, stepLocation.id);
+        builder.append(partNo, stepLocation.partNo);
         builder.append(recordNo, stepLocation.recordNo);
         return builder.isEquals();
     }
 
     public String getEventId() {
-        return streamId + ":" + streamNo + ":" + recordNo;
+        return id + ":" + partNo + ":" + recordNo;
     }
 
     @Override

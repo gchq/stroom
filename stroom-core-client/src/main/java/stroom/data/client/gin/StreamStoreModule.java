@@ -19,6 +19,7 @@ package stroom.data.client.gin;
 import stroom.core.client.gin.PluginModule;
 import stroom.data.client.presenter.ClassificationWrapperPresenter;
 import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
+import stroom.data.client.presenter.DataPopupSupport;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataTypeUiManager;
@@ -50,6 +51,7 @@ public class StreamStoreModule extends PluginModule {
     @Override
     protected void configure() {
         bind(DataTypeUiManager.class).asEagerSingleton();
+        bind(DataPopupSupport.class).asEagerSingleton();
 
         bindPresenterWidget(ClassificationWrapperPresenter.class, ClassificationWrapperView.class,
                 ClassificationWrapperViewImpl.class);

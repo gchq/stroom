@@ -112,9 +112,9 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
         final Column<DocumentType, TickBoxState> checkedColumn = new Column<DocumentType, TickBoxState>(
                 TickBoxCell.create(false, true)) {
             @Override
-            public TickBoxState getValue(final DocumentType object) {
+            public TickBoxState getValue(final DocumentType documentType) {
                 // If we're checking the TickBoxState of 'All/none' then we need some logic for half-ticks.
-                if(object.equals(SELECT_ALL_OR_NONE_DOCUMENT_TYPE)) {
+                if(documentType.equals(SELECT_ALL_OR_NONE_DOCUMENT_TYPE)) {
                     if (selected.size()  == 0){
                         return TickBoxState.UNTICK;
                     }
@@ -126,7 +126,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
                     }
                 }
                 else {
-                    return TickBoxState.fromBoolean(selected.contains(object.getType()));
+                    return TickBoxState.fromBoolean(selected.contains(documentType.getType()));
                 }
             }
         };
@@ -157,9 +157,9 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
     private Column<DocumentType, SafeHtml> getIconColumn() {
         return new Column<DocumentType, SafeHtml>(new SafeHtmlCell()) {
             @Override
-            public SafeHtml getValue(final DocumentType object) {
+            public SafeHtml getValue(final DocumentType documentType) {
                 return SafeHtmlUtils.fromTrustedString("<img style=\"width:16px;height:16px;padding:2px\" src=\""
-                        + ImageUtil.getImageURL() + object.getIconUrl() + "\"/>");
+                        + ImageUtil.getImageURL() + documentType.getIconUrl() + "\"/>");
             }
         };
     }

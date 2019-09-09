@@ -17,5 +17,5 @@
 package stroom.data.client.presenter;
 
 public interface BeginSteppingHandler {
-    void beginStepping(Long streamId, String childStreamType);
+    void beginStepping(long streamId, String childStreamType);
 }

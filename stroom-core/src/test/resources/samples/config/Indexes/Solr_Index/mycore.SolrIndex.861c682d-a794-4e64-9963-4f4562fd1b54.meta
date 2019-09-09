@@ -1,0 +1,161 @@
+{
+  "uuid" : "861c682d-a794-4e64-9963-4f4562fd1b54",
+  "name" : "mycore",
+  "version" : "f21d8c78-98c4-42e8-889f-4014912cbe64",
+  "connection" : {
+    "useZk" : false,
+    "instanceType" : "SINGLE_NOOE",
+    "solrUrls" : [ "http://localhost:8983/solr/mycore" ],
+    "zkHosts" : [ "" ],
+    "zkPath" : ""
+  },
+  "fields" : [ {
+    "fieldName" : "_nest_path_",
+    "fieldType" : "_nest_path_"
+  }, {
+    "fieldName" : "_root_",
+    "fieldType" : "string"
+  }, {
+    "fieldName" : "_text_",
+    "fieldType" : "text_general",
+    "multiValued" : true
+  }, {
+    "fieldName" : "_version_",
+    "fieldType" : "plong",
+    "indexed" : false
+  }, {
+    "fieldName" : "Action",
+    "fieldType" : "lowercase",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Command",
+    "fieldType" : "lowercase",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Command_Keyword",
+    "fieldType" : "strings",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Description",
+    "fieldType" : "lowercase",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Description_Case_Sensitive",
+    "fieldType" : "text_ws",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Environment",
+    "fieldType" : "lowercase",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldUse" : "ID",
+    "fieldName" : "EventId",
+    "fieldType" : "plong",
+    "stored" : true,
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldUse" : "DATE_FIELD",
+    "fieldName" : "EventTime",
+    "fieldType" : "plong",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Feed",
+    "fieldType" : "lowercase",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Feed_Keyword",
+    "fieldType" : "strings",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "Generator",
+    "fieldType" : "lowercase",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "HostName",
+    "fieldType" : "lowercase",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "id",
+    "fieldType" : "string",
+    "stored" : true,
+    "required" : true
+  }, {
+    "fieldName" : "IPAddress",
+    "fieldType" : "strings",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldUse" : "ID",
+    "fieldName" : "StreamId",
+    "fieldType" : "plong",
+    "stored" : true,
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "System",
+    "fieldType" : "lowercase",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  }, {
+    "fieldName" : "UserId",
+    "fieldType" : "strings",
+    "multiValued" : true,
+    "omitNorms" : true,
+    "omitTermFreqAndPositions" : true,
+    "omitPositions" : true
+  } ],
+  "retentionExpression" : {
+    "type" : "operator",
+    "op" : "AND",
+    "children" : [ {
+      "type" : "term",
+      "field" : "EventTime",
+      "condition" : "LESS_THAN",
+      "value" : "now() - 3M",
+      "enabled" : true
+    } ],
+    "enabled" : true
+  }
+}

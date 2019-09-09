@@ -150,18 +150,11 @@ public class StreamMetaDataProvider implements MetaDataProvider {
     private String getPipeline() {
         return parentData.computeIfAbsent(PIPELINE, k -> {
             final Meta meta = metaHolder.getMeta();
-//            if (stream != null) {
-//                return stream.getPipelineName();
-//            }
-
             if (meta != null && meta.getPipelineUuid() != null) {
-//                final StreamProcessor streamProcessor = streamProcessorService.load(stream.getProcessor(), FETCH_SET);
-//                if (streamProcessor != null && streamProcessor.getPipelineUuid() != null) {
                 final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, meta.getPipelineUuid()));
                 if (pipelineDoc != null) {
                     return pipelineDoc.getName();
                 }
-//                }
             }
             return null;
         });

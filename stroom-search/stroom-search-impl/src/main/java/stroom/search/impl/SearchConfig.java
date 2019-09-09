@@ -2,7 +2,7 @@ package stroom.search.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.search.impl.extraction.ExtractionConfig;
+import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.util.shared.IsConfig;
 

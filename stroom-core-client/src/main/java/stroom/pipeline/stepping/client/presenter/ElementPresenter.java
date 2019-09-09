@@ -114,7 +114,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
     private void loadFuzzyEntityRef(final FutureImpl<Boolean> future) {
 //        if (TextConverterDoc.DOCUMENT_TYPE.equals(fuzzyEntityRef.getType())) {
-        final DocumentServiceReadAction documentServiceReadAction = new DocumentServiceReadAction(fuzzyEntityRef);
+        final DocumentServiceReadAction<SharedObject> documentServiceReadAction = new DocumentServiceReadAction<>(fuzzyEntityRef);
 //
 //            final FindTextConverterCriteria criteria = new FindTextConverterCriteria();
 //            criteria.setName(new StringCriteria(fuzzyEntityRef.getName()));
@@ -133,7 +133,11 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                         loadEntityRef(future);
                     }
                 })
-                .onFailure(caught -> future.setResult(false));
+                .onFailure(caught -> {
+                    dirtyCode = false;
+                    setCode(caught.getMessage(), null);
+                    future.setResult(false);
+                });
 //        } else if (XsltDoc.DOCUMENT_TYPE.equals(fuzzyEntityRef.getType())) {
 //            final FindXSLTCriteria criteria = new FindXSLTCriteria();
 //            criteria.setName(new StringCriteria(fuzzyEntityRef.getName()));
@@ -169,7 +173,11 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
                         future.setResult(true);
                     })
-                    .onFailure(caught -> future.setResult(false));
+                    .onFailure(caught -> {
+                        dirtyCode = false;
+                        setCode(caught.getMessage(), null);
+                        future.setResult(false);
+                    });
         } else {
             Scheduler.get().scheduleDeferred(() -> future.setResult(true));
         }

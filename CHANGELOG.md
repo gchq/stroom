@@ -6,6 +6,41 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1253** : Data retention policies containing just `AND` will now match everything.
+
+* Issue **#1252** : Stream type suggestions no longer list internal types.
+
+* Issue **#1218** : All stepping panes will now show line numbers automatically if there are indicators (errors, warnings etc) that need to be displayed.  
+
+* Issue **#1254** : Added option to allow non Java escaped find and replacement text to be used in `FindReplaceFilter`. 
+
+* Issue **#1250** : Fixed logging description for reading and writing documents.
+
+* Issue **#1251** : Copy permissions from a parent now shows changes prior to the user clicking ok.
+
+* Issue **#758** : You no longer need the `Manage Processors` privilege to call `stroom:meta('Pipeline')` in XSLT.
+
+* Issue **#1256** : Fix error caused when logging data source name when downloading search results.
+
+* Issue **#399** : Fix for error message when stepping that said user needed `read` permission on parent pipeline and not just `use`.
+
+* Issue **#1242** : Fix for pipeline corruption caused when moving elements back to inherited parents.
+
+* Issue **#1244** : Updated Dropwizard to version 1.3.14 to fix session based memory leak.
+
+* Issue **#1246** : Removed elastic search document type, menu items and filter.
+
+* Issue **#1247** : Added XSLT functions (`source`, `sourceId`, `partNo`, `recordNo`, `lineFrom`, `colFrom`, `lineTo`, `colTo`) to determine the current source location so it can be embedded in a cooked event. Events containing raw source location info can be made into links in dashboard tables or the text pane so that a user can see raw source data or jump directly to stepping that raw record. 
+
+
+* Add data retention feature and index optimisation to Solr indexes.
+
+* Initial support for Solr indexing and search.
+
+* Issue **#1244** : Updated Dropwizard to version 1.3.14 to fix session based memory leak.
+
+* Issue **#1246** : Removed elastic search document type, menu items and filter.
+
 * Issue **#1214** : Fixed issue where the max results setting in dashboard tables was not always being obeyed. Also fixed some dashboard table result page size issues.
 
 * Issue **#1238** : During proxy clean task we no longer show a failed attempt to delete an empty directory as an error as this condition is expected.

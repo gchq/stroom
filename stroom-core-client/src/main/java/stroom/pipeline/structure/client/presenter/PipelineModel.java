@@ -330,7 +330,30 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         return element;
     }
 
-    public void addExistingElement(final PipelineElement parent, final PipelineElement existingElement)
+    public boolean moveElement(final PipelineElement parent, final PipelineElement child) {
+        boolean linkExists = false;
+
+        // Test that the link does not already exist.
+        final List<PipelineLink> childLinks = combinedData.getLinks().get(parent.getId());
+        if (childLinks != null) {
+            final long count = childLinks
+                    .stream()
+                    .filter(link -> link.getTo().equals(child.getId()))
+                    .count();
+            linkExists = count > 0;
+        }
+
+        // If the link doesn't already exist then make it.
+        if (!linkExists) {
+            // Remove the element before adding it back in.
+            removeElement(child);
+            addExistingElement(parent, child);
+        }
+
+        return !linkExists;
+    }
+
+    void addExistingElement(final PipelineElement parent, final PipelineElement existingElement)
             throws PipelineModelException {
 //        debugLinks("LINKS 1", pipelineData.getLinks());
 //        debugLinks("LINKS 1", combinedData.getLinks());
@@ -349,7 +372,12 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 //        debugLinks("LINKS 2", pipelineData.getLinks());
 //        debugLinks("LINKS 2", combinedData.getLinks());
 
-        pipelineData.addLink(PipelineDataUtil.createLink(parent.getId(), id));
+        // Make sure this link isn't marked as removed.
+        final PipelineLink pipelineLink = PipelineDataUtil.createLink(parent.getId(), id);
+        pipelineData.getLinks().getRemove().remove(pipelineLink);
+        if (!pipelineData.getAddedLinks().contains(pipelineLink)) {
+            pipelineData.addLink(pipelineLink);
+        }
 
 //        debugLinks("LINKS 3", pipelineData.getLinks());
 //        debugLinks("LINKS 3", combinedData.getLinks());

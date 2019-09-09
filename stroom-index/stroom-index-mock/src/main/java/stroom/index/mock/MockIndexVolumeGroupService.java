@@ -48,11 +48,21 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
     }
 
     @Override
+    public IndexVolumeGroup get(String name) {
+        return null;
+    }
+
+    @Override
     public IndexVolumeGroup get(final int id) {
         return groups.stream()
                 .filter(g -> id == g.getId())
                 .findFirst()
                 .orElse(null);
+    }
+
+    @Override
+    public void delete(String name) {
+
     }
 
     @Override

@@ -21,19 +21,19 @@ import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.xml.converter.ds3.DS3Reader;
 import stroom.task.api.TaskContext;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Location;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @PipelineScoped
@@ -140,7 +140,7 @@ public class SteppingController {
      */
     public boolean endRecord(final Locator locator, final long currentRecordNo) {
         // Get the current stream number.
-        final long currentStreamNo = metaHolder.getStreamNo() + 1;
+        final long currentStreamNo = metaHolder.getStreamNo();
 
         if (Thread.currentThread().isInterrupted()) {
             return true;
@@ -155,7 +155,7 @@ public class SteppingController {
         moveSourceLocation(locator);
 
         // Figure out what the highlighted portion of the input stream should be.
-        final Highlight highlight = createHighlight((int) currentStreamNo);
+        final Highlight highlight = createHighlight();
 
         // First we need to check that the record is ok WRT the location of the
         // record, i.e. is it after the last record found if stepping forward
@@ -206,11 +206,11 @@ public class SteppingController {
         // We want to exit early from backward stepping if we have got to the
         // previous record number.
         return StepType.BACKWARD.equals(request.getStepType()) && stepLocation != null
-                && currentStreamNo == stepLocation.getStreamNo() && currentRecordNo >= stepLocation.getRecordNo() - 1;
+                && currentStreamNo == stepLocation.getPartNo() && currentRecordNo >= stepLocation.getRecordNo() - 1;
 
     }
 
-    Highlight createHighlight(final int currentStreamNo) {
+    Highlight createHighlight() {
         // Record the current source location.
         final Location start = locationFactory.create(currentStartLocation.getLineNo(), currentStartLocation.getColNo());
         final Location end = locationFactory.create(currentEndLocation.getLineNo(), currentEndLocation.getColNo());
@@ -220,20 +220,21 @@ public class SteppingController {
         final int endLineNo = end.getLineNo() > 1 ? end.getLineNo() : 1;
         final int endColNo = end.getColNo() > 1 ? end.getColNo() : 1;
 
-        return new Highlight(currentStreamNo, startLineNo, startColNo, currentStreamNo, endLineNo, endColNo);
+        return new Highlight(new DefaultLocation(startLineNo, startColNo), new DefaultLocation(endLineNo, endColNo));
     }
 
     StepData createStepData(final Highlight highlight) {
-        List<Highlight> highlights;
-        if (highlight != null) {
-            highlights = new ArrayList<>(1);
-            highlights.add(highlight);
-        } else {
-            highlights = new ArrayList<>(0);
+        SourceLocation sourceLocation = null;
+        if (stepLocation != null) {
+            sourceLocation = new SourceLocation(stepLocation.getId(),
+                    metaHolder.getChildDataType(),
+                    stepLocation.getPartNo(),
+                    stepLocation.getRecordNo(),
+                    highlight);
         }
 
         final StepData stepData = new StepData();
-        stepData.setSourceHighlights(highlights);
+        stepData.setSourceLocation(sourceLocation);
 
         // Store the current data and reset for each filter.
         final LoggingErrorReceiver errorReceiver = getErrorReceiver();
@@ -273,7 +274,7 @@ public class SteppingController {
      */
     private boolean isRecordPositionOk(final long currentRecordNo) {
         // final PipelineStepTask request = controller.getRequest();
-        final long currentStreamNo = metaHolder.getStreamNo() + 1;
+        final long currentStreamNo = metaHolder.getStreamNo();
 
         // If we aren't using a step location as a reference point to look
         // before or after then the location will always be ok.
@@ -290,15 +291,15 @@ public class SteppingController {
         final StepType stepType = request.getStepType();
         if (StepType.FIRST.equals(stepType) || StepType.LAST.equals(stepType)) {
             return true;
-        } else if (StepType.FORWARD.equals(stepType) && currentStreamNo > stepLocation.getStreamNo()) {
+        } else if (StepType.FORWARD.equals(stepType) && currentStreamNo > stepLocation.getPartNo()) {
             return true;
-        } else if (StepType.BACKWARD.equals(stepType) && currentStreamNo < stepLocation.getStreamNo()) {
+        } else if (StepType.BACKWARD.equals(stepType) && currentStreamNo < stepLocation.getPartNo()) {
             return true;
         }
 
         // If the stream number is the same as the one requested then we can
         // test the record number.
-        if (currentStreamNo == stepLocation.getStreamNo()) {
+        if (currentStreamNo == stepLocation.getPartNo()) {
             if (StepType.REFRESH.equals(stepType) && currentRecordNo == stepLocation.getRecordNo()) {
                 return true;
             } else if (StepType.FORWARD.equals(stepType) && currentRecordNo > stepLocation.getRecordNo()) {

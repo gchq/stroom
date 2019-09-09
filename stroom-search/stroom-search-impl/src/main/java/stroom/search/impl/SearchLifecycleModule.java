@@ -18,7 +18,7 @@ package stroom.search.impl;
 
 import stroom.lifecycle.api.AbstractLifecycleModule;
 import stroom.lifecycle.api.RunnableWrapper;
-import stroom.search.impl.extraction.ExtractionTaskExecutor;
+import stroom.search.extraction.ExtractionTaskExecutor;
 import stroom.search.impl.shard.IndexShardSearchTaskExecutor;
 
 import javax.inject.Inject;
@@ -28,20 +28,12 @@ public class SearchLifecycleModule extends AbstractLifecycleModule {
     protected void configure() {
         super.configure();
         bindShutdown().to(IndexShardSearchTaskExecutorShutdown.class);
-        bindShutdown().to(ExtractionTaskExecutorShutdown.class);
     }
 
     private static class IndexShardSearchTaskExecutorShutdown extends RunnableWrapper {
         @Inject
         IndexShardSearchTaskExecutorShutdown(final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor) {
             super(indexShardSearchTaskExecutor::shutdown);
-        }
-    }
-
-    private static class ExtractionTaskExecutorShutdown extends RunnableWrapper {
-        @Inject
-        ExtractionTaskExecutorShutdown(final ExtractionTaskExecutor extractionTaskExecutor) {
-            super(extractionTaskExecutor::shutdown);
         }
     }
 }

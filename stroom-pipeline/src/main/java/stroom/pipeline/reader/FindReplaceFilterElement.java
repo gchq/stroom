@@ -48,6 +48,8 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
 
     private String find;
     private String replacement = "";
+    private boolean escapeFind = true;
+    private boolean escapeReplacement = true;
     private int maxReplacements = -1;
     private boolean regex;
     private boolean dotAll;
@@ -68,8 +70,8 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
         try {
             textReplacementFilterReader = new FindReplaceFilter.Builder()
                     .reader(reader)
-                    .find(find)
-                    .replacement(replacement)
+                    .find(escapeFind ? StringEscapeUtils.unescapeJava(find) : find)
+                    .replacement(escapeReplacement ? StringEscapeUtils.unescapeJava(replacement) : replacement)
                     .maxReplacements(maxReplacements)
                     .regex(regex)
                     .dotAll(dotAll)
@@ -110,20 +112,39 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
         super.endStream();
     }
 
-    @PipelineProperty(description = "The text or regex pattern to find and replace.",
+    @PipelineProperty(
+            description = "The text or regex pattern to find and replace.",
             displayPriority = 1)
     public void setFind(final String find) {
-        this.find = StringEscapeUtils.unescapeJava(find);
+        this.find = find;
     }
 
-    @PipelineProperty(description = "The replacement text.",
+    @PipelineProperty(
+            description = "The replacement text.",
             displayPriority = 2)
     public void setReplacement(final String replacement) {
-        this.replacement = StringEscapeUtils.unescapeJava(replacement);
+        this.replacement = replacement;
     }
 
-    @PipelineProperty(description = "The maximum number of times to try and replace text. There is no limit by default.",
+    @PipelineProperty(
+            description = "Whether or not to escape find pattern or text.",
+            defaultValue = "true",
             displayPriority = 3)
+    public void setEscapeFind(final boolean escapeFind) {
+        this.escapeFind = escapeFind;
+    }
+
+    @PipelineProperty(
+            description = "Whether or not to escape replacement text.",
+            defaultValue = "true",
+            displayPriority = 4)
+    public void setEscapeReplacement(final boolean escapeReplacement) {
+        this.escapeReplacement = escapeReplacement;
+    }
+
+    @PipelineProperty(
+            description = "The maximum number of times to try and replace text. There is no limit by default.",
+            displayPriority = 5)
     public void setMaxReplacements(final String maxReplacements) {
         try {
             this.maxReplacements = Integer.parseInt(maxReplacements);
@@ -133,30 +154,34 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
         }
     }
 
-    @PipelineProperty(description = "Whether the pattern should be treated as a literal or a regex.",
+    @PipelineProperty(
+            description = "Whether the pattern should be treated as a literal or a regex.",
             defaultValue = "false",
-            displayPriority = 4)
+            displayPriority = 6)
     public void setRegex(final boolean regex) {
         this.regex = regex;
     }
 
-    @PipelineProperty(description = "Let '.' match all characters in a regex.",
+    @PipelineProperty(
+            description = "Let '.' match all characters in a regex.",
             defaultValue = "false",
-            displayPriority = 5)
+            displayPriority = 7)
     public void setDotAll(final boolean dotAll) {
         this.dotAll = dotAll;
     }
 
-    @PipelineProperty(description = "The number of characters to buffer when matching the regex.",
+    @PipelineProperty(
+            description = "The number of characters to buffer when matching the regex.",
             defaultValue = "1000",
-            displayPriority = 6)
+            displayPriority = 8)
     public void setBufferSize(final int bufferSize) {
         this.bufferSize = bufferSize;
     }
 
-    @PipelineProperty(description = "Show total replacement count",
+    @PipelineProperty(
+            description = "Show total replacement count",
             defaultValue = "true",
-            displayPriority = 7)
+            displayPriority = 9)
     public void setShowReplacementCount(final boolean showReplacementCount) {
         this.showReplacementCount = showReplacementCount;
     }

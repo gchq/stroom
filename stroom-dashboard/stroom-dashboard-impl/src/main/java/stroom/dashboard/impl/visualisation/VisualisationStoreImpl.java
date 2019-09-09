@@ -19,6 +19,7 @@ package stroom.dashboard.impl.visualisation;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.explorer.shared.DocumentType;
@@ -144,7 +145,10 @@ class VisualisationStoreImpl implements VisualisationStore {
 
     @Override
     public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
+        if (omitAuditFields) {
+            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
+        }
+        return store.exportDocument(docRef, messageList, d -> d);
     }
 
     @Override
