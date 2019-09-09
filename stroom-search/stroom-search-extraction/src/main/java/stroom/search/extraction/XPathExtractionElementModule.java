@@ -16,13 +16,11 @@
 
 package stroom.search.extraction;
 
-import com.google.inject.AbstractModule;
+import stroom.pipeline.factory.PipelineElementModule;
 
-public class ExtractionModule extends AbstractModule {
+class XPathExtractionElementModule extends PipelineElementModule {
     @Override
-    protected void configure() {
-        install(new ExtractionElementModule());
-        install(new XPathExtractionElementModule());
-        install(new ExtractionLifecycleModule());
+    protected void configureElements() {
+        bindElement(XPathExtractionOutputFilter.class);
     }
 }

@@ -36,9 +36,9 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
     private static final String NAME = "name";
     private static final String VALUE = "value";
 
-    private FieldIndexMap fieldIndexes;
-    private ResultReceiver resultReceiver;
-    private Val[] values;
+    protected FieldIndexMap fieldIndexes;
+    protected ResultReceiver resultReceiver;
+    protected Val[] values;
 
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
