@@ -16,9 +16,7 @@
 
 package stroom.search.extraction;
 
-import org.w3c.dom.DOMImplementation;
-import org.w3c.dom.Document;
-import org.w3c.dom.DocumentType;
+import org.w3c.dom.*;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -63,10 +61,10 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
     private Locator locator;
 
     //Track of current node (the selected "top level" element), separately to lower level elenent
-    private org.w3c.dom.Document currentNode = null;
+    private Document currentDoc = null;
 
     //Also track element under node, in order that errors may be recovered for next node
-    private org.w3c.dom.Document currentElement = null;
+    private Node currentNode = null;
 
     @Inject
     public XPathExtractionOutputFilter(final LocationFactoryProxy locationFactory,
@@ -88,23 +86,39 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
         super.setDocumentLocator(locator);
     }
 
+   private static void setAttributes (Element element, final Attributes attributes){
+        for (int a = 0; a < attributes.getLength(); a++){
+            element.setAttribute(attributes.getLocalName(a), attributes.getValue(a));
+        }
+   }
+
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-        if (EVENT.equals(localName) ){
-            if (currentNode != null){
-                log(Severity.ERROR, "Invalid XML detected. Closing tag not found", null);
-            }
+        try {
+            if (EVENT.equals(localName)) {
+                if (currentNode != null) {
+                    log(Severity.ERROR, "Invalid XML detected. Closing tag not found", null);
+                }
 
-            //Start new document
-            currentNode = domImplementation.createDocument("test", EVENT, null);
-        } else {
-            //Push new element
-            if (currentNode != null){
-                //This could be an error, but might be a higher level XML structure to the defined "top level"
-                currentElement = domImplementation.createDocument("test", "Under", null);
-                currentNode.appendChild(currentElement);
+                //Start new document
+                currentDoc = domImplementation.createDocument(uri, EVENT, null);
+                //Initally add nodes from this point.
+                currentNode = currentDoc;
+            } else {
+                //Push new element
+                if (currentDoc != null) {
+                    Element element = currentDoc.createElementNS(uri, qName);
+                    setAttributes(element, atts);
+                    currentNode.appendChild(element);
+                    currentNode = element;
+                }
             }
+        }catch (DOMException domException){
+            //Scrap the current document
+            currentDoc = null;
+            currentNode = null;
+            log (Severity.ERROR, "XML error creating element " + localName, domException);
         }
 
         super.startElement(uri, localName, qName, atts);
@@ -114,12 +128,17 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (EVENT.equals(localName) ){
             //Finish new document and extract XPaths
-            System.out.println(nodeToString(currentNode));
+            System.out.println(stringify(currentDoc));
+            currentDoc = null;
+            currentNode = null;
         } else {
             //Pop element
-            currentElement = (Document) currentElement.getParentNode();
-            if (currentElement == currentNode)
-                currentElement = null; //Top level
+            currentNode = currentNode.getParentNode();
+            if (currentNode == currentDoc) {  //This shouldn't happen
+                log(Severity.ERROR, "Parse error in XML", null);
+                currentDoc = null; //Top level
+                currentNode = null;
+            }
         }
 
         super.endElement(uri, localName, qName);
@@ -127,13 +146,18 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
 
     @Override
     public void characters(char[] ch, int start, int length) throws SAXException {
-        if (currentElement != null) {
-            currentElement.createTextNode(new String(ch, start, length));
-        } else {
-            log(Severity.WARNING, "Character data in top level element", null);
-            currentNode.createTextNode(new String(ch, start, length));
+        String content = new String(ch, start, length).trim();
+        if (content.length() > 0) {
+            if (currentNode != null) {
+                try {
+                    currentNode.appendChild(currentDoc.createTextNode(content));
+                } catch (DOMException domException){
+                    log (Severity.ERROR, "XML error creating text node", domException);
+                }
+            } else {
+                log(Severity.WARNING, "Chars in L1 element: " + content + " (pos " + start + ")", null);
+            }
         }
-
         //Add characters to the current node
         super.characters(ch, start, length);
     }
@@ -161,7 +185,7 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
     }
 
 
-    public String nodeToString(Document document) {
+    private String stringify(Document document) {
         try {
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
