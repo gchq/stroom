@@ -16,6 +16,12 @@
 
 package stroom.search.extraction;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.event.ReceivingContentHandler;
+import net.sf.saxon.s9api.*;
+import net.sf.saxon.tree.tiny.TinyBuilder;
+import net.sf.saxon.tree.tiny.TinyTree;
 import org.w3c.dom.*;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
@@ -60,11 +66,19 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
     private DOMImplementation domImplementation = null;
     private Locator locator;
 
-    //Track of current node (the selected "top level" element), separately to lower level elenent
-    private Document currentDoc = null;
+    private final Configuration config = new Configuration();
+    private final PipelineConfiguration pipeConfig = config.makePipelineConfiguration();
+    private TinyBuilder builder = null;
 
-    //Also track element under node, in order that errors may be recovered for next node
-    private Node currentNode = null;
+    private ReceivingContentHandler rch = null;
+    private String topLevelElement = "";
+
+
+//    //Track of current node (the selected "top level" element), separately to lower level elenent
+//    private Document currentDoc = null;
+//
+//    //Also track element under node, in order that errors may be recovered for next node
+//    private Node currentNode = null;
 
     @Inject
     public XPathExtractionOutputFilter(final LocationFactoryProxy locationFactory,
@@ -73,6 +87,8 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
         this.securityContext = securityContext;
+
+
     }
 
     /**
@@ -95,30 +111,28 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-        try {
-            if (EVENT.equals(localName)) {
-                if (currentNode != null) {
-                    log(Severity.ERROR, "Invalid XML detected. Closing tag not found", null);
-                }
 
+        try {
+            if (rch == null) {
+                topLevelElement = localName;
                 //Start new document
-                currentDoc = domImplementation.createDocument(uri, EVENT, null);
-                //Initally add nodes from this point.
-                currentNode = currentDoc;
+                builder = new TinyBuilder(pipeConfig);
+                rch = new ReceivingContentHandler();
+                rch.setPipelineConfiguration(pipeConfig);
+                rch.setReceiver(builder);
+               // rch.startPrefixMapping(localName, uri);
+                rch.startDocument();
+
             } else {
                 //Push new element
-                if (currentDoc != null) {
-                    Element element = currentDoc.createElementNS(uri, qName);
-                    setAttributes(element, atts);
-                    currentNode.appendChild(element);
-                    currentNode = element;
-                }
+                rch.startElement(uri, localName, qName, atts);
             }
-        }catch (DOMException domException){
+
+          } catch (SAXException domException) {
             //Scrap the current document
-            currentDoc = null;
-            currentNode = null;
-            log (Severity.ERROR, "XML error creating element " + localName, domException);
+            rch = null;
+            topLevelElement = null;
+            log(Severity.ERROR, "XML error creating element " + localName, domException);
         }
 
         super.startElement(uri, localName, qName, atts);
@@ -126,19 +140,40 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
 
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
-        if (EVENT.equals(localName) ){
-            //Finish new document and extract XPaths
-            System.out.println(stringify(currentDoc));
-            currentDoc = null;
-            currentNode = null;
+        if (topLevelElement != null && topLevelElement.equals(localName)){
+            try {
+                rch.endDocument();
+                //Finish new document and extract XPaths
+                // Get the tree.
+
+                final TinyTree tree = builder.getTree();
+
+                System.out.println ("**Debug**");
+                System.out.println (builder.getCurrentRoot().getDisplayName());
+
+                final Processor processor = new Processor(false);
+                final XQueryCompiler compiler = processor.newXQueryCompiler();
+                final XQueryExecutable executable = compiler.compile("Event/EventSource/User/Id");
+
+                // Can be reused but Not a thread safe thing.
+                final XQueryEvaluator evaluator = executable.load();
+
+                evaluator.setContextItem(new XdmNode(tree.getRootNode()));
+                final XdmSequenceIterator iterator = evaluator.iterator();
+                while (iterator.hasNext()) {
+                    String value = iterator.next().getStringValue();
+                    System.out.println(value);
+                }
+            } catch (SaxonApiException ex){
+                log(Severity.ERROR, "Unable to evaluate XPaths", ex);
+            }
+            finally {
+                topLevelElement = "";
+                rch = null;
+            }
         } else {
             //Pop element
-            currentNode = currentNode.getParentNode();
-            if (currentNode == currentDoc) {  //This shouldn't happen
-                log(Severity.ERROR, "Parse error in XML", null);
-                currentDoc = null; //Top level
-                currentNode = null;
-            }
+            rch.endElement(uri, localName, qName);
         }
 
         super.endElement(uri, localName, qName);
@@ -146,18 +181,11 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
 
     @Override
     public void characters(char[] ch, int start, int length) throws SAXException {
-        String content = new String(ch, start, length).trim();
-        if (content.length() > 0) {
-            if (currentNode != null) {
-                try {
-                    currentNode.appendChild(currentDoc.createTextNode(content));
-                } catch (DOMException domException){
-                    log (Severity.ERROR, "XML error creating text node", domException);
-                }
-            } else {
-                log(Severity.WARNING, "Chars in L1 element: " + content + " (pos " + start + ")", null);
-            }
-        }
+        if (rch != null)
+            rch.characters(ch, start, length);
+        else
+            log(Severity.ERROR, "Unexpected text node " + new String(ch, start, length) +
+                    " at position " + start, null);
         //Add characters to the current node
         super.characters(ch, start, length);
     }
@@ -167,17 +195,7 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
      */
     @Override
     public void startProcessing() {
-        try {
-            DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-            builderFactory.setNamespaceAware(true);
-            DocumentBuilder builder = builderFactory.newDocumentBuilder();
-            domImplementation = builder.getDOMImplementation();
-        } catch (ParserConfigurationException e) {
-            log(Severity.FATAL_ERROR, "XML Configuration Failure", e);
-            throw new LoggedException("XML Parser is not configured correctly", e);
-        } finally {
-            super.startProcessing();
-        }
+
     }
 
     private void log(final Severity severity, final String message, final Exception e) {
