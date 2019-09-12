@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1259** : Fixed schema compliance when logging failed document update events.
+
 * Issue **#1245** : Fixed various issues with session management and authentication.
 
 
