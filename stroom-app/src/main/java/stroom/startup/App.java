@@ -97,7 +97,7 @@ import stroom.servlet.ExportConfigResource;
 import stroom.servlet.HttpServletRequestFilter;
 import stroom.servlet.ImportFileServlet;
 import stroom.servlet.RejectPostFilter;
-import stroom.servlet.SessionListListener;
+import stroom.security.server.SessionListListener;
 import stroom.servlet.SessionListServlet;
 import stroom.servlet.SessionResourceStoreImpl;
 import stroom.servlet.StatusServlet;
