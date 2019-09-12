@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1263** : Fixed issues related to URL encoding/decoding in dashboard expressions.
+
+* Issue **#1262** : Improved behaviour of `+` when using for concatenation in dashboard expressions.
+
 * Issue **#1259** : Fixed schema compliance when logging failed document update events.
 
 * Issue **#1245** : Fixed various issues with session management and authentication.
