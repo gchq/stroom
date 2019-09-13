@@ -51,7 +51,6 @@ import stroom.dictionary.server.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.dispatch.shared.DispatchService;
-import stroom.elastic.spring.ElasticIndexConfiguration;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.explorer.server.ExplorerConfiguration;
@@ -398,7 +397,6 @@ public class App extends Application<Config> {
                 MetaDataStatisticConfiguration.class,
                 StatisticsConfiguration.class,
                 SecurityConfiguration.class,
-                ElasticIndexConfiguration.class,
                 RuleSetConfiguration.class
         );
         try {
