@@ -33,6 +33,8 @@ set -e
 # ----------------------------------------------------------
 # Git tags should match this regex to be a release tag
 readonly RELEASE_VERSION_REGEX='^v[0-9]+\.[0-9]+.*$'
+# Finds version part but only in a '## [v1.2.3xxxxx]' heading
+readonly RELEASE_VERSION_IN_HEADING_REGEX="(?<=## \[)v[0-9]+\.[0-9]+[^\]]*(?=\])" 
 # Example git tag for use in help text
 readonly TAG_EXAMPLE='v6.0-beta.19'
 # Example of a tag that is older than TAG_EXAMPLE, for use in help text
@@ -73,6 +75,8 @@ show_usage() {
     error "Missing version argument${NC}"
     echo -e "${GREEN}Usage: ${BLUE}./tag_release.sh version${NC}"
     echo -e "${GREEN}e.g:   ${BLUE}./tag_release.sh ${TAG_EXAMPLE}${NC}"
+    echo
+    echo -e "${GREEN}If the version argument is not supplied it will try to determine the version to release.${NC}"
     echo
     echo -e "${GREEN}This script will extract the changes from the" \
       "${BLUE}${CHANGELOG_FILE}${GREEN} file for the passed${NC}"
@@ -191,7 +195,6 @@ validate_for_uncommitted_work() {
 
 do_validation() {
   validate_version_string
-  validate_changelog_exists
   validate_in_git_repo
   validate_for_duplicate_tag
   validate_version_in_changelog
@@ -200,16 +203,64 @@ do_validation() {
   validate_for_uncommitted_work
 }
 
+determine_version_to_release() {
+
+  echo -e "${GREEN}Release version argument not supplied so we will try to work it out${NC}"
+  echo
+
+  # Find the first mastching version or return an empty string if no matches
+  determined_version="$( \
+    grep -oP "${RELEASE_VERSION_IN_HEADING_REGEX}" "${CHANGELOG_FILE}" \
+    | head -n1 || echo ""
+  )"
+
+  if [ -n "${determined_version}" ]; then
+    # Found a version so seek confirmation
+
+    # Extract the date from the version heading
+    local release_date
+    release_date="$( \
+      grep -oP "(?<=##\s\[${determined_version}\]\s-\s)\d{4}-\d{2}-\d{2}" "${CHANGELOG_FILE}"
+    )"
+
+    echo -e "${GREEN}Determined release to be" \
+      "[${BLUE}${determined_version}${GREEN}] with date" \
+      "[${BLUE}${release_date}${GREEN}]${NC}"
+    echo
+
+    read -rsp $'If this is correct press "y" to continue or any other key to cancel.\n' -n1 keyPressed
+
+    if [ ! "$keyPressed" = 'y' ] && [ ! "$keyPressed" = 'Y' ]; then
+      show_usage
+      exit 1
+    fi
+    echo
+  fi
+}
+
 main() {
   setup_echo_colours
   echo
 
+  validate_changelog_exists
+
+  local version
+
   if [ $# -ne 1 ]; then
-    show_usage
-    exit 1
+    determine_version_to_release
   fi
 
-  local version="$1"
+  if [ -n "${determined_version}" ]; then
+    version="${determined_version}"
+  else
+    if [ $# -ne 1 ]; then
+      # no arg supplied and we couldn't determine the version so bomb out
+      show_usage
+      exit 1
+    fi
+    version="$1"
+  fi
+
   local curr_date
   curr_date="$(date +%Y-%m-%d)"
 
