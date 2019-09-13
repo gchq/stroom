@@ -53,21 +53,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import static stroom.index.shared.IndexConstants.EVENT_ID;
+import static stroom.index.shared.IndexConstants.STREAM_ID;
+
 
 @ConfigurableElement(type = "XPathExtractionOutputFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.SEARCH)
 public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
-    private static final String EVENT = "Event";
-
-    private static final String RECORD = "record";
-    private static final String DATA = "data";
-    private static final String NAME = "name";
-    private static final String VALUE = "value";
+    private static final String MULTIPLE_VALUE_DELIMITER = ", ";
     private final ErrorReceiverProxy errorReceiverProxy;
     private final SecurityContext securityContext;
     private final LocationFactoryProxy locationFactory;
 
-    private DOMImplementation domImplementation = null;
     private Locator locator;
 
     private final Configuration config = new Configuration();
@@ -83,8 +80,6 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
     private int depth = 0;
 
     private HashMap<String, String> prefixMappings = new HashMap<>();
-
-    private final ArrayList<String> xpaths = new ArrayList<>();
     private final ArrayList<XPathExecutable> xPathExecutables = new ArrayList<>();
 
 
@@ -98,6 +93,7 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
     public XPathExtractionOutputFilter(final LocationFactoryProxy locationFactory,
                                        final SecurityContext securityContext,
                                        final ErrorReceiverProxy errorReceiverProxy) {
+        super(false);
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
         this.securityContext = securityContext;
@@ -175,21 +171,20 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
 
 
     private void createXPathExecutables (){
+        for (String xpathPart : fieldIndexes.getMap().keySet()){
+            if (EVENT_ID.equals (xpathPart))
+                xpathPart = "@" + EVENT_ID;
+            else if (STREAM_ID.equals(xpathPart))
+                xpathPart = "@" + STREAM_ID;
 
-        String[] xpathStrings = {"EventTime/TimeCreated", "@StreamId", "@EventId", "EventSource/System/Name", "EventSource/User/Id"};
-        for (int i = 0; i < xpathStrings.length; i++){
-            String xpath = "/" + topLevelElementToSkip + "/" + secondLevelElementToCreateDocs + "/" + xpathStrings[i];
-            System.out.println (xpath);
-            xpaths.add(xpath);
-        }
-
-        for (String xpath : xpaths) {
+            String xpath = "/" + topLevelElementToSkip + "/" + secondLevelElementToCreateDocs + "/" + xpathPart;
             try {
                 xPathExecutables.add(compiler.compile(xpath));
             } catch (SaxonApiException e) {
                 log(Severity.FATAL_ERROR, "Error in XPath Expression: " + xpath, e);
             }
         }
+
     }
 
     @Override
@@ -208,25 +203,25 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
 
                     final TinyTree tree = builder.getTree();
 
-                    StringBuilder builder = new StringBuilder();
-                    int j = 0;
+                    Val [] values = new Val[xPathExecutables.size()];
+                    int v = 0;
                     for (final XPathExecutable executable : xPathExecutables) {
-                        if(j++ > 0)
-                            builder.append(',');
                         final XPathSelector selector = executable.load();
 
                         selector.setContextItem(new XdmNode(tree.getRootNode()));
                         final Iterator<XdmItem> iterator = selector.iterator();
+                        StringBuilder thisVal = new StringBuilder();
                         int i = 0;
                         while (iterator.hasNext()) {
                             if(i++ > 0)
-                                builder.append('|');
+                                thisVal.append(MULTIPLE_VALUE_DELIMITER);
                             String value = iterator.next().getStringValue();
-                            builder.append(value);
+                            thisVal.append(value);
                         }
-
+                        values[v++] = ValString.create(thisVal.toString());
                     }
-                    System.out.println(builder);
+                    resultReceiver.receive(new Values(values));
+
                 } catch (SaxonApiException ex) {
                     log(Severity.ERROR, "Unable to evaluate XPaths", ex);
                 } finally {

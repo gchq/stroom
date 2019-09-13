@@ -39,34 +39,43 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
     protected FieldIndexMap fieldIndexes;
     protected ResultReceiver resultReceiver;
     protected Val[] values;
+    private boolean sendRecords = true;
+
+    public SearchResultOutputFilter () {}
+
+    SearchResultOutputFilter (boolean sendRecords){
+        this.sendRecords = sendRecords;
+    }
 
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-        if (DATA.equals(localName) && values != null) {
-            String name = atts.getValue(NAME);
-            String value = atts.getValue(VALUE);
-            if (name != null && value != null) {
-                name = name.trim();
-                value = value.trim();
 
-                if (name.length() > 0 && value.length() > 0) {
-                    final int fieldIndex = fieldIndexes.get(name);
-                    if (fieldIndex >= 0) {
-                        values[fieldIndex] = ValString.create(value);
+            if (sendRecords) {
+                if (DATA.equals(localName) && values != null) {
+                    String name = atts.getValue(NAME);
+                    String value = atts.getValue(VALUE);
+                    if (name != null && value != null) {
+                        name = name.trim();
+                        value = value.trim();
+
+                        if (name.length() > 0 && value.length() > 0) {
+                            final int fieldIndex = fieldIndexes.get(name);
+                            if (fieldIndex >= 0) {
+                                values[fieldIndex] = ValString.create(value);
+                            }
+                        }
                     }
+                } else if (RECORD.equals(localName)) {
+                    values = new Val[fieldIndexes.size()];
                 }
             }
-        } else if (RECORD.equals(localName)) {
-            values = new Val[fieldIndexes.size()];
-        }
-
         super.startElement(uri, localName, qName, atts);
     }
 
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
-        if (RECORD.equals(localName)) {
+        if (RECORD.equals(localName) && sendRecords) {
             resultReceiver.receive(new Values(values));
             values = null;
         }
