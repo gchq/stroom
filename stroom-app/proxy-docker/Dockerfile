@@ -70,7 +70,6 @@ VOLUME /stroom-proxy/logs/
 ENTRYPOINT ["/sbin/tini", "--", "/stroom-proxy/docker-entrypoint.sh"]
 
 #start the app, the config file will be supplied by a bind mount volume.
-#CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar stroom-app-all.jar server /stroom-proxy/config/config.yml"]
 CMD ["./start.sh"]
 
 # The following line can be used as a temproary hack in dev if the build can't

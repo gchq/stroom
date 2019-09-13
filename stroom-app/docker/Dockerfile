@@ -83,7 +83,6 @@ VOLUME /stroom/volumes/
 ENTRYPOINT ["/sbin/tini", "--", "/stroom/docker-entrypoint.sh"]
 
 #start the app, the config file will be supplied by a bind mount volume.
-#CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar stroom-app-all.jar server config/config.yml"]
 CMD ["./start.sh"]
 
 # https://github.com/gchq/stroom/issues/884
