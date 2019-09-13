@@ -46,7 +46,6 @@ do_gradle_build() {
     "clean"
     "build"
     "-x" "test"
-    "-x" "integrationTest"
   )
 
   if [ "$mode" = "skipGwt" ]; then
