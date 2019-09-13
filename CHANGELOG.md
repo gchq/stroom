@@ -6,9 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1263** : Fixed issues related to URL encoding/decoding with the `dashboard()` function.
+
+* Issue **#1263** : Fixed issue where date expressions were being allowed without '+' or '-' signs to add or subtract durations.
+
 * Issue **#1263** : Fixed issues related to URL encoding/decoding in dashboard expressions.
 
-* Issue **#1262** : Improved behaviour of `+` when using for concatenation in dashboard expressions.
+* Issue **#1262** : Improved behaviour of `+` when used for concatenation in dashboard expressions.
 
 * Issue **#1259** : Fixed schema compliance when logging failed document update events.
 
