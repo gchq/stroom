@@ -82,7 +82,8 @@ VOLUME /stroom/volumes/
 # see https://github.com/krallin/tini/issues/8
 ENTRYPOINT ["/sbin/tini", "--", "/stroom/docker-entrypoint.sh"]
 
-#start the app, the config file will be supplied by a bind mount volume.
+# start the app, the config file will either be supplied by a bind mount volume
+# or a fallback version baked into the image
 CMD ["./start.sh"]
 
 # https://github.com/gchq/stroom/issues/884

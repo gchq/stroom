@@ -69,7 +69,8 @@ VOLUME /stroom-proxy/logs/
 # see https://github.com/krallin/tini/issues/8
 ENTRYPOINT ["/sbin/tini", "--", "/stroom-proxy/docker-entrypoint.sh"]
 
-#start the app, the config file will be supplied by a bind mount volume.
+# start the app, the config file will either be supplied by a bind mount volume
+# or a fallback version baked into the image
 CMD ["./start.sh"]
 
 # The following line can be used as a temproary hack in dev if the build can't
