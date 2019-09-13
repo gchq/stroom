@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1264** : Stroom no longer asks if you want to leave the web page if no content needs saving.
+
 * Issue **#1263** : Fixed issues related to URL encoding/decoding with the `dashboard()` function.
 
 * Issue **#1263** : Fixed issue where date expressions were being allowed without '+' or '-' signs to add or subtract durations.
