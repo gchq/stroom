@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add fallback config.yml file into the docker images for running outside of a stack.
+
 * Issue **#1263** : Fixed issues related to URL encoding/decoding in dashboard expressions.
 
 * Issue **#1262** : Improved behaviour of `+` when using for concatenation in dashboard expressions.
