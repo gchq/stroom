@@ -46,6 +46,7 @@ public class JWTService implements HasHealthCheck {
     private final String authJwtIssuer;
     private AuthenticationServiceClients authenticationServiceClients;
     private final boolean checkTokenRevocation;
+    private final boolean authenticationRequired;
     private Clock clock;
 
     @Inject
@@ -55,6 +56,7 @@ public class JWTService implements HasHealthCheck {
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken.durationToWarnBeforeExpiry')}") final String durationToWarnBeforeExpiry,
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken')}") final String apiKey,
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.enabletokenrevocationcheck')}") final boolean enableTokenRevocationCheck,
+            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.authentication.required')}") final boolean authenticationRequired,
             final AuthenticationServiceClients authenticationServiceClients) {
         if (durationToWarnBeforeExpiry != null) {
             this.durationToWarnBeforeExpiry = Duration.ofMillis(ModelStringUtil.parseDurationString(durationToWarnBeforeExpiry));
@@ -63,6 +65,7 @@ public class JWTService implements HasHealthCheck {
         this.authJwtIssuer = authJwtIssuer;
         this.authenticationServiceClients = authenticationServiceClients;
         this.checkTokenRevocation = enableTokenRevocationCheck;
+        this.authenticationRequired = authenticationRequired;
 
         updatePublicJsonWebKey();
 
@@ -78,11 +81,13 @@ public class JWTService implements HasHealthCheck {
     }
 
     private void updatePublicJsonWebKey() {
-        try {
-            String jwkAsJson = fetchNewPublicKey();
-            jwk = RsaJsonWebKey.Factory.newPublicJwk(jwkAsJson);
-        } catch (JoseException | ApiException e) {
-            LOGGER.error("Unable to fetch the remote authentication service's public key!", e);
+        if (authenticationRequired) {
+            try {
+                String jwkAsJson = fetchNewPublicKey();
+                jwk = RsaJsonWebKey.Factory.newPublicJwk(jwkAsJson);
+            } catch (JoseException | ApiException e) {
+                LOGGER.error("Unable to fetch the remote authentication service's public key!", e);
+            }
         }
     }
 
