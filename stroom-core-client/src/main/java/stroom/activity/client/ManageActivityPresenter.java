@@ -27,6 +27,7 @@ import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.core.client.UrlParameters;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.EntityServiceLoadAction;
@@ -56,6 +57,9 @@ public class ManageActivityPresenter extends
     private final Provider<ActivityEditPresenter> editProvider;
     private final ClientDispatchAsync dispatcher;
     private final ClientPropertyCache clientPropertyCache;
+    private final UrlParameters urlParameters;
+    private final CurrentActivity currentActivity;
+
     private FindActivityCriteria criteria = new FindActivityCriteria();
     private ButtonView newButton;
     private ButtonView openButton;
@@ -67,12 +71,16 @@ public class ManageActivityPresenter extends
                                    final ActivityListPresenter listPresenter,
                                    final Provider<ActivityEditPresenter> editProvider,
                                    final ClientDispatchAsync dispatcher,
-                                   final ClientPropertyCache clientPropertyCache) {
+                                   final ClientPropertyCache clientPropertyCache,
+                                   final UrlParameters urlParameters,
+                                   final CurrentActivity currentActivity) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
         this.dispatcher = dispatcher;
         this.clientPropertyCache = clientPropertyCache;
+        this.urlParameters = urlParameters;
+        this.currentActivity = currentActivity;
 
         getView().setUiHandlers(this);
 
@@ -123,8 +131,19 @@ public class ManageActivityPresenter extends
         clientPropertyCache.get().onSuccess(clientProperties -> {
             final boolean show = clientProperties.getBoolean(ClientProperties.ACTIVITY_CHOOSE_ON_STARTUP, false) &&
                     clientProperties.getBoolean(ClientProperties.ACTIVITY_ENABLED, false);
+
             if (show) {
-                show(consumer);
+                if (urlParameters.isEmbedded()) {
+                    currentActivity.getActivity(activity -> {
+                        if (activity == null) {
+                            show(consumer);
+                        } else {
+                            consumer.accept(null);
+                        }
+                    });
+                } else {
+                    show(consumer);
+                }
             } else {
                 consumer.accept(null);
             }

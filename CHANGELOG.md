@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1264** : Dashboards running in embedded mode will not always ask for the user to choose an activity if the users session has one set already.
+
 * Issue **#1264** : Added `embedded` mode for dashboards to hide dashboard chrome and save options.
 
 * Issue **#1264** : Stroom no longer asks if you want to leave the web page if no content needs saving.

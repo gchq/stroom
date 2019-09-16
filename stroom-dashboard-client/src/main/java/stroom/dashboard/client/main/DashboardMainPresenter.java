@@ -30,6 +30,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 import stroom.alert.client.event.AlertEvent;
+import stroom.core.client.UrlParameters;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainProxy;
 import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainView;
@@ -57,22 +58,26 @@ public class DashboardMainPresenter
     private String uuid;
 
     @Inject
-    public DashboardMainPresenter(final EventBus eventBus, final DashboardMainView view, final DashboardMainProxy proxy,
-                                  final ClientSecurityContext securityContext, final ClientDispatchAsync dispatcher,
-                                  final DashboardPresenter dashboardPresenter) {
+    public DashboardMainPresenter(final EventBus eventBus,
+                                  final DashboardMainView view,
+                                  final DashboardMainProxy proxy,
+                                  final ClientSecurityContext securityContext,
+                                  final ClientDispatchAsync dispatcher,
+                                  final DashboardPresenter dashboardPresenter,
+                                  final UrlParameters urlParameters) {
         super(eventBus, view, proxy);
         this.dashboardPresenter = dashboardPresenter;
         this.dispatcher = dispatcher;
 
-        type = Window.Location.getParameter("type");
-        uuid = Window.Location.getParameter("uuid");
-        final String title = Window.Location.getParameter("title");
-        final String params = Window.Location.getParameter("params");
-        final String embedded = Window.Location.getParameter("embedded");
+        type = urlParameters.getType();
+        uuid = urlParameters.getUuid();
+        final String title = urlParameters.getTitle();
+        final String params = urlParameters.getParams();
+        final boolean embedded = urlParameters.isEmbedded();
 
         dashboardPresenter.setCustomTitle(title);
         dashboardPresenter.setParams(params);
-        dashboardPresenter.setEmbedded(Boolean.TRUE.toString().equalsIgnoreCase(embedded));
+        dashboardPresenter.setEmbedded(embedded);
 
         if (title != null && title.trim().length() > 0) {
             Window.setTitle(title);
