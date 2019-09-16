@@ -55,8 +55,6 @@ public class DashboardMainPresenter
 
     private String type;
     private String uuid;
-    private String title;
-    private String params;
 
     @Inject
     public DashboardMainPresenter(final EventBus eventBus, final DashboardMainView view, final DashboardMainProxy proxy,
@@ -68,11 +66,13 @@ public class DashboardMainPresenter
 
         type = Window.Location.getParameter("type");
         uuid = Window.Location.getParameter("uuid");
-        title = Window.Location.getParameter("title");
-        params = Window.Location.getParameter("params");
+        final String title = Window.Location.getParameter("title");
+        final String params = Window.Location.getParameter("params");
+        final String embedded = Window.Location.getParameter("embedded");
 
         dashboardPresenter.setCustomTitle(title);
         dashboardPresenter.setParams(params);
+        dashboardPresenter.setEmbedded(Boolean.TRUE.toString().equalsIgnoreCase(embedded));
 
         if (title != null && title.trim().length() > 0) {
             Window.setTitle(title);
