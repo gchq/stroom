@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1263** : Fixed issue where date expressions were being allowed without '+' or '-' signs to add or subtract durations.
 
+
+## [v6.0.10] - 2019-09-13
+
+* Add fallback config.yml file into the docker images for running outside of a stack.
+
 * Issue **#1263** : Fixed issues related to URL encoding/decoding in dashboard expressions.
 
 * Issue **#1262** : Improved behaviour of `+` when used for concatenation in dashboard expressions.
@@ -1890,7 +1895,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.9...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.10...6.0
+[v6.0.10]: https://github.com/gchq/stroom/compare/v6.0.9...v6.0.10
 [v6.0.9]: https://github.com/gchq/stroom/compare/v6.0.8...v6.0.9
 [v6.0.8]: https://github.com/gchq/stroom/compare/v6.0.7...v6.0.8
 [v6.0.7]: https://github.com/gchq/stroom/compare/v6.0.6...v6.0.7
