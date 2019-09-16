@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.11] - 2019-09-16
+
 * Issue **#1264** : Dashboards running in embedded mode will not always ask for the user to choose an activity if the users session has one set already.
 
 * Issue **#1264** : Added `embedded` mode for dashboards to hide dashboard chrome and save options.
@@ -1895,7 +1898,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.10...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.11...6.0
+[v6.0.11]: https://github.com/gchq/stroom/compare/v6.0.10...v6.0.11
 [v6.0.10]: https://github.com/gchq/stroom/compare/v6.0.9...v6.0.10
 [v6.0.9]: https://github.com/gchq/stroom/compare/v6.0.8...v6.0.9
 [v6.0.8]: https://github.com/gchq/stroom/compare/v6.0.7...v6.0.8
