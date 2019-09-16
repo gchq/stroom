@@ -34,7 +34,7 @@ public class HealthChecks {
         final HealthCheckRegistry healthCheckRegistry = environment.healthChecks();
         LOGGER.info("Adding health checks:");
         healthChecks.forEach(hasHealthCheck -> {
-            final String name = hasHealthCheck.getClass().getName() + HEALTH_CHECK_SUFFIX;
+            final String name = hasHealthCheck.getClass().getName() + " - " + HEALTH_CHECK_SUFFIX;
             LOGGER.info("\t{}", name);
             healthCheckRegistry.register(name, hasHealthCheck.getHealthCheck());
         });
