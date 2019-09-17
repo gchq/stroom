@@ -1,16 +1,17 @@
-package stroom.core.db;
+package stroom.config.common;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.util.shared.IsConfig;
 
-import javax.inject.Singleton;
-
-@Singleton
 public class DbConfig implements IsConfig {
-    private ConnectionConfig connectionConfig = new ConnectionConfig();
-    private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
+
+    private ConnectionConfig connectionConfig;
+    private ConnectionPoolConfig connectionPoolConfig;
+
+    public DbConfig() {
+        this.connectionConfig = new ConnectionConfig();
+        this.connectionPoolConfig = new ConnectionPoolConfig();
+    }
 
     @JsonProperty("connection")
     public ConnectionConfig getConnectionConfig() {
@@ -32,7 +33,7 @@ public class DbConfig implements IsConfig {
 
     @Override
     public String toString() {
-        return "CoreConfig{" +
+        return "DbConfig{" +
                 "connectionConfig=" + connectionConfig +
                 ", connectionPoolConfig=" + connectionPoolConfig +
                 '}';

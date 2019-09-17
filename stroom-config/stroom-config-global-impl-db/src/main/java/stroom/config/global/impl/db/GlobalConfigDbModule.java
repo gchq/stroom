@@ -8,8 +8,6 @@ import org.flywaydb.core.api.FlywayException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.PropertyServiceConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.global.impl.ConfigPropertyDao;
 import stroom.config.global.impl.GlobalConfigModule;
 import stroom.db.util.HikariUtil;
@@ -40,9 +38,7 @@ public class GlobalConfigDbModule extends AbstractModule {
     @Singleton
     ConnectionProvider getConnectionProvider(final Provider<PropertyServiceConfig> configProvider) {
         LOGGER.info("Creating connection provider for {}", MODULE);
-        final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
-        final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
-        final HikariConfig config = HikariUtil.createConfig(connectionConfig, connectionPoolConfig);
+        final HikariConfig config = HikariUtil.createConfig(configProvider.get());
         final ConnectionProvider connectionProvider = new ConnectionProvider(config);
         flyway(connectionProvider);
         return connectionProvider;

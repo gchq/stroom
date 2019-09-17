@@ -7,8 +7,6 @@ import org.flywaydb.core.api.FlywayException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
 import stroom.util.shared.Version;
 
@@ -28,19 +26,17 @@ public class DataSourceProvider implements Provider<DataSource> {
     private static final String FLYWAY_LOCATIONS = "stroom/core/db/migration/mysql";
     private static final String FLYWAY_TABLE = "schema_version";
 
-    private final Provider<DbConfig> configProvider;
+    private final Provider<CoreConfig> configProvider;
     private volatile DataSource dataSource;
 
     @Inject
-    DataSourceProvider(final Provider<DbConfig> configProvider) {
+    DataSourceProvider(final Provider<CoreConfig> configProvider) {
         this.configProvider = configProvider;
     }
 
     private DataSource dataSource() {
         LOGGER.info("Creating connection provider for {}", MODULE);
-        final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
-        final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
-        final HikariConfig config = HikariUtil.createConfig(connectionConfig, connectionPoolConfig);
+        final HikariConfig config = HikariUtil.createConfig(configProvider.get());
         return new HikariDataSource(config);
     }
 

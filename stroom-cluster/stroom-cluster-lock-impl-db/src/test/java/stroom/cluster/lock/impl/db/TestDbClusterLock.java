@@ -28,7 +28,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestDbClusterLock {
     @Test
     void test() throws InterruptedException {
-        final DbClusterLock dbClusterLock = new DbClusterLock(new ClusterLockDbModule().getConnectionProvider(ClusterLockConfig::new));
+        final DbClusterLock dbClusterLock = new DbClusterLock(
+                new ClusterLockDbModule().getConnectionProvider(ClusterLockConfig::new));
         final DbClusterLockThreads dbClusterLockThreads = new DbClusterLockThreads(dbClusterLock);
 
         final CountDownLatch countDownLatch = new CountDownLatch(2);
