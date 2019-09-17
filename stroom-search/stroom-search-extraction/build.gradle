@@ -31,4 +31,5 @@ dependencies {
     compile libs.javax_inject
     compile libs.slf4j_api
     compile libs.xml_apis
+    compile libs.json
 }

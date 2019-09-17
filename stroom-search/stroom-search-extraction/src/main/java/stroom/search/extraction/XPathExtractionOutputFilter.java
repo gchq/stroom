@@ -19,9 +19,13 @@ package stroom.search.extraction;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.ReceivingContentHandler;
+import net.sf.saxon.pattern.AnyChildNodeTest;
 import net.sf.saxon.s9api.*;
+import net.sf.saxon.tree.iter.AxisIterator;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import net.sf.saxon.tree.tiny.TinyTree;
+import net.sf.saxon.tree.util.Navigator;
+import org.json.JSONObject;
 import org.w3c.dom.*;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
@@ -32,6 +36,7 @@ import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -40,16 +45,6 @@ import stroom.security.api.SecurityContext;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -60,7 +55,11 @@ import static stroom.index.shared.IndexConstants.STREAM_ID;
 @ConfigurableElement(type = "XPathExtractionOutputFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.SEARCH)
 public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
-    private static final String MULTIPLE_VALUE_DELIMITER = ", ";
+    private String multipleValueDelimiter = DEFAULT_MULTIPLE_STRING_DELIMITER;
+    private static final String DEFAULT_MULTIPLE_STRING_DELIMITER = ",";
+
+    private boolean createJson = false;
+
     private final ErrorReceiverProxy errorReceiverProxy;
     private final SecurityContext securityContext;
     private final LocationFactoryProxy locationFactory;
@@ -80,14 +79,7 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
     private int depth = 0;
 
     private HashMap<String, String> prefixMappings = new HashMap<>();
-    private final ArrayList<XPathExecutable> xPathExecutables = new ArrayList<>();
-
-
-//    //Track of current node (the selected "top level" element), separately to lower level elenent
-//    private Document currentDoc = null;
-//
-//    //Also track element under node, in order that errors may be recovered for next node
-//    private Node currentNode = null;
+    private XPathExecutable[] xPathExecutables = null;;
 
     @Inject
     public XPathExtractionOutputFilter(final LocationFactoryProxy locationFactory,
@@ -131,7 +123,7 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
         try {
             if (depth == 1) {
                 if (!topLevelElementToSkip.equals(localName)) {
-                    xPathExecutables.clear();
+                    xPathExecutables = null;
                     topLevelElementToSkip = localName;
                 }
                 topLevelUri = uri;
@@ -140,9 +132,9 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
             }else if (depth == 2){
                 if (!secondLevelElementToCreateDocs.equals((localName))) {
                     secondLevelElementToCreateDocs = localName;
-                    xPathExecutables.clear();
+                    xPathExecutables = null;
                 }
-                if(xPathExecutables.isEmpty())
+                if(xPathExecutables == null)
                     createXPathExecutables();
 
                 //Start new document
@@ -171,20 +163,123 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
 
 
     private void createXPathExecutables (){
+        xPathExecutables = new XPathExecutable[fieldIndexes.size()];
+
         for (String xpathPart : fieldIndexes.getMap().keySet()){
+            int index = fieldIndexes.get(xpathPart);
+
             if (EVENT_ID.equals (xpathPart))
                 xpathPart = "@" + EVENT_ID;
             else if (STREAM_ID.equals(xpathPart))
                 xpathPart = "@" + STREAM_ID;
 
             String xpath = "/" + topLevelElementToSkip + "/" + secondLevelElementToCreateDocs + "/" + xpathPart;
+
             try {
-                xPathExecutables.add(compiler.compile(xpath));
+                xPathExecutables[index] = compiler.compile(xpath);
             } catch (SaxonApiException e) {
                 log(Severity.FATAL_ERROR, "Error in XPath Expression: " + xpath, e);
             }
         }
 
+    }
+
+
+    private int stringifyItem (XdmItem item, StringBuilder thisVal, int numberOfVals){
+        if (item instanceof XdmAtomicValue) {
+            if (numberOfVals > 0)
+                thisVal.append(multipleValueDelimiter);
+            String value = item.getStringValue();
+            thisVal.append(value);
+            numberOfVals++;
+        } else if (item instanceof  XdmNode){
+            XdmNode node = (XdmNode) item;
+            XdmNodeKind type = node.getNodeKind();
+
+            if (type == XdmNodeKind.ELEMENT) {
+                boolean hasChildElement = false;
+
+
+                XdmSequenceIterator iterator = node.axisIterator(Axis.ATTRIBUTE);
+
+                while (iterator.hasNext()) {
+
+                    XdmItem child = iterator.next();
+                    if (item instanceof XdmNode){
+                        XdmNode childNode = (XdmNode) child;
+                        XdmNodeKind childType = childNode.getNodeKind();
+
+                        if (childType == XdmNodeKind.ATTRIBUTE) {
+                            hasChildElement = true;
+                            break;
+                        }
+                    }
+                }
+                if (!hasChildElement)
+                {
+                    iterator = node.axisIterator(Axis.CHILD);
+
+                    while (iterator.hasNext()) {
+
+                        XdmItem child = iterator.next();
+                        if (item instanceof XdmNode) {
+                            XdmNode childNode = (XdmNode) child;
+                            XdmNodeKind childType = childNode.getNodeKind();
+
+                            if (childType == XdmNodeKind.ELEMENT) {
+                                hasChildElement = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (hasChildElement){
+                    if (createJson) {
+                        JSONObject json = org.json.XML.toJSONObject(node.toString());
+                        thisVal.append(json);
+                    }
+                    else {
+                        thisVal.append(node.toString());
+                    }
+                    numberOfVals++;
+                }
+                else {
+                    iterator = node.axisIterator(Axis.CHILD);
+                    while (iterator.hasNext()) {
+                        XdmItem child = iterator.next();
+                        if (item instanceof XdmAtomicValue) {
+                            if (numberOfVals > 0)
+                                thisVal.append(multipleValueDelimiter);
+                            String value = item.getStringValue();
+                            thisVal.append(value);
+                            numberOfVals++;
+                        } else if (item instanceof XdmNode) {
+                            XdmNode childNode = (XdmNode) child;
+                            XdmNodeKind childType = childNode.getNodeKind();
+
+                            if (childType == XdmNodeKind.TEXT) {
+                                if (numberOfVals > 0)
+                                    thisVal.append(multipleValueDelimiter);
+                                String value = item.getStringValue();
+                                thisVal.append(value);
+                                numberOfVals++;
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                if (numberOfVals > 0)
+                    thisVal.append(multipleValueDelimiter);
+                numberOfVals++;
+                thisVal.append(item.getStringValue());
+            }
+        } else {
+            log(Severity.ERROR, "Unknown type of XdmItem:" + item.getClass().getName(), null);
+        }
+
+        return numberOfVals;
     }
 
     @Override
@@ -203,22 +298,24 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
 
                     final TinyTree tree = builder.getTree();
 
-                    Val [] values = new Val[xPathExecutables.size()];
-                    int v = 0;
-                    for (final XPathExecutable executable : xPathExecutables) {
-                        final XPathSelector selector = executable.load();
+                    Val [] values = new Val[xPathExecutables.length];
+
+                    for (int field = 0; field < values.length; field++) {
+                        final XPathSelector selector = xPathExecutables[field].load();
 
                         selector.setContextItem(new XdmNode(tree.getRootNode()));
                         final Iterator<XdmItem> iterator = selector.iterator();
+
                         StringBuilder thisVal = new StringBuilder();
-                        int i = 0;
+                        int numVals = 0;
                         while (iterator.hasNext()) {
-                            if(i++ > 0)
-                                thisVal.append(MULTIPLE_VALUE_DELIMITER);
-                            String value = iterator.next().getStringValue();
-                            thisVal.append(value);
+                            XdmItem item = iterator.next();
+
+                            numVals = stringifyItem(item, thisVal, numVals);
+
                         }
-                        values[v++] = ValString.create(thisVal.toString());
+
+                        values[field] = ValString.create(thisVal.toString());
                     }
                     resultReceiver.receive(new Values(values));
 
@@ -310,17 +407,17 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
     }
 
 
-//    private String stringify(Document document) {
-//        try {
-//            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-//            Transformer transformer = transformerFactory.newTransformer();
-//            StringWriter stringWriter = new StringWriter();
-//            transformer.transform(new DOMSource(document), new StreamResult(stringWriter));
-//            return stringWriter.toString();
-//        } catch (TransformerException ex) {
-//            log(Severity.ERROR, "Cannot create XML string from DOM", ex);
-//            return "Error: No XML Created";
-//        }
-//
-//    }
+    @PipelineProperty(description = "The string to delimit multiple simple values.", defaultValue = DEFAULT_MULTIPLE_STRING_DELIMITER,
+            displayPriority = 1)
+    public void setMultipleValueDelimiter(final String delimiter) {
+        this.multipleValueDelimiter = delimiter;
+    }
+
+    @PipelineProperty(description = "Whether XML elements should be returned in JSON instead of XML.",
+            defaultValue = "false",
+            displayPriority = 2)
+    public void setCreateJson(final boolean createJson) {
+        this.createJson = createJson;
+    }
+
 }
