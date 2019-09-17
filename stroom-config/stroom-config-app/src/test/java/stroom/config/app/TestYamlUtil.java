@@ -26,7 +26,7 @@ class TestYamlUtil {
      * EXPECTED_YAML_FILE_NAME file so that it can be used in
      * testGeneratedYamlAgainstExpected.
      */
-    static void main(String[] args) throws URISyntaxException, IOException {
+    public static void main(String[] args) throws URISyntaxException, IOException {
 
         final URL url = TestYamlUtil.class.getResource(EXPECTED_YAML_FILE_NAME);
         final Path expectedFile = Paths.get(url.toURI());

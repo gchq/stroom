@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
-import stroom.config.common.DefaultDbConfig;
+import stroom.config.common.CommonDbConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.db.CoreConfig;
 import stroom.core.receive.ProxyAggregationConfig;
@@ -42,7 +42,7 @@ public class AppConfig implements IsConfig {
     private CoreConfig coreConfig;
     private DataConfig dataConfig;
     private DataSourceUrlConfig dataSourceUrlConfig;
-    private DefaultDbConfig defaultDbConfig;
+    private CommonDbConfig commonDbConfig;
     private ExplorerConfig explorerConfig;
     private ExportConfig exportConfig;
     private IndexConfig indexConfig;
@@ -72,7 +72,7 @@ public class AppConfig implements IsConfig {
         this.coreConfig = new CoreConfig();
         this.dataConfig = new DataConfig();
         this.dataSourceUrlConfig = new DataSourceUrlConfig();
-        this.defaultDbConfig = new DefaultDbConfig();
+        this.commonDbConfig = new CommonDbConfig();
         this.explorerConfig = new ExplorerConfig();
         this.exportConfig = new ExportConfig();
         this.indexConfig = new IndexConfig();
@@ -102,7 +102,7 @@ public class AppConfig implements IsConfig {
               final CoreConfig coreConfig,
               final DataConfig dataConfig,
               final DataSourceUrlConfig dataSourceUrlConfig,
-              final DefaultDbConfig defaultDbConfig,
+              final CommonDbConfig commonDbConfig,
               final ExplorerConfig explorerConfig,
               final ExportConfig exportConfig,
               final IndexConfig indexConfig,
@@ -131,7 +131,7 @@ public class AppConfig implements IsConfig {
         this.coreConfig = coreConfig;
         this.dataConfig = dataConfig;
         this.dataSourceUrlConfig = dataSourceUrlConfig;
-        this.defaultDbConfig = defaultDbConfig;
+        this.commonDbConfig = commonDbConfig;
         this.explorerConfig = explorerConfig;
         this.exportConfig = exportConfig;
         this.indexConfig = indexConfig;
@@ -227,13 +227,13 @@ public class AppConfig implements IsConfig {
         this.dataSourceUrlConfig = dataSourceUrlConfig;
     }
 
-    @JsonProperty("defaultDb")
-    public DefaultDbConfig getDefaultDbConfig() {
-        return defaultDbConfig;
+    @JsonProperty("commonDbDetails")
+    public CommonDbConfig getCommonDbConfig() {
+        return commonDbConfig;
     }
 
-    void setDefaultDbConfig(final DefaultDbConfig defaultDbConfig) {
-        this.defaultDbConfig = defaultDbConfig;
+    void setCommonDbConfig(final CommonDbConfig commonDbConfig) {
+        this.commonDbConfig = commonDbConfig;
     }
 
     @JsonProperty("explorer")
