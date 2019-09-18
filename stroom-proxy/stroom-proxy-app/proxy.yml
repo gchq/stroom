@@ -103,13 +103,13 @@ proxyConfig:
     readCron: "* * *"
   logStreamConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
-  contentSyncConfig:
-    contentSyncEnabled: false
-    upstreamUrl:
-      RuleSet: "http://localhost/api/ruleset/v1"
-      Dictionary: "http://localhost/api/dictionary/v1"
-    syncFrequency: 30000
-    apiKey: ""
+#  contentSyncConfig:
+#    contentSyncEnabled: false
+#    upstreamUrl:
+#      RuleSet: "http://localhost/api/ruleset/v1"
+#      Dictionary: "http://localhost/api/dictionary/v1"
+#    syncFrequency: 30000
+#    apiKey: ""
   jerseyClient:
     timeout: 500ms
     connectionTimeout: 500ms
