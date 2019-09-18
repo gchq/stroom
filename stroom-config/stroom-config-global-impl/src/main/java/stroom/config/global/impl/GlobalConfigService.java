@@ -73,6 +73,9 @@ class GlobalConfigService {
     }
 
     private void loadMappedProperties() {
+        // At this point the configMapper.getGlobalProperties() will contain the name, defaultValue
+        // and a value that is either the compile-time default or from the dropiwz yaml. It will also contain
+        // any info gained from the config class annotations, e.g. @Readonly
         try {
             final Collection<ConfigProperty> configPropertyList = configMapper.getGlobalProperties();
             for (final ConfigProperty configProperty : configPropertyList) {
@@ -85,18 +88,24 @@ class GlobalConfigService {
     }
 
     private void loadDBProperties() {
+        // Map of all props and their values from compile-time defaults and dropwiz yaml
         final Map<String, ConfigProperty> map = new HashMap<>(globalProperties);
 
+        // Get all props held in the DB, which may be a subset of those in the config
+        // object model
         final List<ConfigProperty> list = dao.list();
 
         list.forEach(record -> {
             if (record.getName() != null && record.getValue() != null) {
                 final ConfigProperty configProperty = map.remove(record.getName());
                 if (configProperty != null) {
+                    // The DB prop exists in the model
                     configProperty.setId(record.getId());
                     configProperty.setValue(record.getValue());
                     configProperty.setSource(ConfigProperty.SourceType.DATABASE);
 
+                    // Update the object model with the value from the DB
+                    // TODO This is not right, the YAML should trump the DB value.
                     updateConfigObject(record.getName(), record.getValue());
                 } else {
                     // Delete old property that is not in the object model
@@ -119,6 +128,7 @@ class GlobalConfigService {
                     configProperty.setValue(record.getValue());
                     configProperty.setSource(ConfigProperty.SourceType.DATABASE);
 
+                    // TODO This is not right, the YAML should trump the DB value.
                     Object typedValue = updateConfigObject(record.getName(), record.getValue());
 //                                configProperty.setTypedValue(typedValue);
                 }

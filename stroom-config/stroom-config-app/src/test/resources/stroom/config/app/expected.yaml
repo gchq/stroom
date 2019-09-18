@@ -1,14 +1,15 @@
 ---
 activity:
-  connection:
-    jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-    jdbcDriverUsername: "stroomuser"
-    jdbcDriverPassword: "stroompassword1"
-  connectionPool:
-    cachePrepStmts: true
-    prepStmtCacheSize: 250
-    prepStmtCacheSqlLimit: 2048
+  db:
+    connection:
+      jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+      jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+      jdbcDriverUsername: "stroomuser"
+      jdbcDriverPassword: "stroompassword1"
+    connectionPool:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
 benchmark:
   streamCount: 1000
   recordCount: 10000
@@ -18,21 +19,8 @@ cluster:
   clusterCallReadTimeout: "30s"
   clusterCallIgnoreSSLHostnameVerifier: true
   clusterResponseTimeout: "30s"
-contentPackImport:
-  enabled: false
-core:
-  connection:
-    jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-    jdbcDriverUsername: "stroomuser"
-    jdbcDriverPassword: "stroompassword1"
-  connectionPool:
-    cachePrepStmts: true
-    prepStmtCacheSize: 250
-    prepStmtCacheSqlLimit: 2048
-data:
-  meta:
-    metaValueConfig: null
+clusterLock:
+  db:
     connection:
       jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
       jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
@@ -42,6 +30,36 @@ data:
       cachePrepStmts: true
       prepStmtCacheSize: 250
       prepStmtCacheSqlLimit: 2048
+contentPackImport:
+  enabled: false
+core:
+  db:
+    connection:
+      jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+      jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+      jdbcDriverUsername: "stroomuser"
+      jdbcDriverPassword: "stroompassword1"
+    connectionPool:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
+data:
+  meta:
+    metaValueConfig:
+      deleteAge: "30d"
+      deleteBatchSize: 1000
+      flushBatchSize: 1000
+      addAsync: true
+    db:
+      connection:
+        jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+        jdbcDriverUsername: "stroomuser"
+        jdbcDriverPassword: "stroompassword1"
+      connectionPool:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
   retention:
     deleteBatchSize: 1000
   store:
@@ -50,6 +68,35 @@ data:
     fileSystemCleanBatchSize: 20
     fileSystemCleanDeleteOut: false
     fileSystemCleanOldAge: "1d"
+    db:
+      connection:
+        jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+        jdbcDriverUsername: "stroomuser"
+        jdbcDriverPassword: "stroompassword1"
+      connectionPool:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+dataSourceUrl:
+  index: "http://127.0.0.1:8080/api/stroom-index/v2"
+  solrIndex: "http://127.0.0.1:8080/api/stroom-solr-index/v2"
+  statisticStore: "http://127.0.0.1:8080/api/sqlstatistics/v2"
+  searchable: "http://127.0.0.1:8080/api/searchable/v2"
+  annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
+  elasticIndex: "http://IP_ADDRESS/queryElasticService/queryApi/v1"
+commonDbDetails:
+  connection:
+    jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+    jdbcDriverUsername: "stroomuser"
+    jdbcDriverPassword: "stroompassword1"
+  connectionPool:
+    cachePrepStmts: true
+    prepStmtCacheSize: 250
+    prepStmtCacheSqlLimit: 2048
+explorer:
+  db:
     connection:
       jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
       jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
@@ -59,25 +106,20 @@ data:
       cachePrepStmts: true
       prepStmtCacheSize: 250
       prepStmtCacheSqlLimit: 2048
-dataSourceUrl:
-  index: "http://127.0.0.1:8080/api/stroom-index/v2"
-  statisticStore: "http://127.0.0.1:8080/api/sqlstatistics/v2"
-  annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
-  elasticIndex: "http://IP_ADDRESS/queryElasticService/queryApi/v1"
-explorer:
-  connection:
-    jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-    jdbcDriverUsername: "stroomuser"
-    jdbcDriverPassword: "stroompassword1"
-  connectionPool:
-    cachePrepStmts: true
-    prepStmtCacheSize: 250
-    prepStmtCacheSqlLimit: 2048
 export:
   enabled: false
 index:
   ramBufferSizeMB: 1024
+  db:
+    connection:
+      jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+      jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+      jdbcDriverUsername: "stroomuser"
+      jdbcDriverPassword: "stroompassword1"
+    connectionPool:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
   writer:
     cache:
       timeToLive: null
@@ -85,22 +127,32 @@ index:
       minItems: 0
       coreItems: 50
       maxItems: 100
-indexDb:
-  connection:
-    jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-    jdbcDriverUsername: "stroomuser"
-    jdbcDriverPassword: "stroompassword1"
-  connectionPool:
-    cachePrepStmts: true
-    prepStmtCacheSize: 250
-    prepStmtCacheSqlLimit: 2048
 job:
   enabled: true
   executionInterval: "10s"
+  db:
+    connection:
+      jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+      jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+      jdbcDriverUsername: "stroomuser"
+      jdbcDriverPassword: "stroompassword1"
+    connectionPool:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
 lifecycle:
   enabled: true
 node:
+  db:
+    connection:
+      jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+      jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+      jdbcDriverUsername: "stroomuser"
+      jdbcDriverPassword: "stroompassword1"
+    connectionPool:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
   node: "tba"
   status:
     heapHistogram:
@@ -133,31 +185,35 @@ processor:
   fillTaskQueue: true
   queueSize: 1000
   databaseMultiInsertMaxBatchSize: 500
-  connection:
-    jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-    jdbcDriverUsername: "stroomuser"
-    jdbcDriverPassword: "stroompassword1"
-  connectionPool:
-    cachePrepStmts: true
-    prepStmtCacheSize: 250
-    prepStmtCacheSqlLimit: 2048
+  db:
+    connection:
+      jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+      jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+      jdbcDriverUsername: "stroomuser"
+      jdbcDriverPassword: "stroompassword1"
+    connectionPool:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
 properties:
-  connection:
-    jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-    jdbcDriverUsername: "stroomuser"
-    jdbcDriverPassword: "stroompassword1"
-  connectionPool:
-    cachePrepStmts: true
-    prepStmtCacheSize: 250
-    prepStmtCacheSqlLimit: 2048
+  db:
+    connection:
+      jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+      jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+      jdbcDriverUsername: "stroomuser"
+      jdbcDriverPassword: "stroompassword1"
+    connectionPool:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
 proxyAggregation:
   proxyDir: "${stroom.temp}/proxy"
   proxyThreads: 10
-  maxFilesPerAggregate: 10000
+  maxFileScan: 100000
   maxConcurrentMappedFiles: 100000
+  maxFilesPerAggregate: 10000
   maxUncompressedFileSize: "1G"
+  buffferSize: 8192
 feed:
   receiptPolicyUuid: null
   bufferSize: 8192
@@ -175,6 +231,16 @@ search:
     maxThreads: 4
     maxThreadsPerTask: 2
 security:
+  db:
+    connection:
+      jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+      jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+      jdbcDriverUsername: "stroomuser"
+      jdbcDriverPassword: "stroompassword1"
+    connectionPool:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
   authentication:
     authenticationServiceUrl: null
     authenticationRequired: true
@@ -186,16 +252,8 @@ security:
     jwt:
       jwtIssuer: "stroom"
       enableTokenRevocationCheck: true
-securityDb:
-  connection:
-    jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-    jdbcDriverUsername: "stroomuser"
-    jdbcDriverPassword: "stroompassword1"
-  connectionPool:
-    cachePrepStmts: true
-    prepStmtCacheSize: 250
-    prepStmtCacheSqlLimit: 2048
+  authorisation:
+    maxDocumentPermissionCacheSize: 1000
 serviceDiscovery:
   enabled: false
   zookeeperUrl: "localhost:2181"
@@ -210,15 +268,16 @@ statistics:
     docRefType: "StatisticStore"
     statisticAggregationBatchSize: 1000000
     maxProcessingAge: null
-    connection:
-      jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-      jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-      jdbcDriverUsername: "stroomuser"
-      jdbcDriverPassword: "stroompassword1"
-    connectionPool:
-      cachePrepStmts: true
-      prepStmtCacheSize: 250
-      prepStmtCacheSqlLimit: 2048
+    db:
+      connection:
+        jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+        jdbcDriverUsername: "stroomuser"
+        jdbcDriverPassword: "stroompassword1"
+      connectionPool:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
     search:
       storeSize: "1000000,100,10,1"
       resultHandlerBatchSize: 5000
@@ -293,7 +352,9 @@ ui:
     editorTitle: "Edit Activity"
     editorBody: "Activity Code:</br><input type=\"text\" name=\"code\"></input></br></br>Activity\
       \ Description:</br><textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"\
-      description\"></textarea>Explain what the activity is"
+      description\" validation=\".{80,}\" validationMessage=\"The activity description\
+      \ must be at least 80 characters long.\" ></textarea>Explain what the activity\
+      \ is"
   url:
     ui: null
     authenticationService: "http://auth-service:8099/authentication/v1"

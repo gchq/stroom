@@ -70,10 +70,12 @@ public class ConfigMapper {
     public ConfigMapper(final IsConfig configObject) {
 
         LOGGER.debug("Initialising ConfigMapper with class {}", configObject.getClass().getName());
-        // The values in the passed AppConfig will have been set from the yaml by DropWizard on
-        // app boot.  We want to know the default values as defined by the compile-time initial values of
-        // the instance variables in the AppConfig tree.  Therefore create our own AppConfig tree and
-        // walk it to populate globalPropertiesMap with the defaults.
+        // The values in the passed AppConfig will have been set initially from the compile-time defaults and
+        // then from the DropWizard yaml file on app boot.
+        // We want to know the default values as defined by the compile-time initial values of
+        // the instance variables in the AppConfig tree.  This is so we can make the default values available
+        // to the config UI.  Therefore create our own vanilla AppConfig tree and walk it to populate
+        // globalPropertiesMap with the defaults.
         try {
             IsConfig vanillaObject = configObject.getClass().getDeclaredConstructor().newInstance();
             addConfigObjectMethods(vanillaObject, ROOT_PROPERTY_PATH, new HashMap<>(), this::defaultPropertyConsumer);
@@ -82,8 +84,8 @@ public class ConfigMapper {
                     configObject.getClass().getName()), e);
         }
 
-        // Now walk the AppConfig object model from the YAML updating globalPropertiesMap where values
-        // differ from the defaults.
+        // Now walk the AppConfig object model from the DropWiz YAML updating globalPropertiesMap where values
+        // differ from the defaults, i.e. the dropwiz yaml trumps the compile-time defaults
         addConfigObjectMethods(configObject, ROOT_PROPERTY_PATH, propertyMap, this::yamlPropertyConsumer);
     }
 
@@ -309,6 +311,11 @@ public class ConfigMapper {
         return null;
     }
 
+    /**
+     * @param key The fully qualified name of the property, e.g. 'stroom.ui.splash.body'
+     * @param value The new value
+     * @return The updated typed value from the object model
+     */
     Object updateConfigObject(final String key, final String value) {
         try {
             final Prop prop = propertyMap.get(key);

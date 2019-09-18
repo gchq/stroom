@@ -21,7 +21,8 @@ import stroom.util.shared.HasAuditInfo;
 
 /**
  * This class records global properties that are accessible across the whole
- * cluster.
+ * cluster. They may be overridden by values from the dropwizard yaml file on a
+ * node specific basis.
  */
 public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<ConfigProperty> {
     private static final long serialVersionUID = 8440384191352234225L;
@@ -38,7 +39,8 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     // e.g. a custom UI control for managing List/Map/boolean types
     private String value;
 
-    // These fields are not saved to the database ... just
+    // These fields are not saved to the database,
+    // they come from the annotations on the java config classes
     private String defaultValue;
     private SourceType source;
     private String description;
@@ -190,9 +192,21 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
                 '}';
     }
 
+    /**
+     * The source of the property value
+     */
     public static enum SourceType {
+        /**
+         * A compile-time default value
+         */
         DEFAULT("Default"),
+        /**
+         * A value from the node specific dropwizard yaml file
+         */
         YAML("YAML"),
+        /**
+         * A cluster-wide value from the database
+         */
         DATABASE("Database");
 
         private final String name;

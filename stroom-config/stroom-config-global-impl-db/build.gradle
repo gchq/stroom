@@ -7,4 +7,9 @@ dependencies {
     compile libs.flyway_core
     compile libs.guice4
     compile libs.hikari
+
+    testCompile libs.assertj_core
+    testCompile libs.junit_jupiter_api
+
+    testRuntimeOnly libs.junit_jupiter_engine
 }

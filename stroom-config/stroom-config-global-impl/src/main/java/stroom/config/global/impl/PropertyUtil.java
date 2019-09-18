@@ -100,10 +100,17 @@ public final class PropertyUtil {
         return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, name);
     }
 
+    /**
+     * Class to define a config property in the config object tree
+     */
     public static class Prop {
+        // The unqualified name of the property, e.g. 'nodeName'
         private final String name;
+        // The config object that the property exists in
         private final Object parentObject;
+        // The getter method to get the value of the property
         private Method getter;
+        // The getter method to set the value of the property
         private Method setter;
 
         Prop(final String name, final Object parentObject) {

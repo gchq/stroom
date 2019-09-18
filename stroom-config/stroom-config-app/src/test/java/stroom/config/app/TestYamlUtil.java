@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,8 +27,9 @@ class TestYamlUtil {
      */
     public static void main(String[] args) throws URISyntaxException, IOException {
 
-        final URL url = TestYamlUtil.class.getResource(EXPECTED_YAML_FILE_NAME);
-        final Path expectedFile = Paths.get(url.toURI());
+        System.out.println(getExpectedYamlFile().toAbsolutePath());
+//        final URL url = TestYamlUtil.class.getResource(EXPECTED_YAML_FILE_NAME);
+        final Path expectedFile = getExpectedYamlFile();
         final String generatedYaml = getYamlFromJavaModel();
         System.out.println("Writing generated yaml to " + expectedFile.toAbsolutePath());
         Files.writeString(expectedFile, generatedYaml);
@@ -37,10 +37,7 @@ class TestYamlUtil {
 
     @Test
     void testGeneratedYamlAgainstExpected() throws IOException {
-        String expected;
-        try (final InputStream inputStream = getClass().getResourceAsStream(EXPECTED_YAML_FILE_NAME)) {
-            expected = new String(inputStream.readAllBytes());
-        }
+        final String expected = Files.readString(getExpectedYamlFile());
         final String actual = getYamlFromJavaModel();
 
         // *** IMPORTANT ***
@@ -52,6 +49,27 @@ class TestYamlUtil {
         // *** IMPORTANT ***
         assertThat(actual)
                 .isEqualTo(expected);
+    }
+
+    private static Path getExpectedYamlFile() {
+        final String codeSourceLocation = TestYamlUtil.class
+                .getProtectionDomain().getCodeSource().getLocation().getPath();
+
+        Path path = Paths.get(codeSourceLocation);
+
+        while (path != null && !path.getFileName().toString().equals("stroom-config-app")) {
+            path = path.getParent();
+        }
+
+        return path.resolve("src")
+                .resolve("test")
+                .resolve("resources")
+                .resolve("stroom")
+                .resolve("config")
+                .resolve("app")
+                .resolve(EXPECTED_YAML_FILE_NAME)
+                .normalize()
+                .toAbsolutePath();
     }
 
     private static String getYamlFromJavaModel() throws IOException {
