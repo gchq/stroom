@@ -34,7 +34,6 @@ import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
-import stroom.dropwizard.common.SessionListeners;
 import stroom.proxy.app.guice.ProxyModule;
 import stroom.proxy.app.servlet.ConfigServlet;
 import stroom.util.guice.ResourcePaths;
@@ -53,8 +52,6 @@ public class App extends Application<Config> {
     private Filters filters;
     @Inject
     private Servlets servlets;
-    @Inject
-    private SessionListeners sessionListeners;
     @Inject
     private RestResources restResources;
     @Inject
@@ -106,9 +103,6 @@ public class App extends Application<Config> {
 
         // Add servlets
         servlets.register();
-
-        // Add session listeners.
-        sessionListeners.register();
 
         // Add all injectable rest resources.
         restResources.register();

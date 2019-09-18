@@ -89,8 +89,6 @@ logging:
     #    timeZone: UTC
     #    logFormat: "%-6level [%d{\"yyyy-MM-dd\",UTC}] [%t] %logger - %X{code} %msg %n"
 
-mode: "proxy"
-
 proxyConfig:
   proxyContentDir: "${CONTENT_DIR:-/stroom-proxy/content}"
 
@@ -118,7 +116,7 @@ proxyConfig:
   proxyRepositoryConfig:
     storingEnabled: ${STORING_ENABLED:-true}
     repoDir: "${REPO_DIR:-/stroom-proxy/repo}"
-    repositoryFormat: "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"
+    format: "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"
     # Uncomment this for rolled repositories
     # rollCron: "* * *"
   proxyRepositoryReaderConfig:
