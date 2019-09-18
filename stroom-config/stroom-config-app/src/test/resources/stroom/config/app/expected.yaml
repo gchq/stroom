@@ -166,7 +166,7 @@ pipeline:
     maxActiveDestinations: 100
   parser:
     secureProcessing: true
-  refdata:
+  referenceData:
     localDir: "${stroom.temp}/refDataOffHeapStore"
     maxPutsBeforeCommit: 1000
     maxReaders: 100
