@@ -39,6 +39,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import stroom.annotations.impl.db.AnnotationsDbModule;
+import stroom.annotations.impl.db.spring.AnnotationsConfiguration;
+import stroom.annotations.impl.db.spring.AnnotationsShim;
 import stroom.cluster.server.ClusterCallServiceRPC;
 import stroom.connectors.elastic.StroomElasticProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
@@ -283,6 +286,9 @@ public class App extends Application<Config> {
     }
 
     private void startApp(final Config configuration, final Environment environment) {
+        // Temporary shim for annotations.
+        AnnotationsShim.create(configuration.getAnnotationsConfig());
+
         // Get the external config.
         StroomProperties.setExternalConfigPath(configuration.getExternalConfig(), configPath);
 
@@ -386,6 +392,7 @@ public class App extends Application<Config> {
         applicationContext.getBeanFactory().registerSingleton("dwConfiguration", configuration);
         applicationContext.getBeanFactory().registerSingleton("dwEnvironment", environment);
         applicationContext.register(
+                AnnotationsConfiguration.class,
                 ScopeConfiguration.class,
                 PersistenceConfiguration.class,
                 ServerComponentScanConfiguration.class,

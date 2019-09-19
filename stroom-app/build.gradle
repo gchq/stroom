@@ -16,7 +16,7 @@ plugins {
     //usage: honkerCheck honkerGenNotice honkerGenDependencies
     //search for NOTICE.txt and DEPENDENCIES.txt
     //id "org.nosphere.honker" version "0.3.0"
-    id 'org.flywaydb.flyway' version '5.0.7'
+//    id 'org.flywaydb.flyway' version '5.0.7'
     id "de.undercouch.download"
 }
 
@@ -65,6 +65,7 @@ shadowJar {
 }
 
 dependencies {
+    compile project(':stroom-annotations:stroom-annotations-impl-db')
     compile project(':stroom-core-shared')
     compile project(':stroom-core-server')
     compile project(':stroom-pipeline')

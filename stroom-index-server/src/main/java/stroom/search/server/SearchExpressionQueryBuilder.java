@@ -582,7 +582,7 @@ public class SearchExpressionQueryBuilder {
         return numbers;
     }
 
-    static class SearchExpressionQuery {
+    public static class SearchExpressionQuery {
         private final Query query;
         private final Set<String> terms;
 
@@ -591,7 +591,7 @@ public class SearchExpressionQueryBuilder {
             this.terms = terms;
         }
 
-        Query getQuery() {
+        public Query getQuery() {
             return query;
         }
 

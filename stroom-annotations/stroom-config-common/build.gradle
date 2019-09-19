@@ -1,0 +1,8 @@
+ext.moduleName = 'stroom.config.common'
+
+dependencies {
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+
+    compile libs.jackson_annotations
+}

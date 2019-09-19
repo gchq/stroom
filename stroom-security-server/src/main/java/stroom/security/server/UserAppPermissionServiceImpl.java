@@ -150,6 +150,7 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
 
             // Add a special permission for administrators.
             requiredPermissionSet.add(PermissionNames.ADMINISTRATOR);
+            requiredPermissionSet.add(PermissionNames.ANNOTATIONS);
 
             // Add missing permissions to the DB and remove existing permissions
             // that are no longer required.

@@ -19,6 +19,7 @@ package stroom.search.solr.search;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.search.resultsender.NodeResult;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.util.task.ServerTask;
 

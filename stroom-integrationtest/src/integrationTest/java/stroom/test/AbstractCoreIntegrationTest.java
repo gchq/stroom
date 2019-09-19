@@ -18,6 +18,7 @@ package stroom.test;
 
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
+import stroom.annotations.impl.db.spring.AnnotationsConfiguration;
 import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.dictionary.spring.DictionaryConfiguration;
@@ -44,6 +45,7 @@ import stroom.visualisation.spring.VisualisationConfiguration;
         StroomSpringProfiles.IT,
         SecurityConfiguration.MOCK_SECURITY})
 @ContextConfiguration(classes = {
+        AnnotationsConfiguration.class,
         DashboardConfiguration.class,
         EventLoggingConfiguration.class,
         IndexConfiguration.class,

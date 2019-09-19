@@ -23,8 +23,8 @@ import javax.inject.Singleton;
 
 @Component
 @Singleton
-public class IndexShardSearchTaskExecutor extends TaskExecutor {
-    public IndexShardSearchTaskExecutor() {
+class IndexShardSearchTaskExecutor extends TaskExecutor {
+    IndexShardSearchTaskExecutor() {
         super("Stroom Search Index Shard Task Executor");
     }
 }

@@ -20,6 +20,7 @@ import stroom.node.shared.Node;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.search.resultsender.NodeResult;
 import stroom.task.cluster.ClusterTask;
 
 import java.util.List;

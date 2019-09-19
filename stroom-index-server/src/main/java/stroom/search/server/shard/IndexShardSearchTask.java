@@ -18,80 +18,70 @@ package stroom.search.server.shard;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.search.extraction.Values;
+import stroom.search.coprocessor.Error;
+import stroom.search.coprocessor.Receiver;
+import stroom.search.coprocessor.Values;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
-public class IndexShardSearchTask {
+class IndexShardSearchTask {
     private final IndexShardQueryFactory queryFactory;
     private final long indexShardId;
     private final String[] fieldNames;
-    private final ResultReceiver resultReceiver;
-    private final ErrorReceiver errorReceiver;
-    private final AtomicLong hitCount;
+    private final Receiver receiver;
+    private final Tracker tracker;
     private int shardNumber;
     private int shardTotal;
 
     IndexShardSearchTask(final IndexShardQueryFactory queryFactory,
                          final long indexShardId,
                          final String[] fieldNames,
-                         final ResultReceiver resultReceiver,
-                         final ErrorReceiver errorReceiver,
-                         final AtomicLong hitCount) {
+                         final Receiver receiver,
+                         final Tracker tracker) {
         this.queryFactory = queryFactory;
         this.indexShardId = indexShardId;
         this.fieldNames = fieldNames;
-        this.resultReceiver = resultReceiver;
-        this.errorReceiver = errorReceiver;
-        this.hitCount = hitCount;
+        this.receiver = receiver;
+        this.tracker = tracker;
     }
 
-    public IndexShardQueryFactory getQueryFactory() {
+    IndexShardQueryFactory getQueryFactory() {
         return queryFactory;
     }
 
-    public long getIndexShardId() {
+    long getIndexShardId() {
         return indexShardId;
     }
 
-    public String[] getFieldNames() {
+    String[] getFieldNames() {
         return fieldNames;
     }
 
-    public ResultReceiver getResultReceiver() {
-        return resultReceiver;
+    Receiver getReceiver() {
+        return receiver;
     }
 
-    public ErrorReceiver getErrorReceiver() {
-        return errorReceiver;
+    Tracker getTracker() {
+        return tracker;
     }
 
-    public AtomicLong getHitCount() {
-        return hitCount;
-    }
-
-    public int getShardNumber() {
+    int getShardNumber() {
         return shardNumber;
     }
 
-    public void setShardNumber(final int shardNumber) {
+    void setShardNumber(final int shardNumber) {
         this.shardNumber = shardNumber;
     }
 
-    public int getShardTotal() {
+    int getShardTotal() {
         return shardTotal;
     }
 
-    public void setShardTotal(final int shardTotal) {
+    void setShardTotal(final int shardTotal) {
         this.shardTotal = shardTotal;
     }
 
-    public interface ResultReceiver {
-        void receive(long shardId, Values values);
-    }
-
-    public interface IndexShardQueryFactory {
+    interface IndexShardQueryFactory {
         Query getQuery(Version luceneVersion);
     }
 }

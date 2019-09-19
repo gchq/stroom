@@ -23,6 +23,7 @@ import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.ResultHandler;
+import stroom.search.coprocessor.EventRefsPayload;
 import stroom.search.server.EventRefs;
 import stroom.util.shared.HasTerminate;
 

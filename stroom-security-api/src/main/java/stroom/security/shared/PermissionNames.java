@@ -25,6 +25,8 @@ public final class PermissionNames {
      */
     public static final String ADMINISTRATOR = "Administrator";
 
+    public static final String ANNOTATIONS = "Annotations";
+
 //    public static final String VIEW_WITH_PIPELINE = "View - With Pipeline";
 //
 //    public static final String IMPORT_CONFIGURATION = "Import Configuration";

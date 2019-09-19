@@ -1,0 +1,22 @@
+ext.moduleName = 'stroom.annotations.impl'
+
+dependencies {
+    compile project(':stroom-annotations:stroom-annotations-api')
+    compile project(':stroom-core-shared')
+//    compile project(':stroom-explorer:stroom-explorer-api')
+//    compile project(':stroom-explorer:stroom-collection-api')
+//    compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-security-api')
+    compile project(':stroom-search:stroom-search-extraction')
+//    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+
+    compile libs.eventLogging
+    compile libs.guice4
+    compile libs.javax_inject
+    compile libs.slf4j_api
+    compile libs.stroomQueryApi
+    compile libs.swagger_annotations
+    compile libs.ws_rs_api
+}

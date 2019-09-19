@@ -17,6 +17,14 @@ rootProject.name = 'stroom'
  *
  */
 
+// Annotations project.
+include 'stroom-annotations:stroom-annotations-api'
+include 'stroom-annotations:stroom-annotations-impl'
+include 'stroom-annotations:stroom-annotations-impl-db'
+include 'stroom-annotations:stroom-annotations-impl-db-jooq'
+include 'stroom-annotations:stroom-config-common'
+include 'stroom-db-util'
+
 // Proxy project.
 include 'stroom-proxy'
 

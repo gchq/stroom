@@ -17,58 +17,49 @@
 package stroom.search.solr.search;
 
 import org.apache.solr.common.params.SolrParams;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.search.extraction.CompletionStatus;
-import stroom.search.extraction.Values;
+import stroom.search.coprocessor.Error;
+import stroom.search.coprocessor.Receiver;
+import stroom.search.coprocessor.Values;
 import stroom.search.solr.CachedSolrIndex;
 
-public class SolrSearchTask {
+import java.util.function.Consumer;
+
+class SolrSearchTask {
     private final CachedSolrIndex solrIndex;
     private final SolrParams solrParams;
     private final String[] fieldNames;
-    private final ResultReceiver resultReceiver;
-    private final ErrorReceiver errorReceiver;
-    private final CompletionStatus parentCompletionStatus;
+    private final Receiver receiver;
+    private final Tracker tracker;
 
-    public SolrSearchTask(final CachedSolrIndex solrIndex,
-                          final SolrParams solrParams,
-                          final String[] fieldNames,
-                          final ResultReceiver resultReceiver,
-                          final ErrorReceiver errorReceiver,
-                          final CompletionStatus parentCompletionStatus) {
+    SolrSearchTask(final CachedSolrIndex solrIndex,
+                   final SolrParams solrParams,
+                   final String[] fieldNames,
+                   final Receiver receiver,
+                   final Tracker tracker) {
         this.solrIndex = solrIndex;
         this.solrParams = solrParams;
         this.fieldNames = fieldNames;
-        this.resultReceiver = resultReceiver;
-        this.errorReceiver = errorReceiver;
-        this.parentCompletionStatus = parentCompletionStatus;
+        this.receiver = receiver;
+        this.tracker = tracker;
     }
 
-    public CachedSolrIndex getSolrIndex() {
+    CachedSolrIndex getSolrIndex() {
         return solrIndex;
     }
 
-    public SolrParams getSolrParams() {
+    SolrParams getSolrParams() {
         return solrParams;
     }
 
-    public String[] getFieldNames() {
+    String[] getFieldNames() {
         return fieldNames;
     }
 
-    public ResultReceiver getResultReceiver() {
-        return resultReceiver;
+    Receiver getReceiver() {
+        return receiver;
     }
 
-    public ErrorReceiver getErrorReceiver() {
-        return errorReceiver;
-    }
-
-    public CompletionStatus getParentCompletionStatus() {
-        return parentCompletionStatus;
-    }
-
-    public interface ResultReceiver {
-        void receive(Values values);
+    Tracker getTracker() {
+        return tracker;
     }
 }

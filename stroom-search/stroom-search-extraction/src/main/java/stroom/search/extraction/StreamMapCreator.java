@@ -16,45 +16,41 @@
 
 package stroom.search.extraction;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexConstants;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
+import stroom.search.coprocessor.Values;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamPermissionException;
-import stroom.util.shared.Severity;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class StreamMapCreator {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamMapCreator.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamMapCreator.class);
 
-    private final ErrorReceiver errorReceiver;
     private final StreamStore streamStore;
 
     private final int streamIdIndex;
     private final int eventIdIndex;
 
-    private Map<Long, Optional<Stream>> fiteredStreamCache;
+    private Map<Long, Object> fiteredStreamCache;
+    private ExtractionException error;
 
     public StreamMapCreator(final String[] storedFields,
-                            final ErrorReceiver errorReceiver,
                             final StreamStore streamStore) {
-        this.errorReceiver = errorReceiver;
         this.streamStore = streamStore;
 
         // First get the index in the stored data of the stream and event id fields.
-        streamIdIndex = getFieldIndex(storedFields, IndexConstants.STREAM_ID, true);
-        eventIdIndex = getFieldIndex(storedFields, IndexConstants.EVENT_ID, true);
+        streamIdIndex = getFieldIndex(storedFields, IndexConstants.STREAM_ID);
+        eventIdIndex = getFieldIndex(storedFields, IndexConstants.EVENT_ID);
     }
 
-    private int getFieldIndex(final String[] storedFields, final String fieldName, final boolean warn) {
+    private int getFieldIndex(final String[] storedFields, final String fieldName) {
         int index = -1;
 
         for (int i = 0; i < storedFields.length && index == -1; i++) {
@@ -64,57 +60,63 @@ public class StreamMapCreator {
             }
         }
 
-        if (warn && index == -1) {
-            warn("The " + fieldName + " has not been stored in this index", null);
+        if (index == -1 && error == null) {
+            error = new ExtractionException("The " + fieldName + " has not been stored in this index");
         }
 
         return index;
     }
 
     void addEvent(final Map<Long, List<Event>> storedDataMap, final Val[] storedData) {
-        final Long longStreamId = getLong(storedData, streamIdIndex);
-        final Long longEventId = getLong(storedData, eventIdIndex);
-
-        if (longStreamId != null && longEventId != null) {
-            // Filter the streams by ones that should be visible to the current user.
-            final Optional<Stream> optional = getStreamById(longStreamId);
-            if (optional.isPresent()) {
-                storedDataMap.compute(longStreamId, (k, v) -> {
-                    if (v == null) {
-                        v = new ArrayList<>();
-                    }
-                    v.add(new Event(longEventId, storedData));
-                    return v;
-                });
-            }
+        if (error != null) {
+            throw error;
+        } else {
+            final long longStreamId = getLong(storedData, streamIdIndex);
+            final long longEventId = getLong(storedData, eventIdIndex);
+            final Values data = getData(longStreamId, longEventId, storedData);
+            final Event event = new Event(longStreamId, longEventId, data);
+            storedDataMap.compute(longStreamId, (k, v) -> {
+                if (v == null) {
+                    v = new ArrayList<>();
+                }
+                v.add(event);
+                return v;
+            });
         }
     }
 
-    private Optional<Stream> getStreamById(final long streamId) {
-        // Create a map to cache stream lookups. If we have cached more than a million streams then discard the map and start again to avoid using too much memory.
-        if (fiteredStreamCache == null || fiteredStreamCache.size() > 1000000) {
-            fiteredStreamCache = new HashMap<>();
-        }
-
-        return fiteredStreamCache.computeIfAbsent(streamId, k -> {
-            Stream stream = null;
-
-            try {
-                // Make sure we are allowed to see this stream. If we aren't then return an empty optional.
-
-                // See if we can load the stream. We might get a StreamPermissionException if we aren't allowed to read from this stream.
-                stream = streamStore.loadStreamById(streamId);
-            } catch (final StreamPermissionException e) {
-                LOGGER.debug(e.getMessage(), e);
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
+    private Values getData(final long longStreamId, final long longEventId, final Val[] storedData) {
+        if (longStreamId != -1 && longEventId != -1) {
+            // Create a map to cache stream lookups. If we have cached more than a million streams then discard the map and start again to avoid using too much memory.
+            if (fiteredStreamCache == null || fiteredStreamCache.size() > 1000000) {
+                fiteredStreamCache = new HashMap<>();
             }
 
-            return Optional.ofNullable(stream);
-        });
+            final Object stream = fiteredStreamCache.computeIfAbsent(longStreamId, k -> {
+                try {
+                    // See if we can load the stream. We might get a StreamPermissionException if we aren't allowed to read from this stream.
+                    return streamStore.loadStreamById(longStreamId);
+                } catch (final StreamPermissionException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    return e;
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
+                    return e;
+                }
+            });
+
+            if (stream instanceof Stream) {
+                return new Values(storedData);
+            }
+
+            final Throwable t = (Throwable) stream;
+            throw new ExtractionException(t.getMessage(), t);
+        }
+
+        throw new ExtractionException("No event id supplied");
     }
 
-    private Long getLong(final Val[] storedData, final int index) {
+    private long getLong(final Val[] storedData, final int index) {
         try {
             if (index >= 0 && storedData.length > index) {
                 final Val value = storedData[index];
@@ -124,10 +126,6 @@ public class StreamMapCreator {
             // Ignore
         }
 
-        return null;
-    }
-
-    private void warn(final String message, final Throwable t) {
-        errorReceiver.log(Severity.WARNING, null, null, message, t);
+        return -1;
     }
 }

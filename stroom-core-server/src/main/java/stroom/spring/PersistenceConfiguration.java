@@ -50,6 +50,9 @@ import java.util.Properties;
 public class PersistenceConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(PersistenceConfiguration.class);
 
+    private static final String FLYWAY_LOCATIONS = "stroom/db/migration/mysql";
+    private static final String FLYWAY_TABLE = "schema_version";
+
     @Bean
     public ComboPooledDataSource dataSource(final GlobalProperties globalProperties, final StroomPropertyService stroomPropertyService) throws PropertyVetoException {
         final ComboPooledDataSource dataSource = new ComboPooledDataSource();
@@ -86,15 +89,23 @@ public class PersistenceConfiguration {
     public Flyway flyway(final ComboPooledDataSource dataSource) throws PropertyVetoException {
         final String jpaHbm2DdlAuto = StroomProperties.getProperty("stroom.jpaHbm2DdlAuto", "validate");
         if (!"update".equals(jpaHbm2DdlAuto)) {
-            final Flyway flyway = new Flyway();
-            flyway.setDataSource(dataSource);
+            final Flyway flyway = Flyway.configure()
+                    .dataSource(dataSource)
+                    .locations(FLYWAY_LOCATIONS)
+                    .table(FLYWAY_TABLE)
+                    .baselineOnMigrate(true)
+                    .load();
 
-            final String driver = StroomProperties.getProperty("stroom.jdbcDriverClassName");
-            if (driver.toLowerCase().contains("hsqldb")) {
-                flyway.setLocations("stroom/db/migration/hsqldb");
-            } else {
-                flyway.setLocations("stroom/db/migration/mysql");
-            }
+
+//            final Flyway flyway = new Flyway();
+//            flyway.setDataSource(dataSource);
+//
+//            final String driver = StroomProperties.getProperty("stroom.jdbcDriverClassName");
+//            if (driver.toLowerCase().contains("hsqldb")) {
+//                flyway.setLocations("stroom/db/migration/hsqldb");
+//            } else {
+//                flyway.setLocations("stroom/db/migration/mysql");
+//            }
 
             Version version = null;
             boolean usingFlyWay = false;
@@ -103,7 +114,7 @@ public class PersistenceConfiguration {
             try (final Connection connection = dataSource.getConnection()) {
                 try {
                     try (final Statement statement = connection.createStatement()) {
-                        try (final ResultSet resultSet = statement.executeQuery("SELECT version FROM schema_version ORDER BY installed_rank DESC")) {
+                        try (final ResultSet resultSet = statement.executeQuery("SELECT version FROM " + FLYWAY_TABLE + " ORDER BY installed_rank DESC")) {
                             if (resultSet.next()) {
                                 usingFlyWay = true;
 

@@ -15,6 +15,7 @@
  */
 
 dependencies {
+    compile project(':stroom-annotations:stroom-annotations-api')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
