@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.config.global.impl;
+package stroom.util.reflection;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
