@@ -8,7 +8,7 @@
         </encoder>
     </appender>
 
-    <logger name="stroom" level="info" />
+    <logger name="stroom" level="debug" />
 
     <root level="error">
         <appender-ref ref="STDOUT" />

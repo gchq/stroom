@@ -15,13 +15,14 @@
  *
  */
 
-package stroom.util.reflection;
+package stroom.util.config;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.CaseFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -134,12 +135,20 @@ public final class PropertyUtil {
             return setter;
         }
 
-        public Object getValueFromConfigObject() throws InvocationTargetException, IllegalAccessException {
-            return getter.invoke(parentObject);
+        public Object getValueFromConfigObject() {
+            try {
+                return getter.invoke(parentObject);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(LogUtil.message("Error getting value for prop {}", name), e);
+            }
         }
 
-        public void setValueOnConfigObject(final Object value) throws InvocationTargetException, IllegalAccessException {
-            setter.invoke(parentObject, value);
+        public void setValueOnConfigObject(final Object value) {
+            try {
+                setter.invoke(parentObject, value);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(LogUtil.message("Error setting value for prop {}", name), e);
+            }
         }
 
         public Type getValueType() {

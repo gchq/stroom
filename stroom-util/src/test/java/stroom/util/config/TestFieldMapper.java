@@ -1,8 +1,6 @@
-package stroom.config.global.impl;
+package stroom.util.config;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import stroom.util.reflection.FieldMapper;
 
 import java.util.Objects;
 
@@ -23,6 +21,42 @@ class TestFieldMapper {
                 .isEqualTo(original.getString());
         assertThat(System.identityHashCode(original))
                 .isNotEqualTo(System.identityHashCode(copy));
+    }
+
+    @Test
+    void testNoChanges() {
+        final MyParent parent1 = new MyParent();
+        final MyParent parent2 = new MyParent();
+
+        int parent1Id = System.identityHashCode(parent1);
+        int parent1ChildId = System.identityHashCode(parent1.child);
+
+        assertThat(parent2)
+                .isEqualTo(parent1);
+        assertThat(parent2.getChild())
+                .isEqualTo(parent1.getChild());
+
+        assertThat(System.identityHashCode(parent1))
+                .isNotEqualTo(System.identityHashCode(parent2));
+        assertThat(System.identityHashCode(parent1.child))
+                .isNotEqualTo(System.identityHashCode(parent2.child));
+
+        FieldMapper.copy(parent2, parent1);
+
+        assertThat(parent2)
+                .isEqualTo(parent1);
+        assertThat(parent2.getChild())
+                .isEqualTo(parent1.getChild());
+
+        assertThat(System.identityHashCode(parent1))
+                .isNotEqualTo(System.identityHashCode(parent2));
+        assertThat(System.identityHashCode(parent1.child))
+                .isNotEqualTo(System.identityHashCode(parent2.child));
+
+        assertThat(System.identityHashCode(parent1))
+                .isEqualTo(parent1Id);
+        assertThat(System.identityHashCode(parent1.child))
+                .isEqualTo(parent1ChildId);
     }
 
     @Test
@@ -72,15 +106,15 @@ class TestFieldMapper {
         child3.setMyString("changed child");
         parent2.setChild(child3);
 
-        Assertions.assertThat(parent2)
+        assertThat(parent2)
                 .isNotEqualTo(parent1);
-        Assertions.assertThat(parent2.getChild())
+        assertThat(parent2.getChild())
                 .isNotEqualTo(parent1.getChild());
 
         System.out.println("parent2       " + System.identityHashCode(parent2));
         System.out.println("parent2 child " + System.identityHashCode(parent2.child));
 
-        Assertions.assertThat(System.identityHashCode(parent1))
+        assertThat(System.identityHashCode(parent1))
                 .isNotEqualTo(System.identityHashCode(parent2));
 
         FieldMapper.copy(parent2, parent1);
@@ -91,19 +125,19 @@ class TestFieldMapper {
         System.out.println("parent2       " + System.identityHashCode(parent2));
         System.out.println("parent2 child " + System.identityHashCode(parent2.child));
 
-        Assertions.assertThat(System.identityHashCode(parent1))
+        assertThat(System.identityHashCode(parent1))
                 .isNotEqualTo(System.identityHashCode(parent2));
-        Assertions.assertThat(System.identityHashCode(parent1.child))
+        assertThat(System.identityHashCode(parent1.child))
                 .isNotEqualTo(System.identityHashCode(parent2.child));
 
-        Assertions.assertThat(parent2)
+        assertThat(parent2)
                 .isEqualTo(parent1);
-        Assertions.assertThat(parent2.getChild())
+        assertThat(parent2.getChild())
                 .isEqualTo(parent1.getChild());
 
-        Assertions.assertThat(System.identityHashCode(parent1))
+        assertThat(System.identityHashCode(parent1))
                 .isEqualTo(parent1Id);
-        Assertions.assertThat(System.identityHashCode(parent1.child))
+        assertThat(System.identityHashCode(parent1.child))
                 .isEqualTo(parent1ChildId);
     }
 
