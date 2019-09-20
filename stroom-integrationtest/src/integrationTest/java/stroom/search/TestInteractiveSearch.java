@@ -19,7 +19,7 @@ package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.annotations.api.Annotations;
+import stroom.annotation.api.AnnotationDataSource;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.shared.DocRefUtil;
@@ -33,7 +33,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
-import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.Row;
@@ -495,7 +494,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
 
         final Field statusField = new Field.Builder()
                 .name("Status")
-                .expression(ParamUtil.makeParam(Annotations.STATUS))
+                .expression(ParamUtil.makeParam(AnnotationDataSource.STATUS))
                 .build();
 
         final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultPipeline();

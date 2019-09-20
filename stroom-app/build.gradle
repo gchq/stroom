@@ -65,7 +65,7 @@ shadowJar {
 }
 
 dependencies {
-    compile project(':stroom-annotations:stroom-annotations-impl-db')
+    compile project(':stroom-annotation:stroom-annotation-impl-db')
     compile project(':stroom-core-shared')
     compile project(':stroom-core-server')
     compile project(':stroom-pipeline')

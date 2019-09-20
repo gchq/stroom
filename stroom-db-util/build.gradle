@@ -1,7 +1,7 @@
 ext.moduleName = 'stroom.db.util'
 
 dependencies {
-    compile project(':stroom-annotations:stroom-config-common')
+    compile project(':stroom-annotation:stroom-config-common')
 //    compile project(':stroom-dictionary:stroom-dictionary-api')
 //    compile project(':stroom-explorer:stroom-collection-api')
     compile project(':stroom-util')

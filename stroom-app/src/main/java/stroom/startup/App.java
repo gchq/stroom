@@ -39,9 +39,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.annotations.impl.db.AnnotationsDbModule;
-import stroom.annotations.impl.db.spring.AnnotationsConfiguration;
-import stroom.annotations.impl.db.spring.AnnotationsShim;
+import stroom.annotation.impl.AnnotationResourceImpl;
+import stroom.annotation.impl.db.spring.AnnotationsConfiguration;
+import stroom.annotation.impl.db.spring.ConnectionProviderFactoryBean;
+import stroom.annotation.shared.AnnotationResource;
 import stroom.cluster.server.ClusterCallServiceRPC;
 import stroom.connectors.elastic.StroomElasticProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
@@ -286,9 +287,6 @@ public class App extends Application<Config> {
     }
 
     private void startApp(final Config configuration, final Environment environment) {
-        // Temporary shim for annotations.
-        AnnotationsShim.create(configuration.getAnnotationsConfig());
-
         // Get the external config.
         StroomProperties.setExternalConfigPath(configuration.getExternalConfig(), configPath);
 
@@ -304,6 +302,8 @@ public class App extends Application<Config> {
         // Start the spring context.
         LOGGER.info("Loading Spring context");
         final ApplicationContext applicationContext = loadApplicationContext(configuration, environment);
+        // Temporary shim for annotations.
+        applicationContext.getBean(ConnectionProviderFactoryBean.class).setAnnotationsConfig(configuration.getAnnotationsConfig());
 
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
@@ -360,6 +360,7 @@ public class App extends Application<Config> {
         SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SessionResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, FeedStatusResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, AnnotationResource.class);
 
         // Map exceptions to helpful HTTP responses
         environment.jersey().register(PermissionExceptionMapper.class);

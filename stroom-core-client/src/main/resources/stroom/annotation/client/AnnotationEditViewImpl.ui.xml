@@ -1,0 +1,52 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:v="urn:import:stroom.widget.layout.client.view">
+    <g:FlowPanel styleName="stroom-control-page">
+        <g:Grid styleName="stroom-control-grid">
+            <g:row>
+                <g:cell>Title:</g:cell>
+                <g:customCell>
+                    <g:Label ui:field="title" width="400px"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Created By:</g:cell>
+                <g:customCell>
+                    <g:Label ui:field="createdBy" width="400px"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Created On:</g:cell>
+                <g:customCell>
+                    <g:Label ui:field="createdOn" width="400px"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Status:</g:cell>
+                <g:customCell>
+                    <g:Label ui:field="status" width="400px"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Assigned To:</g:cell>
+                <g:customCell>
+                    <g:Label ui:field="assignedTo" width="400px"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>History:</g:cell>
+                <g:customCell>
+                    <v:ResizeSimplePanel ui:field="history" width="400px"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Comment:</g:cell>
+                <g:customCell>
+                    <v:ResizeSimplePanel ui:field="comment" width="400px"/>
+                </g:customCell>
+            </g:row>
+        </g:Grid>
+    </g:FlowPanel>
+</ui:UiBinder>
+

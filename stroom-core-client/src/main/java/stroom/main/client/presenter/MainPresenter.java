@@ -30,6 +30,7 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
+import stroom.annotation.client.AnnotationEditPresenter;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.KeyboardInterceptor;
@@ -56,8 +57,11 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
                          final MainView view,
                          final MainProxy proxy,
                          final KeyboardInterceptor keyboardInterceptor,
-                         final ClientPropertyCache clientPropertyCache) {
+                         final ClientPropertyCache clientPropertyCache,
+                         final AnnotationEditPresenter annotationEditPresenter) {
         super(eventBus, view, proxy);
+
+        annotationEditPresenter.show("123:456");
 
         // Handle key presses.
         keyboardInterceptor.register(view.asWidget());

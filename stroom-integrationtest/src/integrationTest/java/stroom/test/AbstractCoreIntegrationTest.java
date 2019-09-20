@@ -18,7 +18,7 @@ package stroom.test;
 
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import stroom.annotations.impl.db.spring.AnnotationsConfiguration;
+import stroom.annotation.impl.db.spring.AnnotationsConfiguration;
 import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.dictionary.spring.DictionaryConfiguration;

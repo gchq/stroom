@@ -2,7 +2,7 @@ package stroom.startup;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
-import stroom.annotations.impl.db.AnnotationsConfig;
+import stroom.annotation.impl.db.AnnotationsConfig;
 import stroom.proxy.guice.ProxyConfig;
 
 public class Config extends Configuration {

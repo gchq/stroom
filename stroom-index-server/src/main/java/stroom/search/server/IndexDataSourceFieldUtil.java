@@ -16,7 +16,7 @@
 
 package stroom.search.server;
 
-import stroom.annotations.api.Annotations;
+import stroom.annotation.api.AnnotationDataSource;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.index.shared.Index;
@@ -52,14 +52,14 @@ public final class IndexDataSourceFieldUtil {
         }
 
         // Add annotation fields if this index has stream and event ids.
-        if (securityContext == null || securityContext.hasAppPermission(Annotations.ANNOTATIONS_PERMISSION)) {
+        if (securityContext == null || securityContext.hasAppPermission(AnnotationDataSource.ANNOTATIONS_PERMISSION)) {
             final Set<String> names = indexFields
                     .getIndexFields()
                     .stream()
                     .map(IndexField::getFieldName)
                     .collect(Collectors.toSet());
             if (names.contains(IndexConstants.STREAM_ID) && names.contains(IndexConstants.EVENT_ID)) {
-                dataSourceFields.addAll(Annotations.FIELDS);
+                dataSourceFields.addAll(AnnotationDataSource.FIELDS);
             }
         }
 
