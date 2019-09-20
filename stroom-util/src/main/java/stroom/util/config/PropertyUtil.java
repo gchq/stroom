@@ -30,6 +30,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class PropertyUtil {
@@ -40,6 +41,8 @@ public final class PropertyUtil {
     }
 
     public static Map<String, Prop> getProperties(final Object object) {
+        Objects.requireNonNull(object);
+        LOGGER.debug("getProperties called for {}", object);
         final Class<?> clazz = object.getClass();
         final Method[] methods = clazz.getDeclaredMethods();
         final Map<String, Prop> propMap = new HashMap<>();

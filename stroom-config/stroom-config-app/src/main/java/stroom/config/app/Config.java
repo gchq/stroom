@@ -1,4 +1,4 @@
-package stroom.app;
+package stroom.config.app;
 
 import io.dropwizard.Configuration;
 import stroom.config.app.AppConfig;

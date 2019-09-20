@@ -51,14 +51,17 @@ import stroom.util.logging.LogUtil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 
 public class AppConfigModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(AppConfigModule.class);
 
     private final AppConfig appConfig;
+    private final Path configFile;
 
-    public AppConfigModule(final AppConfig appConfig) {
+    public AppConfigModule(final AppConfig appConfig, final Path configFile) {
         this.appConfig = appConfig;
+        this.configFile = configFile;
     }
 
     @Override
@@ -68,6 +71,8 @@ public class AppConfigModule extends AbstractModule {
 
         // Bind the application config.        
         bind(AppConfig.class).toInstance(appConfig);
+
+        bind(AppConfigMonitor.class).toInstance(new AppConfigMonitor(appConfig, configFile));
 
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own

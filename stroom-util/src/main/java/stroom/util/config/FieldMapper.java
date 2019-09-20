@@ -7,6 +7,7 @@ import stroom.util.logging.LogUtil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
+import java.util.Objects;
 
 public class FieldMapper {
     private static final Logger LOGGER = LoggerFactory.getLogger(FieldMapper.class);
@@ -17,33 +18,42 @@ public class FieldMapper {
      * NOTE: Only deep copies objects in packages starting with 'stroom'
      */
     public static <T> void copy(final T source, final T dest) {
-        LOGGER.debug("copy called for {}", source.getClass().getSimpleName());
+        Objects.requireNonNull(source);
+        Objects.requireNonNull(dest);
+
+        LOGGER.debug("copy called for {}",
+                (source == null ? "null" : source.getClass().getSimpleName()));
         try {
             final Map<String, Prop> properties = PropertyUtil.getProperties(source);
             for (Prop prop : properties.values()) {
                 LOGGER.debug("Examining prop {} of type {}", prop.getName(), prop.getValueClass().getSimpleName());
 
-                final Object sourceValue = prop.getGetter().invoke(source);
-                final Object destValue = prop.getGetter().invoke(dest);
+                final Object sourcePropValue = prop.getGetter().invoke(source);
+                final Object destPropValue = prop.getGetter().invoke(dest);
                 if (prop.getValueClass().getName().startsWith("stroom")) {
                     // property is another stroom pojo
-                    if (destValue == null) {
+                    if (sourcePropValue == null && destPropValue == null) {
+                        // nothing to do
+                    } else if (sourcePropValue == null && destPropValue != null) {
+                        LOGGER.debug("Updating value of {} from [{}] to [{}]", prop.getName(), destPropValue, sourcePropValue);
+                        prop.getSetter().invoke(dest, sourcePropValue);
+                    } else if (destPropValue == null) {
                         // Create a new object to copy into
                         Object newInstance = prop.getValueClass().getConstructor().newInstance();
 
                         // no destination instance so just use the new instance
                         prop.getSetter().invoke(dest, newInstance);
-                        copy(sourceValue, newInstance);
+                        copy(sourcePropValue, newInstance);
                     } else {
                         // Recurse for deep copy.
-                        copy(sourceValue, destValue);
+                        copy(sourcePropValue, destPropValue);
                     }
                 } else {
                     // prop is a primitive or a non-stroom class, so update it if it is different
-                    if ((sourceValue == null && destValue != null) ||
-                            (sourceValue != null && !sourceValue.equals(destValue))) {
-                        LOGGER.debug("Updating value of {} from [{}] to [{}]", prop.getName(), sourceValue, destValue);
-                        prop.getSetter().invoke(dest, sourceValue);
+                    if ((sourcePropValue == null && destPropValue != null) ||
+                            (sourcePropValue != null && !sourcePropValue.equals(destPropValue))) {
+                        LOGGER.debug("Updating value of {} from [{}] to [{}]", prop.getName(), destPropValue, sourcePropValue);
+                        prop.getSetter().invoke(dest, sourcePropValue);
                     }
                 }
             }

@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -74,7 +73,7 @@ class TestYamlUtil {
 
     private static String getYamlFromJavaModel() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        YamlUtil.write(new AppConfig(), byteArrayOutputStream);
+        YamlUtil.writeConfig(new AppConfig(), byteArrayOutputStream);
         return new String(byteArrayOutputStream.toByteArray());
     }
 
@@ -97,11 +96,11 @@ class TestYamlUtil {
         }
 
         if (path == null) {
-            throw new FileNotFoundException("Unable to find dev.yaml");
+            throw new FileNotFoundException("Unable to find dev.yml");
         }
 
-        try (final InputStream inputStream = Files.newInputStream(path)) {
-            final AppConfig appConfig = YamlUtil.read(inputStream);
+        try  {
+            final AppConfig appConfig = YamlUtil.readAppConfig(path);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

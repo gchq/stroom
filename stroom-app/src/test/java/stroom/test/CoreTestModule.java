@@ -14,9 +14,7 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -46,9 +44,9 @@ public class CoreTestModule extends AbstractModule {
 
         LOGGER.info("Using config from: " + FileUtil.getCanonicalPath(path));
 
-        try (final InputStream inputStream = Files.newInputStream(path)) {
-            final AppConfig appConfig = YamlUtil.read(inputStream);
-            install(new AppConfigModule(appConfig));
+        try  {
+            final AppConfig appConfig = YamlUtil.readAppConfig(path);
+            install(new AppConfigModule(appConfig, path));
         } catch (final IOException e) {
             throw new UncheckedIOException("Error opening local.yml, try running local.yml.sh in the root of " +
                     "the repo to create one.", e);

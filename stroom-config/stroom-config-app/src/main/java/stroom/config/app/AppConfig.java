@@ -38,11 +38,11 @@ public class AppConfig implements IsConfig {
     private BenchmarkClusterConfig benchmarkClusterConfig;
     private ClusterConfig clusterConfig;
     private ClusterLockConfig clusterLockConfig;
+    private CommonDbConfig commonDbConfig;
     private ContentPackImportConfig contentPackImportConfig;
     private CoreConfig coreConfig;
     private DataConfig dataConfig;
     private DataSourceUrlConfig dataSourceUrlConfig;
-    private CommonDbConfig commonDbConfig;
     private ExplorerConfig explorerConfig;
     private ExportConfig exportConfig;
     private IndexConfig indexConfig;
@@ -68,11 +68,11 @@ public class AppConfig implements IsConfig {
         this.benchmarkClusterConfig = new BenchmarkClusterConfig();
         this.clusterConfig = new ClusterConfig();
         this.clusterLockConfig = new ClusterLockConfig();
+        this.commonDbConfig = new CommonDbConfig();
         this.contentPackImportConfig = new ContentPackImportConfig();
         this.coreConfig = new CoreConfig();
         this.dataConfig = new DataConfig();
         this.dataSourceUrlConfig = new DataSourceUrlConfig();
-        this.commonDbConfig = new CommonDbConfig();
         this.explorerConfig = new ExplorerConfig();
         this.exportConfig = new ExportConfig();
         this.indexConfig = new IndexConfig();
@@ -99,10 +99,10 @@ public class AppConfig implements IsConfig {
               final ClusterConfig clusterConfig,
               final ClusterLockConfig clusterLockConfig,
               final ContentPackImportConfig contentPackImportConfig,
+              final CommonDbConfig commonDbConfig,
               final CoreConfig coreConfig,
               final DataConfig dataConfig,
               final DataSourceUrlConfig dataSourceUrlConfig,
-              final CommonDbConfig commonDbConfig,
               final ExplorerConfig explorerConfig,
               final ExportConfig exportConfig,
               final IndexConfig indexConfig,
@@ -128,10 +128,10 @@ public class AppConfig implements IsConfig {
         this.clusterConfig = clusterConfig;
         this.clusterLockConfig = clusterLockConfig;
         this.contentPackImportConfig = contentPackImportConfig;
+        this.commonDbConfig = commonDbConfig;
         this.coreConfig = coreConfig;
         this.dataConfig = dataConfig;
         this.dataSourceUrlConfig = dataSourceUrlConfig;
-        this.commonDbConfig = commonDbConfig;
         this.explorerConfig = explorerConfig;
         this.exportConfig = exportConfig;
         this.indexConfig = indexConfig;
@@ -189,6 +189,17 @@ public class AppConfig implements IsConfig {
         this.clusterLockConfig = clusterLockConfig;
     }
 
+    @JsonProperty("commonDbDetails")
+    @JsonPropertyDescription("Defines a set of common database connection details to use if no connection details are " +
+            "defined for a service area in stroom, e.g. core or config")
+    public CommonDbConfig getCommonDbConfig() {
+        return commonDbConfig;
+    }
+
+    void setCommonDbConfig(final CommonDbConfig commonDbConfig) {
+        this.commonDbConfig = commonDbConfig;
+    }
+
     @JsonProperty("contentPackImport")
     public ContentPackImportConfig getContentPackImportConfig() {
         return contentPackImportConfig;
@@ -225,17 +236,6 @@ public class AppConfig implements IsConfig {
 
     public void setDataSourceUrlConfig(final DataSourceUrlConfig dataSourceUrlConfig) {
         this.dataSourceUrlConfig = dataSourceUrlConfig;
-    }
-
-    @JsonProperty("commonDbDetails")
-    @JsonPropertyDescription("Defines a set of common database connection details to use if no connection details are " +
-            "defined for a service area in stroom, e.g. core or config")
-    public CommonDbConfig getCommonDbConfig() {
-        return commonDbConfig;
-    }
-
-    void setCommonDbConfig(final CommonDbConfig commonDbConfig) {
-        this.commonDbConfig = commonDbConfig;
     }
 
     @JsonProperty("explorer")

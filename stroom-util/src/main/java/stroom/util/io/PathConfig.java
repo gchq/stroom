@@ -12,6 +12,13 @@ import java.nio.file.Paths;
 public class PathConfig implements IsConfig {
     private String temp;
 
+    public PathConfig() {
+        temp = FileUtil.getTempDir()
+                .resolve("stroom")
+                .toAbsolutePath()
+                .toString();
+    }
+
     @ReadOnly
     @JsonPropertyDescription("Temp folder to write stuff to. Should only be set per node in application property file")
     public String getTemp() {

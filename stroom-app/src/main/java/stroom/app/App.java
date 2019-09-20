@@ -30,6 +30,7 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.app.guice.AppModule;
+import stroom.config.app.Config;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -38,10 +39,14 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.util.guice.ResourcePaths;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.EnumSet;
 
 public class App extends Application<Config> {
@@ -60,8 +65,16 @@ public class App extends Application<Config> {
     @Inject
     private ManagedServices managedServices;
 
+    private final Path configFile;
+
+    App(final Path configFile) {
+        super();
+        this.configFile = configFile;
+    }
+
     public static void main(final String[] args) throws Exception {
-        new App().run(args);
+        final Path yamlConfigFile = getYamlFileFromArgs(args);
+        new App(yamlConfigFile).run(args);
     }
 
     @Override
@@ -89,7 +102,7 @@ public class App extends Application<Config> {
 
         LOGGER.info("Starting Stroom Application");
 
-        final AppModule appModule = new AppModule(configuration, environment);
+        final AppModule appModule = new AppModule(configuration, environment, configFile);
         final Injector injector = Guice.createInjector(appModule);
         injector.injectMembers(this);
 
@@ -113,6 +126,22 @@ public class App extends Application<Config> {
 
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
+    }
+
+    private static Path getYamlFileFromArgs(final String[] args) {
+        // This is not ideal as we are duplicating what dropwizard is doing but there appears to be
+        // no way of getting the yaml file location from the dropwizard classes
+
+        for (String arg : args) {
+            if (arg.toLowerCase().endsWith("yml") || arg.toLowerCase().endsWith("yaml")) {
+                Path yamlFile = Path.of(arg);
+                if (Files.isRegularFile(yamlFile)) {
+                    return yamlFile;
+                }
+            }
+        }
+        throw new RuntimeException(LogUtil.message("Could not extract YAML config file from arguments [{}]",
+                Arrays.asList(args)));
     }
 
     private static void configureCors(io.dropwizard.setup.Environment environment) {

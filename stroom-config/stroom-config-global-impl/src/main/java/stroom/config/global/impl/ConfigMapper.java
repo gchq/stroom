@@ -116,33 +116,29 @@ public class ConfigMapper {
 
             final String fullPath = path + "." + name;
 
-            try {
-                final Class<?> valueType = prop.getValueClass();
+            final Class<?> valueType = prop.getValueClass();
 
-                final Object value = prop.getValueFromConfigObject();
-                if (isSupportedPropertyType(valueType)) {
-                    // This is a leaf, i.e. a property so add it to our map
-                    propertyMap.put(fullPath, prop);
+            final Object value = prop.getValueFromConfigObject();
+            if (isSupportedPropertyType(valueType)) {
+                // This is a leaf, i.e. a property so add it to our map
+                propertyMap.put(fullPath, prop);
 
-                    // Now let the consumer do something to it
-                    propConsumer.accept(fullPath, prop);
-                } else if (IsConfig.class.isAssignableFrom(valueType)) {
-                    // This must be a branch, i.e. config object so recurse into that
-                    if (value != null) {
-                        IsConfig childConfigObject = (IsConfig) value;
-                        addConfigObjectMethods(childConfigObject, fullPath, propertyMap, propConsumer);
-                    }
-                } else {
-                    // This is not expected
-                    throw  new RuntimeException(LogUtil.message(
-                            "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
-                            valueType.getName(),
-                            IsConfig.class.getSimpleName()));
+                // Now let the consumer do something to it
+                propConsumer.accept(fullPath, prop);
+            } else if (IsConfig.class.isAssignableFrom(valueType)) {
+                // This must be a branch, i.e. config object so recurse into that
+                if (value != null) {
+                    IsConfig childConfigObject = (IsConfig) value;
+                    addConfigObjectMethods(childConfigObject, fullPath, propertyMap, propConsumer);
                 }
-
-            } catch (final InvocationTargetException | IllegalAccessException e) {
-                LOGGER.error(e.getMessage(), e);
+            } else {
+                // This is not expected
+                throw  new RuntimeException(LogUtil.message(
+                        "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
+                        valueType.getName(),
+                        IsConfig.class.getSimpleName()));
             }
+
         });
     }
 
@@ -287,26 +283,18 @@ public class ConfigMapper {
     }
 
     private String getStringValue(final Prop prop) {
-        try {
-            final Object value = prop.getValueFromConfigObject();
-            if (value != null) {
-                return convertToString(value);
-            }
-        } catch (final IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-            LOGGER.debug(e.getMessage(), e);
+        final Object value = prop.getValueFromConfigObject();
+        if (value != null) {
+            return convertToString(value);
         }
         return null;
     }
 
     private String getDefaultValue(final Prop prop) {
         if (prop != null) {
-            try {
-                final Object value = prop.getValueFromConfigObject();
-                if (value != null) {
-                    return convertToString(value);
-                }
-            } catch (final IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-                LOGGER.debug(e.getMessage(), e);
+            final Object value = prop.getValueFromConfigObject();
+            if (value != null) {
+                return convertToString(value);
             }
         }
         return null;
@@ -318,19 +306,14 @@ public class ConfigMapper {
      * @return The updated typed value from the object model
      */
     Object updateConfigObject(final String key, final String value) {
-        try {
-            final Prop prop = propertyMap.get(key);
-            if (prop != null) {
-                final Type genericType = prop.getValueType();
-                final Object typedValue = convertToObject(value, genericType);
-                prop.setValueOnConfigObject(typedValue);
-                return typedValue;
-            } else {
-                LOGGER.error(LogUtil.message("Cannot find property with key [{}]", key));
-            }
-        } catch (final IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-            // TODO why swallow these exceptions
-            LOGGER.debug(e.getMessage(), e);
+        final Prop prop = propertyMap.get(key);
+        if (prop != null) {
+            final Type genericType = prop.getValueType();
+            final Object typedValue = convertToObject(value, genericType);
+            prop.setValueOnConfigObject(typedValue);
+            return typedValue;
+        } else {
+            LOGGER.error(LogUtil.message("Cannot find property with key [{}]", key));
         }
         return null;
     }
