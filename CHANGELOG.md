@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v7.0-beta.5] - 2019-09-18
+## [v7.0-beta.5] - 2019-09-23
 
 * Fixes to proxy
 
