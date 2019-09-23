@@ -1,5 +1,6 @@
 package stroom.config.common;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.IsConfig;
 

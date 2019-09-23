@@ -75,6 +75,23 @@ class TestFieldMapper {
     }
 
     @Test
+    void testNullSourceNoCopy() {
+        MyObject original = new MyObject();
+        original.setString(null);
+
+        MyObject copy = new MyObject();
+        copy.setString("copy");
+        FieldMapper.copy(original, copy, FieldMapper.CopyOptions.DONT_COPY_NULLS);
+
+        // we requested not to copy nulls so value is unchanged.
+        assertThat(copy.getString())
+                .isEqualTo("copy");
+
+        assertThat(System.identityHashCode(original))
+                .isNotEqualTo(System.identityHashCode(copy));
+    }
+
+    @Test
     void testNullDest() {
         MyObject original = new MyObject();
         original.setString("NotNull");
@@ -141,14 +158,73 @@ class TestFieldMapper {
                 .isEqualTo(parent1ChildId);
     }
 
+    @Test
+    void testDeepCopyDontCopyNulls() throws NoSuchFieldException, IllegalAccessException {
+        // The dest
+        final MyParent parent1 = new MyParent();
+        System.out.println("parent1       " + System.identityHashCode(parent1));
+        System.out.println("parent1 child " + System.identityHashCode(parent1.child));
+
+        int parent1Id = System.identityHashCode(parent1);
+        int parent1ChildId = System.identityHashCode(parent1.child);
+
+        // the source
+        final MyParent parent2 = new MyParent();
+        parent2.setMyInt(99);
+        parent2.setMyString("changed");
+        parent2.setChild(null);
+
+        assertThat(parent1)
+                .isNotEqualTo(parent2);
+        assertThat(parent1.getChild())
+                .isNotEqualTo(parent2.getChild());
+
+        System.out.println("parent2       " + System.identityHashCode(parent2));
+        System.out.println("parent2 child " + System.identityHashCode(parent2.child));
+
+        assertThat(System.identityHashCode(parent1))
+                .isNotEqualTo(System.identityHashCode(parent2));
+
+        System.out.println("parent1: " + parent1);
+        System.out.println("parent2: " + parent2);
+
+        FieldMapper.copy(parent2, parent1, FieldMapper.CopyOptions.DONT_COPY_NULLS);
+        System.out.println("parent1: " + parent1);
+        System.out.println("parent2: " + parent2);
+
+        System.out.println();
+        System.out.println("parent1       " + System.identityHashCode(parent1));
+        System.out.println("parent1 child " + System.identityHashCode(parent1.child));
+        System.out.println("parent2       " + System.identityHashCode(parent2));
+        System.out.println("parent2 child " + System.identityHashCode(parent2.child));
+
+        assertThat(System.identityHashCode(parent1))
+                .isNotEqualTo(System.identityHashCode(parent2));
+        assertThat(System.identityHashCode(parent1.child))
+                .isNotEqualTo(System.identityHashCode(parent2.child));
+
+        assertThat(parent1.myInt)
+                .isEqualTo(parent2.myInt);
+        assertThat(parent1.myString)
+                .isEqualTo(parent2.myString);
+
+        assertThat(parent1.getChild())
+                .isEqualTo(new MyChild());
+
+        assertThat(System.identityHashCode(parent1))
+                .isEqualTo(parent1Id);
+        assertThat(System.identityHashCode(parent1.child))
+                .isEqualTo(parent1ChildId);
+    }
+
     private static class MyObject {
         private String string;
 
-        String getString() {
+        public String getString() {
             return string;
         }
 
-        void setString(final String string) {
+        public void setString(final String string) {
             this.string = string;
         }
     }
@@ -158,27 +234,27 @@ class TestFieldMapper {
         private MyChild child = new MyChild();
 
 
-        String getMyString() {
+        public String getMyString() {
             return myString;
         }
 
-        void setMyString(final String myString) {
+        public void setMyString(final String myString) {
             this.myString = myString;
         }
 
-        int getMyInt() {
+        public int getMyInt() {
             return myInt;
         }
 
-        void setMyInt(final int myInt) {
+        public void setMyInt(final int myInt) {
             this.myInt = myInt;
         }
 
-        MyChild getChild() {
+        public MyChild getChild() {
             return child;
         }
 
-        void setChild(final MyChild child) {
+        public void setChild(final MyChild child) {
             this.child = child;
         }
 
@@ -211,19 +287,19 @@ class TestFieldMapper {
         private String myString = "xyz";
         private int myInt = 2;
 
-        String getMyString() {
+        public String getMyString() {
             return myString;
         }
 
-        void setMyString(final String myString) {
+        public void setMyString(final String myString) {
             this.myString = myString;
         }
 
-        int getMyInt() {
+        public int getMyInt() {
             return myInt;
         }
 
-        void setMyInt(final int myInt) {
+        public void setMyInt(final int myInt) {
             this.myInt = myInt;
         }
 

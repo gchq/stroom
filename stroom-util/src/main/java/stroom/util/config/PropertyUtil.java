@@ -40,11 +40,17 @@ public final class PropertyUtil {
         // Utility class.
     }
 
+    /**
+     * Builds a map of property names to a {@link Prop} object that provides access to the getter/setter.
+     * Only includes public properties, not package private
+     */
     public static Map<String, Prop> getProperties(final Object object) {
         Objects.requireNonNull(object);
         LOGGER.debug("getProperties called for {}", object);
         final Class<?> clazz = object.getClass();
-        final Method[] methods = clazz.getDeclaredMethods();
+        // Using getMethods rather than getDeclaredMethods means we have to make the methods public
+        // but it does allow us to see inherited methods, e.g. on CommonDbConfig
+        final Method[] methods = clazz.getMethods();
         final Map<String, Prop> propMap = new HashMap<>();
         for (final Method method : methods) {
             final String methodName = method.getName();

@@ -121,6 +121,9 @@ public class AppConfigMonitor implements Managed {
             newAppConfig = YamlUtil.readAppConfig(configFile);
 
             try {
+                // TODO this needs to take into account the CommonDbConfig copying that goes on in AppConfigModule,
+                // i.e. read the yaml then do the db config copying then copy the values into the appConfig
+
                 // Copy changed values from the newly modified appConfig into the guice bound one
                 FieldMapper.copy(newAppConfig, this.appConfig);
             } catch (Throwable e) {

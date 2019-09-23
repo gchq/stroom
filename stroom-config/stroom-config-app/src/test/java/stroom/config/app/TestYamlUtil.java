@@ -82,8 +82,22 @@ class TestYamlUtil {
      */
     @Test
     void testDevYaml() throws FileNotFoundException {
+        loadDevYaml();
+    }
+
+    private static AppConfig loadDevYaml() throws FileNotFoundException {
+        Path path = getDevYamlPath();
+
+        try  {
+            return YamlUtil.readAppConfig(path);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static Path getDevYamlPath() throws FileNotFoundException {
         // Load dev.yaml
-        final String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
+        final String codeSourceLocation = TestYamlUtil.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 
         Path path = Paths.get(codeSourceLocation);
         while (path != null && !path.getFileName().toString().equals("stroom-config")) {
@@ -98,11 +112,6 @@ class TestYamlUtil {
         if (path == null) {
             throw new FileNotFoundException("Unable to find dev.yml");
         }
-
-        try  {
-            final AppConfig appConfig = YamlUtil.readAppConfig(path);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        return path;
     }
 }

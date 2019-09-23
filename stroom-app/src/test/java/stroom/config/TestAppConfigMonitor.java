@@ -1,17 +1,22 @@
-package stroom.config.app;
+package stroom.config;
 
+import org.junit.Ignore;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.config.app.AppConfig;
+import stroom.config.app.AppConfigMonitor;
+import stroom.config.app.YamlUtil;
+import stroom.test.AbstractCoreIntegrationTest;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-class TestAppConfigMonitor {
+class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfigMonitor.class);
 
-    @Disabled
+    @Ignore
     @Test
     void test() throws Exception {
 

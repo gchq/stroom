@@ -63,35 +63,35 @@ class TestPropertyUtil {
         // should not appear in the property map
         private String nonPublicString = "xxx";
 
-        boolean isMyBoolean() {
+        public boolean isMyBoolean() {
             return myBoolean;
         }
 
-        void setMyBoolean(final boolean myBoolean) {
+        public void setMyBoolean(final boolean myBoolean) {
             this.myBoolean = myBoolean;
         }
 
-        int getMyInt() {
+        public int getMyInt() {
             return myInt;
         }
 
-        void setMyInt(final int myInt) {
+        public void setMyInt(final int myInt) {
             this.myInt = myInt;
         }
 
-        String getMyString() {
+        public String getMyString() {
             return myString;
         }
 
-        void setMyString(final String myString) {
+        public void setMyString(final String myString) {
             this.myString = myString;
         }
 
-        MyClass getMyClass() {
+        public MyClass getMyClass() {
             return myClass;
         }
 
-        void setMyClass(final MyClass myClass) {
+        public void setMyClass(final MyClass myClass) {
             this.myClass = myClass;
         }
     }

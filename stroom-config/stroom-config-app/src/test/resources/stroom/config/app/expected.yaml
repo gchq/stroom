@@ -423,7 +423,7 @@ appConfig:
         \ must be at least 80 characters long.\" ></textarea>Explain what the activity\
         \ is"
     url:
-      ui: null
+      ui: "http://IP_ADDRESS"
       authenticationService: "http://auth-service:8099/authentication/v1"
       users: "http://IP_ADDRESS/users"
       apiKeys: "http://IP_ADDRESS/tokens"

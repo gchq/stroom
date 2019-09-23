@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
+import stroom.config.common.CommonDbConfig;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
@@ -46,9 +47,11 @@ import stroom.ui.config.shared.SplashConfig;
 import stroom.ui.config.shared.ThemeConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UrlConfig;
+import stroom.util.config.FieldMapper;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LogUtil;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
@@ -58,6 +61,18 @@ public class AppConfigModule extends AbstractModule {
 
     private final AppConfig appConfig;
     private final Path configFile;
+
+    /**
+     * Intended for test use
+     */
+    AppConfigModule( final Path configFile) {
+        try {
+            this.appConfig = YamlUtil.readAppConfig(configFile);
+            this.configFile = configFile;
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Error loading config file {}", configFile.toAbsolutePath()), e);
+        }
+    }
 
     public AppConfigModule(final AppConfig appConfig, final Path configFile) {
         this.appConfig = appConfig;
@@ -82,6 +97,7 @@ public class AppConfigModule extends AbstractModule {
         bind(BenchmarkClusterConfig.class).toInstance(appConfig.getBenchmarkClusterConfig());
         bind(ClusterConfig.class).toInstance(appConfig.getClusterConfig());
         bind(ClusterLockConfig.class).toInstance(appConfig.getClusterLockConfig());
+        bind(CommonDbConfig.class).toInstance(appConfig.getCommonDbConfig());
         bind(ContentPackImportConfig.class).toInstance(appConfig.getContentPackImportConfig());
         bind(CoreConfig.class).toInstance(appConfig.getCoreConfig());
         bind(DataConfig.class).toInstance(appConfig.getDataConfig());
@@ -138,7 +154,8 @@ public class AppConfigModule extends AbstractModule {
             // find all getters that return a class that implements HasDbConfig
             // Assumes db config only appears as a child of top level
             for (Method method : appConfig.getClass().getMethods()) {
-                if (method.getName().startsWith("get") && method.getReturnType().isAssignableFrom(HasDbConfig.class) ) {
+                if (method.getName().startsWith("get")
+                        && HasDbConfig.class.isAssignableFrom(method.getReturnType())) {
                     try {
                         HasDbConfig serviceConfig = (HasDbConfig) method.invoke(appConfig);
                         applyCommonDbConfig(defaultConfig, commonConfig, serviceConfig);
@@ -154,17 +171,17 @@ public class AppConfigModule extends AbstractModule {
 
     private void applyCommonDbConfig(final DbConfig defaultConfig,
                                       final DbConfig commonConfig,
-                                      final HasDbConfig config) {
+                                      final HasDbConfig serviceConfig) {
 
-        final DbConfig dbConfig = config.getDbConfig();
+        final DbConfig serviceDbConfig = serviceConfig.getDbConfig();
 
-        if (defaultConfig.equals(dbConfig)) {
+        if (defaultConfig.equals(serviceDbConfig)) {
             // The service specific config has default values for its db config
             // so apply all the common values.
-            LOGGER.info("Applying common DB config to {}", config.getClass().getSimpleName());
-            config.setDbConfig(commonConfig);
+            LOGGER.info("Applying common DB config to {}", serviceConfig.getClass().getSimpleName());
+            FieldMapper.copy(commonConfig, serviceDbConfig, FieldMapper.CopyOptions.DONT_COPY_NULLS);
         } else {
-            LOGGER.debug("{} has custom DB config so leaving it as is", config.getClass().getSimpleName());
+            LOGGER.debug("{} has custom DB config so leaving it as is", serviceConfig.getClass().getSimpleName());
         }
     }
 }
