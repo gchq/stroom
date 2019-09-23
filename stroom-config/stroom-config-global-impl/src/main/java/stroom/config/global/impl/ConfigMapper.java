@@ -78,8 +78,10 @@ public class ConfigMapper {
         // to the config UI.  Therefore create our own vanilla AppConfig tree and walk it to populate
         // globalPropertiesMap with the defaults.
         try {
-            IsConfig vanillaObject = configObject.getClass().getDeclaredConstructor().newInstance();
-            addConfigObjectMethods(vanillaObject, ROOT_PROPERTY_PATH, new HashMap<>(), this::defaultPropertyConsumer);
+            final IsConfig vanillaObject = configObject.getClass().getDeclaredConstructor().newInstance();
+            // Pass in an empty hashmap because we are not parsing the actual guice bound appConfig. We are only
+            // populating the globalPropertiesMap so the passed hashmap is thrown away.
+            addConfigObjectMethods(vanillaObject, ROOT_PROPERTY_PATH, new HashMap<>(), this::defaultValuePropertyConsumer);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             throw new RuntimeException(LogUtil.message("Unable to call constructor on class {}",
                     configObject.getClass().getName()), e);
@@ -167,7 +169,7 @@ public class ConfigMapper {
         }
     }
 
-    private void defaultPropertyConsumer(final String fullPath, final Prop defaultProp) {
+    private void defaultValuePropertyConsumer(final String fullPath, final Prop defaultProp) {
 
         // Create global property.
         final String defaultValueAsStr = getDefaultValue(defaultProp);

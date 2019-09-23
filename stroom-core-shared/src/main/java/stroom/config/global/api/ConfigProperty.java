@@ -20,9 +20,25 @@ import stroom.docref.SharedObject;
 import stroom.util.shared.HasAuditInfo;
 
 /**
- * This class records global properties that are accessible across the whole
- * cluster. They may be overridden by values from the dropwizard yaml file on a
- * node specific basis.
+ * This class records config properties that are derived from the following
+ * sources in increasing order of precedence (larger number == higher precedence)
+ * 1. Cluster wide compile time default values
+ * 2. Cluster wide database values (as displayed/edited in the UI properties screen)
+ * 3. Node specific values from the dropwizard YAML file
+ *
+ * The object holds the values from all available sources from which the effective value
+ * can be derived.
+ *
+ * The effective value of a property on a node will be governed by the above precedence rules.
+ * Properties can be changed by means of the UI (database level) or via changes to the YAML
+ * which are hot-loaded in. A change at the DB level may not be effective if there is value
+ * in the YAML.
+ *
+ * The source of config properties for the application is the Guice bound AppConfig class and its
+ * child objects. Changes to the YAML or database will result in updates to the Guice bound AppConfig
+ * object.
+ *
+ * TODO At present the UI is unable to show the value from the YAML so may give a misleading picture
  */
 public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<ConfigProperty> {
     private static final long serialVersionUID = 8440384191352234225L;
@@ -37,11 +53,19 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     // TODO now that properties are typed in AppConfig we should really be dealing with typed
     // values here so the UI can edit/display/validate them appropriately according to their type,
     // e.g. a custom UI control for managing List/Map/boolean types
-    private String value;
+
+    // The cluster wide value held in the database
+    private String databaseValue;
 
     // These fields are not saved to the database,
     // they come from the annotations on the java config classes
+
+    // The cluster wide compile-time default value set in the AppConfig object tree
     private String defaultValue;
+
+    // The node specific value as set by the dropwizard YAML file
+    private String yamlValue;
+
     private SourceType source;
     private String description;
     private boolean editable;
@@ -113,12 +137,25 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         this.name = name;
     }
 
-    public String getValue() {
-        return value;
+    /**
+     * @return The effective value of the property taking into account the precedence order
+     */
+    public String getEffectiveValue() {
+        if (yamlValue != null) {
+            return yamlValue;
+        } else if (databaseValue != null) {
+            return databaseValue;
+        } else {
+            return defaultValue;
+        }
     }
 
-    public void setValue(final String value) {
-        this.value = value;
+    public String getDatabaseValue() {
+        return databaseValue;
+    }
+
+    public void setDatabaseValue(final String databaseValue) {
+        this.databaseValue = databaseValue;
     }
 
     public String getDefaultValue() {
@@ -127,6 +164,14 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
 
     public void setDefaultValue(final String defaultValue) {
         this.defaultValue = defaultValue;
+    }
+
+    String getYamlValue() {
+        return yamlValue;
+    }
+
+    void setYamlValue(final String yamlValue) {
+        this.yamlValue = yamlValue;
     }
 
     public String getDescription() {
