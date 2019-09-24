@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS annotation_entry (
   create_user           varchar(255) NOT NULL,
   update_time_ms        bigint(20) NOT NULL,
   update_user           varchar(255) NOT NULL,
-  fk_annotation_id      int(11) NOT NULL,
+  fk_annotation_id      bigint(20) NOT NULL,
   type                  int(11) NOT NULL,
   data                  longtext,
   PRIMARY KEY           (id),
