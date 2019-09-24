@@ -7,7 +7,7 @@ package stroom.annotation.impl.db.jooq;
 import javax.annotation.Generated;
 
 import stroom.annotation.impl.db.jooq.tables.Annotation;
-import stroom.annotation.impl.db.jooq.tables.AnnotationHistory;
+import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
 
 
 /**
@@ -29,7 +29,7 @@ public class Tables {
     public static final Annotation ANNOTATION = stroom.annotation.impl.db.jooq.tables.Annotation.ANNOTATION;
 
     /**
-     * The table <code>stroom.annotation_history</code>.
+     * The table <code>stroom.annotation_entry</code>.
      */
-    public static final AnnotationHistory ANNOTATION_HISTORY = stroom.annotation.impl.db.jooq.tables.AnnotationHistory.ANNOTATION_HISTORY;
+    public static final AnnotationEntry ANNOTATION_ENTRY = stroom.annotation.impl.db.jooq.tables.AnnotationEntry.ANNOTATION_ENTRY;
 }

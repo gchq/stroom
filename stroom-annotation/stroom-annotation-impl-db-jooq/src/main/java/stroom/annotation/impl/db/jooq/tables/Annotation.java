@@ -41,7 +41,7 @@ import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Annotation extends TableImpl<AnnotationRecord> {
 
-    private static final long serialVersionUID = -1132454620;
+    private static final long serialVersionUID = 1636591191;
 
     /**
      * The reference instance of <code>stroom.annotation</code>
@@ -59,7 +59,7 @@ public class Annotation extends TableImpl<AnnotationRecord> {
     /**
      * The column <code>stroom.annotation.id</code>.
      */
-    public final TableField<AnnotationRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<AnnotationRecord, Long> ID = createField("id", org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>stroom.annotation.version</code>.
@@ -97,14 +97,14 @@ public class Annotation extends TableImpl<AnnotationRecord> {
     public final TableField<AnnotationRecord, Long> EVENT_ID = createField("event_id", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.annotation.current_status</code>.
+     * The column <code>stroom.annotation.status</code>.
      */
-    public final TableField<AnnotationRecord, String> CURRENT_STATUS = createField("current_status", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<AnnotationRecord, String> STATUS = createField("status", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.annotation.current_assignee</code>.
+     * The column <code>stroom.annotation.assigned_to</code>.
      */
-    public final TableField<AnnotationRecord, String> CURRENT_ASSIGNEE = createField("current_assignee", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<AnnotationRecord, String> ASSIGNED_TO = createField("assigned_to", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * Create a <code>stroom.annotation</code> table reference
@@ -159,7 +159,7 @@ public class Annotation extends TableImpl<AnnotationRecord> {
      * {@inheritDoc}
      */
     @Override
-    public Identity<AnnotationRecord, Integer> getIdentity() {
+    public Identity<AnnotationRecord, Long> getIdentity() {
         return Keys.IDENTITY_ANNOTATION;
     }
 

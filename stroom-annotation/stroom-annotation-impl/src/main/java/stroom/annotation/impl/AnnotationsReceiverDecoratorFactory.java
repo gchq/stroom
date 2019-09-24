@@ -35,12 +35,12 @@ class AnnotationsReceiverDecoratorFactory implements AnnotationsDecoratorFactory
             return receiver;
         }
 
-        final Integer createdByIndex = fieldIndexMap.getMap().get(AnnotationDataSource.CREATED_BY);
+        final Integer createUserIndex = fieldIndexMap.getMap().get(AnnotationDataSource.CREATE_USER);
 //        final Integer commentIndex = fieldIndexMap.getMap().get(AnnotationDataSource.COMMENT);
         final Integer statusIndex = fieldIndexMap.getMap().get(AnnotationDataSource.STATUS);
         final Integer assignedToIndex = fieldIndexMap.getMap().get(AnnotationDataSource.ASSIGNED_TO);
 
-        if (createdByIndex == null && statusIndex == null && assignedToIndex == null) {
+        if (createUserIndex == null && statusIndex == null && assignedToIndex == null) {
             return receiver;
         }
 
@@ -51,7 +51,7 @@ class AnnotationsReceiverDecoratorFactory implements AnnotationsDecoratorFactory
             if (annotation == null) {
                 setValue(values.getValues(), statusIndex, "None");
             } else {
-                setValue(values.getValues(), createdByIndex, annotation.getCreatedBy());
+                setValue(values.getValues(), createUserIndex, annotation.getCreateUser());
 //                setValue(values.getValues(), commentIndex, annotation.getComment());
                 setValue(values.getValues(), statusIndex, annotation.getStatus());
                 setValue(values.getValues(), assignedToIndex, annotation.getAssignedTo());

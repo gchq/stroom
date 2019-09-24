@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,8 @@
 
 package stroom.annotation.client;
 
-        import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-        import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
-        import stroom.annotation.client.ChooserPresenter.ChooserView;
+import com.gwtplatform.mvp.client.UiHandlers;
 
-public class AnnotationModule extends AbstractPresenterModule {
-    @Override
-    protected void configure() {
-        bindPresenterWidget(AnnotationEditPresenter.class, AnnotationEditView.class, AnnotationEditViewImpl.class);
-        bindPresenterWidget(ChooserPresenter.class, ChooserView.class, ChooserViewImpl.class);
-    }
+public interface ChooserUiHandlers extends UiHandlers {
+    void onFilterChange(String filter);
 }

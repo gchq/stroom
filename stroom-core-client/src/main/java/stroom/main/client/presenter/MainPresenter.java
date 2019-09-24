@@ -61,7 +61,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
                          final AnnotationEditPresenter annotationEditPresenter) {
         super(eventBus, view, proxy);
 
-        annotationEditPresenter.show("123:456");
+        annotationEditPresenter.show(123, 456);
 
         // Handle key presses.
         keyboardInterceptor.register(view.asWidget());

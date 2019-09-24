@@ -4,7 +4,7 @@ dependencies {
     compile project(':stroom-annotation:stroom-config-common')
     compile project(':stroom-db-util')
     compile project(':stroom-annotation:stroom-annotation-impl')
-//    compile project(':stroom-explorer:stroom-explorer-impl-db-jooq')
+    compile project(':stroom-annotation:stroom-annotation-impl-db-jooq')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 

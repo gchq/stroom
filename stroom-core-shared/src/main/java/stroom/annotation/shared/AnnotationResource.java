@@ -19,9 +19,11 @@ package stroom.annotation.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.query.api.v2.DocRef;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -39,5 +41,11 @@ public interface AnnotationResource extends DirectRestService {
     @ApiOperation(
             value = "Gets an annotation",
             response = Response.class)
-    Annotation get(@PathParam("id") String id);
+    AnnotationDetail get(@PathParam("id") String id);
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("")
+    AnnotationDetail createEntry(CreateEntryRequest request);
 }

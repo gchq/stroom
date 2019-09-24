@@ -1,16 +1,13 @@
 package stroom.annotation.shared;
 
-import java.util.List;
-
-public class Annotation {
+public class AnnotationEntry {
     private Long id;
     private Integer version;
     private Long createTime;
     private String createUser;
     private Long updateTime;
     private String updateUser;
-    private long metaId;
-    private long eventId;
+    private String comment;
     private String status;
     private String assignedTo;
 
@@ -62,20 +59,12 @@ public class Annotation {
         this.updateUser = updateUser;
     }
 
-    public long getMetaId() {
-        return metaId;
+    public String getComment() {
+        return comment;
     }
 
-    public void setMetaId(final long metaId) {
-        this.metaId = metaId;
-    }
-
-    public long getEventId() {
-        return eventId;
-    }
-
-    public void setEventId(final long eventId) {
-        this.eventId = eventId;
+    public void setComment(final String comment) {
+        this.comment = comment;
     }
 
     public String getStatus() {

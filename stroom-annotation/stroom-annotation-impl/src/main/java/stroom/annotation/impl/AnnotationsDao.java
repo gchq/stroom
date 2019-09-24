@@ -17,6 +17,9 @@
 package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationDetail;
+import stroom.annotation.shared.AnnotationEntry;
+import stroom.annotation.shared.CreateEntryRequest;
 
 public interface AnnotationsDao {
 //    TreeModel createModel(Function<String, String> iconUrlProvider);
@@ -45,5 +48,13 @@ public interface AnnotationsDao {
 //
 //    ExplorerTreeNode findByUUID(final String uuid);
 
-    Annotation get(Long streamId, Long eventId);
+    Annotation get(long metaId, long eventId);
+
+//    Annotation get(Annotation annotation);
+
+//    AnnotationDetail getDetail(Annotation annotation);
+
+    AnnotationDetail getDetail(long metaId, long eventId);
+
+    AnnotationDetail createEntry(CreateEntryRequest request, String user);
 }

@@ -28,13 +28,6 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         hostPageBaseUrl = hostPageBaseUrl.substring(0, hostPageBaseUrl.lastIndexOf("/"));
         final String apiUrl = hostPageBaseUrl + "/api/";
         Defaults.setServiceRoot(apiUrl);
-
-//        this.dispatchService = dispatchService;
-//        this.applicationInstanceId = RandomId.createDiscrimiator();
-//
-//        final String endPointName = GWT.getHostPageBaseURL() + "dispatch.rpc";
-//        final ServiceDefTarget target = (ServiceDefTarget) dispatchService;
-//        target.setServiceEntryPoint(endPointName);
     }
 
     @Override

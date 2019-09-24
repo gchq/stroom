@@ -12,8 +12,8 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.Internal;
 
 import stroom.annotation.impl.db.jooq.tables.Annotation;
-import stroom.annotation.impl.db.jooq.tables.AnnotationHistory;
-import stroom.annotation.impl.db.jooq.tables.records.AnnotationHistoryRecord;
+import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 
 
@@ -35,8 +35,8 @@ public class Keys {
     // IDENTITY definitions
     // -------------------------------------------------------------------------
 
-    public static final Identity<AnnotationRecord, Integer> IDENTITY_ANNOTATION = Identities0.IDENTITY_ANNOTATION;
-    public static final Identity<AnnotationHistoryRecord, Integer> IDENTITY_ANNOTATION_HISTORY = Identities0.IDENTITY_ANNOTATION_HISTORY;
+    public static final Identity<AnnotationRecord, Long> IDENTITY_ANNOTATION = Identities0.IDENTITY_ANNOTATION;
+    public static final Identity<AnnotationEntryRecord, Long> IDENTITY_ANNOTATION_ENTRY = Identities0.IDENTITY_ANNOTATION_ENTRY;
 
     // -------------------------------------------------------------------------
     // UNIQUE and PRIMARY KEY definitions
@@ -44,30 +44,30 @@ public class Keys {
 
     public static final UniqueKey<AnnotationRecord> KEY_ANNOTATION_PRIMARY = UniqueKeys0.KEY_ANNOTATION_PRIMARY;
     public static final UniqueKey<AnnotationRecord> KEY_ANNOTATION_META_ID_EVENT_ID = UniqueKeys0.KEY_ANNOTATION_META_ID_EVENT_ID;
-    public static final UniqueKey<AnnotationHistoryRecord> KEY_ANNOTATION_HISTORY_PRIMARY = UniqueKeys0.KEY_ANNOTATION_HISTORY_PRIMARY;
+    public static final UniqueKey<AnnotationEntryRecord> KEY_ANNOTATION_ENTRY_PRIMARY = UniqueKeys0.KEY_ANNOTATION_ENTRY_PRIMARY;
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<AnnotationHistoryRecord, AnnotationRecord> ANNOTATION_HISTORY_FK_ANNOTATION_ID = ForeignKeys0.ANNOTATION_HISTORY_FK_ANNOTATION_ID;
+    public static final ForeignKey<AnnotationEntryRecord, AnnotationRecord> ANNOTATION_ENTRY_FK_ANNOTATION_ID = ForeignKeys0.ANNOTATION_ENTRY_FK_ANNOTATION_ID;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
     // -------------------------------------------------------------------------
 
     private static class Identities0 {
-        public static Identity<AnnotationRecord, Integer> IDENTITY_ANNOTATION = Internal.createIdentity(Annotation.ANNOTATION, Annotation.ANNOTATION.ID);
-        public static Identity<AnnotationHistoryRecord, Integer> IDENTITY_ANNOTATION_HISTORY = Internal.createIdentity(AnnotationHistory.ANNOTATION_HISTORY, AnnotationHistory.ANNOTATION_HISTORY.ID);
+        public static Identity<AnnotationRecord, Long> IDENTITY_ANNOTATION = Internal.createIdentity(Annotation.ANNOTATION, Annotation.ANNOTATION.ID);
+        public static Identity<AnnotationEntryRecord, Long> IDENTITY_ANNOTATION_ENTRY = Internal.createIdentity(AnnotationEntry.ANNOTATION_ENTRY, AnnotationEntry.ANNOTATION_ENTRY.ID);
     }
 
     private static class UniqueKeys0 {
         public static final UniqueKey<AnnotationRecord> KEY_ANNOTATION_PRIMARY = Internal.createUniqueKey(Annotation.ANNOTATION, "KEY_annotation_PRIMARY", Annotation.ANNOTATION.ID);
         public static final UniqueKey<AnnotationRecord> KEY_ANNOTATION_META_ID_EVENT_ID = Internal.createUniqueKey(Annotation.ANNOTATION, "KEY_annotation_meta_id_event_id", Annotation.ANNOTATION.META_ID, Annotation.ANNOTATION.EVENT_ID);
-        public static final UniqueKey<AnnotationHistoryRecord> KEY_ANNOTATION_HISTORY_PRIMARY = Internal.createUniqueKey(AnnotationHistory.ANNOTATION_HISTORY, "KEY_annotation_history_PRIMARY", AnnotationHistory.ANNOTATION_HISTORY.ID);
+        public static final UniqueKey<AnnotationEntryRecord> KEY_ANNOTATION_ENTRY_PRIMARY = Internal.createUniqueKey(AnnotationEntry.ANNOTATION_ENTRY, "KEY_annotation_entry_PRIMARY", AnnotationEntry.ANNOTATION_ENTRY.ID);
     }
 
     private static class ForeignKeys0 {
-        public static final ForeignKey<AnnotationHistoryRecord, AnnotationRecord> ANNOTATION_HISTORY_FK_ANNOTATION_ID = Internal.createForeignKey(stroom.annotation.impl.db.jooq.Keys.KEY_ANNOTATION_PRIMARY, AnnotationHistory.ANNOTATION_HISTORY, "annotation_history_fk_annotation_id", AnnotationHistory.ANNOTATION_HISTORY.FK_ANNOTATION_ID);
+        public static final ForeignKey<AnnotationEntryRecord, AnnotationRecord> ANNOTATION_ENTRY_FK_ANNOTATION_ID = Internal.createForeignKey(stroom.annotation.impl.db.jooq.Keys.KEY_ANNOTATION_PRIMARY, AnnotationEntry.ANNOTATION_ENTRY, "annotation_entry_fk_annotation_id", AnnotationEntry.ANNOTATION_ENTRY.FK_ANNOTATION_ID);
     }
 }

@@ -1,5 +1,5 @@
 --
--- Create the explorer tables
+-- Create the annotation tables
 --
 CREATE TABLE IF NOT EXISTS annotation (
   id                    int(11) NOT NULL AUTO_INCREMENT,
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS annotation (
   UNIQUE KEY            meta_id_event_id (meta_id, event_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE IF NOT EXISTS annotation_history (
+CREATE TABLE IF NOT EXISTS annotation_entry (
   id                    int(11) NOT NULL AUTO_INCREMENT,
   version               int(11) NOT NULL,
   create_time_ms        bigint(20) NOT NULL,
@@ -24,10 +24,8 @@ CREATE TABLE IF NOT EXISTS annotation_history (
   update_time_ms        bigint(20) NOT NULL,
   update_user           varchar(255) NOT NULL,
   fk_annotation_id      int(11) NOT NULL,
-  user_name             varchar(255) NOT NULL,
-  comment               longtext,
-  status                varchar(255) NOT NULL,
-  assignee              varchar(255) NOT NULL,
+  type                  int(11) NOT NULL,
+  data                  longtext,
   PRIMARY KEY           (id),
-  CONSTRAINT 		    annotation_history_fk_annotation_id FOREIGN KEY (fk_annotation_id) REFERENCES annotation (id)
+  CONSTRAINT            annotation_entry_fk_annotation_id FOREIGN KEY (fk_annotation_id) REFERENCES annotation (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
