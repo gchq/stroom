@@ -36,7 +36,7 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final Identity<AnnotationRecord, Long> IDENTITY_ANNOTATION = Identities0.IDENTITY_ANNOTATION;
-    public static final Identity<AnnotationEntryRecord, Long> IDENTITY_ANNOTATION_ENTRY = Identities0.IDENTITY_ANNOTATION_ENTRY;
+    public static final Identity<AnnotationEntryRecord, Integer> IDENTITY_ANNOTATION_ENTRY = Identities0.IDENTITY_ANNOTATION_ENTRY;
 
     // -------------------------------------------------------------------------
     // UNIQUE and PRIMARY KEY definitions
@@ -58,7 +58,7 @@ public class Keys {
 
     private static class Identities0 {
         public static Identity<AnnotationRecord, Long> IDENTITY_ANNOTATION = Internal.createIdentity(Annotation.ANNOTATION, Annotation.ANNOTATION.ID);
-        public static Identity<AnnotationEntryRecord, Long> IDENTITY_ANNOTATION_ENTRY = Internal.createIdentity(AnnotationEntry.ANNOTATION_ENTRY, AnnotationEntry.ANNOTATION_ENTRY.ID);
+        public static Identity<AnnotationEntryRecord, Integer> IDENTITY_ANNOTATION_ENTRY = Internal.createIdentity(AnnotationEntry.ANNOTATION_ENTRY, AnnotationEntry.ANNOTATION_ENTRY.ID);
     }
 
     private static class UniqueKeys0 {

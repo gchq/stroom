@@ -41,7 +41,7 @@ import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
 
-    private static final long serialVersionUID = -1148327009;
+    private static final long serialVersionUID = 1396024137;
 
     /**
      * The reference instance of <code>stroom.annotation_entry</code>
@@ -59,7 +59,7 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
     /**
      * The column <code>stroom.annotation_entry.id</code>.
      */
-    public final TableField<AnnotationEntryRecord, Long> ID = createField("id", org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<AnnotationEntryRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>stroom.annotation_entry.version</code>.
@@ -92,19 +92,14 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
     public final TableField<AnnotationEntryRecord, Long> FK_ANNOTATION_ID = createField("fk_annotation_id", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.annotation_entry.comment</code>.
+     * The column <code>stroom.annotation_entry.type</code>.
      */
-    public final TableField<AnnotationEntryRecord, String> COMMENT = createField("comment", org.jooq.impl.SQLDataType.CLOB, this, "");
+    public final TableField<AnnotationEntryRecord, Integer> TYPE = createField("type", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.annotation_entry.status</code>.
+     * The column <code>stroom.annotation_entry.data</code>.
      */
-    public final TableField<AnnotationEntryRecord, String> STATUS = createField("status", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
-
-    /**
-     * The column <code>stroom.annotation_entry.assigned_to</code>.
-     */
-    public final TableField<AnnotationEntryRecord, String> ASSIGNED_TO = createField("assigned_to", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<AnnotationEntryRecord, String> DATA = createField("data", org.jooq.impl.SQLDataType.CLOB, this, "");
 
     /**
      * Create a <code>stroom.annotation_entry</code> table reference
@@ -159,7 +154,7 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
      * {@inheritDoc}
      */
     @Override
-    public Identity<AnnotationEntryRecord, Long> getIdentity() {
+    public Identity<AnnotationEntryRecord, Integer> getIdentity() {
         return Keys.IDENTITY_ANNOTATION_ENTRY;
     }
 
