@@ -41,7 +41,7 @@ import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
 
-    private static final long serialVersionUID = 1396024137;
+    private static final long serialVersionUID = -1594461188;
 
     /**
      * The reference instance of <code>stroom.annotation_entry</code>
@@ -59,7 +59,7 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
     /**
      * The column <code>stroom.annotation_entry.id</code>.
      */
-    public final TableField<AnnotationEntryRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<AnnotationEntryRecord, Long> ID = createField("id", org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>stroom.annotation_entry.version</code>.
@@ -154,7 +154,7 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
      * {@inheritDoc}
      */
     @Override
-    public Identity<AnnotationEntryRecord, Integer> getIdentity() {
+    public Identity<AnnotationEntryRecord, Long> getIdentity() {
         return Keys.IDENTITY_ANNOTATION_ENTRY;
     }
 

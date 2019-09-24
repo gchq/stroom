@@ -1,5 +1,7 @@
 package stroom.annotation.shared;
 
+import stroom.util.shared.HasDisplayValue;
+
 public class AnnotationEntry {
     private Long id;
     private Integer version;
@@ -7,9 +9,8 @@ public class AnnotationEntry {
     private String createUser;
     private Long updateTime;
     private String updateUser;
-    private String comment;
-    private String status;
-    private String assignedTo;
+    private EntryType entryType;
+    private String data;
 
     public Long getId() {
         return id;
@@ -59,27 +60,45 @@ public class AnnotationEntry {
         this.updateUser = updateUser;
     }
 
-    public String getComment() {
-        return comment;
+    public EntryType getEntryType() {
+        return entryType;
     }
 
-    public void setComment(final String comment) {
-        this.comment = comment;
+    public void setEntryType(final EntryType entryType) {
+        this.entryType = entryType;
     }
 
-    public String getStatus() {
-        return status;
+    public String getData() {
+        return data;
     }
 
-    public void setStatus(final String status) {
-        this.status = status;
+    public void setData(final String data) {
+        this.data = data;
     }
 
-    public String getAssignedTo() {
-        return assignedTo;
-    }
+    public enum EntryType implements HasDisplayValue {
+        COMMENT("Comment", 0),
+        STATUS("Status", 1),
+        ASSIGNED_TO("Assigned To", 2);
 
-    public void setAssignedTo(final String assignedTo) {
-        this.assignedTo = assignedTo;
+        private final String displayValue;
+        private final int primitiveValue;
+
+        EntryType(final String displayValue, int primitiveValue) {
+            this.displayValue = displayValue;
+            this.primitiveValue = primitiveValue;
+        }
+
+        /**
+         * @return drop down string value.
+         */
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
+
+        public int getPrimitiveValue() {
+            return primitiveValue;
+        }
     }
 }

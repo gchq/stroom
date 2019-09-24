@@ -2,7 +2,7 @@
 -- Create the annotation tables
 --
 CREATE TABLE IF NOT EXISTS annotation (
-  id                    int(11) NOT NULL AUTO_INCREMENT,
+  id                    bigint(20) NOT NULL AUTO_INCREMENT,
   version               int(11) NOT NULL,
   create_time_ms        bigint(20) NOT NULL,
   create_user           varchar(255) NOT NULL,
@@ -10,14 +10,14 @@ CREATE TABLE IF NOT EXISTS annotation (
   update_user           varchar(255) NOT NULL,
   meta_id               bigint(20) NOT NULL,
   event_id              bigint(20) NOT NULL,
-  current_status        varchar(255) NOT NULL,
-  current_assignee      varchar(255) NOT NULL,
+  status                varchar(255) NOT NULL,
+  assigned_to           varchar(255) NOT NULL,
   PRIMARY KEY           (id),
   UNIQUE KEY            meta_id_event_id (meta_id, event_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS annotation_entry (
-  id                    int(11) NOT NULL AUTO_INCREMENT,
+  id                    bigint(20) NOT NULL AUTO_INCREMENT,
   version               int(11) NOT NULL,
   create_time_ms        bigint(20) NOT NULL,
   create_user           varchar(255) NOT NULL,

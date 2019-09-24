@@ -21,7 +21,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.datepicker.client.CalendarUtil;
 import com.google.inject.Inject;
@@ -30,9 +29,9 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
-import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationEntry;
+import stroom.annotation.shared.AnnotationEntry.EntryType;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.dispatch.client.ClientDispatchAsync;
@@ -45,7 +44,6 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.FetchUserRefAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -89,7 +87,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         this.restFactory = restFactory;
         this.statusPresenter = statusPresenter;
         this.assignedToPresenter = assignedToPresenter;
-        this.clientSecurityContext =clientSecurityContext;
+        this.clientSecurityContext = clientSecurityContext;
         getView().setUiHandlers(this);
     }
 
@@ -99,7 +97,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
         registerHandler(statusPresenter.addDataSelectionHandler(e -> {
             final String selected = statusPresenter.getSelected();
-                changeStatus(selected);
+            changeStatus(selected);
         }));
         registerHandler(assignedToPresenter.addDataSelectionHandler(e -> {
             final String selected = assignedToPresenter.getSelected();
@@ -117,7 +115,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                 final CreateEntryRequest request = new CreateEntryRequest(
                         metaId,
                         eventId,
-                        null,
+                        EntryType.STATUS,
                         null,
                         selected,
                         null);
@@ -136,7 +134,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                 final CreateEntryRequest request = new CreateEntryRequest(
                         metaId,
                         eventId,
-                        null,
+                        EntryType.ASSIGNED_TO,
                         null,
                         null,
                         selected);
@@ -201,39 +199,41 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder();
                 entries.forEach(entry -> {
 
-                    if (entry.getComment() != null) {
-                        builder.appendHtmlConstant("<div style=\"width:100%;border:1px solid #C5CDE2;border-radius:5px\">");
-                        builder.appendHtmlConstant("<div style=\"width:100%;padding:5px;border-bottom:1px solid #C5CDE2;background-color:#eee\">");
-                        builder.appendHtmlConstant("<b>");
-                        builder.appendEscaped(entry.getCreateUser());
-                        builder.appendHtmlConstant("</b>");
-                        builder.appendEscaped(" commented ");
-                        builder.appendEscaped(getDuration(entry.getCreateTime(), now));
-                        builder.appendHtmlConstant("</div>");
-                        builder.appendHtmlConstant("<div style=\"width:100%;padding:5px\">");
-                        builder.appendEscaped(entry.getComment());
-                        builder.appendHtmlConstant("</div>");
-                        builder.appendHtmlConstant("</div>");
-
-                    } else if (entry.getStatus() != null) {
-                        builder.appendHtmlConstant("<b>");
-                        builder.appendEscaped(entry.getCreateUser());
-                        builder.appendHtmlConstant("</b>");
-                        builder.appendEscaped(" changed status to ");
-                        builder.appendHtmlConstant("<b>");
-                        builder.appendEscaped(entry.getStatus());
-                        builder.appendHtmlConstant("</b>");
-                        builder.appendEscaped(getDuration(entry.getCreateTime(), now));
-
-                    } else if (entry.getAssignedTo() != null) {
-                        builder.appendHtmlConstant("<b>");
-                        builder.appendEscaped(entry.getCreateUser());
-                        builder.appendHtmlConstant("</b>");
-                        builder.appendEscaped(" changed assigned to ");
-                        builder.appendHtmlConstant("<b>");
-                        builder.appendEscaped(entry.getAssignedTo());
-                        builder.appendHtmlConstant("</b>");
-                        builder.appendEscaped(getDuration(entry.getCreateTime(), now));
+                    switch (entry.getEntryType()) {
+                        case COMMENT:
+                            builder.appendHtmlConstant("<div style=\"width:100%;border:1px solid #C5CDE2;border-radius:5px\">");
+                            builder.appendHtmlConstant("<div style=\"width:100%;padding:5px;border-bottom:1px solid #C5CDE2;background-color:#eee\">");
+                            builder.appendHtmlConstant("<b>");
+                            builder.appendEscaped(entry.getCreateUser());
+                            builder.appendHtmlConstant("</b>");
+                            builder.appendEscaped(" commented ");
+                            builder.appendEscaped(getDuration(entry.getCreateTime(), now));
+                            builder.appendHtmlConstant("</div>");
+                            builder.appendHtmlConstant("<div style=\"width:100%;padding:5px\">");
+                            builder.appendEscaped(entry.getData());
+                            builder.appendHtmlConstant("</div>");
+                            builder.appendHtmlConstant("</div>");
+                            break;
+                        case STATUS:
+                            builder.appendHtmlConstant("<b>");
+                            builder.appendEscaped(entry.getCreateUser());
+                            builder.appendHtmlConstant("</b>");
+                            builder.appendEscaped(" changed status to ");
+                            builder.appendHtmlConstant("<b>");
+                            builder.appendEscaped(entry.getData());
+                            builder.appendHtmlConstant("</b>");
+                            builder.appendEscaped(getDuration(entry.getCreateTime(), now));
+                            break;
+                        case ASSIGNED_TO:
+                            builder.appendHtmlConstant("<b>");
+                            builder.appendEscaped(entry.getCreateUser());
+                            builder.appendHtmlConstant("</b>");
+                            builder.appendEscaped(" changed assigned to ");
+                            builder.appendHtmlConstant("<b>");
+                            builder.appendEscaped(entry.getData());
+                            builder.appendHtmlConstant("</b>");
+                            builder.appendEscaped(getDuration(entry.getCreateTime(), now));
+                            break;
                     }
                 });
 
@@ -375,7 +375,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         final CreateEntryRequest request = new CreateEntryRequest(
                 metaId,
                 eventId,
-                null,
+                EntryType.COMMENT,
                 getView().getComment(),
                 currentStatus,
                 currentAssignedTo);

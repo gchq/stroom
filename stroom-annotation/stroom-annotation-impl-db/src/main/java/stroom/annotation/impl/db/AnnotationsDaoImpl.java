@@ -7,6 +7,7 @@ import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationEntry;
+import stroom.annotation.shared.AnnotationEntry.EntryType;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.db.util.JooqUtil;
 
@@ -25,6 +26,8 @@ class AnnotationsDaoImpl implements AnnotationsDao {
 //    private final stroom.explorer.impl.db.jooq.tables.ExplorerPath p2 = EXPLORER_PATH.as("p2");
 //    private final stroom.annotation.impl.db.jooq.tables.Annotation a = ANNOTATION.as("a");
 //    private final stroom.annotation.impl.db.jooq.tables.AnnotationHistory sh = ANNOTATION_HISTORY.as("ah");
+
+    private static final EntryType[] ENTRY_TYPES = new EntryType[]{EntryType.COMMENT, EntryType.STATUS, EntryType.ASSIGNED_TO};
 
     private static final Function<Record, Annotation> RECORD_TO_ANNOTATION_MAPPER = record -> {
         final Annotation annotation = new Annotation();
@@ -75,9 +78,8 @@ class AnnotationsDaoImpl implements AnnotationsDao {
         entry.setCreateUser(record.get(ANNOTATION_ENTRY.CREATE_USER));
         entry.setUpdateTime(record.get(ANNOTATION_ENTRY.UPDATE_TIME_MS));
         entry.setUpdateUser(record.get(ANNOTATION_ENTRY.UPDATE_USER));
-        entry.setComment(record.get(ANNOTATION_ENTRY.COMMENT));
-        entry.setStatus(record.get(ANNOTATION_ENTRY.STATUS));
-        entry.setAssignedTo(record.get(ANNOTATION_ENTRY.ASSIGNED_TO));
+        entry.setEntryType(ENTRY_TYPES[record.get(ANNOTATION_ENTRY.TYPE)]);
+        entry.setData(record.get(ANNOTATION_ENTRY.DATA));
         return entry;
 
 //        final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
@@ -205,15 +207,6 @@ class AnnotationsDaoImpl implements AnnotationsDao {
         return new AnnotationDetail(annotation, entries);
     }
 
-//    @Override
-//    public AnnotationDetail getDetail(final Annotation annotation) {
-//        AnnotationDetail result = getDetail(annotation.getMetaId(), annotation.getEventId());
-//        if (result == null) {
-//            return annotation;
-//        }
-//        return result;
-//    }
-
     @Override
     public AnnotationDetail createEntry(final CreateEntryRequest request, final String user) {
         final long now = System.currentTimeMillis();
@@ -233,8 +226,34 @@ class AnnotationsDaoImpl implements AnnotationsDao {
             parentAnnotation = create(parentAnnotation);
         }
 
+        // Update parent if we need to.
+        final long annotationId = parentAnnotation.getId();
+        if (EntryType.STATUS.equals(request.getEntryType())) {
+            JooqUtil.context(connectionProvider, context -> context
+                    .update(ANNOTATION)
+                    .set(ANNOTATION.STATUS, request.getStatus())
+                    .set(ANNOTATION.UPDATE_USER, user)
+                    .set(ANNOTATION.UPDATE_TIME_MS, now)
+                    .where(ANNOTATION.ID.eq(annotationId))
+                    .execute());
+        } else if (EntryType.ASSIGNED_TO.equals(request.getEntryType())) {
+            JooqUtil.context(connectionProvider, context -> context
+                    .update(ANNOTATION)
+                    .set(ANNOTATION.ASSIGNED_TO, request.getAssignedTo())
+                    .set(ANNOTATION.UPDATE_USER, user)
+                    .set(ANNOTATION.UPDATE_TIME_MS, now)
+                    .where(ANNOTATION.ID.eq(annotationId))
+                    .execute());
+        } else {
+            JooqUtil.context(connectionProvider, context -> context
+                    .update(ANNOTATION)
+                    .set(ANNOTATION.UPDATE_USER, user)
+                    .set(ANNOTATION.UPDATE_TIME_MS, now)
+                    .where(ANNOTATION.ID.eq(annotationId))
+                    .execute());
+        }
+
         // Create entry.
-        final long parentId = parentAnnotation.getId();
         final int count = JooqUtil.contextResult(connectionProvider, context -> context
                 .insertInto(ANNOTATION_ENTRY,
                         ANNOTATION_ENTRY.VERSION,
@@ -243,18 +262,16 @@ class AnnotationsDaoImpl implements AnnotationsDao {
                         ANNOTATION_ENTRY.UPDATE_USER,
                         ANNOTATION_ENTRY.UPDATE_TIME_MS,
                         ANNOTATION_ENTRY.FK_ANNOTATION_ID,
-                        ANNOTATION_ENTRY.COMMENT,
-                        ANNOTATION_ENTRY.STATUS,
-                        ANNOTATION_ENTRY.ASSIGNED_TO)
+                        ANNOTATION_ENTRY.TYPE,
+                        ANNOTATION_ENTRY.DATA)
                 .values(1,
                         user,
                         now,
                         user,
                         now,
-                        parentId,
-                        request.getComment(),
-                        request.getStatus(),
-                        request.getAssignedTo())
+                        annotationId,
+                        request.getEntryType().getPrimitiveValue(),
+                        getData(request))
                 .execute());
 
         if (count != 1) {
@@ -263,6 +280,18 @@ class AnnotationsDaoImpl implements AnnotationsDao {
 
         // Now select everything back to provide refreshed details.
         return getDetail(request.getMetaId(), request.getEventId());
+    }
+
+    private String getData(final CreateEntryRequest request) {
+        switch (request.getEntryType()) {
+            case COMMENT:
+                return request.getComment();
+            case STATUS:
+                return request.getStatus();
+            case ASSIGNED_TO:
+                return request.getAssignedTo();
+        }
+        return null;
     }
 
     private Annotation create(final Annotation annotation) {

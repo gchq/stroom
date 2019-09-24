@@ -1,22 +1,24 @@
 package stroom.annotation.shared;
 
+import stroom.annotation.shared.AnnotationEntry.EntryType;
+
 public class CreateEntryRequest {
     private long metaId;
     private long eventId;
-    private String user;
+    private EntryType entryType;
     private String comment;
     private String status;
     private String assignedTo;
 
     public CreateEntryRequest(final long metaId,
                               final long eventId,
-                              final String user,
+                              final EntryType entryType,
                               final String comment,
                               final String status,
                               final String assignedTo) {
         this.metaId = metaId;
         this.eventId = eventId;
-        this.user = user;
+        this.entryType = entryType;
         this.comment = comment;
         this.status = status;
         this.assignedTo = assignedTo;
@@ -30,8 +32,8 @@ public class CreateEntryRequest {
         return eventId;
     }
 
-    private String getUser() {
-        return user;
+    public EntryType getEntryType() {
+        return entryType;
     }
 
     public String getComment() {
