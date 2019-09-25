@@ -19,6 +19,10 @@ package stroom.config.global.api;
 import stroom.docref.SharedObject;
 import stroom.util.shared.HasAuditInfo;
 
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Consumer;
+
 /**
  * This class records config properties that are derived from the following
  * sources in increasing order of precedence (larger number == higher precedence)
@@ -50,26 +54,33 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     private Long updateTimeMs;
     private String updateUser;
     private String name;
+
     // TODO now that properties are typed in AppConfig we should really be dealing with typed
     // values here so the UI can edit/display/validate them appropriately according to their type,
     // e.g. a custom UI control for managing List/Map/boolean types
 
-    // The cluster wide value held in the database
-    private String databaseValue;
+
+    // The values are held inside a NullWrapper so we can one of three things:
+    // A null reference - indicating no value has been supplied
+    // A NullWrapper holding null - indicating a null value has been supplied, e.g. an empty maintenanceMessage
+    // A NullWrapper holding a non-null value - indicating a non-null value has been supplied, e.g.
+
+    // The cluster wide value held in the database and set by the user in the UI, may be null.
+    private NullWrapper<String> databaseValue = null;
 
     // These fields are not saved to the database,
     // they come from the annotations on the java config classes
 
     // The cluster wide compile-time default value set in the AppConfig object tree
-    private String defaultValue;
+    private String defaultValue = null;
+//    private NullWrapper<String> defaultValue = null;
 
     // The node specific value as set by the dropwizard YAML file
-    private String yamlValue;
+    private NullWrapper<String> yamlValue = null;
 
-    private SourceType source;
     private String description;
-    private boolean editable;
-    private boolean password;
+    private boolean isEditable;
+    private boolean isPassword;
     private boolean requireRestart;
     private boolean requireUiRestart;
 
@@ -129,6 +140,9 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         this.updateUser = updateUser;
     }
 
+    /**
+     * @return The fully qualified name of the property, e.g. "stroom.temp.path"
+     */
     public String getName() {
         return name;
     }
@@ -138,40 +152,119 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     }
 
     /**
-     * @return The effective value of the property taking into account the precedence order
+     * @return The effective value of the property on this node taking into account the precedence order
+     * of default, database and yaml values
      */
-    public String getEffectiveValue() {
+    public Optional<String> getEffectiveValue() {
         if (yamlValue != null) {
-            return yamlValue;
+            return yamlValue.getValue();
         } else if (databaseValue != null) {
-            return databaseValue;
+            return databaseValue.getValue();
         } else {
-            return defaultValue;
+            return Optional.ofNullable(defaultValue);
         }
     }
 
-    public String getDatabaseValue() {
-        return databaseValue;
+    /**
+     * @return The effective value of the property on this node taking into account the precedence order
+     * of default, database and yaml values. If the value is a password then the value will be masked.
+     */
+    public Optional<String> getEffectiveValueMasked() {
+       if (isPassword) {
+           return Optional.of("********************");
+       } else {
+           return getEffectiveValue();
+       }
+    }
+
+    /**
+     * @return The cluster wide value set in the UI and stored in the database, if present.
+     * If no database override value has been set an exception will be thrown.
+     * Test with hasDatabaseOverride() first.
+     */
+    public Optional<String> getDatabaseOverrideValue() {
+        if (databaseValue == null) {
+            return null;
+//            throw new RuntimeException(String.format("Property %s has no database override set", name));
+        } else {
+            return databaseValue.getValue();
+        }
     }
 
     public void setDatabaseValue(final String databaseValue) {
-        this.databaseValue = databaseValue;
+        // If somebody overrides the default with a value identical to the default then we need to save it
+        this.databaseValue = NullWrapper.of(databaseValue);
     }
 
-    public String getDefaultValue() {
-        return defaultValue;
+    /**
+     * @return True if a value has been supplied to override the defaultValue, even it is null
+     */
+    public boolean hasDatabaseOverride() {
+        return this.databaseValue != null;
+    }
+
+    /**
+     * Remove any override value at the database level, whether null or non-null
+     */
+    public void removeDatabaseOverride() {
+        this.databaseValue = null;
+    }
+
+    /**
+     * @return The cluster wide compile time read only default value for the property
+     */
+    public Optional<String> getDefaultValue() {
+        return Optional
+                .ofNullable(defaultValue);
     }
 
     public void setDefaultValue(final String defaultValue) {
         this.defaultValue = defaultValue;
     }
 
-    String getYamlValue() {
-        return yamlValue;
+    /**
+     * @return The node specific value from the dropwizard YAML file on this node, if present.
+     * If no yaml override has been set an exception will be thrown
+     * Test with hasYamlOverride() first.
+     */
+    public Optional<String> getYamlOverrideValue() {
+        if (yamlValue == null) {
+            return null;
+        } else {
+            return yamlValue.getValue();
+        }
     }
 
-    void setYamlValue(final String yamlValue) {
-        this.yamlValue = yamlValue;
+    /**
+     * @return True if a value has been supplied to override the defaultValue, even it is null
+     */
+    public boolean hasYamlOverride() {
+        return yamlValue !=  null;
+    }
+
+    /**
+     * Remove any override value at the database level, whether null or non-null
+     */
+    public void removeYamlOverride() {
+        this.yamlValue = null;
+    }
+
+    public void setYamlValue(final String yamlValue) {
+
+        // We cannot distinguish between a value that has been set in the yaml as say 10
+        // and a default value of 10, so if the default matches the yaml then we treat the
+        // yaml as unset.
+        final NullWrapper<String> wrappedYamlValue = NullWrapper.of(yamlValue);
+        if (Objects.equals(defaultValue, wrappedYamlValue)) {
+            // matches default so remove the yaml value
+            this.yamlValue = null;
+        } else {
+            this.yamlValue = wrappedYamlValue;
+        }
+    }
+
+    public void unsetYamlValue() {
+        this.yamlValue = null;
     }
 
     public String getDescription() {
@@ -182,14 +275,20 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         this.description = description;
     }
 
+    /**
+     * @return True if the databaseValue for this property can be changed in the UI.
+     */
     public boolean isEditable() {
-        return editable;
+        return isEditable;
     }
 
     public void setEditable(final boolean editable) {
-        this.editable = editable;
+        this.isEditable = editable;
     }
 
+    /**
+     * @return True if a change to the value requires a full cluster restart to take affect.
+     */
     public boolean isRequireRestart() {
         return requireRestart;
     }
@@ -198,6 +297,9 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         this.requireRestart = requireRestart;
     }
 
+    /**
+     * @return True if a change to the value requires a restart of the UI nodes to take affect.
+     */
     public boolean isRequireUiRestart() {
         return requireUiRestart;
     }
@@ -207,19 +309,29 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     }
 
     public boolean isPassword() {
-        return password;
+        return isPassword;
     }
 
     public void setPassword(final boolean password) {
-        this.password = password;
+        this.isPassword = password;
     }
 
     public SourceType getSource() {
-        return source;
+        if (yamlValue != null) {
+            return SourceType.YAML;
+        } else if (databaseValue != null) {
+            return SourceType.DATABASE;
+        } else {
+            return SourceType.DEFAULT;
+        }
     }
 
-    public void setSource(final SourceType source) {
-        this.source = source;
+//    public void setSource(final SourceType source) {
+//        this.source = source;
+//    }
+
+    private static boolean hasValue(final NullWrapper<?> wrapper) {
+        return wrapper != null && wrapper.getValue().isPresent();
     }
 
     @Override
@@ -232,8 +344,11 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         return "ConfigProperty{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", value='" + value + '\'' +
-                ", source='" + source + '\'' +
+                ", databaseValue='" + databaseValue + '\'' +
+                ", defaultValue='" + defaultValue + '\'' +
+                ", yamlValue='" + yamlValue + '\'' +
+                ", effectiveValue='" + getEffectiveValue() + '\'' +
+                ", source='" + getSource() + '\'' +
                 '}';
     }
 
@@ -265,46 +380,172 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         }
     }
 
-    public static class Builder {
-        private final ConfigProperty instance = new ConfigProperty();
+    public static class OverrideValue<T> implements SharedObject {
 
-        public Builder name(final String name) {
-            instance.setName(name);
-            return this;
+        private static final OverrideValue UNSET =  new OverrideValue<>(false, null);
+        private static final OverrideValue NULL_VALUE =  new OverrideValue<>(true, null);
+
+        private final boolean hasOverride;
+        private final T value;
+
+        @SuppressWarnings("unchecked")
+        public static <T> OverrideValue<T> unSet() {
+            return (OverrideValue<T>) UNSET;
         }
 
-        public Builder value(final String value) {
-            instance.value = value;
-            return this;
+        @SuppressWarnings("unchecked")
+        public static <T> OverrideValue<T> withNullValue() {
+            return (OverrideValue<T>) NULL_VALUE;
         }
 
-        public Builder description(final String description) {
-            instance.description = description;
-            return this;
+        public static <T> OverrideValue<T> with(final T value) {
+            return new OverrideValue<>(true, value);
         }
 
-        public Builder editable(final boolean editable) {
-            instance.editable = editable;
-            return this;
+        private OverrideValue(final boolean hasOverride, final T value) {
+            this.hasOverride = hasOverride;
+            this.value = value;
         }
 
-        public Builder requireRestart(final boolean requireRestart) {
-            instance.requireRestart = requireRestart;
-            return this;
+        public boolean hasOverride() {
+            return hasOverride;
         }
 
-        public Builder requireUiRestart(final boolean requireUiRestart) {
-            instance.requireUiRestart = requireUiRestart;
-            return this;
+        public Optional<T> getOverrideValue() {
+            return Optional.ofNullable(value);
         }
 
-        public Builder password(final boolean password) {
-            instance.password = password;
-            return this;
+        public void ifHasOverrideValue(final Consumer<T> consumer) {
+            if (hasOverride) {
+                consumer.accept(value);
+            }
         }
 
-        public ConfigProperty build() {
-            return instance;
+        @Override
+        public String toString() {
+            return "Override{" +
+                    "hasOverride=" + hasOverride +
+                    ", value=" + value +
+                    '}';
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final OverrideValue<?> overrideValue = (OverrideValue<?>) o;
+            return hasOverride == overrideValue.hasOverride &&
+                    Objects.equals(value, overrideValue.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(hasOverride, value);
         }
     }
+
+    /**
+     * A wrapper to allow us to distinguish between a reference to a thing whose value is null and not
+     * having a reference to a thing.
+     * @param <T>
+     */
+    private static class NullWrapper<T> implements SharedObject {
+        private T value;
+
+        NullWrapper(final T value) {
+            this.value = value;
+        }
+
+        static <T> NullWrapper<T> of(final T value) {
+            return new NullWrapper<>(value);
+        }
+
+        Optional<T> getValue() {
+            return Optional.ofNullable(value);
+        }
+
+        void setValue(final T value) {
+            this.value = value;
+        }
+
+        boolean hasNonNullValue() {
+            return this.value != null;
+        }
+
+        boolean hasNullValue() {
+            return this.value == null;
+        }
+
+        @Override
+        public String toString() {
+            return "NullWrapper{" +
+                    "value=" + value +
+                    '}';
+        }
+
+//        static boolean areEqual(final NullWrapper<?> wrapper1, final NullWrapper<?> wrapper2) {
+//            if (wrapper1 == null && wrapper2 == null) {
+//                return true;
+//            } else if ((wrapper1 != null && wrapper1.value != null) && (wrapper2 != null && wrapper2.value == null)) {
+//                return true;
+//            } else if (wrapper1 != null && wrapper1.value != null && wrapper1.value.equals())
+//        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final NullWrapper<?> that = (NullWrapper<?>) o;
+            return Objects.equals(value, that.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(value);
+        }
+
+    }
+
+//    public static class Builder {
+//        private final ConfigProperty instance = new ConfigProperty();
+//
+//        public Builder name(final String name) {
+//            instance.setName(name);
+//            return this;
+//        }
+//
+//        public Builder value(final String value) {
+//            instance.value = value;
+//            return this;
+//        }
+//
+//        public Builder description(final String description) {
+//            instance.description = description;
+//            return this;
+//        }
+//
+//        public Builder editable(final boolean editable) {
+//            instance.editable = editable;
+//            return this;
+//        }
+//
+//        public Builder requireRestart(final boolean requireRestart) {
+//            instance.requireRestart = requireRestart;
+//            return this;
+//        }
+//
+//        public Builder requireUiRestart(final boolean requireUiRestart) {
+//            instance.requireUiRestart = requireUiRestart;
+//            return this;
+//        }
+//
+//        public Builder password(final boolean password) {
+//            instance.password = password;
+//            return this;
+//        }
+//
+//        public ConfigProperty build() {
+//            return instance;
+//        }
+//    }
 }

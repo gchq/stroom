@@ -39,7 +39,7 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
     @UiField
     TextArea description;
     @UiField
-    TextArea value;
+    TextArea databaseValue;
     @UiField
     TextBox source;
     @UiField
@@ -51,6 +51,9 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
     @UiField
     TickBox requireUiRestart;
     private boolean password;
+
+    // TODO add a checkbox called 'Override default' next to the databaseValue field, which when checked enables the
+    //  value field and when unchecked clears the field and disables it
 
     @Inject
     public GlobalPropertyEditViewImpl(final EventBus eventBus, final Binder binder) {
@@ -78,11 +81,11 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
     }
 
     @Override
-    public HasText getValue() {
+    public HasText getDatabaseValue() {
         if (password) {
             return valuePassword;
         } else {
-            return value;
+            return databaseValue;
         }
     }
 
@@ -121,7 +124,7 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
 
     @Override
     public void setEditable(final boolean edit) {
-        value.setReadOnly(!edit);
+        databaseValue.setReadOnly(!edit);
         valuePassword.setReadOnly(!edit);
     }
 

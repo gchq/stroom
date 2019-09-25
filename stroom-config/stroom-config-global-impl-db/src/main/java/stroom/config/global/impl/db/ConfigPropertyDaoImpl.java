@@ -6,6 +6,7 @@ import stroom.config.global.impl.ConfigPropertyDao;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -25,7 +26,11 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
         configProperty.setUpdateTimeMs(record.get(CONFIG.UPDATE_TIME_MS));
         configProperty.setUpdateUser(record.get(CONFIG.UPDATE_USER));
         configProperty.setName(record.get(CONFIG.NAME));
-        configProperty.setValue(record.get(CONFIG.VAL));
+        if (record.get(CONFIG.VAL).equals("")) {
+            configProperty.setDatabaseValue(null);
+        } else {
+            configProperty.setDatabaseValue(record.get(CONFIG.VAL));
+        }
         return configProperty;
     };
 
@@ -38,7 +43,13 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
         record.set(CONFIG.UPDATE_TIME_MS, configProperty.getUpdateTimeMs());
         record.set(CONFIG.UPDATE_USER, configProperty.getUpdateUser());
         record.set(CONFIG.NAME, configProperty.getName());
-        record.set(CONFIG.VAL, configProperty.getValue());
+        // DB doesn't allow null values so use empty string
+        if (configProperty.getDatabaseOverrideValue() == null) {
+            // If there is no value override then we don't want it in the DB
+            throw new RuntimeException(LogUtil.message("Trying to save a config record when there is no databaseValue {}",
+                    configProperty));
+        }
+        record.set(CONFIG.VAL, configProperty.getDatabaseOverrideValue().orElse(""));
         return record;
     };
 

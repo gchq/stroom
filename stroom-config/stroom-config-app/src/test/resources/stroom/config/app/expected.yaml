@@ -433,7 +433,7 @@ appConfig:
       groupAuthorisation: "http://IP_ADDRESS/s/authorisationManager/true"
       editDoc: "http://IP_ADDRESS/s/doc/"
       changepassword: "http://IP_ADDRESS/changepassword"
-      kibana: null
+      kibana: "XXXXXXXXXXXXXX"
       trackers: null
       annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
       elastic: "http://IP_ADDRESS/queryElasticService/queryApi/v1"

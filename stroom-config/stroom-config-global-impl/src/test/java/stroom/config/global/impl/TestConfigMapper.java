@@ -11,6 +11,7 @@ import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jackson.Jackson;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,11 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.BooleanSupplier;
-import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,16 +49,39 @@ class TestConfigMapper {
         String txt = configProperties.stream()
                 .sorted(Comparator.comparing(ConfigProperty::getName))
                 .map(configProperty ->
-                        LogUtil.message("{} - [{}] - [{}] - [{}] - [{}]",
+                        LogUtil.message("{} - [{}] - [{}] - [{}] - [{}] - [{}] - [{}] - [{}]",
                                 configProperty.getName(),
-                                configProperty.getValue(),
-                                configProperty.getDefaultValue(),
+                                configProperty.getDefaultValue().orElse(""),
+                                configProperty.getDatabaseOverrideValue(),
+                                configProperty.getYamlOverrideValue(),
+                                configProperty.getEffectiveValue().orElse(""),
                                 configProperty.getSource(),
                                 configProperty.getDescription()))
                 .collect(Collectors.joining("\n"));
 
         LOGGER.debug("Properties\n{}", txt);
     }
+
+    @Test
+    void testSerdeAllProperties() {
+        AppConfig appConfig = getAppConfig();
+        ConfigMapper configMapper = new ConfigMapper(appConfig);
+
+        Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+
+        // getting each prop as a ConfigProperty ensure we can serialise to string
+        configProperties.forEach(configProperty -> {
+            configProperty.setDatabaseValue(configProperty.getDefaultValue().orElse(null));
+
+            // verify we can convert back to an object from a string
+            ConfigProperty newConfigProperty = configMapper.updateDatabaseValue(configProperty);
+
+            LOGGER.debug(configProperty.toString());
+            Assertions.assertThat(newConfigProperty.getSource())
+                    .isIn(ConfigProperty.SourceType.DATABASE, ConfigProperty.SourceType.DEFAULT);
+        });
+    }
+
 
     @Test
     void testValidatePropertyPath_valid() {
@@ -82,6 +103,18 @@ class TestConfigMapper {
         assertThat(isValid).isFalse();
     }
 
+    private void assertValues(final ConfigProperty configProperty,
+                              final String expectedDefault,
+                              final String expectedDatabase,
+                              final String expectedYaml,
+                              final String expectedEffective) {
+
+        assertThat(configProperty.getDatabaseOverrideValue().orElse(null)).isEqualTo(expectedDatabase);
+        assertThat(configProperty.getDefaultValue()).isEqualTo(expectedDefault);
+        assertThat(configProperty.getYamlOverrideValue().orElse(null)).isEqualTo(expectedYaml);
+        assertThat(configProperty.getEffectiveValue()).isEqualTo(expectedEffective);
+    }
+
     @Test
     void testGetGlobalProperties_defaultValueWithValue() throws IOException, ConfigurationException {
 
@@ -97,12 +130,11 @@ class TestConfigMapper {
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
         final ConfigProperty configProperty = configProperties.stream()
-                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.pipeline.refdata.localDir"))
+                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.pipeline.referenceData.localDir"))
                 .findFirst()
                 .orElseThrow();
 
-        assertThat(configProperty.getValue()).isEqualTo(newValue);
-        assertThat(configProperty.getDefaultValue()).isEqualTo(initialValue);
+        assertValues(configProperty, initialValue, null, newValue, newValue);
     }
 
     @Test
@@ -119,12 +151,13 @@ class TestConfigMapper {
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
         final ConfigProperty configProperty = configProperties.stream()
-                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.pipeline.refdata.localDir"))
+                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.pipeline.referenceData.localDir"))
                 .findFirst()
                 .orElseThrow();
 
-        assertThat(configProperty.getValue()).isEqualTo(initialValue);
-        assertThat(configProperty.getDefaultValue()).isEqualTo(initialValue);
+        assertValues(configProperty, initialValue, null, null, initialValue);
+//        assertThat(configProperty.getValue()).isEqualTo(initialValue);
+//        assertThat(configProperty.getDefaultValue()).isEqualTo(initialValue);
     }
 
     @Test
@@ -134,13 +167,16 @@ class TestConfigMapper {
         Supplier<String> getter = () -> appConfig.getPathConfig().getTemp();
         String initialValue = getter.get();
         String newValue = initialValue + "/xxx";
+        String fullPath = "stroom.path.temp";
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
-        configMapper.updateConfigObject("stroom.path.temp", newValue);
+        ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
+        configProperty.setDatabaseValue(newValue);
+        configMapper.updateDatabaseValue(configProperty);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
-
+/*
     @Test
     void update_boolean() throws IOException, ConfigurationException {
         AppConfig appConfig = getAppConfig();
@@ -150,7 +186,7 @@ class TestConfigMapper {
         boolean newValue = !initialValue;
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
-        configMapper.updateConfigObject("stroom.pipeline.refdata.readAheadEnabled", Boolean.valueOf(newValue).toString().toLowerCase());
+        configMapper.updateConfigObject("stroom.pipeline.refData.readAheadEnabled", Boolean.valueOf(newValue).toString().toLowerCase());
 
         assertThat(getter.getAsBoolean()).isEqualTo(newValue);
     }
@@ -164,7 +200,7 @@ class TestConfigMapper {
         int newValue = initialValue + 1;
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
-        configMapper.updateConfigObject("stroom.pipeline.refdata.maxPutsBeforeCommit", Integer.toString(newValue));
+        configMapper.updateConfigObject("stroom.pipeline.refData.maxPutsBeforeCommit", Integer.toString(newValue));
 
         assertThat(getter.getAsInt()).isEqualTo(newValue);
     }
@@ -335,8 +371,13 @@ class TestConfigMapper {
         assertThat(getter.get()).isEqualTo(newValue);
     }
 
+*/
 
-    private AppConfig getAppConfig() throws IOException, ConfigurationException {
+    private AppConfig getAppConfig() {
+        return new AppConfig();
+    }
+
+    private AppConfig getDevYamlAppConfig() throws IOException, ConfigurationException {
         ConfigurationSourceProvider configurationSourceProvider = new SubstitutingSourceProvider(
                 new FileConfigurationSourceProvider(),
                 new EnvironmentVariableSubstitutor(false));
@@ -384,7 +425,7 @@ class TestConfigMapper {
 //        }
 //    }
 
-    private static class TestConfig implements IsConfig {
+    private static class TestConfig extends AppConfig {
 
         private String stringProp = "initial value";
         private List<String> stringListProp = new ArrayList<>();

@@ -119,18 +119,20 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
         getView().setRequireRestart(getEntity().isRequireRestart());
         getView().setRequireUiRestart(getEntity().isRequireUiRestart());
         getView().getName().setText(getEntity().getName());
-        getView().getValue().setText(getEntity().getValue());
+        getView().getDatabaseValue().setText(getEntity().getDatabaseOverrideValue().orElse(""));
         getView().getDescription().setText(getEntity().getDescription());
-        getView().getDefaultValue().setText(getEntity().getDefaultValue());
+        if (getEntity().hasDatabaseOverride() && getEntity().getDatabaseOverrideValue().isPresent()) {
+            getView().getDefaultValue().setText(getEntity().getDefaultValue().get());
+        }
         getView().getSource().setText(getEntity().getSource().getName());
     }
 
     private void write(final boolean hideOnSave) {
-        String value = getView().getValue().getText();
+        String value = getView().getDatabaseValue().getText();
         if (value != null) {
-            getEntity().setValue(value.trim());
+            getEntity().setDatabaseValue(value.trim());
         } else {
-            getEntity().setValue(null);
+            getEntity().setDatabaseValue(null);
         }
 
         // Save.
@@ -152,9 +154,13 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
     public interface GlobalPropertyEditView extends View {
         HasText getName();
 
-        HasText getValue();
-
         HasText getDefaultValue();
+
+        HasText getDatabaseValue();
+//
+//        HasText getYamlValue();
+
+//        HasText getEffectiveValue();
 
         HasText getDescription();
 

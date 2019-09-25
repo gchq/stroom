@@ -1,19 +1,17 @@
-package stroom.config.app;
+package stroom.config;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.internal.cglib.core.$DebuggingClassWriter;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.activity.impl.db.ActivityConfig;
-import stroom.cluster.lock.impl.db.ClusterLockConfig;
+import stroom.config.app.AppConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.HasDbConfig;
-import stroom.task.api.TaskManager;
+import stroom.test.CoreTestModule;
 import stroom.util.io.FileUtil;
 
 import java.io.FileNotFoundException;
@@ -22,9 +20,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class TestAppConfigModule {
 
@@ -41,7 +38,7 @@ class TestAppConfigModule {
     @Test
     void configure() throws IOException {
 
-        Path devYamlPath = TestYamlUtil.getDevYamlPath();
+        Path devYamlPath = getDevYamlPath();
 
         LOGGER.debug("dev yaml path: {}", devYamlPath.toAbsolutePath());
 
@@ -60,7 +57,12 @@ class TestAppConfigModule {
                 MODIFIED_JDBC_DRIVER);
         Files.writeString(devYamlCopyPath, ymlContent, StandardCharsets.UTF_8);
 
-        Injector injector = Guice.createInjector(new AppConfigModule(devYamlCopyPath));
+        Injector injector = Guice.createInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                install(new CoreTestModule(devYamlCopyPath));
+            }
+        });
 
         AppConfig appConfig = injector.getInstance(AppConfig.class);
         CommonDbConfig commonDbConfig = injector.getInstance(CommonDbConfig.class);
@@ -87,5 +89,25 @@ class TestAppConfigModule {
                     Assertions.assertThat(hasDbConfig.getDbConfig().getConnectionPoolConfig())
                             .isEqualTo(commonDbConfig.getConnectionPoolConfig());
                 });
+    }
+
+    public static Path getDevYamlPath() throws FileNotFoundException {
+        // Load dev.yaml
+        final String codeSourceLocation = TestAppConfigModule.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+
+        Path path = Paths.get(codeSourceLocation);
+        while (path != null && !path.getFileName().toString().equals("stroom-app")) {
+            path = path.getParent();
+        }
+        if (path != null) {
+            path = path.getParent();
+            path = path.resolve("stroom-app");
+            path = path.resolve("dev.yml");
+        }
+
+        if (path == null) {
+            throw new FileNotFoundException("Unable to find dev.yml");
+        }
+        return path;
     }
 }

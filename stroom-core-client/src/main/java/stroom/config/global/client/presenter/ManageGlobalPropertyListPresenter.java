@@ -57,9 +57,9 @@ public class ManageGlobalPropertyListPresenter
                 if (row == null) {
                     return null;
                 }
-                return row.getValue();
+                return row.getEffectiveValueMasked().orElse(null);
             }
-        }, "Value", 150);
+        }, "Effective Value", 150);
 
         getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {
             @Override

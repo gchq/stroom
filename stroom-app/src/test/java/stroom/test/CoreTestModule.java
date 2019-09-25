@@ -21,25 +21,40 @@ import java.nio.file.Paths;
 public class CoreTestModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(CoreTestModule.class);
 
+    private Path yamlConfigPath = null;
+
+    public CoreTestModule() {
+    }
+
+    public CoreTestModule(final Path yamlConfigPath) {
+        this.yamlConfigPath = yamlConfigPath;
+    }
+
     @Override
     protected void configure() {
-        // Load dev.yaml
-        final String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
+        Path path;
 
-        Path path = Paths.get(codeSourceLocation);
-        while (path != null && !path.getFileName().toString().equals("stroom-app")) {
-            path = path.getParent();
-        }
+        if (yamlConfigPath != null) {
+            path = yamlConfigPath;
+        } else {
+            // Load dev.yaml
+            final String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
 
-        // resolve local.yml in the root of the repo
-        if (path != null) {
-            path = path.getParent();
-            path = path.resolve("local.yml");
-        }
+            path = Paths.get(codeSourceLocation);
+            while (path != null && !path.getFileName().toString().equals("stroom-app")) {
+                path = path.getParent();
+            }
 
-        if (path == null) {
-            throw new RuntimeException("Unable to find local.yml, try running local.yml.sh in the root of the repo " +
-                    "to create one.");
+            // resolve local.yml in the root of the repo
+            if (path != null) {
+                path = path.getParent();
+                path = path.resolve("local.yml");
+            }
+
+            if (path == null) {
+                throw new RuntimeException("Unable to find local.yml, try running local.yml.sh in the root of the repo " +
+                        "to create one.");
+            }
         }
 
         LOGGER.info("Using config from: " + FileUtil.getCanonicalPath(path));
