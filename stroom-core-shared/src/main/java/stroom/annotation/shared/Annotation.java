@@ -1,7 +1,5 @@
 package stroom.annotation.shared;
 
-import java.util.List;
-
 public class Annotation {
     private Long id;
     private Integer version;
@@ -13,6 +11,9 @@ public class Annotation {
     private long eventId;
     private String status;
     private String assignedTo;
+
+    public Annotation() {
+    }
 
     public Long getId() {
         return id;

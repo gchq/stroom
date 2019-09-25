@@ -27,7 +27,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.svg.client.SvgPresets;
@@ -63,27 +62,6 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     ResizeSimplePanel history;
 
-
-//    @UiField
-//    FlowPanel statusSelection;
-//    @UiField
-//    FlowPanel assignedToSelection;
-
-//    @UiField
-//    Label title;
-//    @UiField
-//    Label createdBy;
-//    @UiField
-//    Label createdOn;
-//    @UiField
-//    Label status;
-//    @UiField
-//    Label assignedTo;
-//    @UiField
-//    ResizeSimplePanel history;
-//    @UiField
-//    ResizeSimplePanel comment;
-
     private final Widget widget;
 
     @Inject
@@ -91,59 +69,13 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         statusIcon = SvgButton.create(SvgPresets.SETTINGS);
         assignedToIcon = SvgButton.create(SvgPresets.SETTINGS);
         widget = binder.createAndBindUi(this);
-
-//        statusSelection.addDomHandler(e -> {
-//            if (getUiHandlers() != null) {
-//                getUiHandlers().showStatusChooser(e);
-//            }
-//        }, MouseDownEvent.getType());
     }
-
-//    @Override
-//    public String getTitle() {
-//        return null;
-//    }
-//
-//    @Override
-//    public void setTitle(final String title) {
-//
-//    }
-//
-//    @Override
-//    public String getCreatedBy() {
-//        return null;
-//    }
-//
-//    @Override
-//    public void setCreateUser(final String createdBy) {
-//
-//    }
-//
-//    @Override
-//    public String getCreatedOn() {
-//        return null;
-//    }
-//
-//    @Override
-//    public void setCreateTime(final String createdOn) {
-//
-//    }
-//
-//    @Override
-//    public String getStatus() {
-//        return null;
-//    }
 
     @Override
     public void setStatus(final String status) {
         final Label label = new Label(status, false);
         this.currentStatusContainer.setWidget(label);
     }
-
-//    @Override
-//    public String getAssignedTo() {
-//        return null;
-//    }
 
     @Override
     public void setAssignedTo(final String assignedTo) {
@@ -162,77 +94,20 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         history.setWidget(view);
     }
 
-//    @Override
-//    public void setCommentView(final View view) {
-//
-//    }
-
     @Override
     public String getComment() {
         return this.comment.getText();
     }
 
+    @Override
+    public void setComment(final String comment) {
+        this.comment.setText(comment);
+    }
 
-
-    //    @Override
-//    public String getTitle() {
-//        return title.getText();
-//    }
-//
-//    @Override
-//    public void setTitle(final String title) {
-//        this.title.setText(title);
-//    }
-//
-//    @Override
-//    public String getCreatedBy() {
-//        return createdBy.getText();
-//    }
-//
-//    @Override
-//    public void setCreatedBy(final String createdBy) {
-//        this.createdBy.setText(createdBy);
-//    }
-//
-//    @Override
-//    public String getCreatedOn() {
-//        return createdOn.getText();
-//    }
-//
-//    @Override
-//    public void setCreatedOn(final String createdOn) {
-//        this.createdOn.setText(createdOn);
-//    }
-//
-//    @Override
-//    public String getStatus() {
-//        return status.getText();
-//    }
-//
-//    @Override
-//    public void setStatus(final String status) {
-//        this.status.setText(status);
-//    }
-//
-//    @Override
-//    public String getAssignedTo() {
-//        return assignedTo.getText();
-//    }
-//
-//    @Override
-//    public void setAssignedTo(final String assignedTo) {
-//        this.assignedTo.setText(assignedTo);
-//    }
-//
-//    @Override
-//    public void setHistoryView(final View view) {
-//
-//    }
-//
-//    @Override
-//    public void setCommentView(final View view) {
-//
-//    }
+    @Override
+    public void setButtonText(final String text) {
+        create.setText(text);
+    }
 
     @Override
     public Widget asWidget() {

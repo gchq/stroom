@@ -299,11 +299,12 @@ public class App extends Application<Config> {
             System.exit(1);
         }
 
+        // Temporary shim for annotations.
+        ConnectionProviderFactoryBean.setAnnotationsConfig(configuration.getAnnotationsConfig());
+
         // Start the spring context.
         LOGGER.info("Loading Spring context");
         final ApplicationContext applicationContext = loadApplicationContext(configuration, environment);
-        // Temporary shim for annotations.
-        applicationContext.getBean(ConnectionProviderFactoryBean.class).setAnnotationsConfig(configuration.getAnnotationsConfig());
 
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 

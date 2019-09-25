@@ -18,7 +18,7 @@ package stroom.annotation.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
@@ -29,6 +29,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
+import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationEntry.EntryType;
@@ -44,6 +45,7 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.FetchUserRefAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
+import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -189,60 +191,74 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
         this.annotationDetail = annotationDetail;
         if (annotationDetail != null) {
-            currentStatus = annotationDetail.getAnnotation().getStatus();
-            currentAssignedTo = annotationDetail.getAnnotation().getAssignedTo();
+            getView().setButtonText("Comment");
+
+            final Annotation annotation = annotationDetail.getAnnotation();
+            currentStatus = annotation.getStatus();
+            currentAssignedTo = annotation.getAssignedTo();
             getView().setStatus(currentStatus);
             getView().setAssignedTo(currentAssignedTo);
 
             final List<AnnotationEntry> entries = annotationDetail.getEntries();
             if (entries != null) {
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+                builder.appendHtmlConstant("<div class=\"annotationHistoryInner\">");
                 entries.forEach(entry -> {
 
+                    builder.appendHtmlConstant("<div class=\"annotationHistoryLine\">");
+                    builder.appendHtmlConstant("<div class=\"annotationHistoryLineMargin\"><div class=\"annotationHistoryLineMarker\"></div></div>");
                     switch (entry.getEntryType()) {
                         case COMMENT:
-                            builder.appendHtmlConstant("<div style=\"width:100%;border:1px solid #C5CDE2;border-radius:5px\">");
-                            builder.appendHtmlConstant("<div style=\"width:100%;padding:5px;border-bottom:1px solid #C5CDE2;background-color:#eee\">");
+                            builder.appendHtmlConstant("<div class=\"annotationHistoryCommentBorder\">");
+                            builder.appendHtmlConstant("<div class=\"annotationHistoryCommentHeader\">");
                             builder.appendHtmlConstant("<b>");
                             builder.appendEscaped(entry.getCreateUser());
                             builder.appendHtmlConstant("</b>");
                             builder.appendEscaped(" commented ");
-                            builder.appendEscaped(getDuration(entry.getCreateTime(), now));
+                            builder.append(getDurationLabel(entry.getCreateTime(), now));
                             builder.appendHtmlConstant("</div>");
-                            builder.appendHtmlConstant("<div style=\"width:100%;padding:5px\">");
+                            builder.appendHtmlConstant("<div class=\"annotationHistoryCommentBody\">");
                             builder.appendEscaped(entry.getData());
                             builder.appendHtmlConstant("</div>");
                             builder.appendHtmlConstant("</div>");
                             break;
                         case STATUS:
+                            builder.appendHtmlConstant("<div class=\"annotationHistoryStatus\">");
                             builder.appendHtmlConstant("<b>");
                             builder.appendEscaped(entry.getCreateUser());
                             builder.appendHtmlConstant("</b>");
                             builder.appendEscaped(" changed status to ");
                             builder.appendHtmlConstant("<b>");
                             builder.appendEscaped(entry.getData());
-                            builder.appendHtmlConstant("</b>");
-                            builder.appendEscaped(getDuration(entry.getCreateTime(), now));
+                            builder.appendHtmlConstant("</b> ");
+                            builder.append(getDurationLabel(entry.getCreateTime(), now));
+                            builder.appendHtmlConstant("</div>");
                             break;
                         case ASSIGNED_TO:
+                            builder.appendHtmlConstant("<div class=\"annotationHistoryAssignedTo\">");
                             builder.appendHtmlConstant("<b>");
                             builder.appendEscaped(entry.getCreateUser());
                             builder.appendHtmlConstant("</b>");
                             builder.appendEscaped(" changed assigned to ");
                             builder.appendHtmlConstant("<b>");
                             builder.appendEscaped(entry.getData());
-                            builder.appendHtmlConstant("</b>");
-                            builder.appendEscaped(getDuration(entry.getCreateTime(), now));
+                            builder.appendHtmlConstant("</b> ");
+                            builder.append(getDurationLabel(entry.getCreateTime(), now));
+                            builder.appendHtmlConstant("</div>");
                             break;
                     }
+                    builder.appendHtmlConstant("</div>");
                 });
 
+                builder.appendHtmlConstant("</div>");
+
                 final HTML panel = new HTML(builder.toSafeHtml());
-                panel.setWidth("100%");
-                panel.setHeight("100%");
-                panel.getElement().getStyle().setOverflow(Overflow.AUTO);
+                panel.setStyleName("annotationHistoryOuter");
                 getView().setHistoryView(panel);
             }
+
+        } else {
+            getView().setButtonText("Create");
         }
 
 //        getView().setTitle("Event Id: " + annotation.getMetaId() + ":" + annotation.getEventId());
@@ -254,16 +270,31 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 //        HidePopupEvent.fire(this, assignedToPresenter, true, true);
     }
 
-    private String getDuration(final long time, final Date finish) {
+    private SafeHtml getDurationLabel(final long time, final Date now) {
+        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+        builder.appendHtmlConstant("<span class=\"annotationDurationLabel\" title=\"" + ClientDateUtil.toISOString(time) + "\">");
+        builder.appendEscaped(getDuration(time, now));
+        builder.appendHtmlConstant("</span>");
+        return builder.toSafeHtml();
+    }
+
+    private String getDuration(final long time, final Date now) {
         final Date start = new Date(time);
-        int days = CalendarUtil.getDaysBetween(start, finish);
+        final int days = CalendarUtil.getDaysBetween(start, now);
         if (days == 1) {
             return "yesterday";
+        } else if (days > 365) {
+            final int years = days / 365;
+            if (years == 1) {
+                return "a year ago";
+            } else {
+                return years + "years ago";
+            }
         } else if (days > 1) {
             return days + " days ago";
         }
 
-        long diff = finish.getTime() - time;
+        long diff = now.getTime() - time;
         if (diff > ONE_HOUR) {
             final int hours = (int) (diff / ONE_HOUR);
             if (hours == 1) {
@@ -372,18 +403,22 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
     @Override
     public void create() {
-        final CreateEntryRequest request = new CreateEntryRequest(
-                metaId,
-                eventId,
-                EntryType.COMMENT,
-                getView().getComment(),
-                currentStatus,
-                currentAssignedTo);
-        addEntry(request);
+        final String comment = getView().getComment();
+        if (comment != null && comment.length() > 0) {
+            final CreateEntryRequest request = new CreateEntryRequest(
+                    metaId,
+                    eventId,
+                    EntryType.COMMENT,
+                    comment,
+                    currentStatus,
+                    currentAssignedTo);
+            addEntry(request);
+            getView().setComment("");
+        }
     }
 
     public interface AnnotationEditView extends View, HasUiHandlers<AnnotationEditUiHandlers> {
-//        String getTitle();
+        //        String getTitle();
 //
 //        void setTitle(String title);
 //
@@ -395,18 +430,16 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 //
 //        void setCreateTime(String createdOn);
 //
-//        String getStatus();
-
         void setStatus(String status);
-
-//        String getAssignedTo();
 
         void setAssignedTo(String assignedTo);
 
         String getComment();
 
+        void setComment(String comment);
+
         void setHistoryView(Widget view);
 
-//        void setCommentView(View view);
+        void setButtonText(String text);
     }
 }

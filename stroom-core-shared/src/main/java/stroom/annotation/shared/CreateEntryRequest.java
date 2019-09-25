@@ -10,6 +10,9 @@ public class CreateEntryRequest {
     private String status;
     private String assignedTo;
 
+    public CreateEntryRequest() {
+    }
+
     public CreateEntryRequest(final long metaId,
                               final long eventId,
                               final EntryType entryType,
@@ -28,23 +31,47 @@ public class CreateEntryRequest {
         return metaId;
     }
 
+    public void setMetaId(final long metaId) {
+        this.metaId = metaId;
+    }
+
     public long getEventId() {
         return eventId;
+    }
+
+    public void setEventId(final long eventId) {
+        this.eventId = eventId;
     }
 
     public EntryType getEntryType() {
         return entryType;
     }
 
+    public void setEntryType(final EntryType entryType) {
+        this.entryType = entryType;
+    }
+
     public String getComment() {
         return comment;
+    }
+
+    public void setComment(final String comment) {
+        this.comment = comment;
     }
 
     public String getStatus() {
         return status;
     }
 
+    public void setStatus(final String status) {
+        this.status = status;
+    }
+
     public String getAssignedTo() {
         return assignedTo;
+    }
+
+    public void setAssignedTo(final String assignedTo) {
+        this.assignedTo = assignedTo;
     }
 }

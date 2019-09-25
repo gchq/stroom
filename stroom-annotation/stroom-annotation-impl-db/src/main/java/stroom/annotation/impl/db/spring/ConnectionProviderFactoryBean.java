@@ -9,8 +9,8 @@ import stroom.annotation.impl.db.ConnectionProvider;
 import stroom.util.spring.StroomScope;
 
 @Component
-@Scope(StroomScope.PROTOTYPE)
 public class ConnectionProviderFactoryBean implements FactoryBean<ConnectionProvider> {
+    private static AnnotationsConfig annotationsConfig;
     private static ConnectionProvider connectionProvider;
 
     @Override
@@ -28,7 +28,7 @@ public class ConnectionProviderFactoryBean implements FactoryBean<ConnectionProv
         return false;
     }
 
-    public void setAnnotationsConfig(final AnnotationsConfig annotationsConfig) {
-        this.connectionProvider = new AnnotationsDbModule(annotationsConfig).getConnectionProvider(() -> annotationsConfig);
+    public static void setAnnotationsConfig(final AnnotationsConfig annotationsConfig) {
+        connectionProvider = new AnnotationsDbModule(annotationsConfig).getConnectionProvider(() -> annotationsConfig);
     }
 }
