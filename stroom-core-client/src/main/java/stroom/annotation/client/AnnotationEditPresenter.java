@@ -28,6 +28,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.alert.client.event.AlertEvent;
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
@@ -47,6 +48,7 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -73,6 +75,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     private AnnotationDetail annotationDetail;
     private long metaId;
     private long eventId;
+    private String currentTitle;
     private String currentStatus;
     private String currentAssignedTo;
 
@@ -107,6 +110,25 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         }));
     }
 
+    private void changeTitle(final String selected) {
+        if (!Objects.equals(currentTitle, selected)) {
+            currentTitle = selected;
+            getView().setTitle(selected);
+
+            if (annotationDetail != null) {
+                final CreateEntryRequest request = new CreateEntryRequest(
+                        metaId,
+                        eventId,
+                        EntryType.TITLE,
+                        selected,
+                        null,
+                        null,
+                        null);
+                addEntry(request);
+            }
+        }
+    }
+
     private void changeStatus(final String selected) {
         if (!Objects.equals(currentStatus, selected)) {
             currentStatus = selected;
@@ -118,6 +140,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                         metaId,
                         eventId,
                         EntryType.STATUS,
+                        null,
                         null,
                         selected,
                         null);
@@ -137,6 +160,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                         metaId,
                         eventId,
                         EntryType.ASSIGNED_TO,
+                        null,
                         null,
                         null,
                         selected);
@@ -161,6 +185,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
     private void edit(final AnnotationDetail annotationDetail) {
         read(annotationDetail);
+
         final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
@@ -177,9 +202,16 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                 this,
                 PopupType.CLOSE_DIALOG,
                 null,
-                popupSize, "Edit Annotation: " + metaId + ":" + eventId,
+                popupSize, getCaption(annotationDetail),
                 internalPopupUiHandlers,
                 false);
+    }
+
+    private String getCaption(final AnnotationDetail annotationDetail) {
+        if (annotationDetail == null) {
+            return "Create Annotation";
+        }
+        return "Edit Annotation";
     }
 
     private void hide() {
@@ -189,13 +221,20 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     private void read(final AnnotationDetail annotationDetail) {
         final Date now = new Date();
 
-        this.annotationDetail = annotationDetail;
         if (annotationDetail != null) {
+            if (this.annotationDetail == null) {
+                // If this is an existing annotation then change the dialog caption.
+                RenamePopupEvent.fire(this, this, getCaption(annotationDetail));
+            }
+            this.annotationDetail = annotationDetail;
+
             getView().setButtonText("Comment");
 
             final Annotation annotation = annotationDetail.getAnnotation();
+            currentTitle = annotation.getTitle();
             currentStatus = annotation.getStatus();
             currentAssignedTo = annotation.getAssignedTo();
+            getView().setTitle(currentTitle);
             getView().setStatus(currentStatus);
             getView().setAssignedTo(currentAssignedTo);
 
@@ -204,48 +243,34 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder();
                 builder.appendHtmlConstant("<div class=\"annotationHistoryInner\">");
                 entries.forEach(entry -> {
-
                     builder.appendHtmlConstant("<div class=\"annotationHistoryLine\">");
                     builder.appendHtmlConstant("<div class=\"annotationHistoryLineMargin\"><div class=\"annotationHistoryLineMarker\"></div></div>");
-                    switch (entry.getEntryType()) {
-                        case COMMENT:
-                            builder.appendHtmlConstant("<div class=\"annotationHistoryCommentBorder\">");
-                            builder.appendHtmlConstant("<div class=\"annotationHistoryCommentHeader\">");
-                            builder.appendHtmlConstant("<b>");
-                            builder.appendEscaped(entry.getCreateUser());
-                            builder.appendHtmlConstant("</b>");
-                            builder.appendEscaped(" commented ");
-                            builder.append(getDurationLabel(entry.getCreateTime(), now));
-                            builder.appendHtmlConstant("</div>");
-                            builder.appendHtmlConstant("<div class=\"annotationHistoryCommentBody\">");
-                            builder.appendEscaped(entry.getData());
-                            builder.appendHtmlConstant("</div>");
-                            builder.appendHtmlConstant("</div>");
-                            break;
-                        case STATUS:
-                            builder.appendHtmlConstant("<div class=\"annotationHistoryStatus\">");
-                            builder.appendHtmlConstant("<b>");
-                            builder.appendEscaped(entry.getCreateUser());
-                            builder.appendHtmlConstant("</b>");
-                            builder.appendEscaped(" changed status to ");
-                            builder.appendHtmlConstant("<b>");
-                            builder.appendEscaped(entry.getData());
-                            builder.appendHtmlConstant("</b> ");
-                            builder.append(getDurationLabel(entry.getCreateTime(), now));
-                            builder.appendHtmlConstant("</div>");
-                            break;
-                        case ASSIGNED_TO:
-                            builder.appendHtmlConstant("<div class=\"annotationHistoryAssignedTo\">");
-                            builder.appendHtmlConstant("<b>");
-                            builder.appendEscaped(entry.getCreateUser());
-                            builder.appendHtmlConstant("</b>");
-                            builder.appendEscaped(" changed assigned to ");
-                            builder.appendHtmlConstant("<b>");
-                            builder.appendEscaped(entry.getData());
-                            builder.appendHtmlConstant("</b> ");
-                            builder.append(getDurationLabel(entry.getCreateTime(), now));
-                            builder.appendHtmlConstant("</div>");
-                            break;
+                    if (EntryType.COMMENT.equals(entry.getEntryType())) {
+                        builder.appendHtmlConstant("<div class=\"annotationHistoryCommentBorder\">");
+                        builder.appendHtmlConstant("<div class=\"annotationHistoryCommentHeader\">");
+                        builder.appendHtmlConstant("<b>");
+                        builder.appendEscaped(entry.getCreateUser());
+                        builder.appendHtmlConstant("</b>");
+                        builder.appendEscaped(" commented ");
+                        builder.append(getDurationLabel(entry.getCreateTime(), now));
+                        builder.appendHtmlConstant("</div>");
+                        builder.appendHtmlConstant("<div class=\"annotationHistoryCommentBody\">");
+                        builder.appendEscaped(entry.getData());
+                        builder.appendHtmlConstant("</div>");
+                        builder.appendHtmlConstant("</div>");
+                    } else {
+                        builder.appendHtmlConstant("<div class=\"annotationHistoryItem\">");
+                        builder.appendHtmlConstant("<b>");
+                        builder.appendEscaped(entry.getCreateUser());
+                        builder.appendHtmlConstant("</b>");
+                        builder.appendEscaped(" changed ");
+                        builder.appendEscaped(entry.getEntryType().getDisplayValue().toLowerCase());
+                        builder.appendEscaped(" to ");
+                        builder.appendHtmlConstant("<b>");
+                        builder.appendEscaped(entry.getData());
+                        builder.appendHtmlConstant("</b> ");
+                        builder.append(getDurationLabel(entry.getCreateTime(), now));
+                        builder.appendHtmlConstant("</div>");
                     }
                     builder.appendHtmlConstant("</div>");
                 });
@@ -259,6 +284,18 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
         } else {
             getView().setButtonText("Create");
+        }
+
+        if (currentStatus == null) {
+            final List<String> values = getStatusValues();
+            if (values.size() > 0) {
+                changeStatus(values.get(0));
+            }
+        }
+
+        if (currentTitle == null || currentTitle.trim().length() == 0) {
+            changeTitle("Title");
+            getView().startTitleEdit();
         }
 
 //        getView().setTitle("Event Id: " + annotation.getMetaId() + ":" + annotation.getEventId());
@@ -326,11 +363,13 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     }
 
     @Override
+    public void onTitleChange() {
+        changeTitle(getView().getTitle());
+    }
+
+    @Override
     public void showStatusChooser(final Element element) {
-        final List<String> status = new ArrayList<>();
-        status.add("New");
-        status.add("Assigned");
-        status.add("Closed");
+
 
 //        final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
 //            @Override
@@ -354,10 +393,11 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 //        };
 
         statusPresenter.setDataSupplier((filter, consumer) -> {
+            final List<String> values = getStatusValues();
             if (filter == null) {
-                consumer.accept(status);
+                consumer.accept(values);
             } else {
-                final List<String> filtered = status
+                final List<String> filtered = values
                         .stream()
                         .filter(value -> value.toLowerCase().contains(filter.toLowerCase()))
                         .collect(Collectors.toList());
@@ -368,6 +408,14 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.fire(this, statusPresenter, PopupType.POPUP, popupPosition, null, element);
+    }
+
+    private List<String> getStatusValues() {
+        final List<String> status = new ArrayList<>();
+        status.add("New");
+        status.add("Assigned");
+        status.add("Closed");
+        return status;
     }
 
     @Override
@@ -409,20 +457,23 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                     metaId,
                     eventId,
                     EntryType.COMMENT,
+                    currentTitle,
                     comment,
                     currentStatus,
                     currentAssignedTo);
             addEntry(request);
             getView().setComment("");
+        } else {
+            AlertEvent.fireWarn(this, "Please enter a comment", null);
         }
     }
 
     public interface AnnotationEditView extends View, HasUiHandlers<AnnotationEditUiHandlers> {
-        //        String getTitle();
-//
-//        void setTitle(String title);
-//
-//        String getCreatedBy();
+        String getTitle();
+
+        void setTitle(String title);
+
+        //        String getCreatedBy();
 //
 //        void setCreateUser(String createdBy);
 //
@@ -441,5 +492,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         void setHistoryView(Widget view);
 
         void setButtonText(String text);
+
+        void startTitleEdit();
     }
 }

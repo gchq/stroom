@@ -6,6 +6,7 @@ public class CreateEntryRequest {
     private long metaId;
     private long eventId;
     private EntryType entryType;
+    private String title;
     private String comment;
     private String status;
     private String assignedTo;
@@ -16,12 +17,14 @@ public class CreateEntryRequest {
     public CreateEntryRequest(final long metaId,
                               final long eventId,
                               final EntryType entryType,
+                              final String title,
                               final String comment,
                               final String status,
                               final String assignedTo) {
         this.metaId = metaId;
         this.eventId = eventId;
         this.entryType = entryType;
+        this.title = title;
         this.comment = comment;
         this.status = status;
         this.assignedTo = assignedTo;
@@ -49,6 +52,14 @@ public class CreateEntryRequest {
 
     public void setEntryType(final EntryType entryType) {
         this.entryType = entryType;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(final String title) {
+        this.title = title;
     }
 
     public String getComment() {

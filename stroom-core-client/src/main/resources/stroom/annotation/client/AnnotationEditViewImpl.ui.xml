@@ -7,8 +7,8 @@
     <g:FlowPanel styleName="annotationContainer">
         <g:FlowPanel styleName="annotationTop">
             <g:FlowPanel addStyleNames="annotationTitleContainer">
-                <g:Label ui:field="titleLabel" styleName="annotationTitle"
-                         text="Some Title"/>
+                <g:Label ui:field="titleLabel" styleName="annotationTitleLabel"/>
+                <g:TextBox ui:field="titleTextBox" styleName="annotationTitleTextBox"/>
             </g:FlowPanel>
         </g:FlowPanel>
         <g:FlowPanel styleName="annotationBottom">
@@ -33,7 +33,7 @@
                              text="Assigned To"/>
                     <button:SvgButton ui:field="assignedToIcon"/>
                 </g:FlowPanel>
-                <g:FlowPanel addStyleNames="annotationSettingBody" >
+                <g:FlowPanel addStyleNames="annotationSettingBody">
                     <g:FlowPanel ui:field="assignYourselfContainer">
                         <g:Label styleName="annotationNobody">Nobody</g:Label>
                         <g:Label ui:field="assignYourself" styleName="annotationAssignYourself">Assign Yourself

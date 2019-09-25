@@ -24,6 +24,8 @@ public interface AnnotationEditUiHandlers extends UiHandlers {
 
     void showAssignedToChooser(Element element);
 
+    void onTitleChange();
+
     void assignYourself();
 
     void create();

@@ -77,9 +77,18 @@ public class AnnotationEntry {
     }
 
     public enum EntryType implements HasDisplayValue {
-        COMMENT("Comment", 0),
-        STATUS("Status", 1),
-        ASSIGNED_TO("Assigned To", 2);
+        TITLE("Title", 0),
+        COMMENT("Comment", 1),
+        STATUS("Status", 2),
+        ASSIGNED_TO("Assigned", 3);
+
+        private static EntryType[] values = new EntryType[] {TITLE, COMMENT, STATUS, ASSIGNED_TO};
+        public static EntryType fromPrimitive(int index) {
+            if (index >= 0 && index < values.length) {
+                return values[index];
+            }
+            return null;
+        }
 
         private final String displayValue;
         private final int primitiveValue;

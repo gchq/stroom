@@ -9,6 +9,7 @@ public class Annotation {
     private String updateUser;
     private long metaId;
     private long eventId;
+    private String title;
     private String status;
     private String assignedTo;
 
@@ -77,6 +78,14 @@ public class Annotation {
 
     public void setEventId(final long eventId) {
         this.eventId = eventId;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(final String title) {
+        this.title = title;
     }
 
     public String getStatus() {

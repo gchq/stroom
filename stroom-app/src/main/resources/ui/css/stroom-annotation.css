@@ -55,18 +55,24 @@
 }
 
 .annotationTitleContainer {
-    padding-bottom: 10px;
+    padding-bottom: 15px;
 }
 
-.annotationTitle {
+.annotationTitleLabel {
     font-size: 18pt;
     width: 100%;
     opacity: 0.6;
     cursor: pointer;
+    padding: 3px;
     transition: opacity 0.5s linear;
     -webkit-transition: opacity 0.5s linear;
     -moz-transition: opacity 0.5s linear;
     -o-transition: opacity 0.5s linear;
+}
+
+.annotationTitleTextBox {
+    font-size: 18pt;
+    width: 100%;
 }
 
 .annotationTitle:hover {
@@ -204,12 +210,7 @@
     white-space: pre;
 }
 
-.annotationHistoryStatus {
-    flex-grow: 1;
-    padding: 5px;
-}
-
-.annotationHistoryAssignedTo {
+.annotationHistoryItem {
     flex-grow: 1;
     padding: 5px;
 }

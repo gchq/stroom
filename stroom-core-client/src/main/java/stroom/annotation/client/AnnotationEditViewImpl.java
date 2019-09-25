@@ -16,7 +16,11 @@
 
 package stroom.annotation.client;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -25,6 +29,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -37,6 +42,10 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public interface Binder extends UiBinder<Widget, AnnotationEditViewImpl> {
     }
 
+    @UiField
+    Label titleLabel;
+    @UiField
+    TextBox titleTextBox;
     @UiField
     Label statusLabel;
     @UiField(provided = true)
@@ -69,6 +78,19 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         statusIcon = SvgButton.create(SvgPresets.SETTINGS);
         assignedToIcon = SvgButton.create(SvgPresets.SETTINGS);
         widget = binder.createAndBindUi(this);
+        titleTextBox.setVisible(false);
+        titleLabel.setVisible(true);
+    }
+
+    @Override
+    public String getTitle() {
+        return titleTextBox.getText();
+    }
+
+    @Override
+    public void setTitle(final String title) {
+        this.titleLabel.setText(title);
+        this.titleTextBox.setText(title);
     }
 
     @Override
@@ -112,6 +134,45 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void startTitleEdit() {
+        titleTextBox.setText(titleLabel.getText());
+        titleTextBox.setVisible(true);
+        titleLabel.setVisible(false);
+        Scheduler.get().scheduleDeferred(() -> {
+            comment.setFocus(true);
+            titleTextBox.setFocus(true);
+        });
+    }
+
+    private void finishTitleEdit() {
+        if (titleTextBox.getText().trim().length() > 0) {
+            titleLabel.setText(titleTextBox.getText());
+            if (getUiHandlers() != null) {
+                getUiHandlers().onTitleChange();
+            }
+        }
+        titleTextBox.setVisible(false);
+        titleLabel.setVisible(true);
+    }
+
+    @UiHandler("titleLabel")
+    public void onTitleClick(final ClickEvent e) {
+        startTitleEdit();
+    }
+
+    @UiHandler("titleTextBox")
+    public void onTitleBlur(final BlurEvent e) {
+        finishTitleEdit();
+    }
+
+    @UiHandler("titleTextBox")
+    public void onTitleReturn(final KeyDownEvent e) {
+        if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+            finishTitleEdit();
+        }
     }
 
     @UiHandler("statusIcon")

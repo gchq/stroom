@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS annotation (
   update_user           varchar(255) NOT NULL,
   meta_id               bigint(20) NOT NULL,
   event_id              bigint(20) NOT NULL,
+  title                 longtext,
   status                varchar(255) NOT NULL,
   assigned_to           varchar(255) NOT NULL,
   PRIMARY KEY           (id),
