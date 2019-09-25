@@ -5,63 +5,45 @@
              xmlns:button="urn:import:stroom.widget.button.client">
 
     <g:FlowPanel styleName="annotationContainer">
-        <g:FlowPanel styleName="annotationLeft">
-            <v:ResizeSimplePanel ui:field="history" styleName="annotationHistory"/>
-            <g:FlowPanel styleName="annotationCommentContainer">
-                <g:TextArea ui:field="comment" styleName="annotationComment"/>
-                <g:SimplePanel ui:field="buttons" styleName="annotationButtons">
-                    <g:Button ui:field="create" text="Create" width="200px"/>
-                </g:SimplePanel>
+        <g:FlowPanel styleName="annotationTop">
+            <g:FlowPanel addStyleNames="annotationTitleContainer">
+                <g:Label ui:field="titleLabel" styleName="annotationTitle"
+                         text="Some Title"/>
             </g:FlowPanel>
         </g:FlowPanel>
-        <g:FlowPanel styleName="annotationRight">
-            <g:Grid styleName="stroom-control-grid" width="100%">
-                <g:row>
-                    <g:customCell>
-                        <g:FlowPanel addStyleNames="annotationClickHeading" ui:field="statusSelection">
-                            <g:Label ui:field="statusLabel" width="100%" styleName="annotationClickLabel"
-                                     text="Status"/>
-                            <button:SvgButton ui:field="statusIcon"/>
-                        </g:FlowPanel>
-                    </g:customCell>
-                </g:row>
-                <g:row>
-                    <g:customCell>
-                        <g:SimplePanel ui:field="currentStatusContainer" width="100%"/>
-                    </g:customCell>
-                </g:row>
-                <g:row>
-                    <g:customCell>
-                        <g:HTMLPanel>
-                            <hr/>
-                        </g:HTMLPanel>
-                    </g:customCell>
-                </g:row>
-                <g:row>
-                    <g:customCell>
-                        <g:FlowPanel addStyleNames="annotationClickHeading" ui:field="assignedToSelection">
-                            <g:Label ui:field="assignedToLabel" width="100%" styleName="annotationClickLabel"
-                                     text="Assigned To"/>
-                            <button:SvgButton ui:field="assignedToIcon"/>
-                        </g:FlowPanel>
-                    </g:customCell>
-                </g:row>
-                <g:row>
-                    <g:customCell>
-                        <g:FlowPanel width="100%">
-                            <g:FlowPanel ui:field="assignYourselfContainer" width="100%">
-                                <g:Label styleName="annotationNobody">Nobody</g:Label>
-                                <g:Label ui:field="assignYourself" styleName="annotationAssignYourself">Assign
-                                    Yourself
-                                </g:Label>
-                            </g:FlowPanel>
-                            <g:FlowPanel ui:field="currentAssignedToContainer" width="100%">
-                                <g:Label ui:field="assignedTo"/>
-                            </g:FlowPanel>
-                        </g:FlowPanel>
-                    </g:customCell>
-                </g:row>
-            </g:Grid>
+        <g:FlowPanel styleName="annotationBottom">
+            <g:FlowPanel styleName="annotationLeft">
+                <v:ResizeSimplePanel ui:field="history" styleName="annotationHistory"/>
+                <g:FlowPanel styleName="annotationCommentContainer">
+                    <g:TextArea ui:field="comment" styleName="annotationComment"/>
+                    <g:SimplePanel ui:field="buttons" styleName="annotationButtons">
+                        <g:Button ui:field="create" text="Create" width="200px"/>
+                    </g:SimplePanel>
+                </g:FlowPanel>
+            </g:FlowPanel>
+            <g:FlowPanel styleName="annotationRight">
+                <g:FlowPanel addStyleNames="annotationSettingHeading" ui:field="statusSelection">
+                    <g:Label ui:field="statusLabel" styleName="annotationClickLabel" text="Status"/>
+                    <button:SvgButton ui:field="statusIcon"/>
+                </g:FlowPanel>
+                <g:SimplePanel addStyleNames="annotationSettingBody" ui:field="currentStatusContainer"/>
+                <g:SimplePanel styleName="annotationSettingDivider"/>
+                <g:FlowPanel addStyleNames="annotationSettingHeading" ui:field="assignedToSelection">
+                    <g:Label ui:field="assignedToLabel" styleName="annotationClickLabel"
+                             text="Assigned To"/>
+                    <button:SvgButton ui:field="assignedToIcon"/>
+                </g:FlowPanel>
+                <g:FlowPanel addStyleNames="annotationSettingBody" >
+                    <g:FlowPanel ui:field="assignYourselfContainer">
+                        <g:Label styleName="annotationNobody">Nobody</g:Label>
+                        <g:Label ui:field="assignYourself" styleName="annotationAssignYourself">Assign Yourself
+                        </g:Label>
+                    </g:FlowPanel>
+                    <g:FlowPanel ui:field="currentAssignedToContainer">
+                        <g:Label ui:field="assignedTo"/>
+                    </g:FlowPanel>
+                </g:FlowPanel>
+            </g:FlowPanel>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

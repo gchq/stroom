@@ -16,12 +16,24 @@
 
 .annotationContainer {
     display: flex;
-    flex-flow: row;
+    flex-flow: column;
     width: 100%;
     height: 100%;
     background-color: white;
     border: 1px solid #C5CDE2;
     padding: 10px;
+}
+
+.annotationTop {
+    display: flex;
+    flex-flow: column;
+}
+
+.annotationBottom {
+    display: flex;
+    flex-grow: 1;
+    flex-flow: row;
+    min-height: 0;
 }
 
 .annotationLeft {
@@ -30,15 +42,38 @@
     flex-grow: 1;
     overflow: auto;
     padding-right: 10px;
+    min-width: 0;
 }
 
 .annotationRight {
+    display: flex;
+    flex-flow: column;
     flex-shrink: 0;
     width: 250px;
     padding-left: 10px;
+    min-width: 0;
 }
 
-.annotationClickHeading {
+.annotationTitleContainer {
+    padding-bottom: 10px;
+}
+
+.annotationTitle {
+    font-size: 18pt;
+    width: 100%;
+    opacity: 0.6;
+    cursor: pointer;
+    transition: opacity 0.5s linear;
+    -webkit-transition: opacity 0.5s linear;
+    -moz-transition: opacity 0.5s linear;
+    -o-transition: opacity 0.5s linear;
+}
+
+.annotationTitle:hover {
+    opacity: 0.9;
+}
+
+.annotationSettingHeading {
     display: flex;
     width: 100%;
     opacity: 0.6;
@@ -49,11 +84,25 @@
     -o-transition: opacity 0.5s linear;
 }
 
-.annotationClickHeading:hover {
+.annotationSettingHeading:hover {
     opacity: 0.9;
 }
 
+.annotationSettingBody {
+    display: flex;
+    padding-top: 5px;
+    padding-bottom: 10px;
+    min-width: 0;
+}
+
+.annotationSettingDivider {
+    border-top: 1px solid #C5CDE2;
+    padding-bottom: 15px;
+    height: 1px;
+}
+
 .annotationClickLabel {
+    flex-grow: 1;
     font-weight: bold;
 }
 
