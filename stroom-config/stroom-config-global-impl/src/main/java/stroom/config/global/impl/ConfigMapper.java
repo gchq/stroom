@@ -184,11 +184,7 @@ public class ConfigMapper {
                 // Update all the DB related values from the passed DB config prop
                 globalConfigProperty.setId(dbConfigProperty.getId());
 
-                if (dbConfigProperty.hasDatabaseOverride()) {
-                    globalConfigProperty.setDatabaseValue(dbConfigProperty.getDatabaseOverrideValue().orElse(null));
-                } else {
-                    globalConfigProperty.removeDatabaseOverride();
-                }
+                globalConfigProperty.setDatabaseOverride(dbConfigProperty.getDatabaseOverrideValue());
                 globalConfigProperty.setVersion(dbConfigProperty.getVersion());
                 globalConfigProperty.setCreateTimeMs(dbConfigProperty.getCreateTimeMs());
                 globalConfigProperty.setCreateUser(dbConfigProperty.getCreateUser());
@@ -257,7 +253,7 @@ public class ConfigMapper {
 
         // Create global property.
         final String yamlValueAsStr = getStringValue(yamlProp);
-        configProperty.setYamlValue(yamlValueAsStr);
+        configProperty.setYamlOverrideValue(yamlValueAsStr);
 //        final String defaultValue = configProperty.getDefaultValue().orElse(null);
 //
 //        // If yaml value is the same as the default then null it out

@@ -65,18 +65,18 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     // A NullWrapper holding null - indicating a null value has been supplied, e.g. an empty maintenanceMessage
     // A NullWrapper holding a non-null value - indicating a non-null value has been supplied, e.g.
 
-    // The cluster wide value held in the database and set by the user in the UI, may be null.
-    private NullWrapper<String> databaseValue = null;
-
-    // These fields are not saved to the database,
-    // they come from the annotations on the java config classes
-
     // The cluster wide compile-time default value set in the AppConfig object tree
     private String defaultValue = null;
 //    private NullWrapper<String> defaultValue = null;
 
+    // The cluster wide value held in the database and set by the user in the UI, may be null.
+    private OverrideValue<String> databaseOverrideValue = OverrideValue.unSet();
+
+    // These fields are not saved to the database,
+    // they come from the annotations on the java config classes
+
     // The node specific value as set by the dropwizard YAML file
-    private NullWrapper<String> yamlValue = null;
+    private OverrideValue<String> yamlOverrideValue = OverrideValue.unSet();
 
     private String description;
     private boolean isEditable;
@@ -156,10 +156,10 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
      * of default, database and yaml values
      */
     public Optional<String> getEffectiveValue() {
-        if (yamlValue != null) {
-            return yamlValue.getValue();
-        } else if (databaseValue != null) {
-            return databaseValue.getValue();
+        if (yamlOverrideValue.hasOverride()) {
+            return yamlOverrideValue.getValue();
+        } else if (databaseOverrideValue.hasOverride()) {
+            return databaseOverrideValue.getValue();
         } else {
             return Optional.ofNullable(defaultValue);
         }
@@ -182,32 +182,31 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
      * If no database override value has been set an exception will be thrown.
      * Test with hasDatabaseOverride() first.
      */
-    public Optional<String> getDatabaseOverrideValue() {
-        if (databaseValue == null) {
-            return null;
-//            throw new RuntimeException(String.format("Property %s has no database override set", name));
-        } else {
-            return databaseValue.getValue();
-        }
+    public OverrideValue<String> getDatabaseOverrideValue() {
+        return databaseOverrideValue;
     }
 
-    public void setDatabaseValue(final String databaseValue) {
+    public void setDatabaseOverrideValue(final String databaseOverrideValue) {
         // If somebody overrides the default with a value identical to the default then we need to save it
-        this.databaseValue = NullWrapper.of(databaseValue);
+        this.databaseOverrideValue = OverrideValue.with(databaseOverrideValue);
+    }
+
+    public void setDatabaseOverride(final OverrideValue<String> databaseOverride) {
+        this.databaseOverrideValue = databaseOverride;
     }
 
     /**
      * @return True if a value has been supplied to override the defaultValue, even it is null
      */
     public boolean hasDatabaseOverride() {
-        return this.databaseValue != null;
+        return this.databaseOverrideValue.hasOverride();
     }
 
     /**
      * Remove any override value at the database level, whether null or non-null
      */
     public void removeDatabaseOverride() {
-        this.databaseValue = null;
+        this.databaseOverrideValue = OverrideValue.unSet();
     }
 
     /**
@@ -224,47 +223,44 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
 
     /**
      * @return The node specific value from the dropwizard YAML file on this node, if present.
-     * If no yaml override has been set an exception will be thrown
-     * Test with hasYamlOverride() first.
      */
-    public Optional<String> getYamlOverrideValue() {
-        if (yamlValue == null) {
-            return null;
-        } else {
-            return yamlValue.getValue();
-        }
+    public OverrideValue<String> getYamlOverrideValue() {
+        return yamlOverrideValue;
     }
 
     /**
      * @return True if a value has been supplied to override the defaultValue, even it is null
      */
     public boolean hasYamlOverride() {
-        return yamlValue !=  null;
+        return yamlOverrideValue.hasOverride();
     }
 
     /**
-     * Remove any override value at the database level, whether null or non-null
+     * Remove any override value at the yaml level, whether null or non-null
      */
     public void removeYamlOverride() {
-        this.yamlValue = null;
+        this.yamlOverrideValue = OverrideValue.unSet();
     }
 
-    public void setYamlValue(final String yamlValue) {
+    public void setYamlOverrideValue(final String yamlOverrideValue) {
 
         // We cannot distinguish between a value that has been set in the yaml as say 10
         // and a default value of 10, so if the default matches the yaml then we treat the
         // yaml as unset.
-        final NullWrapper<String> wrappedYamlValue = NullWrapper.of(yamlValue);
-        if (Objects.equals(defaultValue, wrappedYamlValue)) {
+        if (Objects.equals(defaultValue, yamlOverrideValue)) {
             // matches default so remove the yaml value
-            this.yamlValue = null;
+            this.yamlOverrideValue = OverrideValue.unSet();
         } else {
-            this.yamlValue = wrappedYamlValue;
+            this.yamlOverrideValue = OverrideValue.with(yamlOverrideValue);
         }
     }
 
-    public void unsetYamlValue() {
-        this.yamlValue = null;
+    public void setYamlOverride(final OverrideValue<String> yamlOverride) {
+        if (yamlOverride.hasOverride()) {
+            setYamlOverrideValue(yamlOverride.getValue().orElse(null));
+        } else {
+            this.yamlOverrideValue = yamlOverride;
+        }
     }
 
     public String getDescription() {
@@ -317,21 +313,13 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     }
 
     public SourceType getSource() {
-        if (yamlValue != null) {
+        if (yamlOverrideValue.hasOverride()) {
             return SourceType.YAML;
-        } else if (databaseValue != null) {
+        } else if (databaseOverrideValue.hasOverride()) {
             return SourceType.DATABASE;
         } else {
             return SourceType.DEFAULT;
         }
-    }
-
-//    public void setSource(final SourceType source) {
-//        this.source = source;
-//    }
-
-    private static boolean hasValue(final NullWrapper<?> wrapper) {
-        return wrapper != null && wrapper.getValue().isPresent();
     }
 
     @Override
@@ -344,9 +332,9 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         return "ConfigProperty{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", databaseValue='" + databaseValue + '\'' +
                 ", defaultValue='" + defaultValue + '\'' +
-                ", yamlValue='" + yamlValue + '\'' +
+                ", databaseOverrideValue='" + databaseOverrideValue + '\'' +
+                ", yamlOverrideValue='" + yamlOverrideValue + '\'' +
                 ", effectiveValue='" + getEffectiveValue() + '\'' +
                 ", source='" + getSource() + '\'' +
                 '}';
@@ -398,8 +386,13 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
             return (OverrideValue<T>) NULL_VALUE;
         }
 
+        @SuppressWarnings("unchecked")
         public static <T> OverrideValue<T> with(final T value) {
-            return new OverrideValue<>(true, value);
+            if (value == null) {
+                return (OverrideValue<T>) NULL_VALUE;
+            } else {
+                return new OverrideValue<>(true, value);
+            }
         }
 
         private OverrideValue(final boolean hasOverride, final T value) {
@@ -411,13 +404,49 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
             return hasOverride;
         }
 
-        public Optional<T> getOverrideValue() {
+        /**
+         * @return The override value if present or empty if the override has been explicitly set to
+         * null/empty. If there is no override then a {@link RuntimeException} will be thrown.
+         * Use {@link OverrideValue#hasOverride()} to check if there is an override value.
+         */
+        public Optional<T> getValue() {
+            if (!hasOverride) {
+                throw new RuntimeException("No override present");
+            }
             return Optional.ofNullable(value);
         }
 
-        public void ifHasOverrideValue(final Consumer<T> consumer) {
+        /**
+         * Return the non-null override value or other if the override has explicitly been set to null/empty
+         */
+        public T getValueOrElse(final T other) {
+            if (!hasOverride) {
+                throw new RuntimeException("No override present");
+            }
+            if (value != null) {
+                return value;
+            } else {
+                return other;
+            }
+        }
+
+        public T getValueOrElse(final T valueIfUnSet, final T valueIfNull) {
+            if (!hasOverride) {
+                return valueIfUnSet;
+            } else if (value == null) {
+                return valueIfNull;
+            } else {
+                return value;
+            }
+        }
+
+        /**
+         * If an override value is present then the passed consumer will consume the override value
+         * optional which may be empty if a null/empty override has explicitly been set.
+         */
+        public void ifOverridePresent(final Consumer<Optional<T>> consumer) {
             if (hasOverride) {
-                consumer.accept(value);
+                consumer.accept(Optional.ofNullable(value));
             }
         }
 

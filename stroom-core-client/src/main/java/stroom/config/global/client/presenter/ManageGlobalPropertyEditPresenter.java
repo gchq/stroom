@@ -119,20 +119,22 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
         getView().setRequireRestart(getEntity().isRequireRestart());
         getView().setRequireUiRestart(getEntity().isRequireUiRestart());
         getView().getName().setText(getEntity().getName());
-        getView().getDatabaseValue().setText(getEntity().getDatabaseOverrideValue().orElse(""));
-        getView().getDescription().setText(getEntity().getDescription());
-        if (getEntity().hasDatabaseOverride() && getEntity().getDatabaseOverrideValue().isPresent()) {
-            getView().getDefaultValue().setText(getEntity().getDefaultValue().get());
+        String databaseOverride = "";
+        if (getEntity().hasDatabaseOverride()) {
+            databaseOverride = getEntity().getDatabaseOverrideValue().getValueOrElse("");
         }
+        getView().getDatabaseValue().setText(databaseOverride);
+        getView().getDescription().setText(getEntity().getDescription());
+        getView().getDefaultValue().setText(getEntity().getDefaultValue().orElse(""));
         getView().getSource().setText(getEntity().getSource().getName());
     }
 
     private void write(final boolean hideOnSave) {
         String value = getView().getDatabaseValue().getText();
         if (value != null) {
-            getEntity().setDatabaseValue(value.trim());
+            getEntity().setDatabaseOverrideValue(value.trim());
         } else {
-            getEntity().setDatabaseValue(null);
+            getEntity().setDatabaseOverrideValue(null);
         }
 
         // Save.

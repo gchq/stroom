@@ -26,11 +26,12 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
         configProperty.setUpdateTimeMs(record.get(CONFIG.UPDATE_TIME_MS));
         configProperty.setUpdateUser(record.get(CONFIG.UPDATE_USER));
         configProperty.setName(record.get(CONFIG.NAME));
-        if (record.get(CONFIG.VAL).equals("")) {
-            configProperty.setDatabaseValue(null);
-        } else {
-            configProperty.setDatabaseValue(record.get(CONFIG.VAL));
+        String value = record.get(CONFIG.VAL);
+        // value col is not-null
+        if (value.isEmpty()) {
+            value = null;
         }
+        configProperty.setDatabaseOverrideValue(value);
         return configProperty;
     };
 
@@ -44,12 +45,13 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
         record.set(CONFIG.UPDATE_USER, configProperty.getUpdateUser());
         record.set(CONFIG.NAME, configProperty.getName());
         // DB doesn't allow null values so use empty string
-        if (configProperty.getDatabaseOverrideValue() == null) {
+        if (!configProperty.hasDatabaseOverride()) {
             // If there is no value override then we don't want it in the DB
+            // Code further up the chain should have dealt with this
             throw new RuntimeException(LogUtil.message("Trying to save a config record when there is no databaseValue {}",
                     configProperty));
         }
-        record.set(CONFIG.VAL, configProperty.getDatabaseOverrideValue().orElse(""));
+        record.set(CONFIG.VAL, configProperty.getDatabaseOverrideValue().getValueOrElse(""));
         return record;
     };
 

@@ -160,9 +160,9 @@ class GlobalConfigService {
                 }
                 persistedConfigProperty = configProperty;
             } else {
-                configProperty.getDatabaseOverrideValue().ifPresent(dbValue -> {
-                    configMapper.validateStringValue(configProperty.getName(), dbValue);
-                });
+                configProperty.getDatabaseOverrideValue().ifOverridePresent(optDbValue ->
+                        optDbValue.ifPresent(dbValue ->
+                                configMapper.validateStringValue(configProperty.getName(), dbValue)));
 
                 AuditUtil.stamp(securityContext.getUserId(), configProperty);
 
@@ -185,5 +185,4 @@ class GlobalConfigService {
                 LogUtil.message("Deleting property {} as it is not valid in the object model", name));
         dao.delete(name);
     }
-
 }
