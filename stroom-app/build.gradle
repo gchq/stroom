@@ -289,8 +289,7 @@ task copyFilesForStroomDockerBuild() {
 
         // Copy the dropwizard yml configuration
         copy {
-            from "${projectDir}/dev.yml"
-            rename ("dev.yml", "prod.yml")
+            from "${projectDir}/prod.yml"
             into stroomDockerBuildDir
         }
 
@@ -467,35 +466,6 @@ shadowDistTar.enabled = false
 //}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 task setupSampleDataApplication(type: JavaExec) {
     dependsOn this:compileJava
     dependsOn this:compileTestJava
@@ -504,6 +474,18 @@ task setupSampleDataApplication(type: JavaExec) {
     workingDir '../'
     classpath = sourceSets.test.runtimeClasspath
     main = 'stroom.test.SetupSampleData'
+}
+
+// TODO this is WIP
+// Need to get it to produce example.yml in the build/release dir so we can copy it into
+// the docker build and the dist zip
+task generateExampleYamlFile(type: JavaExec) {
+    dependsOn ':stroom-config:stroom-config-app:compileJava'
+    dependsOn ':stroom-config:stroom-config-app:compileTestJava'
+
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'stroom.config.app.GenerateExpectedYaml'
+    args = [releaseBuildDir + '/example.yml']
 }
 
 ////TODO This specific dep is needed to ensure TestKafkaExternalLoader has the jar available

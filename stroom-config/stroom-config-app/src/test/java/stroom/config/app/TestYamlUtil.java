@@ -67,11 +67,20 @@ class TestYamlUtil {
      */
     @Test
     void testDevYaml() throws FileNotFoundException {
-        loadDevYaml();
+        loadYamlFile("dev.yml");
     }
 
-    private static AppConfig loadDevYaml() throws FileNotFoundException {
-        Path path = getDevYamlPath();
+    /**
+     * Verify prod.yml can be de-serialised into the config object model
+     */
+    @Test
+    void testProdYaml() throws FileNotFoundException {
+        loadYamlFile("prod.yml");
+    }
+
+
+    private static AppConfig loadYamlFile(final String filename) throws FileNotFoundException {
+        Path path = getStroomAppFile(filename);
 
         try  {
             return YamlUtil.readAppConfig(path);
@@ -80,8 +89,7 @@ class TestYamlUtil {
         }
     }
 
-    public static Path getDevYamlPath() throws FileNotFoundException {
-        // Load dev.yaml
+    public static Path getStroomAppFile(final String filename) throws FileNotFoundException {
         final String codeSourceLocation = TestYamlUtil.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 
         Path path = Paths.get(codeSourceLocation);
@@ -91,11 +99,11 @@ class TestYamlUtil {
         if (path != null) {
             path = path.getParent();
             path = path.resolve("stroom-app");
-            path = path.resolve("dev.yml");
+            path = path.resolve(filename);
         }
 
         if (path == null) {
-            throw new FileNotFoundException("Unable to find dev.yml");
+            throw new FileNotFoundException("Unable to find " + filename);
         }
         return path;
     }
