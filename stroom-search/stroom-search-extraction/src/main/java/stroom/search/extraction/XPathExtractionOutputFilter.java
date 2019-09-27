@@ -16,6 +16,7 @@
 
 package stroom.search.extraction;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.ReceivingContentHandler;
@@ -26,10 +27,12 @@ import net.sf.saxon.tree.tiny.TinyBuilder;
 import net.sf.saxon.tree.tiny.TinyTree;
 import net.sf.saxon.tree.util.Navigator;
 import org.json.JSONObject;
+import org.json.JSONWriter;
 import org.w3c.dom.*;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.LocationFactoryProxy;
@@ -45,6 +48,11 @@ import stroom.security.api.SecurityContext;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import javax.xml.parsers.FactoryConfigurationError;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -237,6 +245,7 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
                 if (hasChildElement){
                     if (createJson) {
                         JSONObject json = org.json.XML.toJSONObject(node.toString());
+//                        String json = jsonFromXML(node.toString());
                         thisVal.append(json);
                     }
                     else {
@@ -281,6 +290,30 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
 
         return numberOfVals;
     }
+//
+//    private String jsonFromXML (String xml){
+//        try {
+//            SAXParserFactory factory = SAXParserFactory.newInstance();
+//            factory.setNamespaceAware(true);
+//            SAXParser parser = factory.newSAXParser();
+//
+//            JSONWriter j = null;
+//            DefaultHandler handler = j;
+//            parser.parse(xmlFile, j);
+//        }
+//        catch (FactoryConfigurationError e) {
+//            // unable to get a document builder factory
+//        }
+//        catch (ParserConfigurationException e) {
+//            // parser was unable to be configured
+//        }
+//catch (SAXException e) {
+//                // parsing error
+//            }
+//catch (IOException e) {
+//                // i/o error
+//            }
+//    }
 
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
