@@ -16,43 +16,29 @@
 
 package stroom.search.extraction;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.ReceivingContentHandler;
-import net.sf.saxon.pattern.AnyChildNodeTest;
 import net.sf.saxon.s9api.*;
-import net.sf.saxon.tree.iter.AxisIterator;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import net.sf.saxon.tree.tiny.TinyTree;
-import net.sf.saxon.tree.util.Navigator;
 import org.json.JSONObject;
-import org.json.JSONWriter;
-import org.w3c.dom.*;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import javax.xml.parsers.FactoryConfigurationError;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 
