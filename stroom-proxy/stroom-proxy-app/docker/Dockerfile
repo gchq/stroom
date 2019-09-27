@@ -21,7 +21,7 @@
 
 # The JDK (rather than JRE) is required for the diagnostic tools like
 # jstat/jmap/jcmd/etc.
-FROM openjdk:8u212-jdk-alpine3.9 as stroom-base-stage
+FROM adoptopenjdk/openjdk12:x86_64-alpine-jre-12.0.2_10 as stroom-base-stage
 
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
@@ -39,7 +39,7 @@ RUN echo "http_proxy: $http_proxy" && \
 # Intermediate build stage to copy the stroom fat jar to allow stroom 
 # and proxy builds to re-use the same cached layer with the fat jar in it
 FROM scratch as fat-jar-stage
-COPY ./build/stroom-app-all.jar /stroom-app-all.jar
+COPY ./build/stroom-proxy-app-all.jar /stroom-proxy-app-all.jar
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -70,7 +70,7 @@ VOLUME /stroom-proxy/logs/
 ENTRYPOINT ["/sbin/tini", "--", "/stroom-proxy/docker-entrypoint.sh"]
 
 #start the app, the config file will be supplied by a bind mount volume.
-CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar stroom-app-all.jar server /stroom-proxy/config/config.yml"]
+CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar stroom-proxy-app-all.jar server /stroom-proxy/config/config.yml"]
 
 # The following line can be used as a temproary hack in dev if the build can't
 # resolve alpine's apk repo server.
@@ -95,7 +95,7 @@ RUN \
 # Order matters for COPY/ADD operations, least likely to change go first so cache is used
 # Copy all the fat jars for the application and connectors
 COPY --chown=proxy:proxy *.sh /stroom-proxy/
-COPY --chown=proxy:proxy --from=fat-jar-stage /stroom-app-all.jar /stroom-proxy/
+COPY --chown=proxy:proxy --from=fat-jar-stage /stroom-proxy-app-all.jar /stroom-proxy/
 
 # Label the image so we can see what commit/tag it came from
 ARG GIT_COMMIT=unspecified

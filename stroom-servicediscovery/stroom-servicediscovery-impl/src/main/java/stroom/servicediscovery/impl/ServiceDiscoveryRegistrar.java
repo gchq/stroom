@@ -40,8 +40,13 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
         this.hostNameOrIpAddress = getHostOrIp(serviceDiscoveryConfig);
         this.servicePort = serviceDiscoveryConfig.getServicesPort();
 
-        health = HealthCheck.Result.unhealthy("Not yet initialised...");
-        this.serviceDiscoveryManager.registerStartupListener(this::curatorStartupListener);
+        if(serviceDiscoveryConfig.isEnabled()) {
+            health = HealthCheck.Result.unhealthy("Not yet initialised...");
+            this.serviceDiscoveryManager.registerStartupListener(this::curatorStartupListener);
+        }
+        else {
+            health = HealthCheck.Result.healthy("Service discovery is disabled.");
+        }
     }
 
     private String getHostOrIp(final ServiceDiscoveryConfig serviceDiscoveryConfig) {

@@ -11,13 +11,20 @@ import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.collection.mock.MockCollectionModule;
+import stroom.dictionary.impl.DictionaryModule;
 import stroom.dictionary.impl.DictionaryResource;
 import stroom.dictionary.impl.DictionaryResource2;
 import stroom.dictionary.impl.DictionaryStore;
+import stroom.docstore.api.Serialiser2Factory;
+import stroom.docstore.api.StoreFactory;
 import stroom.docstore.impl.Persistence;
+import stroom.docstore.impl.Serialiser2FactoryImpl;
+import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.fs.FSPersistence;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.proxy.app.BufferFactoryImpl;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
@@ -32,18 +39,22 @@ import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryReader;
 import stroom.proxy.repo.StreamHandlerFactory;
+import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.FeedStatusResource;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.receive.common.RemoteFeedModule;
 import stroom.receive.common.RequestHandler;
+import stroom.receive.rules.impl.DataReceiptPolicyAttributeMapFilterFactoryImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResource;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResource2;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
 import stroom.receive.rules.impl.ReceiveDataRuleSetServiceImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
+import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.TaskContext;
 import stroom.util.RestResource;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
@@ -51,6 +62,7 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HealthCheckBinder;
 import stroom.util.guice.ResourcePaths;
 import stroom.util.guice.ServletBinder;
+import stroom.util.io.BufferFactory;
 import stroom.util.shared.BuildInfo;
 
 import javax.inject.Provider;
@@ -79,9 +91,16 @@ public class ProxyModule extends AbstractModule {
         bind(Environment.class).toInstance(environment);
 
         install(new ProxyConfigModule(configuration.getProxyConfig()));
+        install(new MockCollectionModule());
 
+        install(new DictionaryModule());
         // Allow discovery of feed status from other proxies.
         install(new RemoteFeedModule());
+        bind(BufferFactory.class).to(BufferFactoryImpl.class);
+        bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
+        bind(StoreFactory.class).to(StoreFactoryImpl.class);
+        bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
+        bind(TaskContext.class).to(SimpleTaskContext.class);
 
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
         bind(StreamHandlerFactory.class).to(ForwardStreamHandlerFactory.class);

@@ -46,7 +46,6 @@ do_gradle_build() {
     "clean"
     "build"
     "-x" "test"
-    "-x" "integrationTest"
   )
 
   if [ "$mode" = "skipGwt" ]; then
@@ -82,7 +81,7 @@ do_docker_builds() {
     --tag gchq/stroom-proxy:${DOCKER_IMAGE_TAG} \
     --build-arg GIT_COMMIT=${CURRENT_GIT_COMMIT} \
     --build-arg GIT_TAG=${DOCKER_IMAGE_TAG} \
-    ./stroom-app/proxy-docker
+    ./stroom-proxy/stroom-proxy-app/docker
 }
 
 main() {

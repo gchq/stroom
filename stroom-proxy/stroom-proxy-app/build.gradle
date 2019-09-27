@@ -8,10 +8,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 mainClassName = 'stroom.proxy.app.App'
 
 dependencies {
-    compile project(':stroom-meta:stroom-meta-api')
     compile project(':stroom-core-shared')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-security:stroom-security-mock')
     compile project(':stroom-data:stroom-data-zip')
     compile project(':stroom-dictionary:stroom-dictionary-api')
     compile project(':stroom-dictionary:stroom-dictionary-impl')
@@ -19,10 +16,14 @@ dependencies {
     compile project(':stroom-docstore:stroom-docstore-impl-fs')
     compile project(':stroom-dropwizard-common')
     compile project(':stroom-explorer:stroom-collection-api')
+    compile project(':stroom-explorer:stroom-collection-mock')
+    compile project(':stroom-meta:stroom-meta-api')
     compile project(':stroom-pipeline')
     compile project(':stroom-proxy:stroom-proxy-repo')
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-receive:stroom-receive-rules-impl')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-security:stroom-security-mock')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
@@ -99,6 +100,29 @@ shadowJar {
 }
 
 
+def proxyDockerBuildDir = "${projectDir}/docker/build"
+clean {
+    delete proxyDockerBuildDir
+}
+
+// Copy all the files needed by the stroom-proxy docker build into stroom-app/proxy-docker/build
+task copyFilesForProxyDockerBuild() {
+    dependsOn shadowJar
+    doFirst {
+        // Copy the stroom app fat jar
+        copy {
+            from "${project.buildDir}/libs/${fatJarName}"
+            into proxyDockerBuildDir
+        }
+
+        // Copy the dropwizard yml configuration
+        copy {
+            from "${projectDir}/proxy-prod.yml"
+            into proxyDockerBuildDir
+        }
+    }
+}
+tasks.build.dependsOn copyFilesForProxyDockerBuild
 //
 //war {
 //    exclude 'WEB-INF/lib/**'
