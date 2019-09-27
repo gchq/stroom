@@ -2,6 +2,7 @@ package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.setup.Environment;
+import stroom.config.app.AppConfigMonitor;
 import stroom.config.app.Config;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfigModule;
@@ -50,5 +51,7 @@ public class AppModule extends AbstractModule {
 
         HealthCheckBinder.create(binder())
                 .bind(LogLevelInspector.class);
+        HealthCheckBinder.create(binder())
+                .bind(AppConfigMonitor.class);
     }
 }

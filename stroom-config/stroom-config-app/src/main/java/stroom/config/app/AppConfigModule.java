@@ -80,7 +80,8 @@ public class AppConfigModule extends AbstractModule {
         // Bind the application config.        
         bind(AppConfig.class).toInstance(appConfig);
 
-        bind(AppConfigMonitor.class).toInstance(new AppConfigMonitor(appConfig, configFile));
+        bind(ConfigLocation.class).toInstance(new ConfigLocation(configFile));
+        bind(AppConfigMonitor.class).asEagerSingleton();
 
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own

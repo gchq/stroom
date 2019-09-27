@@ -1,11 +1,15 @@
 package stroom.config.app;
 
+import com.codahale.metrics.health.HealthCheck;
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.config.global.impl.ConfigMapper;
+import stroom.util.HasHealthCheck;
 import stroom.util.config.FieldMapper;
 import stroom.util.logging.LogUtil;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -22,7 +26,7 @@ import java.util.concurrent.Future;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 @Singleton
-public class AppConfigMonitor implements Managed {
+public class AppConfigMonitor implements Managed, HasHealthCheck {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AppConfigMonitor.class);
 
@@ -32,10 +36,16 @@ public class AppConfigMonitor implements Managed {
     private final ExecutorService executorService;
     private WatchService watchService = null;
     private Future<?> watcherFuture = null;
+    private final ConfigMapper configMapper;
+    private boolean isRunning = false;
 
-    public AppConfigMonitor(final AppConfig appConfig, final Path configFile) {
+    @Inject
+    public AppConfigMonitor(final AppConfig appConfig,
+                            final ConfigLocation configLocation,
+                            final ConfigMapper configMapper) {
         this.appConfig = appConfig;
-        this.configFile = configFile;
+        this.configFile = configLocation.getConfigFilePath();
+        this.configMapper = configMapper;
 
         if (!Files.isRegularFile(configFile)) {
             throw new RuntimeException(LogUtil.message("{} is not a regular file", configFile));
@@ -70,7 +80,7 @@ public class AppConfigMonitor implements Managed {
             LOGGER.info("Starting file modification watcher for {}", configFile.toAbsolutePath());
             while (true) {
                 if (Thread.currentThread().isInterrupted()) {
-                    LOGGER.warn("Thread interrupted, stopping watching directory {}", dirToWatch.toAbsolutePath());
+                    LOGGER.debug("Thread interrupted, stopping watching directory {}", dirToWatch.toAbsolutePath());
                     break;
                 }
 
@@ -84,12 +94,14 @@ public class AppConfigMonitor implements Managed {
                 }
 
                 for (WatchEvent<?> event : watchKey.pollEvents()) {
+
                     if (event.kind().equals(OVERFLOW)) {
                         break;
                     }
 
                     final WatchEvent<Path> pathEvent = (WatchEvent<Path>) event;
                     final WatchEvent.Kind<Path> kind = pathEvent.kind();
+                    LOGGER.debug("Dir watch event {}, {}, {}", kind.name(), kind.type(), pathEvent.context());
 
                     if (kind.equals(StandardWatchEventKinds.ENTRY_MODIFY)) {
                         final Path modifiedFile = dirToWatch.resolve(pathEvent.context());
@@ -112,6 +124,7 @@ public class AppConfigMonitor implements Managed {
                 }
             }
         });
+        isRunning = true;
     }
 
     private void updateAppConfigFromFile() {
@@ -126,6 +139,7 @@ public class AppConfigMonitor implements Managed {
 
                 // Copy changed values from the newly modified appConfig into the guice bound one
                 FieldMapper.copy(newAppConfig, this.appConfig);
+
             } catch (Throwable e) {
                 // Swallow error as we don't want to break the app because the new config is bad
                 // The admins can fix the problem and let it have another go.
@@ -147,11 +161,30 @@ public class AppConfigMonitor implements Managed {
     public void stop() throws Exception {
         LOGGER.info("Stopping file modification watcher for {}", configFile.toAbsolutePath());
 
+        watchService.close();
         if (executorService != null) {
-           if (watcherFuture != null) {
+            watchService.close();
+           if (watcherFuture != null && !watcherFuture.isCancelled() && !watcherFuture.isDone()) {
                watcherFuture.cancel(true);
            }
            executorService.shutdown();
         }
+        isRunning = false;
+    }
+
+    @Override
+    public HealthCheck.Result getHealth() {
+        HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
+
+        if (isRunning) {
+            resultBuilder.healthy();
+        } else {
+            resultBuilder.unhealthy();
+        }
+
+        return resultBuilder
+                .withDetail("configFilePath", configFile)
+                .withDetail("isRunning", isRunning)
+                .build();
     }
 }
