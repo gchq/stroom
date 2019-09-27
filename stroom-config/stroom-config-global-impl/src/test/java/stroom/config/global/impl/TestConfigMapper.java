@@ -11,7 +11,6 @@ import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jackson.Jackson;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +80,7 @@ class TestConfigMapper {
             ConfigProperty newConfigProperty = configMapper.updateDatabaseValue(configProperty);
 
             LOGGER.debug(configProperty.toString());
-            Assertions.assertThat(newConfigProperty.getSource())
+            assertThat(newConfigProperty.getSource())
                     .isIn(ConfigProperty.SourceType.DATABASE, ConfigProperty.SourceType.DEFAULT);
         });
     }
@@ -203,7 +202,7 @@ class TestConfigMapper {
         BooleanSupplier getter = () -> appConfig.getPipelineConfig().getRefDataStoreConfig().isReadAheadEnabled();
         boolean initialValue = getter.getAsBoolean();
         boolean newValue = !initialValue;
-        String fullPath = "stroom.pipeline.refData.readAheadEnabled";
+        String fullPath = "stroom.pipeline.referenceData.readAheadEnabled";
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
@@ -220,7 +219,7 @@ class TestConfigMapper {
         IntSupplier getter = () -> appConfig.getPipelineConfig().getRefDataStoreConfig().getMaxPutsBeforeCommit();
         int initialValue = getter.getAsInt();
         int newValue = initialValue + 1;
-        String fullPath = "stroom.pipeline.refData.maxPutsBeforeCommit";
+        String fullPath = "stroom.pipeline.referenceData.maxPutsBeforeCommit";
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
@@ -302,6 +301,8 @@ class TestConfigMapper {
         TestConfig testConfig = new TestConfig();
         ConfigMapper configMapper = new ConfigMapper(testConfig);
 
+        LOGGER.debug("Initial UUID {}", testConfig.getDocRefProp().getUuid());
+
         Supplier<DocRef> getter = testConfig::getDocRefProp;
         DocRef initialValue = getter.get();
         DocRef newValue = new DocRef.Builder()
@@ -310,6 +311,8 @@ class TestConfigMapper {
                 .name(initialValue.getName() + "zzz")
                 .build();
         String fullPath = "stroom.docRefProp";
+
+        LOGGER.debug("New UUID {}", newValue.getUuid());
 
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
@@ -423,6 +426,24 @@ class TestConfigMapper {
         assertThat(getter.get()).isEqualTo(newValue);
     }
 
+    @Test
+    void testPrecedenceDefaultOnly() {
+        TestConfig testConfig = new TestConfig();
+        String defaultValue = testConfig.getStringProp();
+
+        ConfigMapper configMapper = new ConfigMapper(testConfig);
+
+        ConfigProperty configProperty = configMapper.getGlobalProperty("stroom.stringProp").orElseThrow();
+
+        assertThat(configProperty.getDefaultValue().orElseThrow())
+                .isEqualTo(defaultValue);
+        assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
+                .isFalse();
+        assertThat(configProperty.getYamlOverrideValue().hasOverride())
+                .isFalse();
+        assertThat(configProperty.getEffectiveValue().orElseThrow())
+                .isEqualTo(defaultValue);
+    }
 
     private AppConfig getAppConfig() {
         return new AppConfig();
@@ -482,10 +503,10 @@ class TestConfigMapper {
         private List<String> stringListProp = new ArrayList<>();
         private List<Integer> intListProp = new ArrayList<>();
         private Map<String, Long> stringLongMapProp = new HashMap<>();
-        private DocRef docRefProp = new DocRef("MyType", UUID.randomUUID().toString(), "MyName");
+        private DocRef docRefProp = new DocRef("MyType", "9d9ff899-c6db-46c1-97bf-a8015a853b38", "MyName");
         private List<DocRef> docRefListProp = List.of(
-                new DocRef("MyType1", UUID.randomUUID().toString(), "MyDocRef1"),
-                new DocRef("MyType2", UUID.randomUUID().toString(), "MyDocRef2"));
+                new DocRef("MyType1", "9457f9ff-eb2a-4ef1-b60d-769e9a987cd2", "MyDocRef1"),
+                new DocRef("MyType2", "56068221-1a7d-486c-9fa7-af8b98733e53", "MyDocRef2"));
         private State stateProp = State.OFF;
         private List<State> stateListProp = List.of(State.ON, State.IN_BETWEEN);
         // sub-configs
