@@ -23,7 +23,7 @@ body, table td, select {
   font-size: small;
 }
 pre {
-  font-family: "courier new", courier;
+  font-family: "courier new", courier, san-serif;
   font-size: small;
 }
 body {
