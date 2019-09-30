@@ -19,6 +19,8 @@ def swaggerDir = "${uiDir}/swagger"
 def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
 def sendToStroomScriptVersion = 'send-to-stroom-v2.0'
+def releaseBuildDir = 'build/release'
+def configDefaultsFile = releaseBuildDir + '/config/config-defaults.yml'
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -356,7 +358,6 @@ swagger {
 }
 
 
-def releaseBuildDir= 'build/release'
 
 task copyJar(type: Copy) {
     from shadowJar.outputs.files
@@ -403,7 +404,10 @@ task copyContentPackToDistribution(type: Copy) {
     into "${releaseBuildDir}/contentPacks"
 }
 
+// Build the release distribution zip for stroom
 task buildDistribution(type: Zip) {
+
+    // run all the tasks that produce content for the zip
     dependsOn copyJar
     dependsOn copySupportingFiles
     dependsOn downloadSend
@@ -411,6 +415,8 @@ task buildDistribution(type: Zip) {
     dependsOn makeSendExecutable
     dependsOn parent.downloadStroomContent
     dependsOn copyContentPackToDistribution
+    dependsOn generateConfigDefaultsYamlFile
+
     from releaseBuildDir
 }
 
@@ -476,16 +482,14 @@ task setupSampleDataApplication(type: JavaExec) {
     main = 'stroom.test.SetupSampleData'
 }
 
-// TODO this is WIP
-// Need to get it to produce example.yml in the build/release dir so we can copy it into
-// the docker build and the dist zip
-task generateExampleYamlFile(type: JavaExec) {
+// Create an example yaml config file from the compile-time defaults
+task generateConfigDefaultsYamlFile(type: JavaExec) {
     dependsOn ':stroom-config:stroom-config-app:compileJava'
     dependsOn ':stroom-config:stroom-config-app:compileTestJava'
 
-    classpath = sourceSets.test.runtimeClasspath
+    classpath = project(':stroom-config:stroom-config-app').sourceSets.test.runtimeClasspath
     main = 'stroom.config.app.GenerateExpectedYaml'
-    args = [releaseBuildDir + '/example.yml']
+    args = [configDefaultsFile]
 }
 
 ////TODO This specific dep is needed to ensure TestKafkaExternalLoader has the jar available
