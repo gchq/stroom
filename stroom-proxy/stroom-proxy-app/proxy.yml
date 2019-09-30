@@ -2,26 +2,27 @@ server:
   applicationContextPath: /
   adminContextPath: /proxyAdmin
   applicationConnectors:
-  - type: http
-    port: 8090
+    - type: http
+      port: ${STROOM_PROXY_APP_PORT:-8090}
   adminConnectors:
-  - type: http
-    port: 8091
+    - type: http
+      port: ${STROOM_PROXY_ADMIN_PORT:-8091}
+
   requestLog:
     appenders:
     - type: file
-      currentLogFilename: ${HOME}/.stroom-proxy/logs/access.log
+      currentLogFilename: ${HOME}/.stroom-proxy/logs/access/access.log
       threshold: ALL
       queueSize: 256
       discardingThreshold: 0
       archive: true
-      archivedLogFilenamePattern: ${HOME}/.stroom-proxy/logs/access-%d{yyyy-MM-dd'T'HH:mm}.log
+      archivedLogFilenamePattern: ${HOME}/.stroom-proxy/logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log
       archivedFileCount: 100
       timeZone: UTC
 
 
 logging:
-  level: ${STROOM_LOGGING_LEVEL:- ERROR}
+  level: ${STROOM_PROXY_LOGGING_LEVEL:- WARN}
   loggers:
     stroom: INFO
     io.dropwizard: INFO
@@ -32,12 +33,12 @@ logging:
       additive: false
       appenders:
       - type: file
-        currentLogFilename: ${HOME}/.stroom-proxy/logs/receive.log
+        currentLogFilename: ${HOME}/.stroom-proxy/logs/receive/receive.log
         threshold: ALL
         queueSize: 256
         discardingThreshold: 0
         archive: true
-        archivedLogFilenamePattern: ${HOME}/.stroom-proxy/logs/receive-%d{yyyy-MM-dd'T'HH:mm}.log
+        archivedLogFilenamePattern: ${HOME}/.stroom-proxy/logs/receive/receive-%d{yyyy-MM-dd'T'HH:mm}.log
         archivedFileCount: 100
         timeZone: UTC
         logFormat: "%msg%n"
@@ -46,12 +47,12 @@ logging:
       additive: false
       appenders:
       - type: file
-        currentLogFilename: ${HOME}/.stroom-proxy/logs/send.log
+        currentLogFilename: ${HOME}/.stroom-proxy/logs/send/send.log
         threshold: ALL
         queueSize: 256
         discardingThreshold: 0
         archive: true
-        archivedLogFilenamePattern: ${HOME}/.stroom-proxy/logs/send-%d{yyyy-MM-dd'T'HH:mm}.log
+        archivedLogFilenamePattern: ${HOME}/.stroom-proxy/logs/send/send-%d{yyyy-MM-dd'T'HH:mm}.log
         archivedFileCount: 100
         timeZone: UTC
         logFormat: "%msg%n"
@@ -61,56 +62,54 @@ logging:
     logFormat: "%highlight(%-5level) [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%thread] %-20logger{0} %gray(%msg) %n"
     timeZone: UTC
   - type: file
-    currentLogFilename: ${HOME}/.stroom-proxy/logs/app.log
+    currentLogFilename: ${HOME}/.stroom-proxy/logs/app/app.log
     threshold: ALL
     queueSize: 256
     discardingThreshold: 0
     archive: true
-    archivedLogFilenamePattern: ${HOME}/.stroom-proxy/logs/app-%d{yyyy-MM-dd'T'HH:mm}.log
+    archivedLogFilenamePattern: ${HOME}/.stroom-proxy/logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log
     archivedFileCount: 100
     timeZone: UTC
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
-mode: "PROXY"
 proxyConfig:
-  proxyContentDir: "/tmp/stroom-proxy/config"
+  proxyContentDir: "/tmp/stroom-proxy/
+  config"
 
 # If you want to use a receipt policy then the RuleSet must exist
 # in Stroom and have the UUID as specified below in receiptPolicyUuid
   proxyRequestConfig:
     receiptPolicyUuid:
   feedStatus:
-#    url: http://127.0.0.1:8080/api/feedStatus/v1
-    url: "https://nginx/api/feedStatus/v1"
+    url: "http://127.0.0.1/api/feedStatus/v1"
     apiKey: "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6InN0cm9vbSIsInNpZCI6bnVsbH0.k0Ssb43GCdTunAMeM26fIulYKNUuPUaJJk6GxDmzCPb7kVPwEtdfBSrtwazfEFM97dnmvURkLqs-DAZTXhhf-0VqQx4hkwcCHf83eVptWTy-lufIhQo6FCM223c9ONIhl6CPqknWh9Bo3vFNrNJoKz5Zw2T_iCcQhi2WGjd_tjTG7VbibTIpH3lPQDw1IBD2nMsEqACJSk3IaFe0GYcrAEMwsjj3sjAwByMbj5DJvo_DJbAuzUwS5IVpASEENen5Xd3wALLirrraUfED1OY0G56Ttcwl3uQ2s-grZXBM4JCiIurlWR5iNtNwoPUsZsyMju4FMSXt3Ur1NIpD7XKJlg"
   forwardStreamConfig:
     forwardingEnabled: true
-#    userAgent: "My custom user agent string"
     forwardDestinations:
-      - forwardUrl: "https://nginx/stroom/datafeeddirect"
+      - forwardUrl: "https://127.0.0.1/stroom/datafeeddirect"
         sslConfig:
-          keyStorePath: "/home/dev/git_work/stroom-resources/dev-resources/certs/client/client.jks"
+          keyStorePath: ${HOME}/dev/gchq/stroom-resources/dev-resources/certs/client/client.jks
           keyStorePassword: "password"
-          trustStorePath: "/home/dev/git_work/stroom-resources/dev-resources/certs/certificate-authority/ca.jks"
+          trustStorePath: ${HOME}/dev/gchq/stroom-resources/dev-resources/certs/certificate-authority/ca.jks
           trustStorePassword: "password"
           hostnameVerificationEnabled: true
-      - forwardUrl: "http://localhost:8080/stroom/datafeed"
+      - forwardUrl: "http://127.0.0.1/stroom/datafeed"
   proxyRepositoryConfig:
     storingEnabled: true
     repoDir: "/tmp/stroom-proxy/repo"
-    repositoryFormat: "${pathId}/${id}"
+    format: "${pathId}/${id}"
     rollCron: "* * *"
   proxyRepositoryReaderConfig:
     readCron: "* * *"
   logStreamConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
-  contentSyncConfig:
-    contentSyncEnabled: false
-    upstreamUrl:
-      RuleSet: "http://localhost:8080/api/ruleset/v1"
-      Dictionary: "http://localhost:8080/api/dictionary/v1"
-    syncFrequency: 30000
-    apiKey: ""
+#  contentSyncConfig:
+#    contentSyncEnabled: false
+#    upstreamUrl:
+#      RuleSet: "http://127.0.0.1/api/ruleset/v1"
+#      Dictionary: "http://127.0.0.1/api/dictionary/v1"
+#    syncFrequency: 30000
+#    apiKey: ""
   jerseyClient:
     timeout: 500ms
     connectionTimeout: 500ms
@@ -127,10 +126,10 @@ proxyConfig:
       #    keyStorePath: /path/to/file
       #    keyStorePassword: changeit
       #    keyStoreType: JKS
-      keyStorePath: ${HOME}/git_work/stroom-resources/dev-resources/certs/client/client.jks
+      keyStorePath: ${HOME}/dev/gchq/stroom-resources/dev-resources/certs/client/client.jks
       keyStorePassword: password
       keyStoreType: JKS
-      trustStorePath: ${HOME}/git_work/stroom-resources/dev-resources/certs/server/ca.jks
+      trustStorePath: ${HOME}/dev/gchq/stroom-resources/dev-resources/certs/server/ca.jks
       trustStorePassword: password
       trustStoreType: JKS
       trustSelfSignedCertificates: false

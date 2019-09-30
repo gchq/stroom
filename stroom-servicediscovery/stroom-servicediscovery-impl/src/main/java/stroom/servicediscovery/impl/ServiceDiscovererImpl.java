@@ -104,48 +104,53 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
 
     @Override
     public Result getHealth() {
-        if (serviceProviders.isEmpty()) {
-            return HealthCheck.Result.unhealthy("No service providers found");
-        } else {
-            try {
-                Map<String, List<String>> serviceInstanceMap = serviceProviders.entrySet().stream()
-                        .flatMap(entry -> {
-                            try {
-                                return entry.getValue().getAllInstances().stream();
-                            } catch (final Exception e) {
-                                throw new RuntimeException(String.format("Error querying instances for service %s",
-                                        entry.getKey().getVersionedServiceName()), e);
-                            }
-                        })
-                        .map(serviceInstance -> new Tuple2<>(serviceInstance.getName(), serviceInstance.buildUriSpec()))
-                        .collect(Collectors.groupingBy(
-                                Tuple2::_1,
-                                TreeMap::new,
-                                Collectors.mapping(Tuple2::_2, Collectors.toList())));
+        if(serviceDiscoveryConfig.isEnabled()) {
+            if (serviceProviders.isEmpty()) {
+                return HealthCheck.Result.unhealthy("No service providers found");
+            } else {
+                try {
+                    Map<String, List<String>> serviceInstanceMap = serviceProviders.entrySet().stream()
+                            .flatMap(entry -> {
+                                try {
+                                    return entry.getValue().getAllInstances().stream();
+                                } catch (final Exception e) {
+                                    throw new RuntimeException(String.format("Error querying instances for service %s",
+                                            entry.getKey().getVersionedServiceName()), e);
+                                }
+                            })
+                            .map(serviceInstance -> new Tuple2<>(serviceInstance.getName(), serviceInstance.buildUriSpec()))
+                            .collect(Collectors.groupingBy(
+                                    Tuple2::_1,
+                                    TreeMap::new,
+                                    Collectors.mapping(Tuple2::_2, Collectors.toList())));
 
-                //ensure the instances are sorted in a sensible way
-                serviceInstanceMap.values().forEach(Collections::sort);
+                    //ensure the instances are sorted in a sensible way
+                    serviceInstanceMap.values().forEach(Collections::sort);
 
-                long deadServiceCount = serviceInstanceMap.entrySet().stream()
-                        .filter(entry -> entry.getValue().isEmpty())
-                        .count();
+                    long deadServiceCount = serviceInstanceMap.entrySet().stream()
+                            .filter(entry -> entry.getValue().isEmpty())
+                            .count();
 
-                HealthCheck.ResultBuilder builder = HealthCheck.Result.builder();
+                    HealthCheck.ResultBuilder builder = HealthCheck.Result.builder();
 
-                if (deadServiceCount > 0) {
-                    builder.unhealthy()
-                            .withMessage("%s service(s) have no registered instances");
-                } else {
-                    builder.healthy()
-                            .withMessage("All services (local and remote) available");
+                    if (deadServiceCount > 0) {
+                        builder.unhealthy()
+                                .withMessage("%s service(s) have no registered instances");
+                    } else {
+                        builder.healthy()
+                                .withMessage("All services (local and remote) available");
+                    }
+                    return builder.withDetail("discovered-service-instances", serviceInstanceMap)
+                            .build();
+
+                } catch (final RuntimeException e) {
+                    return HealthCheck.Result.unhealthy("Error getting service provider details, error: " +
+                            e.getCause().getMessage());
                 }
-                return builder.withDetail("discovered-service-instances", serviceInstanceMap)
-                        .build();
-
-            } catch (final RuntimeException e) {
-                return HealthCheck.Result.unhealthy("Error getting service provider details, error: " +
-                        e.getCause().getMessage());
             }
+        }
+        else {
+            return HealthCheck.Result.healthy("Service discovery is disabled");
         }
     }
 }

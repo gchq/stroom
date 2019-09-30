@@ -39,7 +39,8 @@ public class ConfigServlet extends HttpServlet implements HasHealthCheck {
     public HealthCheck.Result getHealth() {
         return HealthCheck.Result.builder()
                 .healthy()
-                .withDetail("path", super.getServletContext().getContextPath())
+                // TODO/FIXME: When enabled health check shows a "ServletConfig has not been initialized" error
+//                .withDetail("path", super.getServletContext().getContextPath())
                 .build();
     }
 

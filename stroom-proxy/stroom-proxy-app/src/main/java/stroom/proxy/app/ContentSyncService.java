@@ -120,23 +120,24 @@ public class ContentSyncService implements Managed, HasHealthCheck {
         final String path = "/list";
 
         // parallelStream so we can hit multiple URLs concurrently
-        contentSyncConfig.getUpstreamUrl().entrySet().parallelStream()
-                .filter(entry ->
-                        entry.getValue() != null)
-                .forEach(entry -> {
-                    final String url = entry.getValue();
-                    final String msg = validatePost(url, path);
+        if(contentSyncConfig.isContentSyncEnabled()) {
+            contentSyncConfig.getUpstreamUrl().entrySet().parallelStream()
+                    .filter(entry ->
+                            entry.getValue() != null)
+                    .forEach(entry -> {
+                        final String url = entry.getValue();
+                        final String msg = validatePost(url, path);
 
-                    if (!"200".equals(msg)) {
-                        allHealthy.set(false);
-                    }
-                    Map<String, String> detailMap = new HashMap<>();
-                    detailMap.put("type", entry.getKey());
-                    detailMap.put("url", entry.getValue() + path);
-                    detailMap.put("result", msg);
-                    postResults.put(url, detailMap);
-                });
-
+                        if (!"200".equals(msg)) {
+                            allHealthy.set(false);
+                        }
+                        Map<String, String> detailMap = new HashMap<>();
+                        detailMap.put("type", entry.getKey());
+                        detailMap.put("url", entry.getValue() + path);
+                        detailMap.put("result", msg);
+                        postResults.put(url, detailMap);
+                    });
+        }
         resultBuilder.withDetail("upstreamUrls", postResults);
         if (allHealthy.get()) {
             resultBuilder.healthy();

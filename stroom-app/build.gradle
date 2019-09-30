@@ -252,11 +252,9 @@ test {
 }
 
 def stroomDockerBuildDir = "${projectDir}/docker/build"
-def proxyDockerBuildDir = "${projectDir}/proxy-docker/build"
 
 clean {
     delete stroomDockerBuildDir
-    delete proxyDockerBuildDir
 }
 
 
@@ -299,24 +297,6 @@ task copyFilesForStroomDockerBuild() {
         copy {
             from "${contentPackDownloadDir}"
             into stroomDockerContentPacksDir
-        }
-    }
-}
-
-// Copy all the files needed by the stroom-proxy docker build into stroom-app/proxy-docker/build
-task copyFilesForProxyDockerBuild() {
-    dependsOn shadowJar
-    doFirst {
-        // Copy the stroom app fat jar
-        copy {
-            from "${project.buildDir}/libs/${fatJarName}"
-            into proxyDockerBuildDir
-        }
-
-        // Copy the dropwizard yml configuration
-        copy {
-            from "${projectDir}/proxy-prod.yml"
-            into proxyDockerBuildDir
         }
     }
 }
@@ -440,7 +420,6 @@ tasks.generateSwaggerDocumentation.dependsOn rootProject.getTasksByName('jar', t
 
 tasks.build.dependsOn generateSwaggerDocumentation
 tasks.build.dependsOn copyFilesForStroomDockerBuild
-tasks.build.dependsOn copyFilesForProxyDockerBuild
 tasks.build.dependsOn shadowJar
 tasks.build.dependsOn buildDistribution
 
