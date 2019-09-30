@@ -47,6 +47,7 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UrlConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.IsConfig;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -77,14 +78,17 @@ public class AppConfigModule extends AbstractModule {
     @Override
     protected void configure() {
 
-        // Bind the application config.        
+        // Bind the de-serialised yaml config to a singleton AppConfig object, whose parts
+        // can be injected all over the app.
         bind(AppConfig.class).toInstance(appConfig);
 
+        // Holder for the location of the yaml config file so the AppConfigMonitor can
+        // get hold of it via guice
         bind(ConfigLocation.class).toInstance(new ConfigLocation(configFile));
-        bind(AppConfigMonitor.class).asEagerSingleton();
 
         // AppConfig will instantiate all of its child config objects so
-        // bind each of these instances so we can inject these objects on their own
+        // bind each of these instances so we can inject these objects on their own.
+        // This allows gradle modules to know nothing about the other modules.
         bind(ActivityConfig.class).toInstance(appConfig.getUiConfig().getActivityConfig());
         bind(AppenderConfig.class).toInstance(appConfig.getPipelineConfig().getAppenderConfig());
         bind(AuthenticationConfig.class).toInstance(appConfig.getSecurityConfig().getAuthenticationConfig());

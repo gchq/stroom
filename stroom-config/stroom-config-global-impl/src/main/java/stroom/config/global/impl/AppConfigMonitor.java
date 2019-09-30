@@ -1,10 +1,12 @@
-package stroom.config.app;
+package stroom.config.global.impl;
 
 import com.codahale.metrics.health.HealthCheck;
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.config.global.impl.ConfigMapper;
+import stroom.config.app.AppConfig;
+import stroom.config.app.ConfigLocation;
+import stroom.config.app.YamlUtil;
 import stroom.util.HasHealthCheck;
 import stroom.util.config.FieldMapper;
 import stroom.util.logging.LogUtil;

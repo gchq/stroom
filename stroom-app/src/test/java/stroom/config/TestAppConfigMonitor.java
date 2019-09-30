@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
-import stroom.config.app.AppConfigMonitor;
+import stroom.config.global.impl.AppConfigMonitor;
 import stroom.config.app.ConfigLocation;
 import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.ConfigMapper;

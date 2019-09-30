@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import org.jboss.netty.util.internal.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
@@ -56,11 +55,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+/**
+ * Responsible for mapping between the AppConfig object tree and a flat set of key value pairs.
+ * The key for a leaf of the tree is a dot delimited path of all the branches to get to that leaf,
+ * e.g.
+ */
 @Singleton
 public class ConfigMapper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigMapper.class);
@@ -71,7 +76,7 @@ public class ConfigMapper {
     private static final String DOCREF_PREFIX = "docRef(";
 
     // The guice bound appConfig
-    private final IsConfig appConfig;
+    private final AppConfig appConfig;
 
     // A map of config properties keyed on the fully qualified prop path (i.e. stroom.path.temp)
     // This is the source of truth for all properties. It is used to update the guice injected object model
@@ -95,7 +100,7 @@ public class ConfigMapper {
         // globalPropertiesMap with the defaults.
         LOGGER.debug("Building globalPropertiesMap from compile-time default values and annotations");
         try {
-            final IsConfig vanillaObject = appConfig.getClass().getDeclaredConstructor().newInstance();
+            final AppConfig vanillaObject = appConfig.getClass().getDeclaredConstructor().newInstance();
             // Pass in an empty hashmap because we are not parsing the actual guice bound appConfig. We are only
             // populating the globalPropertiesMap so the passed hashmap is thrown away.
             addConfigObjectMethods(vanillaObject, ROOT_PROPERTY_PATH, new HashMap<>(), this::defaultValuePropertyConsumer);
