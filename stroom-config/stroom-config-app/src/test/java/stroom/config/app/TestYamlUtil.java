@@ -58,7 +58,8 @@ class TestYamlUtil {
 
     static String getYamlFromJavaModel() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        YamlUtil.writeConfig(new AppConfig(), byteArrayOutputStream);
+        AppConfig appConfig = new AppConfig();
+        YamlUtil.writeConfig(appConfig, byteArrayOutputStream);
         return new String(byteArrayOutputStream.toByteArray());
     }
 
