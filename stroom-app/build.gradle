@@ -384,6 +384,16 @@ task copyContentPackToDistribution(type: Copy) {
     into "${releaseBuildDir}/contentPacks"
 }
 
+// Create an example yaml config file from the compile-time defaults
+task generateConfigDefaultsYamlFile(type: JavaExec) {
+    dependsOn ':stroom-config:stroom-config-app:compileJava'
+    dependsOn ':stroom-config:stroom-config-app:compileTestJava'
+
+    classpath = project(':stroom-config:stroom-config-app').sourceSets.test.runtimeClasspath
+    main = 'stroom.config.app.GenerateExpectedYaml'
+    args = [configDefaultsFile]
+}
+
 // Build the release distribution zip for stroom
 task buildDistribution(type: Zip) {
 
@@ -461,15 +471,6 @@ task setupSampleDataApplication(type: JavaExec) {
     main = 'stroom.test.SetupSampleData'
 }
 
-// Create an example yaml config file from the compile-time defaults
-task generateConfigDefaultsYamlFile(type: JavaExec) {
-    dependsOn ':stroom-config:stroom-config-app:compileJava'
-    dependsOn ':stroom-config:stroom-config-app:compileTestJava'
-
-    classpath = project(':stroom-config:stroom-config-app').sourceSets.test.runtimeClasspath
-    main = 'stroom.config.app.GenerateExpectedYaml'
-    args = [configDefaultsFile]
-}
 
 ////TODO This specific dep is needed to ensure TestKafkaExternalLoader has the jar available
 ////for its test. This is a TODO as stroom-connectors needs a big refactor once we

@@ -79,7 +79,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         watcherFuture = executorService.submit(() -> {
             WatchKey watchKey = null;
 
-            LOGGER.info("Starting file modification watcher for {}", configFile.toAbsolutePath());
+            LOGGER.info("Starting config file modification watcher for {}", configFile.toAbsolutePath().normalize());
             while (true) {
                 if (Thread.currentThread().isInterrupted()) {
                     LOGGER.debug("Thread interrupted, stopping watching directory {}", dirToWatch.toAbsolutePath());
@@ -132,7 +132,8 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
     private void updateAppConfigFromFile() {
         final AppConfig newAppConfig;
         try {
-            LOGGER.info("Updating app config from file {}", configFile.toAbsolutePath());
+            LOGGER.info("Change detected to file {}, updating application config.",
+                    configFile.toAbsolutePath().normalize());
             newAppConfig = YamlUtil.readAppConfig(configFile);
 
             try {

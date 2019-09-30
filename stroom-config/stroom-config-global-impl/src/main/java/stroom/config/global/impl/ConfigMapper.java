@@ -86,6 +86,7 @@ public class ConfigMapper {
     private final Map<String, Prop> propertyMap = new HashMap<>();
 
 
+    @Inject
     public ConfigMapper(final AppConfig appConfig) {
 
         LOGGER.debug("Initialising ConfigMapper with class {}", appConfig.getClass().getName());
@@ -682,21 +683,6 @@ public class ConfigMapper {
             FieldMapper.copy(commonConfig, serviceDbConfig, FieldMapper.CopyOptions.DONT_COPY_NULLS);
         } else {
             LOGGER.debug("{} has custom DB config so leaving it as is", serviceConfig.getClass().getSimpleName());
-        }
-    }
-
-    public static class ConfigMapperFactory implements Provider<ConfigMapper> {
-
-        private final ConfigMapper configMapper;
-
-        @Inject
-        ConfigMapperFactory(final AppConfig appConfig) {
-            configMapper = new ConfigMapper(appConfig);
-        }
-
-        @Override
-        public ConfigMapper get() {
-            return configMapper;
         }
     }
 

@@ -260,14 +260,6 @@ public class V07_00_00_02__property_rename extends BaseJavaMigration {
         FROM_TO_MAP.put("stroom.welcomeHTML", "stroom.ui.welcomeHtml");
     }
 
-    private final ConfigMapper configMapper;
-
-    public V07_00_00_02__property_rename() {
-
-        // initialise the config mapper so we can validate property keys
-        configMapper = new ConfigMapper(new AppConfig());
-    }
-
     @Override
     public void migrate(final Context flywayContext) {
         try {
@@ -296,6 +288,7 @@ public class V07_00_00_02__property_rename extends BaseJavaMigration {
                             rec.store();
                         });
                     });
+
 
             // we can't remove keys that are not in the model as there may be more mig scripts
             // after this one that do more migration.  The model is a shifting sand relative to this

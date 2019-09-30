@@ -36,14 +36,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Singleton
+@Singleton // Needs to be singleton to prevent initialise being called multiple times
 class GlobalConfigService {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigService.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigService.class);
 
     private final ConfigPropertyDao dao;
     private final SecurityContext securityContext;
-//    private final Map<String, ConfigProperty> globalProperties = new HashMap<>();
     private final ConfigMapper configMapper;
 
     @Inject
@@ -57,40 +56,20 @@ class GlobalConfigService {
         initialise();
     }
 
-
-//    private Object updateConfigObject(final String key, final String value) {
-//        return configMapper.updateConfigObject(key, value);
-//    }
-
     private void initialise() {
         // At this point the configMapper.getGlobalProperties() will contain the name, defaultValue
         // and the yamlValue. It will also contain any info gained from the config class annotations,
         // e.g. @Readonly
-        LOGGER.info("Setting up configuration properties");
-//        loadMappedProperties();
+        LOGGER.info("Initialising application config with global database properties");
         updateConfigFromDb(true);
     }
 
-//    private void loadMappedProperties() {
-//        try {
-//            final Collection<ConfigProperty> configPropertyList = configMapper.getGlobalProperties();
-//            for (final ConfigProperty configProperty : configPropertyList) {
-//                globalProperties.put(configProperty.getName(), configProperty);
-//                updateConfigObject(configProperty.getName(), configProperty.getValue());
-//            }
-//        } catch (final RuntimeException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
     private void updateConfigFromDb() {
+        LOGGER.info("Updating application config with global database properties");
         updateConfigFromDb(false);
     }
 
     private void updateConfigFromDb(final boolean deleteUnknownProps) {
-        // Map of all props and their values from compile-time defaults and dropwiz yaml
-//        final Map<String, ConfigProperty> map = new HashMap<>(globalProperties);
-
         // Get all props held in the DB, which may be a subset of those in the config
         // object model
         dao.list().forEach(dbConfigProperty -> {

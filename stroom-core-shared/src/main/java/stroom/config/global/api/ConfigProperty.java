@@ -45,6 +45,7 @@ import java.util.function.Consumer;
  * TODO At present the UI is unable to show the value from the YAML so may give a misleading picture
  */
 public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<ConfigProperty> {
+
     private static final long serialVersionUID = 8440384191352234225L;
 
     private Integer id;

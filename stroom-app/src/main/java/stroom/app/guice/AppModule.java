@@ -51,7 +51,5 @@ public class AppModule extends AbstractModule {
 
         HealthCheckBinder.create(binder())
                 .bind(LogLevelInspector.class);
-        HealthCheckBinder.create(binder())
-                .bind(AppConfigMonitor.class);
     }
 }
