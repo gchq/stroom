@@ -21,8 +21,6 @@ public class HikariUtil {
         final ConnectionConfig connectionConfig = dbConfig.getDbConfig().getConnectionConfig();
         final ConnectionPoolConfig connectionPoolConfig = dbConfig.getDbConfig().getConnectionPoolConfig();
 
-        // Add test connection details if needed.
-        DbUtil.decorateConnectionConfig(connectionConfig);
         // Validate the connection details.
         DbUtil.validate(connectionConfig);
         // Keep waiting until we can establish a DB connection to allow for the DB to start after the app

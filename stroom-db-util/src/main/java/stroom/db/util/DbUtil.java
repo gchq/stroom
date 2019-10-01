@@ -19,36 +19,11 @@ import java.util.stream.Collectors;
 
 public class DbUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(DbUtil.class);
-    private static final boolean USE_TEST_CONTAINERS = true;
     private static final long MAX_SLEEP_TIME_MS = 30_000;
     private static final int ACCESS_DENIED_BAD_UNAME_OR_PWORD = 1045;
     private static final int ACCESS_DENIED_BAD_DATABASE = 1044;
 
     private DbUtil() {
-    }
-
-    public static void decorateConnectionConfig(final ConnectionConfig connectionConfig) {
-        if (USE_TEST_CONTAINERS) {
-            try {
-                final Class<?> clazz = Class.forName("org.testcontainers.jdbc.ContainerDatabaseDriver");
-                if (clazz != null) {
-                    LOGGER.info("Using test container DB connection config");
-
-                    connectionConfig.setJdbcDriverClassName("com.mysql.cj.jdbc.Driver");
-                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.5.52://localhost:3306/test");
-//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.6.43://localhost:3306/test");
-//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.7.25://localhost:3306/test");
-//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:8.0.15://localhost:3306/test");
-                    connectionConfig.setJdbcDriverPassword("test");
-                    connectionConfig.setJdbcDriverUsername("test");
-
-                }
-            } catch (final ClassNotFoundException e) {
-                LOGGER.debug("Not using test container DB connection config");
-            }
-        } else {
-            LOGGER.debug("Not using test container DB connection config");
-        }
     }
 
     public static void validate(final ConnectionConfig connectionConfig) {
@@ -216,4 +191,5 @@ public class DbUtil {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
+
 }

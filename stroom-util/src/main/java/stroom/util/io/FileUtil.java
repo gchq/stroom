@@ -111,10 +111,13 @@ public final class FileUtil {
     }
 
     public static void setTempDir(final Path tempDir) {
-//        if (!Objects.equals(FileUtil.tempDir.toAbsolutePath().normalize(), tempDir.toAbsolutePath().normalize())) {
-            LOGGER.info("Setting FileUtil.tempDir to {}", tempDir.toAbsolutePath().normalize());
-            FileUtil.tempDir = tempDir;
-//        }
+        if (tempDir != null) {
+            if (FileUtil.tempDir == null
+                    || !tempDir.toAbsolutePath().normalize().equals(FileUtil.tempDir.toAbsolutePath().normalize())) {
+                LOGGER.info("Setting FileUtil.tempDir to {}", tempDir.toAbsolutePath().normalize());
+                FileUtil.tempDir = tempDir;
+            }
+        }
     }
 
     //    public static void useDevTempDir() {

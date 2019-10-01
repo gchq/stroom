@@ -11,6 +11,7 @@ import stroom.index.VolumeTestConfigModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
+import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -22,8 +23,10 @@ public class CoreTestModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(CoreTestModule.class);
 
     private Path yamlConfigPath = null;
+    private boolean useTestContainers = true;
 
-    public CoreTestModule() {
+    public CoreTestModule(final boolean useTestContainers) {
+        this.useTestContainers = useTestContainers;
     }
 
     public CoreTestModule(final Path yamlConfigPath) {
@@ -59,14 +62,24 @@ public class CoreTestModule extends AbstractModule {
 
         LOGGER.info("Using config from: " + FileUtil.getCanonicalPath(path));
 
+        AppConfig appConfig;
+
         try  {
-            final AppConfig appConfig = YamlUtil.readAppConfig(path);
-            install(new AppConfigModule(appConfig, path));
+            appConfig = YamlUtil.readAppConfig(path);
         } catch (final IOException e) {
             throw new UncheckedIOException("Error opening local.yml, try running local.yml.sh in the root of " +
                     "the repo to create one.", e);
         }
 
+        if (useTestContainers) {
+            LOGGER.info("Setting up Test Containers DB config");
+            // By decorating the common config it should be applied to all DB conns
+            DbTestUtil.applyTestContainersConfig(appConfig.getCommonDbConfig().getConnectionConfig());
+        } else {
+            LOGGER.info("Not using test container DB connection config");
+        }
+
+        install(new AppConfigModule(appConfig, path));
         install(new CoreModule());
         install(new ResourceModule());
         install(new stroom.cluster.impl.MockClusterModule());
@@ -75,4 +88,5 @@ public class CoreTestModule extends AbstractModule {
         install(new MockMetaStatisticsModule());
         install(new stroom.test.DatabaseTestControlModule());
     }
+
 }

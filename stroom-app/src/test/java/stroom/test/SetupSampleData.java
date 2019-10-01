@@ -25,7 +25,9 @@ import stroom.task.api.TaskManager;
  */
 public final class SetupSampleData {
     public static void main(final String[] args) {
-        final Injector injector = Guice.createInjector(new CoreTestModule());
+
+        // We are running stroom so want to use a proper db
+        final Injector injector = Guice.createInjector(new CoreTestModule(false));
 
         // Start task manager
         injector.getInstance(TaskManager.class).startup();
