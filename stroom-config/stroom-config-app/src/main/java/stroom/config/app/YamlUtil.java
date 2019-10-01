@@ -96,12 +96,29 @@ public class YamlUtil {
 //        return mapper.readerFor(AppConfig.class).readValue(substitutedInputStream);
 //    }
 
-    public static void writeConfig(final AppConfig appConfig, final OutputStream outputStream) throws IOException {
+    public static void writeConfig(final Config config, final OutputStream outputStream) throws IOException {
         final YAMLFactory yf = new YAMLFactory();
         final ObjectMapper mapper = new ObjectMapper(yf);
         // wrap the AppConfig so that it sits at the right level
+        mapper.writeValue(outputStream, config);
+
+    }
+    public static void writeConfig(final AppConfig appConfig, final OutputStream outputStream) throws IOException {
         Config config = new Config();
         config.setAppConfig(appConfig);
-        mapper.writeValue(outputStream, config);
+        writeConfig(config, outputStream);
+    }
+
+    public static void writeConfig(final Config config, final Path path) throws IOException {
+        final YAMLFactory yf = new YAMLFactory();
+        final ObjectMapper mapper = new ObjectMapper(yf);
+        // wrap the AppConfig so that it sits at the right level
+        mapper.writeValue(path.toFile(), config);
+    }
+
+    public static void writeConfig(final AppConfig appConfig, final Path path) throws IOException {
+        Config config = new Config();
+        config.setAppConfig(appConfig);
+        writeConfig(config, path);
     }
 }

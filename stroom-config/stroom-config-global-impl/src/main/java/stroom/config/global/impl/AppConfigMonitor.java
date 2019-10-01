@@ -40,6 +40,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
     private Future<?> watcherFuture = null;
     private final ConfigMapper configMapper;
     private boolean isRunning = false;
+    private final boolean isValidFile;
 
     @Inject
     public AppConfigMonitor(final AppConfig appConfig,
@@ -49,14 +50,19 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         this.configFile = configLocation.getConfigFilePath();
         this.configMapper = configMapper;
 
-        if (!Files.isRegularFile(configFile)) {
-            throw new RuntimeException(LogUtil.message("{} is not a regular file", configFile));
+        if (Files.isRegularFile(configFile)) {
+            isValidFile = true;
+
+            dirToWatch = configFile.getParent();
+            if (!Files.isDirectory(dirToWatch)) {
+                throw new RuntimeException(LogUtil.message("{} is not a directory", dirToWatch));
+            }
+            executorService = Executors.newSingleThreadExecutor();
+        } else {
+            isValidFile = false;
+            dirToWatch = null;
+            executorService = null;
         }
-        dirToWatch = configFile.getParent();
-        if (!Files.isDirectory(dirToWatch)) {
-            throw new RuntimeException(LogUtil.message("{} is not a directory", dirToWatch));
-        }
-        executorService = Executors.newSingleThreadExecutor();
     }
 
 
@@ -67,6 +73,14 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
      */
     @Override
     public void start() throws Exception {
+        if (isValidFile) {
+            startWatcher();
+        } else {
+            LOGGER.warn("Unable to start watcher as {} is not a valid file", configFile);
+        }
+    }
+
+    private void startWatcher() throws IOException {
         try {
             watchService = FileSystems.getDefault().newWatchService();
         } catch (IOException e) {
@@ -96,28 +110,10 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                 }
 
                 for (WatchEvent<?> event : watchKey.pollEvents()) {
-
                     if (event.kind().equals(OVERFLOW)) {
                         break;
                     }
-
-                    final WatchEvent<Path> pathEvent = (WatchEvent<Path>) event;
-                    final WatchEvent.Kind<Path> kind = pathEvent.kind();
-                    LOGGER.debug("Dir watch event {}, {}, {}", kind.name(), kind.type(), pathEvent.context());
-
-                    if (kind.equals(StandardWatchEventKinds.ENTRY_MODIFY)) {
-                        final Path modifiedFile = dirToWatch.resolve(pathEvent.context());
-
-                        try {
-                            // we don't care about changes to other files
-                            if (Files.isRegularFile(modifiedFile) && Files.isSameFile(configFile, modifiedFile)) {
-                                updateAppConfigFromFile();
-                            }
-                        } catch (IOException e) {
-                            // Swallow error so future changes can be monitored.
-                            LOGGER.error("Error comparing paths {} and {}", configFile, modifiedFile, e);
-                        }
-                    }
+                    handleWatchEvent((WatchEvent<Path>) event);
                 }
                 boolean isValid = watchKey.reset();
                 if (!isValid) {
@@ -127,6 +123,26 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
             }
         });
         isRunning = true;
+    }
+
+    private void handleWatchEvent(final WatchEvent<Path> event) {
+        final WatchEvent<Path> pathEvent = event;
+        final WatchEvent.Kind<Path> kind = pathEvent.kind();
+        LOGGER.debug("Dir watch event {}, {}, {}", kind.name(), kind.type(), pathEvent.context());
+
+        if (kind.equals(StandardWatchEventKinds.ENTRY_MODIFY)) {
+            final Path modifiedFile = dirToWatch.resolve(pathEvent.context());
+
+            try {
+                // we don't care about changes to other files
+                if (Files.isRegularFile(modifiedFile) && Files.isSameFile(configFile, modifiedFile)) {
+                    updateAppConfigFromFile();
+                }
+            } catch (IOException e) {
+                // Swallow error so future changes can be monitored.
+                LOGGER.error("Error comparing paths {} and {}", configFile, modifiedFile, e);
+            }
+        }
     }
 
     private void updateAppConfigFromFile() {
@@ -162,15 +178,19 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
      */
     @Override
     public void stop() throws Exception {
-        LOGGER.info("Stopping file modification watcher for {}", configFile.toAbsolutePath());
+        if (isValidFile) {
+            LOGGER.info("Stopping file modification watcher for {}", configFile.toAbsolutePath());
 
-        watchService.close();
-        if (executorService != null) {
-            watchService.close();
-           if (watcherFuture != null && !watcherFuture.isCancelled() && !watcherFuture.isDone()) {
-               watcherFuture.cancel(true);
-           }
-           executorService.shutdown();
+            if (watchService != null) {
+                watchService.close();
+            }
+            if (executorService != null) {
+                watchService.close();
+                if (watcherFuture != null && !watcherFuture.isCancelled() && !watcherFuture.isDone()) {
+                    watcherFuture.cancel(true);
+                }
+                executorService.shutdown();
+            }
         }
         isRunning = false;
     }
@@ -188,6 +208,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         return resultBuilder
                 .withDetail("configFilePath", configFile)
                 .withDetail("isRunning", isRunning)
+                .withDetail("isValidFile", isValidFile)
                 .build();
     }
 }
