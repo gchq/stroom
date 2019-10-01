@@ -8,7 +8,7 @@ import org.flywaydb.core.api.FlywayException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.db.util.HikariUtil;
+import stroom.db.util.HikariConfigHolder;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
@@ -40,9 +40,10 @@ public class ClusterLockDbModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final Provider<ClusterLockConfig> configProvider) {
+    ConnectionProvider getConnectionProvider(final Provider<ClusterLockConfig> configProvider,
+                                             final HikariConfigHolder hikariConfigHolder) {
         LOGGER.info("Creating connection provider for {}", MODULE);
-        final HikariConfig config = HikariUtil.createConfig(configProvider.get());
+        final HikariConfig config = hikariConfigHolder.getHikariConfig(configProvider.get());
         final ConnectionProvider connectionProvider = new ConnectionProvider(config);
         flyway(connectionProvider);
         return connectionProvider;

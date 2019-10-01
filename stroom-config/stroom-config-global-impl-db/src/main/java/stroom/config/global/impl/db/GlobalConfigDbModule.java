@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import stroom.config.app.PropertyServiceConfig;
 import stroom.config.global.impl.ConfigPropertyDao;
 import stroom.config.global.impl.GlobalConfigModule;
-import stroom.db.util.HikariUtil;
+import stroom.db.util.HikariConfigHolder;
 import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
@@ -36,9 +36,10 @@ public class GlobalConfigDbModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final Provider<PropertyServiceConfig> configProvider) {
+    ConnectionProvider getConnectionProvider(final Provider<PropertyServiceConfig> configProvider,
+                                             final HikariConfigHolder hikariConfigHolder) {
         LOGGER.info("Creating connection provider for {}", MODULE);
-        final HikariConfig config = HikariUtil.createConfig(configProvider.get());
+        final HikariConfig config = hikariConfigHolder.getHikariConfig(configProvider.get());
         final ConnectionProvider connectionProvider = new ConnectionProvider(config);
         flyway(connectionProvider);
         return connectionProvider;

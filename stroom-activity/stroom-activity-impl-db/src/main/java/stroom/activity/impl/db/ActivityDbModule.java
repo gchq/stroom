@@ -9,9 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.activity.impl.ActivityDao;
 import stroom.activity.impl.ActivityModule;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
-import stroom.db.util.HikariUtil;
+import stroom.db.util.HikariConfigHolder;
 import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
@@ -37,9 +35,11 @@ public class ActivityDbModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final Provider<ActivityConfig> configProvider) {
+    ConnectionProvider getConnectionProvider(final Provider<ActivityConfig> configProvider,
+                                             final HikariConfigHolder hikariConfigHolder) {
         LOGGER.info("Creating connection provider for {}", MODULE);
-        final HikariConfig config = HikariUtil.createConfig(configProvider.get());
+        final HikariConfig config = hikariConfigHolder.getHikariConfig(configProvider.get());
+
         final ConnectionProvider connectionProvider = new ConnectionProvider(config);
         flyway(connectionProvider);
         return connectionProvider;

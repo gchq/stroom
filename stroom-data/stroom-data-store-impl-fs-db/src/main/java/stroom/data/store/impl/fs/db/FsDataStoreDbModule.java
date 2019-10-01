@@ -29,7 +29,7 @@ import stroom.data.store.impl.fs.FsFeedPathDao;
 import stroom.data.store.impl.fs.FsTypePathDao;
 import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.FsVolumeStateDao;
-import stroom.db.util.HikariUtil;
+import stroom.db.util.HikariConfigHolder;
 import stroom.util.guice.GuiceUtil;
 
 import javax.inject.Provider;
@@ -57,9 +57,10 @@ public class FsDataStoreDbModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final Provider<DataStoreServiceConfig> configProvider) {
+    ConnectionProvider getConnectionProvider(final Provider<DataStoreServiceConfig> configProvider,
+                                             final HikariConfigHolder hikariConfigHolder) {
         LOGGER.info("Creating connection provider for {}", MODULE);
-        final HikariConfig config = HikariUtil.createConfig(configProvider.get());
+        final HikariConfig config = hikariConfigHolder.getHikariConfig(configProvider.get());
         final ConnectionProvider connectionProvider = new ConnectionProvider(config);
         flyway(connectionProvider);
         return connectionProvider;

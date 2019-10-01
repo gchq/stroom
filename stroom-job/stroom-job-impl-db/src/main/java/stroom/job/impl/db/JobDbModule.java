@@ -7,7 +7,7 @@ import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.db.util.HikariUtil;
+import stroom.db.util.HikariConfigHolder;
 import stroom.job.impl.JobDao;
 import stroom.job.impl.JobNodeDao;
 import stroom.job.impl.JobSystemConfig;
@@ -35,9 +35,11 @@ public class JobDbModule extends AbstractModule {
 
     @Provides
     @Singleton
-    public ConnectionProvider getConnectionProvider(final Provider<JobSystemConfig> configProvider) {
+    public ConnectionProvider getConnectionProvider(final Provider<JobSystemConfig> configProvider,
+                                                    final HikariConfigHolder hikariConfigHolder) {
         LOGGER.info("Creating connection provider for {}", MODULE);
-        final HikariConfig config = HikariUtil.createConfig(configProvider.get());
+//        final HikariConfig config = HikariUtil.createConfig(configProvider.get());
+        final HikariConfig config = hikariConfigHolder.getHikariConfig(configProvider.get());
         final ConnectionProvider connectionProvider = new ConnectionProvider(config);
         flyway(connectionProvider);
         return connectionProvider;

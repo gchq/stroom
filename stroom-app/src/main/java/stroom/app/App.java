@@ -88,6 +88,7 @@ public class App extends Application<Config> {
 
     @Override
     public void run(final Config configuration, final Environment environment) {
+        LOGGER.info("Using application configuration file {}", configFile.toAbsolutePath().normalize());
         // Add useful logging setup.
         registerLogConfiguration(environment);
 

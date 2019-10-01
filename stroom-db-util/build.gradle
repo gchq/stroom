@@ -14,7 +14,7 @@ dependencies {
     compile libs.google_findbugs
     compile libs.guava
     compile libs.hikari
-//    compile libs.guice4
+    compile libs.guice4
 //    compile libs.jackson_annotations
 //    compile libs.jackson_core
 //    compile libs.jackson_databind

@@ -39,7 +39,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -652,37 +651,63 @@ public class ConfigMapper {
         if (!defaultConfig.equals(commonConfig)) {
             LOGGER.info("Common database config is non-default so will be used as fall-back configuration");
 
-            // find all getters that return a class that implements HasDbConfig
-            // Assumes db config only appears as a child of top level
-            for (Method method : appConfig.getClass().getMethods()) {
-                if (method.getName().startsWith("get")
-                        && HasDbConfig.class.isAssignableFrom(method.getReturnType())) {
-                    try {
-                        HasDbConfig serviceConfig = (HasDbConfig) method.invoke(appConfig);
-                        applyCommonDbConfig(defaultConfig, commonConfig, serviceConfig);
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new RuntimeException(LogUtil.message("Unable to invoke method {}", method.getName()));
-                    }
-                }
-            }
+            scanMethodsForDbConfig(appConfig, commonConfig, defaultConfig, "");
         } else {
             LOGGER.debug("commonConfig matches default so nothing to do");
         }
     }
 
+    private static void scanMethodsForDbConfig(final IsConfig configObject,
+                                               final DbConfig commonConfig,
+                                               final DbConfig defaultConfig,
+                                               String path) {
+        if (!path.isEmpty()) {
+            path += ".";
+        }
+        path = path + configObject.getClass().getSimpleName();
+
+        // find all getters that return a class that implements HasDbConfig
+        for (Method method : configObject.getClass().getMethods()) {
+            if (method.getName().startsWith("get")) {
+//                LOGGER.info("method {} {}", method.getName(), method.getReturnType());
+
+                if (HasDbConfig.class.isAssignableFrom(method.getReturnType())) {
+                    try {
+                        final HasDbConfig serviceConfig = (HasDbConfig) method.invoke(configObject);
+                        applyCommonDbConfig(defaultConfig, commonConfig, serviceConfig, path);
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        throw new RuntimeException(LogUtil.message("Unable to invoke method {}", method.getName()));
+                    }
+                } else {
+                    // Not a HasDbConfig so see if it is a child config object that we can recurse into
+                    if (IsConfig.class.isAssignableFrom(method.getReturnType())) {
+                        try {
+                            final IsConfig childConfigObject = (IsConfig) method.invoke(configObject);
+                            scanMethodsForDbConfig(childConfigObject, commonConfig, defaultConfig, path);
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            throw new RuntimeException(LogUtil.message("Unable to invoke method {}", method.getName()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private static void applyCommonDbConfig(final DbConfig defaultConfig,
                                             final DbConfig commonConfig,
-                                            final HasDbConfig serviceConfig) {
+                                            final HasDbConfig serviceConfig,
+                                            String path) {
 
+        path += "." + serviceConfig.getClass().getSimpleName();
         final DbConfig serviceDbConfig = serviceConfig.getDbConfig();
 
         if (defaultConfig.equals(serviceDbConfig)) {
             // The service specific config has default values for its db config
             // so apply all the common values.
-            LOGGER.info("Applying common DB config to {}", serviceConfig.getClass().getSimpleName());
+            LOGGER.info("Applying common DB config to {}", path);
             FieldMapper.copy(commonConfig, serviceDbConfig, FieldMapper.CopyOptions.DONT_COPY_NULLS);
         } else {
-            LOGGER.debug("{} has custom DB config so leaving it as is", serviceConfig.getClass().getSimpleName());
+            LOGGER.debug("{} has custom DB config so leaving it as is", path);
         }
     }
 
