@@ -24,10 +24,6 @@ public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryConfi
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(StoredQueryDaoImpl.class);
-
-//        // MultiBind the connection provider so we can see status for all databases.
-//        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
-//                .addBinding(ConnectionProvider.class);
     }
 
     @Override
@@ -54,45 +50,4 @@ public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryConfi
     public Class<ConnectionProvider> getConnectionProviderType() {
         return ConnectionProvider.class;
     }
-
-//    @Provides
-//    @Singleton
-//    ConnectionProvider getConnectionProvider(final Provider<StoredQueryConfig> configProvider,
-//                                             final HikariConfigHolder hikariConfigHolder) {
-//        LOGGER.info("Creating connection provider for {}", MODULE);
-//        final HikariConfig config = hikariConfigHolder.getHikariConfig(configProvider.get());
-//        final ConnectionProvider connectionProvider = new ConnectionProvider(config);
-//        flyway(connectionProvider);
-//        return connectionProvider;
-//    }
-//
-//    private Flyway flyway(final DataSource dataSource) {
-//        final Flyway flyway = Flyway.configure()
-//                .dataSource(dataSource)
-//                .locations(FLYWAY_LOCATIONS)
-//                .table(FLYWAY_TABLE)
-//                .baselineOnMigrate(true)
-//                .load();
-//        LOGGER.info("Applying Flyway migrations to {} in {} from {}", MODULE, FLYWAY_TABLE, FLYWAY_LOCATIONS);
-//        try {
-//            flyway.migrate();
-//        } catch (FlywayException e) {
-//            LOGGER.error("Error migrating {} database", MODULE, e);
-//            throw e;
-//        }
-//        LOGGER.info("Completed Flyway migrations for {} in {}", MODULE, FLYWAY_TABLE);
-//        return flyway;
-//    }
-//
-//    @Override
-//    public boolean equals(final Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//        return true;
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        return 0;
-//    }
 }

@@ -25,6 +25,7 @@ import com.google.common.base.Splitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
+import stroom.config.common.CommonDbConfig;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.config.global.api.ConfigProperty;
@@ -704,7 +705,8 @@ public class ConfigMapper {
         if (defaultConfig.equals(serviceDbConfig)) {
             // The service specific config has default values for its db config
             // so apply all the common values.
-            LOGGER.info("Applying common DB config to {}", path);
+            LOGGER.info("Overwriting default {} with {}",
+                    path, AppConfig.class.getSimpleName() + "." + CommonDbConfig.class.getSimpleName());
             FieldMapper.copy(commonConfig, serviceDbConfig, FieldMapper.CopyOptions.DONT_COPY_NULLS);
         } else {
             LOGGER.debug("{} has custom DB config so leaving it as is", path);
